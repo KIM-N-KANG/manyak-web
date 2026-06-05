@@ -1,0 +1,26 @@
+# Gemini Code Assist repository configuration.
+# Schema reference:
+# https://docs.cloud.google.com/gemini/docs/code-review/customize-repo-review
+
+have_fun: false
+
+ignore_patterns:
+  - '.next/**'
+  - 'out/**'
+  - 'build/**'
+  - 'coverage/**'
+  - 'node_modules/**'
+  - '.husky/_/**'
+  - 'pnpm-lock.yaml'
+  - 'src/assets/fonts/**'
+  - 'public/logo/**'
+
+code_review:
+  disable: false
+  comment_severity_threshold: MEDIUM
+  max_review_comments: 10
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+    include_drafts: false
