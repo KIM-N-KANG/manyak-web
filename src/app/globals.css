@@ -47,13 +47,13 @@
   --color-background: var(--background);
 
   /* 모서리 반경 */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: calc(var(--radius) * 1.2); /* 12 */
+  --radius-md: calc(var(--radius) * 1.4); /* 14 */
+  --radius-lg: calc(var(--radius) * 1.6); /* 16 */
+  --radius-xl: calc(var(--radius) * 2); /* 20 */
+  --radius-2xl: calc(var(--radius) * 2.4); /* 24 */
+  --radius-3xl: calc(var(--radius) * 2.8); /* 28 */
+  --radius-4xl: calc(var(--radius) * 3.4); /* 34 */
 }
 
 /* 라이트 테마 변수 */
