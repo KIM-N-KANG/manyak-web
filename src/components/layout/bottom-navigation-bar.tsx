@@ -36,7 +36,7 @@ export function BottomNavigationBar() {
       className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background">
       <ul className="grid h-full grid-cols-2">
         {BOTTOM_NAVIGATION_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname.startsWith(item.href);
 
           return (
             <li key={item.href} className="min-w-0 px-4">

@@ -34,10 +34,14 @@ const fetchWithTimeout = async (
   timeout: number,
 ): Promise<Response> => {
   const controller = new AbortController();
+  const externalSignal = options.signal;
+  const abortRequest = () => controller.abort(externalSignal?.reason);
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  if (options.signal) {
-    options.signal.addEventListener('abort', () => controller.abort(), {
+  if (externalSignal?.aborted) {
+    abortRequest();
+  } else {
+    externalSignal?.addEventListener('abort', abortRequest, {
       once: true,
     });
   }
@@ -49,6 +53,7 @@ const fetchWithTimeout = async (
     });
   } finally {
     clearTimeout(timeoutId);
+    externalSignal?.removeEventListener('abort', abortRequest);
   }
 };
 
