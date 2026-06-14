@@ -42,6 +42,7 @@ export function BottomNavigationBar() {
             <li key={item.href} className="min-w-0 px-4">
               <Link
                 href={item.href}
+                replace
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'flex h-full flex-col items-center justify-center gap-1 text-xs leading-none',

@@ -18,6 +18,7 @@ test('bottom navigation has requested items, routes, icons, and styles', () => {
   assert.doesNotMatch(source, /Line/);
   assert.match(source, /APP_PATH\.MAIN\.STORIES/);
   assert.match(source, /APP_PATH\.MAIN\.CHATS/);
+  assert.match(source, /replace/);
   assert.match(source, /label: '스토리'/);
   assert.match(source, /label: '채팅'/);
   assert.match(source, /h-16/);
