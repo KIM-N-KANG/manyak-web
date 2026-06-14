@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={pretendard.variable} suppressHydrationWarning>
-      <body className="bg-muted font-sans text-foreground antialiased">
+      <body className="bg-border font-sans text-foreground antialiased">
         <QueryProvider>
           <MotionProvider>
             <ThemeProvider>
