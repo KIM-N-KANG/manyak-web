@@ -16,12 +16,12 @@ interface BottomNavigationItem {
 
 const BOTTOM_NAVIGATION_ITEMS: BottomNavigationItem[] = [
   {
-    href: APP_PATH.MAIN.STORY,
+    href: APP_PATH.MAIN.STORIES,
     label: '스토리',
     icon: ClipboardIcon,
   },
   {
-    href: APP_PATH.MAIN.CHAT_LIST,
+    href: APP_PATH.MAIN.CHATS,
     label: '채팅',
     icon: ChatFeedback01Icon,
   },

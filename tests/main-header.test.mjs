@@ -16,8 +16,8 @@ test('main header exposes route-aware page title with requested styles', () => {
   assert.match(source, /usePathname/);
   assert.match(source, /useEffect/);
   assert.match(source, /useState/);
-  assert.match(source, /APP_PATH\.MAIN\.STORY/);
-  assert.match(source, /APP_PATH\.MAIN\.CHAT_LIST/);
+  assert.match(source, /APP_PATH\.MAIN\.STORIES/);
+  assert.match(source, /APP_PATH\.MAIN\.CHATS/);
   assert.match(source, /'스토리'/);
   assert.match(source, /'채팅'/);
   assert.match(source, /scrollY\s*>\s*0/);

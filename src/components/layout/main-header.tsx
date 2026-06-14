@@ -8,8 +8,8 @@ import { APP_PATH, type MainAppPath } from '@/constants/app-path';
 import { cn } from '@/lib/utils';
 
 const MAIN_HEADER_TITLE_BY_PATH: Record<MainAppPath, string> = {
-  [APP_PATH.MAIN.STORY]: '스토리',
-  [APP_PATH.MAIN.CHAT_LIST]: '채팅',
+  [APP_PATH.MAIN.STORIES]: '스토리',
+  [APP_PATH.MAIN.CHATS]: '채팅',
 };
 
 export function MainHeader() {
