@@ -5,22 +5,23 @@ import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { APP_PATH, type MainAppPath } from '@/constants/app-path';
 import { cn } from '@/lib/utils';
 
 interface BottomNavigationItem {
-  href: '/my-story' | '/my-chat';
+  href: MainAppPath;
   label: string;
   icon: IconSvgElement;
 }
 
 const BOTTOM_NAVIGATION_ITEMS: BottomNavigationItem[] = [
   {
-    href: '/my-story',
+    href: APP_PATH.MAIN.STORY,
     label: '스토리',
     icon: ClipboardIcon,
   },
   {
-    href: '/my-chat',
+    href: APP_PATH.MAIN.CHAT_LIST,
     label: '채팅',
     icon: ChatFeedback01Icon,
   },
@@ -38,7 +39,7 @@ export function BottomNavigationBar() {
           const isActive = pathname === item.href;
 
           return (
-            <li key={item.href} className="min-w-0">
+            <li key={item.href} className="min-w-0 px-4">
               <Link
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
