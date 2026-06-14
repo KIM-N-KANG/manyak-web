@@ -21,7 +21,8 @@ export default function ChatsPage() {
         <Button
           nativeButton={false}
           render={<Link href={APP_PATH.CREATOR.STORY} />}
-          size="lg">
+          size="lg"
+          aria-label="스토리 만들기 버튼">
           <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
           <span>스토리 만들기</span>
         </Button>
