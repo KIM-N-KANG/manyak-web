@@ -102,6 +102,16 @@ const request = async <T>(
     return undefined as T;
   }
 
+  const contentType = response.headers.get('Content-Type') ?? '';
+
+  if (contentType.includes('text/event-stream')) {
+    if (response.body) {
+      return response.body as T;
+    }
+
+    return (await response.text()) as T;
+  }
+
   const text = await response.text();
 
   if (!text) {

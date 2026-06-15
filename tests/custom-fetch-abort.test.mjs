@@ -80,3 +80,31 @@ test('custom fetch removes abort listeners after requests settle', async () => {
   assert.equal(removeCalls[0].type, 'abort');
   assert.equal(removeCalls[0].listener, addCalls[0].listener);
 });
+
+test('custom fetch returns event-stream response bodies without JSON parsing', async () => {
+  const { customFetch } = await loadCustomFetch();
+  const originalFetch = globalThis.fetch;
+  const stream = new ReadableStream();
+
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers({
+      'Content-Type': 'text/event-stream',
+    }),
+    body: stream,
+    text() {
+      throw new Error('event streams should not be read as text');
+    },
+  });
+
+  try {
+    const result = await customFetch.post('/chats/1/turns/stream', {
+      message: '계속',
+    });
+
+    assert.equal(result, stream);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
