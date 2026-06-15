@@ -44,16 +44,18 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-tertiary: var(--foreground-tertiary);
   --color-background: var(--background);
 
   /* 모서리 반경 */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: calc(var(--radius) * 1.2); /* 12 */
+  --radius-md: calc(var(--radius) * 1.4); /* 14 */
+  --radius-lg: calc(var(--radius) * 1.6); /* 16 */
+  --radius-xl: calc(var(--radius) * 2); /* 20 */
+  --radius-2xl: calc(var(--radius) * 2.4); /* 24 */
+  --radius-3xl: calc(var(--radius) * 2.8); /* 28 */
+  --radius-4xl: calc(var(--radius) * 3.4); /* 34 */
 }
 
 /* 라이트 테마 변수 */
@@ -61,6 +63,8 @@
   /* 기본 화면 색상 */
   --background: oklch(0.985 0 0);
   --foreground: oklch(0.205 0 0);
+  --foreground-secondary: oklch(0.6431 0.0015 106.44);
+  --foreground-tertiary: oklch(0.7981 0.0014 106.43);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.205 0 0);
   --popover: oklch(1 0 0);
@@ -106,6 +110,8 @@
   /* 기본 화면 색상 */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+  --foreground-secondary: oklch(0.8282 0.0069 106.55);
+  --foreground-tertiary: oklch(0.6844 0.0086 106.63);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
