@@ -2,7 +2,7 @@ import type {
   SimpleStoryCustomTagRequestCategory,
   SimpleStoryTagListItemResponse,
   SimpleStoryTagListItemResponseCategory,
-} from '@/api/generated/api/model';
+} from '@/services/generated/api/model';
 
 export type TagCategory = SimpleStoryTagListItemResponseCategory;
 

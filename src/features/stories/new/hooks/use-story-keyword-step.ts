@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 
-import type { SimpleStoryTagListItemResponse } from '@/api/generated/api/model';
+import type { SimpleStoryTagListItemResponse } from '@/services/generated/api/model';
 import {
   useGenerateSimpleStorylines,
   useGetSimpleStoryTags,
-} from '@/api/generated/api/simple-story-creation/simple-story-creation';
+} from '@/services/generated/api/simple-story-creation/simple-story-creation';
 
 import { TAG_CATEGORIES } from '../constants';
 import type {

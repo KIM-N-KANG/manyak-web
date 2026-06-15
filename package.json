@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "api:generate": "orval --config ./orval.config.ts && eslint --fix src/api/generated",
+    "api:generate": "orval --config ./orval.config.ts && eslint --fix src/services/generated",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
