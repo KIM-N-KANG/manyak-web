@@ -1,7 +1,7 @@
 export function StoryCreateTitle() {
   return (
     <div className="flex flex-col items-start gap-1 p-4">
-      <div className="text-2xl font-bold">
+      <div className="text-xl font-semibold">
         <p>만들고 싶은 스토리의</p>
         <p>키워드를 골라주세요 </p>
       </div>

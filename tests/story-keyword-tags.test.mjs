@@ -10,36 +10,48 @@ const keywordSectionSource = () =>
 const addKeywordDialogSource = () =>
   read('src/features/stories/new/components/add-keyword-dialog.tsx');
 
-test('story keyword step fetches simple story tags and renders selectable toggle chips by category', () => {
-  const source = keywordSectionSource();
+const storyKeywordHookSource = () =>
+  read('src/features/stories/new/hooks/use-story-keyword-step.ts');
 
-  assert.match(source, /^'use client';/);
-  assert.match(source, /useGetSimpleStoryTags/);
-  assert.match(source, /useGenerateSimpleStorylines/);
+const addKeywordDialogHookSource = () =>
+  read('src/features/stories/new/hooks/use-add-keyword-dialog.ts');
+
+const constantsSource = () => read('src/features/stories/new/constants.ts');
+
+test('story keyword step fetches simple story tags and renders selectable toggle chips by category', () => {
+  const sectionSource = keywordSectionSource();
+  const hookSource = storyKeywordHookSource();
+  const constantSource = constantsSource();
+
+  assert.match(sectionSource, /^'use client';/);
+  assert.match(sectionSource, /useStoryKeywordStep/);
+  assert.match(hookSource, /useGetSimpleStoryTags/);
+  assert.match(hookSource, /useGenerateSimpleStorylines/);
   assert.match(
-    source,
+    sectionSource,
     /import \{ ToggleChip \} from '@\/components\/ui\/toggle-chip';/,
   );
-  assert.match(source, /tag\.category === category/);
-  assert.match(source, /GENRE/);
-  assert.match(source, /PROTAGONIST/);
-  assert.match(source, /SUPPORTING_CHARACTER/);
-  assert.match(source, /<ToggleChip/);
-  assert.match(source, /pressed=\{isSelected/);
-  assert.match(source, /onPressedChange=\{\(pressed\) =>/);
+  assert.match(hookSource, /tag\.category === category/);
+  assert.match(constantSource, /GENRE/);
+  assert.match(constantSource, /PROTAGONIST/);
+  assert.match(constantSource, /SUPPORTING_CHARACTER/);
+  assert.match(sectionSource, /<ToggleChip/);
+  assert.match(sectionSource, /pressed=\{isSelected/);
+  assert.match(sectionSource, /onPressedChange=\{\(pressed\) =>/);
 });
 
 test('story keyword step uses skeleton chips while keywords are loading', () => {
-  const source = keywordSectionSource();
-  const widthClassMatch = source.match(
-    /const SKELETON_TAG_CHIP_WIDTH_CLASSES = \[([\s\S]*?)\] as const;/,
+  const sectionSource = keywordSectionSource();
+  const constantSource = constantsSource();
+  const widthClassMatch = constantSource.match(
+    /export const SKELETON_TAG_CHIP_WIDTH_CLASSES = \[([\s\S]*?)\] as const;/,
   );
 
   assert.match(
-    source,
+    sectionSource,
     /import \{ Skeleton \} from '@\/components\/ui\/skeleton';/,
   );
-  assert.match(source, /simpleStoryTags\.isLoading/);
+  assert.match(sectionSource, /simpleStoryTags\.isLoading/);
   assert.ok(widthClassMatch);
 
   const widthClasses = [...widthClassMatch[1].matchAll(/'([^']+)'/g)].map(
@@ -48,28 +60,29 @@ test('story keyword step uses skeleton chips while keywords are loading', () => 
 
   assert.equal(widthClasses.length, 8);
   assert.equal(new Set(widthClasses).size, widthClasses.length);
-  assert.match(source, /SKELETON_TAG_CHIP_WIDTH_CLASSES\.map/);
-  assert.match(source, /<Skeleton/);
-  assert.match(source, /className=\{`h-10 \$\{widthClass\}`\}/);
-  assert.match(source, /aria-hidden="true"/);
-  assert.doesNotMatch(source, /className="h-10 w-20"/);
-  assert.doesNotMatch(source, /키워드를 불러오고 있어요/);
+  assert.match(sectionSource, /SKELETON_TAG_CHIP_WIDTH_CLASSES\.map/);
+  assert.match(sectionSource, /<Skeleton/);
+  assert.match(sectionSource, /className=\{`h-10 \$\{widthClass\}`\}/);
+  assert.match(sectionSource, /aria-hidden="true"/);
+  assert.doesNotMatch(sectionSource, /className="h-10 w-20"/);
+  assert.doesNotMatch(sectionSource, /키워드를 불러오고 있어요/);
 });
 
 test('story keyword step enables storyline generation only after required categories are selected', () => {
-  const source = keywordSectionSource();
+  const sectionSource = keywordSectionSource();
+  const hookSource = storyKeywordHookSource();
 
-  assert.match(source, /selectedTagIdsByCategory\.GENRE\.length > 0/);
-  assert.match(source, /selectedTagIdsByCategory\.PROTAGONIST\.length > 0/);
-  assert.match(source, /const canGenerateStoryline =/);
+  assert.match(hookSource, /selectedTagIdsByCategory\.GENRE\.length > 0/);
+  assert.match(hookSource, /selectedTagIdsByCategory\.PROTAGONIST\.length > 0/);
+  assert.match(hookSource, /const canGenerateStoryline =/);
   assert.match(
-    source,
+    sectionSource,
     /disabled=\{!canGenerateStoryline \|\| generateStorylines\.isPending\}/,
   );
 });
 
 test('story keyword step sends selected predefined and custom tags to the storyline API and logs the response', () => {
-  const source = keywordSectionSource();
+  const source = storyKeywordHookSource();
 
   assert.match(source, /generateStorylines\.mutate\(\{/);
   assert.match(source, /selectedTagIds:/);
@@ -80,28 +93,45 @@ test('story keyword step sends selected predefined and custom tags to the storyl
 });
 
 test('story keyword step lets users add a custom keyword to the active category and auto-selects it', () => {
-  const source = keywordSectionSource();
+  const sectionSource = keywordSectionSource();
+  const hookSource = storyKeywordHookSource();
 
-  assert.match(source, /<AddKeywordDialog/);
-  assert.match(source, /category=\{category\}/);
-  assert.match(source, /onAddKeyword=\{\(keyword\) =>/);
-  assert.match(source, /setCustomKeywordsByCategory/);
-  assert.match(source, /crypto\.randomUUID\(\)/);
-  assert.match(source, /selectedCustomKeywordIdsByCategory/);
+  assert.match(sectionSource, /<AddKeywordDialog/);
+  assert.match(sectionSource, /category=\{category\}/);
+  assert.match(sectionSource, /placeholder=\{placeholder\}/);
+  assert.match(sectionSource, /onAddKeyword=\{\(keyword\) =>/);
+  assert.match(hookSource, /setCustomKeywordsByCategory/);
+  assert.match(hookSource, /crypto\.randomUUID\(\)/);
+  assert.match(hookSource, /selectedCustomKeywordIdsByCategory/);
 });
 
 test('add keyword dialog limits input to ten characters and submits the trimmed keyword', () => {
-  const source = addKeywordDialogSource();
+  const dialogSource = addKeywordDialogSource();
+  const hookSource = addKeywordDialogHookSource();
+  const constantSource = constantsSource();
 
-  assert.match(source, /^'use client';/);
-  assert.match(source, /open=\{open\}/);
-  assert.match(source, /onOpenChange=\{setOpen\}/);
-  assert.match(source, /onSubmit=\{handleSubmit\}/);
-  assert.match(source, /maxLength=\{10\}/);
-  assert.match(source, /value=\{keyword\}/);
-  assert.match(source, /setKeyword\(event\.target\.value\.slice\(0, 10\)\)/);
-  assert.match(source, /const trimmedKeyword = keyword\.trim\(\)/);
-  assert.match(source, /onAddKeyword\(trimmedKeyword\)/);
-  assert.match(source, /disabled=\{keyword\.trim\(\)\.length === 0\}/);
-  assert.match(source, /직접 추가/);
+  assert.match(dialogSource, /^'use client';/);
+  assert.match(dialogSource, /open=\{open\}/);
+  assert.match(dialogSource, /onOpenChange=\{setOpen\}/);
+  assert.match(dialogSource, /onSubmit=\{handleSubmit\}/);
+  assert.match(dialogSource, /placeholder=\{placeholder\}/);
+  assert.match(dialogSource, /maxLength=\{ADD_KEYWORD_MAX_LENGTH\}/);
+  assert.match(dialogSource, /value=\{keyword\}/);
+  assert.match(hookSource, /setKeyword\(event\.target\.value\.slice/);
+  assert.match(hookSource, /ADD_KEYWORD_MAX_LENGTH/);
+  assert.match(hookSource, /const trimmedKeyword = keyword\.trim\(\)/);
+  assert.match(hookSource, /onAddKeyword\(trimmedKeyword\)/);
+  assert.match(hookSource, /isSubmitDisabled: keyword\.trim\(\)\.length === 0/);
+  assert.match(dialogSource, /disabled=\{isSubmitDisabled\}/);
+  assert.match(constantSource, /export const ADD_KEYWORD_MAX_LENGTH = 10;/);
+  assert.match(constantSource, /placeholder: '예: 타임루프, 영지물, 먼치킨'/);
+  assert.match(
+    constantSource,
+    /placeholder: '예: 사랑에 서툰, 타인을 믿지 못하는'/,
+  );
+  assert.match(
+    constantSource,
+    /placeholder: '예: 상냥해서 더 위험한, 어딘가 망가진'/,
+  );
+  assert.match(dialogSource, /키워드 추가/);
 });

@@ -1,7 +1,5 @@
 'use client';
 
-import { type SubmitEvent, useState } from 'react';
-
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -20,9 +18,13 @@ import { Field, FieldDescription, FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+import { ADD_KEYWORD_MAX_LENGTH } from '../constants';
+import { useAddKeywordDialog } from '../hooks/use-add-keyword-dialog';
+
 type AddKeywordDialogProps = {
   category: SimpleStoryCustomTagRequestCategory;
   categoryLabel: string;
+  placeholder: string;
   disabled?: boolean;
   onAddKeyword: (keyword: string) => void;
 };
@@ -30,25 +32,18 @@ type AddKeywordDialogProps = {
 export function AddKeywordDialog({
   category,
   categoryLabel,
+  placeholder,
   disabled,
   onAddKeyword,
 }: AddKeywordDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [keyword, setKeyword] = useState('');
-
-  const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const trimmedKeyword = keyword.trim();
-
-    if (!trimmedKeyword) {
-      return;
-    }
-
-    onAddKeyword(trimmedKeyword);
-    setKeyword('');
-    setOpen(false);
-  };
+  const {
+    open,
+    setOpen,
+    keyword,
+    handleKeywordChange,
+    handleSubmit,
+    isSubmitDisabled,
+  } = useAddKeywordDialog({ onAddKeyword });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -60,13 +55,13 @@ export function AddKeywordDialog({
             className="text-foreground-secondary"
             disabled={disabled}>
             <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-            직접 추가
+            키워드 추가
           </Button>
         }
       />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent showCloseButton={false} className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{categoryLabel} 키워드 직접 추가</DialogTitle>
+          <DialogTitle>{categoryLabel} 키워드 추가</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="contents">
           <FieldGroup>
@@ -75,14 +70,12 @@ export function AddKeywordDialog({
               <Input
                 id={`${category}-keyword`}
                 name="keyword"
-                placeholder="추가할 키워드를 입력해주세요"
-                maxLength={10}
+                placeholder={placeholder}
+                maxLength={ADD_KEYWORD_MAX_LENGTH}
                 value={keyword}
-                onChange={(event) =>
-                  setKeyword(event.target.value.slice(0, 10))
-                }
+                onChange={handleKeywordChange}
               />
-              <FieldDescription>10자 이내로 입력하세요</FieldDescription>
+              <FieldDescription>10자 이내로 입력해주세요</FieldDescription>
             </Field>
           </FieldGroup>
           <DialogFooter>
@@ -93,7 +86,7 @@ export function AddKeywordDialog({
                 </Button>
               }
             />
-            <Button type="submit" disabled={keyword.trim().length === 0}>
+            <Button type="submit" disabled={isSubmitDisabled}>
               추가하기
             </Button>
           </DialogFooter>
