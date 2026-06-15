@@ -39,7 +39,8 @@ test('story keyword step uses toggle chip instead of chips', () => {
     source,
     /import \{ ToggleChip \} from '@\/components\/ui\/toggle-chip';/,
   );
-  assert.match(source, /<ToggleChip>로맨스<\/ToggleChip>/);
+  assert.match(source, /<ToggleChip/);
+  assert.match(source, /pressed=\{isSelected/);
   assert.doesNotMatch(source, /<ToggleChip[^>]*variant=/);
   assert.doesNotMatch(source, /@\/components\/ui\/chips/);
   assert.doesNotMatch(source, /<Chips/);
