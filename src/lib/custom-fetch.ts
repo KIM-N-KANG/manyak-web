@@ -1,6 +1,5 @@
 const API_TIMEOUT_MS = 15000;
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_PROXY_BASE_PATH = '/api';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -20,12 +19,23 @@ export class FetchError extends Error {
   }
 }
 
-const resolveUrl = (url: string) => {
-  if (/^https?:\/\//.test(url) || !BASE_URL) {
-    return url;
+export const resolveApiProxyUrl = (url: string) => {
+  const resolvedUrl = /^https?:\/\//.test(url)
+    ? new URL(url).pathname + new URL(url).search
+    : url;
+  const normalizedUrl = resolvedUrl.startsWith('/')
+    ? resolvedUrl
+    : `/${resolvedUrl}`;
+
+  if (
+    normalizedUrl === API_PROXY_BASE_PATH ||
+    normalizedUrl.startsWith(`${API_PROXY_BASE_PATH}/`) ||
+    normalizedUrl.startsWith(`${API_PROXY_BASE_PATH}?`)
+  ) {
+    return normalizedUrl;
   }
 
-  return new URL(url, BASE_URL).href;
+  return `${API_PROXY_BASE_PATH}${normalizedUrl}`;
 };
 
 const fetchWithTimeout = async (
@@ -80,7 +90,11 @@ const request = async <T>(
     options.body = JSON.stringify(data);
   }
 
-  const response = await fetchWithTimeout(resolveUrl(url), options, timeout);
+  const response = await fetchWithTimeout(
+    resolveApiProxyUrl(url),
+    options,
+    timeout,
+  );
 
   if (!response.ok) {
     let errorData: unknown = null;
@@ -100,6 +114,16 @@ const request = async <T>(
 
   if (response.status === 204) {
     return undefined as T;
+  }
+
+  const contentType = response.headers.get('Content-Type') ?? '';
+
+  if (contentType.includes('text/event-stream')) {
+    if (response.body) {
+      return response.body as T;
+    }
+
+    return (await response.text()) as T;
   }
 
   const text = await response.text();

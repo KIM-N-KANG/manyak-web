@@ -80,3 +80,57 @@ test('custom fetch removes abort listeners after requests settle', async () => {
   assert.equal(removeCalls[0].type, 'abort');
   assert.equal(removeCalls[0].listener, addCalls[0].listener);
 });
+
+test('custom fetch routes internal API paths through the Next.js API proxy', async () => {
+  const { customFetch } = await loadCustomFetch();
+  const originalFetch = globalThis.fetch;
+  const requestedUrls = [];
+
+  globalThis.fetch = async (url) => {
+    requestedUrls.push(url);
+
+    return successfulResponse;
+  };
+
+  try {
+    await customFetch.get('/stories?cursor=10');
+    await customFetch.get('stories/1');
+    await customFetch.get('/api/v1/stories/1');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.deepEqual(requestedUrls, [
+    '/api/stories?cursor=10',
+    '/api/stories/1',
+    '/api/v1/stories/1',
+  ]);
+});
+
+test('custom fetch returns event-stream response bodies without JSON parsing', async () => {
+  const { customFetch } = await loadCustomFetch();
+  const originalFetch = globalThis.fetch;
+  const stream = new ReadableStream();
+
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers({
+      'Content-Type': 'text/event-stream',
+    }),
+    body: stream,
+    text() {
+      throw new Error('event streams should not be read as text');
+    },
+  });
+
+  try {
+    const result = await customFetch.post('/chats/1/turns/stream', {
+      message: '계속',
+    });
+
+    assert.equal(result, stream);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
