@@ -21,6 +21,8 @@ import type {
 } from '@tanstack/react-query';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
+import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
+import { customInstance } from '../../../mutator/custom-instance';
 import type {
   BatchChatRequest,
   ChatDetailResponse,
@@ -28,12 +30,7 @@ import type {
   ContinueChatRequest,
   CreateChatRequest,
   CreateChatResponse,
-} from '../../../../api/generated/models';
-import type {
-  BodyType,
-  ErrorType,
-} from '../../../../api/mutator/custom-instance';
-import { customInstance } from '../../../../api/mutator/custom-instance';
+} from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
