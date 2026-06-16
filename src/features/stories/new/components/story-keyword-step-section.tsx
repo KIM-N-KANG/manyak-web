@@ -77,28 +77,26 @@ export function StoryKeywordStepSection() {
                         </p>
                       )}
                       {tagsByCategory[category].map((tag) => {
-                        if (tag.tagId == null || !tag.name) {
+                        const { tagId, name } = tag;
+
+                        if (tagId == null || !name) {
                           return null;
                         }
 
-                        const isSelected = selectedTagIds.includes(tag.tagId);
+                        const isSelected = selectedTagIds.includes(tagId);
                         const isKeywordChipDisabled =
                           generateStorylines.isPending ||
                           (!isSelected && isMaxSelectionReached);
 
                         return (
                           <ToggleChip
-                            key={tag.tagId}
+                            key={tagId}
                             pressed={isSelected}
                             disabled={isKeywordChipDisabled}
                             onPressedChange={(pressed) =>
-                              togglePredefinedTag(
-                                category,
-                                tag.tagId as number,
-                                pressed,
-                              )
+                              togglePredefinedTag(category, tagId, pressed)
                             }>
-                            {tag.name}
+                            {name}
                           </ToggleChip>
                         );
                       })}

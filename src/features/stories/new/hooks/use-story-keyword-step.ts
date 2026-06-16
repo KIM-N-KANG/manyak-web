@@ -70,13 +70,7 @@ export function useStoryKeywordStep() {
   );
 
   const simpleStoryTags = useGetSimpleStoryTags();
-  const generateStorylines = useGenerateSimpleStorylines({
-    mutation: {
-      onSuccess: (response) => {
-        console.log('스토리라인 생성 응답', response);
-      },
-    },
-  });
+  const generateStorylines = useGenerateSimpleStorylines();
 
   const tagsByCategory = getTagsByCategory(simpleStoryTags.data?.data ?? []);
 

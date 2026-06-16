@@ -113,15 +113,18 @@ test('story keyword step disables every keyword toggle chip while storylines are
   assert.equal(disabledChipMatches.length, 2);
 });
 
-test('story keyword step sends selected predefined and custom tags to the storyline API and logs the response', () => {
+test('story keyword step sends selected predefined and custom tags to the storyline API without logging the response', () => {
   const source = storyKeywordHookSource();
 
   assert.match(source, /generateStorylines\.mutate\(\{/);
   assert.match(source, /selectedTagIds:/);
   assert.match(source, /customTags:/);
   assert.match(source, /category: keyword\.category/);
-  assert.match(source, /onSuccess: \(response\) => \{/);
-  assert.match(source, /console\.log\('스토리라인 생성 응답', response\);/);
+  assert.doesNotMatch(source, /onSuccess: \(response\) => \{/);
+  assert.doesNotMatch(
+    source,
+    /console\.log\('스토리라인 생성 응답', response\);/,
+  );
 });
 
 test('story keyword step lets users add a custom keyword to the active category and auto-selects it', () => {
