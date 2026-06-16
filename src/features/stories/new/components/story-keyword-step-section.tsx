@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleChip } from '@/components/ui/toggle-chip';
 
@@ -139,9 +140,20 @@ export function StoryKeywordStepSection() {
           <Button
             type="button"
             size="lg"
+            className="relative"
+            aria-busy={generateStorylines.isPending}
             disabled={!canGenerateStoryline || generateStorylines.isPending}
             onClick={handleGenerateStoryline}>
-            스토리라인 만들기
+            <span
+              aria-hidden={generateStorylines.isPending}
+              className={
+                generateStorylines.isPending ? 'invisible' : undefined
+              }>
+              스토리라인 만들기
+            </span>
+            {generateStorylines.isPending && (
+              <Spinner className="absolute" aria-label="스토리라인 생성 중" />
+            )}
           </Button>
         </div>
       </nav>

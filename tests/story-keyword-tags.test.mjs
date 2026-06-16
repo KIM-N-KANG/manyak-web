@@ -81,6 +81,23 @@ test('story keyword step enables storyline generation only after required catego
   );
 });
 
+test('story keyword step swaps the generate button label for a spinner while storylines are loading', () => {
+  const sectionSource = keywordSectionSource();
+
+  assert.match(
+    sectionSource,
+    /import \{ Spinner \} from '@\/components\/ui\/spinner';/,
+  );
+  assert.match(sectionSource, /className="relative"/);
+  assert.match(
+    sectionSource,
+    /className=\{\s*generateStorylines\.isPending \? 'invisible' : undefined\s*\}/,
+  );
+  assert.match(sectionSource, /generateStorylines\.isPending && \(/);
+  assert.match(sectionSource, /<Spinner/);
+  assert.match(sectionSource, /aria-label="스토리라인 생성 중"/);
+});
+
 test('story keyword step sends selected predefined and custom tags to the storyline API and logs the response', () => {
   const source = storyKeywordHookSource();
 

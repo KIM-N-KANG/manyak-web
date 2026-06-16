@@ -73,10 +73,10 @@ test('toggle chip variants do not apply shadow utilities', () => {
   assert.doesNotMatch(source, /(?:^|[\s'"])shadow(?:-[^\s'"]+)?(?:[\s'"]|$)/);
 });
 
-test('toggle chip uses secondary text when inactive and primary styles when active', () => {
+test('toggle chip uses foreground text when inactive and primary styles when active', () => {
   const source = read('src/components/ui/toggle-chip.tsx');
 
-  assert.match(source, /text-foreground-secondary/);
+  assert.match(source, /text-foreground/);
   assert.match(source, /aria-pressed:bg-primary\/8/);
   assert.match(source, /aria-pressed:border-primary/);
   assert.match(source, /aria-pressed:text-primary/);
