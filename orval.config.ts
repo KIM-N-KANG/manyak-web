@@ -3,19 +3,19 @@ import { defineConfig } from 'orval';
 const OPENAPI_URL = 'http://localhost:8080/v3/api-docs';
 
 export default defineConfig({
-  manyakApi: {
+  api: {
     input: {
       target: OPENAPI_URL,
     },
     output: {
       mode: 'tags-split',
-      target: 'src/services/generated/api/index.ts',
-      schemas: 'src/services/generated/api/model',
+      target: 'src/api/generated/endpoints',
+      schemas: 'src/api/generated/models',
       client: 'react-query',
       clean: true,
       override: {
         mutator: {
-          path: 'src/services/mutator/custom-instance.ts',
+          path: 'src/api/mutator/custom-instance.ts',
           name: 'customInstance',
         },
       },
@@ -24,13 +24,13 @@ export default defineConfig({
       afterAllFilesWrite: 'prettier --write',
     },
   },
-  manyakApiZod: {
+  zod: {
     input: {
       target: OPENAPI_URL,
     },
     output: {
       mode: 'single',
-      target: 'src/services/generated/zod/index.ts',
+      target: 'src/api/generated/zod/index.ts',
       client: 'zod',
       clean: true,
     },

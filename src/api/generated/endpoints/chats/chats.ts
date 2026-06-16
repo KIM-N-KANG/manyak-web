@@ -30,7 +30,7 @@ import type {
   ContinueChatRequest,
   CreateChatRequest,
   CreateChatResponse,
-} from '../model';
+} from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
