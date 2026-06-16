@@ -27,7 +27,7 @@ import type {
   BatchStoryRequest,
   StoryDetailResponse,
   StorySummaryResponse,
-} from '../model';
+} from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 

@@ -26,7 +26,7 @@ test('package exposes API generation dependencies and script', () => {
 
   assert.equal(
     packageJson.scripts['api:generate'],
-    'orval --config ./orval.config.ts && eslint --fix src/services/generated',
+    'orval --config ./orval.config.ts && eslint --fix src/api/generated',
   );
   assert.ok(packageJson.dependencies.zod);
   assert.ok(packageJson.devDependencies.orval);
@@ -37,21 +37,21 @@ test('orval config reads backend OpenAPI and generates API plus Zod outputs', ()
 
   assert.match(source, /defineConfig/);
   assert.match(source, /http:\/\/localhost:8080\/v3\/api-docs/);
-  assert.match(source, /manyakApi/);
+  assert.match(source, /api:/);
   assert.match(source, /client:\s*'react-query'/);
   assert.match(source, /mode:\s*'tags-split'/);
-  assert.match(source, /target:\s*'src\/services\/generated\/api\/index\.ts'/);
-  assert.match(source, /schemas:\s*'src\/services\/generated\/api\/model'/);
-  assert.match(source, /path:\s*'src\/services\/mutator\/custom-instance\.ts'/);
+  assert.match(source, /target:\s*'src\/api\/generated\/endpoints'/);
+  assert.match(source, /schemas:\s*'src\/api\/generated\/models'/);
+  assert.match(source, /path:\s*'src\/api\/mutator\/custom-instance\.ts'/);
   assert.match(source, /name:\s*'customInstance'/);
-  assert.match(source, /manyakApiZod/);
+  assert.match(source, /zod:/);
   assert.match(source, /client:\s*'zod'/);
-  assert.match(source, /target:\s*'src\/services\/generated\/zod\/index\.ts'/);
+  assert.match(source, /target:\s*'src\/api\/generated\/zod\/index\.ts'/);
   assert.match(source, /afterAllFilesWrite:\s*'prettier --write'/);
 });
 
 test('custom mutator preserves request behavior expected by generated clients', () => {
-  const source = read('src/services/mutator/custom-instance.ts');
+  const source = read('src/api/mutator/custom-instance.ts');
 
   assert.match(source, /export const customInstance/);
   assert.match(source, /BodyType/);
@@ -70,7 +70,7 @@ test('custom mutator preserves request behavior expected by generated clients', 
 });
 
 test('generated clients call the custom mutator with URL and request init', () => {
-  const apiFiles = listFiles('src/services/generated/api').filter((path) =>
+  const apiFiles = listFiles('src/api/generated/endpoints').filter((path) =>
     path.endsWith('.ts'),
   );
   const apiSource = apiFiles.map(read).join('\n');
@@ -86,10 +86,10 @@ test('generated clients call the custom mutator with URL and request init', () =
 });
 
 test('generated API and Zod outputs contain current OpenAPI operations', () => {
-  const apiFiles = listFiles('src/services/generated/api').filter((path) =>
+  const apiFiles = listFiles('src/api/generated/endpoints').filter((path) =>
     path.endsWith('.ts'),
   );
-  const zodFiles = listFiles('src/services/generated/zod').filter((path) =>
+  const zodFiles = listFiles('src/api/generated/zod').filter((path) =>
     path.endsWith('.ts'),
   );
   const apiSource = apiFiles.map(read).join('\n');

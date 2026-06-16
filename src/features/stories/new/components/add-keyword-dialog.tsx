@@ -3,6 +3,7 @@
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import type { SimpleStoryCustomTagRequestCategory } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,7 +17,6 @@ import {
 import { Field, FieldDescription, FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { SimpleStoryCustomTagRequestCategory } from '@/services/generated/api/model';
 
 import { ADD_KEYWORD_MAX_LENGTH } from '../constants';
 import { useAddKeywordDialog } from '../hooks/use-add-keyword-dialog';
