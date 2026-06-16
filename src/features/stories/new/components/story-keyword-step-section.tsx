@@ -82,12 +82,15 @@ export function StoryKeywordStepSection() {
                         }
 
                         const isSelected = selectedTagIds.includes(tag.tagId);
+                        const isKeywordChipDisabled =
+                          generateStorylines.isPending ||
+                          (!isSelected && isMaxSelectionReached);
 
                         return (
                           <ToggleChip
                             key={tag.tagId}
                             pressed={isSelected}
-                            disabled={!isSelected && isMaxSelectionReached}
+                            disabled={isKeywordChipDisabled}
                             onPressedChange={(pressed) =>
                               togglePredefinedTag(
                                 category,
@@ -103,12 +106,15 @@ export function StoryKeywordStepSection() {
                         const isSelected = selectedCustomKeywordIds.includes(
                           keyword.id,
                         );
+                        const isKeywordChipDisabled =
+                          generateStorylines.isPending ||
+                          (!isSelected && isMaxSelectionReached);
 
                         return (
                           <ToggleChip
                             key={keyword.id}
                             pressed={isSelected}
-                            disabled={!isSelected && isMaxSelectionReached}
+                            disabled={isKeywordChipDisabled}
                             onPressedChange={(pressed) =>
                               toggleCustomKeyword(category, keyword.id, pressed)
                             }>

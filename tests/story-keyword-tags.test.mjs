@@ -98,6 +98,21 @@ test('story keyword step swaps the generate button label for a spinner while sto
   assert.match(sectionSource, /aria-label="스토리라인 생성 중"/);
 });
 
+test('story keyword step disables every keyword toggle chip while storylines are pending', () => {
+  const sectionSource = keywordSectionSource();
+
+  assert.match(
+    sectionSource,
+    /const isKeywordChipDisabled =\s*generateStorylines\.isPending \|\|\s*\(!isSelected && isMaxSelectionReached\);/,
+  );
+
+  const disabledChipMatches = [
+    ...sectionSource.matchAll(/disabled=\{isKeywordChipDisabled\}/g),
+  ];
+
+  assert.equal(disabledChipMatches.length, 2);
+});
+
 test('story keyword step sends selected predefined and custom tags to the storyline API and logs the response', () => {
   const source = storyKeywordHookSource();
 
