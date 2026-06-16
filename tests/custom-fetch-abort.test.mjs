@@ -81,6 +81,32 @@ test('custom fetch removes abort listeners after requests settle', async () => {
   assert.equal(removeCalls[0].listener, addCalls[0].listener);
 });
 
+test('custom fetch routes internal API paths through the Next.js API proxy', async () => {
+  const { customFetch } = await loadCustomFetch();
+  const originalFetch = globalThis.fetch;
+  const requestedUrls = [];
+
+  globalThis.fetch = async (url) => {
+    requestedUrls.push(url);
+
+    return successfulResponse;
+  };
+
+  try {
+    await customFetch.get('/stories?cursor=10');
+    await customFetch.get('stories/1');
+    await customFetch.get('/api/v1/stories/1');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.deepEqual(requestedUrls, [
+    '/api/stories?cursor=10',
+    '/api/stories/1',
+    '/api/v1/stories/1',
+  ]);
+});
+
 test('custom fetch returns event-stream response bodies without JSON parsing', async () => {
   const { customFetch } = await loadCustomFetch();
   const originalFetch = globalThis.fetch;

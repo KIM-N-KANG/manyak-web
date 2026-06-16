@@ -59,7 +59,8 @@ test('custom mutator preserves request behavior expected by generated clients', 
   assert.match(source, /FetchError/);
   assert.match(source, /url:\s*string/);
   assert.match(source, /options:\s*RequestInit\s*=\s*\{\}/);
-  assert.match(source, /NEXT_PUBLIC_API_BASE_URL/);
+  assert.doesNotMatch(source, /process\.env/);
+  assert.match(source, /resolveApiProxyUrl/);
   assert.match(source, /text\/event-stream/);
   assert.match(source, /response\.body/);
   assert.match(source, /signal/);

@@ -1,4 +1,4 @@
-import { FetchError } from '@/lib/custom-fetch';
+import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
 
 export type BodyType<BodyData> = BodyData;
 
@@ -7,16 +7,6 @@ export type ErrorType<ErrorData> = FetchError & {
 };
 
 const API_TIMEOUT_MS = 15000;
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const resolveUrl = (url: string) => {
-  if (/^https?:\/\//.test(url) || !BASE_URL) {
-    return url;
-  }
-
-  return new URL(url, BASE_URL).href;
-};
 
 const resolveHeaders = (headers?: HeadersInit) => {
   const resolvedHeaders = new Headers(headers);
@@ -108,7 +98,7 @@ export const customInstance = async <T>(
   options: RequestInit = {},
 ): Promise<T> => {
   const response = await fetchWithTimeout(
-    resolveUrl(url),
+    resolveApiProxyUrl(url),
     {
       ...options,
       headers: resolveHeaders(options.headers),
