@@ -16,7 +16,7 @@ export function StorylineText({ children }: StorylineTextProps) {
   const lines = getStorylineLines(children);
 
   return (
-    <div className="flex flex-col gap-3 font-maruburi text-base leading-loose">
+    <div className="flex flex-col gap-4 font-maruburi text-base leading-loose">
       {lines.map((line, index) => (
         <p key={`${index}-${line}`}>{line}</p>
       ))}

@@ -56,13 +56,14 @@ export function StoryAdditionalInfoStepSection({
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
-      <section className="flex min-h-0 flex-1 flex-col gap-8 overflow-hidden p-4">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <StoryCreateStepTitle
           titleLines={['스토리를 더 풍성하게 만들', '정보를 적어주세요']}
           description="추천 질문에 답하거나, 자유롭게 적어주세요"
+          className="border-b border-border p-4"
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <div className="flex flex-col gap-8">
             <StorylineText>{storyline.story}</StorylineText>
 

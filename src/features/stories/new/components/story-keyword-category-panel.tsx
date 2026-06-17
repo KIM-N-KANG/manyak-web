@@ -53,7 +53,7 @@ export function StoryKeywordCategoryPanel({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="flex flex-col gap-4 px-4 pb-4">
+      <div className="flex flex-col gap-4 p-4">
         <p className="text-sm text-foreground-secondary">
           최대 {maxSelectionCount}개까지 선택할 수 있어요
         </p>

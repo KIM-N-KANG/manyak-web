@@ -38,7 +38,7 @@ export function StorylineSelectStepSection({
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <StoryCreateStepTitle
           titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
-          description="선택한 스토리라인을 바탕으로 스토리를 완성해드릴게요"
+          description="스토리라인을 바탕으로 스토리를 완성해드려요"
           className="p-4"
         />
 
@@ -63,7 +63,7 @@ export function StorylineSelectStepSection({
               value={getStorylineTabValue(index)}
               className="min-h-0">
               <div className="h-full overflow-y-auto">
-                <div className="px-4 pb-4">
+                <div className="p-4">
                   <StorylineText>{storyline.story}</StorylineText>
                 </div>
               </div>
@@ -104,7 +104,7 @@ export function StorylineSelectStepSection({
           size="lg"
           disabled={!selectedStoryline || isRegeneratingStorylines}
           onClick={onSelectStoryline}>
-          이 스토리라인 선택하기
+          선택하기
         </Button>
       </StoryCreateStepFooter>
     </main>
