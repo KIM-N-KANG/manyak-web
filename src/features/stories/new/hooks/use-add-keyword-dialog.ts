@@ -12,7 +12,7 @@ export function useAddKeywordDialog({ onAddKeyword }: UseAddKeywordDialogArgs) {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
 
-  const handleKeywordChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleKeywordChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setKeyword(event.target.value.slice(0, ADD_KEYWORD_MAX_LENGTH));
   };
 

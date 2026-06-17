@@ -7,6 +7,8 @@
 /* Tailwind 테마 토큰 매핑 */
 @theme inline {
   --font-sans: var(--font-pretendard);
+  --font-serif: var(--font-maruburi-family);
+  --font-maruburi: var(--font-maruburi-family);
 
   /* 사이드바 색상 */
   --color-sidebar-ring: var(--sidebar-ring);

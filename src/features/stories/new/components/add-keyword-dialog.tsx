@@ -14,8 +14,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Field, FieldDescription, FieldGroup } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { Field, FieldGroup } from '@/components/ui/field';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 
 import { ADD_KEYWORD_MAX_LENGTH } from '../constants';
@@ -67,15 +72,23 @@ export function AddKeywordDialog({
           <FieldGroup>
             <Field>
               <Label htmlFor={`${category}-keyword`}>키워드</Label>
-              <Input
-                id={`${category}-keyword`}
-                name="keyword"
-                placeholder={placeholder}
-                maxLength={ADD_KEYWORD_MAX_LENGTH}
-                value={keyword}
-                onChange={handleKeywordChange}
-              />
-              <FieldDescription>10자 이내로 입력해주세요</FieldDescription>
+              <InputGroup>
+                <InputGroupTextarea
+                  id={`${category}-keyword`}
+                  name="keyword"
+                  placeholder={placeholder}
+                  className="min-h-10"
+                  maxLength={ADD_KEYWORD_MAX_LENGTH}
+                  rows={1}
+                  value={keyword}
+                  onChange={handleKeywordChange}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupText>
+                    {keyword.length} / {ADD_KEYWORD_MAX_LENGTH}
+                  </InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
             </Field>
           </FieldGroup>
           <DialogFooter>

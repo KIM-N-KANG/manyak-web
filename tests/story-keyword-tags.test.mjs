@@ -7,51 +7,63 @@ const read = (path) => readFileSync(path, 'utf8');
 const keywordSectionSource = () =>
   read('src/features/stories/new/components/story-keyword-step-section.tsx');
 
+const keywordCategoryPanelSource = () =>
+  read('src/features/stories/new/components/story-keyword-category-panel.tsx');
+
 const addKeywordDialogSource = () =>
   read('src/features/stories/new/components/add-keyword-dialog.tsx');
 
 const storyKeywordHookSource = () =>
   read('src/features/stories/new/hooks/use-story-keyword-step.ts');
 
+const idSource = () =>
+  read('src/features/stories/new/utils/create-client-id.ts');
+
 const addKeywordDialogHookSource = () =>
   read('src/features/stories/new/hooks/use-add-keyword-dialog.ts');
+
+const tagCategoryUtilsSource = () =>
+  read('src/features/stories/new/utils/tag-categories.ts');
 
 const constantsSource = () => read('src/features/stories/new/constants.ts');
 
 test('story keyword step fetches simple story tags and renders selectable toggle chips by category', () => {
   const sectionSource = keywordSectionSource();
+  const panelSource = keywordCategoryPanelSource();
   const hookSource = storyKeywordHookSource();
+  const utilsSource = tagCategoryUtilsSource();
   const constantSource = constantsSource();
 
   assert.match(sectionSource, /^'use client';/);
   assert.match(sectionSource, /useStoryKeywordStep/);
+  assert.match(sectionSource, /StoryKeywordCategoryPanel/);
   assert.match(hookSource, /useGetSimpleStoryTags/);
-  assert.match(hookSource, /useGenerateSimpleStorylines/);
+  assert.doesNotMatch(hookSource, /useGenerateSimpleStorylines/);
   assert.match(
-    sectionSource,
+    panelSource,
     /import \{ ToggleChip \} from '@\/components\/ui\/toggle-chip';/,
   );
-  assert.match(hookSource, /tag\.category === category/);
+  assert.match(utilsSource, /tag\.category === category/);
   assert.match(constantSource, /GENRE/);
   assert.match(constantSource, /PROTAGONIST/);
   assert.match(constantSource, /SUPPORTING_CHARACTER/);
-  assert.match(sectionSource, /<ToggleChip/);
-  assert.match(sectionSource, /pressed=\{isSelected/);
-  assert.match(sectionSource, /onPressedChange=\{\(pressed\) =>/);
+  assert.match(panelSource, /<ToggleChip/);
+  assert.match(panelSource, /pressed=\{isSelected/);
+  assert.match(panelSource, /onPressedChange=\{\(pressed\) =>/);
 });
 
 test('story keyword step uses skeleton chips while keywords are loading', () => {
-  const sectionSource = keywordSectionSource();
+  const panelSource = keywordCategoryPanelSource();
   const constantSource = constantsSource();
   const widthClassMatch = constantSource.match(
     /export const SKELETON_TAG_CHIP_WIDTH_CLASSES = \[([\s\S]*?)\] as const;/,
   );
 
   assert.match(
-    sectionSource,
+    panelSource,
     /import \{ Skeleton \} from '@\/components\/ui\/skeleton';/,
   );
-  assert.match(sectionSource, /simpleStoryTags\.isLoading/);
+  assert.match(panelSource, /isLoadingTags/);
   assert.ok(widthClassMatch);
 
   const widthClasses = [...widthClassMatch[1].matchAll(/'([^']+)'/g)].map(
@@ -60,12 +72,12 @@ test('story keyword step uses skeleton chips while keywords are loading', () => 
 
   assert.equal(widthClasses.length, 8);
   assert.equal(new Set(widthClasses).size, widthClasses.length);
-  assert.match(sectionSource, /SKELETON_TAG_CHIP_WIDTH_CLASSES\.map/);
-  assert.match(sectionSource, /<Skeleton/);
-  assert.match(sectionSource, /className=\{`h-10 \$\{widthClass\}`\}/);
-  assert.match(sectionSource, /aria-hidden="true"/);
-  assert.doesNotMatch(sectionSource, /className="h-10 w-20"/);
-  assert.doesNotMatch(sectionSource, /키워드를 불러오고 있어요/);
+  assert.match(panelSource, /SKELETON_TAG_CHIP_WIDTH_CLASSES\.map/);
+  assert.match(panelSource, /<Skeleton/);
+  assert.match(panelSource, /className=\{`h-10 \$\{widthClass\}`\}/);
+  assert.match(panelSource, /aria-hidden="true"/);
+  assert.doesNotMatch(panelSource, /className="h-10 w-20"/);
+  assert.doesNotMatch(panelSource, /키워드를 불러오고 있어요/);
 });
 
 test('story keyword step enables storyline generation only after required categories are selected', () => {
@@ -77,46 +89,38 @@ test('story keyword step enables storyline generation only after required catego
   assert.match(hookSource, /const canGenerateStoryline =/);
   assert.match(
     sectionSource,
-    /disabled=\{!canGenerateStoryline \|\| generateStorylines\.isPending\}/,
+    /disabled=\{!canGenerateStoryline \|\| isGeneratingStoryline\}/,
   );
 });
 
-test('story keyword step swaps the generate button label for a spinner while storylines are loading', () => {
+test('story keyword step keeps the generate button text while the funnel shows storyline loading state', () => {
   const sectionSource = keywordSectionSource();
 
-  assert.match(
-    sectionSource,
-    /import \{ Spinner \} from '@\/components\/ui\/spinner';/,
-  );
-  assert.match(sectionSource, /className="relative"/);
-  assert.match(
-    sectionSource,
-    /className=\{\s*generateStorylines\.isPending \? 'invisible' : undefined\s*\}/,
-  );
-  assert.match(sectionSource, /generateStorylines\.isPending && \(/);
-  assert.match(sectionSource, /<Spinner/);
-  assert.match(sectionSource, /aria-label="스토리라인 생성 중"/);
+  assert.doesNotMatch(sectionSource, /LoadingButtonContent/);
+  assert.doesNotMatch(sectionSource, /aria-busy=\{isGeneratingStoryline\}/);
+  assert.match(sectionSource, /스토리라인 만들기/);
 });
 
 test('story keyword step disables every keyword toggle chip while storylines are pending', () => {
-  const sectionSource = keywordSectionSource();
+  const panelSource = keywordCategoryPanelSource();
 
   assert.match(
-    sectionSource,
-    /const isKeywordChipDisabled =\s*generateStorylines\.isPending \|\|\s*\(!isSelected && isMaxSelectionReached\);/,
+    panelSource,
+    /const isKeywordChipDisabled =\s*isGeneratingStoryline \|\|\s*\(!isSelected && isMaxSelectionReached\);/,
   );
 
   const disabledChipMatches = [
-    ...sectionSource.matchAll(/disabled=\{isKeywordChipDisabled\}/g),
+    ...panelSource.matchAll(/disabled=\{isKeywordChipDisabled\}/g),
   ];
 
   assert.equal(disabledChipMatches.length, 2);
 });
 
-test('story keyword step sends selected predefined and custom tags to the storyline API without logging the response', () => {
+test('story keyword step sends selected predefined and custom tags to the funnel without logging the response', () => {
   const source = storyKeywordHookSource();
 
-  assert.match(source, /generateStorylines\.mutate\(\{/);
+  assert.match(source, /const request: GenerateSimpleStorylinesRequest/);
+  assert.match(source, /onGenerateStoryline\(request\)/);
   assert.match(source, /selectedTagIds:/);
   assert.match(source, /customTags:/);
   assert.match(source, /category: keyword\.category/);
@@ -129,18 +133,25 @@ test('story keyword step sends selected predefined and custom tags to the storyl
 
 test('story keyword step lets users add a custom keyword to the active category and auto-selects it', () => {
   const sectionSource = keywordSectionSource();
+  const panelSource = keywordCategoryPanelSource();
   const hookSource = storyKeywordHookSource();
+  const idText = idSource();
 
-  assert.match(sectionSource, /<AddKeywordDialog/);
-  assert.match(sectionSource, /category=\{category\}/);
-  assert.match(sectionSource, /placeholder=\{placeholder\}/);
-  assert.match(sectionSource, /onAddKeyword=\{\(keyword\) =>/);
+  assert.match(sectionSource, /<StoryKeywordCategoryPanel/);
+  assert.match(sectionSource, /onAddCustomKeyword=\{addCustomKeyword\}/);
+  assert.match(panelSource, /<AddKeywordDialog/);
+  assert.match(panelSource, /category=\{category\}/);
+  assert.match(panelSource, /placeholder=\{placeholder\}/);
+  assert.match(panelSource, /onAddKeyword=\{\(keyword\) =>/);
   assert.match(hookSource, /setCustomKeywordsByCategory/);
-  assert.match(hookSource, /crypto\.randomUUID\(\)/);
+  assert.match(hookSource, /createClientId\(\)/);
+  assert.match(idText, /globalThis\.crypto\?\.randomUUID/);
+  assert.match(idText, /Date\.now\(\)/);
+  assert.match(idText, /Math\.random\(\)/);
   assert.match(hookSource, /selectedCustomKeywordIdsByCategory/);
 });
 
-test('add keyword dialog limits input to ten characters and submits the trimmed keyword', () => {
+test('add keyword dialog limits input to fifteen characters and submits the trimmed keyword', () => {
   const dialogSource = addKeywordDialogSource();
   const hookSource = addKeywordDialogHookSource();
   const constantSource = constantsSource();
@@ -150,15 +161,26 @@ test('add keyword dialog limits input to ten characters and submits the trimmed 
   assert.match(dialogSource, /onOpenChange=\{setOpen\}/);
   assert.match(dialogSource, /onSubmit=\{handleSubmit\}/);
   assert.match(dialogSource, /placeholder=\{placeholder\}/);
+  assert.match(dialogSource, /InputGroupTextarea/);
+  assert.match(dialogSource, /InputGroupAddon/);
+  assert.match(dialogSource, /InputGroupText/);
   assert.match(dialogSource, /maxLength=\{ADD_KEYWORD_MAX_LENGTH\}/);
+  assert.match(dialogSource, /rows=\{1\}/);
+  assert.match(dialogSource, /className="min-h-10"/);
   assert.match(dialogSource, /value=\{keyword\}/);
+  assert.match(
+    dialogSource,
+    /\{keyword\.length\}\s*\/\s*\{ADD_KEYWORD_MAX_LENGTH\}/,
+  );
+  assert.doesNotMatch(dialogSource, /10자 이내로 입력해주세요/);
   assert.match(hookSource, /setKeyword\(event\.target\.value\.slice/);
+  assert.match(hookSource, /ChangeEvent<HTMLTextAreaElement>/);
   assert.match(hookSource, /ADD_KEYWORD_MAX_LENGTH/);
   assert.match(hookSource, /const trimmedKeyword = keyword\.trim\(\)/);
   assert.match(hookSource, /onAddKeyword\(trimmedKeyword\)/);
   assert.match(hookSource, /isSubmitDisabled: keyword\.trim\(\)\.length === 0/);
   assert.match(dialogSource, /disabled=\{isSubmitDisabled\}/);
-  assert.match(constantSource, /export const ADD_KEYWORD_MAX_LENGTH = 10;/);
+  assert.match(constantSource, /export const ADD_KEYWORD_MAX_LENGTH = 15;/);
   assert.match(constantSource, /placeholder: '예: 타임루프, 영지물, 먼치킨'/);
   assert.match(
     constantSource,

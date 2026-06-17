@@ -2,61 +2,29 @@
 
 import { useState } from 'react';
 
-import {
-  useGenerateSimpleStorylines,
-  useGetSimpleStoryTags,
-} from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
+import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
+import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 
 import { TAG_CATEGORIES } from '../constants';
-import type {
-  CustomKeyword,
-  CustomKeywordsByCategory,
-  SelectedCustomKeywordIdsByCategory,
-  SelectedTagIdsByCategory,
-  TagCategory,
-  TagsByCategory,
-} from '../types';
+import type { CustomKeyword, TagCategory } from '../types';
+import { createClientId } from '../utils/create-client-id';
+import {
+  createEmptyCustomKeywordsByCategory,
+  createEmptySelectedCustomKeywordIdsByCategory,
+  createEmptySelectedTagIdsByCategory,
+  getMaxSelectionCount,
+  getTagsByCategory,
+} from '../utils/tag-categories';
 
-const createEmptySelectedTagIdsByCategory = (): SelectedTagIdsByCategory => ({
-  GENRE: [],
-  PROTAGONIST: [],
-  SUPPORTING_CHARACTER: [],
-});
+type UseStoryKeywordStepArgs = {
+  isGeneratingStoryline: boolean;
+  onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
+};
 
-const createEmptySelectedCustomKeywordIdsByCategory =
-  (): SelectedCustomKeywordIdsByCategory => ({
-    GENRE: [],
-    PROTAGONIST: [],
-    SUPPORTING_CHARACTER: [],
-  });
-
-const createEmptyCustomKeywordsByCategory = (): CustomKeywordsByCategory => ({
-  GENRE: [],
-  PROTAGONIST: [],
-  SUPPORTING_CHARACTER: [],
-});
-
-const createEmptyTagsByCategory = (): TagsByCategory => ({
-  GENRE: [],
-  PROTAGONIST: [],
-  SUPPORTING_CHARACTER: [],
-});
-
-const getMaxSelectionCount = (category: TagCategory) =>
-  TAG_CATEGORIES.find((item) => item.value === category)?.maxSelectionCount ??
-  0;
-
-const getTagsByCategory = (
-  tags: SimpleStoryTagListItemResponse[],
-): TagsByCategory =>
-  TAG_CATEGORIES.reduce<TagsByCategory>((acc, { value: category }) => {
-    acc[category] = tags.filter((tag) => tag.category === category);
-
-    return acc;
-  }, createEmptyTagsByCategory());
-
-export function useStoryKeywordStep() {
+export function useStoryKeywordStep({
+  isGeneratingStoryline,
+  onGenerateStoryline,
+}: UseStoryKeywordStepArgs) {
   const [activeCategory, setActiveCategory] = useState<TagCategory>('GENRE');
   const [selectedTagIdsByCategory, setSelectedTagIdsByCategory] = useState(
     createEmptySelectedTagIdsByCategory,
@@ -70,7 +38,6 @@ export function useStoryKeywordStep() {
   );
 
   const simpleStoryTags = useGetSimpleStoryTags();
-  const generateStorylines = useGenerateSimpleStorylines();
 
   const tagsByCategory = getTagsByCategory(simpleStoryTags.data?.data ?? []);
 
@@ -157,7 +124,7 @@ export function useStoryKeywordStep() {
     }
 
     const customKeyword: CustomKeyword = {
-      id: crypto.randomUUID(),
+      id: createClientId(),
       name: keyword,
       category,
     };
@@ -191,12 +158,12 @@ export function useStoryKeywordStep() {
         })),
     );
 
-    generateStorylines.mutate({
-      data: {
-        selectedTagIds: selectedTagIds,
-        customTags: customTags,
-      },
-    });
+    const request: GenerateSimpleStorylinesRequest = {
+      selectedTagIds: selectedTagIds,
+      customTags: customTags,
+    };
+
+    onGenerateStoryline(request);
   };
 
   return {
@@ -206,7 +173,7 @@ export function useStoryKeywordStep() {
     selectedCustomKeywordIdsByCategory,
     customKeywordsByCategory,
     simpleStoryTags,
-    generateStorylines,
+    isGeneratingStoryline,
     tagsByCategory,
     canGenerateStoryline,
     getSelectedCount,

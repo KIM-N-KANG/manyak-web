@@ -30,9 +30,9 @@ test('toggle chip replaces the old chips component name and file', () => {
   assert.doesNotMatch(source, /function Chips\(/);
 });
 
-test('story keyword step uses toggle chip instead of chips', () => {
+test('story keyword category panel uses toggle chip instead of chips', () => {
   const source = read(
-    'src/features/stories/new/components/story-keyword-step-section.tsx',
+    'src/features/stories/new/components/story-keyword-category-panel.tsx',
   );
 
   assert.match(

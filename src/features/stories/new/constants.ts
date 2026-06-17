@@ -1,6 +1,16 @@
-import type { TagCategoryConfig } from './types';
+import type { StoryCreateStep, TagCategoryConfig } from './types';
 
-export const ADD_KEYWORD_MAX_LENGTH = 10;
+export const ADD_KEYWORD_MAX_LENGTH = 15;
+
+export const ADDITIONAL_INFO_MAX_COUNT = 3;
+
+export const ADDITIONAL_INFO_MAX_LENGTH = 100;
+
+export const STORY_CREATE_STEP_PROGRESS_LABELS = {
+  keyword: '1 / 3',
+  'storyline-select': '2 / 3',
+  'additional-info': '3 / 3',
+} satisfies Record<Exclude<StoryCreateStep, 'complete'>, string>;
 
 export const TAG_CATEGORIES = [
   {
@@ -35,4 +45,21 @@ export const SKELETON_TAG_CHIP_WIDTH_CLASSES = [
   'w-32',
   'w-36',
   'w-40',
+] as const;
+
+export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
+
+export const STORYLINE_SELECT_LOADING_TAB_COUNT = 3;
+
+export const STORYLINE_TEXT_SKELETON_WIDTH_CLASSES = [
+  'w-full',
+  'w-8/12',
+  'w-10/12',
+  'w-0',
+  'w-full',
+  'w-2/12',
+  'w-0',
+  'w-full',
+  'w-11/12',
+  'w-5/12',
 ] as const;
