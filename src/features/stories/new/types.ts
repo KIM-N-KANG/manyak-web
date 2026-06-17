@@ -1,5 +1,6 @@
 import type {
   SimpleStoryCustomTagRequestCategory,
+  SimpleStorylineResponse,
   SimpleStoryTagListItemResponse,
   SimpleStoryTagListItemResponseCategory,
 } from '@/api/generated/models';
@@ -41,3 +42,13 @@ export type TagsByCategory = Record<
   TagCategory,
   SimpleStoryTagListItemResponse[]
 >;
+
+export type StorylineSelectStepSectionProps = {
+  storylines: SimpleStorylineResponse[];
+  activeStorylineIndex: number;
+  isRegeneratingStorylines: boolean;
+  hasRegenerateStorylinesError: boolean;
+  onActiveStorylineIndexChange: (index: number) => void;
+  onRegenerateStorylines: () => void;
+  onSelectStoryline: () => void;
+};
