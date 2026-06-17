@@ -38,7 +38,7 @@ export function StorylineSelectStepSection({
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <StoryCreateStepTitle
           titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
-          description="스토리라인을 바탕으로 스토리를 완성해드려요"
+          description="선택한 스토리라인이 스토리의 기본 흐름이 돼요"
           className="p-4"
         />
 
@@ -73,7 +73,7 @@ export function StorylineSelectStepSection({
 
         {storylines.length === 0 && (
           <p className="px-4 py-8 text-sm text-foreground-secondary">
-            생성된 스토리라인이 없어요. 다시 만들어주세요
+            생성된 스토리라인이 없어요. 잠시 후 다시 시도해주세요
           </p>
         )}
         {hasRegenerateStorylinesError && (

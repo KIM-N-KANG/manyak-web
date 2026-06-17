@@ -158,7 +158,7 @@ test('story keyword step lets users add a custom keyword to the active category 
   assert.match(hookSource, /selectedCustomKeywordIdsByCategory/);
 });
 
-test('add keyword dialog limits input to ten characters and submits the trimmed keyword', () => {
+test('add keyword dialog limits input to fifteen characters and submits the trimmed keyword', () => {
   const dialogSource = addKeywordDialogSource();
   const hookSource = addKeywordDialogHookSource();
   const constantSource = constantsSource();
@@ -168,15 +168,26 @@ test('add keyword dialog limits input to ten characters and submits the trimmed 
   assert.match(dialogSource, /onOpenChange=\{setOpen\}/);
   assert.match(dialogSource, /onSubmit=\{handleSubmit\}/);
   assert.match(dialogSource, /placeholder=\{placeholder\}/);
+  assert.match(dialogSource, /InputGroupTextarea/);
+  assert.match(dialogSource, /InputGroupAddon/);
+  assert.match(dialogSource, /InputGroupText/);
   assert.match(dialogSource, /maxLength=\{ADD_KEYWORD_MAX_LENGTH\}/);
+  assert.match(dialogSource, /rows=\{1\}/);
+  assert.match(dialogSource, /className="min-h-10"/);
   assert.match(dialogSource, /value=\{keyword\}/);
+  assert.match(
+    dialogSource,
+    /\{keyword\.length\}\s*\/\s*\{ADD_KEYWORD_MAX_LENGTH\}/,
+  );
+  assert.doesNotMatch(dialogSource, /10자 이내로 입력해주세요/);
   assert.match(hookSource, /setKeyword\(event\.target\.value\.slice/);
+  assert.match(hookSource, /ChangeEvent<HTMLTextAreaElement>/);
   assert.match(hookSource, /ADD_KEYWORD_MAX_LENGTH/);
   assert.match(hookSource, /const trimmedKeyword = keyword\.trim\(\)/);
   assert.match(hookSource, /onAddKeyword\(trimmedKeyword\)/);
   assert.match(hookSource, /isSubmitDisabled: keyword\.trim\(\)\.length === 0/);
   assert.match(dialogSource, /disabled=\{isSubmitDisabled\}/);
-  assert.match(constantSource, /export const ADD_KEYWORD_MAX_LENGTH = 10;/);
+  assert.match(constantSource, /export const ADD_KEYWORD_MAX_LENGTH = 15;/);
   assert.match(constantSource, /placeholder: '예: 타임루프, 영지물, 먼치킨'/);
   assert.match(
     constantSource,

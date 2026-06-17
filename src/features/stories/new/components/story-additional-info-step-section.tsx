@@ -58,8 +58,8 @@ export function StoryAdditionalInfoStepSection({
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <StoryCreateStepTitle
-          titleLines={['스토리를 더 풍성하게 만들', '정보를 적어주세요']}
-          description="추천 질문에 답하거나, 자유롭게 적어주세요"
+          titleLines={['스토리에 더하고 싶은', '내용을 입력해주세요']}
+          description="입력한 내용은 스토리를 완성하는 데 반영돼요"
           className="border-b border-border p-4"
         />
 
@@ -99,6 +99,7 @@ export function StoryAdditionalInfoStepSection({
                       aria-label={`추가 정보 ${index + 1}`}
                       className="min-h-10"
                       maxLength={ADDITIONAL_INFO_MAX_LENGTH}
+                      placeholder="예: 주인공은 오래전 친구를 배신한 비밀을 숨기고 있다"
                       rows={1}
                       value={additionalInfo.value}
                       disabled={isCompletingStory}
@@ -108,7 +109,7 @@ export function StoryAdditionalInfoStepSection({
                     />
                     <InputGroupAddon align="block-end">
                       <InputGroupText>
-                        {additionalInfo.value.length}/
+                        {additionalInfo.value.length} /{' '}
                         {ADDITIONAL_INFO_MAX_LENGTH}
                       </InputGroupText>
                     </InputGroupAddon>

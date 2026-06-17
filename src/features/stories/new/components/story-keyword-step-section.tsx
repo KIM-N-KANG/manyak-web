@@ -49,8 +49,8 @@ export function StoryKeywordStepSection({
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <StoryCreateStepTitle
-          titleLines={['만들고 싶은 스토리의', '키워드를 골라주세요']}
-          description="선택한 키워드로 AI가 스토리라인을 만들어드려요"
+          titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
+          description="선택한 키워드로 AI가 스토리라인을 생성해요"
           className="p-4"
         />
         <Tabs

@@ -29,7 +29,7 @@ test('additional info step shows the selected storyline and AI help questions', 
   assert.match(storylineText, /font-maruburi/);
   assert.match(text, /helpQuestions/);
   assert.match(text, /AI 추천 질문/);
-  assert.match(text, /스토리를 더 풍성하게 만들/);
+  assert.match(text, /스토리에 더하고 싶은/);
 });
 
 test('additional info step lets users add up to three optional inputs with delete buttons', () => {
@@ -67,6 +67,15 @@ test('additional info textareas start as a single line', () => {
   assert.match(text, /<InputGroupTextarea/);
   assert.match(text, /rows=\{1\}/);
   assert.match(text, /className="min-h-10"/);
+});
+
+test('additional info textareas show a simple placeholder', () => {
+  const text = source();
+
+  assert.match(
+    text,
+    /placeholder="예: 주인공은 오래전 친구를 배신한 비밀을 숨기고 있다"/,
+  );
 });
 
 test('additional info step can complete a story without additional info', () => {
