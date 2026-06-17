@@ -29,8 +29,8 @@ export function StorylineSelectStepSection({
   const selectedStoryline = storylines[activeStorylineIndex];
 
   return (
-    <main className="flex flex-1 flex-col pb-16">
-      <section className="flex flex-1 flex-col">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex flex-col items-start gap-1 p-4 pb-8">
           <div className="text-xl font-semibold">
             <p>마음에 드는</p>
@@ -42,6 +42,7 @@ export function StorylineSelectStepSection({
         </div>
 
         <Tabs
+          className="min-h-0 flex-1 overflow-hidden"
           value={getStorylineTabValue(activeStorylineIndex)}
           onValueChange={(value) =>
             onActiveStorylineIndexChange(Number(value))
@@ -59,7 +60,7 @@ export function StorylineSelectStepSection({
             <TabsContent
               key={storyline.id ?? index}
               value={getStorylineTabValue(index)}
-              className="px-4 pb-4">
+              className="min-h-0 overflow-y-auto px-4 pb-4">
               <p className="font-maruburi text-base leading-loose">
                 {storyline.story}
               </p>

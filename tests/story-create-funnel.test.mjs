@@ -69,6 +69,33 @@ test('story create funnel requires back confirmation after storylines are genera
   assert.match(source, /requiresBackConfirmation=\{shouldConfirmBack\}/);
 });
 
+test('story create funnel constrains the viewport so step sections own scrolling', () => {
+  const source = funnelSource();
+
+  assert.match(
+    source,
+    /<div className="flex h-svh min-h-0 flex-col overflow-hidden">/,
+  );
+});
+
+test('story keyword step keeps the title and tabs fixed while tab panels scroll', () => {
+  const source = keywordSectionSource();
+
+  assert.match(
+    source,
+    /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">/,
+  );
+  assert.match(
+    source,
+    /<section className="flex min-h-0 flex-1 flex-col overflow-hidden">/,
+  );
+  assert.match(source, /className="min-h-0 flex-1 overflow-hidden"/);
+  assert.match(
+    source,
+    /<TabsContent key=\{category\} value=\{category\} className="min-h-0 overflow-y-auto">/,
+  );
+});
+
 test('created story ids are stored as a de-duplicated localStorage list', () => {
   const source = storageSource();
 

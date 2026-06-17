@@ -44,10 +44,11 @@ export function StoryKeywordStepSection({
   });
 
   return (
-    <main className="flex flex-1 flex-col pb-16">
-      <section className="flex flex-1 flex-col">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <StoryCreateTitle />
         <Tabs
+          className="min-h-0 flex-1 overflow-hidden"
           value={activeCategory}
           onValueChange={(value) => setActiveCategory(value as TagCategory)}>
           <TabsList variant="line">
@@ -67,7 +68,10 @@ export function StoryKeywordStepSection({
               const isMaxSelectionReached = selectedCount >= maxSelectionCount;
 
               return (
-                <TabsContent key={category} value={category}>
+                <TabsContent
+                  key={category}
+                  value={category}
+                  className="min-h-0 overflow-y-auto">
                   <div className="flex flex-col gap-4 px-4 pb-4">
                     <p className="text-sm text-foreground-secondary">
                       최대 {maxSelectionCount}개까지 선택할 수 있어요

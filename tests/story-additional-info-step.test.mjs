@@ -51,3 +51,20 @@ test('additional info step lets users go back to storyline selection', () => {
   assert.match(text, /다시 선택하기/);
   assert.match(text, /onClick=\{onBackToStorylineSelect\}/);
 });
+
+test('additional info step keeps the title fixed while the content below it scrolls', () => {
+  const text = source();
+
+  assert.match(
+    text,
+    /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-20">/,
+  );
+  assert.match(
+    text,
+    /<section className="flex min-h-0 flex-1 flex-col gap-8 overflow-hidden px-4 py-4">/,
+  );
+  assert.match(
+    text,
+    /<div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pb-4">/,
+  );
+});
