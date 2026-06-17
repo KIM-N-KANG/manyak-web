@@ -106,6 +106,11 @@ export function StoryCreateFunnel() {
     setStep('additional-info');
   };
 
+  const handleBackToStorylineSelect = () => {
+    setSelectedStoryline(null);
+    setStep('storyline-select');
+  };
+
   const handleCompleteStory = (additionalInfos: string[]) => {
     if (
       typeof simpleCreationId !== 'number' ||
@@ -154,6 +159,7 @@ export function StoryCreateFunnel() {
           hasCompleteStoryError={createStory.isError}
           canCompleteStory={canCompleteStory}
           onCompleteStory={handleCompleteStory}
+          onBackToStorylineSelect={handleBackToStorylineSelect}
         />
       )}
 

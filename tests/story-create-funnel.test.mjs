@@ -51,6 +51,17 @@ test('story keyword step builds a storyline request and lets the funnel own the 
   assert.doesNotMatch(hookSource, /useGenerateSimpleStorylines/);
 });
 
+test('story create funnel lets users return from additional info to storyline selection', () => {
+  const source = funnelSource();
+
+  assert.match(source, /handleBackToStorylineSelect/);
+  assert.match(source, /setStep\('storyline-select'\)/);
+  assert.match(
+    source,
+    /onBackToStorylineSelect=\{handleBackToStorylineSelect\}/,
+  );
+});
+
 test('created story ids are stored as a de-duplicated localStorage list', () => {
   const source = storageSource();
 

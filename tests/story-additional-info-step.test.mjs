@@ -42,3 +42,12 @@ test('additional info step can complete a story without additional info', () => 
   assert.match(text, /스토리 완성하기/);
   assert.match(text, /3 \/ 3/);
 });
+
+test('additional info step lets users go back to storyline selection', () => {
+  const text = source();
+
+  assert.match(text, /onBackToStorylineSelect/);
+  assert.match(text, /variant="secondary"/);
+  assert.match(text, /다시 선택하기/);
+  assert.match(text, /onClick=\{onBackToStorylineSelect\}/);
+});

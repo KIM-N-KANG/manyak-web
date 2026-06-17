@@ -32,6 +32,7 @@ type StoryAdditionalInfoStepSectionProps = {
   hasCompleteStoryError: boolean;
   canCompleteStory: boolean;
   onCompleteStory: (additionalInfos: string[]) => void;
+  onBackToStorylineSelect: () => void;
 };
 
 export function StoryAdditionalInfoStepSection({
@@ -40,6 +41,7 @@ export function StoryAdditionalInfoStepSection({
   hasCompleteStoryError,
   canCompleteStory,
   onCompleteStory,
+  onBackToStorylineSelect,
 }: StoryAdditionalInfoStepSectionProps) {
   const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(
     [],
@@ -180,24 +182,34 @@ export function StoryAdditionalInfoStepSection({
       </section>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">
-        <div className="flex h-full w-full items-center justify-between">
+        <div className="flex h-full w-full items-center justify-between gap-4">
           <p className="text-sm font-medium">3 / 3</p>
-          <Button
-            type="button"
-            size="lg"
-            className="relative"
-            aria-busy={isCompletingStory}
-            disabled={!canCompleteStory || isCompletingStory}
-            onClick={handleCompleteStory}>
-            <span
-              aria-hidden={isCompletingStory}
-              className={isCompletingStory ? 'invisible' : undefined}>
-              스토리 완성하기
-            </span>
-            {isCompletingStory && (
-              <Spinner className="absolute" aria-label="스토리 완성 중" />
-            )}
-          </Button>
+          <div className="flex min-w-0 flex-1 justify-end gap-2">
+            <Button
+              type="button"
+              size="lg"
+              variant="secondary"
+              disabled={isCompletingStory}
+              onClick={onBackToStorylineSelect}>
+              다시 선택하기
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              className="relative"
+              aria-busy={isCompletingStory}
+              disabled={!canCompleteStory || isCompletingStory}
+              onClick={handleCompleteStory}>
+              <span
+                aria-hidden={isCompletingStory}
+                className={isCompletingStory ? 'invisible' : undefined}>
+                스토리 완성하기
+              </span>
+              {isCompletingStory && (
+                <Spinner className="absolute" aria-label="스토리 완성 중" />
+              )}
+            </Button>
+          </div>
         </div>
       </nav>
     </main>
