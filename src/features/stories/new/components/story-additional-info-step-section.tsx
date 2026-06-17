@@ -97,7 +97,9 @@ export function StoryAdditionalInfoStepSection({
                   <InputGroup>
                     <InputGroupTextarea
                       aria-label={`추가 정보 ${index + 1}`}
+                      className="min-h-10"
                       maxLength={ADDITIONAL_INFO_MAX_LENGTH}
+                      rows={1}
                       value={additionalInfo.value}
                       disabled={isCompletingStory}
                       onChange={(event) =>

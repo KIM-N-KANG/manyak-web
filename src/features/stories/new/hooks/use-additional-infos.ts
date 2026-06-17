@@ -8,9 +8,14 @@ import {
 } from '../constants';
 import type { AdditionalInfoInput } from '../types';
 
+const createEmptyAdditionalInfo = (): AdditionalInfoInput => ({
+  id: crypto.randomUUID(),
+  value: '',
+});
+
 export function useAdditionalInfos() {
   const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(
-    [],
+    () => [createEmptyAdditionalInfo()],
   );
 
   const addAdditionalInfo = () => {
@@ -20,10 +25,7 @@ export function useAdditionalInfos() {
 
     setAdditionalInfos((previous) => [
       ...previous,
-      {
-        id: crypto.randomUUID(),
-        value: '',
-      },
+      createEmptyAdditionalInfo(),
     ]);
   };
 

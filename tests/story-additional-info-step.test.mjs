@@ -49,6 +49,26 @@ test('additional info step lets users add up to three optional inputs with delet
   assert.match(text, /정보 추가/);
 });
 
+test('additional info step starts with one empty input that users can delete', () => {
+  const text = source();
+  const hookText = hookSource();
+
+  assert.match(hookText, /createEmptyAdditionalInfo/);
+  assert.match(
+    hookText,
+    /useState<AdditionalInfoInput\[\]>\(\s*\(\) => \[\s*createEmptyAdditionalInfo\(\),?\s*\]/,
+  );
+  assert.match(text, /aria-label=\{`추가 정보 \$\{index \+ 1\} 삭제`\}/);
+});
+
+test('additional info textareas start as a single line', () => {
+  const text = source();
+
+  assert.match(text, /<InputGroupTextarea/);
+  assert.match(text, /rows=\{1\}/);
+  assert.match(text, /className="min-h-10"/);
+});
+
 test('additional info step can complete a story without additional info', () => {
   const text = source();
   const hookText = hookSource();
@@ -81,9 +101,9 @@ test('additional info step keeps the title fixed while the content below it scro
   );
   assert.match(
     text,
-    /<section className="flex min-h-0 flex-1 flex-col gap-8 overflow-hidden p-4">/,
+    /<section className="flex min-h-0 flex-1 flex-col overflow-hidden">/,
   );
-  assert.match(text, /<div className="min-h-0 flex-1 overflow-y-auto">/);
+  assert.match(text, /<div className="min-h-0 flex-1 overflow-y-auto p-4">/);
   assert.match(text, /<div className="flex flex-col gap-8">/);
   assert.doesNotMatch(text, /<ScrollArea/);
 });
