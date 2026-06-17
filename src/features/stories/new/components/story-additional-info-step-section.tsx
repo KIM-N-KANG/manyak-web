@@ -146,8 +146,6 @@ export function StoryAdditionalInfoStepSection({
                 type="button"
                 variant="secondary"
                 className="self-center text-foreground-secondary"
-                aria-hidden="true"
-                aria-label="정보 추가"
                 disabled={!canAddAdditionalInfo || isCompletingStory}
                 onClick={addAdditionalInfo}>
                 <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />

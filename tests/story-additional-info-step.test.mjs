@@ -53,6 +53,16 @@ test('additional info step lets users add up to three optional inputs with delet
   assert.match(hookText, /slice\(0, ADDITIONAL_INFO_MAX_LENGTH\)/);
   assert.match(text, /aria-label=\{`추가 정보 \$\{index \+ 1\} 삭제`\}/);
   assert.match(text, /정보 추가/);
+
+  const addInfoClickIndex = text.indexOf('onClick={addAdditionalInfo}');
+  const addInfoButton = text.slice(
+    text.lastIndexOf('<Button', addInfoClickIndex),
+    text.indexOf('>', addInfoClickIndex) + 1,
+  );
+
+  assert.notEqual(addInfoClickIndex, -1);
+  assert.doesNotMatch(addInfoButton, /aria-hidden/);
+  assert.doesNotMatch(addInfoButton, /aria-label/);
 });
 
 test('additional info step starts with one empty input that users can delete', () => {
