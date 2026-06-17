@@ -2,7 +2,7 @@ import './globals.css';
 
 import type { Viewport } from 'next';
 
-import { pretendard } from '@/assets/fonts/fonts';
+import { maruburi, pretendard } from '@/assets/fonts/fonts';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -19,8 +19,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={pretendard.variable} suppressHydrationWarning>
-      <body className="bg-border font-sans text-foreground antialiased">
+    <html
+      lang="ko"
+      className={`${pretendard.variable} ${maruburi.variable} antialiased`}
+      suppressHydrationWarning>
+      <body className="bg-border font-sans text-foreground">
         <QueryProvider>
           <MotionProvider>
             <ThemeProvider>
