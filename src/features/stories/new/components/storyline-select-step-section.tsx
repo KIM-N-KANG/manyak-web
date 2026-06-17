@@ -3,8 +3,13 @@
 import type { SimpleStorylineResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { STORY_CREATE_STEP_PROGRESS_LABELS } from '../constants';
+import { LoadingButtonContent } from './loading-button-content';
+import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepTitle } from './story-create-step-title';
+import { StorylineText } from './storyline-text';
 
 type StorylineSelectStepSectionProps = {
   storylines: SimpleStorylineResponse[];
@@ -32,15 +37,11 @@ export function StorylineSelectStepSection({
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="flex flex-col items-start gap-1 p-4 pb-8">
-          <div className="text-xl font-semibold">
-            <p>마음에 드는</p>
-            <p>스토리라인을 선택해주세요</p>
-          </div>
-          <p className="text-foreground-secondary">
-            선택한 스토리라인을 바탕으로 스토리를 완성해드릴게요
-          </p>
-        </div>
+        <StoryCreateStepTitle
+          titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
+          description="선택한 스토리라인을 바탕으로 스토리를 완성해드릴게요"
+          className="p-4"
+        />
 
         <Tabs
           className="min-h-0 flex-1 overflow-hidden"
@@ -64,9 +65,7 @@ export function StorylineSelectStepSection({
               className="min-h-0">
               <ScrollArea className="h-full">
                 <div className="px-4 pb-4">
-                  <p className="font-maruburi text-base leading-loose">
-                    {storyline.story}
-                  </p>
+                  <StorylineText>{storyline.story}</StorylineText>
                 </div>
               </ScrollArea>
             </TabsContent>
@@ -85,37 +84,30 @@ export function StorylineSelectStepSection({
         )}
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">
-        <div className="flex h-full w-full items-center justify-between gap-4">
-          <p className="text-sm font-medium">2 / 3</p>
-          <div className="flex min-w-0 flex-1 justify-end gap-2">
-            <Button
-              type="button"
-              size="lg"
-              variant="secondary"
-              className="relative"
-              aria-busy={isRegeneratingStorylines}
-              disabled={isRegeneratingStorylines}
-              onClick={onRegenerateStorylines}>
-              <span
-                aria-hidden={isRegeneratingStorylines}
-                className={isRegeneratingStorylines ? 'invisible' : undefined}>
-                다시 만들기
-              </span>
-              {isRegeneratingStorylines && (
-                <Spinner className="absolute" aria-label="스토리라인 생성 중" />
-              )}
-            </Button>
-            <Button
-              type="button"
-              size="lg"
-              disabled={!selectedStoryline || isRegeneratingStorylines}
-              onClick={onSelectStoryline}>
-              이 스토리라인 선택하기
-            </Button>
-          </div>
-        </div>
-      </nav>
+      <StoryCreateStepFooter
+        progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS['storyline-select']}>
+        <Button
+          type="button"
+          size="lg"
+          variant="secondary"
+          className="relative"
+          aria-busy={isRegeneratingStorylines}
+          disabled={isRegeneratingStorylines}
+          onClick={onRegenerateStorylines}>
+          <LoadingButtonContent
+            isLoading={isRegeneratingStorylines}
+            loadingLabel="스토리라인 생성 중">
+            다시 만들기
+          </LoadingButtonContent>
+        </Button>
+        <Button
+          type="button"
+          size="lg"
+          disabled={!selectedStoryline || isRegeneratingStorylines}
+          onClick={onSelectStoryline}>
+          이 스토리라인 선택하기
+        </Button>
+      </StoryCreateStepFooter>
     </main>
   );
 }

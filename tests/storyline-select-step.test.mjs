@@ -7,6 +7,13 @@ const source = () =>
     'src/features/stories/new/components/storyline-select-step-section.tsx',
     'utf8',
   );
+const constantsSource = () =>
+  readFileSync('src/features/stories/new/constants.ts', 'utf8');
+const storylineTextSource = () =>
+  readFileSync(
+    'src/features/stories/new/components/storyline-text.tsx',
+    'utf8',
+  );
 
 test('storyline select step renders generated storylines in selectable tabs', () => {
   const text = source();
@@ -23,11 +30,14 @@ test('storyline select step renders generated storylines in selectable tabs', ()
 
 test('storyline select step displays storyline text with MaruBuri font and has required CTAs', () => {
   const text = source();
+  const constantText = constantsSource();
+  const storylineText = storylineTextSource();
 
-  assert.match(text, /font-maruburi/);
+  assert.match(text, /StorylineText/);
+  assert.match(storylineText, /font-maruburi/);
   assert.match(text, /마음에 드는/);
   assert.match(text, /스토리라인을 선택해주세요/);
-  assert.match(text, /2 \/ 3/);
+  assert.match(constantText, /'storyline-select': '2 \/ 3'/);
   assert.match(text, /variant="secondary"/);
   assert.match(text, /다시 만들기/);
   assert.match(text, /이 스토리라인 선택하기/);

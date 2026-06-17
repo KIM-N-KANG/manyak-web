@@ -2,17 +2,18 @@
 
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToggleChip } from '@/components/ui/toggle-chip';
 
-import { SKELETON_TAG_CHIP_WIDTH_CLASSES, TAG_CATEGORIES } from '../constants';
+import {
+  STORY_CREATE_STEP_PROGRESS_LABELS,
+  TAG_CATEGORIES,
+} from '../constants';
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
 import type { TagCategory } from '../types';
-import { AddKeywordDialog } from './add-keyword-dialog';
-import { StoryCreateTitle } from './story-create-title';
+import { LoadingButtonContent } from './loading-button-content';
+import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepTitle } from './story-create-step-title';
+import { StoryKeywordCategoryPanel } from './story-keyword-category-panel';
 
 type StoryKeywordStepSectionProps = {
   isGeneratingStoryline: boolean;
@@ -47,7 +48,11 @@ export function StoryKeywordStepSection({
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <StoryCreateTitle />
+        <StoryCreateStepTitle
+          titleLines={['만들고 싶은 스토리의', '키워드를 골라주세요']}
+          description="선택한 키워드로 AI가 스토리라인을 만들어드려요"
+          className="p-4"
+        />
         <Tabs
           className="min-h-0 flex-1 overflow-hidden"
           value={activeCategory}
@@ -65,100 +70,29 @@ export function StoryKeywordStepSection({
               const selectedTagIds = selectedTagIdsByCategory[category];
               const selectedCustomKeywordIds =
                 selectedCustomKeywordIdsByCategory[category];
-              const selectedCount = getSelectedCount(category);
-              const isMaxSelectionReached = selectedCount >= maxSelectionCount;
 
               return (
                 <TabsContent
                   key={category}
                   value={category}
                   className="min-h-0">
-                  <ScrollArea className="h-full">
-                    <div className="flex flex-col gap-4 px-4 pb-4">
-                      <p className="text-sm text-foreground-secondary">
-                        최대 {maxSelectionCount}개까지 선택할 수 있어요
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {simpleStoryTags.isLoading && (
-                          <>
-                            {SKELETON_TAG_CHIP_WIDTH_CLASSES.map(
-                              (widthClass, index) => (
-                                <Skeleton
-                                  key={`${category}-tag-skeleton-${index}`}
-                                  className={`h-10 ${widthClass}`}
-                                  aria-hidden="true"
-                                />
-                              ),
-                            )}
-                          </>
-                        )}
-                        {simpleStoryTags.isError && (
-                          <p className="py-2 text-sm text-destructive">
-                            키워드를 불러오지 못했어요
-                          </p>
-                        )}
-                        {tagsByCategory[category].map((tag) => {
-                          const { tagId, name } = tag;
-
-                          if (tagId == null || !name) {
-                            return null;
-                          }
-
-                          const isSelected = selectedTagIds.includes(tagId);
-                          const isKeywordChipDisabled =
-                            isGeneratingStoryline ||
-                            (!isSelected && isMaxSelectionReached);
-
-                          return (
-                            <ToggleChip
-                              key={tagId}
-                              pressed={isSelected}
-                              disabled={isKeywordChipDisabled}
-                              onPressedChange={(pressed) =>
-                                togglePredefinedTag(category, tagId, pressed)
-                              }>
-                              {name}
-                            </ToggleChip>
-                          );
-                        })}
-                        {customKeywordsByCategory[category].map((keyword) => {
-                          const isSelected = selectedCustomKeywordIds.includes(
-                            keyword.id,
-                          );
-                          const isKeywordChipDisabled =
-                            isGeneratingStoryline ||
-                            (!isSelected && isMaxSelectionReached);
-
-                          return (
-                            <ToggleChip
-                              key={keyword.id}
-                              pressed={isSelected}
-                              disabled={isKeywordChipDisabled}
-                              onPressedChange={(pressed) =>
-                                toggleCustomKeyword(
-                                  category,
-                                  keyword.id,
-                                  pressed,
-                                )
-                              }>
-                              {keyword.name}
-                            </ToggleChip>
-                          );
-                        })}
-                        <AddKeywordDialog
-                          category={category}
-                          categoryLabel={label}
-                          placeholder={placeholder}
-                          disabled={
-                            isGeneratingStoryline || isMaxSelectionReached
-                          }
-                          onAddKeyword={(keyword) =>
-                            addCustomKeyword(category, keyword)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </ScrollArea>
+                  <StoryKeywordCategoryPanel
+                    category={category}
+                    label={label}
+                    placeholder={placeholder}
+                    maxSelectionCount={maxSelectionCount}
+                    selectedCount={getSelectedCount(category)}
+                    selectedTagIds={selectedTagIds}
+                    selectedCustomKeywordIds={selectedCustomKeywordIds}
+                    predefinedTags={tagsByCategory[category]}
+                    customKeywords={customKeywordsByCategory[category]}
+                    isLoadingTags={simpleStoryTags.isLoading}
+                    hasTagsError={simpleStoryTags.isError}
+                    isGeneratingStoryline={isGeneratingStoryline}
+                    onTogglePredefinedTag={togglePredefinedTag}
+                    onToggleCustomKeyword={toggleCustomKeyword}
+                    onAddCustomKeyword={addCustomKeyword}
+                  />
                 </TabsContent>
               );
             },
@@ -171,27 +105,22 @@ export function StoryKeywordStepSection({
         )}
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">
-        <div className="flex h-full w-full items-center justify-between">
-          <p className="text-sm font-medium">1 / 3</p>
-          <Button
-            type="button"
-            size="lg"
-            className="relative"
-            aria-busy={isGeneratingStoryline}
-            disabled={!canGenerateStoryline || isGeneratingStoryline}
-            onClick={handleGenerateStoryline}>
-            <span
-              aria-hidden={isGeneratingStoryline}
-              className={isGeneratingStoryline ? 'invisible' : undefined}>
-              스토리라인 만들기
-            </span>
-            {isGeneratingStoryline && (
-              <Spinner className="absolute" aria-label="스토리라인 생성 중" />
-            )}
-          </Button>
-        </div>
-      </nav>
+      <StoryCreateStepFooter
+        progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS.keyword}>
+        <Button
+          type="button"
+          size="lg"
+          className="relative"
+          aria-busy={isGeneratingStoryline}
+          disabled={!canGenerateStoryline || isGeneratingStoryline}
+          onClick={handleGenerateStoryline}>
+          <LoadingButtonContent
+            isLoading={isGeneratingStoryline}
+            loadingLabel="스토리라인 생성 중">
+            스토리라인 만들기
+          </LoadingButtonContent>
+        </Button>
+      </StoryCreateStepFooter>
     </main>
   );
 }

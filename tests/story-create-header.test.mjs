@@ -27,7 +27,7 @@ test('story create header asks for confirmation before leaving generated storyli
   assert.match(source, /setConfirmBackDialogOpen\(true\)/);
   assert.match(source, /DialogDescription/);
   assert.match(source, /스토리 만들기를 그만할까요\?/);
-  assert.match(source, /지금 나가면 작성 중인 내용이 사라져요/);
+  assert.match(source, /지금 나가면 만들고 있는 내용이 사라져요/);
   assert.match(source, /계속 만들기/);
   assert.match(source, /나가기/);
   assert.match(source, /onClick=\{handleConfirmBack\}/);

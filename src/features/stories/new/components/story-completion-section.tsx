@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 
+import { StoryCreateStepFooter } from './story-create-step-footer';
+
 export function StoryCompletionSection() {
   return (
     <main className="flex min-h-svh flex-col pb-16">
@@ -18,21 +20,19 @@ export function StoryCompletionSection() {
         </div>
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">
-        <div className="flex h-full w-full items-center gap-2">
-          <Button
-            nativeButton={false}
-            render={<Link href={APP_PATH.MAIN.STORIES} />}
-            size="lg"
-            variant="secondary"
-            className="min-w-0 flex-1">
-            내 스토리로 이동하기
-          </Button>
-          <Button type="button" size="lg" className="min-w-0 flex-1">
-            채팅 시작하기
-          </Button>
-        </div>
-      </nav>
+      <StoryCreateStepFooter>
+        <Button
+          nativeButton={false}
+          render={<Link href={APP_PATH.MAIN.STORIES} />}
+          size="lg"
+          variant="secondary"
+          className="min-w-0 flex-1">
+          내 스토리로 이동하기
+        </Button>
+        <Button type="button" size="lg" className="min-w-0 flex-1">
+          채팅 시작하기
+        </Button>
+      </StoryCreateStepFooter>
     </main>
   );
 }

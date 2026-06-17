@@ -1,7 +1,5 @@
 'use client';
 
-import { type ChangeEvent, useState } from 'react';
-
 import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -15,17 +13,17 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Spinner } from '@/components/ui/spinner';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
+  STORY_CREATE_STEP_PROGRESS_LABELS,
 } from '../constants';
-
-type AdditionalInfoInput = {
-  id: string;
-  value: string;
-};
+import { useAdditionalInfos } from '../hooks/use-additional-infos';
+import { LoadingButtonContent } from './loading-button-content';
+import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepTitle } from './story-create-step-title';
+import { StorylineText } from './storyline-text';
 
 type StoryAdditionalInfoStepSectionProps = {
   storyline: SimpleStorylineResponse;
@@ -44,80 +42,36 @@ export function StoryAdditionalInfoStepSection({
   onCompleteStory,
   onBackToStorylineSelect,
 }: StoryAdditionalInfoStepSectionProps) {
-  const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(
-    [],
-  );
-
-  const handleAddAdditionalInfo = () => {
-    if (additionalInfos.length >= ADDITIONAL_INFO_MAX_COUNT) {
-      return;
-    }
-
-    setAdditionalInfos((previous) => [
-      ...previous,
-      {
-        id: crypto.randomUUID(),
-        value: '',
-      },
-    ]);
-  };
-
-  const handleRemoveAdditionalInfo = (id: string) => {
-    setAdditionalInfos((previous) =>
-      previous.filter((additionalInfo) => additionalInfo.id !== id),
-    );
-  };
-
-  const handleAdditionalInfoChange = (
-    id: string,
-    event: ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    const nextValue = event.target.value.slice(0, ADDITIONAL_INFO_MAX_LENGTH);
-
-    setAdditionalInfos((previous) =>
-      previous.map((additionalInfo) =>
-        additionalInfo.id === id
-          ? { ...additionalInfo, value: nextValue }
-          : additionalInfo,
-      ),
-    );
-  };
+  const {
+    additionalInfos,
+    canAddAdditionalInfo,
+    addAdditionalInfo,
+    removeAdditionalInfo,
+    changeAdditionalInfo,
+    getSubmittedAdditionalInfos,
+  } = useAdditionalInfos();
 
   const handleCompleteStory = () => {
-    const submittedAdditionalInfos = additionalInfos
-      .map(({ value }) => value.trim())
-      .filter(Boolean);
-
-    onCompleteStory(submittedAdditionalInfos);
+    onCompleteStory(getSubmittedAdditionalInfos());
   };
 
-  const canAddAdditionalInfo =
-    additionalInfos.length < ADDITIONAL_INFO_MAX_COUNT && !isCompletingStory;
-
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-20">
-      <section className="flex min-h-0 flex-1 flex-col gap-8 overflow-hidden px-4 py-4">
-        <div className="flex flex-col gap-1">
-          <div className="text-xl font-semibold">
-            <p>스토리를 더 풍성하게 만들</p>
-            <p>정보를 추가해주세요</p>
-          </div>
-          <p className="text-foreground-secondary">
-            추천 질문에 답하거나, 떠오르는 내용을 자유롭게 적어주세요
-          </p>
-        </div>
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
+      <section className="flex min-h-0 flex-1 flex-col gap-8 overflow-hidden p-4">
+        <StoryCreateStepTitle
+          titleLines={['스토리를 더 풍성하게 만들', '정보를 적어주세요']}
+          description="추천 질문에 답하거나, 자유롭게 적어주세요"
+        />
 
         <ScrollArea className="min-h-0 flex-1">
-          <div className="flex flex-col gap-8 pb-4">
-            <p className="font-maruburi text-base leading-loose">
-              {storyline.story}
-            </p>
+          <div className="flex flex-col gap-8">
+            <StorylineText>{storyline.story}</StorylineText>
 
             <section
               aria-labelledby="story-help-questions"
               className="flex flex-col gap-2">
               <Label>AI 추천 질문</Label>
-              <ul className="flex flex-col gap-2 text-sm">
+              <ul className="flex flex-col gap-2">
                 {(storyline.helpQuestions ?? []).map((helpQuestion, index) => (
                   <li key={helpQuestion.id ?? index}>
                     {helpQuestion.question}
@@ -147,7 +101,7 @@ export function StoryAdditionalInfoStepSection({
                       value={additionalInfo.value}
                       disabled={isCompletingStory}
                       onChange={(event) =>
-                        handleAdditionalInfoChange(additionalInfo.id, event)
+                        changeAdditionalInfo(additionalInfo.id, event)
                       }
                     />
                     <InputGroupAddon align="block-end">
@@ -163,9 +117,7 @@ export function StoryAdditionalInfoStepSection({
                     variant="ghost"
                     aria-label={`추가 정보 ${index + 1} 삭제`}
                     disabled={isCompletingStory}
-                    onClick={() =>
-                      handleRemoveAdditionalInfo(additionalInfo.id)
-                    }>
+                    onClick={() => removeAdditionalInfo(additionalInfo.id)}>
                     <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
                   </Button>
                 </div>
@@ -177,8 +129,8 @@ export function StoryAdditionalInfoStepSection({
                 className="self-center text-foreground-secondary"
                 aria-hidden="true"
                 aria-label="정보 추가"
-                disabled={!canAddAdditionalInfo}
-                onClick={handleAddAdditionalInfo}>
+                disabled={!canAddAdditionalInfo || isCompletingStory}
+                onClick={addAdditionalInfo}>
                 <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
                 정보 추가
               </Button>
@@ -193,37 +145,30 @@ export function StoryAdditionalInfoStepSection({
         </ScrollArea>
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">
-        <div className="flex h-full w-full items-center justify-between gap-4">
-          <p className="text-sm font-medium">3 / 3</p>
-          <div className="flex min-w-0 flex-1 justify-end gap-2">
-            <Button
-              type="button"
-              size="lg"
-              variant="secondary"
-              disabled={isCompletingStory}
-              onClick={onBackToStorylineSelect}>
-              다시 선택하기
-            </Button>
-            <Button
-              type="button"
-              size="lg"
-              className="relative"
-              aria-busy={isCompletingStory}
-              disabled={!canCompleteStory || isCompletingStory}
-              onClick={handleCompleteStory}>
-              <span
-                aria-hidden={isCompletingStory}
-                className={isCompletingStory ? 'invisible' : undefined}>
-                스토리 완성하기
-              </span>
-              {isCompletingStory && (
-                <Spinner className="absolute" aria-label="스토리 완성 중" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </nav>
+      <StoryCreateStepFooter
+        progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS['additional-info']}>
+        <Button
+          type="button"
+          size="lg"
+          variant="secondary"
+          disabled={isCompletingStory}
+          onClick={onBackToStorylineSelect}>
+          다시 선택하기
+        </Button>
+        <Button
+          type="button"
+          size="lg"
+          className="relative"
+          aria-busy={isCompletingStory}
+          disabled={!canCompleteStory || isCompletingStory}
+          onClick={handleCompleteStory}>
+          <LoadingButtonContent
+            isLoading={isCompletingStory}
+            loadingLabel="스토리 완성 중">
+            스토리 완성하기
+          </LoadingButtonContent>
+        </Button>
+      </StoryCreateStepFooter>
     </main>
   );
 }

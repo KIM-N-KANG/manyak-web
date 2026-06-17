@@ -6,6 +6,12 @@ import type {
 
 export type TagCategory = SimpleStoryTagListItemResponseCategory;
 
+export type StoryCreateStep =
+  | 'keyword'
+  | 'storyline-select'
+  | 'additional-info'
+  | 'complete';
+
 export type TagCategoryConfig = {
   value: TagCategory;
   label: string;
@@ -22,6 +28,11 @@ export type CustomKeyword = {
   id: string;
   name: string;
   category: SimpleStoryCustomTagRequestCategory;
+};
+
+export type AdditionalInfoInput = {
+  id: string;
+  value: string;
 };
 
 export type CustomKeywordsByCategory = Record<TagCategory, CustomKeyword[]>;

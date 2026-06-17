@@ -3,58 +3,17 @@
 import { useState } from 'react';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import type {
-  GenerateSimpleStorylinesRequest,
-  SimpleStoryTagListItemResponse,
-} from '@/api/generated/models';
+import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 
 import { TAG_CATEGORIES } from '../constants';
-import type {
-  CustomKeyword,
-  CustomKeywordsByCategory,
-  SelectedCustomKeywordIdsByCategory,
-  SelectedTagIdsByCategory,
-  TagCategory,
-  TagsByCategory,
-} from '../types';
-
-const createEmptySelectedTagIdsByCategory = (): SelectedTagIdsByCategory => ({
-  GENRE: [],
-  PROTAGONIST: [],
-  SUPPORTING_CHARACTER: [],
-});
-
-const createEmptySelectedCustomKeywordIdsByCategory =
-  (): SelectedCustomKeywordIdsByCategory => ({
-    GENRE: [],
-    PROTAGONIST: [],
-    SUPPORTING_CHARACTER: [],
-  });
-
-const createEmptyCustomKeywordsByCategory = (): CustomKeywordsByCategory => ({
-  GENRE: [],
-  PROTAGONIST: [],
-  SUPPORTING_CHARACTER: [],
-});
-
-const createEmptyTagsByCategory = (): TagsByCategory => ({
-  GENRE: [],
-  PROTAGONIST: [],
-  SUPPORTING_CHARACTER: [],
-});
-
-const getMaxSelectionCount = (category: TagCategory) =>
-  TAG_CATEGORIES.find((item) => item.value === category)?.maxSelectionCount ??
-  0;
-
-const getTagsByCategory = (
-  tags: SimpleStoryTagListItemResponse[],
-): TagsByCategory =>
-  TAG_CATEGORIES.reduce<TagsByCategory>((acc, { value: category }) => {
-    acc[category] = tags.filter((tag) => tag.category === category);
-
-    return acc;
-  }, createEmptyTagsByCategory());
+import type { CustomKeyword, TagCategory } from '../types';
+import {
+  createEmptyCustomKeywordsByCategory,
+  createEmptySelectedCustomKeywordIdsByCategory,
+  createEmptySelectedTagIdsByCategory,
+  getMaxSelectionCount,
+  getTagsByCategory,
+} from '../utils/tag-categories';
 
 type UseStoryKeywordStepArgs = {
   isGeneratingStoryline: boolean;

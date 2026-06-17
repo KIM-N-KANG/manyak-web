@@ -7,10 +7,16 @@ const read = (path) => readFileSync(path, 'utf8');
 const pageSource = () => read('src/app/(create)/stories/new/page.tsx');
 const funnelSource = () =>
   read('src/features/stories/new/components/story-create-funnel.tsx');
+const funnelHookSource = () =>
+  read('src/features/stories/new/hooks/use-story-create-funnel.ts');
 const keywordSectionSource = () =>
   read('src/features/stories/new/components/story-keyword-step-section.tsx');
+const keywordCategoryPanelSource = () =>
+  read('src/features/stories/new/components/story-keyword-category-panel.tsx');
 const keywordHookSource = () =>
   read('src/features/stories/new/hooks/use-story-keyword-step.ts');
+const stepTitleSource = () =>
+  read('src/features/stories/new/components/story-create-step-title.tsx');
 const storageSource = () =>
   read('src/features/stories/new/utils/story-id-storage.ts');
 
@@ -18,26 +24,28 @@ test('new story page delegates the client-side funnel to StoryCreateFunnel', () 
   const source = pageSource();
 
   assert.match(source, /StoryCreateFunnel/);
-  assert.doesNotMatch(source, /StoryCreateTitle/);
+  assert.doesNotMatch(source, /StoryCreateStepTitle/);
   assert.doesNotMatch(source, /StoryKeywordStepSection/);
 });
 
 test('story create funnel orchestrates storyline generation, selection, creation, and completion steps', () => {
   const source = funnelSource();
+  const hookSource = funnelHookSource();
 
   assert.match(source, /^'use client';/);
-  assert.match(source, /useGenerateSimpleStorylines/);
-  assert.match(source, /useCreateSimpleStory/);
+  assert.match(source, /useStoryCreateFunnel/);
   assert.match(source, /StoryKeywordStepSection/);
   assert.match(source, /StorylineSelectStepSection/);
   assert.match(source, /StoryAdditionalInfoStepSection/);
   assert.match(source, /StoryCompletionSection/);
-  assert.match(source, /generationRequest/);
-  assert.match(source, /handleRegenerateStorylines/);
-  assert.match(source, /simpleCreationId/);
-  assert.match(source, /storylineId/);
-  assert.match(source, /additionalInfos/);
-  assert.match(source, /saveCreatedStoryId/);
+  assert.match(hookSource, /useGenerateSimpleStorylines/);
+  assert.match(hookSource, /useCreateSimpleStory/);
+  assert.match(hookSource, /generationRequest/);
+  assert.match(hookSource, /handleRegenerateStorylines/);
+  assert.match(hookSource, /simpleCreationId/);
+  assert.match(hookSource, /storylineId/);
+  assert.match(hookSource, /additionalInfos/);
+  assert.match(hookSource, /saveCreatedStoryId/);
 });
 
 test('story keyword step builds a storyline request and lets the funnel own the mutation result', () => {
@@ -53,9 +61,10 @@ test('story keyword step builds a storyline request and lets the funnel own the 
 
 test('story create funnel lets users return from additional info to storyline selection', () => {
   const source = funnelSource();
+  const hookSource = funnelHookSource();
 
-  assert.match(source, /handleBackToStorylineSelect/);
-  assert.match(source, /setStep\('storyline-select'\)/);
+  assert.match(hookSource, /handleBackToStorylineSelect/);
+  assert.match(hookSource, /setStep\('storyline-select'\)/);
   assert.match(
     source,
     /onBackToStorylineSelect=\{handleBackToStorylineSelect\}/,
@@ -64,8 +73,9 @@ test('story create funnel lets users return from additional info to storyline se
 
 test('story create funnel requires back confirmation after storylines are generated', () => {
   const source = funnelSource();
+  const hookSource = funnelHookSource();
 
-  assert.match(source, /const shouldConfirmBack = step !== 'keyword';/);
+  assert.match(hookSource, /const shouldConfirmBack = step !== 'keyword';/);
   assert.match(source, /requiresBackConfirmation=\{shouldConfirmBack\}/);
 });
 
@@ -80,9 +90,19 @@ test('story create funnel constrains the viewport so step sections own scrolling
 
 test('story keyword step keeps the title and tabs fixed while tab panels scroll', () => {
   const source = keywordSectionSource();
+  const panelSource = keywordCategoryPanelSource();
+  const titleSource = stepTitleSource();
 
+  assert.match(source, /<StoryCreateStepTitle/);
   assert.match(
     source,
+    /titleLines=\{\['만들고 싶은 스토리의', '키워드를 골라주세요'\]\}/,
+  );
+  assert.match(titleSource, /titleLines\.map/);
+  assert.match(titleSource, /text-xl font-semibold/);
+  assert.match(titleSource, /text-foreground-secondary/);
+  assert.match(
+    panelSource,
     /import \{ ScrollArea \} from '@\/components\/ui\/scroll-area';/,
   );
   assert.match(
@@ -98,8 +118,10 @@ test('story keyword step keeps the title and tabs fixed while tab panels scroll'
     source,
     /<TabsContent\s+key=\{category\}\s+value=\{category\}\s+className="min-h-0">/,
   );
-  assert.match(source, /<ScrollArea className="h-full">/);
+  assert.match(source, /<StoryKeywordCategoryPanel/);
+  assert.match(panelSource, /<ScrollArea className="h-full">/);
   assert.doesNotMatch(source, /overflow-y-auto/);
+  assert.doesNotMatch(panelSource, /overflow-y-auto/);
 });
 
 test('created story ids are stored as a de-duplicated localStorage list', () => {
