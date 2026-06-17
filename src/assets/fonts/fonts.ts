@@ -20,6 +20,6 @@ export const maruburi = localFont({
       style: 'normal',
     },
   ],
-  variable: '--font-maruburi',
+  variable: '--font-maruburi-family',
   display: 'swap',
 });
