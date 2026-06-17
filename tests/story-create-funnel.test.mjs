@@ -84,6 +84,38 @@ test('story create funnel moves to storyline selection as soon as generation sta
   assert.ok(moveToStorylineSelectIndex < mutateIndex);
 });
 
+test('story create funnel moves to completion as soon as story completion starts', () => {
+  const source = funnelSource();
+  const hookSource = funnelHookSource();
+  const handlerMatch = hookSource.match(
+    /const handleCompleteStory = \(additionalInfos: string\[\]\) => \{([\s\S]*?)\n  \};/,
+  );
+
+  assert.ok(handlerMatch);
+
+  const handlerSource = handlerMatch[1];
+  const moveToCompleteIndex = handlerSource.indexOf("setStep('complete');");
+  const mutateIndex = handlerSource.indexOf('createStory.mutate({');
+
+  assert.ok(moveToCompleteIndex >= 0);
+  assert.ok(mutateIndex >= 0);
+  assert.ok(moveToCompleteIndex < mutateIndex);
+  assert.match(source, /isCompletingStory=\{isCompletingStory\}/);
+});
+
+test('story create funnel returns to additional info when story completion fails', () => {
+  const hookSource = funnelHookSource();
+
+  assert.match(
+    hookSource,
+    /if \(response\.status !== 201\) \{\s*setStep\('additional-info'\);\s*return;\s*\}/,
+  );
+  assert.match(
+    hookSource,
+    /onError: \(\) => \{\s*setStep\('additional-info'\);\s*\}/,
+  );
+});
+
 test('story create funnel lets users return from additional info to storyline selection', () => {
   const source = funnelSource();
   const hookSource = funnelHookSource();
@@ -100,8 +132,25 @@ test('story create funnel requires back confirmation after storylines are genera
   const source = funnelSource();
   const hookSource = funnelHookSource();
 
-  assert.match(hookSource, /const shouldConfirmBack = step !== 'keyword';/);
+  assert.match(
+    hookSource,
+    /const shouldConfirmBack = step !== 'keyword' && step !== 'complete';/,
+  );
   assert.match(source, /requiresBackConfirmation=\{shouldConfirmBack\}/);
+});
+
+test('story create funnel shows the header on completion with keyword-style back behavior', () => {
+  const source = funnelSource();
+
+  assert.doesNotMatch(source, /step !== 'complete' &&/);
+  assert.match(
+    source,
+    /<StoryCreateHeader requiresBackConfirmation=\{shouldConfirmBack\} \/>/,
+  );
+  assert.match(
+    source,
+    /<StoryCompletionSection isCompletingStory=\{isCompletingStory\} \/>/,
+  );
 });
 
 test('story create funnel constrains the viewport so step sections own scrolling', () => {

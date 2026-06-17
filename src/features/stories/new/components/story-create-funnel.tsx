@@ -31,9 +31,7 @@ export function StoryCreateFunnel() {
 
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-      {step !== 'complete' && (
-        <StoryCreateHeader requiresBackConfirmation={shouldConfirmBack} />
-      )}
+      <StoryCreateHeader requiresBackConfirmation={shouldConfirmBack} />
 
       {step === 'keyword' && (
         <StoryKeywordStepSection
@@ -66,7 +64,9 @@ export function StoryCreateFunnel() {
         />
       )}
 
-      {step === 'complete' && <StoryCompletionSection />}
+      {step === 'complete' && (
+        <StoryCompletionSection isCompletingStory={isCompletingStory} />
+      )}
     </div>
   );
 }

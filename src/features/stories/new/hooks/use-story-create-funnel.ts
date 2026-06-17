@@ -51,6 +51,8 @@ export function useStoryCreateFunnel() {
     mutation: {
       onSuccess: (response) => {
         if (response.status !== 201) {
+          setStep('additional-info');
+
           return;
         }
 
@@ -62,6 +64,9 @@ export function useStoryCreateFunnel() {
 
         setStep('complete');
       },
+      onError: () => {
+        setStep('additional-info');
+      },
     },
   });
 
@@ -72,7 +77,7 @@ export function useStoryCreateFunnel() {
   const canCompleteStory =
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
-  const shouldConfirmBack = step !== 'keyword';
+  const shouldConfirmBack = step !== 'keyword' && step !== 'complete';
 
   const handleGenerateStoryline = (
     request: GenerateSimpleStorylinesRequest,
@@ -115,6 +120,7 @@ export function useStoryCreateFunnel() {
       return;
     }
 
+    setStep('complete');
     createStory.mutate({
       data: {
         simpleCreationId: simpleCreationId,
