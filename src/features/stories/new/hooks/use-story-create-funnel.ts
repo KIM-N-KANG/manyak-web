@@ -77,6 +77,11 @@ export function useStoryCreateFunnel() {
   const handleGenerateStoryline = (
     request: GenerateSimpleStorylinesRequest,
   ) => {
+    setGenerationRequest(request);
+    setGenerationResult(null);
+    setActiveStorylineIndex(0);
+    setSelectedStoryline(null);
+    setStep('storyline-select');
     generateStorylines.mutate({ data: request });
   };
 

@@ -22,9 +22,6 @@ const addKeywordDialogHookSource = () =>
 const tagCategoryUtilsSource = () =>
   read('src/features/stories/new/utils/tag-categories.ts');
 
-const loadingButtonContentSource = () =>
-  read('src/features/stories/new/components/loading-button-content.tsx');
-
 const constantsSource = () => read('src/features/stories/new/constants.ts');
 
 test('story keyword step fetches simple story tags and renders selectable toggle chips by category', () => {
@@ -93,23 +90,12 @@ test('story keyword step enables storyline generation only after required catego
   );
 });
 
-test('story keyword step swaps the generate button label for a spinner while storylines are loading', () => {
+test('story keyword step keeps the generate button text while the funnel shows storyline loading state', () => {
   const sectionSource = keywordSectionSource();
-  const loadingSource = loadingButtonContentSource();
 
-  assert.match(
-    loadingSource,
-    /import \{ Spinner \} from '@\/components\/ui\/spinner';/,
-  );
-  assert.match(sectionSource, /className="relative"/);
-  assert.match(sectionSource, /<LoadingButtonContent/);
-  assert.match(
-    loadingSource,
-    /className=\{isLoading \? 'invisible' : undefined\}/,
-  );
-  assert.match(loadingSource, /isLoading && <Spinner/);
-  assert.match(loadingSource, /aria-label=\{loadingLabel\}/);
-  assert.match(sectionSource, /loadingLabel="스토리라인 생성 중"/);
+  assert.doesNotMatch(sectionSource, /LoadingButtonContent/);
+  assert.doesNotMatch(sectionSource, /aria-busy=\{isGeneratingStoryline\}/);
+  assert.match(sectionSource, /스토리라인 만들기/);
 });
 
 test('story keyword step disables every keyword toggle chip while storylines are pending', () => {

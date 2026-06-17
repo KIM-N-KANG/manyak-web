@@ -59,6 +59,31 @@ test('story keyword step builds a storyline request and lets the funnel own the 
   assert.doesNotMatch(hookSource, /useGenerateSimpleStorylines/);
 });
 
+test('story create funnel moves to storyline selection as soon as generation starts', () => {
+  const hookSource = funnelHookSource();
+  const handlerMatch = hookSource.match(
+    /const handleGenerateStoryline = \(\s*request: GenerateSimpleStorylinesRequest,\s*\) => \{([\s\S]*?)\n  \};/,
+  );
+
+  assert.ok(handlerMatch);
+
+  const handlerSource = handlerMatch[1];
+  const moveToStorylineSelectIndex = handlerSource.indexOf(
+    "setStep('storyline-select');",
+  );
+  const mutateIndex = handlerSource.indexOf(
+    'generateStorylines.mutate({ data: request });',
+  );
+
+  assert.match(handlerSource, /setGenerationRequest\(request\);/);
+  assert.match(handlerSource, /setGenerationResult\(null\);/);
+  assert.match(handlerSource, /setActiveStorylineIndex\(0\);/);
+  assert.match(handlerSource, /setSelectedStoryline\(null\);/);
+  assert.ok(moveToStorylineSelectIndex >= 0);
+  assert.ok(mutateIndex >= 0);
+  assert.ok(moveToStorylineSelectIndex < mutateIndex);
+});
+
 test('story create funnel lets users return from additional info to storyline selection', () => {
   const source = funnelSource();
   const hookSource = funnelHookSource();
@@ -96,7 +121,7 @@ test('story keyword step keeps the title and tabs fixed while tab panels scroll'
   assert.match(source, /<StoryCreateStepTitle/);
   assert.match(
     source,
-    /titleLines=\{\['만들고 싶은 스토리의', '키워드를 골라주세요'\]\}/,
+    /titleLines=\{\['만들고 싶은 스토리의', '키워드를 선택해주세요'\]\}/,
   );
   assert.match(titleSource, /titleLines\.map/);
   assert.match(titleSource, /text-xl font-semibold/);

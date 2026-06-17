@@ -9,6 +9,15 @@ const source = () =>
   );
 const constantsSource = () =>
   readFileSync('src/features/stories/new/constants.ts', 'utf8');
+const typesSource = () =>
+  readFileSync('src/features/stories/new/types.ts', 'utf8');
+const storylineTabsSource = () =>
+  readFileSync('src/features/stories/new/utils/storyline-tabs.ts', 'utf8');
+const storylineSelectLoadingStateSource = () =>
+  readFileSync(
+    'src/features/stories/new/components/storyline-select-loading-state.tsx',
+    'utf8',
+  );
 const storylineTextSource = () =>
   readFileSync(
     'src/features/stories/new/components/storyline-text.tsx',
@@ -40,9 +49,60 @@ test('storyline select step displays storyline text with MaruBuri font and has r
   assert.match(constantText, /'storyline-select': '2 \/ 3'/);
   assert.match(text, /variant="secondary"/);
   assert.match(text, /다시 만들기/);
-  assert.match(text, /이 스토리라인 선택하기/);
+  assert.match(text, /선택하기/);
   assert.match(text, /onRegenerateStorylines/);
   assert.match(text, /onSelectStoryline/);
+});
+
+test('storyline select step shows storyline text skeletons while storylines are loading', () => {
+  const text = source();
+  const constants = constantsSource();
+  const loadingState = storylineSelectLoadingStateSource();
+
+  assert.match(
+    loadingState,
+    /import \{ Skeleton \} from '@\/components\/ui\/skeleton';/,
+  );
+  assert.match(text, /const isLoadingStorylines = isRegeneratingStorylines;/);
+  assert.match(text, /import \{ StorylineSelectLoadingState \}/);
+  assert.match(loadingState, /function StorylineTextSkeleton/);
+  assert.match(loadingState, /<StorylineTextSkeleton \/>/);
+  assert.match(loadingState, /STORYLINE_SELECT_LOADING_LABEL/);
+  assert.match(constants, /export const STORYLINE_SELECT_LOADING_LABEL/);
+  assert.match(
+    constants,
+    /export const STORYLINE_SELECT_LOADING_TAB_COUNT = 3;/,
+  );
+  assert.match(
+    constants,
+    /export const STORYLINE_TEXT_SKELETON_WIDTH_CLASSES = \[/,
+  );
+  assert.match(text, /!isLoadingStorylines && storylines\.length === 0/);
+});
+
+test('storyline select step keeps shared constants, types, and utilities outside the component', () => {
+  const text = source();
+  const types = typesSource();
+  const storylineTabs = storylineTabsSource();
+
+  assert.match(
+    text,
+    /import type \{ StorylineSelectStepSectionProps \} from '\.\.\/types';/,
+  );
+  assert.match(types, /export type StorylineSelectStepSectionProps = \{/);
+  assert.doesNotMatch(text, /type StorylineSelectStepSectionProps = \{/);
+  assert.match(
+    text,
+    /import \{ getStorylineTabValue \} from '\.\.\/utils\/storyline-tabs';/,
+  );
+  assert.match(
+    storylineTabs,
+    /export const getStorylineTabValue = \(index: number\) => String\(index\);/,
+  );
+  assert.doesNotMatch(
+    text,
+    /const getStorylineTabValue = \(index: number\) => String\(index\);/,
+  );
 });
 
 test('storyline text breaks long generated stories into readable lines', () => {
@@ -55,7 +115,7 @@ test('storyline text breaks long generated stories into readable lines', () => {
   assert.match(storylineText, /<p key=/);
   assert.match(
     storylineText,
-    /className="flex flex-col gap-3 font-maruburi text-base leading-loose"/,
+    /className="flex flex-col gap-4 font-maruburi text-base leading-loose"/,
   );
   assert.doesNotMatch(
     storylineText,
@@ -78,6 +138,6 @@ test('storyline select step keeps the title and tabs fixed while tab panels scro
   assert.match(text, /className="min-h-0 flex-1 overflow-hidden"/);
   assert.match(text, /className="min-h-0"/);
   assert.match(text, /<div className="h-full overflow-y-auto">/);
-  assert.match(text, /<div className="px-4 pb-4">/);
+  assert.match(text, /<div className="p-4">/);
   assert.doesNotMatch(text, /<ScrollArea/);
 });

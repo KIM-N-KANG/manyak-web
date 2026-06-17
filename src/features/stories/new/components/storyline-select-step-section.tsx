@@ -1,26 +1,15 @@
 'use client';
 
-import type { SimpleStorylineResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { STORY_CREATE_STEP_PROGRESS_LABELS } from '../constants';
-import { LoadingButtonContent } from './loading-button-content';
+import type { StorylineSelectStepSectionProps } from '../types';
+import { getStorylineTabValue } from '../utils/storyline-tabs';
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepTitle } from './story-create-step-title';
+import { StorylineSelectLoadingState } from './storyline-select-loading-state';
 import { StorylineText } from './storyline-text';
-
-type StorylineSelectStepSectionProps = {
-  storylines: SimpleStorylineResponse[];
-  activeStorylineIndex: number;
-  isRegeneratingStorylines: boolean;
-  hasRegenerateStorylinesError: boolean;
-  onActiveStorylineIndexChange: (index: number) => void;
-  onRegenerateStorylines: () => void;
-  onSelectStoryline: () => void;
-};
-
-const getStorylineTabValue = (index: number) => String(index);
 
 export function StorylineSelectStepSection({
   storylines,
@@ -31,7 +20,10 @@ export function StorylineSelectStepSection({
   onRegenerateStorylines,
   onSelectStoryline,
 }: StorylineSelectStepSectionProps) {
-  const selectedStoryline = storylines[activeStorylineIndex];
+  const isLoadingStorylines = isRegeneratingStorylines;
+  const selectedStoryline = isLoadingStorylines
+    ? undefined
+    : storylines[activeStorylineIndex];
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
@@ -42,36 +34,40 @@ export function StorylineSelectStepSection({
           className="p-4"
         />
 
-        <Tabs
-          className="min-h-0 flex-1 overflow-hidden"
-          value={getStorylineTabValue(activeStorylineIndex)}
-          onValueChange={(value) =>
-            onActiveStorylineIndexChange(Number(value))
-          }>
-          <TabsList variant="line">
+        {isLoadingStorylines ? (
+          <StorylineSelectLoadingState />
+        ) : (
+          <Tabs
+            className="min-h-0 flex-1 overflow-hidden"
+            value={getStorylineTabValue(activeStorylineIndex)}
+            onValueChange={(value) =>
+              onActiveStorylineIndexChange(Number(value))
+            }>
+            <TabsList variant="line">
+              {storylines.map((storyline, index) => (
+                <TabsTrigger
+                  key={storyline.id ?? index}
+                  value={getStorylineTabValue(index)}>
+                  {index + 1}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {storylines.map((storyline, index) => (
-              <TabsTrigger
+              <TabsContent
                 key={storyline.id ?? index}
-                value={getStorylineTabValue(index)}>
-                {index + 1}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {storylines.map((storyline, index) => (
-            <TabsContent
-              key={storyline.id ?? index}
-              value={getStorylineTabValue(index)}
-              className="min-h-0">
-              <div className="h-full overflow-y-auto">
-                <div className="p-4">
-                  <StorylineText>{storyline.story}</StorylineText>
+                value={getStorylineTabValue(index)}
+                className="min-h-0">
+                <div className="h-full overflow-y-auto">
+                  <div className="p-4">
+                    <StorylineText>{storyline.story}</StorylineText>
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
 
-        {storylines.length === 0 && (
+        {!isLoadingStorylines && storylines.length === 0 && (
           <p className="px-4 py-8 text-sm text-foreground-secondary">
             생성된 스토리라인이 없어요. 잠시 후 다시 시도해주세요
           </p>
@@ -89,20 +85,14 @@ export function StorylineSelectStepSection({
           type="button"
           size="lg"
           variant="secondary"
-          className="relative"
-          aria-busy={isRegeneratingStorylines}
           disabled={isRegeneratingStorylines}
           onClick={onRegenerateStorylines}>
-          <LoadingButtonContent
-            isLoading={isRegeneratingStorylines}
-            loadingLabel="스토리라인 생성 중">
-            다시 만들기
-          </LoadingButtonContent>
+          다시 만들기
         </Button>
         <Button
           type="button"
           size="lg"
-          disabled={!selectedStoryline || isRegeneratingStorylines}
+          disabled={!selectedStoryline || isLoadingStorylines}
           onClick={onSelectStoryline}>
           선택하기
         </Button>

@@ -46,3 +46,20 @@ export const SKELETON_TAG_CHIP_WIDTH_CLASSES = [
   'w-36',
   'w-40',
 ] as const;
+
+export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
+
+export const STORYLINE_SELECT_LOADING_TAB_COUNT = 3;
+
+export const STORYLINE_TEXT_SKELETON_WIDTH_CLASSES = [
+  'w-full',
+  'w-8/12',
+  'w-10/12',
+  'w-0',
+  'w-full',
+  'w-2/12',
+  'w-0',
+  'w-full',
+  'w-11/12',
+  'w-5/12',
+] as const;

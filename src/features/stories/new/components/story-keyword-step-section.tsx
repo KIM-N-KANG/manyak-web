@@ -10,7 +10,6 @@ import {
 } from '../constants';
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
 import type { TagCategory } from '../types';
-import { LoadingButtonContent } from './loading-button-content';
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepTitle } from './story-create-step-title';
 import { StoryKeywordCategoryPanel } from './story-keyword-category-panel';
@@ -110,15 +109,9 @@ export function StoryKeywordStepSection({
         <Button
           type="button"
           size="lg"
-          className="relative"
-          aria-busy={isGeneratingStoryline}
           disabled={!canGenerateStoryline || isGeneratingStoryline}
           onClick={handleGenerateStoryline}>
-          <LoadingButtonContent
-            isLoading={isGeneratingStoryline}
-            loadingLabel="스토리라인 생성 중">
-            스토리라인 만들기
-          </LoadingButtonContent>
+          스토리라인 만들기
         </Button>
       </StoryCreateStepFooter>
     </main>
