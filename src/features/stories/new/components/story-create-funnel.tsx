@@ -82,6 +82,7 @@ export function StoryCreateFunnel() {
   const canCompleteStory =
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
+  const shouldConfirmBack = step !== 'keyword';
 
   const handleGenerateStoryline = (
     request: GenerateSimpleStorylinesRequest,
@@ -130,7 +131,9 @@ export function StoryCreateFunnel() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      {step !== 'complete' && <StoryCreateHeader />}
+      {step !== 'complete' && (
+        <StoryCreateHeader requiresBackConfirmation={shouldConfirmBack} />
+      )}
 
       {step === 'keyword' && (
         <StoryKeywordStepSection

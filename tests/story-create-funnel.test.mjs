@@ -62,6 +62,13 @@ test('story create funnel lets users return from additional info to storyline se
   );
 });
 
+test('story create funnel requires back confirmation after storylines are generated', () => {
+  const source = funnelSource();
+
+  assert.match(source, /const shouldConfirmBack = step !== 'keyword';/);
+  assert.match(source, /requiresBackConfirmation=\{shouldConfirmBack\}/);
+});
+
 test('created story ids are stored as a de-duplicated localStorage list', () => {
   const source = storageSource();
 
