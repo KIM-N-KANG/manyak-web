@@ -1,5 +1,4 @@
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleChip } from '@/components/ui/toggle-chip';
 
@@ -53,7 +52,7 @@ export function StoryKeywordCategoryPanel({
   const isMaxSelectionReached = selectedCount >= maxSelectionCount;
 
   return (
-    <ScrollArea className="h-full">
+    <div className="h-full overflow-y-auto">
       <div className="flex flex-col gap-4 px-4 pb-4">
         <p className="text-sm text-foreground-secondary">
           최대 {maxSelectionCount}개까지 선택할 수 있어요
@@ -124,6 +123,6 @@ export function StoryKeywordCategoryPanel({
           />
         </div>
       </div>
-    </ScrollArea>
+    </div>
   );
 }

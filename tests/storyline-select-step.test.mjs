@@ -66,10 +66,7 @@ test('storyline text breaks long generated stories into readable lines', () => {
 test('storyline select step keeps the title and tabs fixed while tab panels scroll', () => {
   const text = source();
 
-  assert.match(
-    text,
-    /import \{ ScrollArea \} from '@\/components\/ui\/scroll-area';/,
-  );
+  assert.doesNotMatch(text, /@\/components\/ui\/scroll-area/);
   assert.match(
     text,
     /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">/,
@@ -80,7 +77,7 @@ test('storyline select step keeps the title and tabs fixed while tab panels scro
   );
   assert.match(text, /className="min-h-0 flex-1 overflow-hidden"/);
   assert.match(text, /className="min-h-0"/);
-  assert.match(text, /<ScrollArea className="h-full">/);
+  assert.match(text, /<div className="h-full overflow-y-auto">/);
   assert.match(text, /<div className="px-4 pb-4">/);
-  assert.doesNotMatch(text, /overflow-y-auto/);
+  assert.doesNotMatch(text, /<ScrollArea/);
 });

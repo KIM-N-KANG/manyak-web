@@ -12,7 +12,6 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,
@@ -63,7 +62,7 @@ export function StoryAdditionalInfoStepSection({
           description="추천 질문에 답하거나, 자유롭게 적어주세요"
         />
 
-        <ScrollArea className="min-h-0 flex-1">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-8">
             <StorylineText>{storyline.story}</StorylineText>
 
@@ -142,7 +141,7 @@ export function StoryAdditionalInfoStepSection({
               </p>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </section>
 
       <StoryCreateStepFooter

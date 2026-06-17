@@ -74,10 +74,7 @@ test('additional info step lets users go back to storyline selection', () => {
 test('additional info step keeps the title fixed while the content below it scrolls', () => {
   const text = source();
 
-  assert.match(
-    text,
-    /import \{ ScrollArea \} from '@\/components\/ui\/scroll-area';/,
-  );
+  assert.doesNotMatch(text, /@\/components\/ui\/scroll-area/);
   assert.match(
     text,
     /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">/,
@@ -86,7 +83,7 @@ test('additional info step keeps the title fixed while the content below it scro
     text,
     /<section className="flex min-h-0 flex-1 flex-col gap-8 overflow-hidden p-4">/,
   );
-  assert.match(text, /<ScrollArea className="min-h-0 flex-1">/);
+  assert.match(text, /<div className="min-h-0 flex-1 overflow-y-auto">/);
   assert.match(text, /<div className="flex flex-col gap-8">/);
-  assert.doesNotMatch(text, /overflow-y-auto/);
+  assert.doesNotMatch(text, /<ScrollArea/);
 });

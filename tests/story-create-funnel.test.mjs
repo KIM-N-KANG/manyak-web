@@ -101,10 +101,7 @@ test('story keyword step keeps the title and tabs fixed while tab panels scroll'
   assert.match(titleSource, /titleLines\.map/);
   assert.match(titleSource, /text-xl font-semibold/);
   assert.match(titleSource, /text-foreground-secondary/);
-  assert.match(
-    panelSource,
-    /import \{ ScrollArea \} from '@\/components\/ui\/scroll-area';/,
-  );
+  assert.doesNotMatch(panelSource, /@\/components\/ui\/scroll-area/);
   assert.match(
     source,
     /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">/,
@@ -119,9 +116,9 @@ test('story keyword step keeps the title and tabs fixed while tab panels scroll'
     /<TabsContent\s+key=\{category\}\s+value=\{category\}\s+className="min-h-0">/,
   );
   assert.match(source, /<StoryKeywordCategoryPanel/);
-  assert.match(panelSource, /<ScrollArea className="h-full">/);
+  assert.match(panelSource, /<div className="h-full overflow-y-auto">/);
   assert.doesNotMatch(source, /overflow-y-auto/);
-  assert.doesNotMatch(panelSource, /overflow-y-auto/);
+  assert.doesNotMatch(panelSource, /<ScrollArea/);
 });
 
 test('created story ids are stored as a de-duplicated localStorage list', () => {
