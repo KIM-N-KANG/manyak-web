@@ -113,7 +113,7 @@ test('story create funnel constrains the viewport so step sections own scrolling
   );
 });
 
-test('story keyword step keeps the title and tabs fixed while tab panels scroll', () => {
+test('story keyword step scrolls the whole step content between header and footer', () => {
   const source = keywordSectionSource();
   const panelSource = keywordCategoryPanelSource();
   const titleSource = stepTitleSource();
@@ -129,20 +129,13 @@ test('story keyword step keeps the title and tabs fixed while tab panels scroll'
   assert.doesNotMatch(panelSource, /@\/components\/ui\/scroll-area/);
   assert.match(
     source,
-    /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">/,
+    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">/,
   );
-  assert.match(
-    source,
-    /<section className="flex min-h-0 flex-1 flex-col overflow-hidden">/,
-  );
-  assert.match(source, /className="min-h-0 flex-1 overflow-hidden"/);
-  assert.match(
-    source,
-    /<TabsContent\s+key=\{category\}\s+value=\{category\}\s+className="min-h-0">/,
-  );
+  assert.match(source, /<section className="flex flex-col">/);
+  assert.doesNotMatch(source, /className="min-h-0 flex-1 overflow-hidden"/);
+  assert.doesNotMatch(source, /className="min-h-0"/);
   assert.match(source, /<StoryKeywordCategoryPanel/);
-  assert.match(panelSource, /<div className="h-full overflow-y-auto">/);
-  assert.doesNotMatch(source, /overflow-y-auto/);
+  assert.doesNotMatch(panelSource, /<div className="h-full overflow-y-auto">/);
   assert.doesNotMatch(panelSource, /<ScrollArea/);
 });
 

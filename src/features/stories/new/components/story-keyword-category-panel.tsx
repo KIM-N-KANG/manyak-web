@@ -52,76 +52,74 @@ export function StoryKeywordCategoryPanel({
   const isMaxSelectionReached = selectedCount >= maxSelectionCount;
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="flex flex-col gap-4 p-4">
-        <p className="text-sm text-foreground-secondary">
-          최대 {maxSelectionCount}개까지 선택할 수 있어요
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {isLoadingTags && (
-            <>
-              {SKELETON_TAG_CHIP_WIDTH_CLASSES.map((widthClass, index) => (
-                <Skeleton
-                  key={`${category}-tag-skeleton-${index}`}
-                  className={`h-10 ${widthClass}`}
-                  aria-hidden="true"
-                />
-              ))}
-            </>
-          )}
-          {hasTagsError && (
-            <p className="py-2 text-sm text-destructive">
-              키워드를 불러오지 못했어요
-            </p>
-          )}
-          {predefinedTags.map((tag) => {
-            const { tagId, name } = tag;
+    <div className="flex flex-col gap-4 p-4">
+      <p className="text-sm text-foreground-secondary">
+        최대 {maxSelectionCount}개까지 선택할 수 있어요
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {isLoadingTags && (
+          <>
+            {SKELETON_TAG_CHIP_WIDTH_CLASSES.map((widthClass, index) => (
+              <Skeleton
+                key={`${category}-tag-skeleton-${index}`}
+                className={`h-10 ${widthClass}`}
+                aria-hidden="true"
+              />
+            ))}
+          </>
+        )}
+        {hasTagsError && (
+          <p className="py-2 text-sm text-destructive">
+            키워드를 불러오지 못했어요
+          </p>
+        )}
+        {predefinedTags.map((tag) => {
+          const { tagId, name } = tag;
 
-            if (tagId == null || !name) {
-              return null;
-            }
+          if (tagId == null || !name) {
+            return null;
+          }
 
-            const isSelected = selectedTagIds.includes(tagId);
-            const isKeywordChipDisabled =
-              isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
+          const isSelected = selectedTagIds.includes(tagId);
+          const isKeywordChipDisabled =
+            isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
 
-            return (
-              <ToggleChip
-                key={tagId}
-                pressed={isSelected}
-                disabled={isKeywordChipDisabled}
-                onPressedChange={(pressed) =>
-                  onTogglePredefinedTag(category, tagId, pressed)
-                }>
-                {name}
-              </ToggleChip>
-            );
-          })}
-          {customKeywords.map((keyword) => {
-            const isSelected = selectedCustomKeywordIds.includes(keyword.id);
-            const isKeywordChipDisabled =
-              isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
+          return (
+            <ToggleChip
+              key={tagId}
+              pressed={isSelected}
+              disabled={isKeywordChipDisabled}
+              onPressedChange={(pressed) =>
+                onTogglePredefinedTag(category, tagId, pressed)
+              }>
+              {name}
+            </ToggleChip>
+          );
+        })}
+        {customKeywords.map((keyword) => {
+          const isSelected = selectedCustomKeywordIds.includes(keyword.id);
+          const isKeywordChipDisabled =
+            isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
 
-            return (
-              <ToggleChip
-                key={keyword.id}
-                pressed={isSelected}
-                disabled={isKeywordChipDisabled}
-                onPressedChange={(pressed) =>
-                  onToggleCustomKeyword(category, keyword.id, pressed)
-                }>
-                {keyword.name}
-              </ToggleChip>
-            );
-          })}
-          <AddKeywordDialog
-            category={category}
-            categoryLabel={label}
-            placeholder={placeholder}
-            disabled={isGeneratingStoryline || isMaxSelectionReached}
-            onAddKeyword={(keyword) => onAddCustomKeyword(category, keyword)}
-          />
-        </div>
+          return (
+            <ToggleChip
+              key={keyword.id}
+              pressed={isSelected}
+              disabled={isKeywordChipDisabled}
+              onPressedChange={(pressed) =>
+                onToggleCustomKeyword(category, keyword.id, pressed)
+              }>
+              {keyword.name}
+            </ToggleChip>
+          );
+        })}
+        <AddKeywordDialog
+          category={category}
+          categoryLabel={label}
+          placeholder={placeholder}
+          disabled={isGeneratingStoryline || isMaxSelectionReached}
+          onAddKeyword={(keyword) => onAddCustomKeyword(category, keyword)}
+        />
       </div>
     </div>
   );

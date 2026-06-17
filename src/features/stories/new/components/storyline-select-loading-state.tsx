@@ -20,7 +20,7 @@ function StorylineTextSkeleton() {
 export function StorylineSelectLoadingState() {
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      className="flex flex-col"
       aria-busy="true"
       aria-label={STORYLINE_SELECT_LOADING_LABEL}>
       <div
@@ -37,10 +37,8 @@ export function StorylineSelectLoadingState() {
         )}
       </div>
       <Separator className="mt-1" />
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="p-4 pt-6">
-          <StorylineTextSkeleton />
-        </div>
+      <div className="p-4 pt-6">
+        <StorylineTextSkeleton />
       </div>
     </div>
   );

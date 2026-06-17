@@ -26,8 +26,8 @@ export function StorylineSelectStepSection({
     : storylines[activeStorylineIndex];
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">
+      <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
           description="선택한 스토리라인이 스토리의 기본 흐름이 돼요"
@@ -38,7 +38,6 @@ export function StorylineSelectStepSection({
           <StorylineSelectLoadingState />
         ) : (
           <Tabs
-            className="min-h-0 flex-1 overflow-hidden"
             value={getStorylineTabValue(activeStorylineIndex)}
             onValueChange={(value) =>
               onActiveStorylineIndexChange(Number(value))
@@ -55,12 +54,9 @@ export function StorylineSelectStepSection({
             {storylines.map((storyline, index) => (
               <TabsContent
                 key={storyline.id ?? index}
-                value={getStorylineTabValue(index)}
-                className="min-h-0">
-                <div className="h-full overflow-y-auto">
-                  <div className="p-4">
-                    <StorylineText>{storyline.story}</StorylineText>
-                  </div>
+                value={getStorylineTabValue(index)}>
+                <div className="p-4">
+                  <StorylineText>{storyline.story}</StorylineText>
                 </div>
               </TabsContent>
             ))}

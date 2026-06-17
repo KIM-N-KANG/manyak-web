@@ -31,7 +31,7 @@ test('additional info step shows the selected storyline and AI help questions', 
   assert.match(storylineText, /font-maruburi/);
   assert.match(text, /helpQuestions/);
   assert.match(text, /AI 추천 질문/);
-  assert.match(text, /스토리에 더하고 싶은/);
+  assert.match(text, /스토리라인에 더하고 싶은/);
 });
 
 test('additional info step lets users add up to three optional inputs with delete buttons', () => {
@@ -106,19 +106,20 @@ test('additional info step lets users go back to storyline selection', () => {
   assert.match(text, /onClick=\{onBackToStorylineSelect\}/);
 });
 
-test('additional info step keeps the title fixed while the content below it scrolls', () => {
+test('additional info step scrolls the whole step content between header and footer', () => {
   const text = source();
 
   assert.doesNotMatch(text, /@\/components\/ui\/scroll-area/);
   assert.match(
     text,
-    /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">/,
+    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">/,
   );
-  assert.match(
+  assert.match(text, /<section className="flex flex-col">/);
+  assert.doesNotMatch(
     text,
-    /<section className="flex min-h-0 flex-1 flex-col overflow-hidden">/,
+    /<div className="min-h-0 flex-1 overflow-y-auto p-4">/,
   );
-  assert.match(text, /<div className="min-h-0 flex-1 overflow-y-auto p-4">/);
+  assert.match(text, /<div className="p-4">/);
   assert.match(text, /<div className="flex flex-col gap-8">/);
   assert.doesNotMatch(text, /<ScrollArea/);
 });

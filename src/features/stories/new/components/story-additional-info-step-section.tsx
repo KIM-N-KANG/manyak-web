@@ -1,6 +1,10 @@
 'use client';
 
-import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
+import {
+  ArrowMoveDownRightIcon,
+  Cancel01Icon,
+  PlusSignIcon,
+} from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { SimpleStorylineResponse } from '@/api/generated/models';
@@ -55,26 +59,35 @@ export function StoryAdditionalInfoStepSection({
   };
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-16">
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">
+      <section className="flex flex-col">
         <StoryCreateStepTitle
-          titleLines={['스토리에 더하고 싶은', '내용을 입력해주세요']}
-          description="입력한 내용은 스토리를 완성하는 데 반영돼요"
+          titleLines={[
+            '스토리라인에 더하고 싶은',
+            '정보를 자유롭게 입력해주세요',
+          ]}
+          description="입력한 정보는 스토리를 완성하는 데 반영돼요"
           className="border-b border-border p-4"
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="p-4">
           <div className="flex flex-col gap-8">
             <StorylineText>{storyline.story}</StorylineText>
 
             <section
               aria-labelledby="story-help-questions"
-              className="flex flex-col gap-2">
+              className="flex flex-col gap-2 text-foreground-secondary">
               <Label>AI 추천 질문</Label>
               <ul className="flex flex-col gap-2">
                 {(storyline.helpQuestions ?? []).map((helpQuestion, index) => (
                   <li key={helpQuestion.id ?? index}>
-                    {helpQuestion.question}
+                    <div className="flex gap-2">
+                      <HugeiconsIcon
+                        icon={ArrowMoveDownRightIcon}
+                        aria-hidden="true"
+                      />
+                      {helpQuestion.question}
+                    </div>
                   </li>
                 ))}
               </ul>
