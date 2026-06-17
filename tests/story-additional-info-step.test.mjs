@@ -12,6 +12,8 @@ const hookSource = () =>
     'src/features/stories/new/hooks/use-additional-infos.ts',
     'utf8',
   );
+const idSource = () =>
+  readFileSync('src/features/stories/new/utils/create-client-id.ts', 'utf8');
 const constantsSource = () =>
   readFileSync('src/features/stories/new/constants.ts', 'utf8');
 const storylineTextSource = () =>
@@ -35,6 +37,7 @@ test('additional info step shows the selected storyline and AI help questions', 
 test('additional info step lets users add up to three optional inputs with delete buttons', () => {
   const text = source();
   const hookText = hookSource();
+  const idText = idSource();
 
   assert.match(text, /useAdditionalInfos/);
   assert.match(text, /ADDITIONAL_INFO_MAX_COUNT/);
@@ -43,7 +46,10 @@ test('additional info step lets users add up to three optional inputs with delet
   assert.match(hookText, /addAdditionalInfo/);
   assert.match(hookText, /removeAdditionalInfo/);
   assert.match(hookText, /changeAdditionalInfo/);
-  assert.match(hookText, /crypto\.randomUUID\(\)/);
+  assert.match(hookText, /createClientId\(\)/);
+  assert.match(idText, /globalThis\.crypto\?\.randomUUID/);
+  assert.match(idText, /Date\.now\(\)/);
+  assert.match(idText, /Math\.random\(\)/);
   assert.match(hookText, /slice\(0, ADDITIONAL_INFO_MAX_LENGTH\)/);
   assert.match(text, /aria-label=\{`추가 정보 \$\{index \+ 1\} 삭제`\}/);
   assert.match(text, /정보 추가/);

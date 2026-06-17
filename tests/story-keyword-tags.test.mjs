@@ -16,6 +16,9 @@ const addKeywordDialogSource = () =>
 const storyKeywordHookSource = () =>
   read('src/features/stories/new/hooks/use-story-keyword-step.ts');
 
+const idSource = () =>
+  read('src/features/stories/new/utils/create-client-id.ts');
+
 const addKeywordDialogHookSource = () =>
   read('src/features/stories/new/hooks/use-add-keyword-dialog.ts');
 
@@ -132,6 +135,7 @@ test('story keyword step lets users add a custom keyword to the active category 
   const sectionSource = keywordSectionSource();
   const panelSource = keywordCategoryPanelSource();
   const hookSource = storyKeywordHookSource();
+  const idText = idSource();
 
   assert.match(sectionSource, /<StoryKeywordCategoryPanel/);
   assert.match(sectionSource, /onAddCustomKeyword=\{addCustomKeyword\}/);
@@ -140,7 +144,10 @@ test('story keyword step lets users add a custom keyword to the active category 
   assert.match(panelSource, /placeholder=\{placeholder\}/);
   assert.match(panelSource, /onAddKeyword=\{\(keyword\) =>/);
   assert.match(hookSource, /setCustomKeywordsByCategory/);
-  assert.match(hookSource, /crypto\.randomUUID\(\)/);
+  assert.match(hookSource, /createClientId\(\)/);
+  assert.match(idText, /globalThis\.crypto\?\.randomUUID/);
+  assert.match(idText, /Date\.now\(\)/);
+  assert.match(idText, /Math\.random\(\)/);
   assert.match(hookSource, /selectedCustomKeywordIdsByCategory/);
 });
 

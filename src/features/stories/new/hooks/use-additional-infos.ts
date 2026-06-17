@@ -7,9 +7,10 @@ import {
   ADDITIONAL_INFO_MAX_LENGTH,
 } from '../constants';
 import type { AdditionalInfoInput } from '../types';
+import { createClientId } from '../utils/create-client-id';
 
 const createEmptyAdditionalInfo = (): AdditionalInfoInput => ({
-  id: crypto.randomUUID(),
+  id: createClientId(),
   value: '',
 });
 

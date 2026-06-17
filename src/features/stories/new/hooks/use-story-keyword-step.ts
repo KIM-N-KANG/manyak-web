@@ -7,6 +7,7 @@ import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 
 import { TAG_CATEGORIES } from '../constants';
 import type { CustomKeyword, TagCategory } from '../types';
+import { createClientId } from '../utils/create-client-id';
 import {
   createEmptyCustomKeywordsByCategory,
   createEmptySelectedCustomKeywordIdsByCategory,
@@ -123,7 +124,7 @@ export function useStoryKeywordStep({
     }
 
     const customKeyword: CustomKeyword = {
-      id: crypto.randomUUID(),
+      id: createClientId(),
       name: keyword,
       category,
     };
