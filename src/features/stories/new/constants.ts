@@ -2,6 +2,10 @@ import type { TagCategoryConfig } from './types';
 
 export const ADD_KEYWORD_MAX_LENGTH = 10;
 
+export const ADDITIONAL_INFO_MAX_COUNT = 3;
+
+export const ADDITIONAL_INFO_MAX_LENGTH = 100;
+
 export const TAG_CATEGORIES = [
   {
     value: 'GENRE',
