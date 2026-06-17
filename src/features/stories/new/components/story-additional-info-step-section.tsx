@@ -81,12 +81,15 @@ export function StoryAdditionalInfoStepSection({
               <ul className="flex flex-col gap-2">
                 {(storyline.helpQuestions ?? []).map((helpQuestion, index) => (
                   <li key={helpQuestion.id ?? index}>
-                    <div className="flex gap-2">
+                    <div className="flex items-start gap-2">
                       <HugeiconsIcon
                         icon={ArrowMoveDownRightIcon}
+                        className="size-4 shrink-0"
                         aria-hidden="true"
                       />
-                      {helpQuestion.question}
+                      <span className="min-w-0 flex-1">
+                        {helpQuestion.question}
+                      </span>
                     </div>
                   </li>
                 ))}
