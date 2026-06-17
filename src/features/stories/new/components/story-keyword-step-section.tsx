@@ -2,6 +2,7 @@
 
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -71,87 +72,93 @@ export function StoryKeywordStepSection({
                 <TabsContent
                   key={category}
                   value={category}
-                  className="min-h-0 overflow-y-auto">
-                  <div className="flex flex-col gap-4 px-4 pb-4">
-                    <p className="text-sm text-foreground-secondary">
-                      최대 {maxSelectionCount}개까지 선택할 수 있어요
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {simpleStoryTags.isLoading && (
-                        <>
-                          {SKELETON_TAG_CHIP_WIDTH_CLASSES.map(
-                            (widthClass, index) => (
-                              <Skeleton
-                                key={`${category}-tag-skeleton-${index}`}
-                                className={`h-10 ${widthClass}`}
-                                aria-hidden="true"
-                              />
-                            ),
-                          )}
-                        </>
-                      )}
-                      {simpleStoryTags.isError && (
-                        <p className="py-2 text-sm text-destructive">
-                          키워드를 불러오지 못했어요
-                        </p>
-                      )}
-                      {tagsByCategory[category].map((tag) => {
-                        const { tagId, name } = tag;
+                  className="min-h-0">
+                  <ScrollArea className="h-full">
+                    <div className="flex flex-col gap-4 px-4 pb-4">
+                      <p className="text-sm text-foreground-secondary">
+                        최대 {maxSelectionCount}개까지 선택할 수 있어요
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {simpleStoryTags.isLoading && (
+                          <>
+                            {SKELETON_TAG_CHIP_WIDTH_CLASSES.map(
+                              (widthClass, index) => (
+                                <Skeleton
+                                  key={`${category}-tag-skeleton-${index}`}
+                                  className={`h-10 ${widthClass}`}
+                                  aria-hidden="true"
+                                />
+                              ),
+                            )}
+                          </>
+                        )}
+                        {simpleStoryTags.isError && (
+                          <p className="py-2 text-sm text-destructive">
+                            키워드를 불러오지 못했어요
+                          </p>
+                        )}
+                        {tagsByCategory[category].map((tag) => {
+                          const { tagId, name } = tag;
 
-                        if (tagId == null || !name) {
-                          return null;
-                        }
+                          if (tagId == null || !name) {
+                            return null;
+                          }
 
-                        const isSelected = selectedTagIds.includes(tagId);
-                        const isKeywordChipDisabled =
-                          isGeneratingStoryline ||
-                          (!isSelected && isMaxSelectionReached);
+                          const isSelected = selectedTagIds.includes(tagId);
+                          const isKeywordChipDisabled =
+                            isGeneratingStoryline ||
+                            (!isSelected && isMaxSelectionReached);
 
-                        return (
-                          <ToggleChip
-                            key={tagId}
-                            pressed={isSelected}
-                            disabled={isKeywordChipDisabled}
-                            onPressedChange={(pressed) =>
-                              togglePredefinedTag(category, tagId, pressed)
-                            }>
-                            {name}
-                          </ToggleChip>
-                        );
-                      })}
-                      {customKeywordsByCategory[category].map((keyword) => {
-                        const isSelected = selectedCustomKeywordIds.includes(
-                          keyword.id,
-                        );
-                        const isKeywordChipDisabled =
-                          isGeneratingStoryline ||
-                          (!isSelected && isMaxSelectionReached);
+                          return (
+                            <ToggleChip
+                              key={tagId}
+                              pressed={isSelected}
+                              disabled={isKeywordChipDisabled}
+                              onPressedChange={(pressed) =>
+                                togglePredefinedTag(category, tagId, pressed)
+                              }>
+                              {name}
+                            </ToggleChip>
+                          );
+                        })}
+                        {customKeywordsByCategory[category].map((keyword) => {
+                          const isSelected = selectedCustomKeywordIds.includes(
+                            keyword.id,
+                          );
+                          const isKeywordChipDisabled =
+                            isGeneratingStoryline ||
+                            (!isSelected && isMaxSelectionReached);
 
-                        return (
-                          <ToggleChip
-                            key={keyword.id}
-                            pressed={isSelected}
-                            disabled={isKeywordChipDisabled}
-                            onPressedChange={(pressed) =>
-                              toggleCustomKeyword(category, keyword.id, pressed)
-                            }>
-                            {keyword.name}
-                          </ToggleChip>
-                        );
-                      })}
-                      <AddKeywordDialog
-                        category={category}
-                        categoryLabel={label}
-                        placeholder={placeholder}
-                        disabled={
-                          isGeneratingStoryline || isMaxSelectionReached
-                        }
-                        onAddKeyword={(keyword) =>
-                          addCustomKeyword(category, keyword)
-                        }
-                      />
+                          return (
+                            <ToggleChip
+                              key={keyword.id}
+                              pressed={isSelected}
+                              disabled={isKeywordChipDisabled}
+                              onPressedChange={(pressed) =>
+                                toggleCustomKeyword(
+                                  category,
+                                  keyword.id,
+                                  pressed,
+                                )
+                              }>
+                              {keyword.name}
+                            </ToggleChip>
+                          );
+                        })}
+                        <AddKeywordDialog
+                          category={category}
+                          categoryLabel={label}
+                          placeholder={placeholder}
+                          disabled={
+                            isGeneratingStoryline || isMaxSelectionReached
+                          }
+                          onAddKeyword={(keyword) =>
+                            addCustomKeyword(category, keyword)
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
+                  </ScrollArea>
                 </TabsContent>
               );
             },

@@ -14,6 +14,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 
 import {
@@ -106,81 +107,90 @@ export function StoryAdditionalInfoStepSection({
           </p>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pb-4">
-          <p className="font-maruburi text-base leading-loose">
-            {storyline.story}
-          </p>
-
-          <section
-            aria-labelledby="story-help-questions"
-            className="flex flex-col gap-2">
-            <Label>AI 추천 질문</Label>
-            <ul className="flex flex-col gap-2 text-sm">
-              {(storyline.helpQuestions ?? []).map((helpQuestion, index) => (
-                <li key={helpQuestion.id ?? index}>{helpQuestion.question}</li>
-              ))}
-            </ul>
-          </section>
-
-          <section
-            aria-labelledby="additional-info-label"
-            className="flex flex-col gap-2">
-            <div className="flex items-baseline gap-1">
-              <Label>추가 정보</Label>
-              <p className="text-sm text-foreground-secondary">
-                (최대 {ADDITIONAL_INFO_MAX_COUNT}개 입력)
-              </p>
-            </div>
-
-            {additionalInfos.map((additionalInfo, index) => (
-              <div key={additionalInfo.id} className="flex items-center gap-2">
-                <InputGroup>
-                  <InputGroupTextarea
-                    aria-label={`추가 정보 ${index + 1}`}
-                    maxLength={ADDITIONAL_INFO_MAX_LENGTH}
-                    value={additionalInfo.value}
-                    disabled={isCompletingStory}
-                    onChange={(event) =>
-                      handleAdditionalInfoChange(additionalInfo.id, event)
-                    }
-                  />
-                  <InputGroupAddon align="block-end">
-                    <InputGroupText>
-                      {additionalInfo.value.length}/{ADDITIONAL_INFO_MAX_LENGTH}
-                    </InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label={`추가 정보 ${index + 1} 삭제`}
-                  disabled={isCompletingStory}
-                  onClick={() => handleRemoveAdditionalInfo(additionalInfo.id)}>
-                  <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
-                </Button>
-              </div>
-            ))}
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="self-center text-foreground-secondary"
-              aria-hidden="true"
-              aria-label="정보 추가"
-              disabled={!canAddAdditionalInfo}
-              onClick={handleAddAdditionalInfo}>
-              <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-              정보 추가
-            </Button>
-          </section>
-
-          {hasCompleteStoryError && (
-            <p className="text-sm text-destructive">
-              스토리를 완성하지 못했어요. 다시 시도해주세요
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="flex flex-col gap-8 pb-4">
+            <p className="font-maruburi text-base leading-loose">
+              {storyline.story}
             </p>
-          )}
-        </div>
+
+            <section
+              aria-labelledby="story-help-questions"
+              className="flex flex-col gap-2">
+              <Label>AI 추천 질문</Label>
+              <ul className="flex flex-col gap-2 text-sm">
+                {(storyline.helpQuestions ?? []).map((helpQuestion, index) => (
+                  <li key={helpQuestion.id ?? index}>
+                    {helpQuestion.question}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section
+              aria-labelledby="additional-info-label"
+              className="flex flex-col gap-2">
+              <div className="flex items-baseline gap-1">
+                <Label>추가 정보</Label>
+                <p className="text-sm text-foreground-secondary">
+                  (최대 {ADDITIONAL_INFO_MAX_COUNT}개 입력)
+                </p>
+              </div>
+
+              {additionalInfos.map((additionalInfo, index) => (
+                <div
+                  key={additionalInfo.id}
+                  className="flex items-center gap-2">
+                  <InputGroup>
+                    <InputGroupTextarea
+                      aria-label={`추가 정보 ${index + 1}`}
+                      maxLength={ADDITIONAL_INFO_MAX_LENGTH}
+                      value={additionalInfo.value}
+                      disabled={isCompletingStory}
+                      onChange={(event) =>
+                        handleAdditionalInfoChange(additionalInfo.id, event)
+                      }
+                    />
+                    <InputGroupAddon align="block-end">
+                      <InputGroupText>
+                        {additionalInfo.value.length}/
+                        {ADDITIONAL_INFO_MAX_LENGTH}
+                      </InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={`추가 정보 ${index + 1} 삭제`}
+                    disabled={isCompletingStory}
+                    onClick={() =>
+                      handleRemoveAdditionalInfo(additionalInfo.id)
+                    }>
+                    <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
+                  </Button>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="secondary"
+                className="self-center text-foreground-secondary"
+                aria-hidden="true"
+                aria-label="정보 추가"
+                disabled={!canAddAdditionalInfo}
+                onClick={handleAddAdditionalInfo}>
+                <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
+                정보 추가
+              </Button>
+            </section>
+
+            {hasCompleteStoryError && (
+              <p className="text-sm text-destructive">
+                스토리를 완성하지 못했어요. 다시 시도해주세요
+              </p>
+            )}
+          </div>
+        </ScrollArea>
       </section>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">

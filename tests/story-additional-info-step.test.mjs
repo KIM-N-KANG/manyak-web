@@ -57,14 +57,17 @@ test('additional info step keeps the title fixed while the content below it scro
 
   assert.match(
     text,
+    /import \{ ScrollArea \} from '@\/components\/ui\/scroll-area';/,
+  );
+  assert.match(
+    text,
     /<main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-20">/,
   );
   assert.match(
     text,
     /<section className="flex min-h-0 flex-1 flex-col gap-8 overflow-hidden px-4 py-4">/,
   );
-  assert.match(
-    text,
-    /<div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto pb-4">/,
-  );
+  assert.match(text, /<ScrollArea className="min-h-0 flex-1">/);
+  assert.match(text, /<div className="flex flex-col gap-8 pb-4">/);
+  assert.doesNotMatch(text, /overflow-y-auto/);
 });

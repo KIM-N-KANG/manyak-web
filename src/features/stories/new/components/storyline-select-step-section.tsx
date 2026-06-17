@@ -2,6 +2,7 @@
 
 import type { SimpleStorylineResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -60,10 +61,14 @@ export function StorylineSelectStepSection({
             <TabsContent
               key={storyline.id ?? index}
               value={getStorylineTabValue(index)}
-              className="min-h-0 overflow-y-auto px-4 pb-4">
-              <p className="font-maruburi text-base leading-loose">
-                {storyline.story}
-              </p>
+              className="min-h-0">
+              <ScrollArea className="h-full">
+                <div className="px-4 pb-4">
+                  <p className="font-maruburi text-base leading-loose">
+                    {storyline.story}
+                  </p>
+                </div>
+              </ScrollArea>
             </TabsContent>
           ))}
         </Tabs>
