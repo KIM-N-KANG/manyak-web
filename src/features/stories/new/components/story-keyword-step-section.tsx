@@ -1,5 +1,6 @@
 'use client';
 
+import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
@@ -10,8 +11,19 @@ import { SKELETON_TAG_CHIP_WIDTH_CLASSES, TAG_CATEGORIES } from '../constants';
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
 import type { TagCategory } from '../types';
 import { AddKeywordDialog } from './add-keyword-dialog';
+import { StoryCreateTitle } from './story-create-title';
 
-export function StoryKeywordStepSection() {
+type StoryKeywordStepSectionProps = {
+  isGeneratingStoryline: boolean;
+  hasGenerateStorylineError: boolean;
+  onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
+};
+
+export function StoryKeywordStepSection({
+  isGeneratingStoryline,
+  hasGenerateStorylineError,
+  onGenerateStoryline,
+}: StoryKeywordStepSectionProps) {
   const {
     activeCategory,
     setActiveCategory,
@@ -19,7 +31,6 @@ export function StoryKeywordStepSection() {
     selectedCustomKeywordIdsByCategory,
     customKeywordsByCategory,
     simpleStoryTags,
-    generateStorylines,
     tagsByCategory,
     canGenerateStoryline,
     getSelectedCount,
@@ -27,11 +38,15 @@ export function StoryKeywordStepSection() {
     toggleCustomKeyword,
     addCustomKeyword,
     handleGenerateStoryline,
-  } = useStoryKeywordStep();
+  } = useStoryKeywordStep({
+    isGeneratingStoryline,
+    onGenerateStoryline,
+  });
 
   return (
     <main className="flex flex-1 flex-col pb-16">
       <section className="flex flex-1 flex-col">
+        <StoryCreateTitle />
         <Tabs
           value={activeCategory}
           onValueChange={(value) => setActiveCategory(value as TagCategory)}>
@@ -85,7 +100,7 @@ export function StoryKeywordStepSection() {
 
                         const isSelected = selectedTagIds.includes(tagId);
                         const isKeywordChipDisabled =
-                          generateStorylines.isPending ||
+                          isGeneratingStoryline ||
                           (!isSelected && isMaxSelectionReached);
 
                         return (
@@ -105,7 +120,7 @@ export function StoryKeywordStepSection() {
                           keyword.id,
                         );
                         const isKeywordChipDisabled =
-                          generateStorylines.isPending ||
+                          isGeneratingStoryline ||
                           (!isSelected && isMaxSelectionReached);
 
                         return (
@@ -124,7 +139,9 @@ export function StoryKeywordStepSection() {
                         category={category}
                         categoryLabel={label}
                         placeholder={placeholder}
-                        disabled={isMaxSelectionReached}
+                        disabled={
+                          isGeneratingStoryline || isMaxSelectionReached
+                        }
                         onAddKeyword={(keyword) =>
                           addCustomKeyword(category, keyword)
                         }
@@ -136,6 +153,11 @@ export function StoryKeywordStepSection() {
             },
           )}
         </Tabs>
+        {hasGenerateStorylineError && (
+          <p className="px-4 text-sm text-destructive">
+            스토리라인을 만들지 못했어요. 다시 시도해주세요
+          </p>
+        )}
       </section>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">
@@ -145,17 +167,15 @@ export function StoryKeywordStepSection() {
             type="button"
             size="lg"
             className="relative"
-            aria-busy={generateStorylines.isPending}
-            disabled={!canGenerateStoryline || generateStorylines.isPending}
+            aria-busy={isGeneratingStoryline}
+            disabled={!canGenerateStoryline || isGeneratingStoryline}
             onClick={handleGenerateStoryline}>
             <span
-              aria-hidden={generateStorylines.isPending}
-              className={
-                generateStorylines.isPending ? 'invisible' : undefined
-              }>
+              aria-hidden={isGeneratingStoryline}
+              className={isGeneratingStoryline ? 'invisible' : undefined}>
               스토리라인 만들기
             </span>
-            {generateStorylines.isPending && (
+            {isGeneratingStoryline && (
               <Spinner className="absolute" aria-label="스토리라인 생성 중" />
             )}
           </Button>

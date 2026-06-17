@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 
-import {
-  useGenerateSimpleStorylines,
-  useGetSimpleStoryTags,
-} from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
+import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
+import type {
+  GenerateSimpleStorylinesRequest,
+  SimpleStoryTagListItemResponse,
+} from '@/api/generated/models';
 
 import { TAG_CATEGORIES } from '../constants';
 import type {
@@ -56,7 +56,15 @@ const getTagsByCategory = (
     return acc;
   }, createEmptyTagsByCategory());
 
-export function useStoryKeywordStep() {
+type UseStoryKeywordStepArgs = {
+  isGeneratingStoryline: boolean;
+  onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
+};
+
+export function useStoryKeywordStep({
+  isGeneratingStoryline,
+  onGenerateStoryline,
+}: UseStoryKeywordStepArgs) {
   const [activeCategory, setActiveCategory] = useState<TagCategory>('GENRE');
   const [selectedTagIdsByCategory, setSelectedTagIdsByCategory] = useState(
     createEmptySelectedTagIdsByCategory,
@@ -70,7 +78,6 @@ export function useStoryKeywordStep() {
   );
 
   const simpleStoryTags = useGetSimpleStoryTags();
-  const generateStorylines = useGenerateSimpleStorylines();
 
   const tagsByCategory = getTagsByCategory(simpleStoryTags.data?.data ?? []);
 
@@ -191,12 +198,12 @@ export function useStoryKeywordStep() {
         })),
     );
 
-    generateStorylines.mutate({
-      data: {
-        selectedTagIds: selectedTagIds,
-        customTags: customTags,
-      },
-    });
+    const request: GenerateSimpleStorylinesRequest = {
+      selectedTagIds: selectedTagIds,
+      customTags: customTags,
+    };
+
+    onGenerateStoryline(request);
   };
 
   return {
@@ -206,7 +213,7 @@ export function useStoryKeywordStep() {
     selectedCustomKeywordIdsByCategory,
     customKeywordsByCategory,
     simpleStoryTags,
-    generateStorylines,
+    isGeneratingStoryline,
     tagsByCategory,
     canGenerateStoryline,
     getSelectedCount,

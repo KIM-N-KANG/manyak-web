@@ -26,7 +26,7 @@ test('story keyword step fetches simple story tags and renders selectable toggle
   assert.match(sectionSource, /^'use client';/);
   assert.match(sectionSource, /useStoryKeywordStep/);
   assert.match(hookSource, /useGetSimpleStoryTags/);
-  assert.match(hookSource, /useGenerateSimpleStorylines/);
+  assert.doesNotMatch(hookSource, /useGenerateSimpleStorylines/);
   assert.match(
     sectionSource,
     /import \{ ToggleChip \} from '@\/components\/ui\/toggle-chip';/,
@@ -77,7 +77,7 @@ test('story keyword step enables storyline generation only after required catego
   assert.match(hookSource, /const canGenerateStoryline =/);
   assert.match(
     sectionSource,
-    /disabled=\{!canGenerateStoryline \|\| generateStorylines\.isPending\}/,
+    /disabled=\{!canGenerateStoryline \|\| isGeneratingStoryline\}/,
   );
 });
 
@@ -91,9 +91,9 @@ test('story keyword step swaps the generate button label for a spinner while sto
   assert.match(sectionSource, /className="relative"/);
   assert.match(
     sectionSource,
-    /className=\{\s*generateStorylines\.isPending \? 'invisible' : undefined\s*\}/,
+    /className=\{isGeneratingStoryline \? 'invisible' : undefined\}/,
   );
-  assert.match(sectionSource, /generateStorylines\.isPending && \(/);
+  assert.match(sectionSource, /isGeneratingStoryline && \(/);
   assert.match(sectionSource, /<Spinner/);
   assert.match(sectionSource, /aria-label="스토리라인 생성 중"/);
 });
@@ -103,7 +103,7 @@ test('story keyword step disables every keyword toggle chip while storylines are
 
   assert.match(
     sectionSource,
-    /const isKeywordChipDisabled =\s*generateStorylines\.isPending \|\|\s*\(!isSelected && isMaxSelectionReached\);/,
+    /const isKeywordChipDisabled =\s*isGeneratingStoryline \|\|\s*\(!isSelected && isMaxSelectionReached\);/,
   );
 
   const disabledChipMatches = [
@@ -113,10 +113,11 @@ test('story keyword step disables every keyword toggle chip while storylines are
   assert.equal(disabledChipMatches.length, 2);
 });
 
-test('story keyword step sends selected predefined and custom tags to the storyline API without logging the response', () => {
+test('story keyword step sends selected predefined and custom tags to the funnel without logging the response', () => {
   const source = storyKeywordHookSource();
 
-  assert.match(source, /generateStorylines\.mutate\(\{/);
+  assert.match(source, /const request: GenerateSimpleStorylinesRequest/);
+  assert.match(source, /onGenerateStoryline\(request\)/);
   assert.match(source, /selectedTagIds:/);
   assert.match(source, /customTags:/);
   assert.match(source, /category: keyword\.category/);
