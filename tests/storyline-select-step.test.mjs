@@ -45,6 +45,24 @@ test('storyline select step displays storyline text with MaruBuri font and has r
   assert.match(text, /onSelectStoryline/);
 });
 
+test('storyline text breaks long generated stories into readable lines', () => {
+  const storylineText = storylineTextSource();
+
+  assert.match(storylineText, /getStorylineLines/);
+  assert.match(storylineText, /STORYLINE_EXPLICIT_LINE_BREAK_PATTERN/);
+  assert.match(storylineText, /STORYLINE_SENTENCE_BREAK_PATTERN/);
+  assert.match(storylineText, /lines\.map/);
+  assert.match(storylineText, /<p key=/);
+  assert.match(
+    storylineText,
+    /className="flex flex-col gap-3 font-maruburi text-base leading-loose"/,
+  );
+  assert.doesNotMatch(
+    storylineText,
+    /<p className="font-maruburi text-base leading-loose">\{children\}<\/p>/,
+  );
+});
+
 test('storyline select step keeps the title and tabs fixed while tab panels scroll', () => {
   const text = source();
 
