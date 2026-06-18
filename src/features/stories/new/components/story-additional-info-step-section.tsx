@@ -16,6 +16,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
+import { StoryText } from '@/features/stories/components/story-text';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,
@@ -26,7 +27,6 @@ import { useAdditionalInfos } from '../hooks/use-additional-infos';
 import { LoadingButtonContent } from './loading-button-content';
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepTitle } from './story-create-step-title';
-import { StorylineText } from './storyline-text';
 
 type StoryAdditionalInfoStepSectionProps = {
   storyline: SimpleStorylineResponse;
@@ -72,7 +72,7 @@ export function StoryAdditionalInfoStepSection({
 
         <div className="p-4">
           <div className="flex flex-col gap-8">
-            <StorylineText>{storyline.story}</StorylineText>
+            <StoryText font="maruburi">{storyline.story}</StoryText>
 
             <section
               aria-labelledby="story-help-questions"

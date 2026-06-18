@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StoryText } from '@/features/stories/components/story-text';
 
 import { STORY_CREATE_STEP_PROGRESS_LABELS } from '../constants';
 import type { StorylineSelectStepSectionProps } from '../types';
@@ -9,7 +10,6 @@ import { getStorylineTabValue } from '../utils/storyline-tabs';
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepTitle } from './story-create-step-title';
 import { StorylineSelectLoadingState } from './storyline-select-loading-state';
-import { StorylineText } from './storyline-text';
 
 export function StorylineSelectStepSection({
   storylines,
@@ -56,7 +56,7 @@ export function StorylineSelectStepSection({
                 key={storyline.id ?? index}
                 value={getStorylineTabValue(index)}>
                 <div className="p-4">
-                  <StorylineText>{storyline.story}</StorylineText>
+                  <StoryText font="maruburi">{storyline.story}</StoryText>
                 </div>
               </TabsContent>
             ))}

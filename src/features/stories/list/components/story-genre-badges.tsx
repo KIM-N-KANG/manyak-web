@@ -11,7 +11,6 @@ type StoryGenreBadgesProps = {
   genres: string[];
 };
 
-/** 배지 사이 간격 (gap-1 = 0.25rem = 4px) */
 const GAP_PX = 4;
 
 const useIsomorphicLayoutEffect =
@@ -40,14 +39,12 @@ export function StoryGenreBadges({ genres }: StoryGenreBadgesProps) {
         0,
       );
 
-      // 전체 태그가 한 줄에 다 들어가면 그대로 보여준다.
       if (totalWidth <= containerWidth) {
         setVisibleCount(genres.length);
 
         return;
       }
 
-      // 넘칠 때는 +N 배지 자리를 남겨두고 들어가는 만큼만 센다.
       const overflowWidth = overflowMeasureRef.current?.offsetWidth ?? 0;
       let used = 0;
       let count = 0;
@@ -77,7 +74,6 @@ export function StoryGenreBadges({ genres }: StoryGenreBadgesProps) {
 
   return (
     <div ref={containerRef} className="relative flex gap-1 overflow-hidden">
-      {/* 폭 측정용 레이어 (레이아웃에 영향 없음) */}
       <div
         aria-hidden
         className="pointer-events-none invisible absolute -z-10 flex">
