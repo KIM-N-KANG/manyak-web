@@ -16,19 +16,17 @@ const idSource = () =>
   readFileSync('src/features/stories/new/utils/create-client-id.ts', 'utf8');
 const constantsSource = () =>
   readFileSync('src/features/stories/new/constants.ts', 'utf8');
-const storylineTextSource = () =>
-  readFileSync(
-    'src/features/stories/new/components/storyline-text.tsx',
-    'utf8',
-  );
+const textContentSource = () =>
+  readFileSync('src/components/common/text-content.tsx', 'utf8');
 
 test('additional info step shows the selected storyline and AI help questions', () => {
   const text = source();
-  const storylineText = storylineTextSource();
+  const textContent = textContentSource();
 
   assert.match(text, /^'use client';/);
-  assert.match(text, /StorylineText/);
-  assert.match(storylineText, /font-maruburi/);
+  assert.match(text, /TextContent/);
+  assert.match(text, /font="maruburi"/);
+  assert.match(textContent, /font-maruburi/);
   assert.match(text, /helpQuestions/);
   assert.match(text, /AI 추천 질문/);
   assert.match(text, /스토리라인에 더하고 싶은/);
@@ -122,7 +120,7 @@ test('additional info step scrolls the whole step content between header and foo
   assert.doesNotMatch(text, /@\/components\/ui\/scroll-area/);
   assert.match(
     text,
-    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">/,
+    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto scrollbar-none pb-16">/,
   );
   assert.match(text, /<section className="flex flex-col">/);
   assert.doesNotMatch(

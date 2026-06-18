@@ -1,5 +1,6 @@
 'use client';
 
+import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -9,7 +10,6 @@ import { getStorylineTabValue } from '../utils/storyline-tabs';
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepTitle } from './story-create-step-title';
 import { StorylineSelectLoadingState } from './storyline-select-loading-state';
-import { StorylineText } from './storyline-text';
 
 export function StorylineSelectStepSection({
   storylines,
@@ -26,7 +26,7 @@ export function StorylineSelectStepSection({
     : storylines[activeStorylineIndex];
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">
+    <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16">
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
@@ -56,7 +56,7 @@ export function StorylineSelectStepSection({
                 key={storyline.id ?? index}
                 value={getStorylineTabValue(index)}>
                 <div className="p-4">
-                  <StorylineText>{storyline.story}</StorylineText>
+                  <TextContent font="maruburi">{storyline.story}</TextContent>
                 </div>
               </TabsContent>
             ))}

@@ -8,6 +8,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { SimpleStorylineResponse } from '@/api/generated/models';
+import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -26,7 +27,6 @@ import { useAdditionalInfos } from '../hooks/use-additional-infos';
 import { LoadingButtonContent } from './loading-button-content';
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepTitle } from './story-create-step-title';
-import { StorylineText } from './storyline-text';
 
 type StoryAdditionalInfoStepSectionProps = {
   storyline: SimpleStorylineResponse;
@@ -59,7 +59,7 @@ export function StoryAdditionalInfoStepSection({
   };
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">
+    <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16">
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={[
@@ -72,7 +72,7 @@ export function StoryAdditionalInfoStepSection({
 
         <div className="p-4">
           <div className="flex flex-col gap-8">
-            <StorylineText>{storyline.story}</StorylineText>
+            <TextContent font="maruburi">{storyline.story}</TextContent>
 
             <section
               aria-labelledby="story-help-questions"

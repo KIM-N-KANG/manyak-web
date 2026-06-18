@@ -54,7 +54,7 @@ export function StoryCompletionSection({
 
   return (
     <main
-      className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16"
+      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
       aria-busy={isCompletingStory}>
       <section className="flex flex-1 flex-col">
         <div className="flex flex-col gap-1 border-b border-border p-4">

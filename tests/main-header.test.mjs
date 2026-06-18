@@ -14,13 +14,13 @@ test('main header exposes route-aware page title with requested styles', () => {
   const source = headerSource();
 
   assert.match(source, /usePathname/);
-  assert.match(source, /useEffect/);
-  assert.match(source, /useState/);
   assert.match(source, /APP_PATH\.MAIN\.STORIES/);
   assert.match(source, /APP_PATH\.MAIN\.CHATS/);
   assert.match(source, /'스토리'/);
   assert.match(source, /'채팅'/);
-  assert.match(source, /scrollY\s*>\s*0/);
+  assert.match(source, /type MainHeaderProps = \{/);
+  assert.match(source, /hasScrolled\?: boolean;/);
+  assert.match(source, /hasScrolled = false/);
   assert.match(source, /h-16/);
   assert.match(source, /px-4/);
   assert.match(source, /sticky/);
@@ -30,14 +30,23 @@ test('main header exposes route-aware page title with requested styles', () => {
   assert.match(source, /border-b/);
   assert.match(source, /border-transparent/);
   assert.match(source, /border-border/);
+  assert.match(source, /hasScrolled \? 'border-border' : 'border-transparent'/);
   assert.match(source, /transition-colors/);
   assert.match(source, /text-xl/);
   assert.match(source, /items-center/);
+  assert.doesNotMatch(source, /window\.scrollY/);
+  assert.doesNotMatch(source, /window\.addEventListener\('scroll'/);
 });
 
-test('main route group layout renders the main header above children', () => {
+test('main route group layout renders the main header above internally scrolling children', () => {
   const source = layoutSource();
 
+  assert.match(source, /^'use client';/);
   assert.match(source, /MainHeader/);
-  assert.match(source, /<MainHeader \/>[\s\S]*\{children\}/);
+  assert.match(source, /useState\(false\)/);
+  assert.match(source, /handleContentScroll/);
+  assert.match(source, /scrollTop > 0/);
+  assert.match(source, /<MainHeader hasScrolled=\{hasScrolled\} \/>/);
+  assert.match(source, /onScroll=\{handleContentScroll\}/);
+  assert.match(source, /<MainHeader[\s\S]*\{children\}/);
 });

@@ -4,6 +4,7 @@ export const APP_PATH = {
     STORIES: '/stories',
     CHATS: '/chats',
   },
+  STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CREATOR: {
     STORY: '/stories/new',
   },
