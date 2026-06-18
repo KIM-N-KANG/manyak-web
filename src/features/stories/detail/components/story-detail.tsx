@@ -1,5 +1,5 @@
+import { TextContent } from '@/components/common/text-content';
 import { Label } from '@/components/ui/label';
-import { StoryText } from '@/features/stories/components/story-text';
 import { formatStoryDate } from '@/features/stories/list/utils/format-date';
 
 import { MOCK_STORY_DETAIL } from '../mock';
@@ -29,19 +29,19 @@ export function StoryDetail() {
 
         {story.detailedIntroduction && (
           <StoryDetailSection title="상세 설명">
-            <StoryText>{story.detailedIntroduction}</StoryText>
+            <TextContent>{story.detailedIntroduction}</TextContent>
           </StoryDetailSection>
         )}
 
         {story.startSituationName && (
           <StoryDetailSection title="시작 상황 이름">
-            <StoryText>{story.startSituationName}</StoryText>
+            <TextContent>{story.startSituationName}</TextContent>
           </StoryDetailSection>
         )}
 
         {story.conversationPrologue && (
           <StoryDetailSection title="시작 상황">
-            <StoryText>{story.conversationPrologue}</StoryText>
+            <TextContent>{story.conversationPrologue}</TextContent>
           </StoryDetailSection>
         )}
 

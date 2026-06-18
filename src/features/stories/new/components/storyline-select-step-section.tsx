@@ -1,8 +1,8 @@
 'use client';
 
+import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { StoryText } from '@/features/stories/components/story-text';
 
 import { STORY_CREATE_STEP_PROGRESS_LABELS } from '../constants';
 import type { StorylineSelectStepSectionProps } from '../types';
@@ -56,7 +56,7 @@ export function StorylineSelectStepSection({
                 key={storyline.id ?? index}
                 value={getStorylineTabValue(index)}>
                 <div className="p-4">
-                  <StoryText font="maruburi">{storyline.story}</StoryText>
+                  <TextContent font="maruburi">{storyline.story}</TextContent>
                 </div>
               </TabsContent>
             ))}

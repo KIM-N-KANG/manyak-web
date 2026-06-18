@@ -8,6 +8,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { SimpleStorylineResponse } from '@/api/generated/models';
+import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -16,7 +17,6 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
-import { StoryText } from '@/features/stories/components/story-text';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,
@@ -72,7 +72,7 @@ export function StoryAdditionalInfoStepSection({
 
         <div className="p-4">
           <div className="flex flex-col gap-8">
-            <StoryText font="maruburi">{storyline.story}</StoryText>
+            <TextContent font="maruburi">{storyline.story}</TextContent>
 
             <section
               aria-labelledby="story-help-questions"

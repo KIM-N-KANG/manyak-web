@@ -18,8 +18,8 @@ const storylineSelectLoadingStateSource = () =>
     'src/features/stories/new/components/storyline-select-loading-state.tsx',
     'utf8',
   );
-const storyTextSource = () =>
-  readFileSync('src/features/stories/components/story-text.tsx', 'utf8');
+const textContentSource = () =>
+  readFileSync('src/components/common/text-content.tsx', 'utf8');
 
 test('storyline select step renders generated storylines in selectable tabs', () => {
   const text = source();
@@ -34,14 +34,14 @@ test('storyline select step renders generated storylines in selectable tabs', ()
   assert.match(text, /onActiveStorylineIndexChange/);
 });
 
-test('storyline select step displays story text with MaruBuri font and has required CTAs', () => {
+test('storyline select step displays text content with MaruBuri font and has required CTAs', () => {
   const text = source();
   const constantText = constantsSource();
-  const storyText = storyTextSource();
+  const textContent = textContentSource();
 
-  assert.match(text, /StoryText/);
+  assert.match(text, /TextContent/);
   assert.match(text, /font="maruburi"/);
-  assert.match(storyText, /font-maruburi/);
+  assert.match(textContent, /font-maruburi/);
   assert.match(text, /마음에 드는/);
   assert.match(text, /스토리라인을 선택해주세요/);
   assert.match(constantText, /'storyline-select': '2 \/ 3'/);
@@ -103,30 +103,30 @@ test('storyline select step keeps shared constants, types, and utilities outside
   );
 });
 
-test('story text breaks long generated stories into readable lines', () => {
-  const storyText = storyTextSource();
+test('text content breaks long generated stories into readable lines', () => {
+  const textContent = textContentSource();
 
-  assert.match(storyText, /getStoryTextLines/);
-  assert.match(storyText, /STORY_TEXT_EXPLICIT_LINE_BREAK_PATTERN/);
-  assert.match(storyText, /STORY_TEXT_SENTENCE_BREAK_PATTERN/);
-  assert.match(storyText, /lines\.map/);
-  assert.match(storyText, /<p key=/);
-  assert.match(storyText, /className=\{cn\(/);
-  assert.match(storyText, /'flex flex-col gap-\d text-base leading-loose'/);
-  assert.match(storyText, /font === 'maruburi' && 'font-maruburi'/);
+  assert.match(textContent, /getTextLines/);
+  assert.match(textContent, /TEXT_EXPLICIT_LINE_BREAK_PATTERN/);
+  assert.match(textContent, /TEXT_SENTENCE_BREAK_PATTERN/);
+  assert.match(textContent, /lines\.map/);
+  assert.match(textContent, /<p key=/);
+  assert.match(textContent, /className=\{cn\(/);
+  assert.match(textContent, /'flex flex-col gap-\d text-base leading-loose'/);
+  assert.match(textContent, /font === 'maruburi' && 'font-maruburi'/);
   assert.doesNotMatch(
-    storyText,
+    textContent,
     /<p className="font-maruburi text-base leading-loose">\{children\}<\/p>/,
   );
 });
 
-test('story text lets each consumer choose whether to use MaruBuri', () => {
-  const storyText = storyTextSource();
+test('text content lets each consumer choose whether to use MaruBuri', () => {
+  const textContent = textContentSource();
 
-  assert.match(storyText, /type StoryTextProps = \{/);
-  assert.match(storyText, /font\?: 'default' \| 'maruburi';/);
-  assert.match(storyText, /font = 'default'/);
-  assert.doesNotMatch(storyText, /StorylineText/);
+  assert.match(textContent, /type TextContentProps = \{/);
+  assert.match(textContent, /font\?: 'default' \| 'maruburi';/);
+  assert.match(textContent, /font = 'default'/);
+  assert.doesNotMatch(textContent, /StorylineText/);
 });
 
 test('storyline select step scrolls the whole step content between header and footer', () => {

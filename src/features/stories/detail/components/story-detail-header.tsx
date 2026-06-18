@@ -1,16 +1,37 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import { ArrowLeft01Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function StoryDetailHeader() {
+  const [hasScrolled, setHasScrolled] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    const updateHasScrolled = () => {
+      setHasScrolled(window.scrollY > 0);
+    };
+
+    updateHasScrolled();
+    window.addEventListener('scroll', updateHasScrolled, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', updateHasScrolled);
+    };
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center justify-between bg-background px-1">
+    <header
+      className={cn(
+        'sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-background px-1 transition-colors',
+        hasScrolled ? 'border-border' : 'border-transparent',
+      )}>
       <Button
         type="button"
         size="icon-lg"

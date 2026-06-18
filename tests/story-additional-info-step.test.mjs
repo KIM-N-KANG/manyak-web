@@ -16,17 +16,17 @@ const idSource = () =>
   readFileSync('src/features/stories/new/utils/create-client-id.ts', 'utf8');
 const constantsSource = () =>
   readFileSync('src/features/stories/new/constants.ts', 'utf8');
-const storyTextSource = () =>
-  readFileSync('src/features/stories/components/story-text.tsx', 'utf8');
+const textContentSource = () =>
+  readFileSync('src/components/common/text-content.tsx', 'utf8');
 
 test('additional info step shows the selected storyline and AI help questions', () => {
   const text = source();
-  const storyText = storyTextSource();
+  const textContent = textContentSource();
 
   assert.match(text, /^'use client';/);
-  assert.match(text, /StoryText/);
+  assert.match(text, /TextContent/);
   assert.match(text, /font="maruburi"/);
-  assert.match(storyText, /font-maruburi/);
+  assert.match(textContent, /font-maruburi/);
   assert.match(text, /helpQuestions/);
   assert.match(text, /AI 추천 질문/);
   assert.match(text, /스토리라인에 더하고 싶은/);

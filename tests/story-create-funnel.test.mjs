@@ -4,7 +4,7 @@ import test from 'node:test';
 
 const read = (path) => readFileSync(path, 'utf8');
 
-const pageSource = () => read('src/app/(create)/stories/new/page.tsx');
+const pageSource = () => read('src/app/(story)/stories/new/page.tsx');
 const funnelSource = () =>
   read('src/features/stories/new/components/story-create-funnel.tsx');
 const funnelHookSource = () =>

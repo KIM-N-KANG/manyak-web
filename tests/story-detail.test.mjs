@@ -7,23 +7,51 @@ const source = () =>
     'src/features/stories/detail/components/story-detail.tsx',
     'utf8',
   );
-const storyTextSource = () =>
-  readFileSync('src/features/stories/components/story-text.tsx', 'utf8');
+const textContentSource = () =>
+  readFileSync('src/components/common/text-content.tsx', 'utf8');
+const headerSource = () =>
+  readFileSync(
+    'src/features/stories/detail/components/story-detail-header.tsx',
+    'utf8',
+  );
 
-test('story detail uses the shared story text component with the default font', () => {
+test('story detail uses the shared text content component with the default font', () => {
   const text = source();
-  const storyText = storyTextSource();
+  const textContent = textContentSource();
 
   assert.match(
     text,
-    /import \{ StoryText \} from '@\/features\/stories\/components\/story-text';/,
+    /import \{ TextContent \} from '@\/components\/common\/text-content';/,
   );
-  assert.match(text, /<StoryText>\{story\.detailedIntroduction\}<\/StoryText>/);
-  assert.match(text, /<StoryText>\{story\.startSituationName\}<\/StoryText>/);
-  assert.match(text, /<StoryText>\{story\.conversationPrologue\}<\/StoryText>/);
+  assert.match(
+    text,
+    /<TextContent>\{story\.detailedIntroduction\}<\/TextContent>/,
+  );
+  assert.match(
+    text,
+    /<TextContent>\{story\.startSituationName\}<\/TextContent>/,
+  );
+  assert.match(
+    text,
+    /<TextContent>\{story\.conversationPrologue\}<\/TextContent>/,
+  );
   assert.doesNotMatch(
     text,
     /@\/features\/stories\/new\/components\/storyline-text/,
   );
-  assert.match(storyText, /font = 'default'/);
+  assert.match(textContent, /font = 'default'/);
+});
+
+test('story detail header shows a bottom border after the page scrolls', () => {
+  const text = headerSource();
+
+  assert.match(text, /useEffect/);
+  assert.match(text, /useState/);
+  assert.match(text, /scrollY\s*>\s*0/);
+  assert.match(text, /window\.addEventListener\('scroll'/);
+  assert.match(text, /window\.removeEventListener\('scroll'/);
+  assert.match(text, /border-b/);
+  assert.match(text, /border-transparent/);
+  assert.match(text, /border-border/);
+  assert.match(text, /transition-colors/);
 });
