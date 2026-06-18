@@ -120,7 +120,7 @@ test('additional info step scrolls the whole step content between header and foo
   assert.doesNotMatch(text, /@\/components\/ui\/scroll-area/);
   assert.match(
     text,
-    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">/,
+    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto scrollbar-none pb-16">/,
   );
   assert.match(text, /<section className="flex flex-col">/);
   assert.doesNotMatch(

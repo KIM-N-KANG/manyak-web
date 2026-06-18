@@ -42,16 +42,26 @@ test('story detail uses the shared text content component with the default font'
   assert.match(textContent, /font = 'default'/);
 });
 
-test('story detail header shows a bottom border after the page scrolls', () => {
+test('story detail header shows a bottom border after the content scrolls', () => {
+  const detailText = source();
   const text = headerSource();
 
-  assert.match(text, /useEffect/);
-  assert.match(text, /useState/);
-  assert.match(text, /scrollY\s*>\s*0/);
-  assert.match(text, /window\.addEventListener\('scroll'/);
-  assert.match(text, /window\.removeEventListener\('scroll'/);
+  assert.match(detailText, /useState\(false\)/);
+  assert.match(detailText, /handleContentScroll/);
+  assert.match(detailText, /scrollTop > 0/);
+  assert.match(
+    detailText,
+    /<StoryDetailHeader hasScrolled=\{hasScrolled\} \/>/,
+  );
+  assert.match(detailText, /onScroll=\{handleContentScroll\}/);
+  assert.match(text, /type StoryDetailHeaderProps = \{/);
+  assert.match(text, /hasScrolled\?: boolean;/);
+  assert.match(text, /hasScrolled = false/);
   assert.match(text, /border-b/);
   assert.match(text, /border-transparent/);
   assert.match(text, /border-border/);
+  assert.match(text, /hasScrolled \? 'border-border' : 'border-transparent'/);
   assert.match(text, /transition-colors/);
+  assert.doesNotMatch(text, /window\.scrollY/);
+  assert.doesNotMatch(text, /window\.addEventListener\('scroll'/);
 });

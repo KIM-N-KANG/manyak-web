@@ -41,7 +41,7 @@ test('story completion page fits below the shared story create header', () => {
 
   assert.match(
     text,
-    /<main\s+className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16"/,
+    /<main\s+className="flex min-h-0 flex-1 flex-col overflow-y-auto scrollbar-none pb-16"/,
   );
   assert.match(text, /<section className="flex flex-1 flex-col">/);
   assert.doesNotMatch(text, /min-h-svh/);

@@ -27,7 +27,7 @@ export default function RootLayout({
         <QueryProvider>
           <MotionProvider>
             <ThemeProvider>
-              <div className="mx-auto min-h-svh w-full max-w-md bg-background">
+              <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                 {children}
               </div>
             </ThemeProvider>

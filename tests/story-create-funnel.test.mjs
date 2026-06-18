@@ -178,7 +178,7 @@ test('story keyword step scrolls the whole step content between header and foote
   assert.doesNotMatch(panelSource, /@\/components\/ui\/scroll-area/);
   assert.match(
     source,
-    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">/,
+    /<main className="flex min-h-0 flex-1 flex-col overflow-y-auto scrollbar-none pb-16">/,
   );
   assert.match(source, /<section className="flex flex-col">/);
   assert.doesNotMatch(source, /className="min-h-0 flex-1 overflow-hidden"/);

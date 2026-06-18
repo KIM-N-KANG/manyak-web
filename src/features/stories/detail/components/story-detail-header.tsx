@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import { ArrowLeft01Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
@@ -9,22 +7,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export function StoryDetailHeader() {
-  const [hasScrolled, setHasScrolled] = useState(false);
+type StoryDetailHeaderProps = {
+  hasScrolled?: boolean;
+};
+
+export function StoryDetailHeader({
+  hasScrolled = false,
+}: StoryDetailHeaderProps) {
   const router = useRouter();
-
-  useEffect(() => {
-    const updateHasScrolled = () => {
-      setHasScrolled(window.scrollY > 0);
-    };
-
-    updateHasScrolled();
-    window.addEventListener('scroll', updateHasScrolled, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', updateHasScrolled);
-    };
-  }, []);
 
   return (
     <header

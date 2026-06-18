@@ -26,7 +26,7 @@ export function StorylineSelectStepSection({
     : storylines[activeStorylineIndex];
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-16">
+    <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16">
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
