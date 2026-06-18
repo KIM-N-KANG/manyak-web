@@ -1,11 +1,11 @@
 import { Calendar04Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import type { StoryListItem } from '../types';
 import { formatStoryDate } from '../utils/format-date';
+import { StoryGenreBadges } from './story-genre-badges';
 
 type StoryCardProps = {
   story: StoryListItem;
@@ -25,18 +25,7 @@ export function StoryCard({ story }: StoryCardProps) {
           </Button>
         </div>
 
-        {story.genres.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {story.genres.map((genre) => (
-              <Badge
-                key={genre}
-                variant="secondary"
-                className="text-foreground-secondary">
-                {genre}
-              </Badge>
-            ))}
-          </div>
-        )}
+        {story.genres.length > 0 && <StoryGenreBadges genres={story.genres} />}
 
         <p className="line-clamp-2 min-h-[2lh]">{story.summary}</p>
       </div>
