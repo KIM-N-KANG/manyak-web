@@ -2,7 +2,7 @@ import type { StoryCreateStep, TagCategoryConfig } from './types';
 
 export const ADD_KEYWORD_MAX_LENGTH = 15;
 
-export const ADDITIONAL_INFO_MAX_COUNT = 3;
+export const ADDITIONAL_INFO_MAX_COUNT = 10;
 
 export const ADDITIONAL_INFO_MAX_LENGTH = 100;
 

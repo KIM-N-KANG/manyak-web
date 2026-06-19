@@ -2,9 +2,6 @@
 
 import { useState } from 'react';
 
-import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -42,10 +39,6 @@ export function SelectedStorylineContent({
         aria-expanded={isExpanded}
         onClick={() => setIsExpanded((prev) => !prev)}>
         {isExpanded ? '접기' : '더보기'}
-        <HugeiconsIcon
-          icon={isExpanded ? ArrowUp01Icon : ArrowDown01Icon}
-          aria-hidden="true"
-        />
       </Button>
     </div>
   );
