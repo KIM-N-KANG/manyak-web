@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type Dispatch, type SetStateAction, useState } from 'react';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
@@ -54,6 +54,9 @@ export function useStoryKeywordStep({
     selectedTagIdsByCategory[category].length +
     selectedCustomKeywordIdsByCategory[category].length;
 
+  const isMaxSelectionReached = (category: TagCategory) =>
+    getSelectedCount(category) >= getMaxSelectionCount(category);
+
   const categoryValues = TAG_CATEGORIES.map(({ value }) => value);
 
   const isCategoryComplete = (category: TagCategory) =>
@@ -95,73 +98,43 @@ export function useStoryKeywordStep({
     },
   });
 
-  const togglePredefinedTag = (
-    category: TagCategory,
-    tagId: number,
-    pressed: boolean,
-  ) => {
-    setSelectedTagIdsByCategory((previous) => {
-      const selectedTagIds = previous[category];
+  const createToggleSelection =
+    <Id>(
+      setSelectedIdsByCategory: Dispatch<
+        SetStateAction<Record<TagCategory, Id[]>>
+      >,
+    ) =>
+    (category: TagCategory, id: Id, pressed: boolean) => {
+      setSelectedIdsByCategory((previous) => {
+        const selectedIds = previous[category];
 
-      if (!pressed) {
+        if (!pressed) {
+          return {
+            ...previous,
+            [category]: selectedIds.filter((selectedId) => selectedId !== id),
+          };
+        }
+
+        if (selectedIds.includes(id) || isMaxSelectionReached(category)) {
+          return previous;
+        }
+
         return {
           ...previous,
-          [category]: selectedTagIds.filter(
-            (selectedTagId) => selectedTagId !== tagId,
-          ),
+          [category]: [...selectedIds, id],
         };
-      }
+      });
+    };
 
-      if (
-        selectedTagIds.includes(tagId) ||
-        selectedTagIds.length +
-          selectedCustomKeywordIdsByCategory[category].length >=
-          getMaxSelectionCount(category)
-      ) {
-        return previous;
-      }
-
-      return {
-        ...previous,
-        [category]: [...selectedTagIds, tagId],
-      };
-    });
-  };
-
-  const toggleCustomKeyword = (
-    category: TagCategory,
-    keywordId: string,
-    pressed: boolean,
-  ) => {
-    setSelectedCustomKeywordIdsByCategory((previous) => {
-      const selectedKeywordIds = previous[category];
-
-      if (!pressed) {
-        return {
-          ...previous,
-          [category]: selectedKeywordIds.filter(
-            (selectedKeywordId) => selectedKeywordId !== keywordId,
-          ),
-        };
-      }
-
-      if (
-        selectedKeywordIds.includes(keywordId) ||
-        selectedTagIdsByCategory[category].length + selectedKeywordIds.length >=
-          getMaxSelectionCount(category)
-      ) {
-        return previous;
-      }
-
-      return {
-        ...previous,
-        [category]: [...selectedKeywordIds, keywordId],
-      };
-    });
-  };
+  const togglePredefinedTag = createToggleSelection(
+    setSelectedTagIdsByCategory,
+  );
+  const toggleCustomKeyword = createToggleSelection(
+    setSelectedCustomKeywordIdsByCategory,
+  );
 
   const addCustomKeyword = (category: TagCategory, keyword: string) => {
-    if (getSelectedCount(category) >= getMaxSelectionCount(category)) {
+    if (isMaxSelectionReached(category)) {
       return;
     }
 
@@ -218,7 +191,7 @@ export function useStoryKeywordStep({
     isGeneratingStoryline,
     tagsByCategory,
     canGenerateStoryline,
-    getSelectedCount,
+    isMaxSelectionReached,
     isCategoryComplete,
     isCategoryUnlocked,
     isLastCategory,

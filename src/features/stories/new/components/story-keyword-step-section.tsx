@@ -11,6 +11,7 @@ import {
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
 import type { TagCategory } from '../types';
 import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryCreateStepTitle } from './story-create-step-title';
 import { StoryKeywordCategoryPanel } from './story-keyword-category-panel';
 
@@ -36,7 +37,7 @@ export function StoryKeywordStepSection({
     simpleStoryTags,
     tagsByCategory,
     canGenerateStoryline,
-    getSelectedCount,
+    isMaxSelectionReached,
     isCategoryUnlocked,
     isCategoryComplete,
     isLastCategory,
@@ -53,9 +54,7 @@ export function StoryKeywordStepSection({
   });
 
   return (
-    <main
-      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
-      onScroll={onScroll}>
+    <StoryCreateStepScrollArea onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
@@ -95,7 +94,7 @@ export function StoryKeywordStepSection({
                     label={label}
                     placeholder={placeholder}
                     maxSelectionCount={maxSelectionCount}
-                    selectedCount={getSelectedCount(category)}
+                    isMaxSelectionReached={isMaxSelectionReached(category)}
                     selectedTagIds={selectedTagIds}
                     selectedCustomKeywordIds={selectedCustomKeywordIds}
                     predefinedTags={tagsByCategory[category]}
@@ -135,6 +134,6 @@ export function StoryKeywordStepSection({
           {isLastCategory ? '스토리라인 만들기' : '다음'}
         </Button>
       </StoryCreateStepFooter>
-    </main>
+    </StoryCreateStepScrollArea>
   );
 }

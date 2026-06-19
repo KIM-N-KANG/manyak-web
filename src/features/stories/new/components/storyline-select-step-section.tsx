@@ -4,11 +4,14 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { STORY_CREATE_STEP_PROGRESS_LABELS } from '../constants';
+import {
+  STORY_CREATE_STEP_PROGRESS_LABELS,
+  STORYLINE_TAB_LABELS,
+} from '../constants';
 import { useHorizontalSwipe } from '../hooks/use-horizontal-swipe';
 import type { StorylineSelectStepSectionProps } from '../types';
-import { getStorylineTabValue } from '../utils/storyline-tabs';
 import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryCreateStepTitle } from './story-create-step-title';
 import { StorylineSelectLoadingState } from './storyline-select-loading-state';
 
@@ -22,8 +25,7 @@ export function StorylineSelectStepSection({
   onSelectStoryline,
   onScroll,
 }: StorylineSelectStepSectionProps) {
-  const isLoadingStorylines = isRegeneratingStorylines;
-  const selectedStoryline = isLoadingStorylines
+  const selectedStoryline = isRegeneratingStorylines
     ? undefined
     : storylines[activeStorylineIndex];
 
@@ -41,29 +43,27 @@ export function StorylineSelectStepSection({
   });
 
   return (
-    <main
-      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
-      onScroll={onScroll}>
+    <StoryCreateStepScrollArea onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={
-            isLoadingStorylines
+            isRegeneratingStorylines
               ? ['스토리라인을 만들고 있어요', '잠시만 기다려 주세요']
               : ['마음에 드는', '스토리라인을 선택해주세요']
           }
           description={
-            isLoadingStorylines
+            isRegeneratingStorylines
               ? '선택한 키워드를 바탕으로 스토리라인을 구상하고 있어요'
               : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
           }
           className="p-4"
         />
 
-        {isLoadingStorylines ? (
+        {isRegeneratingStorylines ? (
           <StorylineSelectLoadingState />
         ) : (
           <Tabs
-            value={getStorylineTabValue(activeStorylineIndex)}
+            value={String(activeStorylineIndex)}
             onValueChange={(value) =>
               onActiveStorylineIndexChange(Number(value))
             }
@@ -75,8 +75,8 @@ export function StorylineSelectStepSection({
                 {storylines.map((storyline, index) => (
                   <TabsTrigger
                     key={storyline.id ?? index}
-                    value={getStorylineTabValue(index)}>
-                    {['첫 번째', '두 번째', '세 번째'][index]}
+                    value={String(index)}>
+                    {STORYLINE_TAB_LABELS[index]}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -84,7 +84,7 @@ export function StorylineSelectStepSection({
             {storylines.map((storyline, index) => (
               <TabsContent
                 key={storyline.id ?? index}
-                value={getStorylineTabValue(index)}
+                value={String(index)}
                 className="px-4">
                 <div className="pb-4">
                   <TextContent>{storyline.story}</TextContent>
@@ -94,7 +94,7 @@ export function StorylineSelectStepSection({
           </Tabs>
         )}
 
-        {!isLoadingStorylines && storylines.length === 0 && (
+        {!isRegeneratingStorylines && storylines.length === 0 && (
           <p className="px-4 py-8 text-sm text-foreground-secondary">
             생성된 스토리라인이 없어요. 잠시 후 다시 시도해주세요
           </p>
@@ -119,11 +119,11 @@ export function StorylineSelectStepSection({
         <Button
           type="button"
           size="lg"
-          disabled={!selectedStoryline || isLoadingStorylines}
+          disabled={!selectedStoryline || isRegeneratingStorylines}
           onClick={onSelectStoryline}>
           선택하기
         </Button>
       </StoryCreateStepFooter>
-    </main>
+    </StoryCreateStepScrollArea>
   );
 }

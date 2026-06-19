@@ -11,7 +11,7 @@ type StoryKeywordCategoryPanelProps = {
   label: string;
   placeholder: string;
   maxSelectionCount: number;
-  selectedCount: number;
+  isMaxSelectionReached: boolean;
   selectedTagIds: number[];
   selectedCustomKeywordIds: string[];
   predefinedTags: SimpleStoryTagListItemResponse[];
@@ -37,7 +37,7 @@ export function StoryKeywordCategoryPanel({
   label,
   placeholder,
   maxSelectionCount,
-  selectedCount,
+  isMaxSelectionReached,
   selectedTagIds,
   selectedCustomKeywordIds,
   predefinedTags,
@@ -49,8 +49,6 @@ export function StoryKeywordCategoryPanel({
   onToggleCustomKeyword,
   onAddCustomKeyword,
 }: StoryKeywordCategoryPanelProps) {
-  const isMaxSelectionReached = selectedCount >= maxSelectionCount;
-
   return (
     <div className="flex flex-col gap-2 pb-4">
       <p className="text-sm text-foreground-secondary">

@@ -25,6 +25,7 @@ import { useAdditionalInfos } from '../hooks/use-additional-infos';
 import { LoadingButtonContent } from './loading-button-content';
 import { SelectedStorylineContent } from './selected-storyline-content';
 import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryCreateStepTitle } from './story-create-step-title';
 
 type StoryAdditionalInfoStepSectionProps = {
@@ -81,9 +82,7 @@ export function StoryAdditionalInfoStepSection({
   };
 
   return (
-    <main
-      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
-      onScroll={onScroll}>
+    <StoryCreateStepScrollArea onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={[
@@ -218,6 +217,6 @@ export function StoryAdditionalInfoStepSection({
           </LoadingButtonContent>
         </Button>
       </StoryCreateStepFooter>
-    </main>
+    </StoryCreateStepScrollArea>
   );
 }

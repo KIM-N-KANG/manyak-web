@@ -19,10 +19,8 @@ export function StoryCreateFunnel() {
     activeStorylineIndex,
     selectedStoryline,
     canCompleteStory,
-    isGeneratingStoryline,
-    hasGenerateStorylineError,
-    isRegeneratingStorylines,
-    hasRegenerateStorylinesError,
+    isGeneratingStorylines,
+    hasGenerateStorylinesError,
     completedStory,
     isCompletingStory,
     hasCompleteStoryError,
@@ -49,8 +47,8 @@ export function StoryCreateFunnel() {
 
       {step === 'keyword' && (
         <StoryKeywordStepSection
-          isGeneratingStoryline={isGeneratingStoryline}
-          hasGenerateStorylineError={hasGenerateStorylineError}
+          isGeneratingStoryline={isGeneratingStorylines}
+          hasGenerateStorylineError={hasGenerateStorylinesError}
           onGenerateStoryline={handleGenerateStoryline}
           onScroll={handleContentScroll}
         />
@@ -60,8 +58,8 @@ export function StoryCreateFunnel() {
         <StorylineSelectStepSection
           storylines={storylines}
           activeStorylineIndex={activeStorylineIndex}
-          isRegeneratingStorylines={isRegeneratingStorylines}
-          hasRegenerateStorylinesError={hasRegenerateStorylinesError}
+          isRegeneratingStorylines={isGeneratingStorylines}
+          hasRegenerateStorylinesError={hasGenerateStorylinesError}
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}
           onSelectStoryline={handleSelectStoryline}

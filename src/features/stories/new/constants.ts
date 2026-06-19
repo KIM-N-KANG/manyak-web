@@ -37,15 +37,29 @@ export const TAG_CATEGORIES = [
 ] satisfies TagCategoryConfig[];
 
 export const SKELETON_TAG_CHIP_WIDTH_CLASSES = [
-  'w-14',
-  'w-16',
-  'w-20',
   'w-24',
-  'w-28',
+  'w-10',
   'w-32',
-  'w-36',
-  'w-40',
+  'w-16',
+  'w-14',
+  'w-28',
+  'w-20',
+  'w-12',
+  'w-24',
+  'w-16',
+  'w-10',
+  'w-32',
+  'w-14',
+  'w-28',
+  'w-20',
+  'w-12',
+  'w-24',
+  'w-10',
+  'w-16',
+  'w-28',
 ] as const;
+
+export const STORYLINE_TAB_LABELS = ['첫 번째', '두 번째', '세 번째'] as const;
 
 export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 
