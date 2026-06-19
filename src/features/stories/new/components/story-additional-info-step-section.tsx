@@ -76,7 +76,7 @@ export function StoryAdditionalInfoStepSection({
 
         <div className="p-4">
           <div className="flex flex-col gap-8">
-            <TextContent font="maruburi">{storyline.story}</TextContent>
+            <TextContent>{storyline.story}</TextContent>
 
             <section
               aria-labelledby="story-help-questions"

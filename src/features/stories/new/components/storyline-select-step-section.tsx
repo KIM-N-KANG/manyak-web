@@ -68,7 +68,7 @@ export function StorylineSelectStepSection({
                 key={storyline.id ?? index}
                 value={getStorylineTabValue(index)}>
                 <div className="pb-4">
-                  <TextContent font="maruburi">{storyline.story}</TextContent>
+                  <TextContent>{storyline.story}</TextContent>
                 </div>
               </TabsContent>
             ))}
