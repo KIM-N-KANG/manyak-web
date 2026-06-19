@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { STORY_CREATE_STEP_PROGRESS_LABELS } from '../constants';
+import { useHorizontalSwipe } from '../hooks/use-horizontal-swipe';
 import type { StorylineSelectStepSectionProps } from '../types';
 import { getStorylineTabValue } from '../utils/storyline-tabs';
 import { StoryCreateStepFooter } from './story-create-step-footer';
@@ -25,6 +26,19 @@ export function StorylineSelectStepSection({
   const selectedStoryline = isLoadingStorylines
     ? undefined
     : storylines[activeStorylineIndex];
+
+  const { handleTouchStart, handleTouchEnd } = useHorizontalSwipe({
+    onSwipeLeft: () => {
+      if (activeStorylineIndex < storylines.length - 1) {
+        onActiveStorylineIndexChange(activeStorylineIndex + 1);
+      }
+    },
+    onSwipeRight: () => {
+      if (activeStorylineIndex > 0) {
+        onActiveStorylineIndexChange(activeStorylineIndex - 1);
+      }
+    },
+  });
 
   return (
     <main
@@ -53,20 +67,25 @@ export function StorylineSelectStepSection({
             onValueChange={(value) =>
               onActiveStorylineIndexChange(Number(value))
             }
-            className="p-4">
-            <TabsList>
-              {storylines.map((storyline, index) => (
-                <TabsTrigger
-                  key={storyline.id ?? index}
-                  value={getStorylineTabValue(index)}>
-                  {['첫 번째', '두 번째', '세 번째'][index]}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            className="gap-0"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}>
+            <div className="sticky -top-px z-10 bg-background px-4 pt-4.25 pb-4">
+              <TabsList>
+                {storylines.map((storyline, index) => (
+                  <TabsTrigger
+                    key={storyline.id ?? index}
+                    value={getStorylineTabValue(index)}>
+                    {['첫 번째', '두 번째', '세 번째'][index]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
             {storylines.map((storyline, index) => (
               <TabsContent
                 key={storyline.id ?? index}
-                value={getStorylineTabValue(index)}>
+                value={getStorylineTabValue(index)}
+                className="px-4">
                 <div className="pb-4">
                   <TextContent>{storyline.story}</TextContent>
                 </div>

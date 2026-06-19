@@ -124,7 +124,7 @@ export function StoryKeywordStepSection({
         <Button
           type="button"
           size="lg"
-          className="min-w-20"
+          className="min-w-24"
           disabled={
             isGeneratingStoryline ||
             (isLastCategory

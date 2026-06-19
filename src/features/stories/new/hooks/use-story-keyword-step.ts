@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
@@ -15,6 +15,7 @@ import {
   getMaxSelectionCount,
   getTagsByCategory,
 } from '../utils/tag-categories';
+import { useHorizontalSwipe } from './use-horizontal-swipe';
 
 type UseStoryKeywordStepArgs = {
   isGeneratingStoryline: boolean;
@@ -77,29 +78,22 @@ export function useStoryKeywordStep({
     }
   };
 
-  const touchStartXRef = useRef(0);
-
-  const handleTouchStart = (event: React.TouchEvent) => {
-    touchStartXRef.current = event.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (event: React.TouchEvent) => {
-    if (document.querySelector('[role="dialog"]')) return;
-
-    const delta = event.changedTouches[0].clientX - touchStartXRef.current;
-
-    if (Math.abs(delta) < 50) return;
-
-    if (delta < 0) {
+  const { handleTouchStart, handleTouchEnd } = useHorizontalSwipe({
+    onSwipeLeft: () => {
       const next = categoryValues[activeIndex + 1];
 
-      if (next && isCategoryUnlocked(next)) setActiveCategory(next);
-    } else {
+      if (next && isCategoryUnlocked(next)) {
+        setActiveCategory(next);
+      }
+    },
+    onSwipeRight: () => {
       const prev = categoryValues[activeIndex - 1];
 
-      if (prev) setActiveCategory(prev);
-    }
-  };
+      if (prev) {
+        setActiveCategory(prev);
+      }
+    },
+  });
 
   const togglePredefinedTag = (
     category: TagCategory,
