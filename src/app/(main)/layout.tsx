@@ -5,6 +5,8 @@ import { type UIEvent, useState } from 'react';
 import { BottomNavigationBar } from '@/components/layout/bottom-navigation-bar';
 import { MainHeader } from '@/components/layout/main-header';
 
+import { MainScrollProvider } from './main-scroll-context';
+
 export default function MainLayout({
   children,
 }: Readonly<{
@@ -22,7 +24,9 @@ export default function MainLayout({
       <div
         className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
         onScroll={handleContentScroll}>
-        {children}
+        <MainScrollProvider value={{ hasScrolled }}>
+          {children}
+        </MainScrollProvider>
       </div>
       <BottomNavigationBar />
     </div>

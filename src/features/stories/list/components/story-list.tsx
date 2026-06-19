@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 
 import { useCreatedStories } from '../hooks/use-created-stories';
+import { CreateStoryFab } from './create-story-fab';
 import { StoryCard } from './story-card';
 import { StoryListSkeleton } from './story-list-skeleton';
 import { StoryListStatus } from './story-list-status';
@@ -51,15 +52,18 @@ export function StoryList() {
   }
 
   return (
-    <ul className="flex flex-col gap-4 p-4">
-      {stories.map((story, index) => (
-        <Fragment key={story.id}>
-          <li>
-            <StoryCard story={story} />
-          </li>
-          {index < stories.length - 1 && <Separator />}
-        </Fragment>
-      ))}
-    </ul>
+    <>
+      <ul className="flex flex-col gap-4 p-4">
+        {stories.map((story, index) => (
+          <Fragment key={story.id}>
+            <li>
+              <StoryCard story={story} />
+            </li>
+            {index < stories.length - 1 && <Separator />}
+          </Fragment>
+        ))}
+      </ul>
+      <CreateStoryFab />
+    </>
   );
 }
