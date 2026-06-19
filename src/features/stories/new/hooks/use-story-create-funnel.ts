@@ -9,6 +9,7 @@ import {
 import type {
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
+  SimpleStoryCreateResponse,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
 
@@ -31,6 +32,8 @@ export function useStoryCreateFunnel() {
   const [activeStorylineIndex, setActiveStorylineIndex] = useState(0);
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
+  const [completedStory, setCompletedStory] =
+    useState<SimpleStoryCreateResponse | null>(null);
 
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
@@ -62,6 +65,7 @@ export function useStoryCreateFunnel() {
           saveCreatedStoryId(storyId);
         }
 
+        setCompletedStory(response.data);
         setStep('complete');
       },
       onError: () => {
@@ -141,6 +145,7 @@ export function useStoryCreateFunnel() {
     hasGenerateStorylineError: generateStorylines.isError,
     isRegeneratingStorylines: generateStorylines.isPending,
     hasRegenerateStorylinesError: generateStorylines.isError,
+    completedStory,
     isCompletingStory: createStory.isPending,
     hasCompleteStoryError: createStory.isError,
     handleGenerateStoryline,

@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 type TextContentProps = {
   children?: string;
   font?: 'default' | 'maruburi';
+  size?: 'sm' | 'base';
 };
 
 const TEXT_EXPLICIT_LINE_BREAK_PATTERN = /\r?\n+/u;
@@ -15,13 +16,18 @@ const getTextLines = (text?: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
-export function TextContent({ children, font = 'default' }: TextContentProps) {
+export function TextContent({
+  children,
+  font = 'default',
+  size = 'base',
+}: TextContentProps) {
   const lines = getTextLines(children);
 
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 text-base leading-loose',
+        'flex flex-col gap-3 leading-loose',
+        size === 'sm' ? 'gap-2.5 text-sm' : 'text-base',
         font === 'maruburi' && 'font-maruburi',
       )}>
       {lines.map((line, index) => (

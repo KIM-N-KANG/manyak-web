@@ -19,6 +19,7 @@ export function StoryCreateFunnel() {
     hasGenerateStorylineError,
     isRegeneratingStorylines,
     hasRegenerateStorylinesError,
+    completedStory,
     isCompletingStory,
     hasCompleteStoryError,
     handleGenerateStoryline,
@@ -65,7 +66,10 @@ export function StoryCreateFunnel() {
       )}
 
       {step === 'complete' && (
-        <StoryCompletionSection isCompletingStory={isCompletingStory} />
+        <StoryCompletionSection
+          isCompletingStory={isCompletingStory}
+          completedStory={completedStory}
+        />
       )}
     </div>
   );
