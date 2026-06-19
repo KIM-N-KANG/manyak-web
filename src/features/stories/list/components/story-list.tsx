@@ -8,11 +8,12 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
 
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { StoryCard } from './story-card';
+import { StoryListSkeleton } from './story-list-skeleton';
+import { StoryListStatus } from './story-list-status';
 
 export function StoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
@@ -57,50 +58,6 @@ export function StoryList() {
             <StoryCard story={story} />
           </li>
           {index < stories.length - 1 && <Separator />}
-        </Fragment>
-      ))}
-    </ul>
-  );
-}
-
-function StoryListStatus({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-1 items-center justify-center px-4">
-      <section className="flex flex-col items-center gap-8">
-        <div className="flex flex-col gap-1 text-center">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <p>{description}</p>
-        </div>
-        {children}
-      </section>
-    </div>
-  );
-}
-
-function StoryListSkeleton() {
-  return (
-    <ul className="flex flex-col gap-4 p-4" aria-hidden>
-      {Array.from({ length: 10 }).map((_, index) => (
-        <Fragment key={index}>
-          <li className="flex flex-col gap-2">
-            <Skeleton className="h-6 w-3/12" />
-            <div className="flex items-center gap-1">
-              <Skeleton className="h-5 w-8" />
-              <Skeleton className="h-5 w-12" />
-              <Skeleton className="h-5 w-10" />
-            </div>
-            <Skeleton className="h-[2lh] w-full" />
-            <Skeleton className="h-5 w-24 self-end" />
-          </li>
-          {index < 5 && <Separator />}
         </Fragment>
       ))}
     </ul>
