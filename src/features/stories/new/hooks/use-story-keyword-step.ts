@@ -53,6 +53,30 @@ export function useStoryKeywordStep({
     selectedTagIdsByCategory[category].length +
     selectedCustomKeywordIdsByCategory[category].length;
 
+  const categoryValues = TAG_CATEGORIES.map(({ value }) => value);
+
+  const isCategoryComplete = (category: TagCategory) =>
+    getSelectedCount(category) > 0;
+
+  const isCategoryUnlocked = (category: TagCategory) => {
+    const index = categoryValues.indexOf(category);
+
+    return TAG_CATEGORIES.slice(0, index).every(
+      ({ value, required }) => !required || isCategoryComplete(value),
+    );
+  };
+
+  const activeIndex = categoryValues.indexOf(activeCategory);
+  const isLastCategory = activeIndex === categoryValues.length - 1;
+
+  const goToNextCategory = () => {
+    const nextCategory = categoryValues[activeIndex + 1];
+
+    if (nextCategory) {
+      setActiveCategory(nextCategory);
+    }
+  };
+
   const togglePredefinedTag = (
     category: TagCategory,
     tagId: number,
@@ -177,6 +201,10 @@ export function useStoryKeywordStep({
     tagsByCategory,
     canGenerateStoryline,
     getSelectedCount,
+    isCategoryComplete,
+    isCategoryUnlocked,
+    isLastCategory,
+    goToNextCategory,
     togglePredefinedTag,
     toggleCustomKeyword,
     addCustomKeyword,
