@@ -1,9 +1,9 @@
-import { Calendar04Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
+import { Calendar04Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
 
 import type { StoryListItem } from '../types';
 import { formatStoryDate } from '../utils/format-date';
@@ -26,13 +26,13 @@ export function StoryCard({ story }: StoryCardProps) {
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <p className="line-clamp-1 font-semibold">{story.title}</p>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label="스토리 옵션 더보기"
-            className="relative z-10">
-            <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
-          </Button>
+          {story.id != null && (
+            <StoryOptionsMenu
+              storyId={story.id}
+              size="icon-xs"
+              triggerClassName="relative z-10"
+            />
+          )}
         </div>
 
         {story.genres.length > 0 && <StoryGenreBadges genres={story.genres} />}

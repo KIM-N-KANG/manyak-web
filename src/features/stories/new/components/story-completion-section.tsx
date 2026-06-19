@@ -1,125 +1,18 @@
 import Link from 'next/link';
 
 import type { SimpleStoryCreateResponse } from '@/api/generated/models';
-import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
-import { StoryDetailTags } from '@/features/stories/detail/components/story-detail-tags';
 
+import { StoryCompletionLoadingState } from './story-completion-loading-state';
 import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryInfoSection } from './story-info-section';
 
 type StoryCompletionSectionProps = {
   isCompletingStory: boolean;
   completedStory?: SimpleStoryCreateResponse | null;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
-
-function StoryCompletionLoadingState() {
-  return (
-    <div className="flex flex-col gap-8" aria-label="스토리 완성 중">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-8 w-7/12" />
-          <div className="flex gap-1">
-            <Skeleton className="h-5 w-12 rounded-full" />
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="h-5 w-14 rounded-full" />
-          </div>
-        </div>
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-8/12" />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-7 w-3/12" />
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-7/12" />
-          </div>
-          <div>
-            <Skeleton className="h-4 w-11/12" />
-          </div>
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/12" />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-7 w-3/12" />
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-3.5 w-2/12" />
-            <Skeleton className="h-10 w-full rounded-md" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-3.5 w-2/12" />
-            <Skeleton className="h-20 w-full rounded-md" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type StoryInfoSectionProps = {
-  story: SimpleStoryCreateResponse;
-};
-
-function StoryInfoSection({ story }: StoryInfoSectionProps) {
-  const genres = story.genres ?? [];
-
-  return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">{story.title}</h1>
-          <StoryDetailTags genres={genres} />
-        </div>
-        <p className="text-base">{story.oneLineIntro}</p>
-      </div>
-
-      {story.description && (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">상세 설명</h2>
-          <TextContent>{story.description}</TextContent>
-        </div>
-      )}
-
-      {story.startSetting && (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">시작 상황</h2>
-          <div className="flex flex-col gap-4">
-            {story.startSetting.name && (
-              <div className="flex flex-col gap-2">
-                <Label>상황 이름</Label>
-                <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <TextContent size="sm">{story.startSetting.name}</TextContent>
-                </div>
-              </div>
-            )}
-            {story.startSetting.startSituation && (
-              <div className="flex flex-col gap-2">
-                <Label>상황 설명</Label>
-                <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <TextContent size="sm">
-                    {story.startSetting.startSituation}
-                  </TextContent>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function StoryCompletionSection({
   isCompletingStory,
