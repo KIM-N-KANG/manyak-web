@@ -41,6 +41,8 @@ export function StoryKeywordStepSection({
     isCategoryComplete,
     isLastCategory,
     goToNextCategory,
+    handleTouchStart,
+    handleTouchEnd,
     togglePredefinedTag,
     toggleCustomKeyword,
     addCustomKeyword,
@@ -63,7 +65,9 @@ export function StoryKeywordStepSection({
         <Tabs
           value={activeCategory}
           onValueChange={(value) => setActiveCategory(value as TagCategory)}
-          className="p-4">
+          className="p-4"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}>
           <TabsList>
             {TAG_CATEGORIES.map(({ value, label, required }) => (
               <TabsTrigger
