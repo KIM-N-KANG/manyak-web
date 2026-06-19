@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatFeedback01Icon, ClipboardIcon } from '@hugeicons/core-free-icons';
+import { Chatting01Icon, ClipboardIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,7 +23,7 @@ const BOTTOM_NAVIGATION_ITEMS: BottomNavigationItem[] = [
   {
     href: APP_PATH.MAIN.CHATS,
     label: '채팅',
-    icon: ChatFeedback01Icon,
+    icon: Chatting01Icon,
   },
 ];
 

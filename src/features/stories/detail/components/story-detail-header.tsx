@@ -1,17 +1,20 @@
 'use client';
 
-import { ArrowLeft01Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
+import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
 import { cn } from '@/lib/utils';
 
 type StoryDetailHeaderProps = {
+  storyId: number;
   hasScrolled?: boolean;
 };
 
 export function StoryDetailHeader({
+  storyId,
   hasScrolled = false,
 }: StoryDetailHeaderProps) {
   const router = useRouter();
@@ -30,13 +33,7 @@ export function StoryDetailHeader({
         onClick={() => router.back()}>
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
-      <Button
-        type="button"
-        size="icon-lg"
-        variant="ghost"
-        aria-label="스토리 옵션 더보기">
-        <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
-      </Button>
+      <StoryOptionsMenu storyId={storyId} size="icon-lg" />
     </header>
   );
 }
