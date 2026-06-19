@@ -5,7 +5,6 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { StorySummaryResponseGenresItem } from './storySummaryResponseGenresItem';
 import type { StorySummaryResponseStatus } from './storySummaryResponseStatus';
 
 /**
@@ -18,8 +17,8 @@ export interface StorySummaryResponse {
   title?: string;
   /** 한 줄 소개 */
   summary?: string;
-  /** 장르 목록 */
-  genres?: StorySummaryResponseGenresItem[];
+  /** 장르명 목록 */
+  genres?: string[];
   /**
    * 작성자 닉네임. 작성자가 없는 스토리는 비어 있을 수 있습니다.
    * @nullable

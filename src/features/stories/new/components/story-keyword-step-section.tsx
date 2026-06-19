@@ -18,12 +18,14 @@ type StoryKeywordStepSectionProps = {
   isGeneratingStoryline: boolean;
   hasGenerateStorylineError: boolean;
   onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
+  onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryKeywordStepSection({
   isGeneratingStoryline,
   hasGenerateStorylineError,
   onGenerateStoryline,
+  onScroll,
 }: StoryKeywordStepSectionProps) {
   const {
     activeCategory,
@@ -45,7 +47,9 @@ export function StoryKeywordStepSection({
   });
 
   return (
-    <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16">
+    <main
+      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
+      onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
@@ -54,8 +58,9 @@ export function StoryKeywordStepSection({
         />
         <Tabs
           value={activeCategory}
-          onValueChange={(value) => setActiveCategory(value as TagCategory)}>
-          <TabsList variant="line">
+          onValueChange={(value) => setActiveCategory(value as TagCategory)}
+          className="p-4">
+          <TabsList>
             {TAG_CATEGORIES.map(({ value, label, required }) => (
               <TabsTrigger key={value} value={value} className="gap-0.5">
                 {label}
@@ -94,7 +99,7 @@ export function StoryKeywordStepSection({
           )}
         </Tabs>
         {hasGenerateStorylineError && (
-          <p className="px-4 text-sm text-destructive">
+          <p className="text-sm text-destructive">
             스토리라인을 만들지 못했어요. 다시 시도해주세요
           </p>
         )}

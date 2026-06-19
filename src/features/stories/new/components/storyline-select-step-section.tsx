@@ -19,6 +19,7 @@ export function StorylineSelectStepSection({
   onActiveStorylineIndexChange,
   onRegenerateStorylines,
   onSelectStoryline,
+  onScroll,
 }: StorylineSelectStepSectionProps) {
   const isLoadingStorylines = isRegeneratingStorylines;
   const selectedStoryline = isLoadingStorylines
@@ -26,11 +27,21 @@ export function StorylineSelectStepSection({
     : storylines[activeStorylineIndex];
 
   return (
-    <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16">
+    <main
+      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
+      onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
-          titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
-          description="선택한 스토리라인이 스토리의 기본 흐름이 돼요"
+          titleLines={
+            isLoadingStorylines
+              ? ['스토리라인을 만들고 있어요', '잠시만 기다려 주세요']
+              : ['마음에 드는', '스토리라인을 선택해주세요']
+          }
+          description={
+            isLoadingStorylines
+              ? '선택한 키워드를 바탕으로 스토리라인을 구상하고 있어요'
+              : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
+          }
           className="p-4"
         />
 
@@ -41,13 +52,14 @@ export function StorylineSelectStepSection({
             value={getStorylineTabValue(activeStorylineIndex)}
             onValueChange={(value) =>
               onActiveStorylineIndexChange(Number(value))
-            }>
-            <TabsList variant="line">
+            }
+            className="p-4">
+            <TabsList>
               {storylines.map((storyline, index) => (
                 <TabsTrigger
                   key={storyline.id ?? index}
                   value={getStorylineTabValue(index)}>
-                  {index + 1}
+                  {['첫 번째', '두 번째', '세 번째'][index]}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -55,8 +67,8 @@ export function StorylineSelectStepSection({
               <TabsContent
                 key={storyline.id ?? index}
                 value={getStorylineTabValue(index)}>
-                <div className="p-4">
-                  <TextContent font="maruburi">{storyline.story}</TextContent>
+                <div className="pb-4">
+                  <TextContent>{storyline.story}</TextContent>
                 </div>
               </TabsContent>
             ))}

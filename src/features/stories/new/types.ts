@@ -51,4 +51,5 @@ export type StorylineSelectStepSectionProps = {
   onActiveStorylineIndexChange: (index: number) => void;
   onRegenerateStorylines: () => void;
   onSelectStoryline: () => void;
+  onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };

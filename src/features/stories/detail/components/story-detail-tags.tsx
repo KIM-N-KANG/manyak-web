@@ -11,7 +11,7 @@ export function StoryDetailTags({ genres }: StoryDetailTagsProps) {
         <Badge
           key={genre}
           variant="secondary"
-          className="text-foreground-secondary">
+          className="text-sm text-foreground-secondary">
           {genre}
         </Badge>
       ))}

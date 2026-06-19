@@ -35,6 +35,7 @@ type StoryAdditionalInfoStepSectionProps = {
   canCompleteStory: boolean;
   onCompleteStory: (additionalInfos: string[]) => void;
   onBackToStorylineSelect: () => void;
+  onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryAdditionalInfoStepSection({
@@ -44,6 +45,7 @@ export function StoryAdditionalInfoStepSection({
   canCompleteStory,
   onCompleteStory,
   onBackToStorylineSelect,
+  onScroll,
 }: StoryAdditionalInfoStepSectionProps) {
   const {
     additionalInfos,
@@ -59,7 +61,9 @@ export function StoryAdditionalInfoStepSection({
   };
 
   return (
-    <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16">
+    <main
+      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
+      onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={[
@@ -67,12 +71,12 @@ export function StoryAdditionalInfoStepSection({
             '정보를 자유롭게 입력해주세요',
           ]}
           description="입력한 정보는 스토리를 완성하는 데 반영돼요"
-          className="border-b border-border p-4"
+          className="p-4"
         />
 
         <div className="p-4">
           <div className="flex flex-col gap-8">
-            <TextContent font="maruburi">{storyline.story}</TextContent>
+            <TextContent>{storyline.story}</TextContent>
 
             <section
               aria-labelledby="story-help-questions"

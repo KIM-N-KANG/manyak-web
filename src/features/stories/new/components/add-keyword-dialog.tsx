@@ -82,6 +82,12 @@ export function AddKeywordDialog({
                   rows={1}
                   value={keyword}
                   onChange={handleKeywordChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                      e.preventDefault();
+                      e.currentTarget.form?.requestSubmit();
+                    }
+                  }}
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupText>
