@@ -37,6 +37,10 @@ export function StoryKeywordStepSection({
     tagsByCategory,
     canGenerateStoryline,
     getSelectedCount,
+    isCategoryUnlocked,
+    isCategoryComplete,
+    isLastCategory,
+    goToNextCategory,
     togglePredefinedTag,
     toggleCustomKeyword,
     addCustomKeyword,
@@ -62,7 +66,11 @@ export function StoryKeywordStepSection({
           className="p-4">
           <TabsList>
             {TAG_CATEGORIES.map(({ value, label, required }) => (
-              <TabsTrigger key={value} value={value} className="gap-0.5">
+              <TabsTrigger
+                key={value}
+                value={value}
+                disabled={!isCategoryUnlocked(value)}
+                className="gap-0.5">
                 {label}
                 {required && <span className="text-destructive">*</span>}
               </TabsTrigger>
@@ -110,9 +118,15 @@ export function StoryKeywordStepSection({
         <Button
           type="button"
           size="lg"
-          disabled={!canGenerateStoryline || isGeneratingStoryline}
-          onClick={handleGenerateStoryline}>
-          스토리라인 만들기
+          className="min-w-20"
+          disabled={
+            isGeneratingStoryline ||
+            (isLastCategory
+              ? !canGenerateStoryline
+              : !isCategoryComplete(activeCategory))
+          }
+          onClick={isLastCategory ? handleGenerateStoryline : goToNextCategory}>
+          {isLastCategory ? '스토리라인 만들기' : '다음'}
         </Button>
       </StoryCreateStepFooter>
     </main>
