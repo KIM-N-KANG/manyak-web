@@ -84,6 +84,8 @@ export function useStoryKeywordStep({
   };
 
   const handleTouchEnd = (event: React.TouchEvent) => {
+    if (document.querySelector('[role="dialog"]')) return;
+
     const delta = event.changedTouches[0].clientX - touchStartXRef.current;
 
     if (Math.abs(delta) < 50) return;
