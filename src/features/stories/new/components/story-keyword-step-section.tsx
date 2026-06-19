@@ -65,21 +65,23 @@ export function StoryKeywordStepSection({
         <Tabs
           value={activeCategory}
           onValueChange={(value) => setActiveCategory(value as TagCategory)}
-          className="p-4"
+          className="gap-0"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}>
-          <TabsList>
-            {TAG_CATEGORIES.map(({ value, label, required }) => (
-              <TabsTrigger
-                key={value}
-                value={value}
-                disabled={!isCategoryUnlocked(value)}
-                className="gap-0.5">
-                {label}
-                {required && <span className="text-destructive">*</span>}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="sticky -top-px z-10 bg-background px-4 pt-4.25 pb-4">
+            <TabsList>
+              {TAG_CATEGORIES.map(({ value, label, required }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  disabled={!isCategoryUnlocked(value)}
+                  className="gap-0.5">
+                  {label}
+                  {required && <span className="text-destructive">*</span>}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
           {TAG_CATEGORIES.map(
             ({ value: category, label, placeholder, maxSelectionCount }) => {
               const selectedTagIds = selectedTagIdsByCategory[category];
@@ -87,7 +89,7 @@ export function StoryKeywordStepSection({
                 selectedCustomKeywordIdsByCategory[category];
 
               return (
-                <TabsContent key={category} value={category}>
+                <TabsContent key={category} value={category} className="px-4">
                   <StoryKeywordCategoryPanel
                     category={category}
                     label={label}
