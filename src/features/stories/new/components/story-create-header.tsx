@@ -16,13 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 type StoryCreateHeaderProps = {
   requiresBackConfirmation?: boolean;
+  hasScrolled?: boolean;
 };
 
 export function StoryCreateHeader({
   requiresBackConfirmation = false,
+  hasScrolled = false,
 }: StoryCreateHeaderProps) {
   const router = useRouter();
   const [confirmBackDialogOpen, setConfirmBackDialogOpen] = useState(false);
@@ -44,7 +47,11 @@ export function StoryCreateHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-16 items-center bg-background pr-4 pl-1">
+      <header
+        className={cn(
+          'sticky top-0 z-50 flex h-16 items-center border-b bg-background pr-4 pl-1 transition-colors',
+          hasScrolled ? 'border-border' : 'border-transparent',
+        )}>
         <div className="flex items-center gap-1">
           <Button
             type="button"

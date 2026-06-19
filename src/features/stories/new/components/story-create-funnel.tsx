@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';
 import { StoryCompletionSection } from './story-completion-section';
@@ -8,6 +10,8 @@ import { StoryKeywordStepSection } from './story-keyword-step-section';
 import { StorylineSelectStepSection } from './storyline-select-step-section';
 
 export function StoryCreateFunnel() {
+  const [scrolledStep, setScrolledStep] = useState<string | null>(null);
+
   const {
     step,
     shouldConfirmBack,
@@ -30,15 +34,25 @@ export function StoryCreateFunnel() {
     handleCompleteStory,
   } = useStoryCreateFunnel();
 
+  const hasScrolled = scrolledStep === step;
+
+  const handleContentScroll = (event: React.UIEvent<HTMLElement>) => {
+    setScrolledStep(event.currentTarget.scrollTop > 0 ? step : null);
+  };
+
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-      <StoryCreateHeader requiresBackConfirmation={shouldConfirmBack} />
+      <StoryCreateHeader
+        requiresBackConfirmation={shouldConfirmBack}
+        hasScrolled={hasScrolled}
+      />
 
       {step === 'keyword' && (
         <StoryKeywordStepSection
           isGeneratingStoryline={isGeneratingStoryline}
           hasGenerateStorylineError={hasGenerateStorylineError}
           onGenerateStoryline={handleGenerateStoryline}
+          onScroll={handleContentScroll}
         />
       )}
 
@@ -51,6 +65,7 @@ export function StoryCreateFunnel() {
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}
           onSelectStoryline={handleSelectStoryline}
+          onScroll={handleContentScroll}
         />
       )}
 
@@ -62,6 +77,7 @@ export function StoryCreateFunnel() {
           canCompleteStory={canCompleteStory}
           onCompleteStory={handleCompleteStory}
           onBackToStorylineSelect={handleBackToStorylineSelect}
+          onScroll={handleContentScroll}
         />
       )}
 
@@ -69,6 +85,7 @@ export function StoryCreateFunnel() {
         <StoryCompletionSection
           isCompletingStory={isCompletingStory}
           completedStory={completedStory}
+          onScroll={handleContentScroll}
         />
       )}
     </div>

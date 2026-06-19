@@ -19,6 +19,7 @@ export function StorylineSelectStepSection({
   onActiveStorylineIndexChange,
   onRegenerateStorylines,
   onSelectStoryline,
+  onScroll,
 }: StorylineSelectStepSectionProps) {
   const isLoadingStorylines = isRegeneratingStorylines;
   const selectedStoryline = isLoadingStorylines
@@ -26,7 +27,9 @@ export function StorylineSelectStepSection({
     : storylines[activeStorylineIndex];
 
   return (
-    <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16">
+    <main
+      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
+      onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
@@ -41,13 +44,14 @@ export function StorylineSelectStepSection({
             value={getStorylineTabValue(activeStorylineIndex)}
             onValueChange={(value) =>
               onActiveStorylineIndexChange(Number(value))
-            }>
-            <TabsList variant="line">
+            }
+            className="p-4">
+            <TabsList>
               {storylines.map((storyline, index) => (
                 <TabsTrigger
                   key={storyline.id ?? index}
                   value={getStorylineTabValue(index)}>
-                  {index + 1}
+                  {['첫 번째', '두 번째', '세 번째'][index]}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -55,7 +59,7 @@ export function StorylineSelectStepSection({
               <TabsContent
                 key={storyline.id ?? index}
                 value={getStorylineTabValue(index)}>
-                <div className="p-4">
+                <div className="pb-4">
                   <TextContent font="maruburi">{storyline.story}</TextContent>
                 </div>
               </TabsContent>

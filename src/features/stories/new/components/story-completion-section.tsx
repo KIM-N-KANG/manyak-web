@@ -13,6 +13,7 @@ import { StoryCreateStepFooter } from './story-create-step-footer';
 type StoryCompletionSectionProps = {
   isCompletingStory: boolean;
   completedStory?: SimpleStoryCreateResponse | null;
+  onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 function StoryCompletionLoadingState() {
@@ -123,6 +124,7 @@ function StoryInfoSection({ story }: StoryInfoSectionProps) {
 export function StoryCompletionSection({
   isCompletingStory,
   completedStory,
+  onScroll,
 }: StoryCompletionSectionProps) {
   const titleLines = isCompletingStory
     ? ['스토리를 만들고 있어요', '잠시만 기다려 주세요']
@@ -134,9 +136,10 @@ export function StoryCompletionSection({
   return (
     <main
       className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
+      onScroll={onScroll}
       aria-busy={isCompletingStory}>
       <section className="flex flex-1 flex-col">
-        <div className="flex flex-col gap-1 border-b border-border p-4">
+        <div className="flex flex-col gap-1 p-4">
           <h1 className="text-xl font-semibold">
             {titleLines.map((titleLine) => (
               <span key={titleLine} className="block">
