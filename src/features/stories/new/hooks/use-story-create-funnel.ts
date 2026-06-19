@@ -59,7 +59,7 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        const storyId = response.data.storyId;
+        const storyId = response.data.id;
 
         if (typeof storyId === 'number') {
           saveCreatedStoryId(storyId);

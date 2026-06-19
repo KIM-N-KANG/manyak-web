@@ -74,23 +74,23 @@ export function StoryKeywordCategoryPanel({
           </p>
         )}
         {predefinedTags.map((tag) => {
-          const { tagId, name } = tag;
+          const { id, name } = tag;
 
-          if (tagId == null || !name) {
+          if (id == null || !name) {
             return null;
           }
 
-          const isSelected = selectedTagIds.includes(tagId);
+          const isSelected = selectedTagIds.includes(id);
           const isKeywordChipDisabled =
             isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
 
           return (
             <ToggleChip
-              key={tagId}
+              key={id}
               pressed={isSelected}
               disabled={isKeywordChipDisabled}
               onPressedChange={(pressed) =>
-                onTogglePredefinedTag(category, tagId, pressed)
+                onTogglePredefinedTag(category, id, pressed)
               }>
               {name}
             </ToggleChip>

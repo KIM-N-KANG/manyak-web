@@ -37,7 +37,7 @@ export function StoryCard({ story }: StoryCardProps) {
 
         {story.genres.length > 0 && <StoryGenreBadges genres={story.genres} />}
 
-        <p className="line-clamp-2 min-h-[2lh]">{story.summary}</p>
+        <p className="line-clamp-2 min-h-[2lh]">{story.oneLineIntro}</p>
       </div>
 
       <div className="flex items-center justify-end gap-1 text-sm text-foreground-secondary">
