@@ -6,7 +6,6 @@
  * OpenAPI spec version: v1
  */
 import type { StoryAuthorResponse } from './storyAuthorResponse';
-import type { StoryDetailResponseGenresItem } from './storyDetailResponseGenresItem';
 import type { StoryDetailResponseStatus } from './storyDetailResponseStatus';
 import type { StoryDetailResponseVisibility } from './storyDetailResponseVisibility';
 
@@ -30,8 +29,8 @@ export interface StoryDetailResponse {
    * @nullable
    */
   detailedIntroduction?: string | null;
-  /** 장르 목록 */
-  genres?: StoryDetailResponseGenresItem[];
+  /** 장르명 목록. 제작 시 선택한 장르 태그명입니다. */
+  genres?: string[];
   /** 해시태그 */
   hashtags?: string[];
   author?: StoryAuthorResponse | null;
@@ -45,7 +44,7 @@ export interface StoryDetailResponse {
   conversationPrologue?: string;
   /** 추천 입력 */
   recommendedInputs?: string[];
-  /** 스토리 공개 여부 */
+  /** 스토리 공개 여부. 기본 생성 시 PRIVATE입니다. */
   visibility?: StoryDetailResponseVisibility;
   /** 등록 상태 */
   status?: StoryDetailResponseStatus;

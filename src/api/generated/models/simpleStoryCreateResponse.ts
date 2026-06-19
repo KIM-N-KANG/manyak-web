@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { SimpleStoryStartSettingResponse } from './simpleStoryStartSettingResponse';
 
 /**
  * 간편 제작 이야기 생성 응답
@@ -12,4 +13,20 @@
 export interface SimpleStoryCreateResponse {
   /** 생성된 스토리 ID. 클라이언트는 이 값을 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다. */
   storyId?: number;
+  /** 스토리 제목 */
+  title?: string;
+  /**
+   * 한 줄 소개
+   * @nullable
+   */
+  oneLineIntro?: string | null;
+  /**
+   * 스토리 설명
+   * @nullable
+   */
+  description?: string | null;
+  /** 장르명 목록. 사용자가 선택한 장르 태그명입니다. */
+  genres?: string[];
+  /** 스토리 시작 설정 */
+  startSetting?: SimpleStoryStartSettingResponse;
 }

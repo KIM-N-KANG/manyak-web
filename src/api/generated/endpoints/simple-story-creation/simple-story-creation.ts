@@ -49,12 +49,24 @@ export type createSimpleStoryResponse404 = {
   status: 404;
 };
 
+export type createSimpleStoryResponse409 = {
+  data: ApiErrorResponse;
+  status: 409;
+};
+
+export type createSimpleStoryResponse502 = {
+  data: ApiErrorResponse;
+  status: 502;
+};
+
 export type createSimpleStoryResponseSuccess = createSimpleStoryResponse201 & {
   headers: Headers;
 };
 export type createSimpleStoryResponseError = (
   | createSimpleStoryResponse400
   | createSimpleStoryResponse404
+  | createSimpleStoryResponse409
+  | createSimpleStoryResponse502
 ) & {
   headers: Headers;
 };
@@ -68,7 +80,7 @@ export const getCreateSimpleStoryUrl = () => {
 };
 
 /**
- * 선택한 스토리라인과 추가 정보를 바탕으로 이야기를 바로 저장합니다. 응답으로 받은 storyId는 클라이언트 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다.
+ * 선택한 스토리라인과 추가 정보를 AI 서버에 전달해 최종 스토리를 생성하고 저장합니다. 응답으로 받은 storyId는 클라이언트 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다.
  * @summary 간편 제작 이야기 생성
  */
 export const createSimpleStory = async (
@@ -84,7 +96,7 @@ export const createSimpleStory = async (
 };
 
 export const getCreateSimpleStoryMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<void | ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -125,13 +137,13 @@ export type CreateSimpleStoryMutationResult = NonNullable<
   Awaited<ReturnType<typeof createSimpleStory>>
 >;
 export type CreateSimpleStoryMutationBody = BodyType<CreateSimpleStoryRequest>;
-export type CreateSimpleStoryMutationError = ErrorType<void>;
+export type CreateSimpleStoryMutationError = ErrorType<void | ApiErrorResponse>;
 
 /**
  * @summary 간편 제작 이야기 생성
  */
 export const useCreateSimpleStory = <
-  TError = ErrorType<void>,
+  TError = ErrorType<void | ApiErrorResponse>,
   TContext = unknown,
 >(
   options?: {
