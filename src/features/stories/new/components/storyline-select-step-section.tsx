@@ -32,8 +32,16 @@ export function StorylineSelectStepSection({
       onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
-          titleLines={['마음에 드는', '스토리라인을 선택해주세요']}
-          description="선택한 스토리라인이 스토리의 기본 흐름이 돼요"
+          titleLines={
+            isLoadingStorylines
+              ? ['스토리라인을 만들고 있어요', '잠시만 기다려 주세요']
+              : ['마음에 드는', '스토리라인을 선택해주세요']
+          }
+          description={
+            isLoadingStorylines
+              ? '선택한 키워드를 바탕으로 스토리라인을 구상하고 있어요'
+              : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
+          }
           className="p-4"
         />
 
