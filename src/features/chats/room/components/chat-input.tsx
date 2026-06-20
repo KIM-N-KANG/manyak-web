@@ -62,9 +62,10 @@ export function ChatInput({
             value={value}
             rows={1}
             placeholder="이야기를 어떻게 이어갈까요?"
+            disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
-            className="max-h-[33dvh] min-h-0"
+            className="max-h-[20dvh] min-h-0"
           />
           <InputGroupAddon align="block-end">
             <Button
@@ -72,6 +73,7 @@ export function ChatInput({
               variant="outline"
               size="icon-sm"
               aria-label="강조 표시 추가"
+              disabled={disabled}
               onClick={onInsertEmphasis}>
               <HugeiconsIcon icon={Asterisk02Icon} aria-hidden="true" />
             </Button>

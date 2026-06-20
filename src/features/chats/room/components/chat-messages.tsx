@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 import { useStickyScroll } from '../hooks/use-sticky-scroll';
 import { ChatMessageContent } from './chat-message-content';
@@ -31,10 +32,20 @@ export function ChatMessages({
   onHasScrolledChange,
 }: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const streamingBlockRef = useRef<HTMLDivElement>(null);
+  const lastTurnRef = useRef<HTMLDivElement>(null);
+  const [hasSent, setHasSent] = useState(false);
+
+  if (streamingTurn && !hasSent) {
+    setHasSent(true);
+  }
+
   const signature = `${turns.length}:${streamingTurn?.output.length ?? -1}`;
   const { isAtBottom, scrollToBottom, handleScroll } = useStickyScroll(
     scrollRef,
     signature,
+    streamingTurn ? streamingBlockRef : hasSent ? lastTurnRef : null,
+    streamingTurn ? 'smooth' : 'auto',
   );
 
   const onScroll = () => {
@@ -56,17 +67,24 @@ export function ChatMessages({
           </div>
         ) : null}
 
-        {turns.map((turn, index) => (
-          <ChatTurnItem
-            key={turn.id ?? index}
-            turn={turn}
-            isLast={!streamingTurn && index === lastTurnIndex}
-            onPickChoice={onPickChoice}
-          />
-        ))}
+        {turns.map((turn, index) => {
+          const isLast = !streamingTurn && index === lastTurnIndex;
+          const reserveSpace = isLast && hasSent;
+
+          return (
+            <ChatTurnItem
+              key={turn.id ?? index}
+              ref={reserveSpace ? lastTurnRef : undefined}
+              turn={turn}
+              isLast={isLast}
+              reserveSpace={reserveSpace}
+              onPickChoice={onPickChoice}
+            />
+          );
+        })}
 
         {streamingTurn ? (
-          <div>
+          <div ref={streamingBlockRef} className="min-h-full">
             <div className="bg-muted p-4">
               <ChatMessageContent>{streamingTurn.userInput}</ChatMessageContent>
             </div>
@@ -86,10 +104,15 @@ export function ChatMessages({
           type="button"
           variant="secondary"
           size="icon"
-          aria-label="맨 아래로 이동"
+          aria-label={streamingTurn ? 'AI 응답 생성 중' : '맨 아래로 이동'}
+          disabled={!!streamingTurn}
           onClick={() => scrollToBottom('smooth')}
           className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full shadow-md">
-          <HugeiconsIcon icon={ArrowDown01Icon} aria-hidden="true" />
+          {streamingTurn ? (
+            <Spinner />
+          ) : (
+            <HugeiconsIcon icon={ArrowDown01Icon} aria-hidden="true" />
+          )}
         </Button>
       ) : null}
     </div>

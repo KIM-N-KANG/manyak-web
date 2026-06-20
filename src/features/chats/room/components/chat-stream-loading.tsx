@@ -3,9 +3,9 @@
 import { useTypewriter } from '../hooks/use-typewriter';
 
 const LOADING_PHRASES = [
-  '이야기 이어가는 중...',
-  '다음 장면 떠올리는 중...',
-  '상상의 나래 펴는 중...',
+  '다음 장면 준비 중...',
+  '생각을 정리하는 중...',
+  '문장을 매끄럽게 다듬는 중...',
 ];
 
 export function ChatStreamLoading() {
