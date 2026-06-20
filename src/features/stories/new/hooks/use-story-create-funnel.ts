@@ -61,17 +61,20 @@ export function useStoryCreateFunnel() {
   const createChat = useCreateChat({
     mutation: {
       onSuccess: async (response) => {
-        if (response.status !== 201) {
+        const chatId = response.status === 201 ? response.data.id : undefined;
+
+        if (!chatId) {
+          setStep('additional-info');
+
           return;
         }
 
-        const chatId = response.data.id;
-
-        if (chatId) {
-          saveCreatedChatId(chatId);
-          await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
-          router.replace(APP_PATH.CHAT_ROOM(chatId));
-        }
+        saveCreatedChatId(chatId);
+        await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
+        router.replace(APP_PATH.CHAT_ROOM(chatId));
+      },
+      onError: () => {
+        setStep('additional-info');
       },
     },
   });
@@ -169,7 +172,7 @@ export function useStoryCreateFunnel() {
     isGeneratingStorylines: generateStorylines.isPending,
     hasGenerateStorylinesError: generateStorylines.isError,
     isCompletingStory: createStory.isPending || createChat.isPending,
-    hasCompleteStoryError: createStory.isError,
+    hasCompleteStoryError: createStory.isError || createChat.isError,
     handleGenerateStoryline,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange: setActiveStorylineIndex,

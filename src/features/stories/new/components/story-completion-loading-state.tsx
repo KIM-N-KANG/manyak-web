@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function StoryCompletionLoadingState() {
   return (
-    <div className="-pb-16 flex flex-col gap-8" aria-label="스토리 완성 중">
+    <div className="flex flex-col gap-8" aria-label="스토리 완성 중">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <Skeleton className="h-8 w-7/12" />
