@@ -1,0 +1,119 @@
+'use client';
+
+import { useRef, useState } from 'react';
+
+import { ListStatus } from '@/components/common/list-status';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+
+import { useChatDetail } from '../hooks/use-chat-detail';
+import { useChatStream } from '../hooks/use-chat-stream';
+import { insertEmphasisMarkers } from '../lib/insert-emphasis-markers';
+import { ChatInput } from './chat-input';
+import { ChatMessages } from './chat-messages';
+import { ChatRoomHeader } from './chat-room-header';
+
+type ChatRoomProps = {
+  chatId: string;
+};
+
+export function ChatRoom({ chatId }: ChatRoomProps) {
+  const { storyTitle, prologue, turns, isLoading, isError, refetch } =
+    useChatDetail(chatId);
+  const { streamingTurn, isStreaming, error, send, clearError } = useChatStream(
+    chatId,
+    refetch,
+  );
+
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [value, setValue] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Spinner className="size-8 text-foreground-secondary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ListStatus
+        title="채팅을 불러오지 못했어요"
+        description="잠시 후 다시 시도해주세요">
+        <Button variant="outline" size="lg" onClick={() => refetch()}>
+          다시 시도
+        </Button>
+      </ListStatus>
+    );
+  }
+
+  const handleSend = () => {
+    const text = value.trim();
+
+    if (!text || isStreaming) return;
+
+    setValue('');
+    void send(text);
+  };
+
+  const handlePickChoice = (text: string) => {
+    setValue(text);
+    textareaRef.current?.focus();
+  };
+
+  const handleInsertEmphasis = () => {
+    const element = textareaRef.current;
+
+    if (!element) return;
+
+    const {
+      value: nextValue,
+      cursorStart,
+      cursorEnd,
+    } = insertEmphasisMarkers(
+      value,
+      element.selectionStart,
+      element.selectionEnd,
+    );
+
+    setValue(nextValue);
+    requestAnimationFrame(() => {
+      element.focus();
+      element.setSelectionRange(cursorStart, cursorEnd);
+    });
+  };
+
+  const handleChange = (next: string) => {
+    setValue(next);
+
+    if (error) clearError();
+  };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <ChatRoomHeader storyTitle={storyTitle} hasScrolled={hasScrolled} />
+      <ChatMessages
+        prologue={prologue}
+        turns={turns}
+        streamingTurn={streamingTurn}
+        onPickChoice={handlePickChoice}
+        onHasScrolledChange={setHasScrolled}
+      />
+      {error ? (
+        <p className="px-4 text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <ChatInput
+        value={value}
+        onChange={handleChange}
+        onSend={handleSend}
+        onInsertEmphasis={handleInsertEmphasis}
+        disabled={isStreaming}
+        textareaRef={textareaRef}
+      />
+    </div>
+  );
+}
