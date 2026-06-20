@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
-import { useCreateChat } from '@/api/generated/endpoints/chats/chats';
+import {
+  getGetChatDetailQueryOptions,
+  useCreateChat,
+} from '@/api/generated/endpoints/chats/chats';
 import {
   useCreateSimpleStory,
   useGenerateSimpleStorylines,
@@ -15,6 +19,7 @@ import type {
   SimpleStorylineResponse,
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
+import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
@@ -28,6 +33,7 @@ const getGeneratedStorylines = (
 
 export function useStoryCreateFunnel() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -54,7 +60,7 @@ export function useStoryCreateFunnel() {
   });
   const createChat = useCreateChat({
     mutation: {
-      onSuccess: (response) => {
+      onSuccess: async (response) => {
         if (response.status !== 201) {
           return;
         }
@@ -62,6 +68,8 @@ export function useStoryCreateFunnel() {
         const chatId = response.data.id;
 
         if (chatId) {
+          saveCreatedChatId(chatId);
+          await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
           router.replace(APP_PATH.CHAT_ROOM(chatId));
         }
       },
