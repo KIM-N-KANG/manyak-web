@@ -7,11 +7,11 @@
  */
 
 /**
- * 간편 제작 도움 질문
+ * 간편 제작 추천 추가 정보
  */
-export interface SimpleStoryHelpQuestionResponse {
-  /** 질문 ID */
+export interface SimpleStoryRecommendedInfoResponse {
+  /** 추천 추가 정보 ID */
   id?: number;
-  /** 질문 내용 */
-  question?: string;
+  /** 추천 추가 정보 내용 */
+  text?: string;
 }

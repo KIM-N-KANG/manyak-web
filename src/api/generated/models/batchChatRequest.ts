@@ -11,9 +11,9 @@
  */
 export interface BatchChatRequest {
   /**
-   * 클라이언트가 로컬스토리지에 보관 중인 채팅 ID 목록
+   * 클라이언트가 로컬스토리지에 보관 중인 채팅 ID(공개 식별자) 목록
    * @minItems 0
    * @maxItems 100
    */
-  chatIds: number[];
+  chatIds: string[];
 }

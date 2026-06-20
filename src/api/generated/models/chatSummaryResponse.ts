@@ -10,14 +10,16 @@
  * 채팅 목록 항목
  */
 export interface ChatSummaryResponse {
-  /** 채팅 ID */
-  id?: number;
+  /** 채팅 ID(공개 식별자) */
+  id?: string;
   /** 스토리 ID */
   storyId?: number;
   /** 스토리 제목 */
   storyTitle?: string;
   /** 마지막으로 생성된 이야기 일부 */
   lastStoryPreview?: string;
+  /** 이 채팅에서 사용자가 이어쓴 횟수(완료된 턴 수) */
+  chatCount?: number;
   /** 마지막 진행 시각 */
   updatedAt?: string;
 }

@@ -11,8 +11,8 @@ import type { ChatTurnResponse } from './chatTurnResponse';
  * 채팅 상세 응답
  */
 export interface ChatDetailResponse {
-  /** 채팅 ID */
-  id?: number;
+  /** 채팅 ID(공개 식별자) */
+  id?: string;
   /** 스토리 ID */
   storyId?: number;
   /** 스토리 제목 */

@@ -5,7 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { SimpleStoryHelpQuestionResponse } from './simpleStoryHelpQuestionResponse';
+import type { SimpleStoryRecommendedInfoResponse } from './simpleStoryRecommendedInfoResponse';
 
 /**
  * 간편 제작 예시 스토리라인
@@ -16,9 +16,9 @@ export interface SimpleStorylineResponse {
   /** AI가 생성한 스토리라인 본문 */
   story?: string;
   /**
-   * 해당 스토리라인의 추가 입력을 돕는 도움 질문 3개
+   * 해당 스토리라인의 추가 입력을 돕는 추천 추가 정보 3개
    * @minItems 3
    * @maxItems 3
    */
-  helpQuestions?: SimpleStoryHelpQuestionResponse[];
+  recommendedInfos?: SimpleStoryRecommendedInfoResponse[];
 }

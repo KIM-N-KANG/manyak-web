@@ -1,16 +1,12 @@
 import type { ReactNode } from 'react';
 
-type StoryListStatusProps = {
+type ListStatusProps = {
   title: string;
   description: string;
   children: ReactNode;
 };
 
-export function StoryListStatus({
-  title,
-  description,
-  children,
-}: StoryListStatusProps) {
+export function ListStatus({ title, description, children }: ListStatusProps) {
   return (
     <div className="flex flex-1 items-center justify-center px-4">
       <section className="flex flex-col items-center gap-8">

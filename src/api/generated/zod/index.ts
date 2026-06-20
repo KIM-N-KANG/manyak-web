@@ -46,7 +46,7 @@ export const CreateSimpleStoryBody = zod
 export const CreateSimpleStoryResponse = zod.void();
 
 /**
- * 사용자가 선택한 태그를 저장하고 AI 서버에 전달해 예시 스토리라인 3개와 도움 질문을 생성합니다.
+ * 사용자가 선택한 태그를 저장하고 AI 서버에 전달해 예시 스토리라인 3개와 추천 추가 정보를 생성합니다.
  * @summary 간편 제작 스토리라인 생성
  */
 export const generateSimpleStorylinesBodySelectedTagIdsMin = 0;
@@ -127,7 +127,7 @@ export const CreateChatResponse = zod.void();
  * @summary 채팅 이어쓰기 스트리밍
  */
 export const StreamChatTurnParams = zod.object({
-  chatId: zod.number().describe('채팅 ID'),
+  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
 });
 
 export const streamChatTurnBodyUserInputMin = 0;
@@ -157,10 +157,12 @@ export const getChatsByIdsBodyChatIdsMax = 100;
 export const GetChatsByIdsBody = zod
   .object({
     chatIds: zod
-      .array(zod.number().describe('채팅 ID'))
+      .array(zod.string().describe('채팅 ID(공개 식별자)'))
       .min(getChatsByIdsBodyChatIdsMin)
       .max(getChatsByIdsBodyChatIdsMax)
-      .describe('클라이언트가 로컬스토리지에 보관 중인 채팅 ID 목록'),
+      .describe(
+        '클라이언트가 로컬스토리지에 보관 중인 채팅 ID(공개 식별자) 목록',
+      ),
   })
   .describe('채팅 ID 목록 조회 요청');
 
@@ -187,7 +189,7 @@ export const GetSimpleStoryTagsResponse = zod.unknown();
  * @summary 채팅 상세 조회
  */
 export const GetChatDetailParams = zod.object({
-  chatId: zod.number().describe('채팅 ID'),
+  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
 });
 
 export const GetChatDetailResponse = zod.unknown();

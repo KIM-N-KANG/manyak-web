@@ -199,7 +199,7 @@ export type streamChatTurnResponse =
   | streamChatTurnResponseSuccess
   | streamChatTurnResponseError;
 
-export const getStreamChatTurnUrl = (chatId: number) => {
+export const getStreamChatTurnUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}/turns/stream`;
 };
 
@@ -208,7 +208,7 @@ export const getStreamChatTurnUrl = (chatId: number) => {
  * @summary 채팅 이어쓰기 스트리밍
  */
 export const streamChatTurn = async (
-  chatId: number,
+  chatId: string,
   continueChatRequest: ContinueChatRequest,
   options?: RequestInit,
 ): Promise<streamChatTurnResponse> => {
@@ -227,14 +227,14 @@ export const getStreamChatTurnMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof streamChatTurn>>,
     TError,
-    { chatId: number; data: BodyType<ContinueChatRequest> },
+    { chatId: string; data: BodyType<ContinueChatRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof streamChatTurn>>,
   TError,
-  { chatId: number; data: BodyType<ContinueChatRequest> },
+  { chatId: string; data: BodyType<ContinueChatRequest> },
   TContext
 > => {
   const mutationKey = ['streamChatTurn'];
@@ -248,7 +248,7 @@ export const getStreamChatTurnMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof streamChatTurn>>,
-    { chatId: number; data: BodyType<ContinueChatRequest> }
+    { chatId: string; data: BodyType<ContinueChatRequest> }
   > = (props) => {
     const { chatId, data } = props ?? {};
 
@@ -272,7 +272,7 @@ export const useStreamChatTurn = <TError = ErrorType<void>, TContext = unknown>(
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof streamChatTurn>>,
       TError,
-      { chatId: number; data: BodyType<ContinueChatRequest> },
+      { chatId: string; data: BodyType<ContinueChatRequest> },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -281,7 +281,7 @@ export const useStreamChatTurn = <TError = ErrorType<void>, TContext = unknown>(
 ): UseMutationResult<
   Awaited<ReturnType<typeof streamChatTurn>>,
   TError,
-  { chatId: number; data: BodyType<ContinueChatRequest> },
+  { chatId: string; data: BodyType<ContinueChatRequest> },
   TContext
 > => {
   return useMutation(getStreamChatTurnMutationOptions(options), queryClient);
@@ -414,7 +414,7 @@ export type getChatDetailResponse =
   | getChatDetailResponseSuccess
   | getChatDetailResponseError;
 
-export const getGetChatDetailUrl = (chatId: number) => {
+export const getGetChatDetailUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}`;
 };
 
@@ -423,7 +423,7 @@ export const getGetChatDetailUrl = (chatId: number) => {
  * @summary 채팅 상세 조회
  */
 export const getChatDetail = async (
-  chatId: number,
+  chatId: string,
   options?: RequestInit,
 ): Promise<getChatDetailResponse> => {
   return customInstance<getChatDetailResponse>(getGetChatDetailUrl(chatId), {
@@ -432,7 +432,7 @@ export const getChatDetail = async (
   });
 };
 
-export const getGetChatDetailQueryKey = (chatId: number) => {
+export const getGetChatDetailQueryKey = (chatId: string) => {
   return [`/api/v1/chats/${chatId}`] as const;
 };
 
@@ -440,7 +440,7 @@ export const getGetChatDetailQueryOptions = <
   TData = Awaited<ReturnType<typeof getChatDetail>>,
   TError = ErrorType<void>,
 >(
-  chatId: number,
+  chatId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getChatDetail>>, TError, TData>
@@ -477,7 +477,7 @@ export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
   TError = ErrorType<void>,
 >(
-  chatId: number,
+  chatId: string,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getChatDetail>>, TError, TData>
@@ -500,7 +500,7 @@ export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
   TError = ErrorType<void>,
 >(
-  chatId: number,
+  chatId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getChatDetail>>, TError, TData>
@@ -523,7 +523,7 @@ export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
   TError = ErrorType<void>,
 >(
-  chatId: number,
+  chatId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getChatDetail>>, TError, TData>
@@ -542,7 +542,7 @@ export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
   TError = ErrorType<void>,
 >(
-  chatId: number,
+  chatId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getChatDetail>>, TError, TData>

@@ -16,6 +16,8 @@ export interface ChatTurnResponse {
   userInput?: string;
   /** 사용자 입력을 바탕으로 AI가 이어쓴 이야기 */
   aiOutput?: string;
+  /** 이 턴에서 AI가 제안한 다음 행동 선택지 목록 */
+  choices?: string[];
   /** 생성 시각 */
   createdAt?: string;
 }
