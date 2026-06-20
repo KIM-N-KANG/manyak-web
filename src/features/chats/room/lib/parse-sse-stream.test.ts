@@ -33,8 +33,8 @@ describe('parseSseStream', () => {
     const events = await collect(
       streamFrom([
         'event: started\ndata: {}\n\n',
-        'event: token\ndata: {"content":"안녕"}\n\n',
-        'event: token\ndata: {"content":"하세요"}\n\n',
+        'event: token\ndata: {"text":"안녕"}\n\n',
+        'event: token\ndata: {"text":"하세요"}\n\n',
         'event: completed\ndata: {"aiOutput":"안녕하세요"}\n\n',
       ]),
     );
@@ -49,7 +49,7 @@ describe('parseSseStream', () => {
 
   it('handles chunk boundaries splitting an event in half', async () => {
     const events = await collect(
-      streamFrom(['event: tok', 'en\ndata: {"con', 'tent":"x"}\n\n']),
+      streamFrom(['event: tok', 'en\ndata: {"te', 'xt":"x"}\n\n']),
     );
 
     expect(events).toEqual([{ type: 'token', content: 'x' }]);
@@ -73,7 +73,7 @@ describe('parseSseStream', () => {
     const events = await collect(
       streamFrom([
         'event: ping\r\ndata: {}\r\n\r\n',
-        'event: token\r\ndata: {"content":"y"}\r\n\r\n',
+        'event: token\r\ndata: {"text":"y"}\r\n\r\n',
       ]),
     );
 

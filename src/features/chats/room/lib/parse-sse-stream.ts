@@ -18,8 +18,7 @@ function extractField(dataStr: string, field: string): string | null {
 
     return null;
   } catch {
-    // JSON이 아니면 token content는 raw 문자열로 취급
-    return field === 'content' ? trimmed : null;
+    return field === 'text' ? trimmed : null;
   }
 }
 
@@ -28,7 +27,7 @@ function toSseEvent(eventName: string, dataStr: string): SseEvent | null {
     case 'started':
       return { type: 'started' };
     case 'token': {
-      const content = extractField(dataStr, 'content');
+      const content = extractField(dataStr, 'text');
 
       return content == null ? null : { type: 'token', content };
     }
