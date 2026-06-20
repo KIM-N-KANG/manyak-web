@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 
 import { useStickyScroll } from '../hooks/use-sticky-scroll';
 import { ChatMessageContent } from './chat-message-content';
+import { ChatStreamLoading } from './chat-stream-loading';
 import { ChatTurnItem } from './chat-turn-item';
 
 export type StreamingTurn = { userInput: string; output: string };
@@ -70,7 +71,11 @@ export function ChatMessages({
               <ChatMessageContent>{streamingTurn.userInput}</ChatMessageContent>
             </div>
             <div className="p-4">
-              <ChatMessageContent>{streamingTurn.output}</ChatMessageContent>
+              {streamingTurn.output ? (
+                <ChatMessageContent>{streamingTurn.output}</ChatMessageContent>
+              ) : (
+                <ChatStreamLoading />
+              )}
             </div>
           </div>
         ) : null}
