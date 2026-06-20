@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
+import { useCreateChat } from '@/api/generated/endpoints/chats/chats';
 import {
   useCreateSimpleStory,
   useGenerateSimpleStorylines,
@@ -9,9 +12,9 @@ import {
 import type {
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
-  SimpleStoryCreateResponse,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
+import { APP_PATH } from '@/constants/app-path';
 
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
@@ -24,6 +27,7 @@ const getGeneratedStorylines = (
   );
 
 export function useStoryCreateFunnel() {
+  const router = useRouter();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -32,8 +36,6 @@ export function useStoryCreateFunnel() {
   const [activeStorylineIndex, setActiveStorylineIndex] = useState(0);
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
-  const [completedStory, setCompletedStory] =
-    useState<SimpleStoryCreateResponse | null>(null);
 
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
@@ -50,6 +52,22 @@ export function useStoryCreateFunnel() {
       },
     },
   });
+  const createChat = useCreateChat({
+    mutation: {
+      onSuccess: (response) => {
+        if (response.status !== 201) {
+          return;
+        }
+
+        const chatId = response.data.id;
+
+        if (chatId) {
+          router.replace(APP_PATH.CHAT_ROOM(chatId));
+        }
+      },
+    },
+  });
+
   const createStory = useCreateSimpleStory({
     mutation: {
       onSuccess: (response) => {
@@ -65,8 +83,7 @@ export function useStoryCreateFunnel() {
           saveCreatedStoryId(storyId);
         }
 
-        setCompletedStory(response.data);
-        setStep('complete');
+        createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: () => {
         setStep('additional-info');
@@ -81,7 +98,7 @@ export function useStoryCreateFunnel() {
   const canCompleteStory =
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
-  const shouldConfirmBack = step !== 'keyword' && step !== 'complete';
+  const shouldConfirmBack = step !== 'keyword';
 
   const handleGenerateStoryline = (
     request: GenerateSimpleStorylinesRequest,
@@ -143,8 +160,7 @@ export function useStoryCreateFunnel() {
     canCompleteStory,
     isGeneratingStorylines: generateStorylines.isPending,
     hasGenerateStorylinesError: generateStorylines.isError,
-    completedStory,
-    isCompletingStory: createStory.isPending,
+    isCompletingStory: createStory.isPending || createChat.isPending,
     hasCompleteStoryError: createStory.isError,
     handleGenerateStoryline,
     handleRegenerateStorylines,
