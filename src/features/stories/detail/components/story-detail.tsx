@@ -58,7 +58,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             <StoryInfoSection story={story} />
           </main>
 
-          <StoryDetailCta />
+          <StoryDetailCta storyId={storyId} />
         </>
       )}
     </div>
