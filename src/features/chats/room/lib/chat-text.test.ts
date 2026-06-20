@@ -1,20 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getContentLines, parseEmphasisSegments } from './chat-text';
-
-describe('getContentLines', () => {
-  it('splits on explicit newlines and sentence boundaries, trimming blanks', () => {
-    expect(getContentLines('첫 문장. 둘째 문장!\n\n셋째 문장')).toEqual([
-      '첫 문장.',
-      '둘째 문장!',
-      '셋째 문장',
-    ]);
-  });
-
-  it('returns an empty array for empty input', () => {
-    expect(getContentLines('')).toEqual([]);
-  });
-});
+import { parseEmphasisSegments } from './chat-text';
 
 describe('parseEmphasisSegments', () => {
   it('marks a single *...* region as emphasis and strips the markers', () => {

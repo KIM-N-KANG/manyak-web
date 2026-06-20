@@ -54,7 +54,7 @@ export function ChatInput({
   };
 
   return (
-    <section className="px-4 pb-4">
+    <section className="p-4">
       <form onSubmit={handleSubmit}>
         <InputGroup>
           <InputGroupTextarea
@@ -70,7 +70,7 @@ export function ChatInput({
             <Button
               type="button"
               variant="outline"
-              size="icon"
+              size="icon-sm"
               aria-label="강조 표시 추가"
               onClick={onInsertEmphasis}>
               <HugeiconsIcon icon={Asterisk02Icon} aria-hidden="true" />
@@ -78,7 +78,7 @@ export function ChatInput({
             <Button
               type="submit"
               variant="default"
-              size="icon"
+              size="icon-sm"
               aria-label="전송"
               disabled={!canSend}
               className="ml-auto">

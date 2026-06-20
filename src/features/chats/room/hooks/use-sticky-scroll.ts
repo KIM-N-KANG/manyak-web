@@ -42,5 +42,23 @@ export function useStickyScroll<T extends HTMLElement>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dependency]);
 
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element) return;
+
+    // 입력창이 늘어나는 등으로 스크롤 영역 높이가 줄어들면 하단 고정 유지
+    const observer = new ResizeObserver(() => {
+      if (pinnedRef.current) {
+        scrollToBottom('auto');
+      }
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref]);
+
   return { isAtBottom, scrollToBottom, handleScroll };
 }
