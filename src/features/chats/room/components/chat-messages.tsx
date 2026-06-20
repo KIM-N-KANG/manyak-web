@@ -99,7 +99,7 @@ export function ChatMessages({
         ) : null}
       </main>
 
-      {!isAtBottom ? (
+      {streamingTurn || !isAtBottom ? (
         <Button
           type="button"
           variant="secondary"
