@@ -1,4 +1,7 @@
-import { Calendar04Icon } from '@hugeicons/core-free-icons';
+import {
+  BubbleChatUploadIcon,
+  Calendar04Icon,
+} from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
@@ -34,7 +37,17 @@ export function ChatCard({ chat }: ChatCardProps) {
         </p>
       </div>
 
-      <div className="flex items-center justify-end gap-1 text-sm text-foreground-secondary">
+      <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center gap-1 text-sm text-foreground-secondary">
+          <HugeiconsIcon
+            icon={BubbleChatUploadIcon}
+            className="size-4"
+            aria-hidden="true"
+          />
+          <p>{chat.chatCount}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 text-sm text-foreground-secondary">
         <HugeiconsIcon
           icon={Calendar04Icon}
           className="size-4"

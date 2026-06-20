@@ -3,5 +3,6 @@ export type ChatListItem = {
   storyId: number;
   storyTitle: string;
   lastStoryPreview: string;
+  chatCount: number;
   updatedAt: string;
 };
