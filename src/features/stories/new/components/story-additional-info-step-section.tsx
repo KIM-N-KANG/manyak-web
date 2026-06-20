@@ -1,14 +1,11 @@
 'use client';
 
-import {
-  ArrowMoveDownRightIcon,
-  Cancel01Icon,
-  PlusSignIcon,
-} from '@hugeicons/core-free-icons';
+import { useState } from 'react';
+
+import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { SimpleStorylineResponse } from '@/api/generated/models';
-import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -17,6 +14,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
+import { ToggleChip } from '@/components/ui/toggle-chip';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,
@@ -25,7 +23,9 @@ import {
 } from '../constants';
 import { useAdditionalInfos } from '../hooks/use-additional-infos';
 import { LoadingButtonContent } from './loading-button-content';
+import { SelectedStorylineContent } from './selected-storyline-content';
 import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryCreateStepTitle } from './story-create-step-title';
 
 type StoryAdditionalInfoStepSectionProps = {
@@ -56,14 +56,33 @@ export function StoryAdditionalInfoStepSection({
     getSubmittedAdditionalInfos,
   } = useAdditionalInfos();
 
+  const [selectedRecommendations, setSelectedRecommendations] = useState<
+    Set<string>
+  >(() => new Set());
+
+  const toggleRecommendation = (recommendation: string, pressed: boolean) => {
+    setSelectedRecommendations((previous) => {
+      const next = new Set(previous);
+
+      if (pressed) {
+        next.add(recommendation);
+      } else {
+        next.delete(recommendation);
+      }
+
+      return next;
+    });
+  };
+
   const handleCompleteStory = () => {
-    onCompleteStory(getSubmittedAdditionalInfos());
+    onCompleteStory([
+      ...selectedRecommendations,
+      ...getSubmittedAdditionalInfos(),
+    ]);
   };
 
   return (
-    <main
-      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
-      onScroll={onScroll}>
+    <StoryCreateStepScrollArea onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={[
@@ -76,27 +95,35 @@ export function StoryAdditionalInfoStepSection({
 
         <div className="p-4">
           <div className="flex flex-col gap-8">
-            <TextContent>{storyline.story}</TextContent>
+            <SelectedStorylineContent story={storyline.story} />
 
             <section
               aria-labelledby="story-help-questions"
-              className="flex flex-col gap-2 text-foreground-secondary">
-              <Label>AI 추천 질문</Label>
+              className="flex flex-col gap-2">
+              <Label>AI 추천 추가 정보</Label>
               <ul className="flex flex-col gap-2">
-                {(storyline.helpQuestions ?? []).map((helpQuestion, index) => (
-                  <li key={helpQuestion.id ?? index}>
-                    <div className="flex items-start gap-2">
-                      <HugeiconsIcon
-                        icon={ArrowMoveDownRightIcon}
-                        className="size-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0 flex-1">
-                        {helpQuestion.question}
-                      </span>
-                    </div>
-                  </li>
-                ))}
+                {/** @todo 곧 추천 질문이 아닌 추천 추가 정보로 바뀜 */}
+                {(storyline.helpQuestions ?? []).map((helpQuestion, index) => {
+                  const recommendation = helpQuestion.question ?? '';
+
+                  if (!recommendation) {
+                    return null;
+                  }
+
+                  return (
+                    <li key={helpQuestion.id ?? index}>
+                      <ToggleChip
+                        className="h-auto w-full justify-start text-left whitespace-normal"
+                        pressed={selectedRecommendations.has(recommendation)}
+                        disabled={isCompletingStory}
+                        onPressedChange={(pressed) =>
+                          toggleRecommendation(recommendation, pressed)
+                        }>
+                        {recommendation}
+                      </ToggleChip>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
 
@@ -190,6 +217,6 @@ export function StoryAdditionalInfoStepSection({
           </LoadingButtonContent>
         </Button>
       </StoryCreateStepFooter>
-    </main>
+    </StoryCreateStepScrollArea>
   );
 }

@@ -73,7 +73,9 @@ export function StoryGenreBadges({ genres }: StoryGenreBadgesProps) {
   const hiddenCount = genres.length - visibleCount;
 
   return (
-    <div ref={containerRef} className="relative flex gap-1 overflow-hidden">
+    <div
+      ref={containerRef}
+      className="pointer-events-none relative flex gap-1 overflow-hidden">
       <div
         aria-hidden
         className="pointer-events-none invisible absolute -z-10 flex">

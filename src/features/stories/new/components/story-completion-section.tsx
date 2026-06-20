@@ -6,6 +6,7 @@ import { APP_PATH } from '@/constants/app-path';
 
 import { StoryCompletionLoadingState } from './story-completion-loading-state';
 import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryInfoSection } from './story-info-section';
 
 type StoryCompletionSectionProps = {
@@ -27,8 +28,7 @@ export function StoryCompletionSection({
     : '내 스토리에 저장되어 언제든 채팅을 이어갈 수 있어요';
 
   return (
-    <main
-      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
+    <StoryCreateStepScrollArea
       onScroll={onScroll}
       aria-busy={isCompletingStory}>
       <section className="flex flex-1 flex-col">
@@ -66,6 +66,6 @@ export function StoryCompletionSection({
           </Button>
         </StoryCreateStepFooter>
       )}
-    </main>
+    </StoryCreateStepScrollArea>
   );
 }

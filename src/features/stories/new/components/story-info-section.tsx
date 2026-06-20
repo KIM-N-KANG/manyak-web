@@ -1,10 +1,18 @@
-import type { SimpleStoryCreateResponse } from '@/api/generated/models';
+import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
 import { Label } from '@/components/ui/label';
 import { StoryDetailTags } from '@/features/stories/detail/components/story-detail-tags';
 
+type StoryInfo = {
+  title?: string;
+  oneLineIntro?: string | null;
+  description?: string | null;
+  genres?: string[];
+  startSetting?: StoryStartSettingResponse | null;
+};
+
 type StoryInfoSectionProps = {
-  story: SimpleStoryCreateResponse;
+  story: StoryInfo;
 };
 
 export function StoryInfoSection({ story }: StoryInfoSectionProps) {

@@ -11,6 +11,7 @@ import {
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
 import type { TagCategory } from '../types';
 import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryCreateStepTitle } from './story-create-step-title';
 import { StoryKeywordCategoryPanel } from './story-keyword-category-panel';
 
@@ -36,7 +37,13 @@ export function StoryKeywordStepSection({
     simpleStoryTags,
     tagsByCategory,
     canGenerateStoryline,
-    getSelectedCount,
+    isMaxSelectionReached,
+    isCategoryUnlocked,
+    isCategoryComplete,
+    isLastCategory,
+    goToNextCategory,
+    handleTouchStart,
+    handleTouchEnd,
     togglePredefinedTag,
     toggleCustomKeyword,
     addCustomKeyword,
@@ -47,9 +54,7 @@ export function StoryKeywordStepSection({
   });
 
   return (
-    <main
-      className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16"
-      onScroll={onScroll}>
+    <StoryCreateStepScrollArea onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
@@ -59,15 +64,23 @@ export function StoryKeywordStepSection({
         <Tabs
           value={activeCategory}
           onValueChange={(value) => setActiveCategory(value as TagCategory)}
-          className="p-4">
-          <TabsList>
-            {TAG_CATEGORIES.map(({ value, label, required }) => (
-              <TabsTrigger key={value} value={value} className="gap-0.5">
-                {label}
-                {required && <span className="text-destructive">*</span>}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          className="gap-0"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}>
+          <div className="sticky -top-px z-10 bg-background px-4 pt-4.25 pb-4">
+            <TabsList>
+              {TAG_CATEGORIES.map(({ value, label, required }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  disabled={!isCategoryUnlocked(value)}
+                  className="gap-0.5">
+                  {label}
+                  {required && <span className="text-destructive">*</span>}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
           {TAG_CATEGORIES.map(
             ({ value: category, label, placeholder, maxSelectionCount }) => {
               const selectedTagIds = selectedTagIdsByCategory[category];
@@ -75,13 +88,13 @@ export function StoryKeywordStepSection({
                 selectedCustomKeywordIdsByCategory[category];
 
               return (
-                <TabsContent key={category} value={category}>
+                <TabsContent key={category} value={category} className="px-4">
                   <StoryKeywordCategoryPanel
                     category={category}
                     label={label}
                     placeholder={placeholder}
                     maxSelectionCount={maxSelectionCount}
-                    selectedCount={getSelectedCount(category)}
+                    isMaxSelectionReached={isMaxSelectionReached(category)}
                     selectedTagIds={selectedTagIds}
                     selectedCustomKeywordIds={selectedCustomKeywordIds}
                     predefinedTags={tagsByCategory[category]}
@@ -110,11 +123,17 @@ export function StoryKeywordStepSection({
         <Button
           type="button"
           size="lg"
-          disabled={!canGenerateStoryline || isGeneratingStoryline}
-          onClick={handleGenerateStoryline}>
-          스토리라인 만들기
+          className="min-w-24"
+          disabled={
+            isGeneratingStoryline ||
+            (isLastCategory
+              ? !canGenerateStoryline
+              : !isCategoryComplete(activeCategory))
+          }
+          onClick={isLastCategory ? handleGenerateStoryline : goToNextCategory}>
+          {isLastCategory ? '스토리라인 만들기' : '다음'}
         </Button>
       </StoryCreateStepFooter>
-    </main>
+    </StoryCreateStepScrollArea>
   );
 }

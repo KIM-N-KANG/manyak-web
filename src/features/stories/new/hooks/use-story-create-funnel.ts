@@ -59,7 +59,7 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        const storyId = response.data.storyId;
+        const storyId = response.data.id;
 
         if (typeof storyId === 'number') {
           saveCreatedStoryId(storyId);
@@ -141,10 +141,8 @@ export function useStoryCreateFunnel() {
     activeStorylineIndex,
     selectedStoryline,
     canCompleteStory,
-    isGeneratingStoryline: generateStorylines.isPending,
-    hasGenerateStorylineError: generateStorylines.isError,
-    isRegeneratingStorylines: generateStorylines.isPending,
-    hasRegenerateStorylinesError: generateStorylines.isError,
+    isGeneratingStorylines: generateStorylines.isPending,
+    hasGenerateStorylinesError: generateStorylines.isError,
     completedStory,
     isCompletingStory: createStory.isPending,
     hasCompleteStoryError: createStory.isError,

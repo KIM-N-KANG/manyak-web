@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type Dispatch, type SetStateAction, useState } from 'react';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
@@ -15,6 +15,7 @@ import {
   getMaxSelectionCount,
   getTagsByCategory,
 } from '../utils/tag-categories';
+import { useHorizontalSwipe } from './use-horizontal-swipe';
 
 type UseStoryKeywordStepArgs = {
   isGeneratingStoryline: boolean;
@@ -53,73 +54,87 @@ export function useStoryKeywordStep({
     selectedTagIdsByCategory[category].length +
     selectedCustomKeywordIdsByCategory[category].length;
 
-  const togglePredefinedTag = (
-    category: TagCategory,
-    tagId: number,
-    pressed: boolean,
-  ) => {
-    setSelectedTagIdsByCategory((previous) => {
-      const selectedTagIds = previous[category];
+  const isMaxSelectionReached = (category: TagCategory) =>
+    getSelectedCount(category) >= getMaxSelectionCount(category);
 
-      if (!pressed) {
-        return {
-          ...previous,
-          [category]: selectedTagIds.filter(
-            (selectedTagId) => selectedTagId !== tagId,
-          ),
-        };
-      }
+  const categoryValues = TAG_CATEGORIES.map(({ value }) => value);
 
-      if (
-        selectedTagIds.includes(tagId) ||
-        selectedTagIds.length +
-          selectedCustomKeywordIdsByCategory[category].length >=
-          getMaxSelectionCount(category)
-      ) {
-        return previous;
-      }
+  const isCategoryComplete = (category: TagCategory) =>
+    getSelectedCount(category) > 0;
 
-      return {
-        ...previous,
-        [category]: [...selectedTagIds, tagId],
-      };
-    });
+  const isCategoryUnlocked = (category: TagCategory) => {
+    const index = categoryValues.indexOf(category);
+
+    return TAG_CATEGORIES.slice(0, index).every(
+      ({ value, required }) => !required || isCategoryComplete(value),
+    );
   };
 
-  const toggleCustomKeyword = (
-    category: TagCategory,
-    keywordId: string,
-    pressed: boolean,
-  ) => {
-    setSelectedCustomKeywordIdsByCategory((previous) => {
-      const selectedKeywordIds = previous[category];
+  const activeIndex = categoryValues.indexOf(activeCategory);
+  const isLastCategory = activeIndex === categoryValues.length - 1;
 
-      if (!pressed) {
+  const goToNextCategory = () => {
+    const nextCategory = categoryValues[activeIndex + 1];
+
+    if (nextCategory) {
+      setActiveCategory(nextCategory);
+    }
+  };
+
+  const { handleTouchStart, handleTouchEnd } = useHorizontalSwipe({
+    onSwipeLeft: () => {
+      const next = categoryValues[activeIndex + 1];
+
+      if (next && isCategoryUnlocked(next)) {
+        setActiveCategory(next);
+      }
+    },
+    onSwipeRight: () => {
+      const prev = categoryValues[activeIndex - 1];
+
+      if (prev) {
+        setActiveCategory(prev);
+      }
+    },
+  });
+
+  const createToggleSelection =
+    <Id>(
+      setSelectedIdsByCategory: Dispatch<
+        SetStateAction<Record<TagCategory, Id[]>>
+      >,
+    ) =>
+    (category: TagCategory, id: Id, pressed: boolean) => {
+      setSelectedIdsByCategory((previous) => {
+        const selectedIds = previous[category];
+
+        if (!pressed) {
+          return {
+            ...previous,
+            [category]: selectedIds.filter((selectedId) => selectedId !== id),
+          };
+        }
+
+        if (selectedIds.includes(id) || isMaxSelectionReached(category)) {
+          return previous;
+        }
+
         return {
           ...previous,
-          [category]: selectedKeywordIds.filter(
-            (selectedKeywordId) => selectedKeywordId !== keywordId,
-          ),
+          [category]: [...selectedIds, id],
         };
-      }
+      });
+    };
 
-      if (
-        selectedKeywordIds.includes(keywordId) ||
-        selectedTagIdsByCategory[category].length + selectedKeywordIds.length >=
-          getMaxSelectionCount(category)
-      ) {
-        return previous;
-      }
-
-      return {
-        ...previous,
-        [category]: [...selectedKeywordIds, keywordId],
-      };
-    });
-  };
+  const togglePredefinedTag = createToggleSelection(
+    setSelectedTagIdsByCategory,
+  );
+  const toggleCustomKeyword = createToggleSelection(
+    setSelectedCustomKeywordIdsByCategory,
+  );
 
   const addCustomKeyword = (category: TagCategory, keyword: string) => {
-    if (getSelectedCount(category) >= getMaxSelectionCount(category)) {
+    if (isMaxSelectionReached(category)) {
       return;
     }
 
@@ -176,7 +191,13 @@ export function useStoryKeywordStep({
     isGeneratingStoryline,
     tagsByCategory,
     canGenerateStoryline,
-    getSelectedCount,
+    isMaxSelectionReached,
+    isCategoryComplete,
+    isCategoryUnlocked,
+    isLastCategory,
+    goToNextCategory,
+    handleTouchStart,
+    handleTouchEnd,
     togglePredefinedTag,
     toggleCustomKeyword,
     addCustomKeyword,

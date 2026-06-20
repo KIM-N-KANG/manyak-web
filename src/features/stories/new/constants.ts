@@ -2,7 +2,7 @@ import type { StoryCreateStep, TagCategoryConfig } from './types';
 
 export const ADD_KEYWORD_MAX_LENGTH = 15;
 
-export const ADDITIONAL_INFO_MAX_COUNT = 3;
+export const ADDITIONAL_INFO_MAX_COUNT = 10;
 
 export const ADDITIONAL_INFO_MAX_LENGTH = 100;
 
@@ -22,14 +22,14 @@ export const TAG_CATEGORIES = [
   },
   {
     value: 'PROTAGONIST',
-    label: '주인공',
+    label: '주인공 특징',
     placeholder: '예: 사랑에 서툰, 타인을 믿지 못하는',
     required: true,
     maxSelectionCount: 5,
   },
   {
     value: 'SUPPORTING_CHARACTER',
-    label: '주변 인물',
+    label: '주변 인물 특징',
     placeholder: '예: 상냥해서 더 위험한, 어딘가 망가진',
     required: false,
     maxSelectionCount: 10,
@@ -37,15 +37,29 @@ export const TAG_CATEGORIES = [
 ] satisfies TagCategoryConfig[];
 
 export const SKELETON_TAG_CHIP_WIDTH_CLASSES = [
-  'w-14',
-  'w-16',
-  'w-20',
   'w-24',
-  'w-28',
+  'w-10',
   'w-32',
-  'w-36',
-  'w-40',
+  'w-16',
+  'w-14',
+  'w-28',
+  'w-20',
+  'w-12',
+  'w-24',
+  'w-16',
+  'w-10',
+  'w-32',
+  'w-14',
+  'w-28',
+  'w-20',
+  'w-12',
+  'w-24',
+  'w-10',
+  'w-16',
+  'w-28',
 ] as const;
+
+export const STORYLINE_TAB_LABELS = ['첫 번째', '두 번째', '세 번째'] as const;
 
 export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 

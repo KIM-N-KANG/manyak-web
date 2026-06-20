@@ -3,8 +3,6 @@
 import { type UIEvent, useState } from 'react';
 
 import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
-import type { SimpleStoryCreateResponse } from '@/api/generated/models';
-import type { StoryDetailResponse } from '@/api/generated/models/storyDetailResponse';
 import { Button } from '@/components/ui/button';
 import { StoryInfoSection } from '@/features/stories/new/components/story-info-section';
 
@@ -15,21 +13,6 @@ import { StoryDetailSkeleton } from './story-detail-skeleton';
 type StoryDetailProps = {
   storyId: number;
 };
-
-/** @todo 스토리 상세 정보 조회 API key값이 달라지면 같이 수정해야 함 */
-function toStoryInfo(story: StoryDetailResponse): SimpleStoryCreateResponse {
-  return {
-    storyId: story.id,
-    title: story.title,
-    oneLineIntro: story.shortDescription,
-    description: story.detailedIntroduction,
-    genres: story.genres,
-    startSetting: {
-      name: story.startSituationName,
-      startSituation: story.conversationPrologue,
-    },
-  };
-}
 
 export function StoryDetail({ storyId }: StoryDetailProps) {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -72,7 +55,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
           <main
             className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-20"
             onScroll={handleContentScroll}>
-            <StoryInfoSection story={toStoryInfo(story)} />
+            <StoryInfoSection story={story} />
           </main>
 
           <StoryDetailCta />
