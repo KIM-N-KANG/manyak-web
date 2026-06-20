@@ -27,7 +27,7 @@ export function TextContent({
     <div
       className={cn(
         'flex flex-col gap-6',
-        size === 'sm' ? 'gap-2.5 text-sm' : 'text-base',
+        size === 'sm' ? 'gap-4 text-sm' : 'text-base',
         font === 'maruburi' && 'font-maruburi',
       )}>
       {lines.map((line, index) => (
