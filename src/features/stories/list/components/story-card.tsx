@@ -4,9 +4,9 @@ import Link from 'next/link';
 
 import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
+import { formatDate } from '@/lib/format-date';
 
 import type { StoryListItem } from '../types';
-import { formatStoryDate } from '../utils/format-date';
 import { StoryGenreBadges } from './story-genre-badges';
 
 type StoryCardProps = {
@@ -15,7 +15,7 @@ type StoryCardProps = {
 
 export function StoryCard({ story }: StoryCardProps) {
   return (
-    <article className="relative flex flex-col gap-2">
+    <article className="relative flex flex-col gap-2 px-4 py-2">
       {story.id != null && (
         <Link
           href={APP_PATH.STORY_DETAIL(story.id)}
@@ -46,7 +46,7 @@ export function StoryCard({ story }: StoryCardProps) {
           className="size-4"
           aria-hidden="true"
         />
-        {story.createdAt && <time>{formatStoryDate(story.createdAt)}</time>}
+        {story.createdAt && <time>{formatDate(story.createdAt)}</time>}
       </div>
     </article>
   );

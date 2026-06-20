@@ -53,13 +53,15 @@ export function StoryList() {
 
   return (
     <>
-      <ul className="flex flex-col gap-4 p-4">
+      <ul className="flex flex-col gap-2 py-4">
         {stories.map((story, index) => (
           <Fragment key={story.id}>
             <li>
               <StoryCard story={story} />
             </li>
-            {index < stories.length - 1 && <Separator />}
+            {index < stories.length - 1 && (
+              <Separator className="mx-4 data-horizontal:w-auto" />
+            )}
           </Fragment>
         ))}
       </ul>
