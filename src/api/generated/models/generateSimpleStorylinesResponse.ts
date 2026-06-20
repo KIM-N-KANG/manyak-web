@@ -17,7 +17,7 @@ export interface GenerateSimpleStorylinesResponse {
   /** 저장된 선택 태그 */
   selectedTags?: SimpleStoryTagResponse[];
   /**
-   * AI가 생성한 예시 스토리라인 3개. 각 스토리라인은 추가 입력을 돕는 도움 질문 3개를 포함합니다.
+   * AI가 생성한 예시 스토리라인 3개. 각 스토리라인은 추가 입력을 돕는 추천 추가 정보 3개를 포함합니다.
    * @minItems 3
    * @maxItems 3
    */

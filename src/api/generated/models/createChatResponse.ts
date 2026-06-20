@@ -10,8 +10,8 @@
  * 채팅 생성 응답
  */
 export interface CreateChatResponse {
-  /** 채팅 ID. 클라이언트는 이 값을 로컬스토리지에 저장해 이전 채팅 목록 구성에 사용합니다. */
-  id?: number;
+  /** 채팅 ID(추측 불가능한 공개 식별자). 클라이언트는 이 값을 로컬스토리지에 저장해 이전 채팅 목록 구성에 사용합니다. */
+  id?: string;
   /** 스토리 ID */
   storyId?: number;
   /** 채팅 시작 프롤로그 */
