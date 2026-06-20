@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-import { parseEmphasisSegments } from '../lib/chat-text';
+import { parseChatSegments } from '../lib/chat-text';
 
 type ChatMessageContentProps = {
   children?: string;
@@ -17,10 +17,13 @@ export function ChatMessageContent({
         'font-maruburi text-base leading-loose whitespace-pre-wrap',
         className,
       )}>
-      {parseEmphasisSegments(children ?? '').map((segment, segmentIndex) => (
+      {parseChatSegments(children ?? '').map((segment, segmentIndex) => (
         <span
           key={segmentIndex}
-          className={cn(segment.emphasis && 'text-foreground-secondary')}>
+          className={cn(
+            segment.emphasis && 'text-foreground-secondary',
+            segment.bold && 'font-bold',
+          )}>
           {segment.text}
         </span>
       ))}

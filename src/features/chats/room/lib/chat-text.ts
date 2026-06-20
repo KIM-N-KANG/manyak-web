@@ -1,25 +1,44 @@
-// 앞뒤가 또 다른 '*'가 아닌 단일 '*'로 둘러싼 구간만 매칭(이중 '**' 제외)
-const EMPHASIS_PATTERN = /(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)/g;
+export type ChatTextSegment = {
+  text: string;
+  /** 단일 *...* — 내레이션/속마음 (보조 색상) */
+  emphasis: boolean;
+  /** 이중 **...** — 볼드 */
+  bold: boolean;
+};
 
-export function parseEmphasisSegments(
-  line: string,
-): Array<{ text: string; emphasis: boolean }> {
-  const segments: Array<{ text: string; emphasis: boolean }> = [];
+// **...** (볼드)를 먼저, 그다음 이중 '*'가 아닌 단일 *...* (강조)를 매칭
+const SEGMENT_PATTERN = /\*\*([^*\n]+?)\*\*|(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)/g;
+
+export function parseChatSegments(line: string): ChatTextSegment[] {
+  const segments: ChatTextSegment[] = [];
   let lastIndex = 0;
 
-  for (const match of line.matchAll(EMPHASIS_PATTERN)) {
+  for (const match of line.matchAll(SEGMENT_PATTERN)) {
     const index = match.index ?? 0;
 
     if (index > lastIndex) {
-      segments.push({ text: line.slice(lastIndex, index), emphasis: false });
+      segments.push({
+        text: line.slice(lastIndex, index),
+        emphasis: false,
+        bold: false,
+      });
     }
 
-    segments.push({ text: match[1], emphasis: true });
+    if (match[1] != null) {
+      segments.push({ text: match[1], emphasis: false, bold: true });
+    } else {
+      segments.push({ text: match[2], emphasis: true, bold: false });
+    }
+
     lastIndex = index + match[0].length;
   }
 
   if (lastIndex < line.length) {
-    segments.push({ text: line.slice(lastIndex), emphasis: false });
+    segments.push({
+      text: line.slice(lastIndex),
+      emphasis: false,
+      bold: false,
+    });
   }
 
   return segments;
