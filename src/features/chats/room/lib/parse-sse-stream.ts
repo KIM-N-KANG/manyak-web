@@ -71,7 +71,8 @@ function parseEventBlock(block: string): SseEvent | null {
 export async function* parseSseStream(
   stream: ReadableStream<Uint8Array>,
 ): AsyncGenerator<SseEvent> {
-  const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
   let buffer = '';
 
   try {
@@ -80,7 +81,7 @@ export async function* parseSseStream(
 
       if (done) break;
 
-      buffer += value.replace(/\r\n/g, '\n');
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
 
       let boundary = buffer.indexOf('\n\n');
 
@@ -96,6 +97,8 @@ export async function* parseSseStream(
         boundary = buffer.indexOf('\n\n');
       }
     }
+
+    buffer += decoder.decode();
 
     const trailing = parseEventBlock(buffer);
 
