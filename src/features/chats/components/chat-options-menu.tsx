@@ -15,7 +15,7 @@ import {
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
 type ChatOptionsMenuProps = {
-  chatId: number;
+  chatId: string;
   size?: ButtonSize;
   triggerClassName?: string;
 };

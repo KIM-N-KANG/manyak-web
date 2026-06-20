@@ -11,7 +11,7 @@ import { useChatIds } from './use-chat-ids';
 const CHATS_BATCH_QUERY_KEY = 'chats-batch';
 
 const toChatListItems = (
-  chatIds: number[],
+  chatIds: string[],
   chats: ChatSummaryResponse[],
 ): ChatListItem[] => {
   const chatById = new Map(chats.map((chat) => [chat.id, chat]));

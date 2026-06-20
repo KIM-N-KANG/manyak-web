@@ -1,5 +1,5 @@
 export type ChatListItem = {
-  id: number;
+  id: string;
   storyId: number;
   storyTitle: string;
   lastStoryPreview: string;

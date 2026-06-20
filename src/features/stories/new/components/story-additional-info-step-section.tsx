@@ -102,28 +102,29 @@ export function StoryAdditionalInfoStepSection({
               className="flex flex-col gap-2">
               <Label>AI 추천 추가 정보</Label>
               <ul className="flex flex-col gap-2">
-                {/** @todo 곧 추천 질문이 아닌 추천 추가 정보로 바뀜 */}
-                {(storyline.helpQuestions ?? []).map((helpQuestion, index) => {
-                  const recommendation = helpQuestion.question ?? '';
+                {(storyline.recommendedInfos ?? []).map(
+                  (recommendedInfo, index) => {
+                    const recommendation = recommendedInfo.text ?? '';
 
-                  if (!recommendation) {
-                    return null;
-                  }
+                    if (!recommendation) {
+                      return null;
+                    }
 
-                  return (
-                    <li key={helpQuestion.id ?? index}>
-                      <ToggleChip
-                        className="h-auto w-full justify-start text-left whitespace-normal"
-                        pressed={selectedRecommendations.has(recommendation)}
-                        disabled={isCompletingStory}
-                        onPressedChange={(pressed) =>
-                          toggleRecommendation(recommendation, pressed)
-                        }>
-                        {recommendation}
-                      </ToggleChip>
-                    </li>
-                  );
-                })}
+                    return (
+                      <li key={recommendedInfo.id ?? index}>
+                        <ToggleChip
+                          className="h-auto w-full justify-start text-left whitespace-normal"
+                          pressed={selectedRecommendations.has(recommendation)}
+                          disabled={isCompletingStory}
+                          onPressedChange={(pressed) =>
+                            toggleRecommendation(recommendation, pressed)
+                          }>
+                          {recommendation}
+                        </ToggleChip>
+                      </li>
+                    );
+                  },
+                )}
               </ul>
             </section>
 

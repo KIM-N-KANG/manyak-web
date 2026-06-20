@@ -13,8 +13,7 @@ const parseSavedChatIds = (value: string | null) => {
     }
 
     return parsedValue.filter(
-      (savedChatId): savedChatId is number =>
-        typeof savedChatId === 'number' && Number.isInteger(savedChatId),
+      (savedChatId): savedChatId is string => typeof savedChatId === 'string',
     );
   } catch {
     return [];
@@ -51,7 +50,7 @@ export const getCreatedChatIdsSnapshot = (): string | null =>
 export const getServerCreatedChatIdsSnapshot =
   (): typeof SERVER_CHAT_IDS_SNAPSHOT => SERVER_CHAT_IDS_SNAPSHOT;
 
-export const saveCreatedChatId = (chatId: number) => {
+export const saveCreatedChatId = (chatId: string) => {
   if (typeof window === 'undefined') {
     return;
   }
