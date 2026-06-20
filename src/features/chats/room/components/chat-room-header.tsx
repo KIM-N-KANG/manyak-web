@@ -5,6 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { APP_PATH } from '@/constants/app-path';
 import { cn } from '@/lib/utils';
 
 type ChatRoomHeaderProps = {
@@ -28,8 +29,8 @@ export function ChatRoomHeader({
         type="button"
         size="icon-lg"
         variant="ghost"
-        aria-label="이전 페이지로 돌아가기 버튼"
-        onClick={() => router.back()}>
+        aria-label="채팅 목록으로 돌아가기 버튼"
+        onClick={() => router.push(APP_PATH.MAIN.CHATS)}>
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
       <h1 className="truncate text-lg font-semibold">{storyTitle}</h1>

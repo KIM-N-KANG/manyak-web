@@ -26,7 +26,7 @@ export function TextContent({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 leading-loose',
+        'flex flex-col gap-6',
         size === 'sm' ? 'gap-2.5 text-sm' : 'text-base',
         font === 'maruburi' && 'font-maruburi',
       )}>

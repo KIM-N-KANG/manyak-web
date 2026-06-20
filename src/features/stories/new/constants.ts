@@ -77,3 +77,18 @@ export const STORYLINE_TEXT_SKELETON_WIDTH_CLASSES = [
   'w-11/12',
   'w-5/12',
 ] as const;
+
+export const STORY_COMPLETION_LOADING_LABEL = '스토리 완성 중';
+
+export const STORY_COMPLETION_TEXT_SKELETON_WIDTH_CLASSES = [
+  'w-full',
+  'w-8/12',
+  'w-10/12',
+  'w-0',
+  'w-full',
+  'w-2/12',
+  'w-0',
+  'w-full',
+  'w-11/12',
+  'w-5/12',
+] as const;
