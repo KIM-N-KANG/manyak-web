@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 
+import { ListStatus } from '../../../../components/common/list-status';
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { CreateStoryFab } from './create-story-fab';
 import { StoryCard } from './story-card';
 import { StoryListSkeleton } from './story-list-skeleton';
-import { StoryListStatus } from './story-list-status';
 
 export function StoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
@@ -25,19 +25,19 @@ export function StoryList() {
 
   if (isError) {
     return (
-      <StoryListStatus
+      <ListStatus
         title="스토리를 불러오지 못했어요"
         description="잠시 후 다시 시도해주세요">
         <Button variant="outline" size="lg" onClick={() => refetch()}>
           다시 시도
         </Button>
-      </StoryListStatus>
+      </ListStatus>
     );
   }
 
   if (isEmpty) {
     return (
-      <StoryListStatus
+      <ListStatus
         title="아직 만든 스토리가 없어요"
         description="3단계로 간단하게 스토리를 만들어보세요">
         <Button
@@ -47,7 +47,7 @@ export function StoryList() {
           <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
           <span>스토리 만들기</span>
         </Button>
-      </StoryListStatus>
+      </ListStatus>
     );
   }
 
