@@ -1,16 +1,17 @@
 'use client';
 
-import { Delete02Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import type { VariantProps } from 'class-variance-authority';
 
-import { Button, type buttonVariants } from '@/components/ui/button';
+import { useDeleteChat } from '@/api/generated/endpoints/chats/chats';
+import { OptionsMenu } from '@/components/common/options-menu';
+import type { buttonVariants } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  getCreatedChatIdsSnapshot,
+  parseCreatedChatIds,
+  removeCreatedChatId,
+  writeCreatedChatIds,
+} from '@/features/chats/list/utils/chat-id-storage';
+import { FetchError } from '@/lib/custom-fetch';
 
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
@@ -25,31 +26,33 @@ export function ChatOptionsMenu({
   size = 'icon-xs',
   triggerClassName,
 }: ChatOptionsMenuProps) {
-  /** @todo 채팅 삭제 API 연동 */
-  const handleDelete = () => {
-    void chatId;
+  const { mutateAsync, isPending } = useDeleteChat();
+
+  const handleDelete = async () => {
+    const previousChatIds = parseCreatedChatIds(getCreatedChatIdsSnapshot());
+
+    removeCreatedChatId(chatId);
+
+    try {
+      await mutateAsync({ chatId });
+    } catch (error) {
+      if (error instanceof FetchError && error.status === 404) {
+        return;
+      }
+
+      writeCreatedChatIds(previousChatIds);
+      window.alert('채팅을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    }
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size={size}
-            aria-label="채팅 옵션 더보기"
-            className={triggerClassName}
-          />
-        }>
-        <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem variant="destructive" onClick={handleDelete}>
-          <HugeiconsIcon icon={Delete02Icon} aria-hidden="true" />
-          삭제하기
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <OptionsMenu
+      onDelete={handleDelete}
+      isDeleting={isPending}
+      triggerAriaLabel="채팅 옵션 더보기"
+      confirmTitle="채팅을 삭제할까요?"
+      size={size}
+      triggerClassName={triggerClassName}
+    />
   );
 }

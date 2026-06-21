@@ -1,5 +1,7 @@
 export const CREATED_CHAT_IDS_STORAGE_KEY = 'manyak:created-chat-ids';
 
+const CREATED_CHAT_IDS_CHANGE_EVENT = 'manyak:created-chat-ids-change';
+
 const parseSavedChatIds = (value: string | null) => {
   if (!value) {
     return [];
@@ -40,8 +42,12 @@ export const subscribeCreatedChatIds = (onStoreChange: () => void) => {
   };
 
   window.addEventListener('storage', handleStorageChange);
+  window.addEventListener(CREATED_CHAT_IDS_CHANGE_EVENT, onStoreChange);
 
-  return () => window.removeEventListener('storage', handleStorageChange);
+  return () => {
+    window.removeEventListener('storage', handleStorageChange);
+    window.removeEventListener(CREATED_CHAT_IDS_CHANGE_EVENT, onStoreChange);
+  };
 };
 
 export const getCreatedChatIdsSnapshot = (): string | null =>
@@ -49,6 +55,15 @@ export const getCreatedChatIdsSnapshot = (): string | null =>
 
 export const getServerCreatedChatIdsSnapshot =
   (): typeof SERVER_CHAT_IDS_SNAPSHOT => SERVER_CHAT_IDS_SNAPSHOT;
+
+export const writeCreatedChatIds = (chatIds: string[]) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  localStorage.setItem(CREATED_CHAT_IDS_STORAGE_KEY, JSON.stringify(chatIds));
+  window.dispatchEvent(new Event(CREATED_CHAT_IDS_CHANGE_EVENT));
+};
 
 export const saveCreatedChatId = (chatId: string) => {
   if (typeof window === 'undefined') {
@@ -63,8 +78,19 @@ export const saveCreatedChatId = (chatId: string) => {
     ...savedChatIds.filter((savedChatId) => savedChatId !== chatId),
   ].slice(0, 100);
 
-  localStorage.setItem(
-    CREATED_CHAT_IDS_STORAGE_KEY,
-    JSON.stringify(nextChatIds),
+  writeCreatedChatIds(nextChatIds);
+};
+
+export const removeCreatedChatId = (chatId: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const savedChatIds = parseSavedChatIds(
+    localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY),
+  );
+
+  writeCreatedChatIds(
+    savedChatIds.filter((savedChatId) => savedChatId !== chatId),
   );
 };
