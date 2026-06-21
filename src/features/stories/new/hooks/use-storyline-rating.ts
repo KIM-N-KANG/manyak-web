@@ -71,7 +71,7 @@ export function useStorylineRating() {
 
     inFlightRef.current[storylineId] = true;
 
-    const onSettled = () => {
+    const settle = () => {
       inFlightRef.current[storylineId] = false;
 
       if (
@@ -82,29 +82,19 @@ export function useStorylineRating() {
       }
     };
 
-    if (desired === undefined) {
-      cancelStorylineRating.mutate(
-        { storylineId },
-        {
-          onSuccess: () => {
-            syncedRatingsRef.current[storylineId] = undefined;
-          },
-          onError: () => revertToSynced(storylineId),
-          onSettled,
-        },
-      );
-    } else {
-      rateStoryline.mutate(
-        { storylineId, data: { rating: desired } },
-        {
-          onSuccess: () => {
-            syncedRatingsRef.current[storylineId] = desired;
-          },
-          onError: () => revertToSynced(storylineId),
-          onSettled,
-        },
-      );
-    }
+    // 여러 스토리라인이 단일 mutation 훅을 공유하므로, per-call 콜백 대신
+    // mutateAsync의 per-request 프로미스로 각 평가가 자신의 상태를 정리하도록 한다.
+    const request =
+      desired === undefined
+        ? cancelStorylineRating.mutateAsync({ storylineId })
+        : rateStoryline.mutateAsync({ storylineId, data: { rating: desired } });
+
+    void request
+      .then(() => {
+        syncedRatingsRef.current[storylineId] = desired;
+      })
+      .catch(() => revertToSynced(storylineId))
+      .finally(settle);
   };
 
   const toggleStorylineRating = (

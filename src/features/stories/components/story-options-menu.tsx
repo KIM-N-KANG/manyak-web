@@ -21,12 +21,14 @@ type StoryOptionsMenuProps = {
   storyId: number;
   size?: ButtonSize;
   triggerClassName?: string;
+  onDeleteSuccess?: () => void;
 };
 
 export function StoryOptionsMenu({
   storyId,
   size = 'icon-xs',
   triggerClassName,
+  onDeleteSuccess,
 }: StoryOptionsMenuProps) {
   const { mutateAsync, isPending } = useDeleteStory();
 
@@ -38,8 +40,11 @@ export function StoryOptionsMenu({
     try {
       await mutateAsync({ storyId });
       toast.success(TOAST_MESSAGE.STORY_DELETED);
+      onDeleteSuccess?.();
     } catch (error) {
       if (error instanceof FetchError && error.status === 404) {
+        onDeleteSuccess?.();
+
         return;
       }
 
