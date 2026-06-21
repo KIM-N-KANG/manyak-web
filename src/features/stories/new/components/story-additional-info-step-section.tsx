@@ -98,7 +98,7 @@ export function StoryAdditionalInfoStepSection({
             <SelectedStorylineContent story={storyline.story} />
 
             <section
-              aria-labelledby="story-help-questions"
+              aria-labelledby="recommended-info-label"
               className="flex flex-col gap-2">
               <Label>AI 추천 추가 정보</Label>
               <ul className="flex flex-col gap-2">

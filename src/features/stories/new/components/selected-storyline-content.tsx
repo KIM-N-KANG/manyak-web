@@ -10,7 +10,7 @@ type SelectedStorylineContentProps = {
   story?: string;
 };
 
-const COLLAPSED_MAX_HEIGHT = 64; // max-h-16
+const COLLAPSED_MAX_HEIGHT = 64;
 
 export function SelectedStorylineContent({
   story,
@@ -35,13 +35,13 @@ export function SelectedStorylineContent({
         ref={contentRef}
         className={cn(
           'relative overflow-hidden transition-[max-height] duration-300 ease-in-out',
-          isCollapsed ? 'max-h-16' : '',
+          isCollapsed ? 'max-h-[2lh]' : '',
         )}>
-        <TextContent>{story}</TextContent>
+        <TextContent font="maruburi">{story}</TextContent>
         {isCollapsed && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-background to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-background to-transparent"
           />
         )}
       </div>

@@ -21,7 +21,6 @@ export function StoryCreateFunnel() {
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError,
-    completedStory,
     isCompletingStory,
     hasCompleteStoryError,
     handleGenerateStoryline,
@@ -80,11 +79,7 @@ export function StoryCreateFunnel() {
       )}
 
       {step === 'complete' && (
-        <StoryCompletionSection
-          isCompletingStory={isCompletingStory}
-          completedStory={completedStory}
-          onScroll={handleContentScroll}
-        />
+        <StoryCompletionSection onScroll={handleContentScroll} />
       )}
     </div>
   );

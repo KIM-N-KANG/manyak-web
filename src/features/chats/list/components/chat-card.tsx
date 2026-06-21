@@ -1,13 +1,10 @@
-import {
-  BubbleChatUploadIcon,
-  Calendar04Icon,
-} from '@hugeicons/core-free-icons';
+import { BubbleChatIcon, Calendar04Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
 import { APP_PATH } from '@/constants/app-path';
 import { ChatOptionsMenu } from '@/features/chats/components/chat-options-menu';
-import { formatDate } from '@/lib/format-date';
+import { formatRelativeDate } from '@/lib/format-date';
 
 import type { ChatListItem } from '../types';
 
@@ -25,35 +22,41 @@ export function ChatCard({ chat }: ChatCardProps) {
       />
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="line-clamp-1 font-semibold">{chat.storyTitle}</p>
+          <p className="line-clamp-1 leading-6 font-semibold">
+            {chat.storyTitle}
+          </p>
           <ChatOptionsMenu
             chatId={chat.id}
             size="icon-xs"
             triggerClassName="relative z-10"
           />
         </div>
-        <p className="line-clamp-1 text-foreground-secondary">
-          {chat.lastStoryPreview}
+        <p className="line-clamp-1 leading-4 text-foreground-secondary">
+          {chat.lastStoryPreview || '채팅을 시작하고 이야기를 이어가 보세요'}
         </p>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
-        <div className="flex items-center gap-1 text-sm text-foreground-secondary">
+      <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
           <HugeiconsIcon
-            icon={BubbleChatUploadIcon}
+            icon={BubbleChatIcon}
             className="size-4"
             aria-hidden="true"
           />
           <p>{chat.chatCount}</p>
         </div>
-      </div>
-      <div className="flex items-center gap-1 text-sm text-foreground-secondary">
-        <HugeiconsIcon
-          icon={Calendar04Icon}
-          className="size-4"
-          aria-hidden="true"
-        />
-        <time>{formatDate(chat.updatedAt)}</time>
+        <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
+          <HugeiconsIcon
+            icon={Calendar04Icon}
+            className="size-4"
+            aria-hidden="true"
+          />
+          <time
+            dateTime={chat.updatedAt}
+            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}>
+            {formatRelativeDate(chat.updatedAt)}
+          </time>
+        </div>
       </div>
     </article>
   );

@@ -8,7 +8,7 @@ import type { ChatSummaryResponse } from '@/api/generated/models';
 import type { ChatListItem } from '../types';
 import { useChatIds } from './use-chat-ids';
 
-const CHATS_BATCH_QUERY_KEY = 'chats-batch';
+export const CHATS_BATCH_QUERY_KEY = 'chats-batch';
 
 const toChatListItems = (
   chatIds: string[],

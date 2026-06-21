@@ -1,3 +1,5 @@
+import { ChatRoom } from '@/features/chats/room/components/chat-room';
+
 type ChatRoomPageProps = {
   params: Promise<{ id: string }>;
 };
@@ -5,5 +7,5 @@ type ChatRoomPageProps = {
 export default async function ChatRoomPage({ params }: ChatRoomPageProps) {
   const { id } = await params;
 
-  return <div>Chat Room {id}</div>;
+  return <ChatRoom chatId={id} />;
 }

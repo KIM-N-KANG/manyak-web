@@ -87,7 +87,7 @@ export function StorylineSelectStepSection({
                 value={String(index)}
                 className="px-4">
                 <div className="pb-4">
-                  <TextContent>{storyline.story}</TextContent>
+                  <TextContent font="maruburi">{storyline.story}</TextContent>
                 </div>
               </TabsContent>
             ))}

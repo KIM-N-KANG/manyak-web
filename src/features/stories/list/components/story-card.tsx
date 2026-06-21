@@ -25,7 +25,7 @@ export function StoryCard({ story }: StoryCardProps) {
       )}
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
-          <p className="line-clamp-1 font-semibold">{story.title}</p>
+          <p className="line-clamp-1 leading-6 font-semibold">{story.title}</p>
           {story.id != null && (
             <StoryOptionsMenu
               storyId={story.id}
@@ -37,10 +37,10 @@ export function StoryCard({ story }: StoryCardProps) {
 
         {story.genres.length > 0 && <StoryGenreBadges genres={story.genres} />}
 
-        <p className="line-clamp-2 min-h-[2lh]">{story.oneLineIntro}</p>
+        <p className="line-clamp-1 leading-4">{story.oneLineIntro}</p>
       </div>
 
-      <div className="flex items-center justify-end gap-1 text-sm text-foreground-secondary">
+      <div className="flex items-center justify-end gap-1.5 text-sm text-foreground-secondary">
         <HugeiconsIcon
           icon={Calendar04Icon}
           className="size-4"

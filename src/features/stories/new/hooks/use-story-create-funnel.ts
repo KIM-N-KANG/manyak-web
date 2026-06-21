@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+
+import {
+  getGetChatDetailQueryOptions,
+  useCreateChat,
+} from '@/api/generated/endpoints/chats/chats';
 import {
   useCreateSimpleStory,
   useGenerateSimpleStorylines,
@@ -9,9 +16,10 @@ import {
 import type {
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
-  SimpleStoryCreateResponse,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
+import { APP_PATH } from '@/constants/app-path';
+import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
@@ -24,6 +32,8 @@ const getGeneratedStorylines = (
   );
 
 export function useStoryCreateFunnel() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -32,8 +42,7 @@ export function useStoryCreateFunnel() {
   const [activeStorylineIndex, setActiveStorylineIndex] = useState(0);
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
-  const [completedStory, setCompletedStory] =
-    useState<SimpleStoryCreateResponse | null>(null);
+  const [createdStoryId, setCreatedStoryId] = useState<number | null>(null);
 
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
@@ -50,6 +59,27 @@ export function useStoryCreateFunnel() {
       },
     },
   });
+  const createChat = useCreateChat({
+    mutation: {
+      onSuccess: async (response) => {
+        const chatId = response.status === 201 ? response.data.id : undefined;
+
+        if (!chatId) {
+          setStep('additional-info');
+
+          return;
+        }
+
+        saveCreatedChatId(chatId);
+        await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
+        router.replace(APP_PATH.CHAT_ROOM(chatId));
+      },
+      onError: () => {
+        setStep('additional-info');
+      },
+    },
+  });
+
   const createStory = useCreateSimpleStory({
     mutation: {
       onSuccess: (response) => {
@@ -63,10 +93,10 @@ export function useStoryCreateFunnel() {
 
         if (typeof storyId === 'number') {
           saveCreatedStoryId(storyId);
+          setCreatedStoryId(storyId);
         }
 
-        setCompletedStory(response.data);
-        setStep('complete');
+        createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: () => {
         setStep('additional-info');
@@ -81,7 +111,7 @@ export function useStoryCreateFunnel() {
   const canCompleteStory =
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
-  const shouldConfirmBack = step !== 'keyword' && step !== 'complete';
+  const shouldConfirmBack = step !== 'keyword';
 
   const handleGenerateStoryline = (
     request: GenerateSimpleStorylinesRequest,
@@ -117,6 +147,13 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = (additionalInfos: string[]) => {
+    if (createdStoryId !== null) {
+      setStep('complete');
+      createChat.mutate({ data: { storyId: createdStoryId } });
+
+      return;
+    }
+
     if (
       typeof simpleCreationId !== 'number' ||
       typeof selectedStoryline?.id !== 'number'
@@ -143,9 +180,8 @@ export function useStoryCreateFunnel() {
     canCompleteStory,
     isGeneratingStorylines: generateStorylines.isPending,
     hasGenerateStorylinesError: generateStorylines.isError,
-    completedStory,
-    isCompletingStory: createStory.isPending,
-    hasCompleteStoryError: createStory.isError,
+    isCompletingStory: createStory.isPending || createChat.isPending,
+    hasCompleteStoryError: createStory.isError || createChat.isError,
     handleGenerateStoryline,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange: setActiveStorylineIndex,
