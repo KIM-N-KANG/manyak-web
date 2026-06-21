@@ -1,10 +1,12 @@
 'use client';
 
 import type { VariantProps } from 'class-variance-authority';
+import { toast } from 'sonner';
 
 import { useDeleteStory } from '@/api/generated/endpoints/stories/stories';
 import { OptionsMenu } from '@/components/common/options-menu';
 import type { buttonVariants } from '@/components/ui/button';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
   getCreatedStoryIdsSnapshot,
   parseCreatedStoryIds,
@@ -35,13 +37,14 @@ export function StoryOptionsMenu({
 
     try {
       await mutateAsync({ storyId });
+      toast.success(TOAST_MESSAGE.STORY_DELETED);
     } catch (error) {
       if (error instanceof FetchError && error.status === 404) {
         return;
       }
 
       writeCreatedStoryIds(previousStoryIds);
-      window.alert('스토리를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
     }
   };
 

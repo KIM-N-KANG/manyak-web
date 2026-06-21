@@ -1,10 +1,12 @@
 'use client';
 
 import type { VariantProps } from 'class-variance-authority';
+import { toast } from 'sonner';
 
 import { useDeleteChat } from '@/api/generated/endpoints/chats/chats';
 import { OptionsMenu } from '@/components/common/options-menu';
 import type { buttonVariants } from '@/components/ui/button';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
   getCreatedChatIdsSnapshot,
   parseCreatedChatIds,
@@ -35,13 +37,14 @@ export function ChatOptionsMenu({
 
     try {
       await mutateAsync({ chatId });
+      toast.success(TOAST_MESSAGE.CHAT_DELETED);
     } catch (error) {
       if (error instanceof FetchError && error.status === 404) {
         return;
       }
 
       writeCreatedChatIds(previousChatIds);
-      window.alert('채팅을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      toast.error(TOAST_MESSAGE.CHAT_DELETE_FAILED);
     }
   };
 

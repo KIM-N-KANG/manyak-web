@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { toast } from 'sonner';
+
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+
 import type { StreamingTurn } from '../components/chat-messages';
 import { parseSseStream } from '../lib/parse-sse-stream';
 import { streamChatTurnRaw } from '../lib/stream-chat-turn';
-
-const STREAM_ERROR_MESSAGE =
-  '응답 생성에 실패했어요. 잠시 후 다시 시도해주세요.';
 
 export function useChatStream(
   chatId: string,
@@ -16,14 +17,11 @@ export function useChatStream(
   const [streamingTurn, setStreamingTurn] = useState<StreamingTurn | null>(
     null,
   );
-  const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const send = async (userInput: string) => {
-    setError(null);
-
     setStreamingTurn({ userInput, output: '' });
 
     const controller = new AbortController();
@@ -46,7 +44,9 @@ export function useChatStream(
           await onCompleted();
           setStreamingTurn(null);
         } else if (event.type === 'error') {
-          throw new Error(event.message ?? STREAM_ERROR_MESSAGE);
+          throw new Error(
+            event.message ?? TOAST_MESSAGE.RESPONSE_STREAM_FAILED,
+          );
         }
       }
     } catch (caught) {
@@ -54,7 +54,11 @@ export function useChatStream(
         return;
       }
 
-      setError(caught instanceof Error ? caught.message : STREAM_ERROR_MESSAGE);
+      toast.error(
+        caught instanceof Error
+          ? caught.message
+          : TOAST_MESSAGE.RESPONSE_STREAM_FAILED,
+      );
       setStreamingTurn(null);
     } finally {
       abortRef.current = null;
@@ -64,8 +68,6 @@ export function useChatStream(
   return {
     streamingTurn,
     isStreaming: streamingTurn !== null,
-    error,
     send,
-    clearError: () => setError(null),
   };
 }

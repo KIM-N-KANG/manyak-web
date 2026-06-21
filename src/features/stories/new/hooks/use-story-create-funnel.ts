@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import {
   getGetChatDetailQueryOptions,
@@ -19,6 +20,7 @@ import type {
   SimpleStorylineResponse,
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 
 import type { StoryCreateStep } from '../types';
@@ -57,6 +59,9 @@ export function useStoryCreateFunnel() {
         setSelectedStoryline(null);
         setStep('storyline-select');
       },
+      onError: () => {
+        toast.error(TOAST_MESSAGE.STORYLINE_CREATE_FAILED);
+      },
     },
   });
   const createChat = useCreateChat({
@@ -66,6 +71,7 @@ export function useStoryCreateFunnel() {
 
         if (!chatId) {
           setStep('additional-info');
+          toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
 
           return;
         }
@@ -76,6 +82,7 @@ export function useStoryCreateFunnel() {
       },
       onError: () => {
         setStep('additional-info');
+        toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
       },
     },
   });
@@ -85,6 +92,7 @@ export function useStoryCreateFunnel() {
       onSuccess: (response) => {
         if (response.status !== 201) {
           setStep('additional-info');
+          toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
 
           return;
         }
@@ -100,6 +108,7 @@ export function useStoryCreateFunnel() {
       },
       onError: () => {
         setStep('additional-info');
+        toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
       },
     },
   });

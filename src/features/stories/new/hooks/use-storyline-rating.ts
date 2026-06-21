@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { toast } from 'sonner';
+
 import {
   useCancelStorylineRating,
   useRateStoryline,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import { type StorylineRatingRequestRating } from '@/api/generated/models';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 
 export type StorylineRating =
   (typeof StorylineRatingRequestRating)[keyof typeof StorylineRatingRequestRating];
@@ -39,6 +42,7 @@ export function useStorylineRating() {
   const revertToSynced = (storylineId: number) => {
     const synced = syncedRatingsRef.current[storylineId];
 
+    toast.error(TOAST_MESSAGE.STORYLINE_EVALUATE_FAILED);
     desiredRatingsRef.current[storylineId] = synced;
     setStorylineRatings((prev) => {
       const next = { ...prev };

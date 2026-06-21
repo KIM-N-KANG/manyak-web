@@ -31,7 +31,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     isError,
     refetch,
   } = useChatDetail(chatId);
-  const { streamingTurn, isStreaming, error, send, clearError } = useChatStream(
+  const { streamingTurn, isStreaming, send } = useChatStream(
     chatId,
     async () => {
       await refetch();
@@ -103,8 +103,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   const handleChange = (next: string) => {
     setValue(next);
-
-    if (error) clearError();
   };
 
   return (
@@ -118,11 +116,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
         onPickChoice={handlePickChoice}
         onHasScrolledChange={setHasScrolled}
       />
-      {error ? (
-        <p className="px-4 text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
       <ChatInput
         value={value}
         onChange={handleChange}

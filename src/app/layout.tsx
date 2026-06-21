@@ -6,6 +6,7 @@ import { maruburi, pretendard } from '@/assets/fonts/fonts';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -31,6 +32,7 @@ export default function RootLayout({
               <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                 {children}
               </div>
+              <Toaster />
             </ThemeProvider>
           </MotionProvider>
         </QueryProvider>

@@ -12,7 +12,6 @@ export function StoryDetailCta({ storyId }: StoryDetailCtaProps) {
   const { startChat, isStarting } = useStartChat(storyId);
 
   return (
-    /** @todo 에러 발생 시 Sonner 표시 추가 */
     <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background px-4">
       <div className="flex h-full w-full items-center">
         <Button
