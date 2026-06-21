@@ -1,5 +1,6 @@
-import { StoryCompletionLoadingState } from './story-completion-loading-state';
+import { STORY_COMPLETION_LOADING_PHRASES } from '../constants';
 import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
+import { StoryGeneratingLoading } from './story-generating-loading';
 
 type StoryCompletionSectionProps = {
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -17,12 +18,15 @@ export function StoryCompletionSection({
             <span className="block">잠시만 기다려 주세요</span>
           </h1>
           <p className="text-foreground-secondary">
-            모든 정보를 바탕으로 스토리를 구상하고 있어요
+            스토리가 만들어지면 바로 채팅할 수 있어요
           </p>
         </div>
 
         <div className="p-4">
-          <StoryCompletionLoadingState />
+          <StoryGeneratingLoading
+            phrases={STORY_COMPLETION_LOADING_PHRASES}
+            label="스토리를 구상하고 있어요"
+          />
         </div>
       </section>
     </StoryCreateStepScrollArea>
