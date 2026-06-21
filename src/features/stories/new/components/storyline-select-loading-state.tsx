@@ -11,7 +11,7 @@ export function StorylineSelectLoadingState() {
       className="flex flex-col p-4"
       aria-busy="true"
       aria-label={STORYLINE_SELECT_LOADING_LABEL}>
-      <Skeleton className="h-9 w-44 rounded-lg" />
+      <Skeleton className="h-10 w-44 rounded-lg" />
       <div className="pt-6">
         <div className="flex flex-col gap-3" aria-hidden="true">
           {STORYLINE_TEXT_SKELETON_WIDTH_CLASSES.map((widthClass, index) => (
