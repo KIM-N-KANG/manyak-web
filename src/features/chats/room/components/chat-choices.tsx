@@ -22,7 +22,7 @@ export function ChatChoices({ choices, onPick }: ChatChoicesProps) {
           type="button"
           variant="secondary"
           onClick={() => onPick(choice)}
-          className="justify-start">
+          className="h-auto min-h-10 justify-start py-2.5 text-left whitespace-normal">
           {choice}
         </Button>
       ))}

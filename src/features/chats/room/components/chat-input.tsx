@@ -56,7 +56,7 @@ export function ChatInput({
   return (
     <section className="p-4">
       <form onSubmit={handleSubmit}>
-        <InputGroup>
+        <InputGroup className="rounded-lg">
           <InputGroupTextarea
             ref={textareaRef}
             value={value}

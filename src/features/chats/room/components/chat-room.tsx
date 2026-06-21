@@ -22,8 +22,15 @@ type ChatRoomProps = {
 
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const queryClient = useQueryClient();
-  const { storyTitle, prologue, turns, isLoading, isError, refetch } =
-    useChatDetail(chatId);
+  const {
+    storyTitle,
+    prologue,
+    turns,
+    suggestedInputs,
+    isLoading,
+    isError,
+    refetch,
+  } = useChatDetail(chatId);
   const { streamingTurn, isStreaming, error, send, clearError } = useChatStream(
     chatId,
     async () => {
@@ -106,6 +113,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       <ChatMessages
         prologue={prologue}
         turns={turns}
+        suggestedInputs={suggestedInputs}
         streamingTurn={streamingTurn}
         onPickChoice={handlePickChoice}
         onHasScrolledChange={setHasScrolled}

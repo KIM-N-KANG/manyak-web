@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 import { useStickyScroll } from '../hooks/use-sticky-scroll';
+import { ChatChoices } from './chat-choices';
 import { ChatMessageContent } from './chat-message-content';
 import { ChatStreamLoading } from './chat-stream-loading';
 import { ChatTurnItem } from './chat-turn-item';
@@ -19,6 +20,7 @@ export type StreamingTurn = { userInput: string; output: string };
 type ChatMessagesProps = {
   prologue: string;
   turns: ChatTurnResponse[];
+  suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
   onPickChoice: (text: string) => void;
   onHasScrolledChange: (hasScrolled: boolean) => void;
@@ -27,6 +29,7 @@ type ChatMessagesProps = {
 export function ChatMessages({
   prologue,
   turns,
+  suggestedInputs,
   streamingTurn,
   onPickChoice,
   onHasScrolledChange,
@@ -82,6 +85,10 @@ export function ChatMessages({
             />
           );
         })}
+
+        {turns.length === 0 && !streamingTurn ? (
+          <ChatChoices choices={suggestedInputs} onPick={onPickChoice} />
+        ) : null}
 
         {streamingTurn ? (
           <div ref={streamingBlockRef} className="min-h-full">
