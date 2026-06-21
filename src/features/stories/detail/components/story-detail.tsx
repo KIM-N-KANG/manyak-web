@@ -5,6 +5,7 @@ import { type UIEvent, useState } from 'react';
 import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
 import { StoryInfoSection } from '@/features/stories/new/components/story-info-section';
+import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import { StoryDetailCta } from './story-detail-cta';
 import { StoryDetailHeader } from './story-detail-header';
@@ -18,6 +19,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   const [hasScrolled, setHasScrolled] = useState(false);
   const { data, isPending, isError, refetch } = useGetStoryDetail(storyId);
 
+  const showSkeleton = useDelayedLoading(isPending);
   const story = data?.status === 200 ? data.data : undefined;
 
   const handleContentScroll = (event: UIEvent<HTMLDivElement>) => {
@@ -28,13 +30,13 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
       <StoryDetailHeader storyId={storyId} hasScrolled={hasScrolled} />
 
-      {isPending && (
+      {showSkeleton && (
         <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
           <StoryDetailSkeleton />
         </main>
       )}
 
-      {isError && (
+      {!showSkeleton && isError && (
         <main className="flex min-h-0 flex-1 items-center justify-center px-4">
           <section className="flex flex-col items-center gap-8">
             <div className="flex flex-col gap-1 text-center">
@@ -50,7 +52,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         </main>
       )}
 
-      {story && (
+      {!showSkeleton && story && (
         <>
           <main
             className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-20"

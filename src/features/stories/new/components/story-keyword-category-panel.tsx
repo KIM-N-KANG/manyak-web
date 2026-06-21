@@ -71,46 +71,48 @@ export function StoryKeywordCategoryPanel({
             키워드를 불러오지 못했어요
           </p>
         )}
-        {predefinedTags.map((tag) => {
-          const { id, name } = tag;
+        {!isLoadingTags &&
+          predefinedTags.map((tag) => {
+            const { id, name } = tag;
 
-          if (id == null || !name) {
-            return null;
-          }
+            if (id == null || !name) {
+              return null;
+            }
 
-          const isSelected = selectedTagIds.includes(id);
-          const isKeywordChipDisabled =
-            isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
+            const isSelected = selectedTagIds.includes(id);
+            const isKeywordChipDisabled =
+              isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
 
-          return (
-            <ToggleChip
-              key={id}
-              pressed={isSelected}
-              disabled={isKeywordChipDisabled}
-              onPressedChange={(pressed) =>
-                onTogglePredefinedTag(category, id, pressed)
-              }>
-              {name}
-            </ToggleChip>
-          );
-        })}
-        {customKeywords.map((keyword) => {
-          const isSelected = selectedCustomKeywordIds.includes(keyword.id);
-          const isKeywordChipDisabled =
-            isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
+            return (
+              <ToggleChip
+                key={id}
+                pressed={isSelected}
+                disabled={isKeywordChipDisabled}
+                onPressedChange={(pressed) =>
+                  onTogglePredefinedTag(category, id, pressed)
+                }>
+                {name}
+              </ToggleChip>
+            );
+          })}
+        {!isLoadingTags &&
+          customKeywords.map((keyword) => {
+            const isSelected = selectedCustomKeywordIds.includes(keyword.id);
+            const isKeywordChipDisabled =
+              isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
 
-          return (
-            <ToggleChip
-              key={keyword.id}
-              pressed={isSelected}
-              disabled={isKeywordChipDisabled}
-              onPressedChange={(pressed) =>
-                onToggleCustomKeyword(category, keyword.id, pressed)
-              }>
-              {keyword.name}
-            </ToggleChip>
-          );
-        })}
+            return (
+              <ToggleChip
+                key={keyword.id}
+                pressed={isSelected}
+                disabled={isKeywordChipDisabled}
+                onPressedChange={(pressed) =>
+                  onToggleCustomKeyword(category, keyword.id, pressed)
+                }>
+                {keyword.name}
+              </ToggleChip>
+            );
+          })}
         <AddKeywordDialog
           category={category}
           categoryLabel={label}

@@ -35,6 +35,7 @@ export function StoryKeywordStepSection({
     selectedCustomKeywordIdsByCategory,
     customKeywordsByCategory,
     simpleStoryTags,
+    showTagsSkeleton,
     tagsByCategory,
     canGenerateStoryline,
     isMaxSelectionReached,
@@ -101,7 +102,7 @@ export function StoryKeywordStepSection({
                     selectedCustomKeywordIds={selectedCustomKeywordIds}
                     predefinedTags={tagsByCategory[category]}
                     customKeywords={customKeywordsByCategory[category]}
-                    isLoadingTags={simpleStoryTags.isLoading}
+                    isLoadingTags={showTagsSkeleton}
                     hasTagsError={simpleStoryTags.isError}
                     isGeneratingStoryline={isGeneratingStoryline}
                     onTogglePredefinedTag={togglePredefinedTag}

@@ -4,6 +4,7 @@ import { type Dispatch, type SetStateAction, useState } from 'react';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
+import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import { TAG_CATEGORIES } from '../constants';
 import type { CustomKeyword, TagCategory } from '../types';
@@ -39,6 +40,7 @@ export function useStoryKeywordStep({
   );
 
   const simpleStoryTags = useGetSimpleStoryTags();
+  const showTagsSkeleton = useDelayedLoading(simpleStoryTags.isLoading);
 
   const tagsByCategory = getTagsByCategory(simpleStoryTags.data?.data ?? []);
 
@@ -197,6 +199,7 @@ export function useStoryKeywordStep({
     selectedCustomKeywordIdsByCategory,
     customKeywordsByCategory,
     simpleStoryTags,
+    showTagsSkeleton,
     isGeneratingStoryline,
     tagsByCategory,
     canGenerateStoryline,
