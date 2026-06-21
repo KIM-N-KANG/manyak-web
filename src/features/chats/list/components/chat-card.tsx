@@ -31,7 +31,12 @@ export function ChatCard({ chat }: ChatCardProps) {
             triggerClassName="relative z-10"
           />
         </div>
-        <p className="line-clamp-1 leading-4 text-foreground-secondary">
+        <p
+          className={
+            chat.lastStoryPreview
+              ? 'line-clamp-1 leading-4 text-foreground-secondary'
+              : 'line-clamp-1 leading-4 text-foreground-tertiary'
+          }>
           {chat.lastStoryPreview || '채팅을 시작하고 이야기를 이어가 보세요'}
         </p>
       </div>
