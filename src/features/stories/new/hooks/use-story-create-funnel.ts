@@ -42,6 +42,7 @@ export function useStoryCreateFunnel() {
   const [activeStorylineIndex, setActiveStorylineIndex] = useState(0);
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
+  const [createdStoryId, setCreatedStoryId] = useState<number | null>(null);
 
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
@@ -92,6 +93,7 @@ export function useStoryCreateFunnel() {
 
         if (typeof storyId === 'number') {
           saveCreatedStoryId(storyId);
+          setCreatedStoryId(storyId);
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
@@ -145,6 +147,13 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = (additionalInfos: string[]) => {
+    if (createdStoryId !== null) {
+      setStep('complete');
+      createChat.mutate({ data: { storyId: createdStoryId } });
+
+      return;
+    }
+
     if (
       typeof simpleCreationId !== 'number' ||
       typeof selectedStoryline?.id !== 'number'
