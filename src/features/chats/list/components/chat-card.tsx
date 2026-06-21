@@ -18,7 +18,7 @@ export function ChatCard({ chat }: ChatCardProps) {
       <Link
         href={APP_PATH.CHAT_ROOM(chat.id)}
         aria-label={`${chat.storyTitle} 채팅 보기`}
-        className="absolute inset-0 rounded-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+        className="absolute inset-0"
       />
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2">

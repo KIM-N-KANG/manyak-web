@@ -93,8 +93,11 @@ export function OptionsMenu({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>
+              남겨두기
+            </AlertDialogCancel>
             <AlertDialogAction
+              type="button"
               variant="destructive"
               disabled={isDeleting}
               onClick={(event) => {

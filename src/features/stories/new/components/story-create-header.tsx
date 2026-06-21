@@ -7,16 +7,9 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+
+import { StoryCreateBackDialog } from './story-create-back-dialog';
 
 type StoryCreateHeaderProps = {
   requiresBackConfirmation?: boolean;
@@ -64,30 +57,11 @@ export function StoryCreateHeader({
           <h1 className="text-lg font-semibold">스토리 만들기</h1>
         </div>
       </header>
-      <Dialog
+      <StoryCreateBackDialog
         open={confirmBackDialogOpen}
-        onOpenChange={setConfirmBackDialogOpen}>
-        <DialogContent showCloseButton={false} className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>스토리 만들기를 그만할까요?</DialogTitle>
-            <DialogDescription>
-              지금 나가면 만들고 있는 내용이 사라져요
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose
-              render={
-                <Button type="button" variant="secondary">
-                  계속 만들기
-                </Button>
-              }
-            />
-            <Button type="button" onClick={handleConfirmBack}>
-              나가기
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setConfirmBackDialogOpen}
+        onConfirm={handleConfirmBack}
+      />
     </>
   );
 }

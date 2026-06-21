@@ -46,6 +46,10 @@ export function StoryDetailSkeleton() {
             <Skeleton className="h-3.5 w-2/12" />
             <Skeleton className="h-20 w-full rounded-md" />
           </div>
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-3.5 w-2/12" />
+            <Skeleton className="h-20 w-full rounded-md" />
+          </div>
         </div>
       </div>
     </div>

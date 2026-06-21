@@ -20,7 +20,7 @@ export function StoryCard({ story }: StoryCardProps) {
         <Link
           href={APP_PATH.STORY_DETAIL(story.id)}
           aria-label={`${story.title} 상세 보기`}
-          className="absolute inset-0 rounded-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="absolute inset-0"
         />
       )}
       <div className="flex flex-col gap-1">
