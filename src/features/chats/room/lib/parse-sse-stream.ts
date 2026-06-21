@@ -80,7 +80,8 @@ export async function* parseSseStream(
 
       if (done) break;
 
-      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+      buffer += decoder.decode(value, { stream: true });
+      buffer = buffer.replace(/\r\n/g, '\n');
 
       let boundary = buffer.indexOf('\n\n');
 
@@ -98,6 +99,7 @@ export async function* parseSseStream(
     }
 
     buffer += decoder.decode();
+    buffer = buffer.replace(/\r\n/g, '\n');
 
     const trailing = parseEventBlock(buffer);
 
