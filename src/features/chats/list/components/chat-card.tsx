@@ -35,17 +35,16 @@ export function ChatCard({ chat }: ChatCardProps) {
           {chat.lastStoryPreview || '채팅을 시작하고 이야기를 이어가 보세요'}
         </p>
       </div>
-
-      <div className="flex items-center justify-end gap-3">
-        <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
+      <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon
             icon={BubbleChatIcon}
             className="size-4"
             aria-hidden="true"
           />
-          <p>{chat.chatCount}</p>
+          <p className="leading-4">{chat.chatCount}</p>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
+        <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon
             icon={Calendar04Icon}
             className="size-4"
@@ -53,7 +52,8 @@ export function ChatCard({ chat }: ChatCardProps) {
           />
           <time
             dateTime={chat.updatedAt}
-            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}>
+            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}
+            className="leading-4">
             {formatRelativeDate(chat.updatedAt)}
           </time>
         </div>

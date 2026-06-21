@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
+import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import { ListStatus } from '../../../../components/common/list-status';
 import { useCreatedStories } from '../hooks/use-created-stories';
@@ -18,9 +19,14 @@ import { StoryListSkeleton } from './story-list-skeleton';
 
 export function StoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
+  const showSkeleton = useDelayedLoading(isLoading);
+
+  if (showSkeleton) {
+    return <StoryListSkeleton />;
+  }
 
   if (isLoading) {
-    return <StoryListSkeleton />;
+    return null;
   }
 
   if (isError) {
