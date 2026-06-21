@@ -2,9 +2,12 @@
 
 import { useRef, useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import { ListStatus } from '@/components/common/list-status';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
 
 import { useChatDetail } from '../hooks/use-chat-detail';
 import { useChatStream } from '../hooks/use-chat-stream';
@@ -18,11 +21,17 @@ type ChatRoomProps = {
 };
 
 export function ChatRoom({ chatId }: ChatRoomProps) {
+  const queryClient = useQueryClient();
   const { storyTitle, prologue, turns, isLoading, isError, refetch } =
     useChatDetail(chatId);
   const { streamingTurn, isStreaming, error, send, clearError } = useChatStream(
     chatId,
-    refetch,
+    async () => {
+      await refetch();
+      await queryClient.invalidateQueries({
+        queryKey: [CHATS_BATCH_QUERY_KEY],
+      });
+    },
   );
 
   const [hasScrolled, setHasScrolled] = useState(false);
