@@ -71,6 +71,7 @@ export function useStoryKeywordStep({
   };
 
   const activeIndex = categoryValues.indexOf(activeCategory);
+  const isFirstCategory = activeIndex === 0;
   const isLastCategory = activeIndex === categoryValues.length - 1;
 
   const goToNextCategory = () => {
@@ -78,6 +79,14 @@ export function useStoryKeywordStep({
 
     if (nextCategory) {
       setActiveCategory(nextCategory);
+    }
+  };
+
+  const goToPreviousCategory = () => {
+    const previousCategory = categoryValues[activeIndex - 1];
+
+    if (previousCategory) {
+      setActiveCategory(previousCategory);
     }
   };
 
@@ -194,8 +203,10 @@ export function useStoryKeywordStep({
     isMaxSelectionReached,
     isCategoryComplete,
     isCategoryUnlocked,
+    isFirstCategory,
     isLastCategory,
     goToNextCategory,
+    goToPreviousCategory,
     handleTouchStart,
     handleTouchEnd,
     togglePredefinedTag,
