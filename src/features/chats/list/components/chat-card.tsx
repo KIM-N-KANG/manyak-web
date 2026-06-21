@@ -1,13 +1,10 @@
-import {
-  BubbleChatUploadIcon,
-  Calendar04Icon,
-} from '@hugeicons/core-free-icons';
+import { BubbleChatIcon, Calendar04Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
 import { APP_PATH } from '@/constants/app-path';
 import { ChatOptionsMenu } from '@/features/chats/components/chat-options-menu';
-import { formatDate } from '@/lib/format-date';
+import { formatRelativeDate } from '@/lib/format-date';
 
 import type { ChatListItem } from '../types';
 
@@ -42,7 +39,7 @@ export function ChatCard({ chat }: ChatCardProps) {
       <div className="flex items-center justify-end gap-3">
         <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
           <HugeiconsIcon
-            icon={BubbleChatUploadIcon}
+            icon={BubbleChatIcon}
             className="size-4"
             aria-hidden="true"
           />
@@ -54,7 +51,11 @@ export function ChatCard({ chat }: ChatCardProps) {
             className="size-4"
             aria-hidden="true"
           />
-          <time>{formatDate(chat.updatedAt)}</time>
+          <time
+            dateTime={chat.updatedAt}
+            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}>
+            {formatRelativeDate(chat.updatedAt)}
+          </time>
         </div>
       </div>
     </article>
