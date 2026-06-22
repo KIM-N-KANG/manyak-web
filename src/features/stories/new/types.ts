@@ -3,15 +3,17 @@ import type {
   SimpleStorylineResponse,
   SimpleStoryTagListItemResponse,
   SimpleStoryTagListItemResponseCategory,
+  StorylineRatingRequestRating,
 } from '@/api/generated/models';
+
+import type { STORY_CREATE_STEP_ORDER } from './constants';
 
 export type TagCategory = SimpleStoryTagListItemResponseCategory;
 
-export type StoryCreateStep =
-  | 'keyword'
-  | 'storyline-select'
-  | 'additional-info'
-  | 'complete';
+export type StoryCreateStep = (typeof STORY_CREATE_STEP_ORDER)[number];
+
+export type StorylineRating =
+  (typeof StorylineRatingRequestRating)[keyof typeof StorylineRatingRequestRating];
 
 export type TagCategoryConfig = {
   value: TagCategory;

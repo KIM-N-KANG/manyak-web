@@ -7,7 +7,7 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { STORYLINE_TAB_LABELS } from '../constants';
+import { getStorylineTabLabel } from '../constants';
 import { useHorizontalSwipe } from '../hooks/use-horizontal-swipe';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
 import type { StorylineSelectStepSectionProps } from '../types';
@@ -85,7 +85,7 @@ export function StorylineSelectStepSection({
                   <TabsTrigger
                     key={storyline.id ?? index}
                     value={String(index)}>
-                    {STORYLINE_TAB_LABELS[index]}
+                    {getStorylineTabLabel(index)}
                   </TabsTrigger>
                 ))}
               </TabsList>
