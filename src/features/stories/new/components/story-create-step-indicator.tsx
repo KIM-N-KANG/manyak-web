@@ -53,7 +53,10 @@ export function StoryCreateStepIndicator({
         const isCurrent = index === currentIndex;
 
         return (
-          <li key={item.step} className="relative z-10">
+          <li
+            key={item.step}
+            className="relative z-10"
+            aria-current={isCurrent ? 'step' : undefined}>
             <span
               className={cn(
                 'flex size-4 items-center justify-center rounded-full text-[10px] font-semibold transition-colors',
@@ -71,8 +74,12 @@ export function StoryCreateStepIndicator({
                   aria-hidden="true"
                 />
               ) : isCurrent ? null : (
-                index + 1
+                <span aria-hidden="true">{index + 1}</span>
               )}
+            </span>
+            <span className="sr-only">
+              {item.label}
+              {isCompleted ? ' (완료)' : isCurrent ? ' (현재 단계)' : ''}
             </span>
           </li>
         );
