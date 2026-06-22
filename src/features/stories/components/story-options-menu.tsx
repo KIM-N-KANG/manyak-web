@@ -1,21 +1,19 @@
 'use client';
 
-import {
-  BubbleChatIcon,
-  Delete02Icon,
-  MoreVerticalIcon,
-  PencilEdit02Icon,
-} from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import type { VariantProps } from 'class-variance-authority';
+import { toast } from 'sonner';
 
-import { Button, type buttonVariants } from '@/components/ui/button';
+import { useDeleteStory } from '@/api/generated/endpoints/stories/stories';
+import { OptionsMenu } from '@/components/common/options-menu';
+import type { buttonVariants } from '@/components/ui/button';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  getCreatedStoryIdsSnapshot,
+  parseCreatedStoryIds,
+  removeCreatedStoryId,
+  writeCreatedStoryIds,
+} from '@/features/stories/new/utils/story-id-storage';
+import { FetchError } from '@/lib/custom-fetch';
 
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
@@ -23,52 +21,46 @@ type StoryOptionsMenuProps = {
   storyId: number;
   size?: ButtonSize;
   triggerClassName?: string;
+  onDeleteSuccess?: () => void;
 };
 
 export function StoryOptionsMenu({
   storyId,
   size = 'icon-xs',
   triggerClassName,
+  onDeleteSuccess,
 }: StoryOptionsMenuProps) {
-  /** @todo 채팅 시작/수정/삭제 라우트·API 연동 */
-  const handleStartChat = () => {
-    void storyId;
-  };
-  const handleEdit = () => {
-    void storyId;
-  };
-  const handleDelete = () => {
-    void storyId;
+  const { mutateAsync, isPending } = useDeleteStory();
+
+  const handleDelete = async () => {
+    const previousStoryIds = parseCreatedStoryIds(getCreatedStoryIdsSnapshot());
+
+    removeCreatedStoryId(storyId);
+
+    try {
+      await mutateAsync({ storyId });
+      toast.success(TOAST_MESSAGE.STORY_DELETED);
+      onDeleteSuccess?.();
+    } catch (error) {
+      if (error instanceof FetchError && error.status === 404) {
+        onDeleteSuccess?.();
+
+        return;
+      }
+
+      writeCreatedStoryIds(previousStoryIds);
+      toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
+    }
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size={size}
-            aria-label="스토리 옵션 더보기"
-            className={triggerClassName}
-          />
-        }>
-        <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleStartChat}>
-          <HugeiconsIcon icon={BubbleChatIcon} aria-hidden="true" />
-          채팅 시작하기
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleEdit}>
-          <HugeiconsIcon icon={PencilEdit02Icon} aria-hidden="true" />
-          수정하기
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={handleDelete}>
-          <HugeiconsIcon icon={Delete02Icon} aria-hidden="true" />
-          삭제하기
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <OptionsMenu
+      onDelete={handleDelete}
+      isDeleting={isPending}
+      triggerAriaLabel="스토리 옵션 더보기"
+      confirmTitle="스토리를 삭제할까요?"
+      size={size}
+      triggerClassName={triggerClassName}
+    />
   );
 }

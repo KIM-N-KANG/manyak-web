@@ -1,5 +1,8 @@
 'use client';
 
+import { ThumbsDownIcon, ThumbsUpIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +12,7 @@ import {
   STORYLINE_TAB_LABELS,
 } from '../constants';
 import { useHorizontalSwipe } from '../hooks/use-horizontal-swipe';
+import { useStorylineRating } from '../hooks/use-storyline-rating';
 import type { StorylineSelectStepSectionProps } from '../types';
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
@@ -28,6 +32,14 @@ export function StorylineSelectStepSection({
   const selectedStoryline = isRegeneratingStorylines
     ? undefined
     : storylines[activeStorylineIndex];
+
+  const { storylineRatings, toggleStorylineRating } = useStorylineRating();
+
+  const activeStorylineId = storylines[activeStorylineIndex]?.id;
+  const activeRating =
+    activeStorylineId === undefined
+      ? undefined
+      : storylineRatings[activeStorylineId];
 
   const { handleTouchStart, handleTouchEnd } = useHorizontalSwipe({
     onSwipeLeft: () => {
@@ -70,7 +82,7 @@ export function StorylineSelectStepSection({
             className="gap-0"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}>
-            <div className="sticky -top-px z-10 bg-background px-4 pt-4.25 pb-4">
+            <div className="sticky -top-px z-10 flex flex-wrap items-center gap-2 bg-background px-4 pt-4.25 pb-4">
               <TabsList>
                 {storylines.map((storyline, index) => (
                   <TabsTrigger
@@ -80,6 +92,40 @@ export function StorylineSelectStepSection({
                   </TabsTrigger>
                 ))}
               </TabsList>
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant={
+                    activeRating === 'BAD' ? 'destructiveOutline' : 'outline'
+                  }
+                  size="icon"
+                  disabled={activeStorylineId === undefined}
+                  aria-pressed={activeRating === 'BAD'}
+                  aria-label="이 스토리라인 싫어요"
+                  onClick={() => {
+                    if (activeStorylineId !== undefined) {
+                      toggleStorylineRating(activeStorylineId, 'BAD');
+                    }
+                  }}>
+                  <HugeiconsIcon icon={ThumbsDownIcon} aria-hidden="true" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={
+                    activeRating === 'GOOD' ? 'primaryOutline' : 'outline'
+                  }
+                  size="icon"
+                  disabled={activeStorylineId === undefined}
+                  aria-pressed={activeRating === 'GOOD'}
+                  aria-label="이 스토리라인 좋아요"
+                  onClick={() => {
+                    if (activeStorylineId !== undefined) {
+                      toggleStorylineRating(activeStorylineId, 'GOOD');
+                    }
+                  }}>
+                  <HugeiconsIcon icon={ThumbsUpIcon} aria-hidden="true" />
+                </Button>
+              </div>
             </div>
             {storylines.map((storyline, index) => (
               <TabsContent

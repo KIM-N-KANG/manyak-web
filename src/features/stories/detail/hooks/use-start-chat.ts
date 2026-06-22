@@ -2,12 +2,14 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import {
   getGetChatDetailQueryOptions,
   useCreateChat,
 } from '@/api/generated/endpoints/chats/chats';
 import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 
 export function useStartChat(storyId: number) {
@@ -26,6 +28,9 @@ export function useStartChat(storyId: number) {
         saveCreatedChatId(chatId);
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         router.replace(APP_PATH.CHAT_ROOM(chatId));
+      },
+      onError: () => {
+        toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
       },
     },
   });

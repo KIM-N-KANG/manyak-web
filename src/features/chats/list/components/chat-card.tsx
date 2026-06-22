@@ -18,7 +18,7 @@ export function ChatCard({ chat }: ChatCardProps) {
       <Link
         href={APP_PATH.CHAT_ROOM(chat.id)}
         aria-label={`${chat.storyTitle} 채팅 보기`}
-        className="absolute inset-0 rounded-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+        className="absolute inset-0"
       />
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
@@ -31,21 +31,25 @@ export function ChatCard({ chat }: ChatCardProps) {
             triggerClassName="relative z-10"
           />
         </div>
-        <p className="line-clamp-1 leading-4 text-foreground-secondary">
+        <p
+          className={
+            chat.lastStoryPreview
+              ? 'line-clamp-1 leading-4 text-foreground-secondary'
+              : 'line-clamp-1 leading-4 text-foreground-tertiary'
+          }>
           {chat.lastStoryPreview || '채팅을 시작하고 이야기를 이어가 보세요'}
         </p>
       </div>
-
-      <div className="flex items-center justify-end gap-3">
-        <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
+      <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon
             icon={BubbleChatIcon}
             className="size-4"
             aria-hidden="true"
           />
-          <p>{chat.chatCount}</p>
+          <p className="leading-4">{chat.chatCount}</p>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
+        <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon
             icon={Calendar04Icon}
             className="size-4"
@@ -53,7 +57,8 @@ export function ChatCard({ chat }: ChatCardProps) {
           />
           <time
             dateTime={chat.updatedAt}
-            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}>
+            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}
+            className="leading-4">
             {formatRelativeDate(chat.updatedAt)}
           </time>
         </div>

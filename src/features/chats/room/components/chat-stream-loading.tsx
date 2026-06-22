@@ -1,9 +1,9 @@
 'use client';
 
-import { useTypewriter } from '../hooks/use-typewriter';
+import { useTypewriter } from '@/hooks/use-typewriter';
 
 const LOADING_PHRASES = [
-  '다음 장면 준비 중...',
+  '다음 이야기 준비 중...',
   '생각을 정리하는 중...',
   '문장을 매끄럽게 다듬는 중...',
 ];

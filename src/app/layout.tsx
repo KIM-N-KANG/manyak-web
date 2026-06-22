@@ -1,11 +1,34 @@
 import './globals.css';
 
-import type { Viewport } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
+
+export const metadata: Metadata = {
+  title: '마냑',
+  description: '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+  applicationName: '마냑',
+  metadataBase: new URL('https://manyak.app'),
+  openGraph: {
+    type: 'website',
+    siteName: '마냑',
+    title: '마냑',
+    description:
+      '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+    url: 'https://manyak.app',
+    locale: 'ko_KR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '마냑',
+    description:
+      '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+  },
+};
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -31,6 +54,7 @@ export default function RootLayout({
               <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                 {children}
               </div>
+              <Toaster />
             </ThemeProvider>
           </MotionProvider>
         </QueryProvider>

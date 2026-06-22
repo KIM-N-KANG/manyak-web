@@ -5,6 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
 import { cn } from '@/lib/utils';
 
@@ -33,7 +34,11 @@ export function StoryDetailHeader({
         onClick={() => router.back()}>
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
-      <StoryOptionsMenu storyId={storyId} size="icon-lg" />
+      <StoryOptionsMenu
+        storyId={storyId}
+        size="icon-lg"
+        onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STORIES)}
+      />
     </header>
   );
 }

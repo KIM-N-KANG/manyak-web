@@ -11,6 +11,7 @@ export function useChatDetail(chatId: string) {
     storyTitle: detail?.storyTitle ?? '',
     prologue: detail?.prologue ?? '',
     turns: (detail?.turns ?? []) as ChatTurnResponse[],
+    suggestedInputs: detail?.suggestedInputs ?? [],
     isLoading: query.isPending,
     isError: query.isError,
     refetch: query.refetch,

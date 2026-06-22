@@ -35,13 +35,16 @@ export function StoryKeywordStepSection({
     selectedCustomKeywordIdsByCategory,
     customKeywordsByCategory,
     simpleStoryTags,
+    showTagsSkeleton,
     tagsByCategory,
     canGenerateStoryline,
     isMaxSelectionReached,
     isCategoryUnlocked,
     isCategoryComplete,
+    isFirstCategory,
     isLastCategory,
     goToNextCategory,
+    goToPreviousCategory,
     handleTouchStart,
     handleTouchEnd,
     togglePredefinedTag,
@@ -99,7 +102,7 @@ export function StoryKeywordStepSection({
                     selectedCustomKeywordIds={selectedCustomKeywordIds}
                     predefinedTags={tagsByCategory[category]}
                     customKeywords={customKeywordsByCategory[category]}
-                    isLoadingTags={simpleStoryTags.isLoading}
+                    isLoadingTags={showTagsSkeleton}
                     hasTagsError={simpleStoryTags.isError}
                     isGeneratingStoryline={isGeneratingStoryline}
                     onTogglePredefinedTag={togglePredefinedTag}
@@ -120,10 +123,21 @@ export function StoryKeywordStepSection({
 
       <StoryCreateStepFooter
         progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS.keyword}>
+        {!isFirstCategory && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            className="min-w-20"
+            disabled={isGeneratingStoryline}
+            onClick={goToPreviousCategory}>
+            이전
+          </Button>
+        )}
         <Button
           type="button"
           size="lg"
-          className="min-w-24"
+          className="min-w-20"
           disabled={
             isGeneratingStoryline ||
             (isLastCategory

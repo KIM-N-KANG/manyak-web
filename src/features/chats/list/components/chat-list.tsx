@@ -10,6 +10,7 @@ import { ListStatus } from '@/components/common/list-status';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
+import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import { useChats } from '../hooks/use-chats';
 import { ChatCard } from './chat-card';
@@ -17,9 +18,14 @@ import { ChatListSkeleton } from './chat-list-skeleton';
 
 export function ChatList() {
   const { chats, isLoading, isError, isEmpty, refetch } = useChats();
+  const showSkeleton = useDelayedLoading(isLoading);
+
+  if (showSkeleton) {
+    return <ChatListSkeleton />;
+  }
 
   if (isLoading) {
-    return <ChatListSkeleton />;
+    return null;
   }
 
   if (isError) {

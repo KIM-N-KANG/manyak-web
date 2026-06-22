@@ -63,32 +63,14 @@ export const STORYLINE_TAB_LABELS = ['첫 번째', '두 번째', '세 번째'] a
 
 export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 
-export const STORYLINE_SELECT_LOADING_TAB_COUNT = 3;
+export const STORYLINE_GENERATING_LOADING_PHRASES = [
+  '선택한 키워드 살펴보는 중...',
+  '스토리라인 구상하는 중...',
+  '이야기 흐름 엮는 중...',
+];
 
-export const STORYLINE_TEXT_SKELETON_WIDTH_CLASSES = [
-  'w-full',
-  'w-8/12',
-  'w-10/12',
-  'w-0',
-  'w-full',
-  'w-2/12',
-  'w-0',
-  'w-full',
-  'w-11/12',
-  'w-5/12',
-] as const;
-
-export const STORY_COMPLETION_LOADING_LABEL = '스토리 완성 중';
-
-export const STORY_COMPLETION_TEXT_SKELETON_WIDTH_CLASSES = [
-  'w-full',
-  'w-8/12',
-  'w-10/12',
-  'w-0',
-  'w-full',
-  'w-2/12',
-  'w-0',
-  'w-full',
-  'w-11/12',
-  'w-5/12',
-] as const;
+export const STORY_COMPLETION_LOADING_PHRASES = [
+  '입력한 정보 정리하는 중...',
+  '스토리 써내려가는 중...',
+  '문장 다듬는 중...',
+];
