@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
 import { getStorylineTabLabel } from '../constants';
-import { useHorizontalSwipe } from '../hooks/use-horizontal-swipe';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
+import { useSwipeableIndex } from '../hooks/use-swipeable-index';
 import type { StorylineSelectStepSectionProps } from '../types';
 import { StickyTabsList } from './sticky-tabs-list';
 import { StoryCreateErrorMessage } from './story-create-error-message';
@@ -36,17 +36,10 @@ export function StorylineSelectStepSection({
       ? undefined
       : storylineRatings[activeStorylineId];
 
-  const { handleTouchStart, handleTouchEnd } = useHorizontalSwipe({
-    onSwipeLeft: () => {
-      if (activeStorylineIndex < storylines.length - 1) {
-        onActiveStorylineIndexChange(activeStorylineIndex + 1);
-      }
-    },
-    onSwipeRight: () => {
-      if (activeStorylineIndex > 0) {
-        onActiveStorylineIndexChange(activeStorylineIndex - 1);
-      }
-    },
+  const { handleTouchStart, handleTouchEnd } = useSwipeableIndex({
+    index: activeStorylineIndex,
+    count: storylines.length,
+    onIndexChange: onActiveStorylineIndexChange,
   });
 
   return (
