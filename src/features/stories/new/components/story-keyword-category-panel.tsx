@@ -5,6 +5,7 @@ import { ToggleChip } from '@/components/ui/toggle-chip';
 import { SKELETON_TAG_CHIP_WIDTH_CLASSES } from '../constants';
 import type { CustomKeyword, TagCategory } from '../types';
 import { AddKeywordDialog } from './add-keyword-dialog';
+import { StoryCreateErrorMessage } from './story-create-error-message';
 
 type StoryKeywordCategoryPanelProps = {
   category: TagCategory;
@@ -67,9 +68,9 @@ export function StoryKeywordCategoryPanel({
           </>
         )}
         {hasTagsError && (
-          <p className="py-2 text-sm text-destructive">
+          <StoryCreateErrorMessage className="py-2">
             키워드를 불러오지 못했어요
-          </p>
+          </StoryCreateErrorMessage>
         )}
         {!isLoadingTags &&
           predefinedTags.map((tag) => {

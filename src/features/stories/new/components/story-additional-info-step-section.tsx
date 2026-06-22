@@ -23,9 +23,8 @@ import {
 import { useAdditionalInfos } from '../hooks/use-additional-infos';
 import { LoadingButtonContent } from './loading-button-content';
 import { SelectedStorylineContent } from './selected-storyline-content';
-import { StoryCreateStepFooter } from './story-create-step-footer';
-import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
-import { StoryCreateStepTitle } from './story-create-step-title';
+import { StoryCreateErrorMessage } from './story-create-error-message';
+import { StoryCreateStepLayout } from './story-create-step-layout';
 
 type StoryAdditionalInfoStepSectionProps = {
   storyline: SimpleStorylineResponse;
@@ -81,141 +80,132 @@ export function StoryAdditionalInfoStepSection({
   };
 
   return (
-    <StoryCreateStepScrollArea onScroll={onScroll}>
-      <section className="flex flex-col">
-        <StoryCreateStepTitle
-          titleLines={[
-            '스토리라인에 더하고 싶은',
-            '정보를 자유롭게 입력해주세요',
-          ]}
-          description="입력한 정보는 스토리를 완성하는 데 반영돼요"
-          className="p-4"
-        />
+    <StoryCreateStepLayout
+      titleLines={['스토리라인에 더하고 싶은', '정보를 자유롭게 입력해주세요']}
+      description="입력한 정보는 스토리를 완성하는 데 반영돼요"
+      onScroll={onScroll}
+      footer={
+        <>
+          <Button
+            type="button"
+            size="lg"
+            variant="secondary"
+            disabled={isCompletingStory}
+            onClick={onBackToStorylineSelect}>
+            다시 선택하기
+          </Button>
+          <Button
+            type="button"
+            size="lg"
+            className="relative"
+            aria-busy={isCompletingStory}
+            disabled={!canCompleteStory || isCompletingStory}
+            onClick={handleCompleteStory}>
+            <LoadingButtonContent
+              isLoading={isCompletingStory}
+              loadingLabel="스토리 완성 중">
+              스토리 완성하기
+            </LoadingButtonContent>
+          </Button>
+        </>
+      }>
+      <div className="p-4">
+        <div className="flex flex-col gap-8">
+          <SelectedStorylineContent story={storyline.story} />
 
-        <div className="p-4">
-          <div className="flex flex-col gap-8">
-            <SelectedStorylineContent story={storyline.story} />
+          <section
+            aria-labelledby="recommended-info-label"
+            className="flex flex-col gap-2">
+            <Label>AI 추천 추가 정보</Label>
+            <ul className="flex flex-col gap-2">
+              {(storyline.recommendedInfos ?? []).map(
+                (recommendedInfo, index) => {
+                  const recommendation = recommendedInfo.text ?? '';
 
-            <section
-              aria-labelledby="recommended-info-label"
-              className="flex flex-col gap-2">
-              <Label>AI 추천 추가 정보</Label>
-              <ul className="flex flex-col gap-2">
-                {(storyline.recommendedInfos ?? []).map(
-                  (recommendedInfo, index) => {
-                    const recommendation = recommendedInfo.text ?? '';
+                  if (!recommendation) {
+                    return null;
+                  }
 
-                    if (!recommendation) {
-                      return null;
-                    }
+                  return (
+                    <li key={recommendedInfo.id ?? index}>
+                      <ToggleChip
+                        className="h-auto w-full justify-start text-left whitespace-normal"
+                        pressed={selectedRecommendations.has(recommendation)}
+                        disabled={isCompletingStory}
+                        onPressedChange={(pressed) =>
+                          toggleRecommendation(recommendation, pressed)
+                        }>
+                        {recommendation}
+                      </ToggleChip>
+                    </li>
+                  );
+                },
+              )}
+            </ul>
+          </section>
 
-                    return (
-                      <li key={recommendedInfo.id ?? index}>
-                        <ToggleChip
-                          className="h-auto w-full justify-start text-left whitespace-normal"
-                          pressed={selectedRecommendations.has(recommendation)}
-                          disabled={isCompletingStory}
-                          onPressedChange={(pressed) =>
-                            toggleRecommendation(recommendation, pressed)
-                          }>
-                          {recommendation}
-                        </ToggleChip>
-                      </li>
-                    );
-                  },
-                )}
-              </ul>
-            </section>
-
-            <section
-              aria-labelledby="additional-info-label"
-              className="flex flex-col gap-2">
-              <div className="flex items-baseline gap-1">
-                <Label>추가 정보</Label>
-                <p className="text-sm text-foreground-secondary">
-                  (최대 {ADDITIONAL_INFO_MAX_COUNT}개 입력)
-                </p>
-              </div>
-
-              {additionalInfos.map((additionalInfo, index) => (
-                <div
-                  key={additionalInfo.id}
-                  className="flex items-center gap-2">
-                  <InputGroup>
-                    <InputGroupTextarea
-                      aria-label={`추가 정보 ${index + 1}`}
-                      className="min-h-10"
-                      maxLength={ADDITIONAL_INFO_MAX_LENGTH}
-                      placeholder="예: 주인공은 오래전 친구를 배신한 비밀을 숨기고 있다"
-                      rows={1}
-                      value={additionalInfo.value}
-                      disabled={isCompletingStory}
-                      onChange={(event) =>
-                        changeAdditionalInfo(additionalInfo.id, event)
-                      }
-                    />
-                    <InputGroupAddon align="block-end">
-                      <InputGroupText>
-                        {additionalInfo.value.length} /{' '}
-                        {ADDITIONAL_INFO_MAX_LENGTH}
-                      </InputGroupText>
-                    </InputGroupAddon>
-                  </InputGroup>
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label={`추가 정보 ${index + 1} 삭제`}
-                    disabled={isCompletingStory}
-                    onClick={() => removeAdditionalInfo(additionalInfo.id)}>
-                    <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
-                  </Button>
-                </div>
-              ))}
-
-              <Button
-                type="button"
-                variant="secondary"
-                className="self-center text-foreground-secondary"
-                disabled={!canAddAdditionalInfo || isCompletingStory}
-                onClick={addAdditionalInfo}>
-                <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-                정보 추가
-              </Button>
-            </section>
-
-            {hasCompleteStoryError && (
-              <p className="text-sm text-destructive">
-                스토리를 완성하지 못했어요. 다시 시도해주세요
+          <section
+            aria-labelledby="additional-info-label"
+            className="flex flex-col gap-2">
+            <div className="flex items-baseline gap-1">
+              <Label>추가 정보</Label>
+              <p className="text-sm text-foreground-secondary">
+                (최대 {ADDITIONAL_INFO_MAX_COUNT}개 입력)
               </p>
-            )}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      <StoryCreateStepFooter>
-        <Button
-          type="button"
-          size="lg"
-          variant="secondary"
-          disabled={isCompletingStory}
-          onClick={onBackToStorylineSelect}>
-          다시 선택하기
-        </Button>
-        <Button
-          type="button"
-          size="lg"
-          className="relative"
-          aria-busy={isCompletingStory}
-          disabled={!canCompleteStory || isCompletingStory}
-          onClick={handleCompleteStory}>
-          <LoadingButtonContent
-            isLoading={isCompletingStory}
-            loadingLabel="스토리 완성 중">
-            스토리 완성하기
-          </LoadingButtonContent>
-        </Button>
-      </StoryCreateStepFooter>
-    </StoryCreateStepScrollArea>
+            {additionalInfos.map((additionalInfo, index) => (
+              <div key={additionalInfo.id} className="flex items-center gap-2">
+                <InputGroup>
+                  <InputGroupTextarea
+                    aria-label={`추가 정보 ${index + 1}`}
+                    className="min-h-10"
+                    maxLength={ADDITIONAL_INFO_MAX_LENGTH}
+                    placeholder="예: 주인공은 오래전 친구를 배신한 비밀을 숨기고 있다"
+                    rows={1}
+                    value={additionalInfo.value}
+                    disabled={isCompletingStory}
+                    onChange={(event) =>
+                      changeAdditionalInfo(additionalInfo.id, event)
+                    }
+                  />
+                  <InputGroupAddon align="block-end">
+                    <InputGroupText>
+                      {additionalInfo.value.length} /{' '}
+                      {ADDITIONAL_INFO_MAX_LENGTH}
+                    </InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={`추가 정보 ${index + 1} 삭제`}
+                  disabled={isCompletingStory}
+                  onClick={() => removeAdditionalInfo(additionalInfo.id)}>
+                  <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
+                </Button>
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="self-center text-foreground-secondary"
+              disabled={!canAddAdditionalInfo || isCompletingStory}
+              onClick={addAdditionalInfo}>
+              <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
+              정보 추가
+            </Button>
+          </section>
+
+          {hasCompleteStoryError && (
+            <StoryCreateErrorMessage>
+              스토리를 완성하지 못했어요. 다시 시도해주세요
+            </StoryCreateErrorMessage>
+          )}
+        </div>
+      </div>
+    </StoryCreateStepLayout>
   );
 }
