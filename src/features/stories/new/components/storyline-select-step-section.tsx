@@ -1,6 +1,6 @@
 'use client';
 
-import { ThumbsDownIcon, ThumbsUpIcon } from '@hugeicons/core-free-icons';
+import { ThumbsUpIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { TextContent } from '@/components/common/text-content';
@@ -79,7 +79,7 @@ export function StorylineSelectStepSection({
             className="gap-0"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}>
-            <div className="sticky -top-px z-10 mt-2 flex flex-wrap items-center gap-2 bg-background px-4 pt-2.25 pb-2">
+            <div className="sticky -top-px z-10 mt-2 bg-background px-4 pt-2.25 pb-2">
               <TabsList>
                 {storylines.map((storyline, index) => (
                   <TabsTrigger
@@ -90,47 +90,55 @@ export function StorylineSelectStepSection({
                   </TabsTrigger>
                 ))}
               </TabsList>
-              <div className="ml-auto flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant={
-                    activeRating === 'BAD' ? 'destructiveOutline' : 'outline'
-                  }
-                  size="icon"
-                  disabled={activeStorylineId === undefined}
-                  aria-pressed={activeRating === 'BAD'}
-                  aria-label="이 스토리라인 싫어요"
-                  onClick={() => {
-                    if (activeStorylineId !== undefined) {
-                      toggleStorylineRating(activeStorylineId, 'BAD');
-                    }
-                  }}>
-                  <HugeiconsIcon icon={ThumbsDownIcon} aria-hidden="true" />
-                </Button>
-                <Button
-                  type="button"
-                  variant={
-                    activeRating === 'GOOD' ? 'primaryOutline' : 'outline'
-                  }
-                  size="icon"
-                  disabled={activeStorylineId === undefined}
-                  aria-pressed={activeRating === 'GOOD'}
-                  aria-label="이 스토리라인 좋아요"
-                  onClick={() => {
-                    if (activeStorylineId !== undefined) {
-                      toggleStorylineRating(activeStorylineId, 'GOOD');
-                    }
-                  }}>
-                  <HugeiconsIcon icon={ThumbsUpIcon} aria-hidden="true" />
-                </Button>
-              </div>
             </div>
             {storylines.map((storyline, index) => (
               <TabsContent
                 key={storyline.id ?? index}
                 value={String(index)}
                 className="p-4 pt-2">
-                <TextContent font="maruburi">{storyline.story}</TextContent>
+                <div className="flex h-full flex-col gap-4">
+                  <TextContent font="maruburi">{storyline.story}</TextContent>
+                  <div className="ml-auto flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant={
+                        activeRating === 'GOOD' ? 'primaryOutline' : 'outline'
+                      }
+                      size="icon"
+                      disabled={activeStorylineId === undefined}
+                      aria-pressed={activeRating === 'GOOD'}
+                      aria-label="이 스토리라인 좋아요"
+                      onClick={() => {
+                        if (activeStorylineId !== undefined) {
+                          toggleStorylineRating(activeStorylineId, 'GOOD');
+                        }
+                      }}>
+                      <HugeiconsIcon icon={ThumbsUpIcon} aria-hidden="true" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={
+                        activeRating === 'BAD'
+                          ? 'destructiveOutline'
+                          : 'outline'
+                      }
+                      size="icon"
+                      disabled={activeStorylineId === undefined}
+                      aria-pressed={activeRating === 'BAD'}
+                      aria-label="이 스토리라인 싫어요"
+                      onClick={() => {
+                        if (activeStorylineId !== undefined) {
+                          toggleStorylineRating(activeStorylineId, 'BAD');
+                        }
+                      }}>
+                      <HugeiconsIcon
+                        icon={ThumbsUpIcon}
+                        aria-hidden="true"
+                        className="rotate-180"
+                      />
+                    </Button>
+                  </div>
+                </div>
               </TabsContent>
             ))}
           </Tabs>
