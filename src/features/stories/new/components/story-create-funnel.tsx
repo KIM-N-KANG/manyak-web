@@ -40,6 +40,7 @@ export function StoryCreateFunnel() {
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
       <StoryCreateHeader
+        step={step}
         requiresBackConfirmation={shouldConfirmBack}
         hasScrolled={hasScrolled}
       />

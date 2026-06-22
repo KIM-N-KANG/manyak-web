@@ -62,7 +62,7 @@ export function StorylineSelectStepSection({
           }
           description={
             isRegeneratingStorylines
-              ? '선택한 키워드를 바탕으로 스토리라인을 구상하고 있어요'
+              ? '키워드를 바탕으로 스토리라인을 구상하고 있어요'
               : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
           }
           className="p-4"
@@ -79,12 +79,13 @@ export function StorylineSelectStepSection({
             className="gap-0"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}>
-            <div className="sticky -top-px z-10 flex flex-wrap items-center gap-2 bg-background px-4 pt-4.25 pb-4">
+            <div className="sticky -top-px z-10 mt-2 flex flex-wrap items-center gap-2 bg-background px-4 pt-2.25 pb-2">
               <TabsList>
                 {storylines.map((storyline, index) => (
                   <TabsTrigger
                     key={storyline.id ?? index}
-                    value={String(index)}>
+                    value={String(index)}
+                    className="bg-transparent">
                     {STORYLINE_TAB_LABELS[index]}
                   </TabsTrigger>
                 ))}
@@ -128,10 +129,8 @@ export function StorylineSelectStepSection({
               <TabsContent
                 key={storyline.id ?? index}
                 value={String(index)}
-                className="px-4">
-                <div className="pb-4">
-                  <TextContent font="maruburi">{storyline.story}</TextContent>
-                </div>
+                className="p-4 pt-2">
+                <TextContent font="maruburi">{storyline.story}</TextContent>
               </TabsContent>
             ))}
           </Tabs>
