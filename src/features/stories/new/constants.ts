@@ -1,16 +1,10 @@
-import type { StoryCreateStep, TagCategoryConfig } from './types';
+import type { TagCategoryConfig } from './types';
 
 export const ADD_KEYWORD_MAX_LENGTH = 15;
 
 export const ADDITIONAL_INFO_MAX_COUNT = 10;
 
 export const ADDITIONAL_INFO_MAX_LENGTH = 100;
-
-export const STORY_CREATE_STEP_PROGRESS_LABELS = {
-  keyword: '1 / 3',
-  'storyline-select': '2 / 3',
-  'additional-info': '3 / 3',
-} satisfies Record<Exclude<StoryCreateStep, 'complete'>, string>;
 
 export const TAG_CATEGORIES = [
   {

@@ -4,10 +4,7 @@ import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import {
-  STORY_CREATE_STEP_PROGRESS_LABELS,
-  TAG_CATEGORIES,
-} from '../constants';
+import { TAG_CATEGORIES } from '../constants';
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
 import type { TagCategory } from '../types';
 import { StoryCreateStepFooter } from './story-create-step-footer';
@@ -121,14 +118,12 @@ export function StoryKeywordStepSection({
         )}
       </section>
 
-      <StoryCreateStepFooter
-        progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS.keyword}>
+      <StoryCreateStepFooter>
         {!isFirstCategory && (
           <Button
             type="button"
             variant="secondary"
             size="lg"
-            className="min-w-20"
             disabled={isGeneratingStoryline}
             onClick={goToPreviousCategory}>
             이전
@@ -137,7 +132,6 @@ export function StoryKeywordStepSection({
         <Button
           type="button"
           size="lg"
-          className="min-w-20"
           disabled={
             isGeneratingStoryline ||
             (isLastCategory

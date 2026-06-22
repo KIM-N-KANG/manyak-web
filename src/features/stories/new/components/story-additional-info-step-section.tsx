@@ -19,7 +19,6 @@ import { ToggleChip } from '@/components/ui/toggle-chip';
 import {
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
-  STORY_CREATE_STEP_PROGRESS_LABELS,
 } from '../constants';
 import { useAdditionalInfos } from '../hooks/use-additional-infos';
 import { LoadingButtonContent } from './loading-button-content';
@@ -194,8 +193,7 @@ export function StoryAdditionalInfoStepSection({
         </div>
       </section>
 
-      <StoryCreateStepFooter
-        progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS['additional-info']}>
+      <StoryCreateStepFooter>
         <Button
           type="button"
           size="lg"

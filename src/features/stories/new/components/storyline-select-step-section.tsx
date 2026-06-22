@@ -7,10 +7,7 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import {
-  STORY_CREATE_STEP_PROGRESS_LABELS,
-  STORYLINE_TAB_LABELS,
-} from '../constants';
+import { STORYLINE_TAB_LABELS } from '../constants';
 import { useHorizontalSwipe } from '../hooks/use-horizontal-swipe';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
 import type { StorylineSelectStepSectionProps } from '../types';
@@ -152,8 +149,7 @@ export function StorylineSelectStepSection({
         )}
       </section>
 
-      <StoryCreateStepFooter
-        progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS['storyline-select']}>
+      <StoryCreateStepFooter>
         <Button
           type="button"
           size="lg"
