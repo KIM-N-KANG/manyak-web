@@ -1,28 +1,12 @@
+import { createCreatedIdListStorage } from '@/lib/created-id-list-storage';
+
 export const CREATED_CHAT_IDS_STORAGE_KEY = 'manyak:created-chat-ids';
 
-const CREATED_CHAT_IDS_CHANGE_EVENT = 'manyak:created-chat-ids-change';
-
-const parseSavedChatIds = (value: string | null) => {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    const parsedValue: unknown = JSON.parse(value);
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue.filter(
-      (savedChatId): savedChatId is string => typeof savedChatId === 'string',
-    );
-  } catch {
-    return [];
-  }
-};
-
-export const parseCreatedChatIds = parseSavedChatIds;
+const chatIdListStorage = createCreatedIdListStorage<string>({
+  storageKey: CREATED_CHAT_IDS_STORAGE_KEY,
+  changeEvent: 'manyak:created-chat-ids-change',
+  isValidId: (value): value is string => typeof value === 'string',
+});
 
 /**
  * 서버 렌더링 시점에는 로컬스토리지에 접근할 수 없으므로,
@@ -30,67 +14,17 @@ export const parseCreatedChatIds = parseSavedChatIds;
  */
 export const SERVER_CHAT_IDS_SNAPSHOT = Symbol('server-chat-ids-snapshot');
 
-export const subscribeCreatedChatIds = (onStoreChange: () => void) => {
-  if (typeof window === 'undefined') {
-    return () => {};
-  }
+export const parseCreatedChatIds = chatIdListStorage.parseSavedIds;
 
-  const handleStorageChange = (event: StorageEvent) => {
-    if (event.key === CREATED_CHAT_IDS_STORAGE_KEY) {
-      onStoreChange();
-    }
-  };
+export const subscribeCreatedChatIds = chatIdListStorage.subscribe;
 
-  window.addEventListener('storage', handleStorageChange);
-  window.addEventListener(CREATED_CHAT_IDS_CHANGE_EVENT, onStoreChange);
-
-  return () => {
-    window.removeEventListener('storage', handleStorageChange);
-    window.removeEventListener(CREATED_CHAT_IDS_CHANGE_EVENT, onStoreChange);
-  };
-};
-
-export const getCreatedChatIdsSnapshot = (): string | null =>
-  localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY);
+export const getCreatedChatIdsSnapshot = chatIdListStorage.getSnapshot;
 
 export const getServerCreatedChatIdsSnapshot =
   (): typeof SERVER_CHAT_IDS_SNAPSHOT => SERVER_CHAT_IDS_SNAPSHOT;
 
-export const writeCreatedChatIds = (chatIds: string[]) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
+export const writeCreatedChatIds = chatIdListStorage.write;
 
-  localStorage.setItem(CREATED_CHAT_IDS_STORAGE_KEY, JSON.stringify(chatIds));
-  window.dispatchEvent(new Event(CREATED_CHAT_IDS_CHANGE_EVENT));
-};
+export const saveCreatedChatId = chatIdListStorage.save;
 
-export const saveCreatedChatId = (chatId: string) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  const savedChatIds = parseSavedChatIds(
-    localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY),
-  );
-  const nextChatIds = [
-    chatId,
-    ...savedChatIds.filter((savedChatId) => savedChatId !== chatId),
-  ].slice(0, 100);
-
-  writeCreatedChatIds(nextChatIds);
-};
-
-export const removeCreatedChatId = (chatId: string) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  const savedChatIds = parseSavedChatIds(
-    localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY),
-  );
-
-  writeCreatedChatIds(
-    savedChatIds.filter((savedChatId) => savedChatId !== chatId),
-  );
-};
+export const removeCreatedChatId = chatIdListStorage.remove;
