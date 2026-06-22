@@ -1,3 +1,4 @@
+import { parseTextSegments } from '@/lib/parse-text-segments';
 import { cn } from '@/lib/utils';
 
 type TextContentProps = {
@@ -6,33 +7,28 @@ type TextContentProps = {
   size?: 'sm' | 'base';
 };
 
-const TEXT_EXPLICIT_LINE_BREAK_PATTERN = /\r?\n+/u;
-const TEXT_SENTENCE_BREAK_PATTERN = /(?<=[.!?。！？…])\s+/u;
-
-const getTextLines = (text?: string) =>
-  (text ?? '')
-    .split(TEXT_EXPLICIT_LINE_BREAK_PATTERN)
-    .flatMap((line) => line.split(TEXT_SENTENCE_BREAK_PATTERN))
-    .map((line) => line.trim())
-    .filter(Boolean);
-
 export function TextContent({
   children,
   font = 'default',
   size = 'base',
 }: TextContentProps) {
-  const lines = getTextLines(children);
-
   return (
-    <div
+    <p
       className={cn(
-        'flex flex-col gap-6',
-        size === 'sm' ? 'gap-4 text-sm' : 'text-base',
+        'leading-loose whitespace-pre-wrap',
+        size === 'sm' ? 'text-sm' : 'text-base',
         font === 'maruburi' && 'font-maruburi',
       )}>
-      {lines.map((line, index) => (
-        <p key={`${index}-${line}`}>{line}</p>
+      {parseTextSegments(children ?? '').map((segment, index) => (
+        <span
+          key={index}
+          className={cn(
+            segment.emphasis && 'text-foreground-secondary',
+            segment.bold && 'font-bold',
+          )}>
+          {segment.text}
+        </span>
       ))}
-    </div>
+    </p>
   );
 }
