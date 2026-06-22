@@ -84,8 +84,7 @@ export function StorylineSelectStepSection({
                 {storylines.map((storyline, index) => (
                   <TabsTrigger
                     key={storyline.id ?? index}
-                    value={String(index)}
-                    className="bg-transparent">
+                    value={String(index)}>
                     {STORYLINE_TAB_LABELS[index]}
                   </TabsTrigger>
                 ))}
