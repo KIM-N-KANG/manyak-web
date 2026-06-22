@@ -54,7 +54,7 @@ export function ChatInput({
   };
 
   return (
-    <section className="p-4">
+    <section className="px-4 py-2">
       <form onSubmit={handleSubmit}>
         <InputGroup className="rounded-lg">
           <InputGroupTextarea

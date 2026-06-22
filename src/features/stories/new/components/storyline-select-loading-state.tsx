@@ -1,9 +1,10 @@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import {
+  EXPECTED_STORYLINE_COUNT,
+  getStorylineTabLabel,
   STORYLINE_GENERATING_LOADING_PHRASES,
   STORYLINE_SELECT_LOADING_LABEL,
-  STORYLINE_TAB_LABELS,
 } from '../constants';
 import { StoryGeneratingLoading } from './story-generating-loading';
 
@@ -16,9 +17,9 @@ export function StorylineSelectLoadingState() {
       <Tabs defaultValue="0" className="gap-0">
         <div className="flex flex-wrap items-center gap-2 px-4 pt-4.25 pb-4">
           <TabsList>
-            {STORYLINE_TAB_LABELS.map((label, index) => (
+            {Array.from({ length: EXPECTED_STORYLINE_COUNT }, (_, index) => (
               <TabsTrigger key={index} value={String(index)} disabled>
-                {label}
+                {getStorylineTabLabel(index)}
               </TabsTrigger>
             ))}
           </TabsList>

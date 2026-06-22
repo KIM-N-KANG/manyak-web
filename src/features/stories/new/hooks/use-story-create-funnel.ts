@@ -46,6 +46,11 @@ export function useStoryCreateFunnel() {
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<number | null>(null);
 
+  const failToAdditionalInfo = (message: string) => {
+    setStep('additional-info');
+    toast.error(message);
+  };
+
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
       onSuccess: (response, variables) => {
@@ -70,19 +75,18 @@ export function useStoryCreateFunnel() {
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
-          setStep('additional-info');
-          toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
+          failToAdditionalInfo(TOAST_MESSAGE.CHAT_START_FAILED);
 
           return;
         }
 
         saveCreatedChatId(chatId);
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
+        toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: () => {
-        setStep('additional-info');
-        toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
+        failToAdditionalInfo(TOAST_MESSAGE.CHAT_START_FAILED);
       },
     },
   });
@@ -91,8 +95,7 @@ export function useStoryCreateFunnel() {
     mutation: {
       onSuccess: (response) => {
         if (response.status !== 201) {
-          setStep('additional-info');
-          toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+          failToAdditionalInfo(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
 
           return;
         }
@@ -107,8 +110,7 @@ export function useStoryCreateFunnel() {
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: () => {
-        setStep('additional-info');
-        toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+        failToAdditionalInfo(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
       },
     },
   });

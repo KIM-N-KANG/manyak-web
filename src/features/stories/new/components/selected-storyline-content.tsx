@@ -6,11 +6,11 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+import { SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT } from '../constants';
+
 type SelectedStorylineContentProps = {
   story?: string;
 };
-
-const COLLAPSED_MAX_HEIGHT = 64;
 
 export function SelectedStorylineContent({
   story,
@@ -24,7 +24,9 @@ export function SelectedStorylineContent({
 
     if (!element) return;
 
-    setIsCollapsible(element.scrollHeight > COLLAPSED_MAX_HEIGHT);
+    setIsCollapsible(
+      element.scrollHeight > SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT,
+    );
   }, [story]);
 
   const isCollapsed = isCollapsible && !isExpanded;

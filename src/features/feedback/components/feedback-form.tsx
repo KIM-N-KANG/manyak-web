@@ -40,7 +40,7 @@ export function FeedbackForm() {
         <p className="text-foreground-secondary">{FEEDBACK_DESCRIPTION}</p>
       </div>
 
-      <div className="flex flex-col gap-8 p-4">
+      <div className="mb-2 flex flex-col gap-8 p-4">
         <section
           aria-labelledby="feedback-body-label"
           className="flex flex-col gap-2">
@@ -87,7 +87,7 @@ export function FeedbackForm() {
         </section>
       </div>
 
-      <div className="mt-auto p-4">
+      <div className="mt-auto flex h-16 items-center px-4">
         <Button
           type="submit"
           size="lg"

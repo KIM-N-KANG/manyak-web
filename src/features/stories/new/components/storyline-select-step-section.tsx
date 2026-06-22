@@ -1,22 +1,17 @@
 'use client';
 
-import { ThumbsDownIcon, ThumbsUpIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
-import {
-  STORY_CREATE_STEP_PROGRESS_LABELS,
-  STORYLINE_TAB_LABELS,
-} from '../constants';
-import { useHorizontalSwipe } from '../hooks/use-horizontal-swipe';
+import { getStorylineTabLabel } from '../constants';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
+import { useSwipeableIndex } from '../hooks/use-swipeable-index';
 import type { StorylineSelectStepSectionProps } from '../types';
-import { StoryCreateStepFooter } from './story-create-step-footer';
-import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
-import { StoryCreateStepTitle } from './story-create-step-title';
+import { StickyTabsList } from './sticky-tabs-list';
+import { StoryCreateErrorMessage } from './story-create-error-message';
+import { StoryCreateStepLayout } from './story-create-step-layout';
+import { StorylineRatingButtons } from './storyline-rating-buttons';
 import { StorylineSelectLoadingState } from './storyline-select-loading-state';
 
 export function StorylineSelectStepSection({
@@ -41,135 +36,92 @@ export function StorylineSelectStepSection({
       ? undefined
       : storylineRatings[activeStorylineId];
 
-  const { handleTouchStart, handleTouchEnd } = useHorizontalSwipe({
-    onSwipeLeft: () => {
-      if (activeStorylineIndex < storylines.length - 1) {
-        onActiveStorylineIndexChange(activeStorylineIndex + 1);
-      }
-    },
-    onSwipeRight: () => {
-      if (activeStorylineIndex > 0) {
-        onActiveStorylineIndexChange(activeStorylineIndex - 1);
-      }
-    },
+  const { handleTouchStart, handleTouchEnd } = useSwipeableIndex({
+    index: activeStorylineIndex,
+    count: storylines.length,
+    onIndexChange: onActiveStorylineIndexChange,
   });
 
   return (
-    <StoryCreateStepScrollArea onScroll={onScroll}>
-      <section className="flex flex-col">
-        <StoryCreateStepTitle
-          titleLines={
-            isRegeneratingStorylines
-              ? ['스토리라인을 만들고 있어요', '잠시만 기다려 주세요']
-              : ['마음에 드는', '스토리라인을 선택해주세요']
-          }
-          description={
-            isRegeneratingStorylines
-              ? '선택한 키워드를 바탕으로 스토리라인을 구상하고 있어요'
-              : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
-          }
-          className="p-4"
-        />
-
-        {isRegeneratingStorylines ? (
-          <StorylineSelectLoadingState />
-        ) : (
-          <Tabs
-            value={String(activeStorylineIndex)}
-            onValueChange={(value) =>
-              onActiveStorylineIndexChange(Number(value))
-            }
-            className="gap-0"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}>
-            <div className="sticky -top-px z-10 flex flex-wrap items-center gap-2 bg-background px-4 pt-4.25 pb-4">
-              <TabsList>
-                {storylines.map((storyline, index) => (
-                  <TabsTrigger
-                    key={storyline.id ?? index}
-                    value={String(index)}>
-                    {STORYLINE_TAB_LABELS[index]}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              <div className="ml-auto flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant={
-                    activeRating === 'BAD' ? 'destructiveOutline' : 'outline'
-                  }
-                  size="icon"
-                  disabled={activeStorylineId === undefined}
-                  aria-pressed={activeRating === 'BAD'}
-                  aria-label="이 스토리라인 싫어요"
-                  onClick={() => {
-                    if (activeStorylineId !== undefined) {
-                      toggleStorylineRating(activeStorylineId, 'BAD');
-                    }
-                  }}>
-                  <HugeiconsIcon icon={ThumbsDownIcon} aria-hidden="true" />
-                </Button>
-                <Button
-                  type="button"
-                  variant={
-                    activeRating === 'GOOD' ? 'primaryOutline' : 'outline'
-                  }
-                  size="icon"
-                  disabled={activeStorylineId === undefined}
-                  aria-pressed={activeRating === 'GOOD'}
-                  aria-label="이 스토리라인 좋아요"
-                  onClick={() => {
-                    if (activeStorylineId !== undefined) {
-                      toggleStorylineRating(activeStorylineId, 'GOOD');
-                    }
-                  }}>
-                  <HugeiconsIcon icon={ThumbsUpIcon} aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
+    <StoryCreateStepLayout
+      titleLines={
+        isRegeneratingStorylines
+          ? ['스토리라인을 만들고 있어요', '잠시만 기다려 주세요']
+          : ['마음에 드는', '스토리라인을 선택해주세요']
+      }
+      description={
+        isRegeneratingStorylines
+          ? '키워드를 바탕으로 스토리라인을 구상하고 있어요'
+          : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
+      }
+      onScroll={onScroll}
+      footer={
+        <>
+          <Button
+            type="button"
+            size="lg"
+            variant="secondary"
+            disabled={isRegeneratingStorylines}
+            onClick={onRegenerateStorylines}>
+            다시 만들기
+          </Button>
+          <Button
+            type="button"
+            size="lg"
+            disabled={!selectedStoryline || isRegeneratingStorylines}
+            onClick={onSelectStoryline}>
+            선택하기
+          </Button>
+        </>
+      }>
+      {isRegeneratingStorylines ? (
+        <StorylineSelectLoadingState />
+      ) : (
+        <Tabs
+          value={String(activeStorylineIndex)}
+          onValueChange={(value) => onActiveStorylineIndexChange(Number(value))}
+          className="gap-0"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}>
+          <StickyTabsList>
             {storylines.map((storyline, index) => (
-              <TabsContent
-                key={storyline.id ?? index}
-                value={String(index)}
-                className="px-4">
-                <div className="pb-4">
-                  <TextContent font="maruburi">{storyline.story}</TextContent>
-                </div>
-              </TabsContent>
+              <TabsTrigger key={storyline.id ?? index} value={String(index)}>
+                {getStorylineTabLabel(index)}
+              </TabsTrigger>
             ))}
-          </Tabs>
-        )}
+          </StickyTabsList>
+          {storylines.map((storyline, index) => (
+            <TabsContent
+              key={storyline.id ?? index}
+              value={String(index)}
+              className="p-4 pt-2">
+              <div className="flex h-full flex-col gap-4">
+                <TextContent font="maruburi">{storyline.story}</TextContent>
+                <StorylineRatingButtons
+                  rating={activeRating}
+                  disabled={activeStorylineId === undefined}
+                  onToggle={(rating) => {
+                    if (activeStorylineId !== undefined) {
+                      toggleStorylineRating(activeStorylineId, rating);
+                    }
+                  }}
+                />
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
 
-        {!isRegeneratingStorylines && storylines.length === 0 && (
-          <p className="px-4 py-8 text-sm text-foreground-secondary">
-            생성된 스토리라인이 없어요. 잠시 후 다시 시도해주세요
-          </p>
-        )}
-        {hasRegenerateStorylinesError && (
-          <p className="px-4 text-sm text-destructive">
-            스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요
-          </p>
-        )}
-      </section>
-
-      <StoryCreateStepFooter
-        progressLabel={STORY_CREATE_STEP_PROGRESS_LABELS['storyline-select']}>
-        <Button
-          type="button"
-          size="lg"
-          variant="secondary"
-          disabled={isRegeneratingStorylines}
-          onClick={onRegenerateStorylines}>
-          다시 만들기
-        </Button>
-        <Button
-          type="button"
-          size="lg"
-          disabled={!selectedStoryline || isRegeneratingStorylines}
-          onClick={onSelectStoryline}>
-          선택하기
-        </Button>
-      </StoryCreateStepFooter>
-    </StoryCreateStepScrollArea>
+      {!isRegeneratingStorylines && storylines.length === 0 && (
+        <p className="px-4 py-8 text-sm text-foreground-secondary">
+          생성된 스토리라인이 없어요. 잠시 후 다시 시도해주세요
+        </p>
+      )}
+      {hasRegenerateStorylinesError && (
+        <StoryCreateErrorMessage className="px-4">
+          스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요
+        </StoryCreateErrorMessage>
+      )}
+    </StoryCreateStepLayout>
   );
 }

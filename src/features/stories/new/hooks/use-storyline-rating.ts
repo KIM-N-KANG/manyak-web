@@ -8,13 +8,10 @@ import {
   useCancelStorylineRating,
   useRateStoryline,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import { type StorylineRatingRequestRating } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 
-export type StorylineRating =
-  (typeof StorylineRatingRequestRating)[keyof typeof StorylineRatingRequestRating];
-
-const RATING_SYNC_DEBOUNCE_MS = 300;
+import { STORYLINE_RATING_SYNC_DEBOUNCE_MS } from '../constants';
+import type { StorylineRating } from '../types';
 
 export function useStorylineRating() {
   const [storylineRatings, setStorylineRatings] = useState<
@@ -124,7 +121,7 @@ export function useStorylineRating() {
     timersRef.current[storylineId] = setTimeout(() => {
       delete timersRef.current[storylineId];
       syncRating(storylineId);
-    }, RATING_SYNC_DEBOUNCE_MS);
+    }, STORYLINE_RATING_SYNC_DEBOUNCE_MS);
   };
 
   return {

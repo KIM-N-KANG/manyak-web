@@ -1,7 +1,8 @@
 import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
 import { Label } from '@/components/ui/label';
-import { StoryDetailTags } from '@/features/stories/detail/components/story-detail-tags';
+
+import { StoryDetailTags } from './story-detail-tags';
 
 type StoryInfo = {
   title?: string;

@@ -2,9 +2,11 @@
 
 import { useRef } from 'react';
 
-const SWIPE_THRESHOLD = 112;
-const HORIZONTAL_INTENT_RATIO = 1.5;
-const TEXT_INPUT_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
+import {
+  HORIZONTAL_SWIPE_INTENT_RATIO,
+  HORIZONTAL_SWIPE_THRESHOLD,
+  TEXT_INPUT_SELECTOR,
+} from '../constants';
 
 type UseHorizontalSwipeArgs = {
   onSwipeLeft: () => void;
@@ -46,11 +48,11 @@ export function useHorizontalSwipe({
     const deltaX = touch.clientX - touchStartXRef.current;
     const deltaY = touch.clientY - touchStartYRef.current;
 
-    if (Math.abs(deltaX) < Math.abs(deltaY) * HORIZONTAL_INTENT_RATIO) {
+    if (Math.abs(deltaX) < Math.abs(deltaY) * HORIZONTAL_SWIPE_INTENT_RATIO) {
       return;
     }
 
-    if (Math.abs(deltaX) < SWIPE_THRESHOLD) {
+    if (Math.abs(deltaX) < HORIZONTAL_SWIPE_THRESHOLD) {
       return;
     }
 

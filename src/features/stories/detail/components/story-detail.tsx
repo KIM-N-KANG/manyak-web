@@ -4,12 +4,12 @@ import { type UIEvent, useState } from 'react';
 
 import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
-import { StoryInfoSection } from '@/features/stories/new/components/story-info-section';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import { StoryDetailCta } from './story-detail-cta';
 import { StoryDetailHeader } from './story-detail-header';
 import { StoryDetailSkeleton } from './story-detail-skeleton';
+import { StoryInfoSection } from './story-info-section';
 
 type StoryDetailProps = {
   storyId: number;
