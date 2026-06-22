@@ -1,4 +1,5 @@
 export const TOAST_MESSAGE = {
+  STORY_COMPLETED: '스토리를 완성했어요',
   STORY_DELETED: '스토리를 삭제했어요',
   CHAT_DELETED: '채팅을 삭제했어요',
   STORY_DELETE_FAILED: '스토리 삭제에 실패했어요',

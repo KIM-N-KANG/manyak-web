@@ -82,6 +82,7 @@ export function useStoryCreateFunnel() {
 
         saveCreatedChatId(chatId);
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
+        toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: () => {
