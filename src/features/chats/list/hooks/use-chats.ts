@@ -10,23 +10,21 @@ import { useChatIds } from './use-chat-ids';
 
 export const CHATS_BATCH_QUERY_KEY = 'chats-batch';
 
-const toChatListItems = (
-  chatIds: string[],
+/**
+ * 서버는 채팅 목록을 최신순(마지막 활동순)으로 응답하므로 그 순서를 그대로 보존합니다.
+ * localStorage의 chatId 순서(생성순)로 재정렬하지 않습니다.
+ */
+export const toChatListItems = (
   chats: ChatSummaryResponse[],
 ): ChatListItem[] => {
-  const chatById = new Map(chats.map((chat) => [chat.id, chat]));
-
-  return chatIds
-    .map((chatId) => chatById.get(chatId))
-    .filter((chat): chat is ChatSummaryResponse => chat != null)
-    .filter(
-      (chat): chat is Required<ChatSummaryResponse> =>
-        chat.id != null &&
-        chat.storyId != null &&
-        chat.storyTitle != null &&
-        chat.lastStoryPreview != null &&
-        chat.updatedAt != null,
-    );
+  return chats.filter(
+    (chat): chat is Required<ChatSummaryResponse> =>
+      chat.id != null &&
+      chat.storyId != null &&
+      chat.storyTitle != null &&
+      chat.lastStoryPreview != null &&
+      chat.updatedAt != null,
+  );
 };
 
 export function useChats() {
@@ -38,7 +36,7 @@ export function useChats() {
       const response = await getChatsByIds({ chatIds: chatIds ?? [] });
       const chats = response.status === 200 ? response.data : [];
 
-      return toChatListItems(chatIds ?? [], chats);
+      return toChatListItems(chats);
     },
     enabled: chatIds != null && chatIds.length > 0,
   });
