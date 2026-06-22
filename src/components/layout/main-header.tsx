@@ -2,13 +2,8 @@
 
 import { usePathname } from 'next/navigation';
 
-import { APP_PATH, type MainAppPath } from '@/constants/app-path';
+import { getMainNavigationLabel } from '@/constants/main-navigation';
 import { cn } from '@/lib/utils';
-
-const MAIN_HEADER_TITLE_BY_PATH: Record<MainAppPath, string> = {
-  [APP_PATH.MAIN.STORIES]: '스토리',
-  [APP_PATH.MAIN.CHATS]: '채팅',
-};
 
 type MainHeaderProps = {
   hasScrolled?: boolean;
@@ -16,7 +11,7 @@ type MainHeaderProps = {
 
 export function MainHeader({ hasScrolled = false }: MainHeaderProps) {
   const pathname = usePathname();
-  const title = MAIN_HEADER_TITLE_BY_PATH[pathname as MainAppPath] ?? '';
+  const title = getMainNavigationLabel(pathname);
 
   return (
     <header

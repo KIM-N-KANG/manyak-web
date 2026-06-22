@@ -1,8 +1,8 @@
 export const APP_PATH = {
-  LANDING: '/',
   MAIN: {
     STORIES: '/',
     CHATS: '/chats',
+    FEEDBACK: '/feedback',
   },
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,

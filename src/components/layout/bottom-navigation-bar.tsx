@@ -1,31 +1,11 @@
 'use client';
 
-import { Chatting01Icon, ClipboardIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
+import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { APP_PATH, type MainAppPath } from '@/constants/app-path';
+import { MAIN_NAVIGATION_ITEMS } from '@/constants/main-navigation';
 import { cn } from '@/lib/utils';
-
-interface BottomNavigationItem {
-  href: MainAppPath;
-  label: string;
-  icon: IconSvgElement;
-}
-
-const BOTTOM_NAVIGATION_ITEMS: BottomNavigationItem[] = [
-  {
-    href: APP_PATH.MAIN.STORIES,
-    label: '스토리',
-    icon: ClipboardIcon,
-  },
-  {
-    href: APP_PATH.MAIN.CHATS,
-    label: '채팅',
-    icon: Chatting01Icon,
-  },
-];
 
 export function BottomNavigationBar() {
   const pathname = usePathname();
@@ -34,8 +14,8 @@ export function BottomNavigationBar() {
     <nav
       aria-label="하단 네비게이션"
       className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background">
-      <ul className="grid h-full grid-cols-2">
-        {BOTTOM_NAVIGATION_ITEMS.map((item) => {
+      <ul className="grid h-full grid-cols-3">
+        {MAIN_NAVIGATION_ITEMS.map((item) => {
           const isActive = pathname === item.href;
 
           return (
