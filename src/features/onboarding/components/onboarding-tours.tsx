@@ -16,7 +16,7 @@ export const onboardingTours = [
         side: 'top' as const,
         showControls: false,
         pointerPadding: 8,
-        pointerRadius: 16,
+        pointerRadius: 20,
       },
     ],
   },
@@ -24,24 +24,41 @@ export const onboardingTours = [
     tour: ONBOARDING_TOURS.STORY_CREATE,
     steps: [
       {
-        icon: <>🏷️</>,
-        title: '키워드 선택',
-        content: <>장르·주인공 같은 키워드를 골라 AI에게 알려주세요.</>,
-        selector: onbordaSelector(ONBOARDING_TARGET.KEYWORD_CATEGORIES),
+        icon: <>🗂️</>,
+        title: '세 가지를 차례로 골라요',
+        content: (
+          <>장르 → 주인공 특징 → 주변 인물 특징을 순서대로 골라야 해요</>
+        ),
+        selector: onbordaSelector(ONBOARDING_TARGET.KEYWORD_TABS),
         side: 'bottom' as const,
         showControls: true,
-        pointerPadding: 6,
-        pointerRadius: 8,
+        pointerPadding: 8,
+        pointerRadius: 18,
+      },
+      {
+        icon: <>🏷️</>,
+        title: '먼저 장르부터',
+        content: <>여기서 원하는 키워드를 골라 AI에게 알려주세요</>,
+        selector: onbordaSelector(ONBOARDING_TARGET.KEYWORD_CATEGORIES),
+        side: 'top' as const,
+        showControls: true,
+        pointerPadding: 4,
+        pointerRadius: 20,
       },
       {
         icon: <>✨</>,
-        title: '스토리라인 만들기',
-        content: <>키워드를 다 고르면 여기서 AI가 스토리라인을 만들어요.</>,
+        title: '다 고르면 스토리라인이 만들어져요',
+        content: (
+          <>
+            세 가지를 다 고르면 버튼이 ‘스토리라인 만들기’로 바뀌고, 그때 AI가
+            스토리라인을 만들어요
+          </>
+        ),
         selector: onbordaSelector(ONBOARDING_TARGET.GENERATE_BUTTON),
         side: 'top' as const,
         showControls: true,
         pointerPadding: 8,
-        pointerRadius: 12,
+        pointerRadius: 20,
       },
     ],
   },

@@ -17,11 +17,9 @@ export function OnboardingCard({
   const hasNextControl = step.showControls !== false;
 
   return (
-    <div className="w-72 max-w-[80vw] rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg">
-      <div className="flex items-start justify-between gap-2">
-        <h2 className="text-base font-semibold">
-          {step.icon} {step.title}
-        </h2>
+    <div className="w-76 max-w-[80vw] rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold">{step.title}</h2>
         {totalSteps > 1 && (
           <span className="shrink-0 text-xs text-foreground-secondary">
             {currentStep + 1}/{totalSteps}
@@ -50,7 +48,7 @@ export function OnboardingCard({
         )}
       </div>
 
-      {arrow}
+      <span className="text-popover">{arrow}</span>
     </div>
   );
 }

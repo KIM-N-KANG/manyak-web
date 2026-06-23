@@ -94,7 +94,7 @@ export function StoryKeywordStepSection({
         className="gap-0"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}>
-        <StickyTabsList data-onborda={ONBOARDING_TARGET.KEYWORD_CATEGORIES}>
+        <StickyTabsList data-onborda={ONBOARDING_TARGET.KEYWORD_TABS}>
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
               key={value}
@@ -113,7 +113,11 @@ export function StoryKeywordStepSection({
               selectedCustomKeywordIdsByCategory[category];
 
             return (
-              <TabsContent key={category} value={category} className="p-4">
+              <TabsContent
+                key={category}
+                value={category}
+                className="m-2 mt-0 p-2"
+                data-onborda={ONBOARDING_TARGET.KEYWORD_CATEGORIES}>
                 <StoryKeywordCategoryPanel
                   category={category}
                   label={label}
