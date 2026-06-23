@@ -11,6 +11,7 @@ import {
   InputGroupAddon,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
+import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
 
 type ChatInputProps = {
   value: string;
@@ -55,7 +56,7 @@ export function ChatInput({
 
   return (
     <section className="px-4 py-2">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} data-onborda={ONBOARDING_TARGET.CHAT_INPUT}>
         <InputGroup className="rounded-lg">
           <InputGroupTextarea
             ref={textareaRef}

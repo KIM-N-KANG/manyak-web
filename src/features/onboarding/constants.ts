@@ -2,6 +2,7 @@ export const ONBOARDING_TOURS = {
   STORY_LIST: 'storyList',
   KEYWORD_SELECT: 'keywordSelect',
   STORYLINE_SELECT: 'storylineSelect',
+  ADDITIONAL_INFO: 'additionalInfo',
   CHAT: 'chat',
 } as const;
 
@@ -15,7 +16,8 @@ export const ONBOARDING_TARGET = {
   CREATE_STORY: 'create-story',
   KEYWORD_TABS: 'keyword-tabs',
   STORYLINE_TABS: 'storyline-tabs',
-  CHAT_STORY: 'chat-story',
+  RECOMMENDED_INFO: 'recommended-info',
+  ADDITIONAL_INFO_INPUT: 'additional-info-input',
   CHAT_INPUT: 'chat-input',
 } as const;
 

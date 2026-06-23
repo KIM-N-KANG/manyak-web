@@ -41,6 +41,10 @@ export function StoryCreateFunnel() {
       !isGeneratingStorylines &&
       storylines.length > 0,
   );
+  useStartOnboarding(
+    ONBOARDING_TOURS.ADDITIONAL_INFO,
+    step === 'additional-info' && Boolean(selectedStoryline),
+  );
 
   const hasScrolled = scrolledStep === step;
 
