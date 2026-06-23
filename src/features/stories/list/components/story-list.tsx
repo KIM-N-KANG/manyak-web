@@ -25,8 +25,8 @@ import { StoryListSkeleton } from './story-list-skeleton';
 export function StoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const showSkeleton = useDelayedLoading(isLoading);
-
-  const isCreateTargetReady = !showSkeleton && !isLoading && !isError;
+  const isCreateTargetReady =
+    !showSkeleton && !isLoading && !isError && isEmpty;
 
   useStartOnboarding(ONBOARDING_TOURS.STORY_LIST, isCreateTargetReady);
 

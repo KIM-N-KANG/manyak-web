@@ -11,9 +11,7 @@ export const onboardingTours = [
       {
         icon: <>👋</>,
         title: '마냑에 오신 걸 환영해요',
-        content: (
-          <>여기서 나만의 첫 스토리를 만들어 보세요. 버튼을 누르면 시작돼요!</>
-        ),
+        content: <>여기서 첫 스토리를 만들어 보세요</>,
         selector: onbordaSelector(ONBOARDING_TARGET.CREATE_STORY),
         side: 'top' as const,
         showControls: false,
@@ -53,7 +51,7 @@ export const onboardingTours = [
       {
         icon: <>📖</>,
         title: '이야기',
-        content: <>AI가 만든 이야기가 여기에 펼쳐져요.</>,
+        content: <>AI와 함께 만든 이야기가 여기에 있어요.</>,
         selector: onbordaSelector(ONBOARDING_TARGET.CHAT_STORY),
         side: 'bottom' as const,
         showControls: true,
@@ -65,8 +63,8 @@ export const onboardingTours = [
         title: '이야기 이어가기',
         content: (
           <>
-            당신의 행동이나 대사를 입력해 이야기를 이어가세요. ✱ 버튼으로 강조할
-            수도 있어요.
+            당신의 행동이나 대사를 입력해 이야기를 이어가세요. ✱ 버튼을 누르고
+            내용을 작성하면 상황을 묘사할 수도 있어요.
           </>
         ),
         selector: onbordaSelector(ONBOARDING_TARGET.CHAT_INPUT),

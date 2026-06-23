@@ -5,8 +5,8 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Onborda, OnbordaProvider, useOnborda } from 'onborda';
 
+import { onboardingTours } from '@/features/onboarding/components/onboarding-tours';
 import { markTourSeen } from '@/features/onboarding/utils/onboarding-storage';
-import { onboardingTours } from '@/features/onboarding/utils/onboarding-tours';
 
 import { OnboardingCard } from '../../features/onboarding/components/onboarding-card';
 import type { OnboardingTourName } from '../../features/onboarding/constants';
@@ -61,6 +61,7 @@ export function OnboardingProvider({
       <Onborda
         steps={onboardingTours}
         cardComponent={OnboardingCard}
+        interact
         shadowRgb="31,31,31"
         shadowOpacity="0.6">
         <CloseOnRouteChange />
