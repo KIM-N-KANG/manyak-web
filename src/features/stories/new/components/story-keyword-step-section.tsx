@@ -74,7 +74,6 @@ export function StoryKeywordStepSection({
           <Button
             type="button"
             size="lg"
-            data-onborda={ONBOARDING_TARGET.GENERATE_BUTTON}
             disabled={
               isGeneratingStoryline ||
               (isLastCategory
@@ -113,11 +112,7 @@ export function StoryKeywordStepSection({
               selectedCustomKeywordIdsByCategory[category];
 
             return (
-              <TabsContent
-                key={category}
-                value={category}
-                className="m-2 mt-0 p-2"
-                data-onborda={ONBOARDING_TARGET.KEYWORD_CATEGORIES}>
+              <TabsContent key={category} value={category} className="p-4 pt-2">
                 <StoryKeywordCategoryPanel
                   category={category}
                   label={label}
