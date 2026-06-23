@@ -8,6 +8,11 @@ import { ListStatus } from '@/components/common/list-status';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
+import {
+  ONBOARDING_TARGET,
+  ONBOARDING_TOURS,
+} from '@/features/onboarding/constants';
+import { useStartOnboarding } from '@/features/onboarding/use-onboarding-tour';
 
 import { useChatDetail } from '../hooks/use-chat-detail';
 import { useChatStream } from '../hooks/use-chat-stream';
@@ -40,6 +45,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       });
     },
   );
+
+  useStartOnboarding(ONBOARDING_TOURS.CHAT, !isLoading && !isError);
 
   const [hasScrolled, setHasScrolled] = useState(false);
   const [value, setValue] = useState('');
@@ -108,22 +115,28 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ChatRoomHeader storyTitle={storyTitle} hasScrolled={hasScrolled} />
-      <ChatMessages
-        prologue={prologue}
-        turns={turns}
-        suggestedInputs={suggestedInputs}
-        streamingTurn={streamingTurn}
-        onPickChoice={handlePickChoice}
-        onHasScrolledChange={setHasScrolled}
-      />
-      <ChatInput
-        value={value}
-        onChange={handleChange}
-        onSend={handleSend}
-        onInsertEmphasis={handleInsertEmphasis}
-        disabled={isStreaming}
-        textareaRef={textareaRef}
-      />
+      <div
+        data-onborda={ONBOARDING_TARGET.CHAT_STORY}
+        className="flex min-h-0 flex-1 flex-col">
+        <ChatMessages
+          prologue={prologue}
+          turns={turns}
+          suggestedInputs={suggestedInputs}
+          streamingTurn={streamingTurn}
+          onPickChoice={handlePickChoice}
+          onHasScrolledChange={setHasScrolled}
+        />
+      </div>
+      <div data-onborda={ONBOARDING_TARGET.CHAT_INPUT}>
+        <ChatInput
+          value={value}
+          onChange={handleChange}
+          onSend={handleSend}
+          onInsertEmphasis={handleInsertEmphasis}
+          disabled={isStreaming}
+          textareaRef={textareaRef}
+        />
+      </div>
     </div>
   );
 }
