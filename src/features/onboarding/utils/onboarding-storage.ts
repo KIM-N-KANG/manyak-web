@@ -1,4 +1,4 @@
-import { onboardingStorageKey, type OnboardingTourName } from './constants';
+import { onboardingStorageKey, type OnboardingTourName } from '../constants';
 
 const SEEN_VALUE = '1';
 

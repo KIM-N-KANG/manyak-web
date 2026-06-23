@@ -12,7 +12,7 @@ import {
   ONBOARDING_TARGET,
   ONBOARDING_TOURS,
 } from '@/features/onboarding/constants';
-import { useStartOnboarding } from '@/features/onboarding/use-onboarding-tour';
+import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 
 import { useChatDetail } from '../hooks/use-chat-detail';
 import { useChatStream } from '../hooks/use-chat-stream';

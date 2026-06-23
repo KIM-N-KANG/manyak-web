@@ -4,10 +4,10 @@ import type { Metadata, Viewport } from 'next';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
 import { MotionProvider } from '@/components/providers/motion-provider';
+import { OnboardingProvider } from '@/components/providers/onboarding-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
-import { OnboardingProvider } from '@/features/onboarding/onboarding-provider';
 
 export const metadata: Metadata = {
   title: '마냑',
@@ -50,14 +50,16 @@ export default function RootLayout({
       suppressHydrationWarning>
       <body className="bg-border font-sans text-foreground">
         <QueryProvider>
-          <MotionProvider>
-            <ThemeProvider>
-              <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
-                <OnboardingProvider>{children}</OnboardingProvider>
-              </div>
-              <Toaster />
-            </ThemeProvider>
-          </MotionProvider>
+          <OnboardingProvider>
+            <MotionProvider>
+              <ThemeProvider>
+                <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                  {children}
+                </div>
+                <Toaster />
+              </ThemeProvider>
+            </MotionProvider>
+          </OnboardingProvider>
         </QueryProvider>
       </body>
     </html>

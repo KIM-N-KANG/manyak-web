@@ -5,16 +5,12 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Onborda, OnbordaProvider, useOnborda } from 'onborda';
 
-import type { OnboardingTourName } from './constants';
-import { OnboardingCard } from './onboarding-card';
-import { markTourSeen } from './onboarding-storage';
-import { onboardingTours } from './onboarding-tours';
+import { markTourSeen } from '@/features/onboarding/utils/onboarding-storage';
+import { onboardingTours } from '@/features/onboarding/utils/onboarding-tours';
 
-/**
- * 라우트가 바뀌면 진행 중인 투어를 닫는다.
- * (홈에서 만들기 버튼 클릭 → 제작 페이지 이동처럼, 타깃이 사라지는 화면 전환에서
- *  깨진 오버레이가 남지 않도록 하고, 닫힘 감지(markSeen)를 트리거한다.)
- */
+import { OnboardingCard } from '../../features/onboarding/components/onboarding-card';
+import type { OnboardingTourName } from '../../features/onboarding/constants';
+
 function CloseOnRouteChange() {
   const pathname = usePathname();
   const { closeOnborda, isOnbordaVisible } = useOnborda();
@@ -35,9 +31,6 @@ function CloseOnRouteChange() {
   return null;
 }
 
-/**
- * 투어가 닫힐 때(완료·건너뛰기·라우트 전환) 해당 투어를 "봤음"으로 기록한다.
- */
 function MarkSeenOnClose() {
   const { currentTour, isOnbordaVisible } = useOnborda();
   const activeTourRef = useRef<OnboardingTourName | null>(null);

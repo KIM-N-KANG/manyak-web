@@ -13,7 +13,7 @@ import {
   ONBOARDING_TARGET,
   ONBOARDING_TOURS,
 } from '@/features/onboarding/constants';
-import { useStartOnboarding } from '@/features/onboarding/use-onboarding-tour';
+import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import { ListStatus } from '../../../../components/common/list-status';

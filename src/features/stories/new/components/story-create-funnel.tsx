@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
-import { useStartOnboarding } from '@/features/onboarding/use-onboarding-tour';
+import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';

@@ -2,7 +2,7 @@ import {
   ONBOARDING_TARGET,
   ONBOARDING_TOURS,
   onbordaSelector,
-} from './constants';
+} from '../constants';
 
 export const onboardingTours = [
   {
