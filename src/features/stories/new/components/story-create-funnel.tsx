@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 
+import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
+import { useStartOnboarding } from '@/features/onboarding/use-onboarding-tour';
+
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';
 import { StoryCompletionSection } from './story-completion-section';
@@ -30,6 +33,8 @@ export function StoryCreateFunnel() {
     handleBackToStorylineSelect,
     handleCompleteStory,
   } = useStoryCreateFunnel();
+
+  useStartOnboarding(ONBOARDING_TOURS.STORY_CREATE, step === 'keyword');
 
   const hasScrolled = scrolledStep === step;
 

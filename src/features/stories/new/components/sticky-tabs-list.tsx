@@ -1,14 +1,15 @@
-import type { ReactNode } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 
 import { TabsList } from '@/components/ui/tabs';
 
-type StickyTabsListProps = {
-  children: ReactNode;
-};
-
-export function StickyTabsList({ children }: StickyTabsListProps) {
+export function StickyTabsList({
+  children,
+  ...props
+}: ComponentPropsWithoutRef<'div'>) {
   return (
-    <div className="sticky -top-px z-10 mt-2 bg-background px-4 pt-2.25 pb-2">
+    <div
+      {...props}
+      className="sticky -top-px z-10 mt-2 bg-background px-4 pt-2.25 pb-2">
       <TabsList>{children}</TabsList>
     </div>
   );

@@ -3,6 +3,7 @@
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
 
 import { TAG_CATEGORIES } from '../constants';
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
@@ -73,6 +74,7 @@ export function StoryKeywordStepSection({
           <Button
             type="button"
             size="lg"
+            data-onborda={ONBOARDING_TARGET.GENERATE_BUTTON}
             disabled={
               isGeneratingStoryline ||
               (isLastCategory
@@ -92,7 +94,7 @@ export function StoryKeywordStepSection({
         className="gap-0"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}>
-        <StickyTabsList>
+        <StickyTabsList data-onborda={ONBOARDING_TARGET.KEYWORD_CATEGORIES}>
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
               key={value}
