@@ -1,0 +1,54 @@
+'use client';
+
+import type { CardComponentProps } from 'onborda';
+import { useOnborda } from 'onborda';
+
+import { Button } from '@/components/ui/button';
+
+export function OnboardingCard({
+  step,
+  currentStep,
+  totalSteps,
+  nextStep,
+  arrow,
+}: CardComponentProps) {
+  const { closeOnborda } = useOnborda();
+  const isLastStep = currentStep + 1 >= totalSteps;
+  const hasNextControl = step.showControls !== false;
+
+  return (
+    <div className="w-[280px] max-w-[80vw] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-lg">
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-base font-semibold">
+          {step.icon} {step.title}
+        </h2>
+        {totalSteps > 1 && (
+          <span className="shrink-0 text-xs text-foreground-secondary">
+            {currentStep + 1}/{totalSteps}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-2 text-sm leading-relaxed text-foreground-secondary">
+        {step.content}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" onClick={() => closeOnborda()}>
+          건너뛰기
+        </Button>
+        {hasNextControl ? (
+          <Button size="sm" onClick={() => nextStep()}>
+            {isLastStep ? '완료' : '다음'}
+          </Button>
+        ) : (
+          <span className="text-xs text-foreground-secondary">
+            버튼을 눌러 계속하세요
+          </span>
+        )}
+      </div>
+
+      {arrow}
+    </div>
+  );
+}
