@@ -21,7 +21,7 @@ export const onboardingTours = [
     ],
   },
   {
-    tour: ONBOARDING_TOURS.STORY_CREATE,
+    tour: ONBOARDING_TOURS.KEYWORD_SELECT,
     steps: [
       {
         icon: <>🗂️</>,
@@ -31,6 +31,22 @@ export const onboardingTours = [
         ),
         selector: onbordaSelector(ONBOARDING_TARGET.KEYWORD_TABS),
         side: 'bottom' as const,
+        showControls: true,
+        pointerPadding: 8,
+        pointerRadius: 18,
+      },
+    ],
+  },
+  {
+    tour: ONBOARDING_TOURS.STORYLINE_SELECT,
+    steps: [
+      {
+        title: '3개의 스토리라인을 비교해요',
+        content: (
+          <>탭을 눌러 후보 스토리라인을 살펴보고 마음에 드는 걸 골라요</>
+        ),
+        selector: onbordaSelector(ONBOARDING_TARGET.STORYLINE_TABS),
+        side: 'bottom-left' as const,
         showControls: true,
         pointerPadding: 8,
         pointerRadius: 18,

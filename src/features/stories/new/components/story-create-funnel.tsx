@@ -34,7 +34,13 @@ export function StoryCreateFunnel() {
     handleCompleteStory,
   } = useStoryCreateFunnel();
 
-  useStartOnboarding(ONBOARDING_TOURS.STORY_CREATE, step === 'keyword');
+  useStartOnboarding(ONBOARDING_TOURS.KEYWORD_SELECT, step === 'keyword');
+  useStartOnboarding(
+    ONBOARDING_TOURS.STORYLINE_SELECT,
+    step === 'storyline-select' &&
+      !isGeneratingStorylines &&
+      storylines.length > 0,
+  );
 
   const hasScrolled = scrolledStep === step;
 
