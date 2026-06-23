@@ -3,6 +3,7 @@
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
 
 import { TAG_CATEGORIES } from '../constants';
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
@@ -92,7 +93,7 @@ export function StoryKeywordStepSection({
         className="gap-0"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}>
-        <StickyTabsList>
+        <StickyTabsList data-onborda={ONBOARDING_TARGET.KEYWORD_TABS}>
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
               key={value}
@@ -111,7 +112,7 @@ export function StoryKeywordStepSection({
               selectedCustomKeywordIdsByCategory[category];
 
             return (
-              <TabsContent key={category} value={category} className="p-4">
+              <TabsContent key={category} value={category} className="p-4 pt-2">
                 <StoryKeywordCategoryPanel
                   category={category}
                   label={label}

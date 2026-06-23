@@ -9,6 +9,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
+import {
+  ONBOARDING_TARGET,
+  ONBOARDING_TOURS,
+} from '@/features/onboarding/constants';
+import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import { ListStatus } from '../../../../components/common/list-status';
@@ -20,6 +25,10 @@ import { StoryListSkeleton } from './story-list-skeleton';
 export function StoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const showSkeleton = useDelayedLoading(isLoading);
+  const isCreateTargetReady =
+    !showSkeleton && !isLoading && !isError && isEmpty;
+
+  useStartOnboarding(ONBOARDING_TOURS.STORY_LIST, isCreateTargetReady);
 
   if (showSkeleton) {
     return <StoryListSkeleton />;
@@ -48,7 +57,12 @@ export function StoryList() {
         description="3단계로 간단하게 스토리를 만들어보세요">
         <Button
           nativeButton={false}
-          render={<Link href={APP_PATH.CREATOR.STORY} />}
+          render={
+            <Link
+              href={APP_PATH.CREATOR.STORY}
+              data-onborda={ONBOARDING_TARGET.CREATE_STORY}
+            />
+          }
           size="lg">
           <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
           <span>스토리 만들기</span>

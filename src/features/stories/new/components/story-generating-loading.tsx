@@ -15,7 +15,7 @@ export function StoryGeneratingLoading({
 
   return (
     <span
-      className="font-maruburi text-foreground-secondary"
+      className="text-sm leading-loose text-foreground-secondary"
       aria-label={label}
       aria-live="polite">
       {text}

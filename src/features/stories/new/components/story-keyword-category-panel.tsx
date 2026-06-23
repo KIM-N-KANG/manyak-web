@@ -51,7 +51,7 @@ export function StoryKeywordCategoryPanel({
   onAddCustomKeyword,
 }: StoryKeywordCategoryPanelProps) {
   return (
-    <div className="flex flex-col gap-2 pb-4">
+    <div className="flex flex-col gap-2">
       <p className="text-sm text-foreground-secondary">
         최대 {maxSelectionCount}개까지 선택할 수 있어요
       </p>

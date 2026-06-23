@@ -3,6 +3,7 @@
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
 
 import { getStorylineTabLabel } from '../constants';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
@@ -83,7 +84,7 @@ export function StorylineSelectStepSection({
           className="gap-0"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}>
-          <StickyTabsList>
+          <StickyTabsList data-onborda={ONBOARDING_TARGET.STORYLINE_TABS}>
             {storylines.map((storyline, index) => (
               <TabsTrigger key={storyline.id ?? index} value={String(index)}>
                 {getStorylineTabLabel(index)}

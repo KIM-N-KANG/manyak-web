@@ -78,7 +78,7 @@
 
   /* 보조 상태 색상 */
   --muted: oklch(0.955 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.6431 0.0015 106.44);
   --accent: oklch(0.955 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -125,7 +125,7 @@
 
   /* 보조 상태 색상 */
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.8282 0.0069 106.55);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -181,4 +181,19 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+}
+
+[data-name='onborda-overlay'] {
+  z-index: 60;
+}
+
+/*
+ * 다크 모드 온보딩 dim 처리
+ * dim은 onborda의 shadowOpacity(검정 0.6)로 그려지는데, 이미 어두운 다크
+ * 배경을 더 어둡게 하면 깊이감이 사라진다. 다크 모드에서는 검정 대신 옅은
+ * 흰색 스크림으로 주변을 살짝 띄워 스포트라이트가 도드라지게 한다.
+ * box-shadow가 인라인 스타일이라 !important로 덮어쓴다.
+ */
+.dark [data-name='onborda-pointer'] {
+  box-shadow: 0 0 200vw 200vh rgba(128, 128, 128, 0.4) !important;
 }
