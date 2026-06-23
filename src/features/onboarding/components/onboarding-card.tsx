@@ -17,7 +17,7 @@ export function OnboardingCard({
   const hasNextControl = step.showControls !== false;
 
   return (
-    <div className="w-[280px] max-w-[80vw] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-lg">
+    <div className="w-72 max-w-[80vw] rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg">
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-base font-semibold">
           {step.icon} {step.title}
@@ -34,7 +34,7 @@ export function OnboardingCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={() => closeOnborda()}>
+        <Button variant="secondary" size="sm" onClick={() => closeOnborda()}>
           건너뛰기
         </Button>
         {hasNextControl ? (

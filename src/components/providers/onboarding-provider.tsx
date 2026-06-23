@@ -61,7 +61,7 @@ export function OnboardingProvider({
       <Onborda
         steps={onboardingTours}
         cardComponent={OnboardingCard}
-        shadowRgb="0,0,0"
+        shadowRgb="31,31,31"
         shadowOpacity="0.6">
         <CloseOnRouteChange />
         <MarkSeenOnClose />
