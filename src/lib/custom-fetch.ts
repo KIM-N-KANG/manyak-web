@@ -1,4 +1,4 @@
-const API_TIMEOUT_MS = 15000;
+const API_TIMEOUT_MS = 120 * 1000;
 const API_PROXY_BASE_PATH = '/api';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

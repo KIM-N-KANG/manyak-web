@@ -6,7 +6,7 @@ export type ErrorType<ErrorData> = FetchError & {
   data: ErrorData;
 };
 
-const API_TIMEOUT_MS = 15000;
+const API_TIMEOUT_MS = 120 * 1000;
 
 const resolveHeaders = (headers?: HeadersInit) => {
   const resolvedHeaders = new Headers(headers);
