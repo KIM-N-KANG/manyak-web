@@ -38,7 +38,9 @@ export function OnboardingCard({
           건너뛰기
         </Button>
         {hasNextControl ? (
-          <Button size="sm" onClick={() => nextStep()}>
+          <Button
+            size="sm"
+            onClick={isLastStep ? () => closeOnborda() : () => nextStep()}>
             {isLastStep ? '완료' : '다음'}
           </Button>
         ) : (
