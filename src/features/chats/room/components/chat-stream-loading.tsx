@@ -13,7 +13,7 @@ export function ChatStreamLoading() {
 
   return (
     <p
-      className="font-maruburi text-sm leading-loose text-foreground-secondary"
+      className="text-sm leading-loose text-foreground-secondary"
       aria-label="답변을 작성하고 있어요"
       aria-live="polite">
       {text}
