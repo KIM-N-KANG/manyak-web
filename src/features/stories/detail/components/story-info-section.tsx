@@ -1,3 +1,5 @@
+import type { Ref } from 'react';
+
 import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
 import { Label } from '@/components/ui/label';
@@ -14,16 +16,19 @@ type StoryInfo = {
 
 type StoryInfoSectionProps = {
   story: StoryInfo;
+  titleRef?: Ref<HTMLHeadingElement>;
 };
 
-export function StoryInfoSection({ story }: StoryInfoSectionProps) {
+export function StoryInfoSection({ story, titleRef }: StoryInfoSectionProps) {
   const genres = story.genres ?? [];
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">{story.title}</h1>
+          <h1 ref={titleRef} className="text-2xl font-bold">
+            {story.title}
+          </h1>
           <StoryDetailTags genres={genres} />
         </div>
         <p className="text-base">{story.oneLineIntro}</p>
