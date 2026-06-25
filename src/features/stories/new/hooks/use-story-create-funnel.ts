@@ -47,9 +47,9 @@ export function useStoryCreateFunnel() {
   const [activeStorylineIndex, setActiveStorylineIndex] = useState(0);
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
-  const [createdStoryId, setCreatedStoryId] = useState<number | null>(null);
+  const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const completedStoryRef = useRef<{
-    storyId: number;
+    storyId: string;
     genre?: string[];
   } | null>(null);
 
@@ -123,7 +123,7 @@ export function useStoryCreateFunnel() {
 
         const storyId = response.data.id;
 
-        if (typeof storyId === 'number') {
+        if (typeof storyId === 'string') {
           saveCreatedStoryId(storyId);
           setCreatedStoryId(storyId);
           completedStoryRef.current = { storyId, genre: response.data.genres };

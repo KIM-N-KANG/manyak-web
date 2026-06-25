@@ -162,7 +162,7 @@ export type getStoryDetailResponse =
   | getStoryDetailResponseSuccess
   | getStoryDetailResponseError;
 
-export const getGetStoryDetailUrl = (storyId: number) => {
+export const getGetStoryDetailUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}`;
 };
 
@@ -171,7 +171,7 @@ export const getGetStoryDetailUrl = (storyId: number) => {
  * @summary 이야기 상세 조회
  */
 export const getStoryDetail = async (
-  storyId: number,
+  storyId: string,
   options?: RequestInit,
 ): Promise<getStoryDetailResponse> => {
   return customInstance<getStoryDetailResponse>(getGetStoryDetailUrl(storyId), {
@@ -180,7 +180,7 @@ export const getStoryDetail = async (
   });
 };
 
-export const getGetStoryDetailQueryKey = (storyId: number) => {
+export const getGetStoryDetailQueryKey = (storyId: string) => {
   return [`/api/v1/stories/${storyId}`] as const;
 };
 
@@ -188,7 +188,7 @@ export const getGetStoryDetailQueryOptions = <
   TData = Awaited<ReturnType<typeof getStoryDetail>>,
   TError = ErrorType<void>,
 >(
-  storyId: number,
+  storyId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryDetail>>, TError, TData>
@@ -225,7 +225,7 @@ export function useGetStoryDetail<
   TData = Awaited<ReturnType<typeof getStoryDetail>>,
   TError = ErrorType<void>,
 >(
-  storyId: number,
+  storyId: string,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryDetail>>, TError, TData>
@@ -248,7 +248,7 @@ export function useGetStoryDetail<
   TData = Awaited<ReturnType<typeof getStoryDetail>>,
   TError = ErrorType<void>,
 >(
-  storyId: number,
+  storyId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryDetail>>, TError, TData>
@@ -271,7 +271,7 @@ export function useGetStoryDetail<
   TData = Awaited<ReturnType<typeof getStoryDetail>>,
   TError = ErrorType<void>,
 >(
-  storyId: number,
+  storyId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryDetail>>, TError, TData>
@@ -290,7 +290,7 @@ export function useGetStoryDetail<
   TData = Awaited<ReturnType<typeof getStoryDetail>>,
   TError = ErrorType<void>,
 >(
-  storyId: number,
+  storyId: string,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getStoryDetail>>, TError, TData>
@@ -332,7 +332,7 @@ export type deleteStoryResponse =
   | deleteStoryResponseSuccess
   | deleteStoryResponseError;
 
-export const getDeleteStoryUrl = (storyId: number) => {
+export const getDeleteStoryUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}`;
 };
 
@@ -341,7 +341,7 @@ export const getDeleteStoryUrl = (storyId: number) => {
  * @summary 이야기 삭제 (소프트 삭제)
  */
 export const deleteStory = async (
-  storyId: number,
+  storyId: string,
   options?: RequestInit,
 ): Promise<deleteStoryResponse> => {
   return customInstance<deleteStoryResponse>(getDeleteStoryUrl(storyId), {
@@ -357,14 +357,14 @@ export const getDeleteStoryMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteStory>>,
     TError,
-    { storyId: number },
+    { storyId: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof deleteStory>>,
   TError,
-  { storyId: number },
+  { storyId: string },
   TContext
 > => {
   const mutationKey = ['deleteStory'];
@@ -378,7 +378,7 @@ export const getDeleteStoryMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof deleteStory>>,
-    { storyId: number }
+    { storyId: string }
   > = (props) => {
     const { storyId } = props ?? {};
 
@@ -402,7 +402,7 @@ export const useDeleteStory = <TError = ErrorType<void>, TContext = unknown>(
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof deleteStory>>,
       TError,
-      { storyId: number },
+      { storyId: string },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -411,7 +411,7 @@ export const useDeleteStory = <TError = ErrorType<void>, TContext = unknown>(
 ): UseMutationResult<
   Awaited<ReturnType<typeof deleteStory>>,
   TError,
-  { storyId: number },
+  { storyId: string },
   TContext
 > => {
   return useMutation(getDeleteStoryMutationOptions(options), queryClient);

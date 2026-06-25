@@ -50,7 +50,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     track('client_chat_viewed', { chat_id: chatId });
   }, [chatId]);
 
-  const [hasScrolled, setHasScrolled] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -124,7 +124,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <ChatRoomHeader storyTitle={storyTitle} hasScrolled={hasScrolled} />
+      <ChatRoomHeader storyTitle={storyTitle} isVisible={isHeaderVisible} />
       <div className="flex min-h-0 flex-1 flex-col">
         <ChatMessages
           prologue={prologue}
@@ -132,7 +132,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           suggestedInputs={suggestedInputs}
           streamingTurn={streamingTurn}
           onPickChoice={handlePickChoice}
-          onHasScrolledChange={setHasScrolled}
+          onHeaderVisibleChange={setIsHeaderVisible}
         />
       </div>
       <ChatInput

@@ -1,10 +1,11 @@
 'use client';
 
-import { type UIEvent, useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { useInView } from '@/hooks/use-in-view';
 import { track } from '@/lib/analytics';
 
 import { StoryDetailCta } from './story-detail-cta';
@@ -13,7 +14,7 @@ import { StoryDetailSkeleton } from './story-detail-skeleton';
 import { StoryInfoSection } from './story-info-section';
 
 type StoryDetailProps = {
-  storyId: number;
+  storyId: string;
 };
 
 export function StoryDetail({ storyId }: StoryDetailProps) {
@@ -21,19 +22,27 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     track('client_storyDetail_viewed', { story_id: storyId });
   }, [storyId]);
 
-  const [hasScrolled, setHasScrolled] = useState(false);
   const { data, isPending, isError, refetch } = useGetStoryDetail(storyId);
 
   const showSkeleton = useDelayedLoading(isPending);
   const story = data?.status === 200 ? data.data : undefined;
 
-  const handleContentScroll = (event: UIEvent<HTMLDivElement>) => {
-    setHasScrolled(event.currentTarget.scrollTop > 0);
-  };
+  const contentRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  const isTitleInView = useInView({
+    targetRef: titleRef,
+    rootRef: contentRef,
+    enabled: Boolean(story),
+  });
 
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-      <StoryDetailHeader storyId={storyId} hasScrolled={hasScrolled} />
+      <StoryDetailHeader
+        storyId={storyId}
+        title={story?.title ?? ''}
+        showTitle={Boolean(story) && !isTitleInView}
+      />
 
       {showSkeleton && (
         <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
@@ -60,9 +69,9 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
       {!showSkeleton && story && (
         <>
           <main
-            className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-20"
-            onScroll={handleContentScroll}>
-            <StoryInfoSection story={story} />
+            ref={contentRef}
+            className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-20">
+            <StoryInfoSection story={story} titleRef={titleRef} />
           </main>
 
           <StoryDetailCta storyId={storyId} />

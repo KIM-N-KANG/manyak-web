@@ -9,5 +9,5 @@ export default async function StoryDetailPage({
 }: StoryDetailPageProps) {
   const { id } = await params;
 
-  return <StoryDetail storyId={Number(id)} />;
+  return <StoryDetail storyId={id} />;
 }

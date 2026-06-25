@@ -11,9 +11,9 @@
  */
 export interface BatchStoryRequest {
   /**
-   * 클라이언트가 로컬스토리지에 보관 중인 스토리 ID 목록
+   * 클라이언트가 로컬스토리지에 보관 중인 스토리 ID(공개 식별자) 목록
    * @minItems 0
    * @maxItems 100
    */
-  storyIds: number[];
+  storyIds: string[];
 }

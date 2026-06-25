@@ -9,9 +9,11 @@ export function useStickyScroll<T extends HTMLElement>(
   dependency: unknown,
   anchorRef?: RefObject<HTMLElement | null> | null,
   behavior: ScrollBehavior = 'auto',
+  // 마운트 시 하단 고정 여부. false면 초기 스크롤을 건너뛰어 최상단에 머문다.
+  startPinned = true,
 ) {
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const pinnedRef = useRef(true);
+  const [isAtBottom, setIsAtBottom] = useState(startPinned);
+  const pinnedRef = useRef(startPinned);
 
   // 자동 스크롤 목표 위치.
   // anchorRef가 있으면 "맨 아래"와 "anchor를 최상단에 두는 위치" 중 더 위쪽을 택해,

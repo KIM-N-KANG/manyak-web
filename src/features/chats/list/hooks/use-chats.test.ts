@@ -9,7 +9,7 @@ const makeChat = (
   updatedAt: string,
 ): Required<ChatSummaryResponse> => ({
   id,
-  storyId: 1,
+  storyId: 'story-1',
   storyTitle: `story-${id}`,
   lastStoryPreview: `preview-${id}`,
   chatCount: 0,
@@ -31,7 +31,7 @@ describe('toChatListItems', () => {
   });
 
   it('필수 필드가 누락된 항목은 제외한다', () => {
-    const incomplete = { id: 'x', storyId: 1 } as ChatSummaryResponse;
+    const incomplete = { id: 'x', storyId: 'story-1' } as ChatSummaryResponse;
     const serverChats = [makeChat('a', '2026-06-22T10:00:00Z'), incomplete];
 
     const result = toChatListItems(serverChats);

@@ -1,4 +1,5 @@
 import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
+import { captureApiError } from '@/lib/monitoring/sentry';
 
 export type BodyType<BodyData> = BodyData;
 
@@ -26,7 +27,15 @@ const fetchWithTimeout = async (
   const controller = new AbortController();
   const externalSignal = options.signal;
   const abortRequest = () => controller.abort(externalSignal?.reason);
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  // 타임아웃은 사용자 취소(AbortError)와 구분되도록 TimeoutError로 중단해
+  // Sentry가 실제 백엔드 지연·장애로 인식하게 한다(스펙 §AN-2-8).
+  const timeoutId = setTimeout(
+    () =>
+      controller.abort(
+        new DOMException('요청 시간이 초과되었습니다.', 'TimeoutError'),
+      ),
+    timeout,
+  );
 
   if (externalSignal?.aborted) {
     abortRequest();
@@ -97,26 +106,32 @@ export const customInstance = async <T>(
   url: string,
   options: RequestInit = {},
 ): Promise<T> => {
-  const response = await fetchWithTimeout(
-    resolveApiProxyUrl(url),
-    {
-      ...options,
-      headers: resolveHeaders(options.headers),
-    },
-    API_TIMEOUT_MS,
-  );
-
-  if (!response.ok) {
-    throw new FetchError(
-      '요청 처리에 실패했습니다.',
-      response.status,
-      await parseErrorData(response),
+  try {
+    const response = await fetchWithTimeout(
+      resolveApiProxyUrl(url),
+      {
+        ...options,
+        headers: resolveHeaders(options.headers),
+      },
+      API_TIMEOUT_MS,
     );
-  }
 
-  return {
-    data: await parseResponseData(response),
-    status: response.status,
-    headers: response.headers,
-  } as T;
+    if (!response.ok) {
+      throw new FetchError(
+        '요청 처리에 실패했습니다.',
+        response.status,
+        await parseErrorData(response),
+      );
+    }
+
+    return {
+      data: await parseResponseData(response),
+      status: response.status,
+      headers: response.headers,
+    } as T;
+  } catch (error) {
+    captureApiError(error, { url, method: options.method });
+
+    throw error;
+  }
 };

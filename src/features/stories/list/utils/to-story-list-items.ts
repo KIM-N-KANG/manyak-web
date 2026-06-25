@@ -3,7 +3,7 @@ import type { StorySummaryResponse } from '@/api/generated/models';
 import type { StoryListItem } from '../types';
 
 export const toStoryListItems = (
-  storyIds: number[],
+  storyIds: string[],
   stories: StorySummaryResponse[],
 ): StoryListItem[] => {
   const storyById = new Map(stories.map((story) => [story.id, story]));

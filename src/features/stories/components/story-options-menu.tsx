@@ -18,7 +18,7 @@ import { FetchError } from '@/lib/custom-fetch';
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
 type StoryOptionsMenuProps = {
-  storyId: number;
+  storyId: string;
   size?: ButtonSize;
   triggerClassName?: string;
   onDeleteSuccess?: () => void;

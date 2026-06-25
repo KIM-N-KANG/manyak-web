@@ -10,22 +10,20 @@ import { StoryOptionsMenu } from '@/features/stories/components/story-options-me
 import { cn } from '@/lib/utils';
 
 type StoryDetailHeaderProps = {
-  storyId: number;
-  hasScrolled?: boolean;
+  storyId: string;
+  title: string;
+  showTitle: boolean;
 };
 
 export function StoryDetailHeader({
   storyId,
-  hasScrolled = false,
+  title,
+  showTitle,
 }: StoryDetailHeaderProps) {
   const router = useRouter();
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-background px-1 transition-colors',
-        hasScrolled ? 'border-border' : 'border-transparent',
-      )}>
+    <header className="sticky top-0 z-50 flex h-14 items-center gap-1 bg-background px-1">
       <Button
         type="button"
         size="icon-lg"
@@ -34,6 +32,16 @@ export function StoryDetailHeader({
         onClick={() => router.back()}>
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
+
+      <span
+        aria-hidden="true"
+        className={cn(
+          'min-w-0 flex-1 truncate font-semibold transition-opacity duration-200 ease-out',
+          showTitle ? 'opacity-100' : 'opacity-0',
+        )}>
+        {title}
+      </span>
+
       <StoryOptionsMenu
         storyId={storyId}
         size="icon-lg"
