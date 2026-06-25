@@ -52,7 +52,9 @@ export function StoryInfoSection({ story }: StoryInfoSectionProps) {
               <div className="flex flex-col gap-2">
                 <Label>상황 설명</Label>
                 <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <p className="text-sm">{story.startSetting.startSituation}</p>
+                  <TextContent size="sm">
+                    {story.startSetting.startSituation}
+                  </TextContent>
                 </div>
               </div>
             )}
@@ -60,7 +62,9 @@ export function StoryInfoSection({ story }: StoryInfoSectionProps) {
               <div className="flex flex-col gap-2">
                 <Label>채팅 프롤로그</Label>
                 <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <p className="text-sm">{story.startSetting.prologue}</p>
+                  <TextContent size="sm">
+                    {story.startSetting.prologue}
+                  </TextContent>
                 </div>
               </div>
             )}

@@ -33,6 +33,12 @@ export type CustomKeyword = {
   category: SimpleStoryCustomTagRequestCategory;
 };
 
+export type SelectedKeywordGroup = {
+  category: TagCategory;
+  label: string;
+  keywords: string[];
+};
+
 export type AdditionalInfoInput = {
   id: string;
   value: string;
@@ -47,6 +53,7 @@ export type TagsByCategory = Record<
 
 export type StorylineSelectStepSectionProps = {
   storylines: SimpleStorylineResponse[];
+  selectedKeywordGroups: SelectedKeywordGroup[];
   activeStorylineIndex: number;
   isRegeneratingStorylines: boolean;
   hasRegenerateStorylinesError: boolean;

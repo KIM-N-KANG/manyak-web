@@ -89,6 +89,18 @@ export function useStorylineRating() {
     void request
       .then(() => {
         syncedRatingsRef.current[storylineId] = desired;
+
+        // 응답 도착 전 다른 선택으로 바뀌었다면(stale) 토스트를 띄우지 않는다.
+        if (desiredRatingsRef.current[storylineId] !== desired) {
+          return;
+        }
+
+        if (desired === 'GOOD') {
+          toast.success(TOAST_MESSAGE.STORYLINE_LIKED);
+        } else if (desired === 'BAD') {
+          toast.success(TOAST_MESSAGE.STORYLINE_DISLIKED);
+        }
+        // desired === undefined(평가 취소)는 토스트를 띄우지 않는다.
       })
       .catch(() => revertToSynced(storylineId))
       .finally(settle);

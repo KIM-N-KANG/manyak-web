@@ -80,7 +80,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   const handlePickChoice = (text: string) => {
     setValue(text);
-    textareaRef.current?.focus();
   };
 
   const handleInsertEmphasis = () => {
@@ -110,7 +109,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col">
       <ChatRoomHeader storyTitle={storyTitle} hasScrolled={hasScrolled} />
       <div className="flex min-h-0 flex-1 flex-col">
         <ChatMessages

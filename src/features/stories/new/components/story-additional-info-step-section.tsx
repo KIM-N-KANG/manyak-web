@@ -110,13 +110,13 @@ export function StoryAdditionalInfoStepSection({
           </Button>
         </>
       }>
-      <div className="p-4">
-        <div className="flex flex-col gap-8">
+      <div>
+        <div className="flex flex-col">
           <SelectedStorylineContent story={storyline.story} />
 
           <section
             aria-labelledby="recommended-info-label"
-            className="flex flex-col gap-2"
+            className="mt-4 flex flex-col gap-2 p-4"
             data-onborda={ONBOARDING_TARGET.RECOMMENDED_INFO}>
             <Label>AI 추천 추가 정보</Label>
             <ul className="flex flex-col gap-2">
@@ -148,7 +148,7 @@ export function StoryAdditionalInfoStepSection({
 
           <section
             aria-labelledby="additional-info-label"
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-2 p-4"
             data-onborda={ONBOARDING_TARGET.ADDITIONAL_INFO_INPUT}>
             <div className="flex items-baseline gap-1">
               <Label>추가 정보</Label>
@@ -194,7 +194,7 @@ export function StoryAdditionalInfoStepSection({
             <Button
               type="button"
               variant="secondary"
-              className="self-center text-foreground-secondary"
+              className="self-center"
               disabled={!canAddAdditionalInfo || isCompletingStory}
               onClick={addAdditionalInfo}>
               <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />

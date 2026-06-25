@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { TAG_CATEGORIES } from '../constants';
 import type { TagCategory } from '../types';
-import { useSwipeableIndex } from './use-swipeable-index';
 
 const CATEGORY_VALUES = TAG_CATEGORIES.map(({ value }) => value);
 
@@ -48,13 +47,6 @@ export function useCategoryNavigation({
     }
   };
 
-  const { handleTouchStart, handleTouchEnd } = useSwipeableIndex({
-    index: activeIndex,
-    count: CATEGORY_VALUES.length,
-    onIndexChange: (index) => setActiveCategory(CATEGORY_VALUES[index]),
-    canMoveTo: (index) => isCategoryUnlocked(CATEGORY_VALUES[index]),
-  });
-
   return {
     activeCategory,
     setActiveCategory,
@@ -63,7 +55,5 @@ export function useCategoryNavigation({
     isLastCategory,
     goToNextCategory,
     goToPreviousCategory,
-    handleTouchStart,
-    handleTouchEnd,
   };
 }
