@@ -7,6 +7,8 @@ export const TOAST_MESSAGE = {
   CHAT_START_FAILED: '채팅을 시작하지 못했어요',
   STORYLINE_CREATE_FAILED: '스토리라인 생성에 실패했어요',
   STORY_COMPLETE_FAILED: '스토리 완성에 실패했어요',
+  STORYLINE_LIKED: '좋아요를 남겼어요',
+  STORYLINE_DISLIKED: '싫어요를 남겼어요',
   STORYLINE_EVALUATE_FAILED: '평가 저장에 실패했어요',
   RESPONSE_STREAM_FAILED: '응답 생성에 실패했어요',
   FEEDBACK_SUBMITTED: '소중한 피드백을 보내주셔서 감사해요',
