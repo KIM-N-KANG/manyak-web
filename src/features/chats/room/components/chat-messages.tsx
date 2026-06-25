@@ -23,7 +23,8 @@ type ChatMessagesProps = {
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
   onPickChoice: (text: string, position: number) => void;
-  onHasScrolledChange: (hasScrolled: boolean) => void;
+  onHeaderVisibleChange: (isVisible: boolean) => void;
+  onAtTopChange: (isAtTop: boolean) => void;
 };
 
 export function ChatMessages({
@@ -32,11 +33,13 @@ export function ChatMessages({
   suggestedInputs,
   streamingTurn,
   onPickChoice,
-  onHasScrolledChange,
+  onHeaderVisibleChange,
+  onAtTopChange,
 }: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamingBlockRef = useRef<HTMLDivElement>(null);
   const lastTurnRef = useRef<HTMLDivElement>(null);
+  const lastScrollTopRef = useRef(0);
   const [hasSent, setHasSent] = useState(false);
 
   if (streamingTurn && !hasSent) {
@@ -53,7 +56,22 @@ export function ChatMessages({
 
   const onScroll = () => {
     handleScroll();
-    onHasScrolledChange((scrollRef.current?.scrollTop ?? 0) > 0);
+
+    const current = scrollRef.current?.scrollTop ?? 0;
+    const delta = current - lastScrollTopRef.current;
+    const isAtTop = current <= 8;
+
+    onAtTopChange(isAtTop);
+
+    if (isAtTop) {
+      onHeaderVisibleChange(true);
+    } else if (delta > 4) {
+      onHeaderVisibleChange(false);
+    } else if (delta < -4) {
+      onHeaderVisibleChange(true);
+    }
+
+    lastScrollTopRef.current = current;
   };
 
   const lastTurnIndex = turns.length - 1;
@@ -64,6 +82,8 @@ export function ChatMessages({
         ref={scrollRef}
         onScroll={onScroll}
         className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
+        <div aria-hidden className="h-14 shrink-0" />
+
         {prologue ? (
           <div className="p-4">
             <ChatMessageContent>{prologue}</ChatMessageContent>
