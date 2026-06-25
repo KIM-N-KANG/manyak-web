@@ -42,7 +42,7 @@ export function StoryCreateHeader({
   return (
     <>
       <header className="sticky top-0 z-50 flex flex-col bg-background">
-        <div className="flex h-14 items-center px-1">
+        <div className="flex h-14 items-center pr-4 pl-1">
           <div className="flex items-center gap-1">
             <Button
               type="button"

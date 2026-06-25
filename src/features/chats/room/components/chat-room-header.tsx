@@ -22,7 +22,7 @@ export function ChatRoomHeader({ storyTitle, isVisible }: ChatRoomHeaderProps) {
     <header
       aria-hidden={!isVisible}
       className={cn(
-        'absolute inset-x-0 top-0 z-50 flex h-14 items-center gap-1 bg-background px-1 transition-[translate] duration-300 ease-out',
+        'absolute inset-x-0 top-0 z-50 flex h-14 items-center gap-1 bg-background px-1 pr-4 transition-[translate] duration-300 ease-out',
         isVisible ? 'translate-y-0' : '-translate-y-full',
       )}>
       <Button
