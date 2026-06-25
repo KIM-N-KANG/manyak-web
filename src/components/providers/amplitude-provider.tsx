@@ -4,19 +4,33 @@ import { type PropsWithChildren, useEffect } from 'react';
 
 import * as amplitude from '@amplitude/unified';
 
-const AMPLITUDE_API_KEY = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY ?? '';
+import {
+  ANALYTICS_API_KEY,
+  APP_VERSION,
+  IS_ANALYTICS_ENABLED,
+} from '@/lib/analytics/config';
 
 let initialized = false;
 
 export function AmplitudeProvider({ children }: PropsWithChildren) {
   useEffect(() => {
-    if (initialized) return;
+    if (!IS_ANALYTICS_ENABLED || initialized || !ANALYTICS_API_KEY) return;
 
     initialized = true;
 
-    amplitude.initAll(AMPLITUDE_API_KEY, {
-      analytics: { autocapture: true },
-      sessionReplay: { sampleRate: 1 },
+    void amplitude.initAll(ANALYTICS_API_KEY, {
+      analytics: {
+        appVersion: APP_VERSION,
+        autocapture: {
+          pageViews: true,
+          sessions: true,
+          attribution: true,
+          elementInteractions: false,
+          formInteractions: false,
+          fileDownloads: false,
+        },
+      },
+      sessionReplay: { sampleRate: 0 },
     });
   }, []);
 
