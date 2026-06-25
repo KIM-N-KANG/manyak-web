@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -15,6 +15,7 @@ import {
 } from '@/features/onboarding/constants';
 import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { track } from '@/lib/analytics';
 
 import { ListStatus } from '../../../../components/common/list-status';
 import { useCreatedStories } from '../hooks/use-created-stories';
@@ -23,6 +24,10 @@ import { StoryCard } from './story-card';
 import { StoryListSkeleton } from './story-list-skeleton';
 
 export function StoryList() {
+  useEffect(() => {
+    track('client_storyList_viewed');
+  }, []);
+
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const showSkeleton = useDelayedLoading(isLoading);
   const isCreateTargetReady =
@@ -61,6 +66,7 @@ export function StoryList() {
             <Link
               href={APP_PATH.CREATOR.STORY}
               data-onborda={ONBOARDING_TARGET.CREATE_STORY}
+              onClick={() => track('client_storyList_createButton_clicked')}
             />
           }
           size="lg">
