@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -9,6 +11,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
+import { track } from '@/lib/analytics';
 
 import {
   FEEDBACK_BODY_MAX_LENGTH,
@@ -19,6 +22,10 @@ import {
 import { useFeedbackForm } from '../hooks/use-feedback-form';
 
 export function FeedbackForm() {
+  useEffect(() => {
+    track('client_feedback_viewed');
+  }, []);
+
   const {
     body,
     email,

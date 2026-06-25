@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useCreateFeedback } from '@/api/generated/endpoints/feedbacks/feedbacks';
 import { CreateFeedbackRequestPlatform } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { track } from '@/lib/analytics';
 
 import {
   FEEDBACK_BODY_MAX_LENGTH,
@@ -49,6 +50,7 @@ export function useFeedbackForm() {
 
     const trimmedEmail = email.trim();
 
+    track('client_feedback_form_submitted');
     createFeedback.mutate({
       data: {
         body: trimmedBody,
