@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const trackMock = vi.fn();
+const breadcrumbMock = vi.fn();
 
 vi.mock('@amplitude/unified', () => ({
   track: (...args: unknown[]) => trackMock(...args),
 }));
 
 vi.mock('./config', () => ({ IS_ANALYTICS_ENABLED: true }));
+
+vi.mock('@/lib/monitoring/sentry', () => ({
+  recordAnalyticsBreadcrumb: (...args: unknown[]) => breadcrumbMock(...args),
+}));
 
 import { deriveScreenName, track } from './client';
 
@@ -20,7 +25,10 @@ describe('deriveScreenName', () => {
 });
 
 describe('track (enabled)', () => {
-  beforeEach(() => trackMock.mockClear());
+  beforeEach(() => {
+    trackMock.mockClear();
+    breadcrumbMock.mockClear();
+  });
 
   it('screen_name을 자동 부착해 amplitude.track을 호출한다', () => {
     track('client_chat_messageInput_submitted', {
@@ -41,6 +49,14 @@ describe('track (enabled)', () => {
     track('client_storyList_viewed');
     expect(trackMock).toHaveBeenCalledWith('client_storyList_viewed', {
       screen_name: 'storyList',
+    });
+  });
+
+  it('이벤트명과 payload를 Sentry breadcrumb로도 남긴다', () => {
+    track('client_chat_viewed', { chat_id: 'c1' });
+    expect(breadcrumbMock).toHaveBeenCalledWith('client_chat_viewed', {
+      chat_id: 'c1',
+      screen_name: 'chat',
     });
   });
 });

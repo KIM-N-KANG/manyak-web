@@ -1,4 +1,5 @@
 import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
+import { captureApiError } from '@/lib/monitoring/sentry';
 
 export type BodyType<BodyData> = BodyData;
 
@@ -97,26 +98,32 @@ export const customInstance = async <T>(
   url: string,
   options: RequestInit = {},
 ): Promise<T> => {
-  const response = await fetchWithTimeout(
-    resolveApiProxyUrl(url),
-    {
-      ...options,
-      headers: resolveHeaders(options.headers),
-    },
-    API_TIMEOUT_MS,
-  );
-
-  if (!response.ok) {
-    throw new FetchError(
-      '요청 처리에 실패했습니다.',
-      response.status,
-      await parseErrorData(response),
+  try {
+    const response = await fetchWithTimeout(
+      resolveApiProxyUrl(url),
+      {
+        ...options,
+        headers: resolveHeaders(options.headers),
+      },
+      API_TIMEOUT_MS,
     );
-  }
 
-  return {
-    data: await parseResponseData(response),
-    status: response.status,
-    headers: response.headers,
-  } as T;
+    if (!response.ok) {
+      throw new FetchError(
+        '요청 처리에 실패했습니다.',
+        response.status,
+        await parseErrorData(response),
+      );
+    }
+
+    return {
+      data: await parseResponseData(response),
+      status: response.status,
+      headers: response.headers,
+    } as T;
+  } catch (error) {
+    captureApiError(error, { url, method: options.method });
+
+    throw error;
+  }
 };
