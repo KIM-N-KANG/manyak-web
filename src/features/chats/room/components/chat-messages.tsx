@@ -24,7 +24,6 @@ type ChatMessagesProps = {
   streamingTurn: StreamingTurn | null;
   onPickChoice: (text: string, position: number) => void;
   onHeaderVisibleChange: (isVisible: boolean) => void;
-  onAtTopChange: (isAtTop: boolean) => void;
 };
 
 export function ChatMessages({
@@ -34,7 +33,6 @@ export function ChatMessages({
   streamingTurn,
   onPickChoice,
   onHeaderVisibleChange,
-  onAtTopChange,
 }: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamingBlockRef = useRef<HTMLDivElement>(null);
@@ -60,8 +58,6 @@ export function ChatMessages({
     const current = scrollRef.current?.scrollTop ?? 0;
     const delta = current - lastScrollTopRef.current;
     const isAtTop = current <= 8;
-
-    onAtTopChange(isAtTop);
 
     if (isAtTop) {
       onHeaderVisibleChange(true);

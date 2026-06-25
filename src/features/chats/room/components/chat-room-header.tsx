@@ -11,14 +11,9 @@ import { cn } from '@/lib/utils';
 type ChatRoomHeaderProps = {
   storyTitle: string;
   isVisible: boolean;
-  hasScrolled: boolean;
 };
 
-export function ChatRoomHeader({
-  storyTitle,
-  isVisible,
-  hasScrolled,
-}: ChatRoomHeaderProps) {
+export function ChatRoomHeader({ storyTitle, isVisible }: ChatRoomHeaderProps) {
   const router = useRouter();
 
   const goBack = () => router.push(APP_PATH.MAIN.CHATS);
@@ -27,13 +22,12 @@ export function ChatRoomHeader({
     <header
       aria-hidden={!isVisible}
       className={cn(
-        'absolute inset-x-0 top-0 z-50 flex h-14 items-center gap-2 border-b bg-background pr-4 pl-2 transition-[translate,border-color] duration-300 ease-out',
+        'absolute inset-x-0 top-0 z-50 flex h-14 items-center gap-1 bg-background px-1 transition-[translate] duration-300 ease-out',
         isVisible ? 'translate-y-0' : '-translate-y-full',
-        hasScrolled ? 'border-border' : 'border-transparent',
       )}>
       <Button
         type="button"
-        size="icon"
+        size="icon-lg"
         variant="ghost"
         aria-label="채팅 목록으로 돌아가기 버튼"
         onClick={goBack}>

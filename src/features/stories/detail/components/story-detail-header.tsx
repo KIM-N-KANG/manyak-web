@@ -7,25 +7,16 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
-import { cn } from '@/lib/utils';
 
 type StoryDetailHeaderProps = {
   storyId: string;
-  hasScrolled?: boolean;
 };
 
-export function StoryDetailHeader({
-  storyId,
-  hasScrolled = false,
-}: StoryDetailHeaderProps) {
+export function StoryDetailHeader({ storyId }: StoryDetailHeaderProps) {
   const router = useRouter();
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-background px-1 transition-colors',
-        hasScrolled ? 'border-border' : 'border-transparent',
-      )}>
+    <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-background px-1">
       <Button
         type="button"
         size="icon-lg"

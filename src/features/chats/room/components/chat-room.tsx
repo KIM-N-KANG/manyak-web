@@ -51,7 +51,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   }, [chatId]);
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [isHeaderAtTop, setIsHeaderAtTop] = useState(true);
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -125,11 +124,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <ChatRoomHeader
-        storyTitle={storyTitle}
-        isVisible={isHeaderVisible}
-        hasScrolled={!isHeaderAtTop}
-      />
+      <ChatRoomHeader storyTitle={storyTitle} isVisible={isHeaderVisible} />
       <div className="flex min-h-0 flex-1 flex-col">
         <ChatMessages
           prologue={prologue}
@@ -138,7 +133,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           streamingTurn={streamingTurn}
           onPickChoice={handlePickChoice}
           onHeaderVisibleChange={setIsHeaderVisible}
-          onAtTopChange={setIsHeaderAtTop}
         />
       </div>
       <ChatInput
