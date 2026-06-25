@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useStartChat } from '../hooks/use-start-chat';
 
 type StoryDetailCtaProps = {
-  storyId: number;
+  storyId: string;
 };
 
 export function StoryDetailCta({ storyId }: StoryDetailCtaProps) {

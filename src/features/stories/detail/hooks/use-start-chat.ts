@@ -13,7 +13,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import { track } from '@/lib/analytics';
 
-export function useStartChat(storyId: number) {
+export function useStartChat(storyId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
 

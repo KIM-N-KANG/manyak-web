@@ -13,7 +13,7 @@ import { StoryDetailSkeleton } from './story-detail-skeleton';
 import { StoryInfoSection } from './story-info-section';
 
 type StoryDetailProps = {
-  storyId: number;
+  storyId: string;
 };
 
 export function StoryDetail({ storyId }: StoryDetailProps) {

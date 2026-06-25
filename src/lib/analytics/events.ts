@@ -8,8 +8,8 @@ export type AnalyticsEventProps = {
   // storyList
   client_storyList_viewed: void;
   client_storyList_createButton_clicked: void;
-  client_storyList_storyCard_clicked: { story_id: number; position?: number };
-  client_storyList_storyCard_impressed: { story_id: number; position?: number };
+  client_storyList_storyCard_clicked: { story_id: string; position?: number };
+  client_storyList_storyCard_impressed: { story_id: string; position?: number };
   // storyCreate
   client_storyCreate_viewed: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
@@ -24,13 +24,13 @@ export type AnalyticsEventProps = {
   };
   client_storyCreate_selectedKeywordsButton_clicked: { creation_id: string };
   client_storyCreate_completed: {
-    story_id: number;
+    story_id: string;
     chat_id: string;
     genre?: string[];
   };
   // storyDetail
-  client_storyDetail_viewed: { story_id: number };
-  client_storyDetail_chatStartButton_clicked: { story_id: number };
+  client_storyDetail_viewed: { story_id: string };
+  client_storyDetail_chatStartButton_clicked: { story_id: string };
   // chatList
   client_chatList_viewed: void;
   client_chatList_chatCard_clicked: { chat_id: string; position?: number };

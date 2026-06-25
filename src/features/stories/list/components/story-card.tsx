@@ -21,7 +21,7 @@ export function StoryCard({ story, position }: StoryCardProps) {
   const storyId = story.id;
   const impressionRef = useImpression({
     object: 'storyCard',
-    itemId: storyId ?? -1,
+    itemId: storyId ?? '',
     screen: SCREEN.STORY_LIST,
     onImpress: () => {
       if (storyId != null) {
