@@ -7,7 +7,6 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 import type { StoryCreateStep } from '../types';
 import { StoryCreateBackDialog } from './story-create-back-dialog';
@@ -16,13 +15,11 @@ import { StoryCreateStepIndicator } from './story-create-step-indicator';
 type StoryCreateHeaderProps = {
   step: StoryCreateStep;
   requiresBackConfirmation?: boolean;
-  hasScrolled?: boolean;
 };
 
 export function StoryCreateHeader({
   step,
   requiresBackConfirmation = false,
-  hasScrolled = false,
 }: StoryCreateHeaderProps) {
   const router = useRouter();
   const [confirmBackDialogOpen, setConfirmBackDialogOpen] = useState(false);
@@ -44,12 +41,8 @@ export function StoryCreateHeader({
 
   return (
     <>
-      <header
-        className={cn(
-          'sticky top-0 z-50 flex flex-col border-b bg-background transition-colors',
-          hasScrolled ? 'border-border' : 'border-transparent',
-        )}>
-        <div className="flex h-16 items-center pr-4 pl-1">
+      <header className="sticky top-0 z-50 flex flex-col bg-background">
+        <div className="flex h-14 items-center pr-4 pl-1">
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -59,10 +52,10 @@ export function StoryCreateHeader({
               onClick={handleBackClick}>
               <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
             </Button>
-            <h1 className="text-lg font-semibold">스토리 만들기</h1>
+            <h1 className="font-semibold">스토리 만들기</h1>
           </div>
         </div>
-        <div className="px-12 pb-4">
+        <div className="px-14 pb-4">
           <StoryCreateStepIndicator step={step} />
         </div>
       </header>

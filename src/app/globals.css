@@ -124,9 +124,9 @@
   --secondary-foreground: oklch(0.985 0 0);
 
   /* 보조 상태 색상 */
-  --muted: oklch(0.269 0 0);
+  --muted: oklch(0.225 0 0);
   --muted-foreground: oklch(0.8282 0.0069 106.55);
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.225 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.5654 0.1101 164.5);
@@ -146,7 +146,7 @@
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.225 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);

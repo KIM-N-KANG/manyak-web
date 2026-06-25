@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
 import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
@@ -15,8 +15,6 @@ import { StoryKeywordStepSection } from './story-keyword-step-section';
 import { StorylineSelectStepSection } from './storyline-select-step-section';
 
 export function StoryCreateFunnel() {
-  const [scrolledStep, setScrolledStep] = useState<string | null>(null);
-
   const {
     step,
     creationId,
@@ -58,18 +56,11 @@ export function StoryCreateFunnel() {
     step === 'additional-info' && Boolean(selectedStoryline),
   );
 
-  const hasScrolled = scrolledStep === step;
-
-  const handleContentScroll = (event: React.UIEvent<HTMLElement>) => {
-    setScrolledStep(event.currentTarget.scrollTop > 0 ? step : null);
-  };
-
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
       <StoryCreateHeader
         step={step}
         requiresBackConfirmation={shouldConfirmBack}
-        hasScrolled={hasScrolled}
       />
 
       {step === 'keyword' && (
@@ -77,7 +68,6 @@ export function StoryCreateFunnel() {
           isGeneratingStoryline={isGeneratingStorylines}
           hasGenerateStorylineError={hasGenerateStorylinesError}
           onGenerateStoryline={handleGenerateStoryline}
-          onScroll={handleContentScroll}
         />
       )}
 
@@ -92,7 +82,6 @@ export function StoryCreateFunnel() {
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}
           onSelectStoryline={handleSelectStoryline}
-          onScroll={handleContentScroll}
         />
       )}
 
@@ -104,13 +93,10 @@ export function StoryCreateFunnel() {
           canCompleteStory={canCompleteStory}
           onCompleteStory={handleCompleteStory}
           onBackToStorylineSelect={handleBackToStorylineSelect}
-          onScroll={handleContentScroll}
         />
       )}
 
-      {step === 'complete' && (
-        <StoryCompletionLoadingState onScroll={handleContentScroll} />
-      )}
+      {step === 'complete' && <StoryCompletionLoadingState />}
     </div>
   );
 }
