@@ -87,7 +87,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     void send(text);
   };
 
-  const handlePickChoice = (text: string) => {
+  const handlePickChoice = (text: string, position: number) => {
+    track('client_chat_choiceOption_selected', {
+      chat_id: chatId,
+      turn_number: turns.length + 1,
+      position,
+    });
     setValue(text);
   };
 

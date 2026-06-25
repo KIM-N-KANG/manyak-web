@@ -10,7 +10,7 @@ type ChatTurnItemProps = {
   turn: ChatTurnResponse;
   isLast: boolean;
   reserveSpace?: boolean;
-  onPickChoice: (text: string) => void;
+  onPickChoice: (text: string, position: number) => void;
   ref?: Ref<HTMLDivElement>;
 };
 

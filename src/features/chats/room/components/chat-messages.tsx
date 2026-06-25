@@ -22,7 +22,7 @@ type ChatMessagesProps = {
   turns: ChatTurnResponse[];
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
-  onPickChoice: (text: string) => void;
+  onPickChoice: (text: string, position: number) => void;
   onHasScrolledChange: (hasScrolled: boolean) => void;
 };
 
