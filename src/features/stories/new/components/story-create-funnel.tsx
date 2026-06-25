@@ -7,7 +7,7 @@ import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-t
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';
-import { StoryCompletionSection } from './story-completion-section';
+import { StoryCompletionLoadingState } from './story-completion-loading-state';
 import { StoryCreateHeader } from './story-create-header';
 import { StoryKeywordStepSection } from './story-keyword-step-section';
 import { StorylineSelectStepSection } from './storyline-select-step-section';
@@ -95,7 +95,7 @@ export function StoryCreateFunnel() {
       )}
 
       {step === 'complete' && (
-        <StoryCompletionSection onScroll={handleContentScroll} />
+        <StoryCompletionLoadingState onScroll={handleContentScroll} />
       )}
     </div>
   );

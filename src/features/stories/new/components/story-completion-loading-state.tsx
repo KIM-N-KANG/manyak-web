@@ -6,7 +6,7 @@ type StoryCompletionSectionProps = {
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
-export function StoryCompletionSection({
+export function StoryCompletionLoadingState({
   onScroll,
 }: StoryCompletionSectionProps) {
   return (
