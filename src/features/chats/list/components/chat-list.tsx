@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -11,12 +11,17 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { track } from '@/lib/analytics';
 
 import { useChats } from '../hooks/use-chats';
 import { ChatCard } from './chat-card';
 import { ChatListSkeleton } from './chat-list-skeleton';
 
 export function ChatList() {
+  useEffect(() => {
+    track('client_chatList_viewed');
+  }, []);
+
   const { chats, isLoading, isError, isEmpty, refetch } = useChats();
   const showSkeleton = useDelayedLoading(isLoading);
 
@@ -61,7 +66,7 @@ export function ChatList() {
       {chats.map((chat, index) => (
         <Fragment key={chat.id}>
           <li>
-            <ChatCard chat={chat} />
+            <ChatCard chat={chat} position={index} />
           </li>
           {index < chats.length - 1 && (
             <Separator className="mx-4 data-horizontal:w-auto" />

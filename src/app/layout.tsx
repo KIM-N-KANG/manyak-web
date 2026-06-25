@@ -3,6 +3,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
+import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { OnboardingProvider } from '@/components/providers/onboarding-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
@@ -49,18 +50,20 @@ export default function RootLayout({
       className={`${pretendard.variable} ${maruburi.variable} antialiased`}
       suppressHydrationWarning>
       <body className="bg-border font-sans text-foreground">
-        <QueryProvider>
-          <OnboardingProvider>
-            <MotionProvider>
-              <ThemeProvider>
-                <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
-                  {children}
-                </div>
-                <Toaster />
-              </ThemeProvider>
-            </MotionProvider>
-          </OnboardingProvider>
-        </QueryProvider>
+        <AmplitudeProvider>
+          <QueryProvider>
+            <OnboardingProvider>
+              <MotionProvider>
+                <ThemeProvider>
+                  <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                    {children}
+                  </div>
+                  <Toaster />
+                </ThemeProvider>
+              </MotionProvider>
+            </OnboardingProvider>
+          </QueryProvider>
+        </AmplitudeProvider>
       </body>
     </html>
   );

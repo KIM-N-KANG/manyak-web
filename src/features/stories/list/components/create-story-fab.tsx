@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useMainScroll } from '@/app/(main)/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
 import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
+import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
 export function CreateStoryFab() {
@@ -17,6 +18,7 @@ export function CreateStoryFab() {
       <Link
         href={APP_PATH.CREATOR.STORY}
         data-onborda={ONBOARDING_TARGET.CREATE_STORY}
+        onClick={() => track('client_storyList_createButton_clicked')}
         aria-label="스토리 만들기"
         className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md transition-[filter] outline-none hover:brightness-105 focus-visible:ring-3 focus-visible:ring-ring/50">
         <HugeiconsIcon

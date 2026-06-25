@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
 import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
+import { track } from '@/lib/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
+import { mapStepToSpec } from '../utils/step-analytics';
 import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';
 import { StoryCompletionLoadingState } from './story-completion-loading-state';
 import { StoryCreateHeader } from './story-create-header';
@@ -17,6 +19,7 @@ export function StoryCreateFunnel() {
 
   const {
     step,
+    creationId,
     shouldConfirmBack,
     storylines,
     selectedKeywordGroups,
@@ -34,6 +37,14 @@ export function StoryCreateFunnel() {
     handleBackToStorylineSelect,
     handleCompleteStory,
   } = useStoryCreateFunnel();
+
+  useEffect(() => {
+    track('client_storyCreate_viewed');
+  }, []);
+
+  useEffect(() => {
+    track('client_storyCreate_step_viewed', mapStepToSpec(step));
+  }, [step]);
 
   useStartOnboarding(ONBOARDING_TOURS.KEYWORD_SELECT, step === 'keyword');
   useStartOnboarding(
@@ -73,6 +84,7 @@ export function StoryCreateFunnel() {
       {step === 'storyline-select' && (
         <StorylineSelectStepSection
           storylines={storylines}
+          creationId={creationId}
           selectedKeywordGroups={selectedKeywordGroups}
           activeStorylineIndex={activeStorylineIndex}
           isRegeneratingStorylines={isGeneratingStorylines}

@@ -22,7 +22,7 @@ type ChatMessagesProps = {
   turns: ChatTurnResponse[];
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
-  onPickChoice: (text: string) => void;
+  onPickChoice: (text: string, position: number) => void;
   onHasScrolledChange: (hasScrolled: boolean) => void;
 };
 
@@ -109,12 +109,12 @@ export function ChatMessages({
       {streamingTurn || !isAtBottom ? (
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           size="icon"
           aria-label={streamingTurn ? 'AI 응답 생성 중' : '맨 아래로 이동'}
           disabled={!!streamingTurn}
           onClick={() => scrollToBottom('smooth')}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full shadow-md">
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-background/50 shadow-sm backdrop-blur-md">
           {streamingTurn ? (
             <Spinner />
           ) : (

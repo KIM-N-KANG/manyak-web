@@ -1,24 +1,47 @@
+'use client';
+
 import { BubbleChatIcon, Calendar04Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
 import { APP_PATH } from '@/constants/app-path';
 import { ChatOptionsMenu } from '@/features/chats/components/chat-options-menu';
+import { SCREEN, track, useImpression } from '@/lib/analytics';
 import { formatRelativeDate } from '@/lib/format-date';
 
 import type { ChatListItem } from '../types';
 
 type ChatCardProps = {
   chat: ChatListItem;
+  position?: number;
 };
 
-export function ChatCard({ chat }: ChatCardProps) {
+export function ChatCard({ chat, position }: ChatCardProps) {
+  const impressionRef = useImpression({
+    object: 'chatCard',
+    itemId: chat.id,
+    screen: SCREEN.CHAT_LIST,
+    onImpress: () =>
+      track('client_chatList_chatCard_impressed', {
+        chat_id: chat.id,
+        position,
+      }),
+  });
+
   return (
-    <article className="relative flex flex-col gap-2 px-4 py-2">
+    <article
+      ref={impressionRef}
+      className="relative flex flex-col gap-2 px-4 py-2">
       <Link
         href={APP_PATH.CHAT_ROOM(chat.id)}
         aria-label={`${chat.storyTitle} 채팅 보기`}
         className="absolute inset-0"
+        onClick={() =>
+          track('client_chatList_chatCard_clicked', {
+            chat_id: chat.id,
+            position,
+          })
+        }
       />
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2">

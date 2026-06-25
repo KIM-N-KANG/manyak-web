@@ -1,9 +1,12 @@
+'use client';
+
 import { Calendar04Icon, Image01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
 import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
+import { SCREEN, track, useImpression } from '@/lib/analytics';
 import { formatDate } from '@/lib/format-date';
 
 import type { StoryListItem } from '../types';
@@ -11,16 +14,38 @@ import { StoryGenreBadges } from './story-genre-badges';
 
 type StoryCardProps = {
   story: StoryListItem;
+  position?: number;
 };
 
-export function StoryCard({ story }: StoryCardProps) {
+export function StoryCard({ story, position }: StoryCardProps) {
+  const storyId = story.id;
+  const impressionRef = useImpression({
+    object: 'storyCard',
+    itemId: storyId ?? -1,
+    screen: SCREEN.STORY_LIST,
+    onImpress: () => {
+      if (storyId != null) {
+        track('client_storyList_storyCard_impressed', {
+          story_id: storyId,
+          position,
+        });
+      }
+    },
+  });
+
   return (
-    <article className="relative flex gap-4 px-4 py-2">
-      {story.id != null && (
+    <article ref={impressionRef} className="relative flex gap-4 px-4 py-2">
+      {storyId != null && (
         <Link
-          href={APP_PATH.STORY_DETAIL(story.id)}
+          href={APP_PATH.STORY_DETAIL(storyId)}
           aria-label={`${story.title} 상세 보기`}
           className="absolute inset-0"
+          onClick={() =>
+            track('client_storyList_storyCard_clicked', {
+              story_id: storyId,
+              position,
+            })
+          }
         />
       )}
       <div

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,7 @@ import type {
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
+import { track } from '@/lib/analytics';
 
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
@@ -47,6 +48,10 @@ export function useStoryCreateFunnel() {
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<number | null>(null);
+  const completedStoryRef = useRef<{
+    storyId: number;
+    genre?: string[];
+  } | null>(null);
 
   const simpleStoryTags = useGetSimpleStoryTags();
 
@@ -85,6 +90,18 @@ export function useStoryCreateFunnel() {
         }
 
         saveCreatedChatId(chatId);
+
+        const completedStoryId =
+          completedStoryRef.current?.storyId ?? createdStoryId;
+
+        if (completedStoryId !== null) {
+          track('client_storyCreate_completed', {
+            story_id: completedStoryId,
+            chat_id: chatId,
+            genre: completedStoryRef.current?.genre,
+          });
+        }
+
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         router.replace(APP_PATH.CHAT_ROOM(chatId));
@@ -109,6 +126,7 @@ export function useStoryCreateFunnel() {
         if (typeof storyId === 'number') {
           saveCreatedStoryId(storyId);
           setCreatedStoryId(storyId);
+          completedStoryRef.current = { storyId, genre: response.data.genres };
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
@@ -140,6 +158,7 @@ export function useStoryCreateFunnel() {
     setActiveStorylineIndex(0);
     setSelectedStoryline(null);
     setStep('storyline-select');
+    track('client_storyCreate_storyGeneration_requested');
     generateStorylines.mutate({ data: request });
   };
 
@@ -154,6 +173,13 @@ export function useStoryCreateFunnel() {
   const handleSelectStoryline = () => {
     if (!activeStoryline) {
       return;
+    }
+
+    if (typeof simpleCreationId === 'number') {
+      track('client_storyCreate_storylineOption_selected', {
+        creation_id: String(simpleCreationId),
+        position: activeStorylineIndex,
+      });
     }
 
     setSelectedStoryline(activeStoryline);
@@ -192,6 +218,10 @@ export function useStoryCreateFunnel() {
 
   return {
     step,
+    creationId:
+      typeof simpleCreationId === 'number'
+        ? String(simpleCreationId)
+        : undefined,
     shouldConfirmBack,
     storylines,
     selectedKeywordGroups,

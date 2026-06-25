@@ -1,10 +1,11 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
+import { useOnborda } from 'onborda';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -15,6 +16,7 @@ import {
 } from '@/features/onboarding/constants';
 import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { track } from '@/lib/analytics';
 
 import { ListStatus } from '../../../../components/common/list-status';
 import { useCreatedStories } from '../hooks/use-created-stories';
@@ -23,12 +25,18 @@ import { StoryCard } from './story-card';
 import { StoryListSkeleton } from './story-list-skeleton';
 
 export function StoryList() {
+  useEffect(() => {
+    track('client_storyList_viewed');
+  }, []);
+
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const showSkeleton = useDelayedLoading(isLoading);
   const isCreateTargetReady =
     !showSkeleton && !isLoading && !isError && isEmpty;
 
   useStartOnboarding(ONBOARDING_TOURS.STORY_LIST, isCreateTargetReady);
+
+  const { currentTour, isOnbordaVisible } = useOnborda();
 
   if (showSkeleton) {
     return <StoryListSkeleton />;
@@ -61,6 +69,16 @@ export function StoryList() {
             <Link
               href={APP_PATH.CREATOR.STORY}
               data-onborda={ONBOARDING_TARGET.CREATE_STORY}
+              onClick={() => {
+                track('client_storyList_createButton_clicked');
+
+                if (
+                  isOnbordaVisible &&
+                  currentTour === ONBOARDING_TOURS.STORY_LIST
+                ) {
+                  track('client_onboarding_completed');
+                }
+              }}
             />
           }
           size="lg">
@@ -77,7 +95,7 @@ export function StoryList() {
         {stories.map((story, index) => (
           <Fragment key={story.id}>
             <li>
-              <StoryCard story={story} />
+              <StoryCard story={story} position={index} />
             </li>
             {index < stories.length - 1 && (
               <Separator className="mx-4 data-horizontal:w-auto" />

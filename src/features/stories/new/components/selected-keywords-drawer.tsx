@@ -11,23 +11,33 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { track } from '@/lib/analytics';
 
 import type { SelectedKeywordGroup as SelectedKeywordGroupModel } from '../types';
 import { SelectedKeywordGroup } from './selected-keyword-group';
 
 type SelectedKeywordsDrawerProps = {
   groups: SelectedKeywordGroupModel[];
+  creationId?: string;
 };
 
 export function SelectedKeywordsDrawer({
   groups,
+  creationId,
 }: SelectedKeywordsDrawerProps) {
   if (groups.length === 0) {
     return null;
   }
 
   return (
-    <Drawer>
+    <Drawer
+      onOpenChange={(open) => {
+        if (open && creationId) {
+          track('client_storyCreate_selectedKeywordsButton_clicked', {
+            creation_id: creationId,
+          });
+        }
+      }}>
       <DrawerTrigger asChild>
         <Button
           type="button"

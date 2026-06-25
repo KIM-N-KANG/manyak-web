@@ -17,6 +17,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@amplitude/unified": "^1.1.18",
     "@base-ui/react": "^1.5.0",
     "@hugeicons/core-free-icons": "^4.2.0",
     "@hugeicons/react": "^1.1.6",
