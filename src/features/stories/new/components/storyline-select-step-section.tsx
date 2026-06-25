@@ -17,6 +17,7 @@ import { StorylineSelectLoadingState } from './storyline-select-loading-state';
 
 export function StorylineSelectStepSection({
   storylines,
+  creationId,
   selectedKeywordGroups,
   activeStorylineIndex,
   isRegeneratingStorylines,
@@ -80,7 +81,10 @@ export function StorylineSelectStepSection({
           <StickyTabsList
             data-onborda={ONBOARDING_TARGET.STORYLINE_TABS}
             rightSlot={
-              <SelectedKeywordsDrawer groups={selectedKeywordGroups} />
+              <SelectedKeywordsDrawer
+                groups={selectedKeywordGroups}
+                creationId={creationId}
+              />
             }>
             {storylines.map((storyline, index) => (
               <TabsTrigger key={storyline.id ?? index} value={String(index)}>

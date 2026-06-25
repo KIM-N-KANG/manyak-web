@@ -53,6 +53,7 @@ export type TagsByCategory = Record<
 
 export type StorylineSelectStepSectionProps = {
   storylines: SimpleStorylineResponse[];
+  creationId?: string;
   selectedKeywordGroups: SelectedKeywordGroup[];
   activeStorylineIndex: number;
   isRegeneratingStorylines: boolean;
