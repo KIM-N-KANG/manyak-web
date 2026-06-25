@@ -14,6 +14,11 @@ export function useImpression(input: {
 }) {
   const [node, setNode] = useState<Element | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onImpressRef = useRef(input.onImpress);
+
+  useEffect(() => {
+    onImpressRef.current = input.onImpress;
+  });
 
   useEffect(() => {
     if (!node) return;
@@ -29,7 +34,7 @@ export function useImpression(input: {
 
             if (shouldEmitImpression(lastEmittedByKey.get(key), now)) {
               lastEmittedByKey.set(key, now);
-              input.onImpress();
+              onImpressRef.current();
             }
           }, MIN_VISIBLE_MS);
         } else if (timerRef.current) {
