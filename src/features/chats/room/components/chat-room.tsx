@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
 import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
 import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
+import { track } from '@/lib/analytics';
 
 import { useChatDetail } from '../hooks/use-chat-detail';
 import { useChatStream } from '../hooks/use-chat-stream';
@@ -45,6 +46,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   useStartOnboarding(ONBOARDING_TOURS.CHAT, !isLoading && !isError);
 
+  useEffect(() => {
+    track('client_chat_viewed', { chat_id: chatId });
+  }, [chatId]);
+
   const [hasScrolled, setHasScrolled] = useState(false);
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -74,6 +79,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
     if (!text || isStreaming) return;
 
+    track('client_chat_messageInput_submitted', {
+      chat_id: chatId,
+      turn_number: turns.length + 1,
+    });
     setValue('');
     void send(text);
   };
