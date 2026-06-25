@@ -14,8 +14,8 @@ import type { StoryStartSettingResponse } from './storyStartSettingResponse';
  * 스토리 상세 응답
  */
 export interface StoryDetailResponse {
-  /** 스토리 ID */
-  id?: number;
+  /** 스토리 ID(공개 식별자) */
+  id?: string;
   /**
    * 커버 이미지 URL
    * @nullable

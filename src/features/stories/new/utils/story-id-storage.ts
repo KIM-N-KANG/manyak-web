@@ -2,11 +2,10 @@ import { createCreatedIdListStorage } from '@/lib/created-id-list-storage';
 
 export const CREATED_STORY_IDS_STORAGE_KEY = 'manyak:created-story-ids';
 
-const storyIdListStorage = createCreatedIdListStorage<number>({
+const storyIdListStorage = createCreatedIdListStorage<string>({
   storageKey: CREATED_STORY_IDS_STORAGE_KEY,
   changeEvent: 'manyak:created-story-ids-change',
-  isValidId: (value): value is number =>
-    typeof value === 'number' && Number.isInteger(value),
+  isValidId: (value): value is string => typeof value === 'string',
 });
 
 /**

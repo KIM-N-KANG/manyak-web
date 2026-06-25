@@ -10,7 +10,7 @@ import { StoryOptionsMenu } from '@/features/stories/components/story-options-me
 import { cn } from '@/lib/utils';
 
 type StoryDetailHeaderProps = {
-  storyId: number;
+  storyId: string;
   hasScrolled?: boolean;
 };
 

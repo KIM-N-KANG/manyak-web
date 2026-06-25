@@ -10,6 +10,6 @@
  * 채팅 생성 요청
  */
 export interface CreateChatRequest {
-  /** 채팅을 시작할 스토리 ID */
-  storyId?: number;
+  /** 채팅을 시작할 스토리 ID(공개 식별자) */
+  storyId?: string;
 }

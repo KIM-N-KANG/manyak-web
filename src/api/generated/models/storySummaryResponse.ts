@@ -12,8 +12,8 @@ import type { StorySummaryResponseStatus } from './storySummaryResponseStatus';
  * 스토리 목록 항목
  */
 export interface StorySummaryResponse {
-  /** 스토리 ID */
-  id?: number;
+  /** 스토리 ID(공개 식별자) */
+  id?: string;
   /** 제목 */
   title?: string;
   /** 한 줄 소개 */

@@ -12,8 +12,8 @@
 export interface ChatSummaryResponse {
   /** 채팅 ID(공개 식별자) */
   id?: string;
-  /** 스토리 ID */
-  storyId?: number;
+  /** 스토리 ID(공개 식별자) */
+  storyId?: string;
   /** 스토리 제목 */
   storyTitle?: string;
   /** 마지막으로 생성된 이야기 일부 */
