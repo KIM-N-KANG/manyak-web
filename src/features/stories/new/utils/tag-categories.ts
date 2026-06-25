@@ -1,4 +1,7 @@
-import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
+import type {
+  GenerateSimpleStorylinesRequest,
+  SimpleStoryTagListItemResponse,
+} from '@/api/generated/models';
 
 import { TAG_CATEGORIES } from '../constants';
 import type {
@@ -45,3 +48,31 @@ export const getTagsByCategory = (
 
     return acc;
   }, createEmptyTagsByCategory());
+
+/**
+ * 스토리라인 생성 요청에 담긴 선택 키워드를 사람이 읽을 수 있는 이름 목록으로 변환한다.
+ * 사전 정의 태그는 전체 태그 목록에서 id로 이름을 찾고, 직접 추가 태그는 이름을 그대로 사용한다.
+ */
+export const getSelectedKeywordNames = (
+  request: GenerateSimpleStorylinesRequest | null,
+  tags: SimpleStoryTagListItemResponse[],
+): string[] => {
+  if (!request) {
+    return [];
+  }
+
+  const tagNameById = new Map(
+    tags
+      .filter((tag) => tag.id != null && Boolean(tag.name))
+      .map((tag) => [tag.id, tag.name] as const),
+  );
+
+  const predefinedKeywordNames = (request.selectedTagIds ?? [])
+    .map((tagId) => tagNameById.get(tagId))
+    .filter((name): name is string => Boolean(name));
+  const customKeywordNames = (request.customTags ?? [])
+    .map((tag) => tag.name)
+    .filter((name) => Boolean(name));
+
+  return [...predefinedKeywordNames, ...customKeywordNames];
+};

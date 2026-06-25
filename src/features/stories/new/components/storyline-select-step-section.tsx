@@ -9,6 +9,7 @@ import { getStorylineTabLabel } from '../constants';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
 import { useSwipeableIndex } from '../hooks/use-swipeable-index';
 import type { StorylineSelectStepSectionProps } from '../types';
+import { SelectedKeywordsSummary } from './selected-keywords-summary';
 import { StickyTabsList } from './sticky-tabs-list';
 import { StoryCreateErrorMessage } from './story-create-error-message';
 import { StoryCreateStepLayout } from './story-create-step-layout';
@@ -17,6 +18,7 @@ import { StorylineSelectLoadingState } from './storyline-select-loading-state';
 
 export function StorylineSelectStepSection({
   storylines,
+  selectedKeywords,
   activeStorylineIndex,
   isRegeneratingStorylines,
   hasRegenerateStorylinesError,
@@ -75,6 +77,7 @@ export function StorylineSelectStepSection({
           </Button>
         </>
       }>
+      <SelectedKeywordsSummary keywords={selectedKeywords} />
       {isRegeneratingStorylines ? (
         <StorylineSelectLoadingState />
       ) : (

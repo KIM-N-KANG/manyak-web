@@ -13,6 +13,7 @@ import {
 import {
   useCreateSimpleStory,
   useGenerateSimpleStorylines,
+  useGetSimpleStoryTags,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type {
   GenerateSimpleStorylinesRequest,
@@ -25,6 +26,7 @@ import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
+import { getSelectedKeywordNames } from '../utils/tag-categories';
 
 const getGeneratedStorylines = (
   generationResult: GenerateSimpleStorylinesResponse | null,
@@ -45,6 +47,8 @@ export function useStoryCreateFunnel() {
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<number | null>(null);
+
+  const simpleStoryTags = useGetSimpleStoryTags();
 
   const failToAdditionalInfo = (message: string) => {
     setStep('additional-info');
@@ -116,6 +120,10 @@ export function useStoryCreateFunnel() {
   });
 
   const storylines = getGeneratedStorylines(generationResult);
+  const selectedKeywords = getSelectedKeywordNames(
+    generationRequest,
+    simpleStoryTags.data?.data ?? [],
+  );
   const activeStoryline =
     storylines[activeStorylineIndex] ?? storylines[0] ?? null;
   const simpleCreationId = generationResult?.simpleCreationId;
@@ -186,6 +194,7 @@ export function useStoryCreateFunnel() {
     step,
     shouldConfirmBack,
     storylines,
+    selectedKeywords,
     activeStorylineIndex,
     selectedStoryline,
     canCompleteStory,

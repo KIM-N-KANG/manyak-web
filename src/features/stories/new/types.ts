@@ -47,6 +47,7 @@ export type TagsByCategory = Record<
 
 export type StorylineSelectStepSectionProps = {
   storylines: SimpleStorylineResponse[];
+  selectedKeywords: string[];
   activeStorylineIndex: number;
   isRegeneratingStorylines: boolean;
   hasRegenerateStorylinesError: boolean;
