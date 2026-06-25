@@ -127,10 +127,12 @@ export const getStoriesByIdsBodyStoryIdsMax = 100;
 export const GetStoriesByIdsBody = zod
   .object({
     storyIds: zod
-      .array(zod.number().describe('스토리 ID'))
+      .array(zod.string().describe('스토리 ID(공개 식별자)'))
       .min(getStoriesByIdsBodyStoryIdsMin)
       .max(getStoriesByIdsBodyStoryIdsMax)
-      .describe('클라이언트가 로컬스토리지에 보관 중인 스토리 ID 목록'),
+      .describe(
+        '클라이언트가 로컬스토리지에 보관 중인 스토리 ID(공개 식별자) 목록',
+      ),
   })
   .describe('스토리 ID 목록 조회 요청');
 
@@ -189,7 +191,10 @@ export const CreateFeedbackResponse = zod.void();
  */
 export const CreateChatBody = zod
   .object({
-    storyId: zod.number().optional().describe('채팅을 시작할 스토리 ID'),
+    storyId: zod
+      .string()
+      .optional()
+      .describe('채팅을 시작할 스토리 ID(공개 식별자)'),
   })
   .describe('채팅 생성 요청');
 
@@ -246,7 +251,7 @@ export const GetChatsByIdsResponse = zod.unknown();
  * @summary 이야기 상세 조회
  */
 export const GetStoryDetailParams = zod.object({
-  storyId: zod.number().describe('스토리 ID'),
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
 });
 
 export const GetStoryDetailResponse = zod.unknown();
@@ -256,7 +261,7 @@ export const GetStoryDetailResponse = zod.unknown();
  * @summary 이야기 삭제 (소프트 삭제)
  */
 export const DeleteStoryParams = zod.object({
-  storyId: zod.number().describe('스토리 ID'),
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
 });
 
 export const DeleteStoryResponse = zod.void();

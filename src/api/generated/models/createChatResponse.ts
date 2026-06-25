@@ -12,8 +12,8 @@
 export interface CreateChatResponse {
   /** 채팅 ID(추측 불가능한 공개 식별자). 클라이언트는 이 값을 로컬스토리지에 저장해 이전 채팅 목록 구성에 사용합니다. */
   id?: string;
-  /** 스토리 ID */
-  storyId?: number;
+  /** 스토리 ID(공개 식별자) */
+  storyId?: string;
   /** 채팅 시작 프롤로그 */
   prologue?: string;
   /** 시작 화면에 노출할 추천 입력 목록. 시작 설정이나 등록된 추천 입력이 없으면 빈 배열입니다. */
