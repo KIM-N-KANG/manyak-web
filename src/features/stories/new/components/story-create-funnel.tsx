@@ -1,0 +1,116 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
+import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
+import { track } from '@/lib/analytics';
+
+import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
+import { mapStepToSpec } from '../utils/step-analytics';
+import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';
+import { StoryCompletionLoadingState } from './story-completion-loading-state';
+import { StoryCreateHeader } from './story-create-header';
+import { StoryKeywordStepSection } from './story-keyword-step-section';
+import { StorylineSelectStepSection } from './storyline-select-step-section';
+
+export function StoryCreateFunnel() {
+  const [scrolledStep, setScrolledStep] = useState<string | null>(null);
+
+  const {
+    step,
+    creationId,
+    shouldConfirmBack,
+    storylines,
+    selectedKeywordGroups,
+    activeStorylineIndex,
+    selectedStoryline,
+    canCompleteStory,
+    isGeneratingStorylines,
+    hasGenerateStorylinesError,
+    isCompletingStory,
+    hasCompleteStoryError,
+    handleGenerateStoryline,
+    handleRegenerateStorylines,
+    handleActiveStorylineIndexChange,
+    handleSelectStoryline,
+    handleBackToStorylineSelect,
+    handleCompleteStory,
+  } = useStoryCreateFunnel();
+
+  useEffect(() => {
+    track('client_storyCreate_viewed');
+  }, []);
+
+  useEffect(() => {
+    track('client_storyCreate_step_viewed', mapStepToSpec(step));
+  }, [step]);
+
+  useStartOnboarding(ONBOARDING_TOURS.KEYWORD_SELECT, step === 'keyword');
+  useStartOnboarding(
+    ONBOARDING_TOURS.STORYLINE_SELECT,
+    step === 'storyline-select' &&
+      !isGeneratingStorylines &&
+      storylines.length > 0,
+  );
+  useStartOnboarding(
+    ONBOARDING_TOURS.ADDITIONAL_INFO,
+    step === 'additional-info' && Boolean(selectedStoryline),
+  );
+
+  const hasScrolled = scrolledStep === step;
+
+  const handleContentScroll = (event: React.UIEvent<HTMLElement>) => {
+    setScrolledStep(event.currentTarget.scrollTop > 0 ? step : null);
+  };
+
+  return (
+    <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+      <StoryCreateHeader
+        step={step}
+        requiresBackConfirmation={shouldConfirmBack}
+        hasScrolled={hasScrolled}
+      />
+
+      {step === 'keyword' && (
+        <StoryKeywordStepSection
+          isGeneratingStoryline={isGeneratingStorylines}
+          hasGenerateStorylineError={hasGenerateStorylinesError}
+          onGenerateStoryline={handleGenerateStoryline}
+          onScroll={handleContentScroll}
+        />
+      )}
+
+      {step === 'storyline-select' && (
+        <StorylineSelectStepSection
+          storylines={storylines}
+          creationId={creationId}
+          selectedKeywordGroups={selectedKeywordGroups}
+          activeStorylineIndex={activeStorylineIndex}
+          isRegeneratingStorylines={isGeneratingStorylines}
+          hasRegenerateStorylinesError={hasGenerateStorylinesError}
+          onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
+          onRegenerateStorylines={handleRegenerateStorylines}
+          onSelectStoryline={handleSelectStoryline}
+          onScroll={handleContentScroll}
+        />
+      )}
+
+      {step === 'additional-info' && selectedStoryline && (
+        <StoryAdditionalInfoStepSection
+          storyline={selectedStoryline}
+          isCompletingStory={isCompletingStory}
+          hasCompleteStoryError={hasCompleteStoryError}
+          canCompleteStory={canCompleteStory}
+          onCompleteStory={handleCompleteStory}
+          onBackToStorylineSelect={handleBackToStorylineSelect}
+          onScroll={handleContentScroll}
+        />
+      )}
+
+      {step === 'complete' && (
+        <StoryCompletionLoadingState onScroll={handleContentScroll} />
+      )}
+    </div>
+  );
+}

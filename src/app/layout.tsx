@@ -1,9 +1,43 @@
 import './globals.css';
 
-import { pretendard } from '@/assets/fonts/fonts';
+import type { Metadata, Viewport } from 'next';
+
+import { maruburi, pretendard } from '@/assets/fonts/fonts';
+import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { MotionProvider } from '@/components/providers/motion-provider';
+import { OnboardingProvider } from '@/components/providers/onboarding-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
+
+export const metadata: Metadata = {
+  title: '마냑',
+  description: '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+  applicationName: '마냑',
+  metadataBase: new URL('https://manyak.app'),
+  openGraph: {
+    type: 'website',
+    siteName: '마냑',
+    title: '마냑',
+    description:
+      '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+    url: 'https://manyak.app',
+    locale: 'ko_KR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '마냑',
+    description:
+      '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  interactiveWidget: 'resizes-content',
+};
 
 export default function RootLayout({
   children,
@@ -11,13 +45,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={pretendard.variable} suppressHydrationWarning>
-      <body className="bg-background font-sans text-foreground antialiased">
-        <QueryProvider>
-          <MotionProvider>
-            <ThemeProvider>{children}</ThemeProvider>
-          </MotionProvider>
-        </QueryProvider>
+    <html
+      lang="ko"
+      className={`${pretendard.variable} ${maruburi.variable} antialiased`}
+      suppressHydrationWarning>
+      <body className="bg-border font-sans text-foreground">
+        <AmplitudeProvider>
+          <QueryProvider>
+            <OnboardingProvider>
+              <MotionProvider>
+                <ThemeProvider>
+                  <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                    {children}
+                  </div>
+                  <Toaster />
+                </ThemeProvider>
+              </MotionProvider>
+            </OnboardingProvider>
+          </QueryProvider>
+        </AmplitudeProvider>
       </body>
     </html>
   );
