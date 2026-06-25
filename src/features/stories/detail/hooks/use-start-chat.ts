@@ -11,6 +11,7 @@ import {
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
+import { track } from '@/lib/analytics';
 
 export function useStartChat(storyId: number) {
   const router = useRouter();
@@ -36,6 +37,7 @@ export function useStartChat(storyId: number) {
   });
 
   const startChat = () => {
+    track('client_storyDetail_chatStartButton_clicked', { story_id: storyId });
     createChat.mutate({ data: { storyId } });
   };
 

@@ -1,10 +1,11 @@
 'use client';
 
-import { type UIEvent, useState } from 'react';
+import { type UIEvent, useEffect, useState } from 'react';
 
 import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { track } from '@/lib/analytics';
 
 import { StoryDetailCta } from './story-detail-cta';
 import { StoryDetailHeader } from './story-detail-header';
@@ -16,6 +17,10 @@ type StoryDetailProps = {
 };
 
 export function StoryDetail({ storyId }: StoryDetailProps) {
+  useEffect(() => {
+    track('client_storyDetail_viewed', { story_id: storyId });
+  }, [storyId]);
+
   const [hasScrolled, setHasScrolled] = useState(false);
   const { data, isPending, isError, refetch } = useGetStoryDetail(storyId);
 
