@@ -5,6 +5,7 @@ import { Fragment, useEffect } from 'react';
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
+import { useOnborda } from 'onborda';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -34,6 +35,8 @@ export function StoryList() {
     !showSkeleton && !isLoading && !isError && isEmpty;
 
   useStartOnboarding(ONBOARDING_TOURS.STORY_LIST, isCreateTargetReady);
+
+  const { currentTour, isOnbordaVisible } = useOnborda();
 
   if (showSkeleton) {
     return <StoryListSkeleton />;
@@ -66,7 +69,16 @@ export function StoryList() {
             <Link
               href={APP_PATH.CREATOR.STORY}
               data-onborda={ONBOARDING_TARGET.CREATE_STORY}
-              onClick={() => track('client_storyList_createButton_clicked')}
+              onClick={() => {
+                track('client_storyList_createButton_clicked');
+
+                if (
+                  isOnbordaVisible &&
+                  currentTour === ONBOARDING_TOURS.STORY_LIST
+                ) {
+                  track('client_onboarding_completed');
+                }
+              }}
             />
           }
           size="lg">

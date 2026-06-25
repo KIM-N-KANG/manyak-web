@@ -1,9 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import type { CardComponentProps } from 'onborda';
 import { useOnborda } from 'onborda';
 
 import { Button } from '@/components/ui/button';
+import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
+import { track } from '@/lib/analytics';
 
 export function OnboardingCard({
   step,
@@ -12,9 +16,16 @@ export function OnboardingCard({
   nextStep,
   arrow,
 }: CardComponentProps) {
-  const { closeOnborda } = useOnborda();
+  const { closeOnborda, currentTour } = useOnborda();
   const isLastStep = currentStep + 1 >= totalSteps;
   const hasNextControl = step.showControls !== false;
+  const isEntryTour = currentTour === ONBOARDING_TOURS.STORY_LIST;
+
+  useEffect(() => {
+    if (isEntryTour && currentStep === 0) {
+      track('client_onboarding_viewed', { step_number: 1 });
+    }
+  }, [isEntryTour, currentStep]);
 
   return (
     <div className="w-76 max-w-[80vw] rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-lg">
@@ -32,7 +43,18 @@ export function OnboardingCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2">
-        <Button variant="secondary" size="sm" onClick={() => closeOnborda()}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            if (isEntryTour) {
+              track('client_onboarding_skipButton_clicked', {
+                step_number: currentStep + 1,
+              });
+            }
+
+            closeOnborda();
+          }}>
           건너뛰기
         </Button>
         {hasNextControl ? (
