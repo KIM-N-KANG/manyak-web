@@ -53,8 +53,6 @@ export function useStoryKeywordStep({
     isLastCategory: navigation.isLastCategory,
     goToNextCategory: navigation.goToNextCategory,
     goToPreviousCategory: navigation.goToPreviousCategory,
-    handleTouchStart: navigation.handleTouchStart,
-    handleTouchEnd: navigation.handleTouchEnd,
     togglePredefinedTag: tagSelection.togglePredefinedTag,
     toggleCustomKeyword: tagSelection.toggleCustomKeyword,
     addCustomKeyword: tagSelection.addCustomKeyword,

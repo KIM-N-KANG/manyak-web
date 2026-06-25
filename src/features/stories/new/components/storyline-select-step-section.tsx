@@ -7,7 +7,6 @@ import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
 
 import { getStorylineTabLabel } from '../constants';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
-import { useSwipeableIndex } from '../hooks/use-swipeable-index';
 import type { StorylineSelectStepSectionProps } from '../types';
 import { SelectedKeywordsDrawer } from './selected-keywords-drawer';
 import { StickyTabsList } from './sticky-tabs-list';
@@ -38,12 +37,6 @@ export function StorylineSelectStepSection({
     activeStorylineId === undefined
       ? undefined
       : storylineRatings[activeStorylineId];
-
-  const { handleTouchStart, handleTouchEnd } = useSwipeableIndex({
-    index: activeStorylineIndex,
-    count: storylines.length,
-    onIndexChange: onActiveStorylineIndexChange,
-  });
 
   return (
     <StoryCreateStepLayout
@@ -83,9 +76,7 @@ export function StorylineSelectStepSection({
         <Tabs
           value={String(activeStorylineIndex)}
           onValueChange={(value) => onActiveStorylineIndexChange(Number(value))}
-          className="gap-0"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}>
+          className="gap-0">
           <StickyTabsList
             data-onborda={ONBOARDING_TARGET.STORYLINE_TABS}
             rightSlot={

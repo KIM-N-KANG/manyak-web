@@ -6,13 +6,6 @@ export const ADDITIONAL_INFO_MAX_COUNT = 10;
 
 export const ADDITIONAL_INFO_MAX_LENGTH = 100;
 
-export const HORIZONTAL_SWIPE_THRESHOLD = 96;
-
-export const HORIZONTAL_SWIPE_INTENT_RATIO = 1.5;
-
-export const TEXT_INPUT_SELECTOR =
-  'input, textarea, select, [contenteditable="true"]';
-
 export const STORYLINE_RATING_SYNC_DEBOUNCE_MS = 300;
 
 export const SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT = 64;

@@ -43,8 +43,6 @@ export function StoryKeywordStepSection({
     isLastCategory,
     goToNextCategory,
     goToPreviousCategory,
-    handleTouchStart,
-    handleTouchEnd,
     togglePredefinedTag,
     toggleCustomKeyword,
     addCustomKeyword,
@@ -90,9 +88,7 @@ export function StoryKeywordStepSection({
       <Tabs
         value={activeCategory}
         onValueChange={(value) => setActiveCategory(value as TagCategory)}
-        className="gap-0"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}>
+        className="gap-0">
         <StickyTabsList data-onborda={ONBOARDING_TARGET.KEYWORD_TABS}>
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
