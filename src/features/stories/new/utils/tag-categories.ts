@@ -7,6 +7,7 @@ import { TAG_CATEGORIES } from '../constants';
 import type {
   CustomKeywordsByCategory,
   SelectedCustomKeywordIdsByCategory,
+  SelectedKeywordGroup,
   SelectedTagIdsByCategory,
   TagCategory,
   TagsByCategory,
@@ -50,29 +51,48 @@ export const getTagsByCategory = (
   }, createEmptyTagsByCategory());
 
 /**
- * 스토리라인 생성 요청에 담긴 선택 키워드를 사람이 읽을 수 있는 이름 목록으로 변환한다.
+ * 스토리라인 생성 요청에 담긴 선택 키워드를 카테고리별 그룹으로 변환한다.
  * 사전 정의 태그는 전체 태그 목록에서 id로 이름을 찾고, 직접 추가 태그는 이름을 그대로 사용한다.
+ * 선택값이 없는 카테고리는 결과에서 제외한다.
  */
-export const getSelectedKeywordNames = (
+export const getSelectedKeywordsByCategory = (
   request: GenerateSimpleStorylinesRequest | null,
   tags: SimpleStoryTagListItemResponse[],
-): string[] => {
+): SelectedKeywordGroup[] => {
   if (!request) {
     return [];
   }
 
-  const tagNameById = new Map(
+  const tagById = new Map(
     tags
       .filter((tag) => tag.id != null && Boolean(tag.name))
-      .map((tag) => [tag.id, tag.name] as const),
+      .map((tag) => [tag.id, tag] as const),
   );
 
-  const predefinedKeywordNames = (request.selectedTagIds ?? [])
-    .map((tagId) => tagNameById.get(tagId))
-    .filter((name): name is string => Boolean(name));
-  const customKeywordNames = (request.customTags ?? [])
-    .map((tag) => tag.name)
-    .filter((name) => Boolean(name));
+  return TAG_CATEGORIES.reduce<SelectedKeywordGroup[]>(
+    (groups, { value: category, label }) => {
+      const predefinedKeywordNames = (request.selectedTagIds ?? [])
+        .map((tagId) => tagById.get(tagId))
+        .filter(
+          (tag): tag is SimpleStoryTagListItemResponse =>
+            Boolean(tag) && tag?.category === category,
+        )
+        .map((tag) => tag.name)
+        .filter((name): name is string => Boolean(name));
 
-  return [...predefinedKeywordNames, ...customKeywordNames];
+      const customKeywordNames = (request.customTags ?? [])
+        .filter((tag) => tag.category === category)
+        .map((tag) => tag.name)
+        .filter((name): name is string => Boolean(name));
+
+      const keywords = [...predefinedKeywordNames, ...customKeywordNames];
+
+      if (keywords.length > 0) {
+        groups.push({ category, label, keywords });
+      }
+
+      return groups;
+    },
+    [],
+  );
 };

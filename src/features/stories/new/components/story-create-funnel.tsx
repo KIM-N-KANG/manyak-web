@@ -19,7 +19,7 @@ export function StoryCreateFunnel() {
     step,
     shouldConfirmBack,
     storylines,
-    selectedKeywords,
+    selectedKeywordGroups,
     activeStorylineIndex,
     selectedStoryline,
     canCompleteStory,
@@ -73,7 +73,7 @@ export function StoryCreateFunnel() {
       {step === 'storyline-select' && (
         <StorylineSelectStepSection
           storylines={storylines}
-          selectedKeywords={selectedKeywords}
+          selectedKeywordGroups={selectedKeywordGroups}
           activeStorylineIndex={activeStorylineIndex}
           isRegeneratingStorylines={isGeneratingStorylines}
           hasRegenerateStorylinesError={hasGenerateStorylinesError}

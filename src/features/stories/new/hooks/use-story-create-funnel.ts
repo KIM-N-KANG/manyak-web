@@ -26,7 +26,7 @@ import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
-import { getSelectedKeywordNames } from '../utils/tag-categories';
+import { getSelectedKeywordsByCategory } from '../utils/tag-categories';
 
 const getGeneratedStorylines = (
   generationResult: GenerateSimpleStorylinesResponse | null,
@@ -120,7 +120,7 @@ export function useStoryCreateFunnel() {
   });
 
   const storylines = getGeneratedStorylines(generationResult);
-  const selectedKeywords = getSelectedKeywordNames(
+  const selectedKeywordGroups = getSelectedKeywordsByCategory(
     generationRequest,
     simpleStoryTags.data?.data ?? [],
   );
@@ -194,7 +194,7 @@ export function useStoryCreateFunnel() {
     step,
     shouldConfirmBack,
     storylines,
-    selectedKeywords,
+    selectedKeywordGroups,
     activeStorylineIndex,
     selectedStoryline,
     canCompleteStory,
