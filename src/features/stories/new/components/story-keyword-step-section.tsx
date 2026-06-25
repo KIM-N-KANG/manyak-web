@@ -4,6 +4,7 @@ import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
+import { track } from '@/lib/analytics';
 
 import { TAG_CATEGORIES } from '../constants';
 import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
@@ -79,7 +80,15 @@ export function StoryKeywordStepSection({
                 : !isCategoryComplete(activeCategory))
             }
             onClick={
-              isLastCategory ? handleGenerateStoryline : goToNextCategory
+              isLastCategory
+                ? handleGenerateStoryline
+                : () => {
+                    track('client_storyCreate_nextButton_clicked', {
+                      step_name: 'keyword',
+                      step_number: 1,
+                    });
+                    goToNextCategory();
+                  }
             }>
             {isLastCategory ? '스토리라인 만들기' : '다음'}
           </Button>

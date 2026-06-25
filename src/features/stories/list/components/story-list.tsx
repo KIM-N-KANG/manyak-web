@@ -83,7 +83,7 @@ export function StoryList() {
         {stories.map((story, index) => (
           <Fragment key={story.id}>
             <li>
-              <StoryCard story={story} />
+              <StoryCard story={story} position={index} />
             </li>
             {index < stories.length - 1 && (
               <Separator className="mx-4 data-horizontal:w-auto" />
