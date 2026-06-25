@@ -34,8 +34,8 @@ export function ChatCard({ chat }: ChatCardProps) {
         <p
           className={
             chat.lastStoryPreview
-              ? 'line-clamp-1 leading-4 text-foreground-secondary'
-              : 'line-clamp-1 leading-4 text-foreground-tertiary'
+              ? 'line-clamp-1 text-sm leading-3.5 text-foreground-secondary'
+              : 'line-clamp-1 text-sm leading-3.5 text-foreground-tertiary'
           }>
           {chat.lastStoryPreview || '채팅을 시작하고 이야기를 이어가 보세요'}
         </p>
@@ -44,21 +44,21 @@ export function ChatCard({ chat }: ChatCardProps) {
         <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon
             icon={BubbleChatIcon}
-            className="size-4"
+            className="size-3.5"
             aria-hidden="true"
           />
-          <p className="leading-4">{chat.chatCount}</p>
+          <p className="leading-3.5">{chat.chatCount}</p>
         </div>
         <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon
             icon={Calendar04Icon}
-            className="size-4"
+            className="size-3.5"
             aria-hidden="true"
           />
           <time
             dateTime={chat.updatedAt}
             title={new Date(chat.updatedAt).toLocaleString('ko-KR')}
-            className="leading-4">
+            className="leading-3.5">
             {formatRelativeDate(chat.updatedAt)}
           </time>
         </div>
