@@ -54,11 +54,7 @@ export function AddKeywordDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button
-            type="button"
-            variant="secondary"
-            className="text-foreground-secondary"
-            disabled={disabled}>
+          <Button type="button" variant="secondary" disabled={disabled}>
             <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
             키워드 추가
           </Button>
