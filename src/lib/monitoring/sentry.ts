@@ -88,11 +88,12 @@ export function recordAnalyticsBreadcrumb(
     data: payload,
   });
 
+  // 상관 태그는 client scope에 누적되므로, 현재 payload에 없는 키는 undefined로
+  // 비워 이전 화면의 값(예: 떠나온 chat_id)이 이후 에러에 남지 않게 한다.
   for (const key of CORRELATION_TAG_KEYS) {
     const value = payload[key];
+    const isTaggable = typeof value === 'string' || typeof value === 'number';
 
-    if (typeof value === 'string' || typeof value === 'number') {
-      Sentry.setTag(key, value);
-    }
+    Sentry.setTag(key, isTaggable ? value : undefined);
   }
 }

@@ -40,7 +40,15 @@ const fetchWithTimeout = async (
   const controller = new AbortController();
   const externalSignal = options.signal;
   const abortRequest = () => controller.abort(externalSignal?.reason);
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  // 타임아웃은 사용자 취소(AbortError)와 구분되도록 TimeoutError로 중단해
+  // Sentry가 실제 백엔드 지연·장애로 인식하게 한다(스펙 §AN-2-8).
+  const timeoutId = setTimeout(
+    () =>
+      controller.abort(
+        new DOMException('요청 시간이 초과되었습니다.', 'TimeoutError'),
+      ),
+    timeout,
+  );
 
   if (externalSignal?.aborted) {
     abortRequest();

@@ -128,4 +128,23 @@ describe('recordAnalyticsBreadcrumb', () => {
     // 상관 키가 아닌 turn_number는 tag로 올리지 않는다.
     expect(setTag).not.toHaveBeenCalledWith('turn_number', 3);
   });
+
+  it('payload에 없는 상관 키는 비워서 이전 화면의 값이 남지 않게 한다', () => {
+    recordAnalyticsBreadcrumb('client_chat_viewed', {
+      screen_name: 'chat',
+      chat_id: 'c1',
+    });
+
+    setTag.mockClear();
+
+    // chat_id가 없는 화면으로 이동하면 이전 chat_id가 비워져야 한다.
+    recordAnalyticsBreadcrumb('client_storyList_viewed', {
+      screen_name: 'storyList',
+    });
+
+    expect(setTag).toHaveBeenCalledWith('screen_name', 'storyList');
+    expect(setTag).toHaveBeenCalledWith('chat_id', undefined);
+    expect(setTag).toHaveBeenCalledWith('story_id', undefined);
+    expect(setTag).toHaveBeenCalledWith('creation_id', undefined);
+  });
 });
