@@ -18,7 +18,6 @@ export function StoryCreateFunnel() {
   const {
     step,
     creationId,
-    shouldConfirmBack,
     storylines,
     selectedKeywordGroups,
     activeStorylineIndex,
@@ -34,6 +33,10 @@ export function StoryCreateFunnel() {
     handleSelectStoryline,
     handleBackToStorylineSelect,
     handleCompleteStory,
+    backDialogOpen,
+    onBackDialogOpenChange,
+    handleHeaderBack,
+    handleConfirmBack,
   } = useStoryCreateFunnel();
 
   useEffect(() => {
@@ -60,7 +63,10 @@ export function StoryCreateFunnel() {
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
       <StoryCreateHeader
         step={step}
-        requiresBackConfirmation={shouldConfirmBack}
+        backDialogOpen={backDialogOpen}
+        onBackClick={handleHeaderBack}
+        onBackDialogOpenChange={onBackDialogOpenChange}
+        onConfirmBack={handleConfirmBack}
       />
 
       {step === 'keyword' && (

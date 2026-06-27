@@ -28,6 +28,7 @@ import { track } from '@/lib/analytics';
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
 import { getSelectedKeywordsByCategory } from '../utils/tag-categories';
+import { usePreventPageLeave } from './use-prevent-page-leave';
 
 const getGeneratedStorylines = (
   generationResult: GenerateSimpleStorylinesResponse | null,
@@ -49,12 +50,20 @@ export function useStoryCreateFunnel() {
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const [hasCompletionFailed, setHasCompletionFailed] = useState(false);
+  const [confirmBackDialogOpen, setConfirmBackDialogOpen] = useState(false);
   const completedStoryRef = useRef<{
     storyId: string;
     genre?: string[];
   } | null>(null);
 
   const simpleStoryTags = useGetSimpleStoryTags();
+
+  const shouldConfirmBack = step !== 'keyword';
+
+  const { confirmLeave, leaveAfterCleanup } = usePreventPageLeave({
+    enabled: shouldConfirmBack,
+    onBackAttempt: () => setConfirmBackDialogOpen(true),
+  });
 
   const failToAdditionalInfo = () => {
     setStep('additional-info');
@@ -102,7 +111,7 @@ export function useStoryCreateFunnel() {
 
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
-        router.replace(APP_PATH.CHAT_ROOM(chatId));
+        leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
       onError: () => {
         failToAdditionalInfo();
@@ -146,7 +155,6 @@ export function useStoryCreateFunnel() {
   const canCompleteStory =
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
-  const shouldConfirmBack = step !== 'keyword';
 
   const handleGenerateStoryline = (
     request: GenerateSimpleStorylinesRequest,
@@ -217,13 +225,27 @@ export function useStoryCreateFunnel() {
     });
   };
 
+  const handleHeaderBack = () => {
+    if (shouldConfirmBack) {
+      setConfirmBackDialogOpen(true);
+
+      return;
+    }
+
+    router.back();
+  };
+
+  const handleConfirmBack = () => {
+    setConfirmBackDialogOpen(false);
+    confirmLeave();
+  };
+
   return {
     step,
     creationId:
       typeof simpleCreationId === 'number'
         ? String(simpleCreationId)
         : undefined,
-    shouldConfirmBack,
     storylines,
     selectedKeywordGroups,
     activeStorylineIndex,
@@ -239,5 +261,9 @@ export function useStoryCreateFunnel() {
     handleSelectStoryline,
     handleBackToStorylineSelect,
     handleCompleteStory,
+    backDialogOpen: confirmBackDialogOpen,
+    onBackDialogOpenChange: setConfirmBackDialogOpen,
+    handleHeaderBack,
+    handleConfirmBack,
   };
 }
