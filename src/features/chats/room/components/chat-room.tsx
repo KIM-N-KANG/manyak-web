@@ -8,8 +8,6 @@ import { ListStatus } from '@/components/common/list-status';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
-import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
-import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 import { track } from '@/lib/analytics';
 
 import { useChatDetail } from '../hooks/use-chat-detail';
@@ -43,8 +41,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       });
     },
   );
-
-  useStartOnboarding(ONBOARDING_TOURS.CHAT, !isLoading && !isError);
 
   useEffect(() => {
     track('client_chat_viewed', { chat_id: chatId });

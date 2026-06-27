@@ -3,7 +3,6 @@
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
-import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
 import { track } from '@/lib/analytics';
 
 import { TAG_CATEGORIES } from '../constants';
@@ -98,7 +97,7 @@ export function StoryKeywordStepSection({
         value={activeCategory}
         onValueChange={(value) => setActiveCategory(value as TagCategory)}
         className="gap-0">
-        <StickyTabsList data-onborda={ONBOARDING_TARGET.KEYWORD_TABS}>
+        <StickyTabsList>
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
               key={value}

@@ -46,10 +46,6 @@ export type AnalyticsEventProps = {
   // feedback
   client_feedback_viewed: void;
   client_feedback_form_submitted: void;
-  // onboarding (엔트리 STORY_LIST 투어 한정)
-  client_onboarding_viewed: { step_number?: number };
-  client_onboarding_completed: void;
-  client_onboarding_skipButton_clicked: { step_number: number };
 };
 
 export type AnalyticsEventName = keyof AnalyticsEventProps;
