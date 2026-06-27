@@ -114,14 +114,16 @@ export function StorylineSelectStepSection({
         </Tabs>
       )}
 
-      {!isRegeneratingStorylines && storylines.length === 0 && (
-        <p className="px-4 py-8 text-sm text-foreground-secondary">
-          생성된 스토리라인이 없어요. 잠시 후 다시 시도해주세요
-        </p>
-      )}
+      {!isRegeneratingStorylines &&
+        !hasRegenerateStorylinesError &&
+        storylines.length === 0 && (
+          <p className="px-4 py-8 text-sm text-foreground-secondary">
+            생성된 스토리라인이 없어요. 잠시 후 다시 시도해주세요.
+          </p>
+        )}
       {hasRegenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
-          스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요
+          스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요.
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>

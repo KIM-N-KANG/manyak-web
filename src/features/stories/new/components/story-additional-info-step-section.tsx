@@ -204,7 +204,7 @@ export function StoryAdditionalInfoStepSection({
 
           {hasCompleteStoryError && (
             <StoryCreateErrorMessage>
-              스토리를 완성하지 못했어요. 다시 시도해주세요
+              스토리를 완성하지 못했어요. 잠시 후 다시 시도해주세요.
             </StoryCreateErrorMessage>
           )}
         </div>

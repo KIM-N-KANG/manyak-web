@@ -48,6 +48,7 @@ export function useStoryCreateFunnel() {
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
+  const [hasCompletionFailed, setHasCompletionFailed] = useState(false);
   const completedStoryRef = useRef<{
     storyId: string;
     genre?: string[];
@@ -55,9 +56,9 @@ export function useStoryCreateFunnel() {
 
   const simpleStoryTags = useGetSimpleStoryTags();
 
-  const failToAdditionalInfo = (message: string) => {
+  const failToAdditionalInfo = () => {
     setStep('additional-info');
-    toast.error(message);
+    setHasCompletionFailed(true);
   };
 
   const generateStorylines = useGenerateSimpleStorylines({
@@ -73,9 +74,6 @@ export function useStoryCreateFunnel() {
         setSelectedStoryline(null);
         setStep('storyline-select');
       },
-      onError: () => {
-        toast.error(TOAST_MESSAGE.STORYLINE_CREATE_FAILED);
-      },
     },
   });
   const createChat = useCreateChat({
@@ -84,7 +82,7 @@ export function useStoryCreateFunnel() {
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
-          failToAdditionalInfo(TOAST_MESSAGE.CHAT_START_FAILED);
+          failToAdditionalInfo();
 
           return;
         }
@@ -107,7 +105,7 @@ export function useStoryCreateFunnel() {
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: () => {
-        failToAdditionalInfo(TOAST_MESSAGE.CHAT_START_FAILED);
+        failToAdditionalInfo();
       },
     },
   });
@@ -116,7 +114,7 @@ export function useStoryCreateFunnel() {
     mutation: {
       onSuccess: (response) => {
         if (response.status !== 201) {
-          failToAdditionalInfo(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+          failToAdditionalInfo();
 
           return;
         }
@@ -132,7 +130,7 @@ export function useStoryCreateFunnel() {
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: () => {
-        failToAdditionalInfo(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+        failToAdditionalInfo();
       },
     },
   });
@@ -183,6 +181,7 @@ export function useStoryCreateFunnel() {
     }
 
     setSelectedStoryline(activeStoryline);
+    setHasCompletionFailed(false);
     setStep('additional-info');
   };
 
@@ -192,6 +191,8 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = (additionalInfos: string[]) => {
+    setHasCompletionFailed(false);
+
     if (createdStoryId !== null) {
       setStep('complete');
       createChat.mutate({ data: { storyId: createdStoryId } });
@@ -231,7 +232,7 @@ export function useStoryCreateFunnel() {
     isGeneratingStorylines: generateStorylines.isPending,
     hasGenerateStorylinesError: generateStorylines.isError,
     isCompletingStory: createStory.isPending || createChat.isPending,
-    hasCompleteStoryError: createStory.isError || createChat.isError,
+    hasCompleteStoryError: hasCompletionFailed,
     handleGenerateStoryline,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange: setActiveStorylineIndex,
