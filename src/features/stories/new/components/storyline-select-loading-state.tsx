@@ -1,4 +1,5 @@
 import {
+  STORYLINE_GENERATING_LOADING_HINTS,
   STORYLINE_GENERATING_LOADING_PHRASES,
   STORYLINE_SELECT_LOADING_LABEL,
 } from '../constants';
@@ -14,6 +15,7 @@ export function StorylineSelectLoadingState() {
         <StoryGeneratingLoading
           phrases={STORYLINE_GENERATING_LOADING_PHRASES}
           label="스토리라인을 구상하고 있어요"
+          hints={STORYLINE_GENERATING_LOADING_HINTS}
         />
       </div>
     </div>

@@ -1,3 +1,5 @@
+import type { RevealHint } from '@/hooks/use-revealed-hint';
+
 import type { StoryCreateStep, TagCategoryConfig } from './types';
 
 export const ADD_KEYWORD_MAX_LENGTH = 15;
@@ -104,3 +106,12 @@ export const STORY_COMPLETION_LOADING_PHRASES = [
   '스토리 써내려가는 중...',
   '문장 다듬는 중...',
 ];
+
+export const STORYLINE_GENERATING_LOADING_HINTS = [
+  { delayMs: 15000, text: '생각보다 시간이 조금 더 걸리고 있어요' },
+] as const satisfies readonly RevealHint[];
+
+export const STORY_COMPLETION_LOADING_HINTS = [
+  { delayMs: 30000, text: '생각보다 시간이 조금 더 걸리고 있어요' },
+  { delayMs: 60000, text: '거의 다 완성됐어요' },
+] as const satisfies readonly RevealHint[];
