@@ -5,6 +5,9 @@ export type StepName =
   | 'complete';
 
 export type AnalyticsEventProps = {
+  // onboarding
+  client_onboarding_viewed: void;
+  client_onboarding_createButton_clicked: void;
   // storyList
   client_storyList_viewed: void;
   client_storyList_createButton_clicked: void;
