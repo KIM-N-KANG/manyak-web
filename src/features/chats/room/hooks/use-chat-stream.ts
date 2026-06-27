@@ -49,16 +49,12 @@ export function useChatStream(
           );
         }
       }
-    } catch (caught) {
+    } catch {
       if (controller.signal.aborted) {
         return;
       }
 
-      toast.error(
-        caught instanceof Error
-          ? caught.message
-          : TOAST_MESSAGE.RESPONSE_STREAM_FAILED,
-      );
+      toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
       setStreamingTurn(null);
     } finally {
       abortRef.current = null;

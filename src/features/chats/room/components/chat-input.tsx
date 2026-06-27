@@ -55,7 +55,7 @@ export function ChatInput({
   };
 
   return (
-    <section className="px-4 py-2">
+    <section className="px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
       <form onSubmit={handleSubmit} data-onborda={ONBOARDING_TARGET.CHAT_INPUT}>
         <InputGroup className="rounded-lg">
           <InputGroupTextarea

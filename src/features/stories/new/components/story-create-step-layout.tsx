@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 import { StoryCreateStepFooter } from './story-create-step-footer';
 import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
@@ -9,6 +9,7 @@ type StoryCreateStepLayoutProps = {
   description: string;
   footer: ReactNode;
   children: ReactNode;
+  scrollAreaRef?: Ref<HTMLElement>;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
@@ -17,10 +18,13 @@ export function StoryCreateStepLayout({
   description,
   footer,
   children,
+  scrollAreaRef,
   onScroll,
 }: StoryCreateStepLayoutProps) {
   return (
-    <StoryCreateStepScrollArea onScroll={onScroll}>
+    <StoryCreateStepScrollArea
+      scrollAreaRef={scrollAreaRef}
+      onScroll={onScroll}>
       <section className="flex flex-col">
         <StoryCreateStepTitle
           titleLines={titleLines}

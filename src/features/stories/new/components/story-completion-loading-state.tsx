@@ -1,4 +1,7 @@
-import { STORY_COMPLETION_LOADING_PHRASES } from '../constants';
+import {
+  STORY_COMPLETION_LOADING_HINTS,
+  STORY_COMPLETION_LOADING_PHRASES,
+} from '../constants';
 import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryGeneratingLoading } from './story-generating-loading';
 
@@ -26,6 +29,7 @@ export function StoryCompletionLoadingState({
           <StoryGeneratingLoading
             phrases={STORY_COMPLETION_LOADING_PHRASES}
             label="스토리를 구상하고 있어요"
+            hints={STORY_COMPLETION_LOADING_HINTS}
           />
         </div>
       </section>

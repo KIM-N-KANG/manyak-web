@@ -28,6 +28,7 @@ import { track } from '@/lib/analytics';
 import type { StoryCreateStep } from '../types';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
 import { getSelectedKeywordsByCategory } from '../utils/tag-categories';
+import { usePreventPageLeave } from './use-prevent-page-leave';
 
 const getGeneratedStorylines = (
   generationResult: GenerateSimpleStorylinesResponse | null,
@@ -48,6 +49,8 @@ export function useStoryCreateFunnel() {
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
+  const [hasCompletionFailed, setHasCompletionFailed] = useState(false);
+  const [confirmBackDialogOpen, setConfirmBackDialogOpen] = useState(false);
   const completedStoryRef = useRef<{
     storyId: string;
     genre?: string[];
@@ -55,9 +58,16 @@ export function useStoryCreateFunnel() {
 
   const simpleStoryTags = useGetSimpleStoryTags();
 
-  const failToAdditionalInfo = (message: string) => {
+  const shouldConfirmBack = step !== 'keyword';
+
+  const { confirmLeave, leaveAfterCleanup } = usePreventPageLeave({
+    enabled: shouldConfirmBack,
+    onBackAttempt: () => setConfirmBackDialogOpen(true),
+  });
+
+  const failToAdditionalInfo = () => {
     setStep('additional-info');
-    toast.error(message);
+    setHasCompletionFailed(true);
   };
 
   const generateStorylines = useGenerateSimpleStorylines({
@@ -73,9 +83,6 @@ export function useStoryCreateFunnel() {
         setSelectedStoryline(null);
         setStep('storyline-select');
       },
-      onError: () => {
-        toast.error(TOAST_MESSAGE.STORYLINE_CREATE_FAILED);
-      },
     },
   });
   const createChat = useCreateChat({
@@ -84,7 +91,7 @@ export function useStoryCreateFunnel() {
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
-          failToAdditionalInfo(TOAST_MESSAGE.CHAT_START_FAILED);
+          failToAdditionalInfo();
 
           return;
         }
@@ -104,10 +111,10 @@ export function useStoryCreateFunnel() {
 
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
-        router.replace(APP_PATH.CHAT_ROOM(chatId));
+        leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
       onError: () => {
-        failToAdditionalInfo(TOAST_MESSAGE.CHAT_START_FAILED);
+        failToAdditionalInfo();
       },
     },
   });
@@ -116,7 +123,7 @@ export function useStoryCreateFunnel() {
     mutation: {
       onSuccess: (response) => {
         if (response.status !== 201) {
-          failToAdditionalInfo(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+          failToAdditionalInfo();
 
           return;
         }
@@ -132,7 +139,7 @@ export function useStoryCreateFunnel() {
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: () => {
-        failToAdditionalInfo(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+        failToAdditionalInfo();
       },
     },
   });
@@ -148,7 +155,6 @@ export function useStoryCreateFunnel() {
   const canCompleteStory =
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
-  const shouldConfirmBack = step !== 'keyword';
 
   const handleGenerateStoryline = (
     request: GenerateSimpleStorylinesRequest,
@@ -183,6 +189,7 @@ export function useStoryCreateFunnel() {
     }
 
     setSelectedStoryline(activeStoryline);
+    setHasCompletionFailed(false);
     setStep('additional-info');
   };
 
@@ -192,6 +199,8 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = (additionalInfos: string[]) => {
+    setHasCompletionFailed(false);
+
     if (createdStoryId !== null) {
       setStep('complete');
       createChat.mutate({ data: { storyId: createdStoryId } });
@@ -216,13 +225,27 @@ export function useStoryCreateFunnel() {
     });
   };
 
+  const handleHeaderBack = () => {
+    if (shouldConfirmBack) {
+      setConfirmBackDialogOpen(true);
+
+      return;
+    }
+
+    router.back();
+  };
+
+  const handleConfirmBack = () => {
+    setConfirmBackDialogOpen(false);
+    confirmLeave();
+  };
+
   return {
     step,
     creationId:
       typeof simpleCreationId === 'number'
         ? String(simpleCreationId)
         : undefined,
-    shouldConfirmBack,
     storylines,
     selectedKeywordGroups,
     activeStorylineIndex,
@@ -231,12 +254,16 @@ export function useStoryCreateFunnel() {
     isGeneratingStorylines: generateStorylines.isPending,
     hasGenerateStorylinesError: generateStorylines.isError,
     isCompletingStory: createStory.isPending || createChat.isPending,
-    hasCompleteStoryError: createStory.isError || createChat.isError,
+    hasCompleteStoryError: hasCompletionFailed,
     handleGenerateStoryline,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange: setActiveStorylineIndex,
     handleSelectStoryline,
     handleBackToStorylineSelect,
     handleCompleteStory,
+    backDialogOpen: confirmBackDialogOpen,
+    onBackDialogOpenChange: setConfirmBackDialogOpen,
+    handleHeaderBack,
+    handleConfirmBack,
   };
 }
