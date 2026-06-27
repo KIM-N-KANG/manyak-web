@@ -11,7 +11,7 @@ export function StoryCreateStepScrollArea({
   return (
     <main
       className={cn(
-        'flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-16',
+        'flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))]',
         className,
       )}
       {...props}
