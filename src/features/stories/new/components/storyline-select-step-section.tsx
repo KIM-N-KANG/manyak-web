@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +14,7 @@ import { SelectedKeywordsDrawer } from './selected-keywords-drawer';
 import { StickyTabsList } from './sticky-tabs-list';
 import { StoryCreateErrorMessage } from './story-create-error-message';
 import { StoryCreateStepLayout } from './story-create-step-layout';
+import { StorylineNavButtons } from './storyline-nav-buttons';
 import { StorylineRatingButtons } from './storyline-rating-buttons';
 import { StorylineSelectLoadingState } from './storyline-select-loading-state';
 
@@ -33,6 +36,12 @@ export function StorylineSelectStepSection({
 
   const { storylineRatings, toggleStorylineRating } = useStorylineRating();
 
+  const scrollAreaRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    scrollAreaRef.current?.scrollTo({ top: 0 });
+  }, [activeStorylineIndex]);
+
   const activeStorylineId = storylines[activeStorylineIndex]?.id;
   const activeRating =
     activeStorylineId === undefined
@@ -41,6 +50,7 @@ export function StorylineSelectStepSection({
 
   return (
     <StoryCreateStepLayout
+      scrollAreaRef={scrollAreaRef}
       titleLines={
         isRegeneratingStorylines
           ? ['스토리라인을 만들고 있어요', '잠시만 기다려 주세요']
@@ -99,15 +109,23 @@ export function StorylineSelectStepSection({
               className="p-4 pt-2">
               <div className="flex h-full flex-col gap-4">
                 <TextContent font="maruburi">{storyline.story}</TextContent>
-                <StorylineRatingButtons
-                  rating={activeRating}
-                  disabled={activeStorylineId === undefined}
-                  onToggle={(rating) => {
-                    if (activeStorylineId !== undefined) {
-                      toggleStorylineRating(activeStorylineId, rating);
-                    }
-                  }}
-                />
+                <div className="flex items-center justify-between">
+                  <StorylineRatingButtons
+                    rating={activeRating}
+                    disabled={activeStorylineId === undefined}
+                    onToggle={(rating) => {
+                      if (activeStorylineId !== undefined) {
+                        toggleStorylineRating(activeStorylineId, rating);
+                      }
+                    }}
+                  />
+                  <StorylineNavButtons
+                    canGoPrev={index > 0}
+                    canGoNext={index < storylines.length - 1}
+                    onPrev={() => onActiveStorylineIndexChange(index - 1)}
+                    onNext={() => onActiveStorylineIndexChange(index + 1)}
+                  />
+                </div>
               </div>
             </TabsContent>
           ))}
