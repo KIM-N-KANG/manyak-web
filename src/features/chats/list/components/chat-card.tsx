@@ -8,6 +8,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { ChatOptionsMenu } from '@/features/chats/components/chat-options-menu';
 import { SCREEN, track, useImpression } from '@/lib/analytics';
 import { formatRelativeDate } from '@/lib/format-date';
+import { cn } from '@/lib/utils';
 
 import type { ChatListItem } from '../types';
 
@@ -55,11 +56,12 @@ export function ChatCard({ chat, position }: ChatCardProps) {
           />
         </div>
         <p
-          className={
+          className={cn(
+            'line-clamp-1 text-sm leading-3.5',
             chat.lastStoryPreview
-              ? 'line-clamp-1 text-sm leading-3.5 text-foreground-secondary'
-              : 'line-clamp-1 text-sm leading-3.5 text-foreground-tertiary'
-          }>
+              ? 'text-foreground-secondary'
+              : 'text-foreground-tertiary',
+          )}>
           {chat.lastStoryPreview || '채팅을 시작하고 이야기를 이어가 보세요'}
         </p>
       </div>

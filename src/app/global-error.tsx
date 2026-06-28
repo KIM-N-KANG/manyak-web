@@ -7,8 +7,7 @@ import { useEffect, useState } from 'react';
 import * as Sentry from '@sentry/nextjs';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
-import { ListStatus } from '@/components/common/list-status';
-import { Button } from '@/components/ui/button';
+import { RetryListStatus } from '@/components/common/retry-list-status';
 
 type GlobalErrorProps = {
   error: Error & { digest?: string };
@@ -41,13 +40,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
       suppressHydrationWarning>
       <body className="bg-border font-sans text-foreground">
         <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
-          <ListStatus
-            title="문제가 발생했어요"
-            description="잠시 후 다시 시도해주세요">
-            <Button variant="outline" size="lg" onClick={() => reset()}>
-              다시 시도
-            </Button>
-          </ListStatus>
+          <RetryListStatus title="문제가 발생했어요" onRetry={() => reset()} />
         </div>
       </body>
     </html>

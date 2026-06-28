@@ -67,19 +67,19 @@
   --foreground: oklch(0.205 0 0);
   --foreground-secondary: oklch(0.512 0 0);
   --foreground-tertiary: oklch(0.768 0 0);
-  --card: oklch(1 0 0);
+  --card: oklch(0.985 0 0);
   --card-foreground: oklch(0.205 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.985 0 0);
   --popover-foreground: oklch(0.205 0 0);
   --primary: oklch(0.6398 0.1458 159.17);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.955 0 0);
+  --secondary: oklch(0.95 0 0);
   --secondary-foreground: oklch(0.205 0 0);
 
   /* 보조 상태 색상 */
-  --muted: oklch(0.955 0 0);
+  --muted: oklch(0.95 0 0);
   --muted-foreground: oklch(0.512 0 0);
-  --accent: oklch(0.955 0 0);
+  --accent: oklch(0.95 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.5654 0.1101 164.5);
@@ -99,9 +99,9 @@
   /* 사이드바 색상 */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.205 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.6398 0.1458 159.17);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent: oklch(0.95 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
@@ -110,7 +110,7 @@
 /* 다크 테마 변수 */
 .dark {
   /* 기본 화면 색상 */
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.205 0 0);
   --foreground: oklch(0.985 0 0);
   --foreground-secondary: oklch(0.738 0 0);
   --foreground-tertiary: oklch(0.512 0 0);
@@ -120,18 +120,18 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.6398 0.1458 159.17);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: oklch(0.235 0 0);
   --secondary-foreground: oklch(0.985 0 0);
 
   /* 보조 상태 색상 */
-  --muted: oklch(0.225 0 0);
+  --muted: oklch(0.255 0 0);
   --muted-foreground: oklch(0.8282 0.0069 106.55);
-  --accent: oklch(0.225 0 0);
+  --accent: oklch(0.255 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.5654 0.1101 164.5);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 5%);
+  --border: oklch(0.285 0 0);
+  --input: oklch(0.185 0 0);
   --ring: oklch(0.556 0 0);
 
   /* 차트 색상 */
@@ -144,11 +144,11 @@
   /* 사이드바 색상 */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.6398 0.1458 159.17);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.225 0 0);
+  --sidebar-accent: oklch(0.235 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(0.285 0 0);
   --sidebar-ring: oklch(0.556 0 0);
 }
 
@@ -180,53 +180,5 @@
 
   .scrollbar-none::-webkit-scrollbar {
     display: none;
-  }
-
-  .text-shimmer {
-    background-image: linear-gradient(
-      100deg,
-      var(--color-foreground-tertiary) 35%,
-      var(--color-foreground-secondary) 50%,
-      var(--color-foreground-tertiary) 65%
-    );
-    background-size: 200% auto;
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    animation: text-shimmer 2.5s linear infinite;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .text-shimmer {
-      animation: none;
-      background-image: none;
-      -webkit-text-fill-color: var(--color-foreground-secondary);
-      color: var(--color-foreground-secondary);
-    }
-  }
-}
-
-[data-name='onborda-overlay'] {
-  z-index: 60;
-}
-
-/*
- * 다크 모드 온보딩 dim 처리
- * dim은 onborda의 shadowOpacity(검정 0.6)로 그려지는데, 이미 어두운 다크
- * 배경을 더 어둡게 하면 깊이감이 사라진다. 다크 모드에서는 검정 대신 옅은
- * 흰색 스크림으로 주변을 살짝 띄워 스포트라이트가 도드라지게 한다.
- * box-shadow가 인라인 스타일이라 !important로 덮어쓴다.
- */
-.dark [data-name='onborda-pointer'] {
-  box-shadow: 0 0 200vw 200vh rgba(128, 128, 128, 0.4) !important;
-}
-
-@keyframes text-shimmer {
-  from {
-    background-position: 200% center;
-  }
-  to {
-    background-position: 0% center;
   }
 }

@@ -1,26 +1,25 @@
 'use client';
 
-import { Fragment, useEffect } from 'react';
+import { Fragment } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
 import { ListStatus } from '@/components/common/list-status';
+import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
-import { track } from '@/lib/analytics';
+import { useTrackOnView } from '@/lib/analytics';
 
 import { useChats } from '../hooks/use-chats';
 import { ChatCard } from './chat-card';
 import { ChatListSkeleton } from './chat-list-skeleton';
 
 export function ChatList() {
-  useEffect(() => {
-    track('client_chatList_viewed');
-  }, []);
+  useTrackOnView('client_chatList_viewed');
 
   const { chats, isLoading, isError, isEmpty, refetch } = useChats();
   const showSkeleton = useDelayedLoading(isLoading);
@@ -35,13 +34,10 @@ export function ChatList() {
 
   if (isError) {
     return (
-      <ListStatus
+      <RetryListStatus
         title="채팅을 불러오지 못했어요"
-        description="잠시 후 다시 시도해주세요">
-        <Button variant="outline" size="lg" onClick={() => refetch()}>
-          다시 시도
-        </Button>
-      </ListStatus>
+        onRetry={() => refetch()}
+      />
     );
   }
 

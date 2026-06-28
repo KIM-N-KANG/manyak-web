@@ -4,7 +4,7 @@ import type { ChatTurnResponse } from '@/api/generated/models';
 import { cn } from '@/lib/utils';
 
 import { ChatChoices } from './chat-choices';
-import { ChatMessageContent } from './chat-message-content';
+import { StoryMessageBubble, UserMessageBubble } from './chat-message-bubble';
 
 type ChatTurnItemProps = {
   turn: ChatTurnResponse;
@@ -24,14 +24,10 @@ export function ChatTurnItem({
   return (
     <div ref={ref} className={cn(reserveSpace && 'min-h-full')}>
       {turn.userInput ? (
-        <div className="bg-muted p-4">
-          <ChatMessageContent>{turn.userInput}</ChatMessageContent>
-        </div>
+        <UserMessageBubble>{turn.userInput}</UserMessageBubble>
       ) : null}
       {turn.aiOutput ? (
-        <div className="p-4">
-          <ChatMessageContent>{turn.aiOutput}</ChatMessageContent>
-        </div>
+        <StoryMessageBubble>{turn.aiOutput}</StoryMessageBubble>
       ) : null}
       {isLast && turn.choices && turn.choices.length > 0 ? (
         <ChatChoices choices={turn.choices} onPick={onPickChoice} />

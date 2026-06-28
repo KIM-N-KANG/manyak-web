@@ -4,6 +4,17 @@ export type SseEvent =
   | { type: 'completed'; aiOutput: string }
   | { type: 'error'; message?: string };
 
+const SSE_EVENT_PREFIX = 'event:';
+const SSE_DATA_PREFIX = 'data:';
+
+const SSE_FIELD = {
+  TEXT: 'text',
+  AI_OUTPUT: 'aiOutput',
+  MESSAGE: 'message',
+} as const;
+
+const normalizeNewlines = (text: string): string => text.replace(/\r\n/g, '\n');
+
 function extractField(dataStr: string, field: string): string | null {
   const trimmed = dataStr.trim();
 
@@ -18,7 +29,7 @@ function extractField(dataStr: string, field: string): string | null {
 
     return null;
   } catch {
-    return field === 'text' ? trimmed : null;
+    return field === SSE_FIELD.TEXT ? trimmed : null;
   }
 }
 
@@ -27,19 +38,19 @@ function toSseEvent(eventName: string, dataStr: string): SseEvent | null {
     case 'started':
       return { type: 'started' };
     case 'token': {
-      const content = extractField(dataStr, 'text');
+      const content = extractField(dataStr, SSE_FIELD.TEXT);
 
       return content == null ? null : { type: 'token', content };
     }
     case 'completed':
       return {
         type: 'completed',
-        aiOutput: extractField(dataStr, 'aiOutput') ?? '',
+        aiOutput: extractField(dataStr, SSE_FIELD.AI_OUTPUT) ?? '',
       };
     case 'error':
       return {
         type: 'error',
-        message: extractField(dataStr, 'message') ?? undefined,
+        message: extractField(dataStr, SSE_FIELD.MESSAGE) ?? undefined,
       };
 
     default:
@@ -53,10 +64,10 @@ function parseEventBlock(block: string): SseEvent | null {
   const dataLines: string[] = [];
 
   for (const line of lines) {
-    if (line.startsWith('event:')) {
-      eventName = line.slice('event:'.length).trim();
-    } else if (line.startsWith('data:')) {
-      dataLines.push(line.slice('data:'.length).trim());
+    if (line.startsWith(SSE_EVENT_PREFIX)) {
+      eventName = line.slice(SSE_EVENT_PREFIX.length).trim();
+    } else if (line.startsWith(SSE_DATA_PREFIX)) {
+      dataLines.push(line.slice(SSE_DATA_PREFIX.length).trim());
     }
   }
 
@@ -81,7 +92,7 @@ export async function* parseSseStream(
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      buffer = buffer.replace(/\r\n/g, '\n');
+      buffer = normalizeNewlines(buffer);
 
       let boundary = buffer.indexOf('\n\n');
 
@@ -99,7 +110,7 @@ export async function* parseSseStream(
     }
 
     buffer += decoder.decode();
-    buffer = buffer.replace(/\r\n/g, '\n');
+    buffer = normalizeNewlines(buffer);
 
     const trailing = parseEventBlock(buffer);
 

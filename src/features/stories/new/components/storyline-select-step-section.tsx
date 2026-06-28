@@ -5,7 +5,6 @@ import { useEffect, useRef } from 'react';
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
-import { ONBOARDING_TARGET } from '@/features/onboarding/constants';
 
 import { getStorylineTabLabel } from '../constants';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
@@ -89,7 +88,6 @@ export function StorylineSelectStepSection({
           onValueChange={(value) => onActiveStorylineIndexChange(Number(value))}
           className="gap-0">
           <StickyTabsList
-            data-onborda={ONBOARDING_TARGET.STORYLINE_TABS}
             rightSlot={
               <SelectedKeywordsDrawer
                 groups={selectedKeywordGroups}
