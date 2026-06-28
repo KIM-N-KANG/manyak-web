@@ -1,18 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { ListStatus } from '@/components/common/list-status';
-import { Button } from '@/components/ui/button';
+import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
-import { track } from '@/lib/analytics';
+import { useTrackOnView } from '@/lib/analytics';
 
+import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
 import { useChatStream } from '../hooks/use-chat-stream';
-import { insertEmphasisMarkers } from '../lib/insert-emphasis-markers';
 import { ChatInput } from './chat-input';
 import { ChatMessages } from './chat-messages';
 import { ChatRoomHeader } from './chat-room-header';
@@ -32,23 +31,26 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     isError,
     refetch,
   } = useChatDetail(chatId);
+  const handleStreamCompleted = async () => {
+    await refetch();
+    await queryClient.invalidateQueries({ queryKey: [CHATS_BATCH_QUERY_KEY] });
+  };
+
   const { streamingTurn, isStreaming, send } = useChatStream(
     chatId,
-    async () => {
-      await refetch();
-      await queryClient.invalidateQueries({
-        queryKey: [CHATS_BATCH_QUERY_KEY],
-      });
-    },
+    handleStreamCompleted,
   );
 
-  useEffect(() => {
-    track('client_chat_viewed', { chat_id: chatId });
-  }, [chatId]);
+  const composer = useChatComposer({
+    chatId,
+    turnCount: turns.length,
+    isStreaming,
+    onSend: send,
+  });
+
+  useTrackOnView('client_chat_viewed', { chat_id: chatId });
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [value, setValue] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   if (isLoading) {
     return (
@@ -60,63 +62,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   if (isError) {
     return (
-      <ListStatus
+      <RetryListStatus
         title="채팅을 불러오지 못했어요"
-        description="잠시 후 다시 시도해주세요">
-        <Button variant="outline" size="lg" onClick={() => refetch()}>
-          다시 시도
-        </Button>
-      </ListStatus>
+        onRetry={() => refetch()}
+      />
     );
   }
-
-  const handleSend = () => {
-    const text = value.trim();
-
-    if (!text || isStreaming) return;
-
-    track('client_chat_messageInput_submitted', {
-      chat_id: chatId,
-      turn_number: turns.length + 1,
-    });
-    setValue('');
-    void send(text);
-  };
-
-  const handlePickChoice = (text: string, position: number) => {
-    track('client_chat_choiceOption_selected', {
-      chat_id: chatId,
-      turn_number: turns.length + 1,
-      position,
-    });
-    setValue(text);
-  };
-
-  const handleInsertEmphasis = () => {
-    const element = textareaRef.current;
-
-    if (!element) return;
-
-    const {
-      value: nextValue,
-      cursorStart,
-      cursorEnd,
-    } = insertEmphasisMarkers(
-      value,
-      element.selectionStart,
-      element.selectionEnd,
-    );
-
-    setValue(nextValue);
-    requestAnimationFrame(() => {
-      element.focus();
-      element.setSelectionRange(cursorStart, cursorEnd);
-    });
-  };
-
-  const handleChange = (next: string) => {
-    setValue(next);
-  };
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -127,17 +78,17 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           turns={turns}
           suggestedInputs={suggestedInputs}
           streamingTurn={streamingTurn}
-          onPickChoice={handlePickChoice}
+          onPickChoice={composer.pickChoice}
           onHeaderVisibleChange={setIsHeaderVisible}
         />
       </div>
       <ChatInput
-        value={value}
-        onChange={handleChange}
-        onSend={handleSend}
-        onInsertEmphasis={handleInsertEmphasis}
+        value={composer.value}
+        onChange={composer.setValue}
+        onSend={composer.send}
+        onInsertEmphasis={composer.insertEmphasis}
         disabled={isStreaming}
-        textareaRef={textareaRef}
+        textareaRef={composer.textareaRef}
       />
     </div>
   );

@@ -8,10 +8,13 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
 import { useStickyScroll } from '../hooks/use-sticky-scroll';
+import { CHAT_HEADER_HEIGHT_CLASS } from '../lib/constants';
+import { resolveHeaderVisibility } from '../lib/resolve-header-visibility';
 import { ChatChoices } from './chat-choices';
-import { ChatMessageContent } from './chat-message-content';
+import { StoryMessageBubble, UserMessageBubble } from './chat-message-bubble';
 import { ChatStreamLoading } from './chat-stream-loading';
 import { ChatTurnItem } from './chat-turn-item';
 
@@ -70,14 +73,10 @@ export function ChatMessages({
 
     const current = scrollRef.current?.scrollTop ?? 0;
     const delta = current - lastScrollTopRef.current;
-    const isAtTop = current <= 8;
+    const nextVisible = resolveHeaderVisibility(current, delta);
 
-    if (isAtTop) {
-      onHeaderVisibleChange(true);
-    } else if (delta > 4) {
-      onHeaderVisibleChange(false);
-    } else if (delta < -4) {
-      onHeaderVisibleChange(true);
+    if (nextVisible !== null) {
+      onHeaderVisibleChange(nextVisible);
     }
 
     lastScrollTopRef.current = current;
@@ -91,13 +90,9 @@ export function ChatMessages({
         ref={scrollRef}
         onScroll={onScroll}
         className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
-        <div aria-hidden className="h-14 shrink-0" />
+        <div aria-hidden className={cn('shrink-0', CHAT_HEADER_HEIGHT_CLASS)} />
 
-        {prologue ? (
-          <div className="p-4">
-            <ChatMessageContent>{prologue}</ChatMessageContent>
-          </div>
-        ) : null}
+        {prologue ? <StoryMessageBubble>{prologue}</StoryMessageBubble> : null}
 
         {turns.map((turn, index) => {
           const isLast = !streamingTurn && index === lastTurnIndex;
@@ -121,16 +116,14 @@ export function ChatMessages({
 
         {streamingTurn ? (
           <div ref={streamingBlockRef} className="min-h-full">
-            <div className="bg-muted p-4">
-              <ChatMessageContent>{streamingTurn.userInput}</ChatMessageContent>
-            </div>
-            <div className="p-4">
-              {streamingTurn.output ? (
-                <ChatMessageContent>{streamingTurn.output}</ChatMessageContent>
-              ) : (
+            <UserMessageBubble>{streamingTurn.userInput}</UserMessageBubble>
+            {streamingTurn.output ? (
+              <StoryMessageBubble>{streamingTurn.output}</StoryMessageBubble>
+            ) : (
+              <div className="p-4">
                 <ChatStreamLoading />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ) : null}
       </main>

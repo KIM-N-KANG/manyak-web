@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { cn } from '@/lib/utils';
 
+import { CHAT_HEADER_HEIGHT_CLASS } from '../lib/constants';
+
 type ChatRoomHeaderProps = {
   storyTitle: string;
   isVisible: boolean;
@@ -23,7 +25,8 @@ export function ChatRoomHeader({ storyTitle, isVisible }: ChatRoomHeaderProps) {
       aria-hidden={!isVisible}
       inert={!isVisible}
       className={cn(
-        'absolute inset-x-0 top-0 z-50 flex h-14 items-center gap-1 bg-background px-1 pr-4 transition-[translate] duration-300 ease-out',
+        'absolute inset-x-0 top-0 z-50 flex items-center gap-1 bg-background px-1 pr-4 transition-[translate] duration-300 ease-out',
+        CHAT_HEADER_HEIGHT_CLASS,
         isVisible ? 'translate-y-0' : '-translate-y-full',
       )}>
       <Button
