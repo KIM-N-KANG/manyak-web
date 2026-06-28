@@ -6,13 +6,14 @@ import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
+import { ListStatus } from '@/components/common/list-status';
+import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/lib/analytics';
 
-import { ListStatus } from '../../../../components/common/list-status';
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { CreateStoryFab } from './create-story-fab';
 import { StoryCard } from './story-card';
@@ -36,13 +37,10 @@ export function StoryList() {
 
   if (isError) {
     return (
-      <ListStatus
+      <RetryListStatus
         title="스토리를 불러오지 못했어요"
-        description="잠시 후 다시 시도해주세요">
-        <Button variant="outline" size="lg" onClick={() => refetch()}>
-          다시 시도
-        </Button>
-      </ListStatus>
+        onRetry={() => refetch()}
+      />
     );
   }
 
