@@ -48,7 +48,8 @@ export function OnboardingDialog() {
             <strong className="font-semibold text-foreground">
               이 브라우저에만
             </strong>{' '}
-            저장돼요. 브라우저를 바꾸거나 방문 기록을 지우면 다시 만들어야 해요.
+            저장되어, 브라우저를 바꾸거나 방문 기록을 지우면 다시 만들어야
+            합니다.
           </div>
         </div>
 

@@ -143,7 +143,7 @@ export function ChatMessages({
           aria-label={streamingTurn ? 'AI 응답 생성 중' : '맨 아래로 이동'}
           disabled={!!streamingTurn}
           onClick={() => scrollToBottom('smooth')}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-background/50 shadow-sm backdrop-blur-md">
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-background/50 shadow-sm backdrop-blur-md disabled:opacity-100">
           {streamingTurn ? (
             <Spinner />
           ) : (
