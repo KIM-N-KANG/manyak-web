@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,23 +16,28 @@ import { useOnboardingDialog } from '../hooks/use-onboarding-dialog';
 
 export function OnboardingDialog() {
   const { open, handleStartCreate } = useOnboardingDialog();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
         showCloseButton={false}
+        initialFocus={contentRef}
         className={cn(
           'top-0 left-1/2 h-full max-h-none w-full max-w-md -translate-x-1/2 translate-y-0 rounded-none ring-0',
           'flex flex-col gap-0 p-0',
         )}>
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-y-auto px-4 pt-26 pb-4">
+        <div
+          ref={contentRef}
+          tabIndex={-1}
+          className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-y-auto px-4 pt-26 pb-4 outline-none">
           <DialogHeader className="gap-4">
             <DialogTitle className="text-2xl font-bold">
-              마냑에 오신걸 환영해요 👋
+              나만의 스토리, 바로 만들어볼까요?
             </DialogTitle>
             <DialogDescription className="text-base text-foreground">
-              키워드를 골라 나만의 스토리를 만들고, 스토리 속 주인공이 되어 AI와
-              채팅하며 스토리를 이어가는 곳이에요
+              키워드 몇 개를 고르면 AI가 스토리라인을 만들어드려요. 마음에 드는
+              스토리라인을 골라 채팅으로 바로 이어갈 수 있습니다.
             </DialogDescription>
           </DialogHeader>
 
@@ -51,7 +58,7 @@ export function OnboardingDialog() {
             size="lg"
             className="w-full"
             onClick={handleStartCreate}>
-            스토리 만들기
+            첫 스토리 만들기
           </Button>
         </div>
       </DialogContent>
