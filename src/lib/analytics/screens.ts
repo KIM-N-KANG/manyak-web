@@ -1,5 +1,4 @@
 export const SCREEN = {
-  ONBOARDING: 'onboarding',
   STORY_LIST: 'storyList',
   STORY_CREATE: 'storyCreate',
   STORY_DETAIL: 'storyDetail',

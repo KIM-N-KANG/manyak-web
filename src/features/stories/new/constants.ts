@@ -1,3 +1,5 @@
+import type { RevealHint } from '@/hooks/use-revealed-hint';
+
 import type { StoryCreateStep, TagCategoryConfig } from './types';
 
 export const ADD_KEYWORD_MAX_LENGTH = 15;
@@ -95,12 +97,32 @@ export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 
 export const STORYLINE_GENERATING_LOADING_PHRASES = [
   '선택한 키워드 살펴보는 중...',
-  '스토리라인 구상하는 중...',
-  '이야기 흐름 엮는 중...',
+  '이야기의 뼈대 잡는 중...',
+  '장면 순서 엮는 중...',
 ];
 
 export const STORY_COMPLETION_LOADING_PHRASES = [
   '입력한 정보 정리하는 중...',
-  '스토리 써내려가는 중...',
-  '문장 다듬는 중...',
+  '이야기를 문장으로 풀어내는 중...',
+  '표현을 자연스럽게 다듬는 중...',
 ];
+
+export const STORYLINE_GENERATING_LOADING_HINTS = [
+  { delayMs: 15000, text: '스토리라인을 잡는 데 시간이 조금 더 걸리고 있어요' },
+  {
+    delayMs: 30000,
+    text: '장면 흐름을 다시 맞춰보고 있어요',
+  },
+] as const satisfies readonly RevealHint[];
+
+export const STORY_COMPLETION_LOADING_HINTS = [
+  { delayMs: 15000, text: '스토리를 완성하는 데 시간이 조금 더 걸리고 있어요' },
+  {
+    delayMs: 30000,
+    text: '세계관과 마무리를 다시 살펴보고 있어요',
+  },
+  {
+    delayMs: 60000,
+    text: '거의 다 완성됐어요',
+  },
+] as const satisfies readonly RevealHint[];

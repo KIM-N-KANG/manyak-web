@@ -37,7 +37,7 @@ export function StorylineRatingButtons({
   onToggle,
 }: StorylineRatingButtonsProps) {
   return (
-    <div className="ml-auto flex items-center gap-2">
+    <div className="flex items-center gap-2">
       {RATING_BUTTONS.map((button) => {
         const isActive = rating === button.rating;
 

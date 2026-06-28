@@ -13,8 +13,8 @@ export function BottomNavigationBar() {
   return (
     <nav
       aria-label="하단 네비게이션"
-      className="fixed inset-x-0 bottom-0 z-50 mx-auto h-16 max-w-md border-t border-border bg-background">
-      <ul className="grid h-full grid-cols-3">
+      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
+      <ul className="grid h-16 grid-cols-3">
         {MAIN_NAVIGATION_ITEMS.map((item) => {
           const isActive = pathname === item.href;
 

@@ -15,10 +15,6 @@ const DEFAULT_TYPING_DELAY = 90;
 const DEFAULT_DELETING_DELAY = 50;
 const DEFAULT_PAUSE_DELAY = 1200;
 
-/**
- * 문구 배열을 한 글자씩 타이핑 → 멈춤 → 삭제 → 다음 문구로 순환하며
- * 현재 표시할 텍스트를 반환한다. 깜빡이는 커서는 표시 측에서 처리한다.
- */
 export function useTypewriter(
   phrases: string[],
   options: TypewriterOptions = {},
@@ -36,14 +32,12 @@ export function useTypewriter(
   useEffect(() => {
     if (phrases.length === 0) return;
 
-    // 완성 후 멈춤 → 삭제 시작
     if (!isDeleting && charCount === phrase.length) {
       const timer = setTimeout(() => setIsDeleting(true), pauseDelay);
 
       return () => clearTimeout(timer);
     }
 
-    // 삭제 완료 → 다음 문구
     if (isDeleting && charCount === 0) {
       const timer = setTimeout(() => {
         setIsDeleting(false);

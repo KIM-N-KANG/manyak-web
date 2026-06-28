@@ -2,8 +2,6 @@
 
 import { useEffect } from 'react';
 
-import { ONBOARDING_TOURS } from '@/features/onboarding/constants';
-import { useStartOnboarding } from '@/features/onboarding/hooks/use-onboarding-tour';
 import { track } from '@/lib/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
@@ -18,7 +16,6 @@ export function StoryCreateFunnel() {
   const {
     step,
     creationId,
-    shouldConfirmBack,
     storylines,
     selectedKeywordGroups,
     activeStorylineIndex,
@@ -34,6 +31,10 @@ export function StoryCreateFunnel() {
     handleSelectStoryline,
     handleBackToStorylineSelect,
     handleCompleteStory,
+    backDialogOpen,
+    onBackDialogOpenChange,
+    handleHeaderBack,
+    handleConfirmBack,
   } = useStoryCreateFunnel();
 
   useEffect(() => {
@@ -44,23 +45,14 @@ export function StoryCreateFunnel() {
     track('client_storyCreate_step_viewed', mapStepToSpec(step));
   }, [step]);
 
-  useStartOnboarding(ONBOARDING_TOURS.KEYWORD_SELECT, step === 'keyword');
-  useStartOnboarding(
-    ONBOARDING_TOURS.STORYLINE_SELECT,
-    step === 'storyline-select' &&
-      !isGeneratingStorylines &&
-      storylines.length > 0,
-  );
-  useStartOnboarding(
-    ONBOARDING_TOURS.ADDITIONAL_INFO,
-    step === 'additional-info' && Boolean(selectedStoryline),
-  );
-
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
       <StoryCreateHeader
         step={step}
-        requiresBackConfirmation={shouldConfirmBack}
+        backDialogOpen={backDialogOpen}
+        onBackClick={handleHeaderBack}
+        onBackDialogOpenChange={onBackDialogOpenChange}
+        onConfirmBack={handleConfirmBack}
       />
 
       {step === 'keyword' && (

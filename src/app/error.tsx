@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { ListStatus } from '@/components/common/list-status';
-import { Button } from '@/components/ui/button';
+import { RetryListStatus } from '@/components/common/retry-list-status';
 
 type ErrorProps = {
   error: Error & { digest?: string };
@@ -15,13 +14,5 @@ export default function Error({ error, reset }: ErrorProps) {
     console.error(error);
   }, [error]);
 
-  return (
-    <ListStatus
-      title="문제가 발생했어요"
-      description="잠시 후 다시 시도해주세요">
-      <Button variant="outline" size="lg" onClick={() => reset()}>
-        다시 시도
-      </Button>
-    </ListStatus>
-  );
+  return <RetryListStatus title="문제가 발생했어요" onRetry={() => reset()} />;
 }

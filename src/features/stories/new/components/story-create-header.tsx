@@ -1,10 +1,5 @@
-'use client';
-
-import { useState } from 'react';
-
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 
@@ -14,31 +9,19 @@ import { StoryCreateStepIndicator } from './story-create-step-indicator';
 
 type StoryCreateHeaderProps = {
   step: StoryCreateStep;
-  requiresBackConfirmation?: boolean;
+  backDialogOpen: boolean;
+  onBackClick: () => void;
+  onBackDialogOpenChange: (open: boolean) => void;
+  onConfirmBack: () => void;
 };
 
 export function StoryCreateHeader({
   step,
-  requiresBackConfirmation = false,
+  backDialogOpen,
+  onBackClick,
+  onBackDialogOpenChange,
+  onConfirmBack,
 }: StoryCreateHeaderProps) {
-  const router = useRouter();
-  const [confirmBackDialogOpen, setConfirmBackDialogOpen] = useState(false);
-
-  const handleBackClick = () => {
-    if (requiresBackConfirmation) {
-      setConfirmBackDialogOpen(true);
-
-      return;
-    }
-
-    router.back();
-  };
-
-  const handleConfirmBack = () => {
-    setConfirmBackDialogOpen(false);
-    router.back();
-  };
-
   return (
     <>
       <header className="sticky top-0 z-50 flex flex-col bg-background">
@@ -49,7 +32,7 @@ export function StoryCreateHeader({
               size="icon-lg"
               variant="ghost"
               aria-label="이전 페이지로 돌아가기 버튼"
-              onClick={handleBackClick}>
+              onClick={onBackClick}>
               <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
             </Button>
             <h1 className="font-semibold">스토리 만들기</h1>
@@ -60,9 +43,9 @@ export function StoryCreateHeader({
         </div>
       </header>
       <StoryCreateBackDialog
-        open={confirmBackDialogOpen}
-        onOpenChange={setConfirmBackDialogOpen}
-        onConfirm={handleConfirmBack}
+        open={backDialogOpen}
+        onOpenChange={onBackDialogOpenChange}
+        onConfirm={onConfirmBack}
       />
     </>
   );

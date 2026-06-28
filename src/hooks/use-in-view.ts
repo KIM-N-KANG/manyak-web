@@ -11,10 +11,6 @@ type UseInViewParams = {
   enabled?: boolean;
 };
 
-/**
- * 대상 요소가 스크롤 컨테이너(또는 뷰포트) 안에 보이는지 여부를 반환합니다.
- * 대상이 비동기로 마운트되는 경우 `enabled`로 관찰 시점을 제어하세요.
- */
 export function useInView({
   targetRef,
   rootRef,
