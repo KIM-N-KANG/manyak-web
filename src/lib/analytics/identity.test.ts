@@ -14,6 +14,15 @@ import {
   SESSION_ID_HEADER,
 } from './identity';
 
+// Amplitude가 저장하는 쿠키와 같은 형식(base64 → URL 인코드 → JSON)으로 만든다.
+const ampCookie = (state: { deviceId?: string; sessionId?: number }) =>
+  `AMP_test=${btoa(encodeURIComponent(JSON.stringify(state)))}`;
+
+const stubBrowser = (cookie = '') => {
+  vi.stubGlobal('window', {});
+  vi.stubGlobal('document', { cookie });
+};
+
 describe('getAnalyticsIdentityHeaders', () => {
   beforeEach(() => {
     getDeviceIdMock.mockReset();
@@ -33,8 +42,8 @@ describe('getAnalyticsIdentityHeaders', () => {
     expect(getSessionIdMock).not.toHaveBeenCalled();
   });
 
-  it('브라우저에서 device_id·session_id를 헤더로 싣는다', () => {
-    vi.stubGlobal('window', {});
+  it('SDK가 준비되면 SDK 값을 싣고 쿠키는 참조하지 않는다', () => {
+    stubBrowser(ampCookie({ deviceId: 'cookie-d', sessionId: 999 }));
     getDeviceIdMock.mockReturnValue('device-1');
     getSessionIdMock.mockReturnValue(1717777777);
 
@@ -44,8 +53,50 @@ describe('getAnalyticsIdentityHeaders', () => {
     });
   });
 
-  it('SDK 미초기화로 값이 없으면 해당 헤더를 생략한다', () => {
-    vi.stubGlobal('window', {});
+  it('SDK 미초기화 시 쿠키에서 device_id·session_id를 폴백으로 읽는다', () => {
+    stubBrowser(
+      ampCookie({ deviceId: 'cookie-device', sessionId: 1782715658700 }),
+    );
+    getDeviceIdMock.mockReturnValue(undefined);
+    getSessionIdMock.mockReturnValue(undefined);
+
+    expect(getAnalyticsIdentityHeaders()).toEqual({
+      [DEVICE_ID_HEADER]: 'cookie-device',
+      [SESSION_ID_HEADER]: '1782715658700',
+    });
+  });
+
+  it('일부 값만 비면 비는 값만 쿠키로 보완한다', () => {
+    stubBrowser(ampCookie({ deviceId: 'cookie-device', sessionId: 555 }));
+    getDeviceIdMock.mockReturnValue('sdk-device');
+    getSessionIdMock.mockReturnValue(undefined);
+
+    expect(getAnalyticsIdentityHeaders()).toEqual({
+      [DEVICE_ID_HEADER]: 'sdk-device',
+      [SESSION_ID_HEADER]: '555',
+    });
+  });
+
+  it('SDK·쿠키 모두 값이 없으면 빈 객체를 반환한다', () => {
+    stubBrowser('');
+    getDeviceIdMock.mockReturnValue(undefined);
+    getSessionIdMock.mockReturnValue(undefined);
+
+    expect(getAnalyticsIdentityHeaders()).toEqual({});
+  });
+
+  it('마케팅용 AMP_MKTG_ 쿠키는 식별자 쿠키로 쓰지 않는다', () => {
+    stubBrowser(
+      `AMP_MKTG_test=${btoa(encodeURIComponent(JSON.stringify({})))}`,
+    );
+    getDeviceIdMock.mockReturnValue(undefined);
+    getSessionIdMock.mockReturnValue(undefined);
+
+    expect(getAnalyticsIdentityHeaders()).toEqual({});
+  });
+
+  it('쿠키 파싱에 실패하면 헤더를 생략한다', () => {
+    stubBrowser('AMP_test=not-a-valid-base64-json');
     getDeviceIdMock.mockReturnValue(undefined);
     getSessionIdMock.mockReturnValue(undefined);
 
@@ -53,7 +104,7 @@ describe('getAnalyticsIdentityHeaders', () => {
   });
 
   it('session_id가 0이어도 헤더로 싣는다', () => {
-    vi.stubGlobal('window', {});
+    stubBrowser('');
     getDeviceIdMock.mockReturnValue(undefined);
     getSessionIdMock.mockReturnValue(0);
 
