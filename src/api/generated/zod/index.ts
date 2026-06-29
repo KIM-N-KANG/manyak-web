@@ -247,6 +247,55 @@ export const GetChatsByIdsBody = zod
 export const GetChatsByIdsResponse = zod.unknown();
 
 /**
+ * 유효한 refresh 토큰으로 새 access+refresh를 발급합니다. 기존 refresh는 폐기(1회용)되며, 무효·만료·이미 회전된 토큰은 401로 응답합니다.
+ * @summary refresh 토큰 회전
+ */
+
+export const RefreshBody = zod
+  .object({
+    refreshToken: zod.string().min(1).describe('발급받은 refresh 토큰'),
+  })
+  .describe('refresh 토큰 회전 요청');
+
+export const RefreshResponse = zod.unknown();
+
+/**
+ * 제시된 refresh 토큰을 폐기해 재발급(회전)을 막습니다(단일 기기 로그아웃). 멱등하므로 이미 폐기됐거나 발급된 적 없는 토큰도 204로 응답합니다. access 토큰 없이 호출할 수 있으며, 자동 첨부된 만료·위조 access 헤더로는 막히지 않습니다.
+ * @summary 로그아웃
+ */
+
+export const LogoutBody = zod
+  .object({
+    refreshToken: zod
+      .string()
+      .min(1)
+      .describe(
+        '폐기할 refresh 토큰. 단일 기기 로그아웃으로 이 토큰만 폐기되어 재발급(회전)이 막힌다.',
+      ),
+  })
+  .describe('로그아웃 요청');
+
+export const LogoutResponse = zod.void();
+
+/**
+ * Google ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
+ * @summary Google 로그인
+ */
+
+export const LoginWithGoogleBody = zod
+  .object({
+    idToken: zod
+      .string()
+      .min(1)
+      .describe(
+        'Google에서 발급받은 ID 토큰(JWT). 서버가 Google 공개키로 검증한다.',
+      ),
+  })
+  .describe('Google 로그인 요청');
+
+export const LoginWithGoogleResponse = zod.unknown();
+
+/**
  * 목록에서 선택한 이야기의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
  * @summary 이야기 상세 조회
  */
@@ -291,3 +340,9 @@ export const DeleteChatParams = zod.object({
 });
 
 export const DeleteChatResponse = zod.void();
+
+/**
+ * Authorization: Bearer <accessToken> 의 sub(공개 식별자)로 사용자를 조회합니다. 토큰이 없거나 만료·위조됐으면 401, 토큰의 사용자가 더 이상 존재하지 않으면 401로 응답합니다.
+ * @summary 현재 로그인 사용자 조회
+ */
+export const MeResponse = zod.unknown();
