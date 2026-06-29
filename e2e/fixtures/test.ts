@@ -11,4 +11,4 @@ export const test = base.extend({
 });
 
 export { expect };
-export { skipOnboarding } from './storage';
+export { seedStoryIds, skipOnboarding } from './storage';
