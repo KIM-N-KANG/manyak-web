@@ -1,3 +1,4 @@
+import { getAnalyticsIdentityHeaders } from '@/lib/analytics/identity';
 import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
 import { captureApiError } from '@/lib/monitoring/sentry';
 
@@ -10,7 +11,12 @@ export type ErrorType<ErrorData> = FetchError & {
 const API_TIMEOUT_MS = 120 * 1000;
 
 const resolveHeaders = (headers?: HeadersInit) => {
-  const resolvedHeaders = new Headers(headers);
+  // 익명 식별자 헤더를 기본값으로 깔고, 호출부가 지정한 헤더가 우선하도록 덮어쓴다.
+  const resolvedHeaders = new Headers(getAnalyticsIdentityHeaders());
+
+  new Headers(headers).forEach((value, key) => {
+    resolvedHeaders.set(key, value);
+  });
 
   if (!resolvedHeaders.has('Content-Type')) {
     resolvedHeaders.set('Content-Type', 'application/json');

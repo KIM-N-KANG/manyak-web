@@ -1,3 +1,4 @@
+import { getAnalyticsIdentityHeaders } from '@/lib/analytics/identity';
 import { captureApiError } from '@/lib/monitoring/sentry';
 
 import { FetchError } from './api-error';
@@ -79,6 +80,7 @@ const request = async <T>(
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    ...getAnalyticsIdentityHeaders(),
     ...restConfig.headers,
   };
 
