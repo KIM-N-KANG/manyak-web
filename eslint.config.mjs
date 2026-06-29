@@ -96,6 +96,14 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // E2E(Playwright) 파일은 React 코드가 아니므로 React Hook 규칙을 비활성화한다.
+    // 픽스처의 `use` 인자가 react-hooks/rules-of-hooks에 React 훅으로 오인된다.
+    files: ['e2e/**/*.ts'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+    },
+  },
 ]);
 
 export default eslintConfig;
