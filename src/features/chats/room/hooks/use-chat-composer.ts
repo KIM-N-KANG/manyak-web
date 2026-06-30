@@ -20,26 +20,46 @@ export function useChatComposer({
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const submit = (text: string) => {
+    track('client_chat_messageInput_submitted', {
+      chat_id: chatId,
+      turn_number: turnCount + 1,
+    });
+    onSend(text);
+  };
+
   const send = () => {
     const text = value.trim();
 
     if (!text || isStreaming) return;
 
-    track('client_chat_messageInput_submitted', {
-      chat_id: chatId,
-      turn_number: turnCount + 1,
-    });
     setValue('');
-    onSend(text);
+    submit(text);
   };
 
-  const pickChoice = (text: string, position: number) => {
+  const sendChoice = (text: string, position: number) => {
+    const trimmed = text.trim();
+
+    if (!trimmed || isStreaming) return;
+
     track('client_chat_choiceOption_selected', {
       chat_id: chatId,
       turn_number: turnCount + 1,
       position,
     });
+    submit(trimmed);
+  };
+
+  const fillChoice = (text: string) => {
     setValue(text);
+    requestAnimationFrame(() => {
+      const element = textareaRef.current;
+
+      if (!element) return;
+
+      element.focus();
+      element.setSelectionRange(text.length, text.length);
+    });
   };
 
   const insertEmphasis = () => {
@@ -64,5 +84,13 @@ export function useChatComposer({
     });
   };
 
-  return { value, setValue, textareaRef, send, pickChoice, insertEmphasis };
+  return {
+    value,
+    setValue,
+    textareaRef,
+    send,
+    sendChoice,
+    fillChoice,
+    insertEmphasis,
+  };
 }

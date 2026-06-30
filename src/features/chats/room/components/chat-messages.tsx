@@ -25,7 +25,8 @@ type ChatMessagesProps = {
   turns: ChatTurnResponse[];
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
-  onPickChoice: (text: string, position: number) => void;
+  onSendChoice: (text: string, position: number) => void;
+  onFillChoice: (text: string) => void;
   onHeaderVisibleChange: (isVisible: boolean) => void;
 };
 
@@ -34,7 +35,8 @@ export function ChatMessages({
   turns,
   suggestedInputs,
   streamingTurn,
-  onPickChoice,
+  onSendChoice,
+  onFillChoice,
   onHeaderVisibleChange,
 }: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -105,13 +107,18 @@ export function ChatMessages({
               turn={turn}
               isLast={isLast}
               reserveSpace={reserveSpace}
-              onPickChoice={onPickChoice}
+              onSendChoice={onSendChoice}
+              onFillChoice={onFillChoice}
             />
           );
         })}
 
         {turns.length === 0 && !streamingTurn ? (
-          <ChatChoices choices={suggestedInputs} onPick={onPickChoice} />
+          <ChatChoices
+            choices={suggestedInputs}
+            onSend={onSendChoice}
+            onFill={onFillChoice}
+          />
         ) : null}
 
         {streamingTurn ? (

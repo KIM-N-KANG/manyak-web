@@ -10,7 +10,8 @@ type ChatTurnItemProps = {
   turn: ChatTurnResponse;
   isLast: boolean;
   reserveSpace?: boolean;
-  onPickChoice: (text: string, position: number) => void;
+  onSendChoice: (text: string, position: number) => void;
+  onFillChoice: (text: string) => void;
   ref?: Ref<HTMLDivElement>;
 };
 
@@ -18,7 +19,8 @@ export function ChatTurnItem({
   turn,
   isLast,
   reserveSpace,
-  onPickChoice,
+  onSendChoice,
+  onFillChoice,
   ref,
 }: ChatTurnItemProps) {
   return (
@@ -30,7 +32,11 @@ export function ChatTurnItem({
         <StoryMessageBubble>{turn.aiOutput}</StoryMessageBubble>
       ) : null}
       {isLast && turn.choices && turn.choices.length > 0 ? (
-        <ChatChoices choices={turn.choices} onPick={onPickChoice} />
+        <ChatChoices
+          choices={turn.choices}
+          onSend={onSendChoice}
+          onFill={onFillChoice}
+        />
       ) : null}
     </div>
   );
