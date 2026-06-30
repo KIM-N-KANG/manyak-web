@@ -140,7 +140,7 @@ export function StoryKeywordStepSection({
         )}
       </Tabs>
       {hasGenerateStorylineError && (
-        <StoryCreateErrorMessage>
+        <StoryCreateErrorMessage className="px-4">
           스토리라인을 만들지 못했어요. 잠시 후 다시 시도해주세요.
         </StoryCreateErrorMessage>
       )}
