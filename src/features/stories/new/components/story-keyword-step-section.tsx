@@ -116,7 +116,10 @@ export function StoryKeywordStepSection({
               selectedCustomKeywordIdsByCategory[category];
 
             return (
-              <TabsContent key={category} value={category} className="p-4 pt-2">
+              <TabsContent
+                key={category}
+                value={category}
+                className="p-4 pt-2 pb-6">
                 <StoryKeywordCategoryPanel
                   category={category}
                   label={label}

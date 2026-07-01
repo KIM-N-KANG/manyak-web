@@ -104,9 +104,9 @@ export function StorylineSelectStepSection({
             <TabsContent
               key={storyline.id ?? index}
               value={String(index)}
-              className="p-4 pt-2">
+              className="p-4 pt-2 pb-6">
               <div className="flex h-full flex-col gap-4">
-                <TextContent font="maruburi">{storyline.story}</TextContent>
+                <TextContent>{storyline.story}</TextContent>
                 <div className="flex items-center justify-between">
                   <StorylineRatingButtons
                     rating={activeRating}
@@ -138,7 +138,7 @@ export function StorylineSelectStepSection({
           </p>
         )}
       {hasRegenerateStorylinesError && (
-        <StoryCreateErrorMessage className="px-4">
+        <StoryCreateErrorMessage className="px-4 pb-6">
           스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요.
         </StoryCreateErrorMessage>
       )}
