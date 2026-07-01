@@ -40,13 +40,13 @@ export function SelectedStorylineContent({
         ref={contentRef}
         className={cn(
           'relative overflow-hidden transition-[max-height] duration-300 ease-in-out',
-          isCollapsed ? 'max-h-[2lh]' : '',
+          isCollapsed ? 'max-h-lh' : '',
         )}>
-        <TextContent font="maruburi">{story}</TextContent>
+        <TextContent>{story}</TextContent>
         {isCollapsed && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-muted to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-lh bg-linear-to-t from-muted to-transparent"
           />
         )}
       </div>

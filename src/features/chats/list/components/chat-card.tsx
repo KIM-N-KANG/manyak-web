@@ -30,9 +30,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
   });
 
   return (
-    <article
-      ref={impressionRef}
-      className="relative flex flex-col gap-2 px-4 py-2">
+    <article ref={impressionRef} className="relative flex flex-col gap-1 p-4">
       <Link
         href={APP_PATH.CHAT_ROOM(chat.id)}
         aria-label={`${chat.storyTitle} 채팅 보기`}
@@ -46,9 +44,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
       />
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="line-clamp-1 leading-6 font-semibold">
-            {chat.storyTitle}
-          </p>
+          <p className="line-clamp-1 font-semibold">{chat.storyTitle}</p>
           <ChatOptionsMenu
             chatId={chat.id}
             size="icon-xs"
@@ -72,7 +68,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
             className="size-3.5"
             aria-hidden="true"
           />
-          <p className="leading-3.5">{chat.chatCount}</p>
+          <p>{chat.chatCount}</p>
         </div>
         <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon
@@ -82,8 +78,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
           />
           <time
             dateTime={chat.updatedAt}
-            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}
-            className="leading-3.5">
+            title={new Date(chat.updatedAt).toLocaleString('ko-KR')}>
             {formatRelativeDate(chat.updatedAt)}
           </time>
         </div>

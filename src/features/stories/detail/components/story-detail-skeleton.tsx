@@ -35,19 +35,22 @@ export function StoryDetailSkeleton() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         <Skeleton className="h-7 w-3/12" />
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Skeleton className="h-3.5 w-2/12" />
-            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-6 w-2/12" />
+            <Skeleton className="h-4 w-5/12" />
           </div>
           <div className="flex flex-col gap-2">
-            <Skeleton className="h-3.5 w-2/12" />
-            <Skeleton className="h-20 w-full rounded-md" />
+            <Skeleton className="h-6 w-2/12" />
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-9/12" />
+            </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Skeleton className="h-3.5 w-2/12" />
+            <Skeleton className="h-6 w-3/12" />
             <Skeleton className="h-20 w-full rounded-md" />
           </div>
         </div>

@@ -2,7 +2,6 @@ import type { Ref } from 'react';
 
 import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
-import { Label } from '@/components/ui/label';
 
 import { StoryDetailTags } from './story-detail-tags';
 
@@ -36,38 +35,32 @@ export function StoryInfoSection({ story, titleRef }: StoryInfoSectionProps) {
 
       {story.description && (
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">상세 설명</h2>
+          <h2 className="text-lg font-bold">주요 내용</h2>
           <TextContent>{story.description}</TextContent>
         </div>
       )}
 
       {story.startSetting && (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">시작 상황</h2>
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-bold">채팅 시작 상황</h2>
           <div className="flex flex-col gap-4">
             {story.startSetting.name && (
               <div className="flex flex-col gap-2">
-                <Label>상황 이름</Label>
-                <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <TextContent size="sm">{story.startSetting.name}</TextContent>
-                </div>
+                <h3 className="font-semibold">상황 이름</h3>
+                <TextContent>{story.startSetting.name}</TextContent>
               </div>
             )}
             {story.startSetting.startSituation && (
               <div className="flex flex-col gap-2">
-                <Label>상황 설명</Label>
-                <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <TextContent size="sm">
-                    {story.startSetting.startSituation}
-                  </TextContent>
-                </div>
+                <h3 className="font-semibold">상황 설명</h3>
+                <TextContent>{story.startSetting.startSituation}</TextContent>
               </div>
             )}
             {story.startSetting.prologue && (
               <div className="flex flex-col gap-2">
-                <Label>채팅 프롤로그</Label>
+                <h3 className="font-semibold">채팅 첫 메시지</h3>
                 <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <TextContent size="sm">
+                  <TextContent size="sm" font="maruburi">
                     {story.startSetting.prologue}
                   </TextContent>
                 </div>

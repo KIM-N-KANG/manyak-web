@@ -70,12 +70,13 @@ export function ChatInput({
           <InputGroupAddon align="block-end">
             <Button
               type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label="강조 표시 추가"
+              variant="secondary"
+              size="sm"
+              aria-label="상황 묘사 추가"
               disabled={disabled}
               onClick={onInsertEmphasis}>
               <HugeiconsIcon icon={Asterisk02Icon} aria-hidden="true" />
+              상황 추가
             </Button>
             <Button
               type="submit"

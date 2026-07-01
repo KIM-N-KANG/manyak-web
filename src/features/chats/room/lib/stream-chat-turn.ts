@@ -1,5 +1,6 @@
 import { getStreamChatTurnUrl } from '@/api/generated/endpoints/chats/chats';
 import type { ContinueChatRequest } from '@/api/generated/models';
+import { getAnalyticsIdentityHeaders } from '@/lib/analytics/identity';
 import { resolveApiProxyUrl } from '@/lib/custom-fetch';
 
 export async function streamChatTurnRaw(
@@ -14,6 +15,7 @@ export async function streamChatTurnRaw(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
+        ...getAnalyticsIdentityHeaders(),
       },
       body: JSON.stringify(body),
       signal,

@@ -67,7 +67,7 @@ export function StoryList() {
 
   return (
     <>
-      <ul className="flex flex-col gap-2 py-4">
+      <ul className="flex flex-col">
         {stories.map((story, index) => (
           <Fragment key={story.id}>
             <li>

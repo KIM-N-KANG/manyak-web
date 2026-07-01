@@ -11,6 +11,7 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
+import { useCreatedStoryIds } from '@/features/stories/list/hooks/use-created-story-ids';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useTrackOnView } from '@/lib/analytics';
 
@@ -22,6 +23,8 @@ export function ChatList() {
   useTrackOnView('client_chatList_viewed');
 
   const { chats, isLoading, isError, isEmpty, refetch } = useChats();
+  const storyIds = useCreatedStoryIds();
+  const hasStories = (storyIds?.length ?? 0) > 0;
   const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) {
@@ -45,20 +48,33 @@ export function ChatList() {
     return (
       <ListStatus
         title="아직 진행중인 채팅이 없어요"
-        description="스토리를 만든 후 채팅으로 이야기를 이어가보세요">
-        <Button
-          nativeButton={false}
-          render={<Link href={APP_PATH.CREATOR.STORY} />}
-          size="lg">
-          <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-          <span>스토리 만들기</span>
-        </Button>
+        description={
+          hasStories
+            ? '스토리를 선택해서 채팅으로 이어가보세요'
+            : '스토리를 만든 후 채팅으로 이야기를 이어가보세요'
+        }>
+        {hasStories ? (
+          <Button
+            nativeButton={false}
+            render={<Link href={APP_PATH.MAIN.STORIES} />}
+            size="lg">
+            스토리 목록으로 가기
+          </Button>
+        ) : (
+          <Button
+            nativeButton={false}
+            render={<Link href={APP_PATH.CREATOR.STORY} />}
+            size="lg">
+            <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
+            <span>스토리 만들기</span>
+          </Button>
+        )}
       </ListStatus>
     );
   }
 
   return (
-    <ul className="flex flex-col gap-2 py-4">
+    <ul className="flex flex-col">
       {chats.map((chat, index) => (
         <Fragment key={chat.id}>
           <li>
