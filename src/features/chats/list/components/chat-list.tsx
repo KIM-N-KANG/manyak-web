@@ -74,7 +74,7 @@ export function ChatList() {
   }
 
   return (
-    <ul className="flex flex-col gap-2 py-4">
+    <ul className="flex flex-col">
       {chats.map((chat, index) => (
         <Fragment key={chat.id}>
           <li>

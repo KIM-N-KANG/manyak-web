@@ -25,13 +25,13 @@ export function ChatRoomHeader({ storyTitle, isVisible }: ChatRoomHeaderProps) {
       aria-hidden={!isVisible}
       inert={!isVisible}
       className={cn(
-        'absolute inset-x-0 top-0 z-50 flex items-center gap-1 bg-background px-1 pr-4 transition-[translate] duration-300 ease-out',
+        'absolute inset-x-0 top-0 z-50 flex items-center gap-2 bg-background px-2 pr-4 transition-[translate] duration-300 ease-out',
         CHAT_HEADER_HEIGHT_CLASS,
         isVisible ? 'translate-y-0' : '-translate-y-full',
       )}>
       <Button
         type="button"
-        size="icon-lg"
+        size="icon"
         variant="ghost"
         aria-label="채팅 목록으로 돌아가기 버튼"
         onClick={goBack}>

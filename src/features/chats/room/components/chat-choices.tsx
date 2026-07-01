@@ -40,7 +40,7 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
             type="button"
             variant="secondary"
             onClick={() => onSend(choice, index)}
-            className="h-auto min-h-10 w-5/6 justify-start text-left font-maruburi font-normal whitespace-normal">
+            className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi font-normal whitespace-normal">
             <span>
               {parseTextSegments(choice).map((segment, segmentIndex) => (
                 <span
