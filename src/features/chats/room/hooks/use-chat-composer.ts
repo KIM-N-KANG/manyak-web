@@ -47,6 +47,7 @@ export function useChatComposer({
       turn_number: turnCount + 1,
       position,
     });
+    setValue('');
     submit(trimmed);
   };
 
