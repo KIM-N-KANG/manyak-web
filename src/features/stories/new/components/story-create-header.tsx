@@ -25,11 +25,11 @@ export function StoryCreateHeader({
   return (
     <>
       <header className="sticky top-0 z-50 flex flex-col bg-background">
-        <div className="flex h-14 items-center pr-4 pl-1">
-          <div className="flex items-center gap-1">
+        <div className="flex h-14 items-center pr-4 pl-2">
+          <div className="flex items-center gap-2">
             <Button
               type="button"
-              size="icon-lg"
+              size="icon"
               variant="ghost"
               aria-label="이전 페이지로 돌아가기 버튼"
               onClick={onBackClick}>

@@ -13,7 +13,7 @@ export function ChatMessageContent({
   return (
     <p
       className={cn(
-        'font-maruburi text-base leading-loose whitespace-pre-wrap',
+        'font-maruburi text-base leading-loose break-words whitespace-pre-wrap',
         className,
       )}>
       {parseTextSegments(children ?? '').map((segment, segmentIndex) => (

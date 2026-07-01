@@ -23,10 +23,10 @@ export function StoryDetailHeader({
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center gap-1 bg-background px-1">
+    <header className="sticky top-0 z-50 flex h-14 items-center gap-2 bg-background px-2">
       <Button
         type="button"
-        size="icon-lg"
+        size="icon"
         variant="ghost"
         aria-label="이전 페이지로 돌아가기 버튼"
         onClick={() => router.back()}>
@@ -44,7 +44,7 @@ export function StoryDetailHeader({
 
       <StoryOptionsMenu
         storyId={storyId}
-        size="icon-lg"
+        size="icon"
         onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STORIES)}
       />
     </header>

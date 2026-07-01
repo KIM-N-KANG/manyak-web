@@ -146,7 +146,7 @@ export function StoryAdditionalInfoStepSection({
 
           <section
             aria-labelledby="additional-info-label"
-            className="flex flex-col gap-2 p-4">
+            className="flex flex-col gap-2 p-4 pb-6">
             <div className="flex items-baseline gap-1">
               <Label>추가 정보</Label>
               <p className="text-sm text-foreground-secondary">
@@ -200,7 +200,7 @@ export function StoryAdditionalInfoStepSection({
           </section>
 
           {hasCompleteStoryError && (
-            <StoryCreateErrorMessage>
+            <StoryCreateErrorMessage className="px-4 pb-6">
               스토리를 완성하지 못했어요. 잠시 후 다시 시도해주세요.
             </StoryCreateErrorMessage>
           )}

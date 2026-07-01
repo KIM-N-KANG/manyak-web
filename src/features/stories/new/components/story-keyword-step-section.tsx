@@ -116,7 +116,10 @@ export function StoryKeywordStepSection({
               selectedCustomKeywordIdsByCategory[category];
 
             return (
-              <TabsContent key={category} value={category} className="p-4 pt-2">
+              <TabsContent
+                key={category}
+                value={category}
+                className="p-4 pt-2 pb-6">
                 <StoryKeywordCategoryPanel
                   category={category}
                   label={label}
@@ -140,7 +143,7 @@ export function StoryKeywordStepSection({
         )}
       </Tabs>
       {hasGenerateStorylineError && (
-        <StoryCreateErrorMessage>
+        <StoryCreateErrorMessage className="px-4">
           스토리라인을 만들지 못했어요. 잠시 후 다시 시도해주세요.
         </StoryCreateErrorMessage>
       )}

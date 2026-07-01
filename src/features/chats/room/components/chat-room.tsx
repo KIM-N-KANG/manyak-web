@@ -78,7 +78,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           turns={turns}
           suggestedInputs={suggestedInputs}
           streamingTurn={streamingTurn}
-          onPickChoice={composer.pickChoice}
+          onSendChoice={composer.sendChoice}
+          onFillChoice={composer.fillChoice}
           onHeaderVisibleChange={setIsHeaderVisible}
         />
       </div>

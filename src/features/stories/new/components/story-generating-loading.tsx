@@ -23,26 +23,28 @@ export function StoryGeneratingLoading({
   return (
     <div className="flex flex-col">
       <Marker role="status">
-        <MarkerContent className="min-h-lh shimmer" aria-label={label}>
+        <MarkerContent className="min-h-lh" aria-label={label}>
           {text}
         </MarkerContent>
       </Marker>
 
       <div aria-live="polite" className="flex flex-col">
-        {revealedHints.map((hint) => (
-          <div
-            key={hint.delayMs}
-            className="mt-4 flex animate-in flex-col gap-4 duration-500 fade-in">
-            <Marker variant="separator">
+        {revealedHints.map(({ hint, isTextRevealed }) => (
+          <div key={hint.delayMs} className="mt-4 flex flex-col gap-4">
+            <Marker
+              variant="separator"
+              className="animate-in duration-500 fade-in">
               <MarkerContent className="text-foreground-tertiary">
                 {Math.round(hint.delayMs / 1000)}초 지남
               </MarkerContent>
             </Marker>
-            <Marker>
-              <MarkerContent className="text-foreground-tertiary">
-                {hint.text}
-              </MarkerContent>
-            </Marker>
+            {isTextRevealed && (
+              <Marker className="animate-in duration-500 fade-in">
+                <MarkerContent className="text-foreground-tertiary">
+                  {hint.text}
+                </MarkerContent>
+              </Marker>
+            )}
           </div>
         ))}
       </div>
