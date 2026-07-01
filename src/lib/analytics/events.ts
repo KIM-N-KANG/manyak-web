@@ -1,3 +1,5 @@
+import type { SimpleStoryTagListItemResponseCategory } from '@/api/generated/models';
+
 export type StepName =
   | 'keyword'
   | 'storylineSelect'
@@ -16,9 +18,10 @@ export type AnalyticsEventProps = {
   // storyCreate
   client_storyCreate_viewed: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
-  client_storyCreate_nextButton_clicked: {
-    step_name: StepName;
-    step_number: number;
+  client_storyCreate_keywordCategory_selected: {
+    from_category: SimpleStoryTagListItemResponseCategory;
+    to_category: SimpleStoryTagListItemResponseCategory;
+    direction: 'forward' | 'backward';
   };
   client_storyCreate_storyGeneration_requested: void;
   client_storyCreate_storylineOption_selected: {
