@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { ToggleChip } from '@/components/ui/toggle-chip';
+import { track } from '@/lib/analytics';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,
@@ -59,6 +60,7 @@ export function StoryAdditionalInfoStepSection({
   >(() => new Set());
 
   const toggleRecommendation = (recommendation: string, pressed: boolean) => {
+    track('client_storyCreate_recommendedInfo_clicked', { selected: pressed });
     setSelectedRecommendations((previous) => {
       const next = new Set(previous);
 

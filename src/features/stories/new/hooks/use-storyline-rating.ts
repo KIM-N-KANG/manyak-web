@@ -9,6 +9,7 @@ import {
   useRateStoryline,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { track } from '@/lib/analytics';
 
 import { STORYLINE_RATING_SYNC_DEBOUNCE_MS } from '../constants';
 import type { StorylineRating } from '../types';
@@ -112,6 +113,12 @@ export function useStorylineRating() {
   ) => {
     const current = desiredRatingsRef.current[storylineId];
     const nextRating = current === rating ? undefined : rating;
+
+    track('client_storyCreate_storylineRating_clicked', {
+      storyline_id: String(storylineId),
+      rating,
+      active: nextRating !== undefined,
+    });
 
     desiredRatingsRef.current[storylineId] = nextRating;
     setStorylineRatings((prev) => {

@@ -2,13 +2,20 @@
 
 import { type ChangeEvent, type SubmitEvent, useState } from 'react';
 
+import type { SimpleStoryCustomTagRequestCategory } from '@/api/generated/models';
+import { track } from '@/lib/analytics';
+
 import { ADD_KEYWORD_MAX_LENGTH } from '../constants';
 
 type UseAddKeywordDialogArgs = {
+  category: SimpleStoryCustomTagRequestCategory;
   onAddKeyword: (keyword: string) => void;
 };
 
-export function useAddKeywordDialog({ onAddKeyword }: UseAddKeywordDialogArgs) {
+export function useAddKeywordDialog({
+  category,
+  onAddKeyword,
+}: UseAddKeywordDialogArgs) {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
 
@@ -25,6 +32,7 @@ export function useAddKeywordDialog({ onAddKeyword }: UseAddKeywordDialogArgs) {
       return;
     }
 
+    track('client_storyCreate_addKeyword_submitted', { category });
     onAddKeyword(trimmedKeyword);
     setKeyword('');
     setOpen(false);

@@ -48,7 +48,7 @@ export function AddKeywordDialog({
     handleKeywordChange,
     handleSubmit,
     isSubmitDisabled,
-  } = useAddKeywordDialog({ onAddKeyword });
+  } = useAddKeywordDialog({ category, onAddKeyword });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

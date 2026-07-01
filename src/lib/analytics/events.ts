@@ -29,6 +29,29 @@ export type AnalyticsEventProps = {
     position?: number;
   };
   client_storyCreate_selectedKeywordsButton_clicked: { creation_id: string };
+  client_storyCreate_addKeyword_submitted: {
+    category: SimpleStoryTagListItemResponseCategory;
+  };
+  client_storyCreate_regenerateButton_clicked: { creation_id: string };
+  client_storyCreate_storylineTab_selected: {
+    creation_id: string;
+    position: number;
+  };
+  client_storyCreate_storylineRating_clicked: {
+    storyline_id: string;
+    rating: 'GOOD' | 'BAD';
+    active: boolean;
+  };
+  client_storyCreate_backToStorylineButton_clicked: void;
+  client_storyCreate_recommendedInfo_clicked: { selected: boolean };
+  client_storyCreate_additionalInfoAddButton_clicked: void;
+  client_storyCreate_additionalInfoRemoveButton_clicked: void;
+  client_storyCreate_completeButton_clicked: void;
+  client_storyCreate_completeError_shown: { stage: 'story' | 'chat' };
+  client_storyCreate_exitButton_clicked: {
+    step_name: StepName;
+    step_number: number;
+  };
   client_storyCreate_completed: {
     story_id: string;
     chat_id: string;
