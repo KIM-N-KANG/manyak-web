@@ -1,6 +1,6 @@
 'use client';
 
-import { SidebarRightIcon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { LayoutAlignRightIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 
 import { type ChatInputMode } from '../hooks/use-chat-input-mode';
 
@@ -40,6 +41,8 @@ export function ChatSettingsDrawer({
   mode,
   onModeChange,
 }: ChatSettingsDrawerProps) {
+  const container = useAppFrameContainer();
+
   return (
     <Drawer direction="right">
       <DrawerTrigger asChild>
@@ -48,10 +51,13 @@ export function ChatSettingsDrawer({
           size="icon"
           variant="ghost"
           aria-label="채팅 설정 열기">
-          <HugeiconsIcon icon={SidebarRightIcon} aria-hidden="true" />
+          <HugeiconsIcon icon={LayoutAlignRightIcon} aria-hidden="true" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent
+        container={container}
+        className="absolute"
+        overlayClassName="absolute">
         <DrawerHeader>
           <DrawerTitle>채팅 설정</DrawerTitle>
         </DrawerHeader>

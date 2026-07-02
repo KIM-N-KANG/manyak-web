@@ -8,6 +8,7 @@ import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { APP_FRAME_ID } from '@/constants/app-frame';
 
 export const metadata: Metadata = {
   title: '마냑',
@@ -52,7 +53,9 @@ export default function RootLayout({
           <QueryProvider>
             <MotionProvider>
               <ThemeProvider>
-                <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                <div
+                  id={APP_FRAME_ID}
+                  className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                   {children}
                 </div>
                 <Toaster />
