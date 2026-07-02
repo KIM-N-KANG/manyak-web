@@ -96,14 +96,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           onHeaderVisibleChange={setIsHeaderVisible}
         />
       </div>
-      <ChatInput
-        value={composer.value}
-        onChange={composer.setValue}
-        onSend={composer.send}
-        onInsertEmphasis={composer.insertEmphasis}
-        disabled={isStreaming}
-        textareaRef={composer.textareaRef}
-      />
+      <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
     </div>
   );
 }
