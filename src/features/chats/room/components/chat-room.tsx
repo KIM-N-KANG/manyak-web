@@ -11,6 +11,7 @@ import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
+import { useChatInputMode } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
 import { ChatInput } from './chat-input';
 import { ChatMessages } from './chat-messages';
@@ -41,10 +42,13 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     handleStreamCompleted,
   );
 
+  const { mode } = useChatInputMode();
+
   const composer = useChatComposer({
     chatId,
     turnCount: turns.length,
     isStreaming,
+    inputMode: mode,
     onSend: send,
   });
 
