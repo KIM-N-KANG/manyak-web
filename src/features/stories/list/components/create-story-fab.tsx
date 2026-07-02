@@ -6,8 +6,8 @@ import Link from 'next/link';
 
 import { useMainScroll } from '@/app/(main)/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
-import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
+import { track } from '@/observability/analytics';
 
 export function CreateStoryFab() {
   const { hasScrolled } = useMainScroll();

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { CreateStoryFab } from './create-story-fab';

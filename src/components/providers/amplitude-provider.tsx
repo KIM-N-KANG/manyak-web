@@ -8,8 +8,8 @@ import {
   ANALYTICS_API_KEY,
   APP_VERSION,
   IS_ANALYTICS_ENABLED,
-} from '@/lib/analytics/config';
-import { identifyUser } from '@/lib/monitoring/sentry';
+} from '@/observability/analytics/config';
+import { identifyUser } from '@/observability/monitoring/sentry';
 
 let initialized = false;
 

@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 import { useCreatedStoryIds } from '@/features/stories/list/hooks/use-created-story-ids';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
-import { useTrackOnView } from '@/lib/analytics';
+import { useTrackOnView } from '@/observability/analytics';
 
 import { useChats } from '../hooks/use-chats';
 import { ChatCard } from './chat-card';

@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
-import { track, useTrackOnView } from '@/lib/analytics';
+import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';

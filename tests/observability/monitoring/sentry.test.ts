@@ -18,7 +18,7 @@ import {
   dropRecoverableApiError,
   identifyUser,
   recordAnalyticsBreadcrumb,
-} from '@/lib/monitoring/sentry';
+} from '@/observability/monitoring/sentry';
 
 function abortError() {
   const error = new Error('aborted');

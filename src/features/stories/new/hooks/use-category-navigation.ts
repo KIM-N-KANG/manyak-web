@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { TAG_CATEGORIES } from '../constants';
 import type { TagCategory } from '../types';

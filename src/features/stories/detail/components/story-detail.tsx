@@ -6,7 +6,7 @@ import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { StoryDetailCta } from './story-detail-cta';
 import { StoryDetailHeader } from './story-detail-header';

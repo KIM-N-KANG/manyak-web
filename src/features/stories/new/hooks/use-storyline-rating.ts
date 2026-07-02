@@ -9,7 +9,7 @@ import {
   useRateStoryline,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { STORYLINE_RATING_SYNC_DEBOUNCE_MS } from '../constants';
 import type { StorylineRating } from '../types';

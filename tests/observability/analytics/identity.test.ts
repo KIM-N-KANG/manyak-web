@@ -12,7 +12,7 @@ import {
   DEVICE_ID_HEADER,
   getAnalyticsIdentityHeaders,
   SESSION_ID_HEADER,
-} from '@/lib/analytics/identity';
+} from '@/observability/analytics/identity';
 
 // Amplitude가 저장하는 쿠키와 같은 형식(base64 → URL 인코드 → JSON)으로 만든다.
 const ampCookie = (state: { deviceId?: string; sessionId?: number }) =>

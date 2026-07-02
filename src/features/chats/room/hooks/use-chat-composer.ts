@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { insertEmphasisMarkers } from '../lib/insert-emphasis-markers';
 

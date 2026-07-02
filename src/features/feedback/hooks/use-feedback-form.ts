@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { useCreateFeedback } from '@/api/generated/endpoints/feedbacks/feedbacks';
 import { CreateFeedbackRequestPlatform } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import {
   FEEDBACK_BODY_MAX_LENGTH,

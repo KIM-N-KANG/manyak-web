@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { ToggleChip } from '@/components/ui/toggle-chip';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,

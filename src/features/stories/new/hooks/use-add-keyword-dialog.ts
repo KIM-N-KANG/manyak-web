@@ -3,7 +3,7 @@
 import { type ChangeEvent, type SubmitEvent, useState } from 'react';
 
 import type { SimpleStoryCustomTagRequestCategory } from '@/api/generated/models';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { ADD_KEYWORD_MAX_LENGTH } from '../constants';
 
