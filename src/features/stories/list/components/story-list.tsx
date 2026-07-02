@@ -54,7 +54,11 @@ export function StoryList() {
           render={
             <Link
               href={APP_PATH.CREATOR.STORY}
-              onClick={() => track('client_storyList_createButton_clicked')}
+              onClick={() =>
+                track('client_storyList_createButton_clicked', {
+                  source: 'emptyState',
+                })
+              }
             />
           }
           size="lg">

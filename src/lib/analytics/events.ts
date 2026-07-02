@@ -12,7 +12,7 @@ export type AnalyticsEventProps = {
   client_onboarding_createButton_clicked: void;
   // storyList
   client_storyList_viewed: void;
-  client_storyList_createButton_clicked: void;
+  client_storyList_createButton_clicked: { source: 'fab' | 'emptyState' };
   client_storyList_storyCard_clicked: { story_id: string; position?: number };
   client_storyList_storyCard_impressed: { story_id: string; position?: number };
   // storyCreate
@@ -46,7 +46,7 @@ export type AnalyticsEventProps = {
   client_storyCreate_recommendedInfo_clicked: { selected: boolean };
   client_storyCreate_additionalInfoAddButton_clicked: void;
   client_storyCreate_additionalInfoRemoveButton_clicked: void;
-  client_storyCreate_completeButton_clicked: void;
+  client_storyCreate_storyCompletion_requested: { creation_id: string };
   client_storyCreate_completeError_shown: { stage: 'story' | 'chat' };
   client_storyCreate_exitButton_clicked: {
     step_name: StepName;
@@ -72,6 +72,8 @@ export type AnalyticsEventProps = {
     turn_number: number;
     position?: number;
   };
+  client_chat_loadError_shown: { chat_id: string };
+  client_chat_retryButton_clicked: { chat_id: string };
   // feedback
   client_feedback_viewed: void;
   client_feedback_form_submitted: void;

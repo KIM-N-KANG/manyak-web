@@ -219,10 +219,15 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = (additionalInfos: string[]) => {
-    track('client_storyCreate_completeButton_clicked');
     setHasCompletionFailed(false);
 
     if (createdStoryId !== null) {
+      if (typeof simpleCreationId === 'number') {
+        track('client_storyCreate_storyCompletion_requested', {
+          creation_id: String(simpleCreationId),
+        });
+      }
+
       setStep('complete');
       createChat.mutate({ data: { storyId: createdStoryId } });
 
@@ -236,6 +241,9 @@ export function useStoryCreateFunnel() {
       return;
     }
 
+    track('client_storyCreate_storyCompletion_requested', {
+      creation_id: String(simpleCreationId),
+    });
     setStep('complete');
     createStory.mutate({
       data: {
