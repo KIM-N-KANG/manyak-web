@@ -20,6 +20,7 @@ import { track } from '@/observability/analytics';
 import {
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
+  ADDITIONAL_INFO_PLACEHOLDERS,
 } from '../constants';
 import { useAdditionalInfos } from '../hooks/use-additional-infos';
 import { LoadingButtonContent } from './loading-button-content';
@@ -118,7 +119,7 @@ export function StoryAdditionalInfoStepSection({
           <section
             aria-labelledby="recommended-info-label"
             className="mt-4 flex flex-col gap-2 p-4">
-            <Label>AI 추천 추가 정보</Label>
+            <Label>추천 추가 정보</Label>
             <ul className="flex flex-col gap-2">
               {(storyline.recommendedInfos ?? []).map(
                 (recommendedInfo, index) => {
@@ -163,7 +164,11 @@ export function StoryAdditionalInfoStepSection({
                     aria-label={`추가 정보 ${index + 1}`}
                     className="min-h-10"
                     maxLength={ADDITIONAL_INFO_MAX_LENGTH}
-                    placeholder="예: 주인공은 오래전 친구를 배신한 비밀을 숨기고 있다"
+                    placeholder={
+                      ADDITIONAL_INFO_PLACEHOLDERS[
+                        index % ADDITIONAL_INFO_PLACEHOLDERS.length
+                      ]
+                    }
                     rows={1}
                     value={additionalInfo.value}
                     disabled={isCompletingStory}
