@@ -1,6 +1,6 @@
 import * as amplitude from '@amplitude/unified';
 
-import { recordAnalyticsBreadcrumb } from '@/lib/monitoring/sentry';
+import { recordAnalyticsBreadcrumb } from '@/observability/monitoring/sentry';
 
 import { IS_ANALYTICS_ENABLED } from './config';
 import type { AnalyticsEventName, AnalyticsEventProps } from './events';

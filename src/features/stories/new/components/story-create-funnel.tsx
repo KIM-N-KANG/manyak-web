@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { mapStepToSpec } from '../utils/step-analytics';

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { track } from '@/observability/analytics';
+
 import { TAG_CATEGORIES } from '../constants';
 import type { TagCategory } from '../types';
 
@@ -31,11 +33,34 @@ export function useCategoryNavigation({
     );
   };
 
+  /**
+   * 카테고리 이동을 처리하는 단일 진입점. 버튼('다음'/'이전')과 탭 클릭·스와이프가
+   * 모두 이 함수를 거치므로, 이동 방향과 함께 이벤트를 한 곳에서 추적한다.
+   */
+  const changeCategory = (nextCategory: TagCategory) => {
+    if (nextCategory === activeCategory) {
+      return;
+    }
+
+    const direction =
+      CATEGORY_VALUES.indexOf(nextCategory) > activeIndex
+        ? 'forward'
+        : 'backward';
+
+    track('client_storyCreate_keywordCategory_selected', {
+      from_category: activeCategory,
+      to_category: nextCategory,
+      direction,
+    });
+
+    setActiveCategory(nextCategory);
+  };
+
   const goToNextCategory = () => {
     const nextCategory = CATEGORY_VALUES[activeIndex + 1];
 
     if (nextCategory) {
-      setActiveCategory(nextCategory);
+      changeCategory(nextCategory);
     }
   };
 
@@ -43,13 +68,13 @@ export function useCategoryNavigation({
     const previousCategory = CATEGORY_VALUES[activeIndex - 1];
 
     if (previousCategory) {
-      setActiveCategory(previousCategory);
+      changeCategory(previousCategory);
     }
   };
 
   return {
     activeCategory,
-    setActiveCategory,
+    changeCategory,
     isCategoryUnlocked,
     isFirstCategory,
     isLastCategory,

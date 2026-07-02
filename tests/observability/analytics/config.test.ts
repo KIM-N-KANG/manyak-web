@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveAnalyticsEnabled } from '@/lib/analytics/config';
+import { resolveAnalyticsEnabled } from '@/observability/analytics/config';
 
 describe('resolveAnalyticsEnabled', () => {
   it('키가 있고 production이면 true', () => {

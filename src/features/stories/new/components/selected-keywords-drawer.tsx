@@ -11,7 +11,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import type { SelectedKeywordGroup as SelectedKeywordGroupModel } from '../types';
 import { SelectedKeywordGroup } from './selected-keyword-group';

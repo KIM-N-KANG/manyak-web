@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { APP_PATH } from '@/constants/app-path';
 import { useChatIds } from '@/features/chats/list/hooks/use-chat-ids';
 import { useCreatedStoryIds } from '@/features/stories/list/hooks/use-created-story-ids';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import {
   isOnboardingSeen,

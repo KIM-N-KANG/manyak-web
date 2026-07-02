@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   impressionKey,
   shouldEmitImpression,
-} from '@/lib/analytics/impression';
+} from '@/observability/analytics/impression';
 
 describe('impressionKey', () => {
   it('screen+object+itemId로 키를 만든다', () => {

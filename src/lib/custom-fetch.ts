@@ -1,5 +1,5 @@
-import { getAnalyticsIdentityHeaders } from '@/lib/analytics/identity';
-import { captureApiError } from '@/lib/monitoring/sentry';
+import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
+import { captureApiError } from '@/observability/monitoring/sentry';
 
 import { FetchError } from './api-error';
 

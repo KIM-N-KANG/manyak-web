@@ -6,9 +6,9 @@ import Link from 'next/link';
 
 import { APP_PATH } from '@/constants/app-path';
 import { ChatOptionsMenu } from '@/features/chats/components/chat-options-menu';
-import { SCREEN, track, useImpression } from '@/lib/analytics';
 import { formatRelativeDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
+import { SCREEN, track, useImpression } from '@/observability/analytics';
 
 import type { ChatListItem } from '../types';
 

@@ -36,7 +36,7 @@ export function useStoryKeywordStep({
 
   return {
     activeCategory: navigation.activeCategory,
-    setActiveCategory: navigation.setActiveCategory,
+    changeCategory: navigation.changeCategory,
     selectedTagIdsByCategory: tagSelection.selectedTagIdsByCategory,
     selectedCustomKeywordIdsByCategory:
       tagSelection.selectedCustomKeywordIdsByCategory,

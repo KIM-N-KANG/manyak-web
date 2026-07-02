@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
-import { useTrackOnView } from '@/lib/analytics';
+import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
@@ -50,6 +50,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   useTrackOnView('client_chat_viewed', { chat_id: chatId });
 
+  useEffect(() => {
+    if (isError) {
+      track('client_chat_loadError_shown', { chat_id: chatId });
+    }
+  }, [isError, chatId]);
+
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   if (isLoading) {
@@ -64,7 +70,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     return (
       <RetryListStatus
         title="채팅을 불러오지 못했어요"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          track('client_chat_retryButton_clicked', { chat_id: chatId });
+          refetch();
+        }}
       />
     );
   }

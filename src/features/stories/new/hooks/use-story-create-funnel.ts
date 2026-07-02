@@ -23,9 +23,10 @@ import type {
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
+import { mapStepToSpec } from '../utils/step-analytics';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
 import { getSelectedKeywordsByCategory } from '../utils/tag-categories';
 import { usePreventPageLeave } from './use-prevent-page-leave';
@@ -65,7 +66,8 @@ export function useStoryCreateFunnel() {
     onBackAttempt: () => setConfirmBackDialogOpen(true),
   });
 
-  const failToAdditionalInfo = () => {
+  const failToAdditionalInfo = (stage: 'story' | 'chat') => {
+    track('client_storyCreate_completeError_shown', { stage });
     setStep('additional-info');
     setHasCompletionFailed(true);
   };
@@ -91,7 +93,7 @@ export function useStoryCreateFunnel() {
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
-          failToAdditionalInfo();
+          failToAdditionalInfo('chat');
 
           return;
         }
@@ -114,7 +116,7 @@ export function useStoryCreateFunnel() {
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
       onError: () => {
-        failToAdditionalInfo();
+        failToAdditionalInfo('chat');
       },
     },
   });
@@ -123,7 +125,7 @@ export function useStoryCreateFunnel() {
     mutation: {
       onSuccess: (response) => {
         if (response.status !== 201) {
-          failToAdditionalInfo();
+          failToAdditionalInfo('story');
 
           return;
         }
@@ -139,7 +141,7 @@ export function useStoryCreateFunnel() {
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: () => {
-        failToAdditionalInfo();
+        failToAdditionalInfo('story');
       },
     },
   });
@@ -173,7 +175,24 @@ export function useStoryCreateFunnel() {
       return;
     }
 
+    if (typeof simpleCreationId === 'number') {
+      track('client_storyCreate_regenerateButton_clicked', {
+        creation_id: String(simpleCreationId),
+      });
+    }
+
     generateStorylines.mutate({ data: generationRequest });
+  };
+
+  const handleActiveStorylineIndexChange = (index: number) => {
+    if (typeof simpleCreationId === 'number') {
+      track('client_storyCreate_storylineTab_selected', {
+        creation_id: String(simpleCreationId),
+        position: index,
+      });
+    }
+
+    setActiveStorylineIndex(index);
   };
 
   const handleSelectStoryline = () => {
@@ -194,6 +213,7 @@ export function useStoryCreateFunnel() {
   };
 
   const handleBackToStorylineSelect = () => {
+    track('client_storyCreate_backToStorylineButton_clicked');
     setSelectedStoryline(null);
     setStep('storyline-select');
   };
@@ -202,6 +222,12 @@ export function useStoryCreateFunnel() {
     setHasCompletionFailed(false);
 
     if (createdStoryId !== null) {
+      if (typeof simpleCreationId === 'number') {
+        track('client_storyCreate_storyCompletion_requested', {
+          creation_id: String(simpleCreationId),
+        });
+      }
+
       setStep('complete');
       createChat.mutate({ data: { storyId: createdStoryId } });
 
@@ -215,6 +241,9 @@ export function useStoryCreateFunnel() {
       return;
     }
 
+    track('client_storyCreate_storyCompletion_requested', {
+      creation_id: String(simpleCreationId),
+    });
     setStep('complete');
     createStory.mutate({
       data: {
@@ -236,6 +265,7 @@ export function useStoryCreateFunnel() {
   };
 
   const handleConfirmBack = () => {
+    track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
     setConfirmBackDialogOpen(false);
     confirmLeave();
   };
@@ -257,7 +287,7 @@ export function useStoryCreateFunnel() {
     hasCompleteStoryError: hasCompletionFailed,
     handleGenerateStoryline,
     handleRegenerateStorylines,
-    handleActiveStorylineIndexChange: setActiveStorylineIndex,
+    handleActiveStorylineIndexChange,
     handleSelectStoryline,
     handleBackToStorylineSelect,
     handleCompleteStory,

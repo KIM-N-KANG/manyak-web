@@ -7,13 +7,15 @@ vi.mock('@amplitude/unified', () => ({
   track: (...args: unknown[]) => trackMock(...args),
 }));
 
-vi.mock('@/lib/analytics/config', () => ({ IS_ANALYTICS_ENABLED: true }));
+vi.mock('@/observability/analytics/config', () => ({
+  IS_ANALYTICS_ENABLED: true,
+}));
 
-vi.mock('@/lib/monitoring/sentry', () => ({
+vi.mock('@/observability/monitoring/sentry', () => ({
   recordAnalyticsBreadcrumb: (...args: unknown[]) => breadcrumbMock(...args),
 }));
 
-import { deriveScreenName, track } from '@/lib/analytics/client';
+import { deriveScreenName, track } from '@/observability/analytics/client';
 
 describe('deriveScreenName', () => {
   it('이벤트명 2번째 세그먼트를 screen_name으로 파생한다', () => {

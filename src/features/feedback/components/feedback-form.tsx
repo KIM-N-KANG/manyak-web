@@ -11,7 +11,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import {
   FEEDBACK_BODY_MAX_LENGTH,

@@ -6,8 +6,8 @@ import Link from 'next/link';
 
 import { useMainScroll } from '@/app/(main)/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
-import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
+import { track } from '@/observability/analytics';
 
 export function CreateStoryFab() {
   const { hasScrolled } = useMainScroll();
@@ -16,7 +16,9 @@ export function CreateStoryFab() {
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-end px-4">
       <Link
         href={APP_PATH.CREATOR.STORY}
-        onClick={() => track('client_storyList_createButton_clicked')}
+        onClick={() =>
+          track('client_storyList_createButton_clicked', { source: 'fab' })
+        }
         aria-label="스토리 만들기"
         className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md transition-[filter] outline-none hover:brightness-105 focus-visible:ring-3 focus-visible:ring-ring/50">
         <HugeiconsIcon

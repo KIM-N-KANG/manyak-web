@@ -2,6 +2,8 @@
 
 import { type ChangeEvent, useState } from 'react';
 
+import { track } from '@/observability/analytics';
+
 import {
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
@@ -24,6 +26,7 @@ export function useAdditionalInfos() {
       return;
     }
 
+    track('client_storyCreate_additionalInfoAddButton_clicked');
     setAdditionalInfos((previous) => [
       ...previous,
       createEmptyAdditionalInfo(),
@@ -31,6 +34,7 @@ export function useAdditionalInfos() {
   };
 
   const removeAdditionalInfo = (id: string) => {
+    track('client_storyCreate_additionalInfoRemoveButton_clicked');
     setAdditionalInfos((previous) =>
       previous.filter((additionalInfo) => additionalInfo.id !== id),
     );
