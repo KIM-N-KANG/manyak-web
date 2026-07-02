@@ -11,7 +11,10 @@ import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
-import { useChatInputMode } from '../hooks/use-chat-input-mode';
+import {
+  type ChatInputMode,
+  useChatInputMode,
+} from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
 import { ChatInput } from './chat-input';
 import { ChatMessages } from './chat-messages';
@@ -42,7 +45,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     handleStreamCompleted,
   );
 
-  const { mode } = useChatInputMode();
+  const { mode, changeMode } = useChatInputMode();
 
   const composer = useChatComposer({
     chatId,
@@ -51,6 +54,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     inputMode: mode,
     onSend: send,
   });
+
+  const handleModeChange = (nextMode: ChatInputMode) => {
+    composer.convertTo(nextMode);
+    changeMode(nextMode);
+  };
 
   useTrackOnView('client_chat_viewed', { chat_id: chatId });
 
@@ -84,7 +92,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <ChatRoomHeader storyTitle={storyTitle} isVisible={isHeaderVisible} />
+      <ChatRoomHeader
+        storyTitle={storyTitle}
+        isVisible={isHeaderVisible}
+        inputMode={mode}
+        onInputModeChange={handleModeChange}
+      />
       <div className="flex min-h-0 flex-1 flex-col">
         <ChatMessages
           prologue={prologue}
