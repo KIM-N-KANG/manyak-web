@@ -189,7 +189,8 @@ export function StoryAdditionalInfoStepSection({
                   variant="ghost"
                   aria-label={`추가 정보 ${index + 1} 삭제`}
                   disabled={isCompletingStory}
-                  onClick={() => removeAdditionalInfo(additionalInfo.id)}>
+                  onClick={() => removeAdditionalInfo(additionalInfo.id)}
+                  className="text-foreground-secondary">
                   <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
                 </Button>
               </div>

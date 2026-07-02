@@ -33,7 +33,8 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
             variant="ghost"
             size="icon-sm"
             aria-label="입력창에 넣어 수정"
-            onClick={() => onFill(choice)}>
+            onClick={() => onFill(choice)}
+            className="text-foreground-secondary">
             <HugeiconsIcon icon={BubbleChatEditIcon} aria-hidden="true" />
           </Button>
           <Button

@@ -11,6 +11,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { Label } from '@/components/ui/label';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 
 import { type ChatInputMode } from '../hooks/use-chat-input-mode';
@@ -61,24 +62,17 @@ export function ChatSettingsDrawer({
         <DrawerHeader>
           <DrawerTitle>채팅 설정</DrawerTitle>
         </DrawerHeader>
-        <div className="flex flex-col gap-2 overflow-y-auto p-4 pt-0">
-          <p className="text-xs font-medium text-foreground-secondary">
-            입력 모드
-          </p>
+        <div className="flex flex-col gap-2 overflow-y-auto p-4">
+          <Label>입력 모드</Label>
           {MODE_OPTIONS.map((option) => (
             <Button
               key={option.value}
               type="button"
               variant={mode === option.value ? 'secondary' : 'ghost'}
               onClick={() => onModeChange(option.value)}
-              className="h-auto w-full flex-col items-start gap-0.5 whitespace-normal">
-              <span className="flex w-full items-center justify-between">
-                {option.label}
-                {mode === option.value && (
-                  <HugeiconsIcon icon={Tick02Icon} aria-hidden="true" />
-                )}
-              </span>
-              <span className="text-xs font-normal text-foreground-secondary">
+              className="h-auto w-full flex-col items-start gap-1 whitespace-normal">
+              {option.label}
+              <span className="text-xs text-foreground-secondary">
                 {option.description}
               </span>
             </Button>
