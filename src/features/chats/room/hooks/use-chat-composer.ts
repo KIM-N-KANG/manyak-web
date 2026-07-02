@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { track } from '@/observability/analytics';
 
 import {
+  createDefaultInputBlocks,
   createInputBlock,
   type InputBlock,
   type InputBlockType,
@@ -28,9 +29,9 @@ export function useChatComposer({
   onSend,
 }: UseChatComposerParams) {
   const [value, setValue] = useState('');
-  const [blocks, setBlocks] = useState<InputBlock[]>([]);
+  const [blocks, setBlocks] = useState<InputBlock[]>(createDefaultInputBlocks);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const blockInputRefs = useRef(new Map<string, HTMLInputElement>());
+  const blockInputRefs = useRef(new Map<string, HTMLTextAreaElement>());
 
   const submit = (text: string) => {
     track('client_chat_messageInput_submitted', {
@@ -55,7 +56,10 @@ export function useChatComposer({
     });
   };
 
-  const registerBlockInput = (id: string, element: HTMLInputElement | null) => {
+  const registerBlockInput = (
+    id: string,
+    element: HTMLTextAreaElement | null,
+  ) => {
     if (element) {
       blockInputRefs.current.set(id, element);
     } else {
@@ -87,7 +91,7 @@ export function useChatComposer({
 
     if (!text || isStreaming) return;
 
-    setBlocks([]);
+    setBlocks(createDefaultInputBlocks());
     submit(text);
   };
 
@@ -102,7 +106,7 @@ export function useChatComposer({
       position,
     });
     setValue('');
-    setBlocks([]);
+    setBlocks(createDefaultInputBlocks());
     submit(trimmed);
   };
 
@@ -135,7 +139,9 @@ export function useChatComposer({
     if (nextMode === inputMode) return;
 
     if (nextMode === 'block') {
-      setBlocks(parseInputBlocks(value));
+      const parsed = parseInputBlocks(value);
+
+      setBlocks(parsed.length > 0 ? parsed : createDefaultInputBlocks());
       setValue('');
     } else {
       setValue(serializeInputBlocks(blocks));

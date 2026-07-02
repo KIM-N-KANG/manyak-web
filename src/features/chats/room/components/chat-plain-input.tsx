@@ -2,7 +2,7 @@
 
 import { type KeyboardEvent, type SubmitEvent } from 'react';
 
-import { ArrowUp02Icon, Asterisk02Icon } from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
@@ -65,9 +65,9 @@ export function ChatPlainInput({
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={handleKeyDown}
-            className="max-h-[20dvh] min-h-0"
+            className="max-h-[20dvh] min-h-0 pb-0"
           />
-          <InputGroupAddon align="block-end">
+          <InputGroupAddon align="block-end" className="pt-2.5">
             <Button
               type="button"
               variant="secondary"
@@ -75,7 +75,6 @@ export function ChatPlainInput({
               aria-label="상황 묘사 추가"
               disabled={disabled}
               onClick={onInsertEmphasis}>
-              <HugeiconsIcon icon={Asterisk02Icon} aria-hidden="true" />
               상황 추가
             </Button>
             <Button

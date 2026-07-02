@@ -196,7 +196,24 @@ test.describe('채팅 스트리밍', () => {
 });
 
 test.describe('블럭 입력 모드 (기본)', () => {
-  test('상황·대사 블럭을 추가해 전송하면 하나의 메시지로 직렬화된다', async ({
+  test('묘사 블럭과 대사 블럭이 기본으로 하나씩 보인다', async ({ page }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(
+      page.getByPlaceholder('어떤 상황을 묘사할까요?'),
+    ).toBeVisible();
+    await expect(page.getByPlaceholder('어떤 대사를 건넬까요?')).toBeVisible();
+  });
+
+  test('기본 상황·대사 블럭을 채워 전송하면 하나의 메시지로 직렬화된다', async ({
     page,
   }) => {
     const completedTurn = {
@@ -237,9 +254,7 @@ test.describe('블럭 입력 모드 (기본)', () => {
 
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '상황 추가' }).click();
     await page.getByPlaceholder('어떤 상황을 묘사할까요?').fill('비가 온다');
-    await page.getByRole('button', { name: '대사 추가' }).click();
     await page.getByPlaceholder('어떤 대사를 건넬까요?').fill('우산 챙겼어?');
     await page.getByRole('button', { name: '전송' }).click();
 
@@ -260,12 +275,11 @@ test.describe('블럭 입력 모드 (기본)', () => {
 
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '상황 추가' }).click();
     await expect(
       page.getByPlaceholder('어떤 상황을 묘사할까요?'),
     ).toBeVisible();
 
-    await page.getByRole('button', { name: '입력 삭제' }).click();
+    await page.getByRole('button', { name: '입력 삭제' }).first().click();
     await expect(page.getByPlaceholder('어떤 상황을 묘사할까요?')).toBeHidden();
   });
 

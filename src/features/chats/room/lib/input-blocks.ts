@@ -12,6 +12,11 @@ export function createInputBlock(type: InputBlockType, value = ''): InputBlock {
   return { id: crypto.randomUUID(), type, value };
 }
 
+/** 블럭 입력 모드의 기본 상태. 묘사 1개와 대사 1개를 순서대로 보여준다. */
+export function createDefaultInputBlocks(): InputBlock[] {
+  return [createInputBlock('situation'), createInputBlock('dialogue')];
+}
+
 /**
  * 블럭들을 서버 전송용 텍스트로 직렬화한다.
  * 상황은 *...* 강조 마커로 감싸고, 빈 블럭은 제외하며, 순서대로 공백으로 연결한다.
