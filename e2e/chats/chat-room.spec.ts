@@ -1,3 +1,5 @@
+import { type Page } from '@playwright/test';
+
 import { expect, test } from '../fixtures/test';
 
 // 채팅방(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
@@ -5,6 +7,13 @@ import { expect, test } from '../fixtures/test';
 // SSE 포맷: started → token({"text":...})×N → completed({"aiOutput":...}) | error({"message":...})
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
+
+// 기본 모드가 블럭 입력이므로, textarea 기반 테스트는 일반 모드를 고정한다.
+const setPlainInputMode = async (page: Page) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('manyak:chat-input-mode', 'plain');
+  });
+};
 
 const chatDetail = (
   turns: unknown[] = [],
@@ -78,6 +87,7 @@ test.describe('채팅 스트리밍', () => {
       });
     });
 
+    await setPlainInputMode(page);
     await page.goto('/chats/c1');
     await page
       .getByPlaceholder('이야기를 어떻게 이어갈까요?')
@@ -99,6 +109,7 @@ test.describe('채팅 스트리밍', () => {
       });
     });
 
+    await setPlainInputMode(page);
     await page.goto('/chats/c1');
     // 첫 번째 추천 입력의 "입력창에 넣어 수정" 버튼을 누르면 전송하지 않고 입력창에만 채운다.
     await page
@@ -173,6 +184,7 @@ test.describe('채팅 스트리밍', () => {
       });
     });
 
+    await setPlainInputMode(page);
     await page.goto('/chats/c1');
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
     await page.getByRole('button', { name: '전송' }).click();
@@ -180,5 +192,105 @@ test.describe('채팅 스트리밍', () => {
     await expect(
       page.getByText('응답 생성에 실패했어요. 잠시 후 다시 시도해주세요.'),
     ).toBeVisible();
+  });
+});
+
+test.describe('블럭 입력 모드 (기본)', () => {
+  test('상황·대사 블럭을 추가해 전송하면 하나의 메시지로 직렬화된다', async ({
+    page,
+  }) => {
+    const completedTurn = {
+      id: 1,
+      userInput: '*비가 온다* 우산 챙겼어?',
+      aiOutput: '그녀가 고개를 끄덕였다.',
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+
+    let detailCallCount = 0;
+    let streamRequestBody = '';
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1 ? chatDetail() : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      streamRequestBody = route.request().postData() ?? '';
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"그녀가 고개를 끄덕였다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"그녀가 고개를 끄덕였다."}\n\n',
+        ]),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await page.getByRole('button', { name: '상황 추가' }).click();
+    await page.getByPlaceholder('어떤 상황을 묘사할까요?').fill('비가 온다');
+    await page.getByRole('button', { name: '대사 추가' }).click();
+    await page.getByPlaceholder('어떤 대사를 건넬까요?').fill('우산 챙겼어?');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText('그녀가 고개를 끄덕였다.')).toBeVisible();
+    expect(JSON.parse(streamRequestBody)).toEqual({
+      userInput: '*비가 온다* 우산 챙겼어?',
+    });
+  });
+
+  test('X 버튼을 누르면 해당 블럭 인풋이 사라진다', async ({ page }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await page.getByRole('button', { name: '상황 추가' }).click();
+    await expect(
+      page.getByPlaceholder('어떤 상황을 묘사할까요?'),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: '입력 삭제' }).click();
+    await expect(page.getByPlaceholder('어떤 상황을 묘사할까요?')).toBeHidden();
+  });
+
+  test('추천 입력의 수정 버튼을 누르면 파싱되어 블럭 인풋에 채워진다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([], ['*문이 열린다* 누구세요?'])),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page
+      .getByRole('button', { name: '입력창에 넣어 수정' })
+      .first()
+      .click();
+
+    await expect(page.getByPlaceholder('어떤 상황을 묘사할까요?')).toHaveValue(
+      '문이 열린다',
+    );
+    await expect(page.getByPlaceholder('어떤 대사를 건넬까요?')).toHaveValue(
+      '누구세요?',
+    );
   });
 });
