@@ -19,17 +19,28 @@ export function useChatInputMode() {
   const [mode, setMode] = useState<ChatInputMode>(DEFAULT_MODE);
 
   useEffect(() => {
-    const saved = localStorage.getItem(CHAT_INPUT_MODE_STORAGE_KEY);
+    // 쿠키/스토리지 차단 환경에서는 localStorage 접근 자체가 예외를 던질 수 있으므로
+    // 예외 발생 시 기본값을 유지한 채 조용히 넘어간다.
+    try {
+      const saved = localStorage.getItem(CHAT_INPUT_MODE_STORAGE_KEY);
 
-    if (isChatInputMode(saved)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMode(saved);
+      if (isChatInputMode(saved)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMode(saved);
+      }
+    } catch {
+      // no-op: 기본값(DEFAULT_MODE)으로 렌더링을 유지한다.
     }
   }, []);
 
   const changeMode = (next: ChatInputMode) => {
     setMode(next);
-    localStorage.setItem(CHAT_INPUT_MODE_STORAGE_KEY, next);
+
+    try {
+      localStorage.setItem(CHAT_INPUT_MODE_STORAGE_KEY, next);
+    } catch {
+      // no-op: 저장에 실패해도 현재 세션의 상태 변경은 유지한다.
+    }
   };
 
   return { mode, changeMode };
