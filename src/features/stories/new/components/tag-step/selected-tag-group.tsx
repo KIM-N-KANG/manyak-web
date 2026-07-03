@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
-import type { SelectedTagGroup as SelectedTagGroupModel } from '../types';
+import type { SelectedTagGroup as SelectedTagGroupModel } from '../../types';
 
 type SelectedTagGroupProps = {
   group: SelectedTagGroupModel;

@@ -3,7 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
 
-import type { StorylineRating } from '../types';
+import type { StorylineRating } from '../../types';
 
 const RATING_BUTTONS = [
   {

@@ -14,8 +14,8 @@ import {
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
-import type { SelectedTagGroup as SelectedTagGroupModel } from '../types';
-import { SelectedTagGroup } from './selected-tag-group';
+import type { SelectedTagGroup as SelectedTagGroupModel } from '../../types';
+import { SelectedTagGroup } from '../tag-step/selected-tag-group';
 
 type SelectedTagsDrawerProps = {
   groups: SelectedTagGroupModel[];

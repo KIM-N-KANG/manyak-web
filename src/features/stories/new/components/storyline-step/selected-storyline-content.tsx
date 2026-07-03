@@ -9,7 +9,7 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import { SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT } from '../constants';
+import { SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT } from '../../constants';
 
 type SelectedStorylineContentProps = {
   story?: string;

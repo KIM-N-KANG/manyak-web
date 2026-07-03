@@ -3,9 +3,9 @@ import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
 
-import type { StoryCreateStep } from '../types';
+import type { StoryCreateStep } from '../../types';
+import { StoryCreateStepIndicator } from '../step-layout/story-create-step-indicator';
 import { StoryCreateBackDialog } from './story-create-back-dialog';
-import { StoryCreateStepIndicator } from './story-create-step-indicator';
 
 type StoryCreateHeaderProps = {
   step: StoryCreateStep;

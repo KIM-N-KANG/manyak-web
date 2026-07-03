@@ -23,8 +23,8 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 
-import { ADD_TAG_MAX_LENGTH } from '../constants';
-import { useAddTagDialog } from '../hooks/use-add-tag-dialog';
+import { ADD_TAG_MAX_LENGTH } from '../../constants';
+import { useAddTagDialog } from '../../hooks/use-add-tag-dialog';
 
 type AddTagDialogProps = {
   category: SimpleStoryCustomTagRequestCategory;

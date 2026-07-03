@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 import {
   STORY_CREATE_INDICATOR_STEPS,
   STORY_CREATE_STEP_ORDER,
-} from '../constants';
-import type { StoryCreateStep } from '../types';
+} from '../../constants';
+import type { StoryCreateStep } from '../../types';
 
 // 양 끝 동그라미(size-4)는 좌우에 붙고 가운데 동그라미는 중앙에 오므로,
 // 각 연결선은 동그라미 반지름(8px = left-2/right-2)만큼 띄워 중심끼리 잇는다.

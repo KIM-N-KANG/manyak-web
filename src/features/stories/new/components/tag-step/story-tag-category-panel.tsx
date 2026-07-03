@@ -2,10 +2,10 @@ import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleChip } from '@/components/ui/toggle-chip';
 
-import { SKELETON_TAG_CHIP_WIDTH_CLASSES } from '../constants';
-import type { CustomTag, TagCategory } from '../types';
+import { SKELETON_TAG_CHIP_WIDTH_CLASSES } from '../../constants';
+import type { CustomTag, TagCategory } from '../../types';
+import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { AddTagDialog } from './add-tag-dialog';
-import { StoryCreateErrorMessage } from './story-create-error-message';
 
 type StoryTagCategoryPanelProps = {
   category: TagCategory;

@@ -6,16 +6,16 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
-import { getStorylineTabLabel } from '../constants';
-import { useStorylineRating } from '../hooks/use-storyline-rating';
-import type { StorylineSelectStepSectionProps } from '../types';
-import { SelectedTagsDrawer } from './selected-tags-drawer';
-import { StickyTabsList } from './sticky-tabs-list';
-import { StoryCreateErrorMessage } from './story-create-error-message';
-import { StoryCreateStepLayout } from './story-create-step-layout';
-import { StorylineNavButtons } from './storyline-nav-buttons';
-import { StorylineRatingButtons } from './storyline-rating-buttons';
-import { StorylineSelectLoadingState } from './storyline-select-loading-state';
+import { getStorylineTabLabel } from '../../constants';
+import { useStorylineRating } from '../../hooks/use-storyline-rating';
+import type { StorylineSelectStepSectionProps } from '../../types';
+import { StickyTabsList } from '../shared/sticky-tabs-list';
+import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
+import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
+import { SelectedTagsDrawer } from '../storyline-step/selected-tags-drawer';
+import { StorylineNavButtons } from '../storyline-step/storyline-nav-buttons';
+import { StorylineRatingButtons } from '../storyline-step/storyline-rating-buttons';
+import { StorylineSelectLoadingState } from '../storyline-step/storyline-select-loading-state';
 
 export function StorylineSelectStepSection({
   storylines,

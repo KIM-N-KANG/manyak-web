@@ -18,12 +18,12 @@ import {
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
   ADDITIONAL_INFO_PLACEHOLDERS,
-} from '../constants';
-import type { AdditionalInfoInput } from '../types';
-import { LoadingButtonContent } from './loading-button-content';
-import { SelectedStorylineContent } from './selected-storyline-content';
-import { StoryCreateErrorMessage } from './story-create-error-message';
-import { StoryCreateStepLayout } from './story-create-step-layout';
+} from '../../constants';
+import type { AdditionalInfoInput } from '../../types';
+import { LoadingButtonContent } from '../shared/loading-button-content';
+import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
+import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
+import { SelectedStorylineContent } from '../storyline-step/selected-storyline-content';
 
 type StoryAdditionalInfoStepSectionProps = {
   storyline: SimpleStorylineResponse;

@@ -2,8 +2,8 @@ import {
   STORYLINE_GENERATING_LOADING_HINTS,
   STORYLINE_GENERATING_LOADING_PHRASES,
   STORYLINE_SELECT_LOADING_LABEL,
-} from '../constants';
-import { StoryGeneratingLoading } from './story-generating-loading';
+} from '../../constants';
+import { StoryGeneratingLoading } from '../shared/story-generating-loading';
 
 export function StorylineSelectLoadingState() {
   return (

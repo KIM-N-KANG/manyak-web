@@ -4,13 +4,13 @@ import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
-import { TAG_CATEGORIES } from '../constants';
-import { useStoryTagStep } from '../hooks/use-story-tag-step';
-import type { TagCategory } from '../types';
-import { StickyTabsList } from './sticky-tabs-list';
-import { StoryCreateErrorMessage } from './story-create-error-message';
-import { StoryCreateStepLayout } from './story-create-step-layout';
-import { StoryTagCategoryPanel } from './story-tag-category-panel';
+import { TAG_CATEGORIES } from '../../constants';
+import { useStoryTagStep } from '../../hooks/use-story-tag-step';
+import type { TagCategory } from '../../types';
+import { StickyTabsList } from '../shared/sticky-tabs-list';
+import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
+import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
+import { StoryTagCategoryPanel } from '../tag-step/story-tag-category-panel';
 
 type StoryTagStepSectionProps = {
   isGeneratingStoryline: boolean;

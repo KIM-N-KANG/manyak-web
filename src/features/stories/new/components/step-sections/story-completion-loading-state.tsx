@@ -1,9 +1,9 @@
 import {
   STORY_COMPLETION_LOADING_HINTS,
   STORY_COMPLETION_LOADING_PHRASES,
-} from '../constants';
-import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
-import { StoryGeneratingLoading } from './story-generating-loading';
+} from '../../constants';
+import { StoryGeneratingLoading } from '../shared/story-generating-loading';
+import { StoryCreateStepScrollArea } from '../step-layout/story-create-step-scroll-area';
 
 type StoryCompletionSectionProps = {
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
