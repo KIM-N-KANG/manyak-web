@@ -36,7 +36,7 @@ export function SelectedTagsDrawer({
     <Drawer
       onOpenChange={(open) => {
         if (open && creationId) {
-          track('client_storyCreate_selectedKeywordsButton_clicked', {
+          track('client_storyCreate_selectedTagsButton_clicked', {
             creation_id: creationId,
           });
         }

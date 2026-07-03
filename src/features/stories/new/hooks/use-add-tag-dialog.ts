@@ -29,7 +29,7 @@ export function useAddTagDialog({ category, onAddTag }: UseAddTagDialogArgs) {
       return;
     }
 
-    track('client_storyCreate_addKeyword_submitted', { category });
+    track('client_storyCreate_addTag_submitted', { category });
     onAddTag(trimmedTag);
     setTag('');
     setOpen(false);

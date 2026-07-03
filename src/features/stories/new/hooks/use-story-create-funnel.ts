@@ -58,7 +58,7 @@ export function useStoryCreateFunnel() {
   >(() => new Set());
   const completedStoryRef = useRef<{
     storyId: string;
-    genre?: string[];
+    genres?: string[];
   } | null>(null);
   const {
     additionalInfos,
@@ -125,7 +125,7 @@ export function useStoryCreateFunnel() {
           track('client_storyCreate_completed', {
             story_id: completedStoryId,
             chat_id: chatId,
-            genre: completedStoryRef.current?.genre,
+            genres: completedStoryRef.current?.genres,
           });
         }
 
@@ -153,7 +153,7 @@ export function useStoryCreateFunnel() {
         if (typeof storyId === 'string') {
           saveCreatedStoryId(storyId);
           setCreatedStoryId(storyId);
-          completedStoryRef.current = { storyId, genre: response.data.genres };
+          completedStoryRef.current = { storyId, genres: response.data.genres };
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
