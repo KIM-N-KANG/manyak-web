@@ -68,7 +68,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
             className="size-3.5"
             aria-hidden="true"
           />
-          <p>{chat.chatCount}</p>
+          <p>{chat.turnCount}</p>
         </div>
         <div className="flex items-center gap-1 text-sm text-foreground-secondary">
           <HugeiconsIcon

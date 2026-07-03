@@ -7,7 +7,7 @@
  */
 
 /**
- * 간편 제작 이야기 생성 요청
+ * 간편 제작 스토리 생성 요청
  */
 export interface CreateSimpleStoryRequest {
   /**

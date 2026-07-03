@@ -16,7 +16,7 @@ const chat = (id: string, storyTitle: string) => ({
   storyId: `story-${id}`,
   storyTitle,
   lastStoryPreview: '이야기 미리보기입니다',
-  chatCount: 3,
+  turnCount: 3,
   updatedAt: '2026-06-01T00:00:00Z',
 });
 

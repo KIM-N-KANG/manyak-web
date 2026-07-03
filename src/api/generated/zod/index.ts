@@ -8,7 +8,7 @@
 import * as zod from 'zod';
 
 /**
- * 간편 제작으로 생성된 예시 스토리라인에 좋아요/나빠요 평가를 남깁니다. 같은 스토리라인을 다시 평가하면 값이 갱신됩니다(대상당 1개). 취소는 DELETE를 사용합니다.
+ * 간편 제작으로 생성된 스토리라인에 좋아요/나빠요 평가를 남깁니다. 같은 스토리라인을 다시 평가하면 값이 갱신됩니다(대상당 1개). 취소는 DELETE를 사용합니다.
  * @summary 스토리라인 평가 설정/변경
  */
 export const RateStorylineParams = zod.object({
@@ -35,7 +35,7 @@ export const CancelStorylineRatingResponse = zod.void();
 
 /**
  * 선택한 스토리라인과 추가 정보를 AI 서버에 전달해 최종 스토리를 생성하고 저장합니다. 응답으로 받은 id는 클라이언트 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다.
- * @summary 간편 제작 이야기 생성
+ * @summary 간편 제작 스토리 생성
  */
 
 export const createSimpleStoryBodyAdditionalInfosItemMax = 100;
@@ -67,7 +67,7 @@ export const CreateSimpleStoryBody = zod
       .optional()
       .describe('선택한 스토리라인을 보완하는 자유 추가 정보 목록'),
   })
-  .describe('간편 제작 이야기 생성 요청');
+  .describe('간편 제작 스토리 생성 요청');
 
 export const CreateSimpleStoryResponse = zod.void();
 
@@ -119,7 +119,7 @@ export const GenerateSimpleStorylinesResponse = zod.void();
 
 /**
  * 클라이언트가 로컬스토리지에 보관 중인 storyId 목록으로 스토리 카드 목록을 조회합니다. 로그인 사용자 소유권 조회가 아니라 MVP용 로컬 ID 기반 조회입니다.
- * @summary 스토리 ID 목록으로 이야기 목록 조회
+ * @summary 스토리 ID 목록으로 스토리 목록 조회
  */
 export const getStoriesByIdsBodyStoryIdsMin = 0;
 export const getStoriesByIdsBodyStoryIdsMax = 100;
@@ -296,8 +296,8 @@ export const LoginWithGoogleBody = zod
 export const LoginWithGoogleResponse = zod.unknown();
 
 /**
- * 목록에서 선택한 이야기의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
- * @summary 이야기 상세 조회
+ * 목록에서 선택한 스토리의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
+ * @summary 스토리 상세 조회
  */
 export const GetStoryDetailParams = zod.object({
   storyId: zod.string().describe('스토리 ID(공개 식별자)'),
@@ -307,7 +307,7 @@ export const GetStoryDetailResponse = zod.unknown();
 
 /**
  * 스토리를 소프트 삭제합니다. 행을 물리 삭제하지 않고 삭제 시각만 기록하며, 이후 목록·상세 조회에서 제외됩니다. 존재하지 않거나 이미 삭제된 스토리는 404로 응답합니다.
- * @summary 이야기 삭제 (소프트 삭제)
+ * @summary 스토리 삭제 (소프트 삭제)
  */
 export const DeleteStoryParams = zod.object({
   storyId: zod.string().describe('스토리 ID(공개 식별자)'),
@@ -320,6 +320,19 @@ export const DeleteStoryResponse = zod.void();
  * @summary 간편 제작 태그 목록 조회
  */
 export const GetSimpleStoryTagsResponse = zod.unknown();
+
+/**
+ * 일반 제작에서 참조할 로어북(장르 공용 용어 사전) 목록을 조회합니다. genre로 필터할 수 있습니다.
+ * @summary 로어북 카탈로그 조회
+ */
+export const GetLorebooksQueryParams = zod.object({
+  genre: zod
+    .string()
+    .optional()
+    .describe('장르 필터. 생략하면 전체 활성 로어북을 조회합니다.'),
+});
+
+export const GetLorebooksResponse = zod.unknown();
 
 /**
  * 프롤로그와 지금까지의 사용자 입력, AI 이어쓰기 결과를 조회합니다.

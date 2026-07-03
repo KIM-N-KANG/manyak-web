@@ -11,7 +11,7 @@ const makeChat = (
   storyId: 'story-1',
   storyTitle: `story-${id}`,
   lastStoryPreview: `preview-${id}`,
-  chatCount: 0,
+  turnCount: 0,
   updatedAt,
 });
 
