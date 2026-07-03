@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, useState } from 'react';
 
+import { createClientId } from '@/lib/create-client-id';
 import { track } from '@/observability/analytics';
 
 import {
@@ -9,7 +10,6 @@ import {
   ADDITIONAL_INFO_MAX_LENGTH,
 } from '../constants';
 import type { AdditionalInfoInput } from '../types';
-import { createClientId } from '../utils/create-client-id';
 
 const createEmptyAdditionalInfo = (): AdditionalInfoInput => ({
   id: createClientId(),

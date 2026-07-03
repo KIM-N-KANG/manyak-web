@@ -1,3 +1,4 @@
+import { createClientId } from '@/lib/create-client-id';
 import { parseTextSegments } from '@/lib/parse-text-segments';
 
 export type InputBlockType = 'situation' | 'dialogue';
@@ -9,7 +10,7 @@ export type InputBlock = {
 };
 
 export function createInputBlock(type: InputBlockType, value = ''): InputBlock {
-  return { id: crypto.randomUUID(), type, value };
+  return { id: createClientId(), type, value };
 }
 
 /** 블럭 입력 모드의 기본 상태. 묘사 1개와 대사 1개를 순서대로 보여준다. */
