@@ -11,6 +11,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
 import type { SelectedKeywordGroup as SelectedKeywordGroupModel } from '../types';
@@ -25,6 +26,8 @@ export function SelectedKeywordsDrawer({
   groups,
   creationId,
 }: SelectedKeywordsDrawerProps) {
+  const container = useAppFrameContainer();
+
   if (groups.length === 0) {
     return null;
   }
@@ -47,7 +50,10 @@ export function SelectedKeywordsDrawer({
           <HugeiconsIcon icon={LayoutAlignBottomIcon} aria-hidden="true" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="mx-auto w-full max-w-md">
+      <DrawerContent
+        container={container}
+        className="absolute"
+        overlayClassName="absolute">
         <DrawerHeader>
           <DrawerTitle>선택한 키워드</DrawerTitle>
         </DrawerHeader>

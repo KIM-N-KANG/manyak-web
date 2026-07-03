@@ -4,13 +4,13 @@ import { BubbleChatEditIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
-import { parseTextSegments } from '@/lib/parse-text-segments';
-import { cn } from '@/lib/utils';
+
+import { ChatTextSegments } from './chat-text-segments';
 
 type ChatChoicesProps = {
   choices: string[];
   onSend: (text: string, position: number) => void;
-  onFill: (text: string) => void;
+  onFill: (text: string, position: number) => void;
 };
 
 export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
@@ -33,7 +33,8 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
             variant="ghost"
             size="icon-sm"
             aria-label="입력창에 넣어 수정"
-            onClick={() => onFill(choice)}>
+            onClick={() => onFill(choice, index)}
+            className="text-foreground-secondary">
             <HugeiconsIcon icon={BubbleChatEditIcon} aria-hidden="true" />
           </Button>
           <Button
@@ -42,16 +43,7 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
             onClick={() => onSend(choice, index)}
             className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi font-normal whitespace-normal">
             <span>
-              {parseTextSegments(choice).map((segment, segmentIndex) => (
-                <span
-                  key={segmentIndex}
-                  className={cn(
-                    segment.emphasis && 'text-foreground-secondary',
-                    segment.bold && 'font-bold',
-                  )}>
-                  {segment.text}
-                </span>
-              ))}
+              <ChatTextSegments>{choice}</ChatTextSegments>
             </span>
           </Button>
         </div>

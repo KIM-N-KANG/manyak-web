@@ -66,12 +66,33 @@ export type AnalyticsEventProps = {
   client_chatList_chatCard_impressed: { chat_id: string; position?: number };
   // chat
   client_chat_viewed: { chat_id: string };
-  client_chat_messageInput_submitted: { chat_id: string; turn_number: number };
+  client_chat_settingsButton_clicked: { chat_id: string };
+  client_chat_inputMode_selected: { chat_id: string; mode: 'block' | 'plain' };
+  client_chat_messageInput_submitted: {
+    chat_id: string;
+    turn_number: number;
+    input_mode: 'block' | 'plain' | 'choice';
+  };
+  client_chat_situationInsertButton_clicked: { chat_id: string };
+  client_chat_addBlockButton_clicked: {
+    chat_id: string;
+    block_type: 'situation' | 'dialogue';
+  };
+  client_chat_removeBlockButton_clicked: {
+    chat_id: string;
+    block_type: 'situation' | 'dialogue';
+  };
   client_chat_choiceOption_selected: {
     chat_id: string;
     turn_number: number;
     position?: number;
   };
+  client_chat_choiceFillButton_clicked: {
+    chat_id: string;
+    turn_number: number;
+    position?: number;
+  };
+  client_chat_streamError_shown: { chat_id: string; turn_number: number };
   client_chat_loadError_shown: { chat_id: string };
   client_chat_retryButton_clicked: { chat_id: string };
   // feedback

@@ -3,10 +3,10 @@
 import { type Dispatch, type SetStateAction, useState } from 'react';
 
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
+import { createClientId } from '@/lib/create-client-id';
 
 import { TAG_CATEGORIES } from '../constants';
 import type { CustomKeyword, TagCategory } from '../types';
-import { createClientId } from '../utils/create-client-id';
 import {
   createEmptyCustomKeywordsByCategory,
   createEmptySelectedCustomKeywordIdsByCategory,

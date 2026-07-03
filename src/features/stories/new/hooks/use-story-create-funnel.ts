@@ -29,6 +29,7 @@ import type { StoryCreateStep } from '../types';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
 import { getSelectedKeywordsByCategory } from '../utils/tag-categories';
+import { useAdditionalInfos } from './use-additional-infos';
 import { usePreventPageLeave } from './use-prevent-page-leave';
 
 const getGeneratedStorylines = (
@@ -52,10 +53,22 @@ export function useStoryCreateFunnel() {
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const [hasCompletionFailed, setHasCompletionFailed] = useState(false);
   const [confirmBackDialogOpen, setConfirmBackDialogOpen] = useState(false);
+  const [selectedRecommendations, setSelectedRecommendations] = useState<
+    Set<string>
+  >(() => new Set());
   const completedStoryRef = useRef<{
     storyId: string;
     genre?: string[];
   } | null>(null);
+  const {
+    additionalInfos,
+    canAddAdditionalInfo,
+    addAdditionalInfo,
+    removeAdditionalInfo,
+    changeAdditionalInfo,
+    getSubmittedAdditionalInfos,
+    resetAdditionalInfos,
+  } = useAdditionalInfos();
 
   const simpleStoryTags = useGetSimpleStoryTags();
 
@@ -70,6 +83,11 @@ export function useStoryCreateFunnel() {
     track('client_storyCreate_completeError_shown', { stage });
     setStep('additional-info');
     setHasCompletionFailed(true);
+  };
+
+  const resetAdditionalInfoStep = () => {
+    resetAdditionalInfos();
+    setSelectedRecommendations(new Set());
   };
 
   const generateStorylines = useGenerateSimpleStorylines({
@@ -165,6 +183,7 @@ export function useStoryCreateFunnel() {
     setGenerationResult(null);
     setActiveStorylineIndex(0);
     setSelectedStoryline(null);
+    resetAdditionalInfoStep();
     setStep('storyline-select');
     track('client_storyCreate_storyGeneration_requested');
     generateStorylines.mutate({ data: request });
@@ -209,16 +228,36 @@ export function useStoryCreateFunnel() {
 
     setSelectedStoryline(activeStoryline);
     setHasCompletionFailed(false);
+    resetAdditionalInfoStep();
     setStep('additional-info');
   };
 
   const handleBackToStorylineSelect = () => {
     track('client_storyCreate_backToStorylineButton_clicked');
     setSelectedStoryline(null);
+    resetAdditionalInfoStep();
     setStep('storyline-select');
   };
 
-  const handleCompleteStory = (additionalInfos: string[]) => {
+  const handleToggleRecommendation = (
+    recommendation: string,
+    pressed: boolean,
+  ) => {
+    track('client_storyCreate_recommendedInfo_clicked', { selected: pressed });
+    setSelectedRecommendations((previous) => {
+      const next = new Set(previous);
+
+      if (pressed) {
+        next.add(recommendation);
+      } else {
+        next.delete(recommendation);
+      }
+
+      return next;
+    });
+  };
+
+  const handleCompleteStory = () => {
     setHasCompletionFailed(false);
 
     if (createdStoryId !== null) {
@@ -249,7 +288,10 @@ export function useStoryCreateFunnel() {
       data: {
         simpleCreationId: simpleCreationId,
         storylineId: selectedStoryline.id,
-        additionalInfos: additionalInfos,
+        additionalInfos: [
+          ...selectedRecommendations,
+          ...getSubmittedAdditionalInfos(),
+        ],
       },
     });
   };
@@ -280,6 +322,9 @@ export function useStoryCreateFunnel() {
     selectedKeywordGroups,
     activeStorylineIndex,
     selectedStoryline,
+    selectedRecommendations,
+    additionalInfos,
+    canAddAdditionalInfo,
     canCompleteStory,
     isGeneratingStorylines: generateStorylines.isPending,
     hasGenerateStorylinesError: generateStorylines.isError,
@@ -290,6 +335,10 @@ export function useStoryCreateFunnel() {
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
     handleBackToStorylineSelect,
+    handleToggleRecommendation,
+    addAdditionalInfo,
+    removeAdditionalInfo,
+    changeAdditionalInfo,
     handleCompleteStory,
     backDialogOpen: confirmBackDialogOpen,
     onBackDialogOpenChange: setConfirmBackDialogOpen,

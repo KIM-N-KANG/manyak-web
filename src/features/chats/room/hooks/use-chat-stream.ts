@@ -5,13 +5,15 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { track } from '@/observability/analytics';
 
-import type { StreamingTurn } from '../components/chat-messages';
 import { parseSseStream } from '../lib/parse-sse-stream';
 import { streamChatTurnRaw } from '../lib/stream-chat-turn';
+import type { StreamingTurn } from '../types';
 
 export function useChatStream(
   chatId: string,
+  turnCount: number,
   onCompleted: () => Promise<unknown> | unknown,
 ) {
   const [streamingTurn, setStreamingTurn] = useState<StreamingTurn | null>(
@@ -54,6 +56,10 @@ export function useChatStream(
         return;
       }
 
+      track('client_chat_streamError_shown', {
+        chat_id: chatId,
+        turn_number: turnCount + 1,
+      });
       toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
       setStreamingTurn(null);
     } finally {

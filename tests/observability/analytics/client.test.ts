@@ -36,12 +36,14 @@ describe('track (enabled)', () => {
     track('client_chat_messageInput_submitted', {
       chat_id: 'c1',
       turn_number: 1,
+      input_mode: 'block',
     });
     expect(trackMock).toHaveBeenCalledWith(
       'client_chat_messageInput_submitted',
       {
         chat_id: 'c1',
         turn_number: 1,
+        input_mode: 'block',
         screen_name: 'chat',
       },
     );

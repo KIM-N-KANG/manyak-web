@@ -20,6 +20,9 @@ export function StoryCreateFunnel() {
     selectedKeywordGroups,
     activeStorylineIndex,
     selectedStoryline,
+    selectedRecommendations,
+    additionalInfos,
+    canAddAdditionalInfo,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError,
@@ -30,6 +33,10 @@ export function StoryCreateFunnel() {
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
     handleBackToStorylineSelect,
+    handleToggleRecommendation,
+    addAdditionalInfo,
+    removeAdditionalInfo,
+    changeAdditionalInfo,
     handleCompleteStory,
     backDialogOpen,
     onBackDialogOpenChange,
@@ -83,6 +90,13 @@ export function StoryCreateFunnel() {
           isCompletingStory={isCompletingStory}
           hasCompleteStoryError={hasCompleteStoryError}
           canCompleteStory={canCompleteStory}
+          selectedRecommendations={selectedRecommendations}
+          additionalInfos={additionalInfos}
+          canAddAdditionalInfo={canAddAdditionalInfo}
+          onToggleRecommendation={handleToggleRecommendation}
+          onAddAdditionalInfo={addAdditionalInfo}
+          onRemoveAdditionalInfo={removeAdditionalInfo}
+          onChangeAdditionalInfo={changeAdditionalInfo}
           onCompleteStory={handleCompleteStory}
           onBackToStorylineSelect={handleBackToStorylineSelect}
         />

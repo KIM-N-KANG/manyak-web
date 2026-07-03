@@ -1,13 +1,21 @@
-import { useRef, useState } from 'react';
-
 import { track } from '@/observability/analytics';
 
-import { insertEmphasisMarkers } from '../lib/insert-emphasis-markers';
+import {
+  createDefaultInputBlocks,
+  type InputBlockType,
+  parseInputBlocks,
+  serializeInputBlocks,
+} from '../lib/input-blocks';
+import { useChatBlockComposer } from './use-chat-block-composer';
+import { type ChatInputMode } from './use-chat-input-mode';
+import { useChatPlainComposer } from './use-chat-plain-composer';
+import { useChatSubmitActions } from './use-chat-submit-actions';
 
 type UseChatComposerParams = {
   chatId: string;
   turnCount: number;
   isStreaming: boolean;
+  inputMode: ChatInputMode;
   onSend: (text: string) => void;
 };
 
@@ -15,83 +23,95 @@ export function useChatComposer({
   chatId,
   turnCount,
   isStreaming,
+  inputMode,
   onSend,
 }: UseChatComposerParams) {
-  const [value, setValue] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { submitText, submitChoice, trackChoiceFill } = useChatSubmitActions({
+    chatId,
+    turnCount,
+    isStreaming,
+    inputMode,
+    onSend,
+  });
+  const plainComposer = useChatPlainComposer({ submitText });
+  const blockComposer = useChatBlockComposer({ submitText });
 
-  const submit = (text: string) => {
-    track('client_chat_messageInput_submitted', {
+  const addBlock = (type: InputBlockType) => {
+    track('client_chat_addBlockButton_clicked', {
       chat_id: chatId,
-      turn_number: turnCount + 1,
+      block_type: type,
     });
-    onSend(text);
+    blockComposer.addBlock(type);
   };
 
-  const send = () => {
-    const text = value.trim();
+  const removeBlock = (id: string) => {
+    const target = blockComposer.blocks.find((block) => block.id === id);
 
-    if (!text || isStreaming) return;
+    if (target) {
+      track('client_chat_removeBlockButton_clicked', {
+        chat_id: chatId,
+        block_type: target.type,
+      });
+    }
 
-    setValue('');
-    submit(text);
-  };
-
-  const sendChoice = (text: string, position: number) => {
-    const trimmed = text.trim();
-
-    if (!trimmed || isStreaming) return;
-
-    track('client_chat_choiceOption_selected', {
-      chat_id: chatId,
-      turn_number: turnCount + 1,
-      position,
-    });
-    setValue('');
-    submit(trimmed);
-  };
-
-  const fillChoice = (text: string) => {
-    setValue(text);
-    requestAnimationFrame(() => {
-      const element = textareaRef.current;
-
-      if (!element) return;
-
-      element.focus();
-      element.setSelectionRange(text.length, text.length);
-    });
+    blockComposer.removeBlock(id);
   };
 
   const insertEmphasis = () => {
-    const element = textareaRef.current;
+    track('client_chat_situationInsertButton_clicked', { chat_id: chatId });
+    plainComposer.insertEmphasis();
+  };
 
-    if (!element) return;
+  const sendChoice = (text: string, position: number) => {
+    if (submitChoice(text, position)) {
+      plainComposer.clear();
+      blockComposer.reset();
+    }
+  };
 
-    const {
-      value: nextValue,
-      cursorStart,
-      cursorEnd,
-    } = insertEmphasisMarkers(
-      value,
-      element.selectionStart,
-      element.selectionEnd,
-    );
+  const fillChoice = (text: string, position: number) => {
+    trackChoiceFill(position);
 
-    setValue(nextValue);
-    requestAnimationFrame(() => {
-      element.focus();
-      element.setSelectionRange(cursorStart, cursorEnd);
-    });
+    if (inputMode === 'block') {
+      blockComposer.replace(parseInputBlocks(text));
+
+      return;
+    }
+
+    plainComposer.fill(text);
+  };
+
+  /** 모드 전환 시 작성 중 내용을 다음 모드 형식으로 변환해 유실을 막는다. */
+  const convertTo = (nextMode: ChatInputMode) => {
+    if (nextMode === inputMode) return;
+
+    if (nextMode === 'block') {
+      const parsed = parseInputBlocks(plainComposer.value);
+
+      blockComposer.replace(
+        parsed.length > 0 ? parsed : createDefaultInputBlocks(),
+      );
+      plainComposer.clear();
+    } else {
+      plainComposer.setValue(serializeInputBlocks(blockComposer.blocks));
+      blockComposer.clear();
+    }
   };
 
   return {
-    value,
-    setValue,
-    textareaRef,
-    send,
+    value: plainComposer.value,
+    setValue: plainComposer.setValue,
+    textareaRef: plainComposer.textareaRef,
+    blocks: blockComposer.blocks,
+    addBlock,
+    removeBlock,
+    updateBlock: blockComposer.updateBlock,
+    registerBlockInput: blockComposer.registerBlockInput,
+    sendBlocks: blockComposer.send,
+    send: plainComposer.send,
     sendChoice,
     fillChoice,
     insertEmphasis,
+    convertTo,
   };
 }

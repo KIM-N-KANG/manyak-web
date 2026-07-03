@@ -3,6 +3,12 @@
 import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   InputGroup,
@@ -10,7 +16,6 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
-import { Label } from '@/components/ui/label';
 import { track } from '@/observability/analytics';
 
 import {
@@ -47,17 +52,15 @@ export function FeedbackForm() {
         <p className="text-foreground-secondary">{FEEDBACK_DESCRIPTION}</p>
       </div>
 
-      <div className="mb-2 flex flex-col gap-8 p-4">
-        <section
-          aria-labelledby="feedback-body-label"
-          className="flex flex-col gap-2">
-          <Label
+      <FieldGroup className="mb-2 gap-8 p-4">
+        <Field className="gap-2" aria-labelledby="feedback-body-label">
+          <FieldLabel
             id="feedback-body-label"
             htmlFor="feedback-body"
             className="gap-0.5">
             피드백 내용
             <span className="text-destructive">*</span>
-          </Label>
+          </FieldLabel>
           <InputGroup>
             <InputGroupTextarea
               id="feedback-body"
@@ -73,26 +76,27 @@ export function FeedbackForm() {
               </InputGroupText>
             </InputGroupAddon>
           </InputGroup>
-        </section>
+        </Field>
 
-        <section
-          aria-labelledby="feedback-email-label"
-          className="flex flex-col gap-2">
-          <Label id="feedback-email-label" htmlFor="feedback-email">
+        <Field className="gap-2" aria-labelledby="feedback-email-label">
+          <FieldLabel id="feedback-email-label" htmlFor="feedback-email">
             답변 받을 이메일
-          </Label>
+          </FieldLabel>
           <Input
             id="feedback-email"
             type="email"
             inputMode="email"
             maxLength={FEEDBACK_EMAIL_MAX_LENGTH}
-            placeholder="답변이 필요하시면 이메일을 남겨주세요"
+            placeholder="예: contact@manyak.app"
             value={email}
             disabled={isSubmitting}
             onChange={changeEmail}
           />
-        </section>
-      </div>
+          <FieldDescription className="text-foreground-secondary">
+            답변이 필요하시면 이메일을 남겨주세요
+          </FieldDescription>
+        </Field>
+      </FieldGroup>
 
       <div className="mt-auto flex h-16 items-center px-4">
         <Button

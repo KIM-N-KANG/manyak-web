@@ -11,7 +11,7 @@ type ChatTurnItemProps = {
   isLast: boolean;
   reserveSpace?: boolean;
   onSendChoice: (text: string, position: number) => void;
-  onFillChoice: (text: string) => void;
+  onFillChoice: (text: string, position: number) => void;
   ref?: Ref<HTMLDivElement>;
 };
 
