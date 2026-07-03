@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 
-export type ChatInputMode = 'block' | 'plain';
+import {
+  CHAT_INPUT_MODE_STORAGE_KEY,
+  type ChatInputMode,
+  DEFAULT_CHAT_INPUT_MODE,
+  isChatInputMode,
+} from '../lib/chat-input-config';
 
-export const CHAT_INPUT_MODE_STORAGE_KEY = 'manyak:chat-input-mode';
-
-const DEFAULT_MODE: ChatInputMode = 'block';
-
-function isChatInputMode(value: string | null): value is ChatInputMode {
-  return value === 'block' || value === 'plain';
-}
+export type { ChatInputMode } from '../lib/chat-input-config';
 
 /**
  * 채팅 입력 모드를 localStorage에 전역 저장한다. 기본값은 블럭 모드.
@@ -16,7 +15,7 @@ function isChatInputMode(value: string | null): value is ChatInputMode {
  * 기본값으로 렌더링한 뒤 마운트 후 저장된 값을 반영한다.
  */
 export function useChatInputMode() {
-  const [mode, setMode] = useState<ChatInputMode>(DEFAULT_MODE);
+  const [mode, setMode] = useState<ChatInputMode>(DEFAULT_CHAT_INPUT_MODE);
 
   useEffect(() => {
     // 쿠키/스토리지 차단 환경에서는 localStorage 접근 자체가 예외를 던질 수 있으므로
@@ -29,7 +28,7 @@ export function useChatInputMode() {
         setMode(saved);
       }
     } catch {
-      // no-op: 기본값(DEFAULT_MODE)으로 렌더링을 유지한다.
+      // no-op: 기본값(DEFAULT_CHAT_INPUT_MODE)으로 렌더링을 유지한다.
     }
   }, []);
 

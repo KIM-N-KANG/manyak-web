@@ -1,6 +1,6 @@
 'use client';
 
-import { type KeyboardEvent, type SubmitEvent } from 'react';
+import { type SubmitEvent } from 'react';
 
 import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -11,6 +11,8 @@ import {
   InputGroupAddon,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
+
+import { submitOnShortcut } from '../lib/submit-shortcut';
 
 type ChatPlainInputProps = {
   value: string;
@@ -39,20 +41,6 @@ export function ChatPlainInput({
     }
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (
-      event.key === 'Enter' &&
-      !event.shiftKey &&
-      !event.nativeEvent.isComposing
-    ) {
-      event.preventDefault();
-
-      if (canSend) {
-        onSend();
-      }
-    }
-  };
-
   return (
     <section className="px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
       <form onSubmit={handleSubmit}>
@@ -64,7 +52,7 @@ export function ChatPlainInput({
             placeholder="이야기를 어떻게 이어갈까요?"
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(event) => submitOnShortcut(event, canSend, onSend)}
             className="max-h-[20dvh] min-h-0 pb-0"
           />
           <InputGroupAddon align="block-end" className="pt-2.5">

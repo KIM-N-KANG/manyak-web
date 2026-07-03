@@ -1,7 +1,6 @@
 'use client';
 
 import type { VariantProps } from 'class-variance-authority';
-import { toast } from 'sonner';
 
 import { useDeleteChat } from '@/api/generated/endpoints/chats/chats';
 import { OptionsMenu } from '@/components/common/options-menu';
@@ -13,7 +12,7 @@ import {
   removeCreatedChatId,
   writeCreatedChatIds,
 } from '@/features/chats/list/utils/chat-id-storage';
-import { FetchError } from '@/lib/custom-fetch';
+import { useOptimisticCreatedResourceDelete } from '@/hooks/use-optimistic-created-resource-delete';
 
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
@@ -29,24 +28,16 @@ export function ChatOptionsMenu({
   triggerClassName,
 }: ChatOptionsMenuProps) {
   const { mutateAsync, isPending } = useDeleteChat();
-
-  const handleDelete = async () => {
-    const previousChatIds = parseCreatedChatIds(getCreatedChatIdsSnapshot());
-
-    removeCreatedChatId(chatId);
-
-    try {
-      await mutateAsync({ chatId });
-      toast.success(TOAST_MESSAGE.CHAT_DELETED);
-    } catch (error) {
-      if (error instanceof FetchError && error.status === 404) {
-        return;
-      }
-
-      writeCreatedChatIds(previousChatIds);
-      toast.error(TOAST_MESSAGE.CHAT_DELETE_FAILED);
-    }
-  };
+  const handleDelete = useOptimisticCreatedResourceDelete({
+    id: chatId,
+    getSnapshot: getCreatedChatIdsSnapshot,
+    parseSnapshot: parseCreatedChatIds,
+    removeId: removeCreatedChatId,
+    writeIds: writeCreatedChatIds,
+    deleteResource: () => mutateAsync({ chatId }),
+    successMessage: TOAST_MESSAGE.CHAT_DELETED,
+    failureMessage: TOAST_MESSAGE.CHAT_DELETE_FAILED,
+  });
 
   return (
     <OptionsMenu

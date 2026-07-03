@@ -6,9 +6,9 @@ import { toast } from 'sonner';
 
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 
-import type { StreamingTurn } from '../components/chat-messages';
 import { parseSseStream } from '../lib/parse-sse-stream';
 import { streamChatTurnRaw } from '../lib/stream-chat-turn';
+import type { StreamingTurn } from '../types';
 
 export function useChatStream(
   chatId: string,

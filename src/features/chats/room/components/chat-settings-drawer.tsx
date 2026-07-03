@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutAlignRightIcon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { LayoutAlignRightIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
@@ -15,23 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 
 import { type ChatInputMode } from '../hooks/use-chat-input-mode';
-
-const MODE_OPTIONS: {
-  value: ChatInputMode;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: 'block',
-    label: '블럭 입력',
-    description: '상황과 대사를 나눠서 입력해요',
-  },
-  {
-    value: 'plain',
-    label: '일반 입력',
-    description: '한 입력창에 자유롭게 입력해요',
-  },
-];
+import { CHAT_INPUT_MODE_OPTIONS } from '../lib/chat-input-config';
 
 type ChatSettingsDrawerProps = {
   mode: ChatInputMode;
@@ -64,7 +48,7 @@ export function ChatSettingsDrawer({
         </DrawerHeader>
         <div className="flex flex-col gap-2 overflow-y-auto p-4">
           <Label>입력 모드</Label>
-          {MODE_OPTIONS.map((option) => (
+          {CHAT_INPUT_MODE_OPTIONS.map((option) => (
             <Button
               key={option.value}
               type="button"

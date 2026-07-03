@@ -1,7 +1,5 @@
 'use client';
 
-import { type KeyboardEvent } from 'react';
-
 import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -9,17 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
+import {
+  INPUT_BLOCK_LABELS,
+  INPUT_BLOCK_PLACEHOLDERS,
+} from '../lib/chat-input-config';
 import { type InputBlock, type InputBlockType } from '../lib/input-blocks';
-
-const BLOCK_PLACEHOLDERS: Record<InputBlockType, string> = {
-  situation: '어떤 상황을 묘사할까요?',
-  dialogue: '어떤 대사를 건넬까요?',
-};
-
-const BLOCK_LABELS: Record<InputBlockType, string> = {
-  situation: '상황',
-  dialogue: '대사',
-};
+import { submitOnShortcut } from '../lib/submit-shortcut';
 
 type ChatBlockInputProps = {
   blocks: InputBlock[];
@@ -43,20 +36,6 @@ export function ChatBlockInput({
   const canSend =
     !disabled && blocks.some((block) => block.value.trim().length > 0);
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (
-      event.key === 'Enter' &&
-      !event.shiftKey &&
-      !event.nativeEvent.isComposing
-    ) {
-      event.preventDefault();
-
-      if (canSend) {
-        onSend();
-      }
-    }
-  };
-
   return (
     <section className="flex flex-col pb-[env(safe-area-inset-bottom)]">
       {blocks.length > 0 && (
@@ -64,18 +43,18 @@ export function ChatBlockInput({
           {blocks.map((block) => (
             <div key={block.id} className="flex items-center gap-2">
               <span className="w-8 shrink-0 text-center text-sm text-foreground-secondary">
-                {BLOCK_LABELS[block.type]}
+                {INPUT_BLOCK_LABELS[block.type]}
               </span>
               <Textarea
                 ref={(element) => onRegisterInput(block.id, element)}
                 value={block.value}
                 rows={1}
-                placeholder={BLOCK_PLACEHOLDERS[block.type]}
+                placeholder={INPUT_BLOCK_PLACEHOLDERS[block.type]}
                 disabled={disabled}
                 onChange={(event) =>
                   onUpdateBlock(block.id, event.target.value)
                 }
-                onKeyDown={handleKeyDown}
+                onKeyDown={(event) => submitOnShortcut(event, canSend, onSend)}
                 className={cn(
                   'max-h-[4lh] min-h-10 resize-none',
                   block.type === 'situation'

@@ -4,8 +4,8 @@ import { BubbleChatEditIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
-import { parseTextSegments } from '@/lib/parse-text-segments';
-import { cn } from '@/lib/utils';
+
+import { ChatTextSegments } from './chat-text-segments';
 
 type ChatChoicesProps = {
   choices: string[];
@@ -43,16 +43,7 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
             onClick={() => onSend(choice, index)}
             className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi font-normal whitespace-normal">
             <span>
-              {parseTextSegments(choice).map((segment, segmentIndex) => (
-                <span
-                  key={segmentIndex}
-                  className={cn(
-                    segment.emphasis && 'text-foreground-secondary',
-                    segment.bold && 'font-bold',
-                  )}>
-                  {segment.text}
-                </span>
-              ))}
+              <ChatTextSegments>{choice}</ChatTextSegments>
             </span>
           </Button>
         </div>
