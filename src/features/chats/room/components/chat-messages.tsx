@@ -22,7 +22,7 @@ type ChatMessagesProps = {
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
   onSendChoice: (text: string, position: number) => void;
-  onFillChoice: (text: string) => void;
+  onFillChoice: (text: string, position: number) => void;
   onHeaderVisibleChange: (isVisible: boolean) => void;
 };
 

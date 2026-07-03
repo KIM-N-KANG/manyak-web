@@ -13,16 +13,19 @@ import {
 } from '@/components/ui/drawer';
 import { Label } from '@/components/ui/label';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
+import { track } from '@/observability/analytics';
 
 import { type ChatInputMode } from '../hooks/use-chat-input-mode';
 import { CHAT_INPUT_MODE_OPTIONS } from '../lib/chat-input-config';
 
 type ChatSettingsDrawerProps = {
+  chatId: string;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
 };
 
 export function ChatSettingsDrawer({
+  chatId,
   mode,
   onModeChange,
 }: ChatSettingsDrawerProps) {
@@ -35,7 +38,10 @@ export function ChatSettingsDrawer({
           type="button"
           size="icon"
           variant="ghost"
-          aria-label="채팅 설정 열기">
+          aria-label="채팅 설정 열기"
+          onClick={() =>
+            track('client_chat_settingsButton_clicked', { chat_id: chatId })
+          }>
           <HugeiconsIcon icon={LayoutAlignRightIcon} aria-hidden="true" />
         </Button>
       </DrawerTrigger>

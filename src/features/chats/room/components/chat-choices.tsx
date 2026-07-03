@@ -10,7 +10,7 @@ import { ChatTextSegments } from './chat-text-segments';
 type ChatChoicesProps = {
   choices: string[];
   onSend: (text: string, position: number) => void;
-  onFill: (text: string) => void;
+  onFill: (text: string, position: number) => void;
 };
 
 export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
@@ -33,7 +33,7 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
             variant="ghost"
             size="icon-sm"
             aria-label="입력창에 넣어 수정"
-            onClick={() => onFill(choice)}
+            onClick={() => onFill(choice, index)}
             className="text-foreground-secondary">
             <HugeiconsIcon icon={BubbleChatEditIcon} aria-hidden="true" />
           </Button>

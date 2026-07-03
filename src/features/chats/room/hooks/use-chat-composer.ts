@@ -1,5 +1,8 @@
+import { track } from '@/observability/analytics';
+
 import {
   createDefaultInputBlocks,
+  type InputBlockType,
   parseInputBlocks,
   serializeInputBlocks,
 } from '../lib/input-blocks';
@@ -23,14 +26,41 @@ export function useChatComposer({
   inputMode,
   onSend,
 }: UseChatComposerParams) {
-  const { submitText, submitChoice } = useChatSubmitActions({
+  const { submitText, submitChoice, trackChoiceFill } = useChatSubmitActions({
     chatId,
     turnCount,
     isStreaming,
+    inputMode,
     onSend,
   });
   const plainComposer = useChatPlainComposer({ submitText });
   const blockComposer = useChatBlockComposer({ submitText });
+
+  const addBlock = (type: InputBlockType) => {
+    track('client_chat_addBlockButton_clicked', {
+      chat_id: chatId,
+      block_type: type,
+    });
+    blockComposer.addBlock(type);
+  };
+
+  const removeBlock = (id: string) => {
+    const target = blockComposer.blocks.find((block) => block.id === id);
+
+    if (target) {
+      track('client_chat_removeBlockButton_clicked', {
+        chat_id: chatId,
+        block_type: target.type,
+      });
+    }
+
+    blockComposer.removeBlock(id);
+  };
+
+  const insertEmphasis = () => {
+    track('client_chat_situationInsertButton_clicked', { chat_id: chatId });
+    plainComposer.insertEmphasis();
+  };
 
   const sendChoice = (text: string, position: number) => {
     if (submitChoice(text, position)) {
@@ -39,7 +69,9 @@ export function useChatComposer({
     }
   };
 
-  const fillChoice = (text: string) => {
+  const fillChoice = (text: string, position: number) => {
+    trackChoiceFill(position);
+
     if (inputMode === 'block') {
       blockComposer.replace(parseInputBlocks(text));
 
@@ -71,15 +103,15 @@ export function useChatComposer({
     setValue: plainComposer.setValue,
     textareaRef: plainComposer.textareaRef,
     blocks: blockComposer.blocks,
-    addBlock: blockComposer.addBlock,
-    removeBlock: blockComposer.removeBlock,
+    addBlock,
+    removeBlock,
     updateBlock: blockComposer.updateBlock,
     registerBlockInput: blockComposer.registerBlockInput,
     sendBlocks: blockComposer.send,
     send: plainComposer.send,
     sendChoice,
     fillChoice,
-    insertEmphasis: plainComposer.insertEmphasis,
+    insertEmphasis,
     convertTo,
   };
 }

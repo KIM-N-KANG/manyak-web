@@ -42,6 +42,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   const { streamingTurn, isStreaming, send } = useChatStream(
     chatId,
+    turns.length,
     handleStreamCompleted,
   );
 
@@ -56,6 +57,13 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   });
 
   const handleModeChange = (nextMode: ChatInputMode) => {
+    if (nextMode !== mode) {
+      track('client_chat_inputMode_selected', {
+        chat_id: chatId,
+        mode: nextMode,
+      });
+    }
+
     composer.convertTo(nextMode);
     changeMode(nextMode);
   };
@@ -93,6 +101,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <ChatRoomHeader
+        chatId={chatId}
         storyTitle={storyTitle}
         isVisible={isHeaderVisible}
         inputMode={mode}
