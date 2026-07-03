@@ -58,6 +58,10 @@ export function useAdditionalInfos() {
   const getSubmittedAdditionalInfos = () =>
     additionalInfos.map(({ value }) => value.trim()).filter(Boolean);
 
+  const resetAdditionalInfos = () => {
+    setAdditionalInfos([createEmptyAdditionalInfo()]);
+  };
+
   return {
     additionalInfos,
     canAddAdditionalInfo: additionalInfos.length < ADDITIONAL_INFO_MAX_COUNT,
@@ -65,5 +69,6 @@ export function useAdditionalInfos() {
     removeAdditionalInfo,
     changeAdditionalInfo,
     getSubmittedAdditionalInfos,
+    resetAdditionalInfos,
   };
 }

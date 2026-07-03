@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -15,14 +13,13 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { ToggleChip } from '@/components/ui/toggle-chip';
-import { track } from '@/observability/analytics';
 
 import {
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
   ADDITIONAL_INFO_PLACEHOLDERS,
 } from '../constants';
-import { useAdditionalInfos } from '../hooks/use-additional-infos';
+import type { AdditionalInfoInput } from '../types';
 import { LoadingButtonContent } from './loading-button-content';
 import { SelectedStorylineContent } from './selected-storyline-content';
 import { StoryCreateErrorMessage } from './story-create-error-message';
@@ -33,7 +30,17 @@ type StoryAdditionalInfoStepSectionProps = {
   isCompletingStory: boolean;
   hasCompleteStoryError: boolean;
   canCompleteStory: boolean;
-  onCompleteStory: (additionalInfos: string[]) => void;
+  selectedRecommendations: Set<string>;
+  additionalInfos: AdditionalInfoInput[];
+  canAddAdditionalInfo: boolean;
+  onToggleRecommendation: (recommendation: string, pressed: boolean) => void;
+  onAddAdditionalInfo: () => void;
+  onRemoveAdditionalInfo: (id: string) => void;
+  onChangeAdditionalInfo: (
+    id: string,
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => void;
+  onCompleteStory: () => void;
   onBackToStorylineSelect: () => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
@@ -43,45 +50,17 @@ export function StoryAdditionalInfoStepSection({
   isCompletingStory,
   hasCompleteStoryError,
   canCompleteStory,
+  selectedRecommendations,
+  additionalInfos,
+  canAddAdditionalInfo,
+  onToggleRecommendation,
+  onAddAdditionalInfo,
+  onRemoveAdditionalInfo,
+  onChangeAdditionalInfo,
   onCompleteStory,
   onBackToStorylineSelect,
   onScroll,
 }: StoryAdditionalInfoStepSectionProps) {
-  const {
-    additionalInfos,
-    canAddAdditionalInfo,
-    addAdditionalInfo,
-    removeAdditionalInfo,
-    changeAdditionalInfo,
-    getSubmittedAdditionalInfos,
-  } = useAdditionalInfos();
-
-  const [selectedRecommendations, setSelectedRecommendations] = useState<
-    Set<string>
-  >(() => new Set());
-
-  const toggleRecommendation = (recommendation: string, pressed: boolean) => {
-    track('client_storyCreate_recommendedInfo_clicked', { selected: pressed });
-    setSelectedRecommendations((previous) => {
-      const next = new Set(previous);
-
-      if (pressed) {
-        next.add(recommendation);
-      } else {
-        next.delete(recommendation);
-      }
-
-      return next;
-    });
-  };
-
-  const handleCompleteStory = () => {
-    onCompleteStory([
-      ...selectedRecommendations,
-      ...getSubmittedAdditionalInfos(),
-    ]);
-  };
-
   return (
     <StoryCreateStepLayout
       titleLines={['스토리라인에 더하고 싶은', '정보를 자유롭게 입력해주세요']}
@@ -103,7 +82,7 @@ export function StoryAdditionalInfoStepSection({
             className="relative"
             aria-busy={isCompletingStory}
             disabled={!canCompleteStory || isCompletingStory}
-            onClick={handleCompleteStory}>
+            onClick={onCompleteStory}>
             <LoadingButtonContent
               isLoading={isCompletingStory}
               loadingLabel="스토리 완성 중">
@@ -136,7 +115,7 @@ export function StoryAdditionalInfoStepSection({
                         pressed={selectedRecommendations.has(recommendation)}
                         disabled={isCompletingStory}
                         onPressedChange={(pressed) =>
-                          toggleRecommendation(recommendation, pressed)
+                          onToggleRecommendation(recommendation, pressed)
                         }>
                         {recommendation}
                       </ToggleChip>
@@ -173,7 +152,7 @@ export function StoryAdditionalInfoStepSection({
                     value={additionalInfo.value}
                     disabled={isCompletingStory}
                     onChange={(event) =>
-                      changeAdditionalInfo(additionalInfo.id, event)
+                      onChangeAdditionalInfo(additionalInfo.id, event)
                     }
                   />
                   <InputGroupAddon align="block-end">
@@ -189,7 +168,7 @@ export function StoryAdditionalInfoStepSection({
                   variant="ghost"
                   aria-label={`추가 정보 ${index + 1} 삭제`}
                   disabled={isCompletingStory}
-                  onClick={() => removeAdditionalInfo(additionalInfo.id)}
+                  onClick={() => onRemoveAdditionalInfo(additionalInfo.id)}
                   className="text-foreground-secondary">
                   <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
                 </Button>
@@ -201,7 +180,7 @@ export function StoryAdditionalInfoStepSection({
               variant="secondary"
               className="self-center"
               disabled={!canAddAdditionalInfo || isCompletingStory}
-              onClick={addAdditionalInfo}>
+              onClick={onAddAdditionalInfo}>
               <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
               정보 추가
             </Button>
