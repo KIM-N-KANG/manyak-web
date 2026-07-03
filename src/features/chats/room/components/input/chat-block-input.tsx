@@ -36,7 +36,7 @@ export function ChatBlockInput({
   return (
     <section className="flex flex-col pb-[env(safe-area-inset-bottom)]">
       {blocks.length > 0 && (
-        <div className="flex max-h-[30dvh] scrollbar-none flex-col gap-2 overflow-y-auto px-4 py-2">
+        <div className="flex max-h-[25dvh] scrollbar-none flex-col gap-2 overflow-y-auto px-4 py-2">
           {blocks.map((block) => (
             <div key={block.id} className="flex items-center gap-2">
               <span className="w-8 shrink-0 text-center text-sm text-foreground-secondary">
@@ -72,9 +72,10 @@ export function ChatBlockInput({
           ))}
         </div>
       )}
-      <div className="flex h-14 items-center gap-2 bg-background px-4 py-2">
+      <div className="flex items-center gap-2 bg-background p-4 pt-2">
         <Button
           type="button"
+          aria-label="상황 묘사 추가"
           variant="secondary"
           disabled={disabled}
           onClick={() => onAddBlock('situation')}>
@@ -82,6 +83,7 @@ export function ChatBlockInput({
         </Button>
         <Button
           type="button"
+          aria-label="대사 추가"
           variant="secondary"
           disabled={disabled}
           onClick={() => onAddBlock('dialogue')}>
