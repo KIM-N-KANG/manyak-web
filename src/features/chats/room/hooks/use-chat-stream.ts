@@ -24,7 +24,7 @@ export function useChatStream(
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const send = async (userInput: string) => {
-    setStreamingTurn({ userInput, output: '' });
+    setStreamingTurn({ userInput, aiOutput: '' });
 
     const controller = new AbortController();
 
@@ -40,7 +40,7 @@ export function useChatStream(
       for await (const event of parseSseStream(stream)) {
         if (event.type === 'token') {
           setStreamingTurn((prev) =>
-            prev ? { ...prev, output: prev.output + event.content } : prev,
+            prev ? { ...prev, aiOutput: prev.aiOutput + event.content } : prev,
           );
         } else if (event.type === 'completed') {
           await onCompleted();

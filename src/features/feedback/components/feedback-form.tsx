@@ -34,15 +34,15 @@ export function FeedbackForm() {
   const {
     body,
     email,
-    changeBody,
-    changeEmail,
-    submitFeedback,
+    handleBodyChange,
+    handleEmailChange,
+    handleSubmit,
     canSubmit,
     isSubmitting,
   } = useFeedbackForm();
 
   return (
-    <form onSubmit={submitFeedback} className="flex flex-1 flex-col">
+    <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
       <div className="flex flex-col items-start gap-1 p-4">
         <div className="text-xl font-semibold">
           {FEEDBACK_TITLE_LINES.map((titleLine) => (
@@ -68,7 +68,7 @@ export function FeedbackForm() {
               placeholder="예: 이런 점이 불편했어요, 이런 기능이 있으면 좋겠어요"
               value={body}
               disabled={isSubmitting}
-              onChange={changeBody}
+              onChange={handleBodyChange}
             />
             <InputGroupAddon align="block-end">
               <InputGroupText>
@@ -90,7 +90,7 @@ export function FeedbackForm() {
             placeholder="예: contact@manyak.app"
             value={email}
             disabled={isSubmitting}
-            onChange={changeEmail}
+            onChange={handleEmailChange}
           />
           <FieldDescription className="text-foreground-secondary">
             답변이 필요하시면 이메일을 남겨주세요

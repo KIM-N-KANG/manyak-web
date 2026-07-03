@@ -30,7 +30,7 @@ const storylinesResponse = {
 };
 
 test.describe('스토리 생성', () => {
-  test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅방으로 이동한다 (US-3)', async ({
+  test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅 화면으로 이동한다 (US-3)', async ({
     page,
   }) => {
     await page.route(TAGS, async (route) => {
@@ -85,7 +85,7 @@ test.describe('스토리 생성', () => {
     ).toBeVisible();
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    // Step 4: 완료 후 채팅방 이동
+    // Step 4: 완료 후 채팅 화면 이동
     await expect(page).toHaveURL(/\/chats\/chat-new$/);
   });
 

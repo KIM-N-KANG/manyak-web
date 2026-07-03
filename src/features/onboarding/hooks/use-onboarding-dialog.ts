@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { APP_PATH } from '@/constants/app-path';
-import { useChatIds } from '@/features/chats/list/hooks/use-chat-ids';
+import { useCreatedChatIds } from '@/features/chats/list/hooks/use-created-chat-ids';
 import { useCreatedStoryIds } from '@/features/stories/list/hooks/use-created-story-ids';
 import { track } from '@/observability/analytics';
 
@@ -17,8 +17,8 @@ import {
 export function useOnboardingDialog() {
   const router = useRouter();
   const storyIds = useCreatedStoryIds();
-  const chatIds = useChatIds();
-  const [open, setOpen] = useState(false);
+  const chatIds = useCreatedChatIds();
+  const [isOpen, setIsOpen] = useState(false);
 
   // 서버 렌더링 시점(null)에는 보유 여부를 알 수 없으므로 열지 않고,
   // 클라이언트에서 "보관된 스토리·채팅이 모두 없음"이 확정됐을 때만 게이팅을 통과시킨다.
@@ -32,7 +32,7 @@ export function useOnboardingDialog() {
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOpen(true);
+    setIsOpen(true);
     track('client_onboarding_viewed');
   }, [isNewVisitor]);
 
@@ -42,5 +42,5 @@ export function useOnboardingDialog() {
     router.push(APP_PATH.CREATOR.STORY);
   };
 
-  return { open, handleStartCreate };
+  return { isOpen, handleStartCreate };
 }

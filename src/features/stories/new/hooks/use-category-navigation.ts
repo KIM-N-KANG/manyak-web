@@ -47,7 +47,7 @@ export function useCategoryNavigation({
         ? 'forward'
         : 'backward';
 
-    track('client_storyCreate_keywordCategory_selected', {
+    track('client_storyCreate_tagCategory_selected', {
       from_category: activeCategory,
       to_category: nextCategory,
       direction,

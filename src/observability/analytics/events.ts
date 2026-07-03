@@ -18,7 +18,7 @@ export type AnalyticsEventProps = {
   // storyCreate
   client_storyCreate_viewed: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
-  client_storyCreate_keywordCategory_selected: {
+  client_storyCreate_tagCategory_selected: {
     from_category: SimpleStoryTagListItemResponseCategory;
     to_category: SimpleStoryTagListItemResponseCategory;
     direction: 'forward' | 'backward';
@@ -28,8 +28,8 @@ export type AnalyticsEventProps = {
     creation_id: string;
     position?: number;
   };
-  client_storyCreate_selectedKeywordsButton_clicked: { creation_id: string };
-  client_storyCreate_addKeyword_submitted: {
+  client_storyCreate_selectedTagsButton_clicked: { creation_id: string };
+  client_storyCreate_addTag_submitted: {
     category: SimpleStoryTagListItemResponseCategory;
   };
   client_storyCreate_regenerateButton_clicked: { creation_id: string };
@@ -55,7 +55,7 @@ export type AnalyticsEventProps = {
   client_storyCreate_completed: {
     story_id: string;
     chat_id: string;
-    genre?: string[];
+    genres?: string[];
   };
   // storyDetail
   client_storyDetail_viewed: { story_id: string };

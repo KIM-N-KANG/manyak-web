@@ -29,7 +29,7 @@ const DEFAULT_MUTATION_OPTIONS: Options['mutationOptions'] = {
   throwOnError: false,
 };
 
-export const makeQueryClient = () => {
+export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
@@ -40,7 +40,7 @@ export const makeQueryClient = () => {
       },
     },
   });
-};
+}
 
 /**
  * API 쿼리 옵션을 간소화하기 위한 타입

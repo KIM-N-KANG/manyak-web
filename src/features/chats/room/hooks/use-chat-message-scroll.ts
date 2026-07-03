@@ -32,7 +32,7 @@ export function useChatMessageScroll({
     }
   }, [streamingTurn, hasSent]);
 
-  const signature = `${turnCount}:${streamingTurn?.output.length ?? -1}`;
+  const signature = `${turnCount}:${streamingTurn?.aiOutput.length ?? -1}`;
   const { isAtBottom, scrollToBottom, handleScroll } = useStickyScroll(
     scrollRef,
     signature,

@@ -23,12 +23,12 @@ import type {
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
+import { saveCreatedStoryId } from '@/features/stories/list/utils/story-id-storage';
 import { track } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
 import { mapStepToSpec } from '../utils/step-analytics';
-import { saveCreatedStoryId } from '../utils/story-id-storage';
-import { getSelectedKeywordsByCategory } from '../utils/tag-categories';
+import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { usePreventPageLeave } from './use-prevent-page-leave';
 
@@ -51,14 +51,14 @@ export function useStoryCreateFunnel() {
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
-  const [hasCompletionFailed, setHasCompletionFailed] = useState(false);
-  const [confirmBackDialogOpen, setConfirmBackDialogOpen] = useState(false);
+  const [hasCompleteStoryError, setHasCompleteStoryError] = useState(false);
+  const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
   const [selectedRecommendations, setSelectedRecommendations] = useState<
     Set<string>
   >(() => new Set());
   const completedStoryRef = useRef<{
     storyId: string;
-    genre?: string[];
+    genres?: string[];
   } | null>(null);
   const {
     additionalInfos,
@@ -76,13 +76,13 @@ export function useStoryCreateFunnel() {
 
   const { confirmLeave, leaveAfterCleanup } = usePreventPageLeave({
     enabled: shouldConfirmBack,
-    onBackAttempt: () => setConfirmBackDialogOpen(true),
+    onBackAttempt: () => setIsBackDialogOpen(true),
   });
 
   const failToAdditionalInfo = (stage: 'story' | 'chat') => {
     track('client_storyCreate_completeError_shown', { stage });
     setStep('additional-info');
-    setHasCompletionFailed(true);
+    setHasCompleteStoryError(true);
   };
 
   const resetAdditionalInfoStep = () => {
@@ -125,7 +125,7 @@ export function useStoryCreateFunnel() {
           track('client_storyCreate_completed', {
             story_id: completedStoryId,
             chat_id: chatId,
-            genre: completedStoryRef.current?.genre,
+            genres: completedStoryRef.current?.genres,
           });
         }
 
@@ -153,7 +153,7 @@ export function useStoryCreateFunnel() {
         if (typeof storyId === 'string') {
           saveCreatedStoryId(storyId);
           setCreatedStoryId(storyId);
-          completedStoryRef.current = { storyId, genre: response.data.genres };
+          completedStoryRef.current = { storyId, genres: response.data.genres };
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
@@ -165,7 +165,7 @@ export function useStoryCreateFunnel() {
   });
 
   const storylines = getGeneratedStorylines(generationResult);
-  const selectedKeywordGroups = getSelectedKeywordsByCategory(
+  const selectedTagGroups = getSelectedTagsByCategory(
     generationRequest,
     simpleStoryTags.data?.data ?? [],
   );
@@ -176,7 +176,7 @@ export function useStoryCreateFunnel() {
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
 
-  const handleGenerateStoryline = (
+  const handleGenerateStorylines = (
     request: GenerateSimpleStorylinesRequest,
   ) => {
     setGenerationRequest(request);
@@ -227,7 +227,7 @@ export function useStoryCreateFunnel() {
     }
 
     setSelectedStoryline(activeStoryline);
-    setHasCompletionFailed(false);
+    setHasCompleteStoryError(false);
     resetAdditionalInfoStep();
     setStep('additional-info');
   };
@@ -258,7 +258,7 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = () => {
-    setHasCompletionFailed(false);
+    setHasCompleteStoryError(false);
 
     if (createdStoryId !== null) {
       if (typeof simpleCreationId === 'number') {
@@ -298,7 +298,7 @@ export function useStoryCreateFunnel() {
 
   const handleHeaderBack = () => {
     if (shouldConfirmBack) {
-      setConfirmBackDialogOpen(true);
+      setIsBackDialogOpen(true);
 
       return;
     }
@@ -308,7 +308,7 @@ export function useStoryCreateFunnel() {
 
   const handleConfirmBack = () => {
     track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
-    setConfirmBackDialogOpen(false);
+    setIsBackDialogOpen(false);
     confirmLeave();
   };
 
@@ -319,7 +319,7 @@ export function useStoryCreateFunnel() {
         ? String(simpleCreationId)
         : undefined,
     storylines,
-    selectedKeywordGroups,
+    selectedTagGroups,
     activeStorylineIndex,
     selectedStoryline,
     selectedRecommendations,
@@ -329,8 +329,8 @@ export function useStoryCreateFunnel() {
     isGeneratingStorylines: generateStorylines.isPending,
     hasGenerateStorylinesError: generateStorylines.isError,
     isCompletingStory: createStory.isPending || createChat.isPending,
-    hasCompleteStoryError: hasCompletionFailed,
-    handleGenerateStoryline,
+    hasCompleteStoryError,
+    handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
@@ -340,8 +340,8 @@ export function useStoryCreateFunnel() {
     removeAdditionalInfo,
     changeAdditionalInfo,
     handleCompleteStory,
-    backDialogOpen: confirmBackDialogOpen,
-    onBackDialogOpenChange: setConfirmBackDialogOpen,
+    backDialogOpen: isBackDialogOpen,
+    onBackDialogOpenChange: setIsBackDialogOpen,
     handleHeaderBack,
     handleConfirmBack,
   };

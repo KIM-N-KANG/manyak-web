@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
-import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
+import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
@@ -16,9 +16,9 @@ import {
   useChatInputMode,
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
-import { ChatInput } from './chat-input';
-import { ChatMessages } from './chat-messages';
-import { ChatRoomHeader } from './chat-room-header';
+import { ChatRoomHeader } from './header/chat-room-header';
+import { ChatInput } from './input/chat-input';
+import { ChatMessages } from './messages/chat-messages';
 
 type ChatRoomProps = {
   chatId: string;

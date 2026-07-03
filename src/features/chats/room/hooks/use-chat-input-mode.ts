@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 
 import {
   CHAT_INPUT_MODE_STORAGE_KEY,
-  type ChatInputMode,
   DEFAULT_CHAT_INPUT_MODE,
-  isChatInputMode,
-} from '../lib/chat-input-config';
+} from '../constants';
+import { type ChatInputMode, isChatInputMode } from '../lib/chat-input-config';
 
 export type { ChatInputMode } from '../lib/chat-input-config';
 

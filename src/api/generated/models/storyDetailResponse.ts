@@ -5,9 +5,11 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { LorebookResponse } from './lorebookResponse';
 import type { StoryAuthorResponse } from './storyAuthorResponse';
 import type { StoryDetailResponseStatus } from './storyDetailResponseStatus';
 import type { StoryDetailResponseVisibility } from './storyDetailResponseVisibility';
+import type { StoryEndingResponse } from './storyEndingResponse';
 import type { StoryStartSettingResponse } from './storyStartSettingResponse';
 
 /**
@@ -41,11 +43,15 @@ export interface StoryDetailResponse {
   likeCount?: number;
   startSetting?: StoryStartSettingResponse | null;
   /** 추천 입력 */
-  recommendedInputs?: string[];
+  suggestedInputs?: string[];
   /** 스토리 공개 여부. 기본 생성 시 PRIVATE입니다. */
   visibility?: StoryDetailResponseVisibility;
   /** 등록 상태 */
   status?: StoryDetailResponseStatus;
+  /** 스토리가 참조하는 로어북(장르 공용 용어 사전) 목록. 없으면 빈 배열입니다. */
+  lorebooks?: LorebookResponse[];
+  /** 스토리 엔딩 목록. 없으면 빈 배열입니다. */
+  endings?: StoryEndingResponse[];
   /** 생성 시각 */
   createdAt?: string;
 }
