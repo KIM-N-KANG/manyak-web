@@ -7,12 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-import {
-  INPUT_BLOCK_LABELS,
-  INPUT_BLOCK_PLACEHOLDERS,
-} from '../lib/chat-input-config';
-import { type InputBlock, type InputBlockType } from '../lib/input-blocks';
-import { submitOnShortcut } from '../lib/submit-shortcut';
+import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
+import { type InputBlock, type InputBlockType } from '../../lib/input-blocks';
+import { submitOnShortcut } from '../../lib/submit-shortcut';
 
 type ChatBlockInputProps = {
   blocks: InputBlock[];

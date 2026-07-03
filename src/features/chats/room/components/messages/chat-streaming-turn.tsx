@@ -1,7 +1,10 @@
 import type { Ref } from 'react';
 
-import type { StreamingTurn } from '../types';
-import { AiMessageBubble, UserMessageBubble } from './chat-message-bubble';
+import type { StreamingTurn } from '../../types';
+import {
+  AiMessageBubble,
+  UserMessageBubble,
+} from '../message-content/chat-message-bubble';
 import { ChatStreamLoading } from './chat-stream-loading';
 
 type ChatStreamingTurnProps = {

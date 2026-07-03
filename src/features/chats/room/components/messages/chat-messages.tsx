@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
-import { useChatMessageScroll } from '../hooks/use-chat-message-scroll';
-import { CHAT_HEADER_HEIGHT_CLASS } from '../lib/constants';
-import type { StreamingTurn } from '../types';
+import { CHAT_HEADER_HEIGHT_CLASS } from '../../constants';
+import { useChatMessageScroll } from '../../hooks/use-chat-message-scroll';
+import type { StreamingTurn } from '../../types';
+import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
-import { AiMessageBubble } from './chat-message-bubble';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';
 

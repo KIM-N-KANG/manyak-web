@@ -3,8 +3,11 @@ import type { Ref } from 'react';
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { cn } from '@/lib/utils';
 
+import {
+  AiMessageBubble,
+  UserMessageBubble,
+} from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
-import { AiMessageBubble, UserMessageBubble } from './chat-message-bubble';
 
 type ChatTurnItemProps = {
   turn: ChatTurnResponse;

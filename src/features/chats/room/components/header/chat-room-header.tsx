@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { cn } from '@/lib/utils';
 
-import { type ChatInputMode } from '../hooks/use-chat-input-mode';
-import { CHAT_HEADER_HEIGHT_CLASS } from '../lib/constants';
+import { CHAT_HEADER_HEIGHT_CLASS } from '../../constants';
+import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { ChatSettingsDrawer } from './chat-settings-drawer';
 
 type ChatRoomHeaderProps = {

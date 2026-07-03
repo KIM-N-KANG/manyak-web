@@ -16,9 +16,9 @@ import {
   useChatInputMode,
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
-import { ChatInput } from './chat-input';
-import { ChatMessages } from './chat-messages';
-import { ChatRoomHeader } from './chat-room-header';
+import { ChatRoomHeader } from './header/chat-room-header';
+import { ChatInput } from './input/chat-input';
+import { ChatMessages } from './messages/chat-messages';
 
 type ChatRoomProps = {
   chatId: string;

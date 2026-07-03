@@ -1,7 +1,7 @@
 'use client';
 
-import { type useChatComposer } from '../hooks/use-chat-composer';
-import { type ChatInputMode } from '../hooks/use-chat-input-mode';
+import { type useChatComposer } from '../../hooks/use-chat-composer';
+import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { ChatBlockInput } from './chat-block-input';
 import { ChatPlainInput } from './chat-plain-input';
 

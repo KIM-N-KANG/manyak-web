@@ -15,8 +15,8 @@ import { Label } from '@/components/ui/label';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
-import { type ChatInputMode } from '../hooks/use-chat-input-mode';
-import { CHAT_INPUT_MODE_OPTIONS } from '../lib/chat-input-config';
+import { CHAT_INPUT_MODE_OPTIONS } from '../../constants';
+import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 
 type ChatSettingsDrawerProps = {
   chatId: string;
