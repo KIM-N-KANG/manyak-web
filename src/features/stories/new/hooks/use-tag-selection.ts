@@ -43,7 +43,7 @@ export function useTagSelection() {
   const hasProtagonistTag =
     selectedTagIdsByCategory.PROTAGONIST.length > 0 ||
     selectedCustomTagIdsByCategory.PROTAGONIST.length > 0;
-  const canGenerateStoryline = hasGenreTag && hasProtagonistTag;
+  const canGenerateStorylines = hasGenreTag && hasProtagonistTag;
 
   const createToggleSelection =
     <Id>(
@@ -128,7 +128,7 @@ export function useTagSelection() {
     customTagsByCategory,
     isMaxSelectionReached,
     isCategoryComplete,
-    canGenerateStoryline,
+    canGenerateStorylines,
     togglePredefinedTag,
     toggleCustomTag,
     addCustomTag,

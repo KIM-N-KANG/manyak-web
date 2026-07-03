@@ -10,19 +10,19 @@ import type { TagCategory } from '../../types';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
-import { StoryTagCategoryPanel } from '../tag-step/story-tag-category-panel';
+import { StoryTagCategorySection } from '../tag-step/story-tag-category-section';
 
 type StoryTagStepSectionProps = {
-  isGeneratingStoryline: boolean;
-  hasGenerateStorylineError: boolean;
-  onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
+  isGeneratingStorylines: boolean;
+  hasGenerateStorylinesError: boolean;
+  onGenerateStorylines: (request: GenerateSimpleStorylinesRequest) => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryTagStepSection({
-  isGeneratingStoryline,
-  hasGenerateStorylineError,
-  onGenerateStoryline,
+  isGeneratingStorylines,
+  hasGenerateStorylinesError,
+  onGenerateStorylines,
   onScroll,
 }: StoryTagStepSectionProps) {
   const {
@@ -34,7 +34,7 @@ export function StoryTagStepSection({
     simpleStoryTags,
     showTagsSkeleton,
     tagsByCategory,
-    canGenerateStoryline,
+    canGenerateStorylines,
     isMaxSelectionReached,
     isCategoryUnlocked,
     isCategoryComplete,
@@ -45,10 +45,10 @@ export function StoryTagStepSection({
     togglePredefinedTag,
     toggleCustomTag,
     addCustomTag,
-    handleGenerateStoryline,
+    handleGenerateStorylines,
   } = useStoryTagStep({
-    isGeneratingStoryline,
-    onGenerateStoryline,
+    isGeneratingStorylines,
+    onGenerateStorylines,
   });
 
   return (
@@ -63,7 +63,7 @@ export function StoryTagStepSection({
               type="button"
               variant="secondary"
               size="lg"
-              disabled={isGeneratingStoryline}
+              disabled={isGeneratingStorylines}
               onClick={goToPreviousCategory}>
               이전
             </Button>
@@ -72,13 +72,13 @@ export function StoryTagStepSection({
             type="button"
             size="lg"
             disabled={
-              isGeneratingStoryline ||
+              isGeneratingStorylines ||
               (isLastCategory
-                ? !canGenerateStoryline
+                ? !canGenerateStorylines
                 : !isCategoryComplete(activeCategory))
             }
             onClick={
-              isLastCategory ? handleGenerateStoryline : goToNextCategory
+              isLastCategory ? handleGenerateStorylines : goToNextCategory
             }>
             {isLastCategory ? '스토리라인 만들기' : '다음'}
           </Button>
@@ -111,7 +111,7 @@ export function StoryTagStepSection({
                 key={category}
                 value={category}
                 className="p-4 pt-2 pb-6">
-                <StoryTagCategoryPanel
+                <StoryTagCategorySection
                   category={category}
                   label={label}
                   placeholder={placeholder}
@@ -123,7 +123,7 @@ export function StoryTagStepSection({
                   customTags={customTagsByCategory[category]}
                   isLoadingTags={showTagsSkeleton}
                   hasTagsError={simpleStoryTags.isError}
-                  isGeneratingStoryline={isGeneratingStoryline}
+                  isGeneratingStorylines={isGeneratingStorylines}
                   onTogglePredefinedTag={togglePredefinedTag}
                   onToggleCustomTag={toggleCustomTag}
                   onAddCustomTag={addCustomTag}
@@ -133,7 +133,7 @@ export function StoryTagStepSection({
           },
         )}
       </Tabs>
-      {hasGenerateStorylineError && (
+      {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
           스토리라인을 만들지 못했어요. 잠시 후 다시 시도해주세요.
         </StoryCreateErrorMessage>

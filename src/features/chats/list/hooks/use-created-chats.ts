@@ -6,7 +6,7 @@ import { getChatsByIds } from '@/api/generated/endpoints/chats/chats';
 import type { ChatSummaryResponse } from '@/api/generated/models';
 
 import type { ChatListItem } from '../types';
-import { useChatIds } from './use-chat-ids';
+import { useCreatedChatIds } from './use-created-chat-ids';
 
 export const CHATS_BATCH_QUERY_KEY = 'chats-batch';
 
@@ -27,8 +27,8 @@ export const toChatListItems = (
   );
 };
 
-export function useChats() {
-  const chatIds = useChatIds();
+export function useCreatedChats() {
+  const chatIds = useCreatedChatIds();
 
   const query = useQuery({
     queryKey: [CHATS_BATCH_QUERY_KEY, chatIds],

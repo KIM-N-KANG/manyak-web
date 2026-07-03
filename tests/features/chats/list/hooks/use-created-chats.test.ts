@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ChatSummaryResponse } from '@/api/generated/models';
-import { toChatListItems } from '@/features/chats/list/hooks/use-chats';
+import { toChatListItems } from '@/features/chats/list/hooks/use-created-chats';
 
 const makeChat = (
   id: string,

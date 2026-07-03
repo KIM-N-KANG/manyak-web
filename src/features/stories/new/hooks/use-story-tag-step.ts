@@ -9,13 +9,13 @@ import { useCategoryNavigation } from './use-category-navigation';
 import { useTagSelection } from './use-tag-selection';
 
 type UseStoryTagStepArgs = {
-  isGeneratingStoryline: boolean;
-  onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
+  isGeneratingStorylines: boolean;
+  onGenerateStorylines: (request: GenerateSimpleStorylinesRequest) => void;
 };
 
 export function useStoryTagStep({
-  isGeneratingStoryline,
-  onGenerateStoryline,
+  isGeneratingStorylines,
+  onGenerateStorylines,
 }: UseStoryTagStepArgs) {
   const tagSelection = useTagSelection();
   const navigation = useCategoryNavigation({
@@ -26,12 +26,12 @@ export function useStoryTagStep({
   const showTagsSkeleton = useDelayedLoading(simpleStoryTags.isLoading);
   const tagsByCategory = getTagsByCategory(simpleStoryTags.data?.data ?? []);
 
-  const handleGenerateStoryline = () => {
-    if (!tagSelection.canGenerateStoryline) {
+  const handleGenerateStorylines = () => {
+    if (!tagSelection.canGenerateStorylines) {
       return;
     }
 
-    onGenerateStoryline(tagSelection.buildGenerateRequest());
+    onGenerateStorylines(tagSelection.buildGenerateRequest());
   };
 
   return {
@@ -42,9 +42,9 @@ export function useStoryTagStep({
     customTagsByCategory: tagSelection.customTagsByCategory,
     simpleStoryTags,
     showTagsSkeleton,
-    isGeneratingStoryline,
+    isGeneratingStorylines,
     tagsByCategory,
-    canGenerateStoryline: tagSelection.canGenerateStoryline,
+    canGenerateStorylines: tagSelection.canGenerateStorylines,
     isMaxSelectionReached: tagSelection.isMaxSelectionReached,
     isCategoryComplete: tagSelection.isCategoryComplete,
     isCategoryUnlocked: navigation.isCategoryUnlocked,
@@ -55,6 +55,6 @@ export function useStoryTagStep({
     togglePredefinedTag: tagSelection.togglePredefinedTag,
     toggleCustomTag: tagSelection.toggleCustomTag,
     addCustomTag: tagSelection.addCustomTag,
-    handleGenerateStoryline,
+    handleGenerateStorylines,
   };
 }

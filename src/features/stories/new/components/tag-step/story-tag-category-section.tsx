@@ -7,7 +7,7 @@ import type { CustomTag, TagCategory } from '../../types';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { AddTagDialog } from './add-tag-dialog';
 
-type StoryTagCategoryPanelProps = {
+type StoryTagCategorySectionProps = {
   category: TagCategory;
   label: string;
   placeholder: string;
@@ -19,7 +19,7 @@ type StoryTagCategoryPanelProps = {
   customTags: CustomTag[];
   isLoadingTags: boolean;
   hasTagsError: boolean;
-  isGeneratingStoryline: boolean;
+  isGeneratingStorylines: boolean;
   onTogglePredefinedTag: (
     category: TagCategory,
     tagId: number,
@@ -33,7 +33,7 @@ type StoryTagCategoryPanelProps = {
   onAddCustomTag: (category: TagCategory, tag: string) => void;
 };
 
-export function StoryTagCategoryPanel({
+export function StoryTagCategorySection({
   category,
   label,
   placeholder,
@@ -45,11 +45,11 @@ export function StoryTagCategoryPanel({
   customTags,
   isLoadingTags,
   hasTagsError,
-  isGeneratingStoryline,
+  isGeneratingStorylines,
   onTogglePredefinedTag,
   onToggleCustomTag,
   onAddCustomTag,
-}: StoryTagCategoryPanelProps) {
+}: StoryTagCategorySectionProps) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm text-foreground-secondary">
@@ -82,7 +82,7 @@ export function StoryTagCategoryPanel({
 
             const isSelected = selectedTagIds.includes(id);
             const isTagChipDisabled =
-              isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
+              isGeneratingStorylines || (!isSelected && isMaxSelectionReached);
 
             return (
               <ToggleChip
@@ -100,7 +100,7 @@ export function StoryTagCategoryPanel({
           customTags.map((customTag) => {
             const isSelected = selectedCustomTagIds.includes(customTag.id);
             const isTagChipDisabled =
-              isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
+              isGeneratingStorylines || (!isSelected && isMaxSelectionReached);
 
             return (
               <ToggleChip
@@ -118,7 +118,7 @@ export function StoryTagCategoryPanel({
           category={category}
           categoryLabel={label}
           placeholder={placeholder}
-          disabled={isGeneratingStoryline || isMaxSelectionReached}
+          disabled={isGeneratingStorylines || isMaxSelectionReached}
           onAddTag={(tag) => onAddCustomTag(category, tag)}
         />
       </div>

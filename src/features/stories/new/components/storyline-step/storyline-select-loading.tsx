@@ -5,7 +5,7 @@ import {
 } from '../../constants';
 import { StoryGeneratingLoading } from '../shared/story-generating-loading';
 
-export function StorylineSelectLoadingState() {
+export function StorylineSelectLoading() {
   return (
     <div
       className="flex flex-col"

@@ -8,7 +8,7 @@ import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { StoryCreateHeader } from './header/story-create-header';
 import { StoryAdditionalInfoStepSection } from './step-sections/story-additional-info-step-section';
-import { StoryCompletionLoadingState } from './step-sections/story-completion-loading-state';
+import { StoryCompletionLoading } from './step-sections/story-completion-loading';
 import { StoryTagStepSection } from './step-sections/story-tag-step-section';
 import { StorylineSelectStepSection } from './step-sections/storyline-select-step-section';
 
@@ -28,7 +28,7 @@ export function StoryCreateFunnel() {
     hasGenerateStorylinesError,
     isCompletingStory,
     hasCompleteStoryError,
-    handleGenerateStoryline,
+    handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
@@ -64,9 +64,9 @@ export function StoryCreateFunnel() {
 
       {step === 'keyword' && (
         <StoryTagStepSection
-          isGeneratingStoryline={isGeneratingStorylines}
-          hasGenerateStorylineError={hasGenerateStorylinesError}
-          onGenerateStoryline={handleGenerateStoryline}
+          isGeneratingStorylines={isGeneratingStorylines}
+          hasGenerateStorylinesError={hasGenerateStorylinesError}
+          onGenerateStorylines={handleGenerateStorylines}
         />
       )}
 
@@ -102,7 +102,7 @@ export function StoryCreateFunnel() {
         />
       )}
 
-      {step === 'complete' && <StoryCompletionLoadingState />}
+      {step === 'complete' && <StoryCompletionLoading />}
     </div>
   );
 }

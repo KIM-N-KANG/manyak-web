@@ -1,7 +1,7 @@
 'use client';
 
 import { Marker, MarkerContent } from '@/components/ui/marker';
-import { type RevealHint, useRevealedHints } from '@/hooks/use-revealed-hint';
+import { type RevealHint, useRevealedHints } from '@/hooks/use-revealed-hints';
 import { useTypewriter } from '@/hooks/use-typewriter';
 
 const NO_HINTS: ReadonlyArray<RevealHint> = [];

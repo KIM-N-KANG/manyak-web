@@ -15,14 +15,14 @@ import { useCreatedStoryIds } from '@/features/stories/list/hooks/use-created-st
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useTrackOnView } from '@/observability/analytics';
 
-import { useChats } from '../hooks/use-chats';
+import { useCreatedChats } from '../hooks/use-created-chats';
 import { ChatCard } from './chat-card';
 import { ChatListSkeleton } from './chat-list-skeleton';
 
 export function ChatList() {
   useTrackOnView('client_chatList_viewed');
 
-  const { chats, isLoading, isError, isEmpty, refetch } = useChats();
+  const { chats, isLoading, isError, isEmpty, refetch } = useCreatedChats();
   const storyIds = useCreatedStoryIds();
   const hasStories = (storyIds?.length ?? 0) > 0;
   const showSkeleton = useDelayedLoading(isLoading);

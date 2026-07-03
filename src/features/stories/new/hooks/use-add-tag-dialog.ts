@@ -13,7 +13,7 @@ type UseAddTagDialogArgs = {
 };
 
 export function useAddTagDialog({ category, onAddTag }: UseAddTagDialogArgs) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [tag, setTag] = useState('');
 
   const handleTagChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -32,12 +32,12 @@ export function useAddTagDialog({ category, onAddTag }: UseAddTagDialogArgs) {
     track('client_storyCreate_addTag_submitted', { category });
     onAddTag(trimmedTag);
     setTag('');
-    setOpen(false);
+    setIsOpen(false);
   };
 
   return {
-    open,
-    setOpen,
+    isOpen,
+    setIsOpen,
     tag,
     handleTagChange,
     handleSubmit,

@@ -15,11 +15,11 @@ import { cn } from '@/lib/utils';
 import { useOnboardingDialog } from '../hooks/use-onboarding-dialog';
 
 export function OnboardingDialog() {
-  const { open, handleStartCreate } = useOnboardingDialog();
+  const { isOpen, handleStartCreate } = useOnboardingDialog();
   const contentRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent
         showCloseButton={false}
         initialFocus={contentRef}

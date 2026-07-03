@@ -1,4 +1,4 @@
-import type { RevealHint } from '@/hooks/use-revealed-hint';
+import type { RevealHint } from '@/hooks/use-revealed-hints';
 
 import type { StoryCreateStep, TagCategoryConfig } from './types';
 

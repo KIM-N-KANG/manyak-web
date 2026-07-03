@@ -4,7 +4,7 @@ export const CREATED_CHAT_IDS_STORAGE_KEY = 'manyak:created-chat-ids';
 
 const chatIdListStorage = createCreatedIdListStorage<string>({
   storageKey: CREATED_CHAT_IDS_STORAGE_KEY,
-  changeEvent: 'manyak:created-chat-ids-change',
+  changeEvent: `${CREATED_CHAT_IDS_STORAGE_KEY}-change`,
   isValidId: (value): value is string => typeof value === 'string',
 });
 

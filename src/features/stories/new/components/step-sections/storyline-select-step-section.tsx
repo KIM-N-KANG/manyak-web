@@ -15,7 +15,7 @@ import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
 import { SelectedTagsDrawer } from '../storyline-step/selected-tags-drawer';
 import { StorylineNavButtons } from '../storyline-step/storyline-nav-buttons';
 import { StorylineRatingButtons } from '../storyline-step/storyline-rating-buttons';
-import { StorylineSelectLoadingState } from '../storyline-step/storyline-select-loading-state';
+import { StorylineSelectLoading } from '../storyline-step/storyline-select-loading';
 
 export function StorylineSelectStepSection({
   storylines,
@@ -81,7 +81,7 @@ export function StorylineSelectStepSection({
         </>
       }>
       {isRegeneratingStorylines ? (
-        <StorylineSelectLoadingState />
+        <StorylineSelectLoading />
       ) : (
         <Tabs
           value={String(activeStorylineIndex)}

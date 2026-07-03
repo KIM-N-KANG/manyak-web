@@ -4,7 +4,7 @@ export const CREATED_STORY_IDS_STORAGE_KEY = 'manyak:created-story-ids';
 
 const storyIdListStorage = createCreatedIdListStorage<string>({
   storageKey: CREATED_STORY_IDS_STORAGE_KEY,
-  changeEvent: 'manyak:created-story-ids-change',
+  changeEvent: `${CREATED_STORY_IDS_STORAGE_KEY}-change`,
   isValidId: (value): value is string => typeof value === 'string',
 });
 

@@ -42,8 +42,8 @@ export function AddTagDialog({
   onAddTag,
 }: AddTagDialogProps) {
   const {
-    open,
-    setOpen,
+    isOpen,
+    setIsOpen,
     tag,
     handleTagChange,
     handleSubmit,
@@ -51,7 +51,7 @@ export function AddTagDialog({
   } = useAddTagDialog({ category, onAddTag });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger
         render={
           <Button type="button" variant="secondary" disabled={disabled}>

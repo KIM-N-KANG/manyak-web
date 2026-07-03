@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   type RevealHint,
   selectRevealedHints,
-} from '@/hooks/use-revealed-hint';
+} from '@/hooks/use-revealed-hints';
 
 const STORY_HINTS: RevealHint[] = [
   { delayMs: 30000, text: '생각보다 시간이 조금 더 걸리고 있어요' },

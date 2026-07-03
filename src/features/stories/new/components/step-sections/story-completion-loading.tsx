@@ -5,13 +5,13 @@ import {
 import { StoryGeneratingLoading } from '../shared/story-generating-loading';
 import { StoryCreateStepScrollArea } from '../step-layout/story-create-step-scroll-area';
 
-type StoryCompletionSectionProps = {
+type StoryCompletionLoadingProps = {
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
-export function StoryCompletionLoadingState({
+export function StoryCompletionLoading({
   onScroll,
-}: StoryCompletionSectionProps) {
+}: StoryCompletionLoadingProps) {
   return (
     <StoryCreateStepScrollArea onScroll={onScroll} aria-busy className="pb-4">
       <section className="flex flex-1 flex-col">
