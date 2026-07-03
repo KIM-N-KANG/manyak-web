@@ -12,7 +12,7 @@ export function UserMessageBubble({ children }: ChatMessageBubbleProps) {
   );
 }
 
-export function StoryMessageBubble({ children }: ChatMessageBubbleProps) {
+export function AiMessageBubble({ children }: ChatMessageBubbleProps) {
   return (
     <div className="p-4">
       <ChatMessageContent>{children}</ChatMessageContent>

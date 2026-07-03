@@ -1,7 +1,7 @@
 import type { Ref } from 'react';
 
 import type { StreamingTurn } from '../types';
-import { StoryMessageBubble, UserMessageBubble } from './chat-message-bubble';
+import { AiMessageBubble, UserMessageBubble } from './chat-message-bubble';
 import { ChatStreamLoading } from './chat-stream-loading';
 
 type ChatStreamingTurnProps = {
@@ -13,8 +13,8 @@ export function ChatStreamingTurn({ turn, ref }: ChatStreamingTurnProps) {
   return (
     <div ref={ref} className="min-h-full">
       <UserMessageBubble>{turn.userInput}</UserMessageBubble>
-      {turn.output ? (
-        <StoryMessageBubble>{turn.output}</StoryMessageBubble>
+      {turn.aiOutput ? (
+        <AiMessageBubble>{turn.aiOutput}</AiMessageBubble>
       ) : (
         <div className="p-4">
           <ChatStreamLoading />

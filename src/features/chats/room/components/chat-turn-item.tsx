@@ -4,7 +4,7 @@ import type { ChatTurnResponse } from '@/api/generated/models';
 import { cn } from '@/lib/utils';
 
 import { ChatChoices } from './chat-choices';
-import { StoryMessageBubble, UserMessageBubble } from './chat-message-bubble';
+import { AiMessageBubble, UserMessageBubble } from './chat-message-bubble';
 
 type ChatTurnItemProps = {
   turn: ChatTurnResponse;
@@ -29,7 +29,7 @@ export function ChatTurnItem({
         <UserMessageBubble>{turn.userInput}</UserMessageBubble>
       ) : null}
       {turn.aiOutput ? (
-        <StoryMessageBubble>{turn.aiOutput}</StoryMessageBubble>
+        <AiMessageBubble>{turn.aiOutput}</AiMessageBubble>
       ) : null}
       {isLast && turn.choices && turn.choices.length > 0 ? (
         <ChatChoices

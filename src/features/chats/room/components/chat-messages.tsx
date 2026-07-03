@@ -12,7 +12,7 @@ import { useChatMessageScroll } from '../hooks/use-chat-message-scroll';
 import { CHAT_HEADER_HEIGHT_CLASS } from '../lib/constants';
 import type { StreamingTurn } from '../types';
 import { ChatChoices } from './chat-choices';
-import { StoryMessageBubble } from './chat-message-bubble';
+import { AiMessageBubble } from './chat-message-bubble';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';
 
@@ -59,7 +59,7 @@ export function ChatMessages({
         className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
         <div aria-hidden className={cn('shrink-0', CHAT_HEADER_HEIGHT_CLASS)} />
 
-        {prologue ? <StoryMessageBubble>{prologue}</StoryMessageBubble> : null}
+        {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
 
         {turns.map((turn, index) => {
           const isLast = !streamingTurn && index === lastTurnIndex;
