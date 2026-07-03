@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { getStorylineTabLabel } from '../constants';
 import { useStorylineRating } from '../hooks/use-storyline-rating';
 import type { StorylineSelectStepSectionProps } from '../types';
-import { SelectedKeywordsDrawer } from './selected-keywords-drawer';
+import { SelectedTagsDrawer } from './selected-tags-drawer';
 import { StickyTabsList } from './sticky-tabs-list';
 import { StoryCreateErrorMessage } from './story-create-error-message';
 import { StoryCreateStepLayout } from './story-create-step-layout';
@@ -20,7 +20,7 @@ import { StorylineSelectLoadingState } from './storyline-select-loading-state';
 export function StorylineSelectStepSection({
   storylines,
   creationId,
-  selectedKeywordGroups,
+  selectedTagGroups,
   activeStorylineIndex,
   isRegeneratingStorylines,
   hasRegenerateStorylinesError,
@@ -89,8 +89,8 @@ export function StorylineSelectStepSection({
           className="gap-0">
           <StickyTabsList
             rightSlot={
-              <SelectedKeywordsDrawer
-                groups={selectedKeywordGroups}
+              <SelectedTagsDrawer
+                groups={selectedTagGroups}
                 creationId={creationId}
               />
             }>

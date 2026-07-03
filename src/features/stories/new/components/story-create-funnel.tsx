@@ -9,7 +9,7 @@ import { mapStepToSpec } from '../utils/step-analytics';
 import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';
 import { StoryCompletionLoadingState } from './story-completion-loading-state';
 import { StoryCreateHeader } from './story-create-header';
-import { StoryKeywordStepSection } from './story-keyword-step-section';
+import { StoryTagStepSection } from './story-tag-step-section';
 import { StorylineSelectStepSection } from './storyline-select-step-section';
 
 export function StoryCreateFunnel() {
@@ -17,7 +17,7 @@ export function StoryCreateFunnel() {
     step,
     creationId,
     storylines,
-    selectedKeywordGroups,
+    selectedTagGroups,
     activeStorylineIndex,
     selectedStoryline,
     selectedRecommendations,
@@ -63,7 +63,7 @@ export function StoryCreateFunnel() {
       />
 
       {step === 'keyword' && (
-        <StoryKeywordStepSection
+        <StoryTagStepSection
           isGeneratingStoryline={isGeneratingStorylines}
           hasGenerateStorylineError={hasGenerateStorylinesError}
           onGenerateStoryline={handleGenerateStoryline}
@@ -74,7 +74,7 @@ export function StoryCreateFunnel() {
         <StorylineSelectStepSection
           storylines={storylines}
           creationId={creationId}
-          selectedKeywordGroups={selectedKeywordGroups}
+          selectedTagGroups={selectedTagGroups}
           activeStorylineIndex={activeStorylineIndex}
           isRegeneratingStorylines={isGeneratingStorylines}
           hasRegenerateStorylinesError={hasGenerateStorylinesError}

@@ -28,7 +28,7 @@ import { track } from '@/observability/analytics';
 import type { StoryCreateStep } from '../types';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { saveCreatedStoryId } from '../utils/story-id-storage';
-import { getSelectedKeywordsByCategory } from '../utils/tag-categories';
+import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { usePreventPageLeave } from './use-prevent-page-leave';
 
@@ -165,7 +165,7 @@ export function useStoryCreateFunnel() {
   });
 
   const storylines = getGeneratedStorylines(generationResult);
-  const selectedKeywordGroups = getSelectedKeywordsByCategory(
+  const selectedTagGroups = getSelectedTagsByCategory(
     generationRequest,
     simpleStoryTags.data?.data ?? [],
   );
@@ -319,7 +319,7 @@ export function useStoryCreateFunnel() {
         ? String(simpleCreationId)
         : undefined,
     storylines,
-    selectedKeywordGroups,
+    selectedTagGroups,
     activeStorylineIndex,
     selectedStoryline,
     selectedRecommendations,

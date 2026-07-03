@@ -3,20 +3,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleChip } from '@/components/ui/toggle-chip';
 
 import { SKELETON_TAG_CHIP_WIDTH_CLASSES } from '../constants';
-import type { CustomKeyword, TagCategory } from '../types';
-import { AddKeywordDialog } from './add-keyword-dialog';
+import type { CustomTag, TagCategory } from '../types';
+import { AddTagDialog } from './add-tag-dialog';
 import { StoryCreateErrorMessage } from './story-create-error-message';
 
-type StoryKeywordCategoryPanelProps = {
+type StoryTagCategoryPanelProps = {
   category: TagCategory;
   label: string;
   placeholder: string;
   maxSelectionCount: number;
   isMaxSelectionReached: boolean;
   selectedTagIds: number[];
-  selectedCustomKeywordIds: string[];
+  selectedCustomTagIds: string[];
   predefinedTags: SimpleStoryTagListItemResponse[];
-  customKeywords: CustomKeyword[];
+  customTags: CustomTag[];
   isLoadingTags: boolean;
   hasTagsError: boolean;
   isGeneratingStoryline: boolean;
@@ -25,31 +25,31 @@ type StoryKeywordCategoryPanelProps = {
     tagId: number,
     pressed: boolean,
   ) => void;
-  onToggleCustomKeyword: (
+  onToggleCustomTag: (
     category: TagCategory,
-    keywordId: string,
+    tagId: string,
     pressed: boolean,
   ) => void;
-  onAddCustomKeyword: (category: TagCategory, keyword: string) => void;
+  onAddCustomTag: (category: TagCategory, tag: string) => void;
 };
 
-export function StoryKeywordCategoryPanel({
+export function StoryTagCategoryPanel({
   category,
   label,
   placeholder,
   maxSelectionCount,
   isMaxSelectionReached,
   selectedTagIds,
-  selectedCustomKeywordIds,
+  selectedCustomTagIds,
   predefinedTags,
-  customKeywords,
+  customTags,
   isLoadingTags,
   hasTagsError,
   isGeneratingStoryline,
   onTogglePredefinedTag,
-  onToggleCustomKeyword,
-  onAddCustomKeyword,
-}: StoryKeywordCategoryPanelProps) {
+  onToggleCustomTag,
+  onAddCustomTag,
+}: StoryTagCategoryPanelProps) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm text-foreground-secondary">
@@ -81,14 +81,14 @@ export function StoryKeywordCategoryPanel({
             }
 
             const isSelected = selectedTagIds.includes(id);
-            const isKeywordChipDisabled =
+            const isTagChipDisabled =
               isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
 
             return (
               <ToggleChip
                 key={id}
                 pressed={isSelected}
-                disabled={isKeywordChipDisabled}
+                disabled={isTagChipDisabled}
                 onPressedChange={(pressed) =>
                   onTogglePredefinedTag(category, id, pressed)
                 }>
@@ -97,29 +97,29 @@ export function StoryKeywordCategoryPanel({
             );
           })}
         {!isLoadingTags &&
-          customKeywords.map((keyword) => {
-            const isSelected = selectedCustomKeywordIds.includes(keyword.id);
-            const isKeywordChipDisabled =
+          customTags.map((customTag) => {
+            const isSelected = selectedCustomTagIds.includes(customTag.id);
+            const isTagChipDisabled =
               isGeneratingStoryline || (!isSelected && isMaxSelectionReached);
 
             return (
               <ToggleChip
-                key={keyword.id}
+                key={customTag.id}
                 pressed={isSelected}
-                disabled={isKeywordChipDisabled}
+                disabled={isTagChipDisabled}
                 onPressedChange={(pressed) =>
-                  onToggleCustomKeyword(category, keyword.id, pressed)
+                  onToggleCustomTag(category, customTag.id, pressed)
                 }>
-                {keyword.name}
+                {customTag.name}
               </ToggleChip>
             );
           })}
-        <AddKeywordDialog
+        <AddTagDialog
           category={category}
           categoryLabel={label}
           placeholder={placeholder}
           disabled={isGeneratingStoryline || isMaxSelectionReached}
-          onAddKeyword={(keyword) => onAddCustomKeyword(category, keyword)}
+          onAddTag={(tag) => onAddCustomTag(category, tag)}
         />
       </div>
     </div>

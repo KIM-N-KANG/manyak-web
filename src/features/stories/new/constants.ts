@@ -2,7 +2,7 @@ import type { RevealHint } from '@/hooks/use-revealed-hint';
 
 import type { StoryCreateStep, TagCategoryConfig } from './types';
 
-export const ADD_KEYWORD_MAX_LENGTH = 15;
+export const ADD_TAG_MAX_LENGTH = 15;
 
 export const ADDITIONAL_INFO_MAX_COUNT = 7;
 

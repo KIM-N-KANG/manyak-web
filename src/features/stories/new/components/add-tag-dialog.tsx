@@ -23,32 +23,32 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 
-import { ADD_KEYWORD_MAX_LENGTH } from '../constants';
-import { useAddKeywordDialog } from '../hooks/use-add-keyword-dialog';
+import { ADD_TAG_MAX_LENGTH } from '../constants';
+import { useAddTagDialog } from '../hooks/use-add-tag-dialog';
 
-type AddKeywordDialogProps = {
+type AddTagDialogProps = {
   category: SimpleStoryCustomTagRequestCategory;
   categoryLabel: string;
   placeholder: string;
   disabled?: boolean;
-  onAddKeyword: (keyword: string) => void;
+  onAddTag: (tag: string) => void;
 };
 
-export function AddKeywordDialog({
+export function AddTagDialog({
   category,
   categoryLabel,
   placeholder,
   disabled,
-  onAddKeyword,
-}: AddKeywordDialogProps) {
+  onAddTag,
+}: AddTagDialogProps) {
   const {
     open,
     setOpen,
-    keyword,
-    handleKeywordChange,
+    tag,
+    handleTagChange,
     handleSubmit,
     isSubmitDisabled,
-  } = useAddKeywordDialog({ category, onAddKeyword });
+  } = useAddTagDialog({ category, onAddTag });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -67,17 +67,17 @@ export function AddKeywordDialog({
         <form onSubmit={handleSubmit} className="contents">
           <FieldGroup>
             <Field>
-              <Label htmlFor={`${category}-keyword`}>키워드</Label>
+              <Label htmlFor={`${category}-tag`}>키워드</Label>
               <InputGroup>
                 <InputGroupTextarea
-                  id={`${category}-keyword`}
-                  name="keyword"
+                  id={`${category}-tag`}
+                  name="tag"
                   placeholder={placeholder}
                   className="min-h-10"
-                  maxLength={ADD_KEYWORD_MAX_LENGTH}
+                  maxLength={ADD_TAG_MAX_LENGTH}
                   rows={1}
-                  value={keyword}
-                  onChange={handleKeywordChange}
+                  value={tag}
+                  onChange={handleTagChange}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                       e.preventDefault();
@@ -87,7 +87,7 @@ export function AddKeywordDialog({
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupText>
-                    {keyword.length} / {ADD_KEYWORD_MAX_LENGTH}
+                    {tag.length} / {ADD_TAG_MAX_LENGTH}
                   </InputGroupText>
                 </InputGroupAddon>
               </InputGroup>

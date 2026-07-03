@@ -8,15 +8,15 @@ import { getTagsByCategory } from '../utils/tag-categories';
 import { useCategoryNavigation } from './use-category-navigation';
 import { useTagSelection } from './use-tag-selection';
 
-type UseStoryKeywordStepArgs = {
+type UseStoryTagStepArgs = {
   isGeneratingStoryline: boolean;
   onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
 };
 
-export function useStoryKeywordStep({
+export function useStoryTagStep({
   isGeneratingStoryline,
   onGenerateStoryline,
-}: UseStoryKeywordStepArgs) {
+}: UseStoryTagStepArgs) {
   const tagSelection = useTagSelection();
   const navigation = useCategoryNavigation({
     isCategoryComplete: tagSelection.isCategoryComplete,
@@ -38,9 +38,8 @@ export function useStoryKeywordStep({
     activeCategory: navigation.activeCategory,
     changeCategory: navigation.changeCategory,
     selectedTagIdsByCategory: tagSelection.selectedTagIdsByCategory,
-    selectedCustomKeywordIdsByCategory:
-      tagSelection.selectedCustomKeywordIdsByCategory,
-    customKeywordsByCategory: tagSelection.customKeywordsByCategory,
+    selectedCustomTagIdsByCategory: tagSelection.selectedCustomTagIdsByCategory,
+    customTagsByCategory: tagSelection.customTagsByCategory,
     simpleStoryTags,
     showTagsSkeleton,
     isGeneratingStoryline,
@@ -54,8 +53,8 @@ export function useStoryKeywordStep({
     goToNextCategory: navigation.goToNextCategory,
     goToPreviousCategory: navigation.goToPreviousCategory,
     togglePredefinedTag: tagSelection.togglePredefinedTag,
-    toggleCustomKeyword: tagSelection.toggleCustomKeyword,
-    addCustomKeyword: tagSelection.addCustomKeyword,
+    toggleCustomTag: tagSelection.toggleCustomTag,
+    addCustomTag: tagSelection.addCustomTag,
     handleGenerateStoryline,
   };
 }

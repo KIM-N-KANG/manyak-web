@@ -25,18 +25,18 @@ export type TagCategoryConfig = {
 
 export type SelectedTagIdsByCategory = Record<TagCategory, number[]>;
 
-export type SelectedCustomKeywordIdsByCategory = Record<TagCategory, string[]>;
+export type SelectedCustomTagIdsByCategory = Record<TagCategory, string[]>;
 
-export type CustomKeyword = {
+export type CustomTag = {
   id: string;
   name: string;
   category: SimpleStoryCustomTagRequestCategory;
 };
 
-export type SelectedKeywordGroup = {
+export type SelectedTagGroup = {
   category: TagCategory;
   label: string;
-  keywords: string[];
+  tags: string[];
 };
 
 export type AdditionalInfoInput = {
@@ -44,7 +44,7 @@ export type AdditionalInfoInput = {
   value: string;
 };
 
-export type CustomKeywordsByCategory = Record<TagCategory, CustomKeyword[]>;
+export type CustomTagsByCategory = Record<TagCategory, CustomTag[]>;
 
 export type TagsByCategory = Record<
   TagCategory,
@@ -54,7 +54,7 @@ export type TagsByCategory = Record<
 export type StorylineSelectStepSectionProps = {
   storylines: SimpleStorylineResponse[];
   creationId?: string;
-  selectedKeywordGroups: SelectedKeywordGroup[];
+  selectedTagGroups: SelectedTagGroup[];
   activeStorylineIndex: number;
   isRegeneratingStorylines: boolean;
   hasRegenerateStorylinesError: boolean;

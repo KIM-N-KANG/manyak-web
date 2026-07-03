@@ -14,18 +14,18 @@ import {
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
-import type { SelectedKeywordGroup as SelectedKeywordGroupModel } from '../types';
-import { SelectedKeywordGroup } from './selected-keyword-group';
+import type { SelectedTagGroup as SelectedTagGroupModel } from '../types';
+import { SelectedTagGroup } from './selected-tag-group';
 
-type SelectedKeywordsDrawerProps = {
-  groups: SelectedKeywordGroupModel[];
+type SelectedTagsDrawerProps = {
+  groups: SelectedTagGroupModel[];
   creationId?: string;
 };
 
-export function SelectedKeywordsDrawer({
+export function SelectedTagsDrawer({
   groups,
   creationId,
-}: SelectedKeywordsDrawerProps) {
+}: SelectedTagsDrawerProps) {
   const container = useAppFrameContainer();
 
   if (groups.length === 0) {
@@ -59,7 +59,7 @@ export function SelectedKeywordsDrawer({
         </DrawerHeader>
         <div className="flex flex-col gap-8 overflow-y-auto p-4 pb-8">
           {groups.map((group) => (
-            <SelectedKeywordGroup key={group.category} group={group} />
+            <SelectedTagGroup key={group.category} group={group} />
           ))}
         </div>
       </DrawerContent>

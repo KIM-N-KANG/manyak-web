@@ -5,32 +5,32 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
 import { TAG_CATEGORIES } from '../constants';
-import { useStoryKeywordStep } from '../hooks/use-story-keyword-step';
+import { useStoryTagStep } from '../hooks/use-story-tag-step';
 import type { TagCategory } from '../types';
 import { StickyTabsList } from './sticky-tabs-list';
 import { StoryCreateErrorMessage } from './story-create-error-message';
 import { StoryCreateStepLayout } from './story-create-step-layout';
-import { StoryKeywordCategoryPanel } from './story-keyword-category-panel';
+import { StoryTagCategoryPanel } from './story-tag-category-panel';
 
-type StoryKeywordStepSectionProps = {
+type StoryTagStepSectionProps = {
   isGeneratingStoryline: boolean;
   hasGenerateStorylineError: boolean;
   onGenerateStoryline: (request: GenerateSimpleStorylinesRequest) => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
-export function StoryKeywordStepSection({
+export function StoryTagStepSection({
   isGeneratingStoryline,
   hasGenerateStorylineError,
   onGenerateStoryline,
   onScroll,
-}: StoryKeywordStepSectionProps) {
+}: StoryTagStepSectionProps) {
   const {
     activeCategory,
     changeCategory,
     selectedTagIdsByCategory,
-    selectedCustomKeywordIdsByCategory,
-    customKeywordsByCategory,
+    selectedCustomTagIdsByCategory,
+    customTagsByCategory,
     simpleStoryTags,
     showTagsSkeleton,
     tagsByCategory,
@@ -43,10 +43,10 @@ export function StoryKeywordStepSection({
     goToNextCategory,
     goToPreviousCategory,
     togglePredefinedTag,
-    toggleCustomKeyword,
-    addCustomKeyword,
+    toggleCustomTag,
+    addCustomTag,
     handleGenerateStoryline,
-  } = useStoryKeywordStep({
+  } = useStoryTagStep({
     isGeneratingStoryline,
     onGenerateStoryline,
   });
@@ -103,30 +103,30 @@ export function StoryKeywordStepSection({
         {TAG_CATEGORIES.map(
           ({ value: category, label, placeholder, maxSelectionCount }) => {
             const selectedTagIds = selectedTagIdsByCategory[category];
-            const selectedCustomKeywordIds =
-              selectedCustomKeywordIdsByCategory[category];
+            const selectedCustomTagIds =
+              selectedCustomTagIdsByCategory[category];
 
             return (
               <TabsContent
                 key={category}
                 value={category}
                 className="p-4 pt-2 pb-6">
-                <StoryKeywordCategoryPanel
+                <StoryTagCategoryPanel
                   category={category}
                   label={label}
                   placeholder={placeholder}
                   maxSelectionCount={maxSelectionCount}
                   isMaxSelectionReached={isMaxSelectionReached(category)}
                   selectedTagIds={selectedTagIds}
-                  selectedCustomKeywordIds={selectedCustomKeywordIds}
+                  selectedCustomTagIds={selectedCustomTagIds}
                   predefinedTags={tagsByCategory[category]}
-                  customKeywords={customKeywordsByCategory[category]}
+                  customTags={customTagsByCategory[category]}
                   isLoadingTags={showTagsSkeleton}
                   hasTagsError={simpleStoryTags.isError}
                   isGeneratingStoryline={isGeneratingStoryline}
                   onTogglePredefinedTag={togglePredefinedTag}
-                  onToggleCustomKeyword={toggleCustomKeyword}
-                  onAddCustomKeyword={addCustomKeyword}
+                  onToggleCustomTag={toggleCustomTag}
+                  onAddCustomTag={addCustomTag}
                 />
               </TabsContent>
             );
