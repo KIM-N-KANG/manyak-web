@@ -42,7 +42,7 @@ test.describe('채팅 목록', () => {
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
   });
 
-  test('채팅을 누르면 채팅방으로 이어간다 (US-5-2)', async ({ page }) => {
+  test('채팅을 누르면 채팅 화면으로 이어간다 (US-5-2)', async ({ page }) => {
     await seedChatIds(page, ['c1']);
     await page.route(CHATS_BATCH, async (route) => {
       await route.fulfill({

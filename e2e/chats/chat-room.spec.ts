@@ -2,7 +2,7 @@ import { type Page } from '@playwright/test';
 
 import { expect, test } from '../fixtures/test';
 
-// 채팅방(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
+// 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
 // SSE 포맷: started → token({"text":...})×N → completed({"aiOutput":...}) | error({"message":...})
 const CHAT_DETAIL = '**/api/v1/chats/c1';

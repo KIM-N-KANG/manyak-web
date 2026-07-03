@@ -40,7 +40,7 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
   });
 
-  test('"채팅 시작하기"를 누르면 채팅방으로 이동한다 (US-4-2)', async ({
+  test('"채팅 시작하기"를 누르면 채팅 화면으로 이동한다 (US-4-2)', async ({
     page,
   }) => {
     await page.route(STORY_DETAIL, fulfillStoryDetail);
