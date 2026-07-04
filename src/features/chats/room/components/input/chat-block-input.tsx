@@ -3,9 +3,12 @@
 import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InputGroup, InputGroupTextarea } from '@/components/ui/input-group';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
@@ -40,14 +43,18 @@ export function ChatBlockInput({
         <div className="flex max-h-[30dvh] scrollbar-none flex-col gap-2 overflow-y-auto px-4 py-2">
           {blocks.map((block) => (
             <div key={block.id} className="flex items-center gap-2">
-              <Badge
-                variant="secondary"
-                className={cn(
-                  block.type === 'situation' && 'text-foreground-secondary',
-                )}>
-                {INPUT_BLOCK_LABELS[block.type]}
-              </Badge>
               <InputGroup>
+                <InputGroupAddon>
+                  <span
+                    className={cn(
+                      'text-xs',
+                      block.type === 'situation'
+                        ? 'text-foreground-secondary'
+                        : 'text-foreground',
+                    )}>
+                    {INPUT_BLOCK_LABELS[block.type]}
+                  </span>
+                </InputGroupAddon>
                 <InputGroupTextarea
                   ref={(element) => onRegisterInput(block.id, element)}
                   value={block.value}
@@ -61,7 +68,7 @@ export function ChatBlockInput({
                     submitOnShortcut(event, canSend, onSend)
                   }
                   className={cn(
-                    'max-h-[4lh] resize-none',
+                    'max-h-[4lh] resize-none py-2.25',
                     block.type === 'situation'
                       ? 'text-foreground-secondary'
                       : 'text-foreground',
@@ -75,7 +82,7 @@ export function ChatBlockInput({
                 aria-label="입력 삭제"
                 disabled={disabled}
                 onClick={() => onRemoveBlock(block.id)}
-                className="shrink-0 text-foreground-tertiary">
+                className="shrink-0 text-foreground-secondary">
                 <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
               </Button>
             </div>

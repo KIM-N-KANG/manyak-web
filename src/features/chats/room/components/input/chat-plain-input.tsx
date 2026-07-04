@@ -58,7 +58,7 @@ export function ChatPlainInput({
           <InputGroupAddon align="block-end" className="pt-2.5">
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
               aria-label="상황 묘사 추가"
               disabled={disabled}
