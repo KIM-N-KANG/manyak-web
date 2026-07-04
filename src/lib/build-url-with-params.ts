@@ -17,14 +17,10 @@ type Params<PathParams, QueryParams> = {
  * @param pathParams - path parameter (예: `{ id: 1 }`)
  * @param queryParams - query parameter (예: `{ bojUsername: 'alsdn1360' }`)
  */
-export const buildUrlWithParams = <
+export function buildUrlWithParams<
   PathParams extends DefaultPathParams = DefaultPathParams,
   QueryParams extends DefaultQueryParams = DefaultQueryParams,
->({
-  url,
-  pathParams,
-  queryParams,
-}: Params<PathParams, QueryParams>) => {
+>({ url, pathParams, queryParams }: Params<PathParams, QueryParams>) {
   let newUrl = url;
 
   if (pathParams) {
@@ -65,4 +61,4 @@ export const buildUrlWithParams = <
   }
 
   return newUrl;
-};
+}

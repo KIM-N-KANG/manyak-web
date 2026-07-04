@@ -1,7 +1,6 @@
 'use client';
 
 import type { VariantProps } from 'class-variance-authority';
-import { toast } from 'sonner';
 
 import { useDeleteStory } from '@/api/generated/endpoints/stories/stories';
 import { OptionsMenu } from '@/components/common/options-menu';
@@ -12,8 +11,8 @@ import {
   parseCreatedStoryIds,
   removeCreatedStoryId,
   writeCreatedStoryIds,
-} from '@/features/stories/new/utils/story-id-storage';
-import { FetchError } from '@/lib/custom-fetch';
+} from '@/features/stories/list/utils/story-id-storage';
+import { useOptimisticCreatedResourceDelete } from '@/hooks/use-optimistic-created-resource-delete';
 
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
@@ -31,27 +30,17 @@ export function StoryOptionsMenu({
   onDeleteSuccess,
 }: StoryOptionsMenuProps) {
   const { mutateAsync, isPending } = useDeleteStory();
-
-  const handleDelete = async () => {
-    const previousStoryIds = parseCreatedStoryIds(getCreatedStoryIdsSnapshot());
-
-    removeCreatedStoryId(storyId);
-
-    try {
-      await mutateAsync({ storyId });
-      toast.success(TOAST_MESSAGE.STORY_DELETED);
-      onDeleteSuccess?.();
-    } catch (error) {
-      if (error instanceof FetchError && error.status === 404) {
-        onDeleteSuccess?.();
-
-        return;
-      }
-
-      writeCreatedStoryIds(previousStoryIds);
-      toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
-    }
-  };
+  const handleDelete = useOptimisticCreatedResourceDelete({
+    id: storyId,
+    getSnapshot: getCreatedStoryIdsSnapshot,
+    parseSnapshot: parseCreatedStoryIds,
+    removeId: removeCreatedStoryId,
+    writeIds: writeCreatedStoryIds,
+    deleteResource: () => mutateAsync({ storyId }),
+    successMessage: TOAST_MESSAGE.STORY_DELETED,
+    failureMessage: TOAST_MESSAGE.STORY_DELETE_FAILED,
+    onDeleteSuccess,
+  });
 
   return (
     <OptionsMenu

@@ -6,8 +6,8 @@ import Link from 'next/link';
 
 import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
-import { SCREEN, track, useImpression } from '@/lib/analytics';
 import { formatDate } from '@/lib/format-date';
+import { SCREEN, track, useImpression } from '@/observability/analytics';
 
 import type { StoryListItem } from '../types';
 import { StoryGenreBadges } from './story-genre-badges';

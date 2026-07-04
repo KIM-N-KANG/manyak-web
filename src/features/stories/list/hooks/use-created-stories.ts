@@ -7,7 +7,7 @@ import { getStoriesByIds } from '@/api/generated/endpoints/stories/stories';
 import { toStoryListItems } from '../utils/to-story-list-items';
 import { useCreatedStoryIds } from './use-created-story-ids';
 
-const STORIES_BATCH_QUERY_KEY = 'stories-batch';
+export const STORIES_BATCH_QUERY_KEY = 'stories-batch';
 
 export function useCreatedStories() {
   const storyIds = useCreatedStoryIds();

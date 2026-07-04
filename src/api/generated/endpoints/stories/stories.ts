@@ -25,6 +25,8 @@ import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
   BatchStoryRequest,
+  GetLorebooksParams,
+  LorebookListItemResponse,
   StoryDetailResponse,
   StorySummaryResponse,
 } from '../../models';
@@ -58,7 +60,7 @@ export const getGetStoriesByIdsUrl = () => {
 
 /**
  * 클라이언트가 로컬스토리지에 보관 중인 storyId 목록으로 스토리 카드 목록을 조회합니다. 로그인 사용자 소유권 조회가 아니라 MVP용 로컬 ID 기반 조회입니다.
- * @summary 스토리 ID 목록으로 이야기 목록 조회
+ * @summary 스토리 ID 목록으로 스토리 목록 조회
  */
 export const getStoriesByIds = async (
   batchStoryRequest: BatchStoryRequest,
@@ -117,7 +119,7 @@ export type GetStoriesByIdsMutationBody = BodyType<BatchStoryRequest>;
 export type GetStoriesByIdsMutationError = ErrorType<void>;
 
 /**
- * @summary 스토리 ID 목록으로 이야기 목록 조회
+ * @summary 스토리 ID 목록으로 스토리 목록 조회
  */
 export const useGetStoriesByIds = <
   TError = ErrorType<void>,
@@ -167,8 +169,8 @@ export const getGetStoryDetailUrl = (storyId: string) => {
 };
 
 /**
- * 목록에서 선택한 이야기의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
- * @summary 이야기 상세 조회
+ * 목록에서 선택한 스토리의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
+ * @summary 스토리 상세 조회
  */
 export const getStoryDetail = async (
   storyId: string,
@@ -283,7 +285,7 @@ export function useGetStoryDetail<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary 이야기 상세 조회
+ * @summary 스토리 상세 조회
  */
 
 export function useGetStoryDetail<
@@ -338,7 +340,7 @@ export const getDeleteStoryUrl = (storyId: string) => {
 
 /**
  * 스토리를 소프트 삭제합니다. 행을 물리 삭제하지 않고 삭제 시각만 기록하며, 이후 목록·상세 조회에서 제외됩니다. 존재하지 않거나 이미 삭제된 스토리는 404로 응답합니다.
- * @summary 이야기 삭제 (소프트 삭제)
+ * @summary 스토리 삭제 (소프트 삭제)
  */
 export const deleteStory = async (
   storyId: string,
@@ -395,7 +397,7 @@ export type DeleteStoryMutationResult = NonNullable<
 export type DeleteStoryMutationError = ErrorType<void>;
 
 /**
- * @summary 이야기 삭제 (소프트 삭제)
+ * @summary 스토리 삭제 (소프트 삭제)
  */
 export const useDeleteStory = <TError = ErrorType<void>, TContext = unknown>(
   options?: {
@@ -416,3 +418,168 @@ export const useDeleteStory = <TError = ErrorType<void>, TContext = unknown>(
 > => {
   return useMutation(getDeleteStoryMutationOptions(options), queryClient);
 };
+export type getLorebooksResponse200 = {
+  data: LorebookListItemResponse[];
+  status: 200;
+};
+
+export type getLorebooksResponseSuccess = getLorebooksResponse200 & {
+  headers: Headers;
+};
+export type getLorebooksResponse = getLorebooksResponseSuccess;
+
+export const getGetLorebooksUrl = (params?: GetLorebooksParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/stories/lorebooks?${stringifiedParams}`
+    : `/api/v1/stories/lorebooks`;
+};
+
+/**
+ * 일반 제작에서 참조할 로어북(장르 공용 용어 사전) 목록을 조회합니다. genre로 필터할 수 있습니다.
+ * @summary 로어북 카탈로그 조회
+ */
+export const getLorebooks = async (
+  params?: GetLorebooksParams,
+  options?: RequestInit,
+): Promise<getLorebooksResponse> => {
+  return customInstance<getLorebooksResponse>(getGetLorebooksUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLorebooksQueryKey = (params?: GetLorebooksParams) => {
+  return [`/api/v1/stories/lorebooks`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetLorebooksQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLorebooks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetLorebooksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getLorebooks>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLorebooksQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLorebooks>>> = ({
+    signal,
+  }) => getLorebooks(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLorebooks>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetLorebooksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLorebooks>>
+>;
+export type GetLorebooksQueryError = ErrorType<unknown>;
+
+export function useGetLorebooks<
+  TData = Awaited<ReturnType<typeof getLorebooks>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | GetLorebooksParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getLorebooks>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLorebooks>>,
+          TError,
+          Awaited<ReturnType<typeof getLorebooks>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetLorebooks<
+  TData = Awaited<ReturnType<typeof getLorebooks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetLorebooksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getLorebooks>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLorebooks>>,
+          TError,
+          Awaited<ReturnType<typeof getLorebooks>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetLorebooks<
+  TData = Awaited<ReturnType<typeof getLorebooks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetLorebooksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getLorebooks>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 로어북 카탈로그 조회
+ */
+
+export function useGetLorebooks<
+  TData = Awaited<ReturnType<typeof getLorebooks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetLorebooksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getLorebooks>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetLorebooksQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

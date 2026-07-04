@@ -30,7 +30,7 @@ const storylinesResponse = {
 };
 
 test.describe('스토리 생성', () => {
-  test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅방으로 이동한다 (US-3)', async ({
+  test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅 화면으로 이동한다 (US-3)', async ({
     page,
   }) => {
     await page.route(TAGS, async (route) => {
@@ -85,7 +85,63 @@ test.describe('스토리 생성', () => {
     ).toBeVisible();
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    // Step 4: 완료 후 채팅방 이동
+    // Step 4: 완료 후 채팅 화면 이동
     await expect(page).toHaveURL(/\/chats\/chat-new$/);
+  });
+
+  test('스토리 완성 실패 후 추가 정보 입력값과 추천 선택을 유지한다', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tags),
+      });
+    });
+    await page.route(STORYLINES, async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(storylinesResponse),
+      });
+    });
+    await page.route(CREATE_STORY, async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'failed to create story' }),
+      });
+    });
+
+    await page.goto('/stories/new');
+
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '스토리라인 만들기' }).click();
+
+    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+    await page.getByRole('button', { name: '선택하기' }).click();
+
+    const recommendation = page.getByRole('button', {
+      name: '주인공은 비밀을 품고 있다',
+    });
+    const additionalInfoInput = page.locator(
+      'textarea[aria-label="추가 정보 1"]',
+    );
+
+    await recommendation.click();
+    await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+
+    await expect(
+      page.getByText('스토리를 완성하지 못했어요. 잠시 후 다시 시도해주세요.'),
+    ).toBeVisible();
+    await expect(additionalInfoInput).toHaveValue(
+      '비밀은 사라진 왕국의 문장이다',
+    );
+    await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
   });
 });

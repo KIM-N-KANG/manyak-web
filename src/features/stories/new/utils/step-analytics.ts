@@ -1,4 +1,4 @@
-import type { StepName } from '@/lib/analytics';
+import type { StepName } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
 

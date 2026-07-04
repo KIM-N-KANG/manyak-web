@@ -3,13 +3,13 @@
 import { type Dispatch, type SetStateAction, useState } from 'react';
 
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
+import { createClientId } from '@/lib/create-client-id';
 
 import { TAG_CATEGORIES } from '../constants';
-import type { CustomKeyword, TagCategory } from '../types';
-import { createClientId } from '../utils/create-client-id';
+import type { CustomTag, TagCategory } from '../types';
 import {
-  createEmptyCustomKeywordsByCategory,
-  createEmptySelectedCustomKeywordIdsByCategory,
+  createEmptyCustomTagsByCategory,
+  createEmptySelectedCustomTagIdsByCategory,
   createEmptySelectedTagIdsByCategory,
   getMaxSelectionCount,
 } from '../utils/tag-categories';
@@ -21,17 +21,15 @@ export function useTagSelection() {
   const [selectedTagIdsByCategory, setSelectedTagIdsByCategory] = useState(
     createEmptySelectedTagIdsByCategory,
   );
-  const [
-    selectedCustomKeywordIdsByCategory,
-    setSelectedCustomKeywordIdsByCategory,
-  ] = useState(createEmptySelectedCustomKeywordIdsByCategory);
-  const [customKeywordsByCategory, setCustomKeywordsByCategory] = useState(
-    createEmptyCustomKeywordsByCategory,
+  const [selectedCustomTagIdsByCategory, setSelectedCustomTagIdsByCategory] =
+    useState(createEmptySelectedCustomTagIdsByCategory);
+  const [customTagsByCategory, setCustomTagsByCategory] = useState(
+    createEmptyCustomTagsByCategory,
   );
 
   const getSelectedCount = (category: TagCategory) =>
     selectedTagIdsByCategory[category].length +
-    selectedCustomKeywordIdsByCategory[category].length;
+    selectedCustomTagIdsByCategory[category].length;
 
   const isMaxSelectionReached = (category: TagCategory) =>
     getSelectedCount(category) >= getMaxSelectionCount(category);
@@ -39,13 +37,13 @@ export function useTagSelection() {
   const isCategoryComplete = (category: TagCategory) =>
     getSelectedCount(category) > 0;
 
-  const hasGenreKeyword =
+  const hasGenreTag =
     selectedTagIdsByCategory.GENRE.length > 0 ||
-    selectedCustomKeywordIdsByCategory.GENRE.length > 0;
-  const hasProtagonistKeyword =
+    selectedCustomTagIdsByCategory.GENRE.length > 0;
+  const hasProtagonistTag =
     selectedTagIdsByCategory.PROTAGONIST.length > 0 ||
-    selectedCustomKeywordIdsByCategory.PROTAGONIST.length > 0;
-  const canGenerateStoryline = hasGenreKeyword && hasProtagonistKeyword;
+    selectedCustomTagIdsByCategory.PROTAGONIST.length > 0;
+  const canGenerateStorylines = hasGenreTag && hasProtagonistTag;
 
   const createToggleSelection =
     <Id>(
@@ -78,28 +76,28 @@ export function useTagSelection() {
   const togglePredefinedTag = createToggleSelection(
     setSelectedTagIdsByCategory,
   );
-  const toggleCustomKeyword = createToggleSelection(
-    setSelectedCustomKeywordIdsByCategory,
+  const toggleCustomTag = createToggleSelection(
+    setSelectedCustomTagIdsByCategory,
   );
 
-  const addCustomKeyword = (category: TagCategory, keyword: string) => {
+  const addCustomTag = (category: TagCategory, tag: string) => {
     if (isMaxSelectionReached(category)) {
       return;
     }
 
-    const customKeyword: CustomKeyword = {
+    const customTag: CustomTag = {
       id: createClientId(),
-      name: keyword,
+      name: tag,
       category,
     };
 
-    setCustomKeywordsByCategory((previous) => ({
+    setCustomTagsByCategory((previous) => ({
       ...previous,
-      [category]: [...previous[category], customKeyword],
+      [category]: [...previous[category], customTag],
     }));
-    setSelectedCustomKeywordIdsByCategory((previous) => ({
+    setSelectedCustomTagIdsByCategory((previous) => ({
       ...previous,
-      [category]: [...previous[category], customKeyword.id],
+      [category]: [...previous[category], customTag.id],
     }));
   };
 
@@ -108,13 +106,13 @@ export function useTagSelection() {
       ({ value }) => selectedTagIdsByCategory[value],
     );
     const customTags = TAG_CATEGORIES.flatMap(({ value }) =>
-      customKeywordsByCategory[value]
-        .filter((keyword) =>
-          selectedCustomKeywordIdsByCategory[value].includes(keyword.id),
+      customTagsByCategory[value]
+        .filter((customTag) =>
+          selectedCustomTagIdsByCategory[value].includes(customTag.id),
         )
-        .map((keyword) => ({
-          name: keyword.name,
-          category: keyword.category,
+        .map((customTag) => ({
+          name: customTag.name,
+          category: customTag.category,
         })),
     );
 
@@ -126,14 +124,14 @@ export function useTagSelection() {
 
   return {
     selectedTagIdsByCategory,
-    selectedCustomKeywordIdsByCategory,
-    customKeywordsByCategory,
+    selectedCustomTagIdsByCategory,
+    customTagsByCategory,
     isMaxSelectionReached,
     isCategoryComplete,
-    canGenerateStoryline,
+    canGenerateStorylines,
     togglePredefinedTag,
-    toggleCustomKeyword,
-    addCustomKeyword,
+    toggleCustomTag,
+    addCustomTag,
     buildGenerateRequest,
   };
 }

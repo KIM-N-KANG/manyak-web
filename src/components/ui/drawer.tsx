@@ -49,11 +49,17 @@ function DrawerOverlay({
 function DrawerContent({
   className,
   children,
+  container,
+  overlayClassName,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+}: React.ComponentProps<typeof DrawerPrimitive.Content> & {
+  /** 포탈 대상 엘리먼트. 지정하면 body 대신 해당 컨테이너 안에 렌더링된다. */
+  container?: React.ComponentProps<typeof DrawerPortal>['container'];
+  overlayClassName?: string;
+}) {
   return (
-    <DrawerPortal data-slot="drawer-portal">
-      <DrawerOverlay />
+    <DrawerPortal data-slot="drawer-portal" container={container}>
+      <DrawerOverlay className={overlayClassName} />
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(

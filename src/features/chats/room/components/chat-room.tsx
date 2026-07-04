@@ -1,20 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
-import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-chats';
-import { useTrackOnView } from '@/lib/analytics';
+import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
+import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
+import {
+  type ChatInputMode,
+  useChatInputMode,
+} from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
-import { ChatInput } from './chat-input';
-import { ChatMessages } from './chat-messages';
-import { ChatRoomHeader } from './chat-room-header';
+import { ChatRoomHeader } from './header/chat-room-header';
+import { ChatInput } from './input/chat-input';
+import { ChatMessages } from './messages/chat-messages';
 
 type ChatRoomProps = {
   chatId: string;
@@ -38,17 +42,39 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   const { streamingTurn, isStreaming, send } = useChatStream(
     chatId,
+    turns.length,
     handleStreamCompleted,
   );
+
+  const { mode, changeMode } = useChatInputMode();
 
   const composer = useChatComposer({
     chatId,
     turnCount: turns.length,
     isStreaming,
+    inputMode: mode,
     onSend: send,
   });
 
+  const handleModeChange = (nextMode: ChatInputMode) => {
+    if (nextMode !== mode) {
+      track('client_chat_inputMode_selected', {
+        chat_id: chatId,
+        mode: nextMode,
+      });
+    }
+
+    composer.convertTo(nextMode);
+    changeMode(nextMode);
+  };
+
   useTrackOnView('client_chat_viewed', { chat_id: chatId });
+
+  useEffect(() => {
+    if (isError) {
+      track('client_chat_loadError_shown', { chat_id: chatId });
+    }
+  }, [isError, chatId]);
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
@@ -64,14 +90,23 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     return (
       <RetryListStatus
         title="채팅을 불러오지 못했어요"
-        onRetry={() => refetch()}
+        onRetry={() => {
+          track('client_chat_retryButton_clicked', { chat_id: chatId });
+          refetch();
+        }}
       />
     );
   }
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <ChatRoomHeader storyTitle={storyTitle} isVisible={isHeaderVisible} />
+      <ChatRoomHeader
+        chatId={chatId}
+        storyTitle={storyTitle}
+        isVisible={isHeaderVisible}
+        inputMode={mode}
+        onInputModeChange={handleModeChange}
+      />
       <div className="flex min-h-0 flex-1 flex-col">
         <ChatMessages
           prologue={prologue}
@@ -83,14 +118,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           onHeaderVisibleChange={setIsHeaderVisible}
         />
       </div>
-      <ChatInput
-        value={composer.value}
-        onChange={composer.setValue}
-        onSend={composer.send}
-        onInsertEmphasis={composer.insertEmphasis}
-        disabled={isStreaming}
-        textareaRef={composer.textareaRef}
-      />
+      <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
     </div>
   );
 }

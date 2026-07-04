@@ -5,9 +5,9 @@ import type {
 
 import { TAG_CATEGORIES } from '../constants';
 import type {
-  CustomKeywordsByCategory,
-  SelectedCustomKeywordIdsByCategory,
-  SelectedKeywordGroup,
+  CustomTagsByCategory,
+  SelectedCustomTagIdsByCategory,
+  SelectedTagGroup,
   SelectedTagIdsByCategory,
   TagCategory,
   TagsByCategory,
@@ -27,12 +27,11 @@ const createEmptyTagCategoryRecord = <Value>(
 export const createEmptySelectedTagIdsByCategory =
   (): SelectedTagIdsByCategory => createEmptyTagCategoryRecord(() => []);
 
-export const createEmptySelectedCustomKeywordIdsByCategory =
-  (): SelectedCustomKeywordIdsByCategory =>
-    createEmptyTagCategoryRecord(() => []);
+export const createEmptySelectedCustomTagIdsByCategory =
+  (): SelectedCustomTagIdsByCategory => createEmptyTagCategoryRecord(() => []);
 
-export const createEmptyCustomKeywordsByCategory =
-  (): CustomKeywordsByCategory => createEmptyTagCategoryRecord(() => []);
+export const createEmptyCustomTagsByCategory = (): CustomTagsByCategory =>
+  createEmptyTagCategoryRecord(() => []);
 
 export const createEmptyTagsByCategory = (): TagsByCategory =>
   createEmptyTagCategoryRecord(() => []);
@@ -55,10 +54,10 @@ export const getTagsByCategory = (
  * 사전 정의 태그는 전체 태그 목록에서 id로 이름을 찾고, 직접 추가 태그는 이름을 그대로 사용한다.
  * 선택값이 없는 카테고리는 결과에서 제외한다.
  */
-export const getSelectedKeywordsByCategory = (
+export const getSelectedTagsByCategory = (
   request: GenerateSimpleStorylinesRequest | null,
   tags: SimpleStoryTagListItemResponse[],
-): SelectedKeywordGroup[] => {
+): SelectedTagGroup[] => {
   if (!request) {
     return [];
   }
@@ -69,9 +68,9 @@ export const getSelectedKeywordsByCategory = (
       .map((tag) => [tag.id, tag] as const),
   );
 
-  return TAG_CATEGORIES.reduce<SelectedKeywordGroup[]>(
+  return TAG_CATEGORIES.reduce<SelectedTagGroup[]>(
     (groups, { value: category, label }) => {
-      const predefinedKeywordNames = (request.selectedTagIds ?? [])
+      const predefinedTagNames = (request.selectedTagIds ?? [])
         .map((tagId) => tagById.get(tagId))
         .filter(
           (tag): tag is SimpleStoryTagListItemResponse =>
@@ -80,15 +79,15 @@ export const getSelectedKeywordsByCategory = (
         .map((tag) => tag.name)
         .filter((name): name is string => Boolean(name));
 
-      const customKeywordNames = (request.customTags ?? [])
+      const customTagNames = (request.customTags ?? [])
         .filter((tag) => tag.category === category)
         .map((tag) => tag.name)
         .filter((name): name is string => Boolean(name));
 
-      const keywords = [...predefinedKeywordNames, ...customKeywordNames];
+      const tags = [...predefinedTagNames, ...customTagNames];
 
-      if (keywords.length > 0) {
-        groups.push({ category, label, keywords });
+      if (tags.length > 0) {
+        groups.push({ category, label, tags });
       }
 
       return groups;

@@ -19,7 +19,7 @@ export interface ChatSummaryResponse {
   /** 마지막으로 생성된 이야기 일부 */
   lastStoryPreview?: string;
   /** 이 채팅에서 사용자가 이어쓴 횟수(완료된 턴 수) */
-  chatCount?: number;
+  turnCount?: number;
   /** 마지막 진행 시각 */
   updatedAt?: string;
 }

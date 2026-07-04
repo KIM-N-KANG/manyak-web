@@ -1,5 +1,5 @@
-import { getAnalyticsIdentityHeaders } from '@/lib/analytics/identity';
-import { captureApiError } from '@/lib/monitoring/sentry';
+import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
+import { captureApiError } from '@/observability/monitoring/sentry';
 
 import { FetchError } from './api-error';
 
@@ -14,7 +14,7 @@ export interface RequestConfig extends Omit<RequestInit, 'method' | 'body'> {
   timeout?: number;
 }
 
-export const resolveApiProxyUrl = (url: string) => {
+export function resolveApiProxyUrl(url: string) {
   const resolvedUrl = /^https?:\/\//.test(url)
     ? new URL(url).pathname + new URL(url).search
     : url;
@@ -31,7 +31,7 @@ export const resolveApiProxyUrl = (url: string) => {
   }
 
   return `${API_PROXY_BASE_PATH}${normalizedUrl}`;
-};
+}
 
 const fetchWithTimeout = async (
   url: string,

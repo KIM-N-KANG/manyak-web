@@ -3,6 +3,6 @@ export type ChatListItem = {
   storyId: string;
   storyTitle: string;
   lastStoryPreview: string;
-  chatCount: number;
+  turnCount: number;
   updatedAt: string;
 };

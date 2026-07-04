@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const captureApiError = vi.fn();
 
-vi.mock('@/lib/monitoring/sentry', () => ({
+vi.mock('@/observability/monitoring/sentry', () => ({
   captureApiError: (...args: unknown[]) => captureApiError(...args),
 }));
 

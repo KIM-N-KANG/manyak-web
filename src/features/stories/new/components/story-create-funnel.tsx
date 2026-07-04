@@ -2,34 +2,41 @@
 
 import { useEffect } from 'react';
 
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { mapStepToSpec } from '../utils/step-analytics';
-import { StoryAdditionalInfoStepSection } from './story-additional-info-step-section';
-import { StoryCompletionLoadingState } from './story-completion-loading-state';
-import { StoryCreateHeader } from './story-create-header';
-import { StoryKeywordStepSection } from './story-keyword-step-section';
-import { StorylineSelectStepSection } from './storyline-select-step-section';
+import { StoryCreateHeader } from './header/story-create-header';
+import { StoryAdditionalInfoStepSection } from './step-sections/story-additional-info-step-section';
+import { StoryCompletionLoading } from './step-sections/story-completion-loading';
+import { StoryTagStepSection } from './step-sections/story-tag-step-section';
+import { StorylineSelectStepSection } from './step-sections/storyline-select-step-section';
 
 export function StoryCreateFunnel() {
   const {
     step,
     creationId,
     storylines,
-    selectedKeywordGroups,
+    selectedTagGroups,
     activeStorylineIndex,
     selectedStoryline,
+    selectedRecommendations,
+    additionalInfos,
+    canAddAdditionalInfo,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError,
     isCompletingStory,
     hasCompleteStoryError,
-    handleGenerateStoryline,
+    handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
     handleBackToStorylineSelect,
+    handleToggleRecommendation,
+    addAdditionalInfo,
+    removeAdditionalInfo,
+    changeAdditionalInfo,
     handleCompleteStory,
     backDialogOpen,
     onBackDialogOpenChange,
@@ -56,10 +63,10 @@ export function StoryCreateFunnel() {
       />
 
       {step === 'keyword' && (
-        <StoryKeywordStepSection
-          isGeneratingStoryline={isGeneratingStorylines}
-          hasGenerateStorylineError={hasGenerateStorylinesError}
-          onGenerateStoryline={handleGenerateStoryline}
+        <StoryTagStepSection
+          isGeneratingStorylines={isGeneratingStorylines}
+          hasGenerateStorylinesError={hasGenerateStorylinesError}
+          onGenerateStorylines={handleGenerateStorylines}
         />
       )}
 
@@ -67,7 +74,7 @@ export function StoryCreateFunnel() {
         <StorylineSelectStepSection
           storylines={storylines}
           creationId={creationId}
-          selectedKeywordGroups={selectedKeywordGroups}
+          selectedTagGroups={selectedTagGroups}
           activeStorylineIndex={activeStorylineIndex}
           isRegeneratingStorylines={isGeneratingStorylines}
           hasRegenerateStorylinesError={hasGenerateStorylinesError}
@@ -83,12 +90,19 @@ export function StoryCreateFunnel() {
           isCompletingStory={isCompletingStory}
           hasCompleteStoryError={hasCompleteStoryError}
           canCompleteStory={canCompleteStory}
+          selectedRecommendations={selectedRecommendations}
+          additionalInfos={additionalInfos}
+          canAddAdditionalInfo={canAddAdditionalInfo}
+          onToggleRecommendation={handleToggleRecommendation}
+          onAddAdditionalInfo={addAdditionalInfo}
+          onRemoveAdditionalInfo={removeAdditionalInfo}
+          onChangeAdditionalInfo={changeAdditionalInfo}
           onCompleteStory={handleCompleteStory}
           onBackToStorylineSelect={handleBackToStorylineSelect}
         />
       )}
 
-      {step === 'complete' && <StoryCompletionLoadingState />}
+      {step === 'complete' && <StoryCompletionLoading />}
     </div>
   );
 }

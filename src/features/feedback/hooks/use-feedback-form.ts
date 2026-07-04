@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { useCreateFeedback } from '@/api/generated/endpoints/feedbacks/feedbacks';
 import { CreateFeedbackRequestPlatform } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { track } from '@/lib/analytics';
+import { track } from '@/observability/analytics';
 
 import {
   FEEDBACK_BODY_MAX_LENGTH,
@@ -31,15 +31,15 @@ export function useFeedbackForm() {
     },
   });
 
-  const changeBody = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  const handleBodyChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setBody(event.target.value.slice(0, FEEDBACK_BODY_MAX_LENGTH));
   };
 
-  const changeEmail = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value.slice(0, FEEDBACK_EMAIL_MAX_LENGTH));
   };
 
-  const submitFeedback = (event: SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedBody = body.trim();
@@ -63,9 +63,9 @@ export function useFeedbackForm() {
   return {
     body,
     email,
-    changeBody,
-    changeEmail,
-    submitFeedback,
+    handleBodyChange,
+    handleEmailChange,
+    handleSubmit,
     canSubmit: body.trim().length > 0,
     isSubmitting: createFeedback.isPending,
   };
