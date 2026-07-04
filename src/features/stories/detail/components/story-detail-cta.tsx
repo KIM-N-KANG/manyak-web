@@ -20,7 +20,7 @@ export function StoryDetailCta({ storyId }: StoryDetailCtaProps) {
           className="w-full"
           disabled={isStarting}
           onClick={startChat}>
-          {isStarting ? '채팅을 시작하는 중...' : '채팅 시작하기'}
+          {isStarting ? '새 채팅을 시작하는 중...' : '새 채팅 시작하기'}
         </Button>
       </div>
     </nav>
