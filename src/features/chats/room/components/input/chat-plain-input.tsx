@@ -53,7 +53,7 @@ export function ChatPlainInput({
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={(event) => submitOnShortcut(event, canSend, onSend)}
-            className="max-h-[20dvh] min-h-0 pb-0"
+            className="max-h-[20dvh] pb-0"
           />
           <InputGroupAddon align="block-end" className="pt-2.5">
             <Button
