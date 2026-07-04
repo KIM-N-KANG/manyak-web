@@ -22,19 +22,21 @@ export function StoryCreateStepLayout({
   onScroll,
 }: StoryCreateStepLayoutProps) {
   return (
-    <StoryCreateStepScrollArea
-      scrollAreaRef={scrollAreaRef}
-      onScroll={onScroll}>
-      <section className="flex flex-col">
-        <StoryCreateStepTitle
-          titleLines={titleLines}
-          description={description}
-          className="p-4"
-        />
-        {children}
-      </section>
+    <>
+      <StoryCreateStepScrollArea
+        scrollAreaRef={scrollAreaRef}
+        onScroll={onScroll}>
+        <section className="flex flex-col">
+          <StoryCreateStepTitle
+            titleLines={titleLines}
+            description={description}
+            className="p-4"
+          />
+          {children}
+        </section>
+      </StoryCreateStepScrollArea>
 
       <StoryCreateStepFooter>{footer}</StoryCreateStepFooter>
-    </StoryCreateStepScrollArea>
+    </>
   );
 }
