@@ -86,7 +86,7 @@ export function StoryCreateFunnel() {
 
       {step === 'additional-info' && selectedStoryline && (
         <StoryAdditionalInfoStepSection
-          storyline={selectedStoryline}
+          storylineItem={selectedStoryline}
           isCompletingStory={isCompletingStory}
           hasCompleteStoryError={hasCompleteStoryError}
           canCompleteStory={canCompleteStory}
