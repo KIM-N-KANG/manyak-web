@@ -41,7 +41,7 @@ export const CancelStorylineRatingResponse = zod.void();
 export const createSimpleStoryBodyAdditionalInfosItemMax = 100;
 
 export const createSimpleStoryBodyAdditionalInfosMin = 0;
-export const createSimpleStoryBodyAdditionalInfosMax = 3;
+export const createSimpleStoryBodyAdditionalInfosMax = 13;
 
 export const CreateSimpleStoryBody = zod
   .object({

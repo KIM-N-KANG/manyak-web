@@ -73,7 +73,6 @@ export function AddTagDialog({
                   id={`${category}-tag`}
                   name="tag"
                   placeholder={placeholder}
-                  className="min-h-10"
                   maxLength={ADD_TAG_MAX_LENGTH}
                   rows={1}
                   value={tag}

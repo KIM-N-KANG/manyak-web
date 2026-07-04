@@ -20,7 +20,7 @@ export function CreateStoryFab() {
           track('client_storyList_createButton_clicked', { source: 'fab' })
         }
         aria-label="스토리 만들기"
-        className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md transition-[filter] outline-none hover:brightness-105 focus-visible:ring-3 focus-visible:ring-ring/50">
+        className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md shadow-primary/20 transition-[filter] outline-none hover:bg-primary/80 focus-visible:ring-2 focus-visible:ring-ring/50">
         <HugeiconsIcon
           icon={PlusSignIcon}
           className="size-6 shrink-0"

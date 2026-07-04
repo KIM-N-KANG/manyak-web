@@ -23,7 +23,7 @@ export interface CreateSimpleStoryRequest {
   /**
    * 선택한 스토리라인을 보완하는 자유 추가 정보 목록
    * @minItems 0
-   * @maxItems 3
+   * @maxItems 13
    * @items.maxLength 100
    */
   additionalInfos?: string[];

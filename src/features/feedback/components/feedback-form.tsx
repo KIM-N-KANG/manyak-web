@@ -52,7 +52,7 @@ export function FeedbackForm() {
         <p className="text-foreground-secondary">{FEEDBACK_DESCRIPTION}</p>
       </div>
 
-      <FieldGroup className="mb-2 gap-8 p-4">
+      <FieldGroup className="gap-8 p-4 pb-6">
         <Field className="gap-2" aria-labelledby="feedback-body-label">
           <FieldLabel
             id="feedback-body-label"
@@ -98,7 +98,7 @@ export function FeedbackForm() {
         </Field>
       </FieldGroup>
 
-      <div className="mt-auto flex h-16 items-center px-4">
+      <div className="mt-auto flex h-18 items-center p-4 pt-2">
         <Button
           type="submit"
           size="lg"
