@@ -14,7 +14,7 @@ export interface SimpleStorylineResponse {
   /** 스토리라인 ID */
   id?: number;
   /** AI가 생성한 스토리라인 본문 */
-  story?: string;
+  storyline?: string;
   /**
    * 해당 스토리라인의 추가 입력을 돕는 추천 추가 정보 3개
    * @minItems 3

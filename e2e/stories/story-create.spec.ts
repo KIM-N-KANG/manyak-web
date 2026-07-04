@@ -21,11 +21,11 @@ const storylinesResponse = {
   storylines: [
     {
       id: 101,
-      story: '첫 번째 이야기 흐름입니다.',
+      storyline: '첫 번째 이야기 흐름입니다.',
       recommendedInfos: [{ id: 1, text: '주인공은 비밀을 품고 있다' }],
     },
-    { id: 102, story: '두 번째 이야기 흐름입니다.', recommendedInfos: [] },
-    { id: 103, story: '세 번째 이야기 흐름입니다.', recommendedInfos: [] },
+    { id: 102, storyline: '두 번째 이야기 흐름입니다.', recommendedInfos: [] },
+    { id: 103, storyline: '세 번째 이야기 흐름입니다.', recommendedInfos: [] },
   ],
 };
 

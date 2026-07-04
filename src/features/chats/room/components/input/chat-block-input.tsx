@@ -4,7 +4,11 @@ import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
@@ -34,47 +38,62 @@ export function ChatBlockInput({
     !disabled && blocks.some((block) => block.value.trim().length > 0);
 
   return (
-    <section className="flex flex-col pb-[env(safe-area-inset-bottom)]">
+    <section className="flex flex-col bg-background pb-[env(safe-area-inset-bottom)]">
       {blocks.length > 0 && (
         <div className="flex max-h-[30dvh] scrollbar-none flex-col gap-2 overflow-y-auto px-4 py-2">
           {blocks.map((block) => (
             <div key={block.id} className="flex items-center gap-2">
-              <span className="w-8 shrink-0 text-center text-sm text-foreground-secondary">
-                {INPUT_BLOCK_LABELS[block.type]}
-              </span>
-              <Textarea
-                ref={(element) => onRegisterInput(block.id, element)}
-                value={block.value}
-                rows={1}
-                placeholder={INPUT_BLOCK_PLACEHOLDERS[block.type]}
-                disabled={disabled}
-                onChange={(event) =>
-                  onUpdateBlock(block.id, event.target.value)
-                }
-                onKeyDown={(event) => submitOnShortcut(event, canSend, onSend)}
-                className={cn(
-                  'max-h-[4lh] min-h-10 resize-none',
-                  block.type === 'situation'
-                    ? 'text-foreground-secondary'
-                    : 'text-foreground',
-                )}
-              />
+              <InputGroup>
+                <InputGroupAddon>
+                  <span
+                    className={cn(
+                      'text-xs',
+                      block.type === 'situation'
+                        ? 'text-foreground-secondary'
+                        : 'text-foreground',
+                    )}>
+                    {INPUT_BLOCK_LABELS[block.type]}
+                  </span>
+                </InputGroupAddon>
+                <InputGroupTextarea
+                  ref={(element) => onRegisterInput(block.id, element)}
+                  value={block.value}
+                  rows={1}
+                  placeholder={INPUT_BLOCK_PLACEHOLDERS[block.type]}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    onUpdateBlock(block.id, event.target.value)
+                  }
+                  onKeyDown={(event) =>
+                    submitOnShortcut(event, canSend, onSend)
+                  }
+                  className={cn(
+                    'max-h-[4lh] resize-none py-2.25',
+                    block.type === 'situation'
+                      ? 'text-foreground-secondary'
+                      : 'text-foreground',
+                  )}
+                />
+              </InputGroup>
               <Button
                 type="button"
                 size="icon-sm"
                 variant="ghost"
                 aria-label="입력 삭제"
                 disabled={disabled}
-                onClick={() => onRemoveBlock(block.id)}>
+                onClick={() => onRemoveBlock(block.id)}
+                className="shrink-0 text-foreground-secondary">
                 <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
               </Button>
             </div>
           ))}
         </div>
       )}
-      <div className="flex h-14 items-center gap-2 bg-background px-4 py-2">
+      <div className="flex items-center gap-2 p-4 pt-2">
         <Button
           type="button"
+          aria-label="상황 묘사 추가"
+          size="sm"
           variant="secondary"
           disabled={disabled}
           onClick={() => onAddBlock('situation')}>
@@ -82,6 +101,8 @@ export function ChatBlockInput({
         </Button>
         <Button
           type="button"
+          aria-label="대사 추가"
+          size="sm"
           variant="secondary"
           disabled={disabled}
           onClick={() => onAddBlock('dialogue')}>
@@ -89,7 +110,7 @@ export function ChatBlockInput({
         </Button>
         <Button
           type="button"
-          size="icon"
+          size="icon-sm"
           aria-label="전송"
           disabled={!canSend}
           onClick={onSend}

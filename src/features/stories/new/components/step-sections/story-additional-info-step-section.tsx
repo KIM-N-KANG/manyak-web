@@ -26,7 +26,7 @@ import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
 import { SelectedStorylineContent } from '../storyline-step/selected-storyline-content';
 
 type StoryAdditionalInfoStepSectionProps = {
-  storyline: SimpleStorylineResponse;
+  storylineItem: SimpleStorylineResponse;
   isCompletingStory: boolean;
   hasCompleteStoryError: boolean;
   canCompleteStory: boolean;
@@ -46,7 +46,7 @@ type StoryAdditionalInfoStepSectionProps = {
 };
 
 export function StoryAdditionalInfoStepSection({
-  storyline,
+  storylineItem,
   isCompletingStory,
   hasCompleteStoryError,
   canCompleteStory,
@@ -93,14 +93,14 @@ export function StoryAdditionalInfoStepSection({
       }>
       <div>
         <div className="flex flex-col">
-          <SelectedStorylineContent story={storyline.story} />
+          <SelectedStorylineContent story={storylineItem.storyline} />
 
           <section
             aria-labelledby="recommended-info-label"
             className="mt-4 flex flex-col gap-2 p-4">
             <Label>추천 추가 정보</Label>
             <ul className="flex flex-col gap-2">
-              {(storyline.recommendedInfos ?? []).map(
+              {(storylineItem.recommendedInfos ?? []).map(
                 (recommendedInfo, index) => {
                   const recommendation = recommendedInfo.text ?? '';
 
@@ -169,7 +169,7 @@ export function StoryAdditionalInfoStepSection({
                   aria-label={`추가 정보 ${index + 1} 삭제`}
                   disabled={isCompletingStory}
                   onClick={() => onRemoveAdditionalInfo(additionalInfo.id)}
-                  className="text-foreground-secondary">
+                  className="shrink-0 text-foreground-secondary">
                   <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
                 </Button>
               </div>

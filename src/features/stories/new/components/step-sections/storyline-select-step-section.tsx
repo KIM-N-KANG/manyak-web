@@ -94,19 +94,21 @@ export function StorylineSelectStepSection({
                 creationId={creationId}
               />
             }>
-            {storylines.map((storyline, index) => (
-              <TabsTrigger key={storyline.id ?? index} value={String(index)}>
+            {storylines.map((storylineItem, index) => (
+              <TabsTrigger
+                key={storylineItem.id ?? index}
+                value={String(index)}>
                 {getStorylineTabLabel(index)}
               </TabsTrigger>
             ))}
           </StickyTabsList>
-          {storylines.map((storyline, index) => (
+          {storylines.map((storylineItem, index) => (
             <TabsContent
-              key={storyline.id ?? index}
+              key={storylineItem.id ?? index}
               value={String(index)}
               className="p-4 pt-2 pb-6">
               <div className="flex h-full flex-col gap-4">
-                <TextContent>{storyline.story}</TextContent>
+                <TextContent>{storylineItem.storyline}</TextContent>
                 <div className="flex items-center justify-between">
                   <StorylineRatingButtons
                     rating={activeRating}
