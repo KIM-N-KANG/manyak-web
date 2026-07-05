@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -61,6 +63,29 @@ export function StoryAdditionalInfoStepSection({
   onBackToStorylineSelect,
   onScroll,
 }: StoryAdditionalInfoStepSectionProps) {
+  const textareaRefs = useRef(new Map<string, HTMLTextAreaElement>());
+  const previousIdsRef = useRef<string[]>(
+    additionalInfos.map((additionalInfo) => additionalInfo.id),
+  );
+
+  useEffect(() => {
+    const previousIds = new Set(previousIdsRef.current);
+    const currentIds = additionalInfos.map(
+      (additionalInfo) => additionalInfo.id,
+    );
+
+    previousIdsRef.current = currentIds;
+
+    const addedId = currentIds.find((id) => !previousIds.has(id));
+
+    if (addedId) {
+      const addedTextarea = textareaRefs.current.get(addedId);
+
+      addedTextarea?.focus({ preventScroll: true });
+      addedTextarea?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [additionalInfos]);
+
   return (
     <StoryCreateStepLayout
       titleLines={['스토리라인에 더하고 싶은', '정보를 자유롭게 입력해주세요']}
@@ -140,6 +165,13 @@ export function StoryAdditionalInfoStepSection({
               <div key={additionalInfo.id} className="flex items-center gap-2">
                 <InputGroup>
                   <InputGroupTextarea
+                    ref={(node) => {
+                      if (node) {
+                        textareaRefs.current.set(additionalInfo.id, node);
+                      } else {
+                        textareaRefs.current.delete(additionalInfo.id);
+                      }
+                    }}
                     aria-label={`추가 정보 ${index + 1}`}
                     className="min-h-10"
                     maxLength={ADDITIONAL_INFO_MAX_LENGTH}
