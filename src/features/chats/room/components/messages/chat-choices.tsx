@@ -2,6 +2,7 @@
 
 import { BubbleChatEditIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { m, type Variants } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
 
@@ -13,21 +14,33 @@ type ChatChoicesProps = {
   onFill: (text: string, position: number) => void;
 };
 
+const listVariants: Variants = {
+  show: {
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+};
+
 export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
   if (choices.length === 0) {
     return null;
   }
 
   return (
-    <div className="flex flex-col gap-2 p-4 pb-6">
+    <m.div
+      variants={listVariants}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col gap-2 p-4 pb-6">
       {choices.map((choice, index) => (
-        <div
+        <m.div
           key={`${index}-${choice}`}
-          style={{
-            animationDelay: `${index * 80}ms`,
-            animationFillMode: 'backwards',
-          }}
-          className="flex animate-in items-center justify-end gap-2 duration-300 fade-in slide-in-from-bottom-2">
+          variants={itemVariants}
+          className="flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -46,8 +59,8 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
               <ChatTextSegments>{choice}</ChatTextSegments>
             </span>
           </Button>
-        </div>
+        </m.div>
       ))}
-    </div>
+    </m.div>
   );
 }

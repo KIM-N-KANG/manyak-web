@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, m } from 'motion/react';
 
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
@@ -23,6 +24,13 @@ import { ChatMessages } from './messages/chat-messages';
 
 type ChatRoomProps = {
   chatId: string;
+};
+
+const fadeProps = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.2 },
 };
 
 export function ChatRoom({ chatId }: ChatRoomProps) {
@@ -102,16 +110,19 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
+  let stateKey: string;
+  let content: ReactNode;
+
   if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
+    stateKey = 'loading';
+    content = (
+      <div className="flex flex-1 items-center justify-center">
         <Spinner className="size-8 text-foreground-secondary" />
       </div>
     );
-  }
-
-  if (isError) {
-    return (
+  } else if (isError) {
+    stateKey = 'error';
+    content = (
       <RetryListStatus
         title="채팅을 불러오지 못했어요"
         onRetry={() => {
@@ -120,38 +131,50 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
         }}
       />
     );
+  } else {
+    stateKey = 'content';
+    content = (
+      <>
+        <ChatRoomHeader
+          chatId={chatId}
+          storyTitle={storyTitle}
+          isVisible={isHeaderVisible}
+          inputMode={mode}
+          onInputModeChange={handleModeChange}
+        />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <ChatMessages
+            prologue={prologue}
+            turns={turns}
+            suggestedInputs={suggestedInputs}
+            streamingTurn={streamingTurn}
+            onSendChoice={composer.sendChoice}
+            onFillChoice={handleFillChoice}
+            onHeaderVisibleChange={setIsHeaderVisible}
+          />
+        </div>
+        <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
+        <ChatFillChoiceDialog
+          open={pendingFill !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingFill(null);
+            }
+          }}
+          onConfirm={confirmFillChoice}
+        />
+      </>
+    );
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
-      <ChatRoomHeader
-        chatId={chatId}
-        storyTitle={storyTitle}
-        isVisible={isHeaderVisible}
-        inputMode={mode}
-        onInputModeChange={handleModeChange}
-      />
-      <div className="flex min-h-0 flex-1 flex-col">
-        <ChatMessages
-          prologue={prologue}
-          turns={turns}
-          suggestedInputs={suggestedInputs}
-          streamingTurn={streamingTurn}
-          onSendChoice={composer.sendChoice}
-          onFillChoice={handleFillChoice}
-          onHeaderVisibleChange={setIsHeaderVisible}
-        />
-      </div>
-      <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
-      <ChatFillChoiceDialog
-        open={pendingFill !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPendingFill(null);
-          }
-        }}
-        onConfirm={confirmFillChoice}
-      />
-    </div>
+    <AnimatePresence mode="wait" initial={false}>
+      <m.div
+        key={stateKey}
+        className="relative flex h-full min-h-0 flex-col"
+        {...fadeProps}>
+        {content}
+      </m.div>
+    </AnimatePresence>
   );
 }
