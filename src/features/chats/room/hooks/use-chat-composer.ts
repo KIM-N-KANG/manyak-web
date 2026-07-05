@@ -36,6 +36,12 @@ export function useChatComposer({
   const plainComposer = useChatPlainComposer({ submitText });
   const blockComposer = useChatBlockComposer({ submitText });
 
+  /** 작성 중인 입력이 있는지 여부. 추천 문구 덮어쓰기 확인에 사용한다. */
+  const hasDraft =
+    inputMode === 'block'
+      ? blockComposer.blocks.some((block) => block.value.trim().length > 0)
+      : plainComposer.value.trim().length > 0;
+
   const addBlock = (type: InputBlockType) => {
     track('client_chat_addBlockButton_clicked', {
       chat_id: chatId,
@@ -103,6 +109,7 @@ export function useChatComposer({
     setValue: plainComposer.setValue,
     textareaRef: plainComposer.textareaRef,
     blocks: blockComposer.blocks,
+    hasDraft,
     addBlock,
     removeBlock,
     updateBlock: blockComposer.updateBlock,

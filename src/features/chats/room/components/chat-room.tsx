@@ -18,6 +18,7 @@ import {
 import { useChatStream } from '../hooks/use-chat-stream';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
+import { ChatFillChoiceDialog } from './messages/chat-fill-choice-dialog';
 import { ChatMessages } from './messages/chat-messages';
 
 type ChatRoomProps = {
@@ -55,6 +56,29 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     inputMode: mode,
     onSend: send,
   });
+
+  const [pendingFill, setPendingFill] = useState<{
+    text: string;
+    position: number;
+  } | null>(null);
+
+  const handleFillChoice = (text: string, position: number) => {
+    if (composer.hasDraft) {
+      setPendingFill({ text, position });
+
+      return;
+    }
+
+    composer.fillChoice(text, position);
+  };
+
+  const confirmFillChoice = () => {
+    if (pendingFill) {
+      composer.fillChoice(pendingFill.text, pendingFill.position);
+    }
+
+    setPendingFill(null);
+  };
 
   const handleModeChange = (nextMode: ChatInputMode) => {
     if (nextMode !== mode) {
@@ -114,11 +138,20 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           suggestedInputs={suggestedInputs}
           streamingTurn={streamingTurn}
           onSendChoice={composer.sendChoice}
-          onFillChoice={composer.fillChoice}
+          onFillChoice={handleFillChoice}
           onHeaderVisibleChange={setIsHeaderVisible}
         />
       </div>
       <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
+      <ChatFillChoiceDialog
+        open={pendingFill !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingFill(null);
+          }
+        }}
+        onConfirm={confirmFillChoice}
+      />
     </div>
   );
 }
