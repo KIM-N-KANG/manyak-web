@@ -6,6 +6,7 @@ import { createClientId } from '@/lib/create-client-id';
 import { track } from '@/observability/analytics';
 
 import {
+  ADDITIONAL_INFO_INITIAL_COUNT,
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
 } from '../constants';
@@ -16,9 +17,15 @@ const createEmptyAdditionalInfo = (): AdditionalInfoInput => ({
   value: '',
 });
 
+const createInitialAdditionalInfos = (): AdditionalInfoInput[] =>
+  Array.from(
+    { length: ADDITIONAL_INFO_INITIAL_COUNT },
+    createEmptyAdditionalInfo,
+  );
+
 export function useAdditionalInfos() {
   const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(
-    () => [createEmptyAdditionalInfo()],
+    createInitialAdditionalInfos,
   );
 
   const addAdditionalInfo = () => {
@@ -59,7 +66,7 @@ export function useAdditionalInfos() {
     additionalInfos.map(({ value }) => value.trim()).filter(Boolean);
 
   const resetAdditionalInfos = () => {
-    setAdditionalInfos([createEmptyAdditionalInfo()]);
+    setAdditionalInfos(createInitialAdditionalInfos());
   };
 
   return {

@@ -4,21 +4,23 @@ import type { StoryCreateStep, TagCategoryConfig } from './types';
 
 export const ADD_TAG_MAX_LENGTH = 15;
 
+export const ADDITIONAL_INFO_INITIAL_COUNT = 3;
+
 export const ADDITIONAL_INFO_MAX_COUNT = 10;
 
 export const ADDITIONAL_INFO_MAX_LENGTH = 100;
 
 export const ADDITIONAL_INFO_PLACEHOLDERS = [
-  '예: 주인공은 남성이다',
-  '예: 메인 상대역은 여성이다',
-  '예: 주변 인물은 총 3명이다',
-  '예: 주인공은 20대 대학생이다',
-  '예: 배경은 현대의 서울이다',
-  '예: 두 사람은 어릴 적 사귄 사이이다',
-  '예: 전체적으로 밝고 유쾌한 분위기다',
-  '예: 계절 배경은 겨울이다',
-  '예: 주요 무대는 오래된 서점이다',
-  '예: 초반에 큰 오해로 갈등이 시작된다',
+  '예: 내 이름을 마냑이라고 불러줘',
+  '예: 메인 상대역은 남성/여성으로 해줘',
+  '예: 나 20대 대학생이야',
+  '예: 나를 막내아들로 설정해줘',
+  '예: 배경은 현대의 서울로 해줘',
+  '예: 나와 메인 상대역은 어릴 적 사귄 사이야',
+  '예: 전체적으로 밝고 유쾌한 분위기로 그려줘',
+  '예: 계절 배경은 겨울로 잡아줘',
+  '예: 주요 무대는 오래된 서점으로 해줘',
+  '예: 초반에 큰 오해로 갈등이 시작되게 해줘',
 ] as const;
 
 export const STORYLINE_RATING_SYNC_DEBOUNCE_MS = 300;
