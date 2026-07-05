@@ -35,7 +35,6 @@ export function AmplitudeProvider({ children }: PropsWithChildren) {
         sessionReplay: { sampleRate: 0 },
       });
 
-      // Amplitude device_id를 Sentry user로 연결해 행동 ↔ 에러를 잇는다(스펙 §AN-2-8).
       identifyUser(amplitude.getDeviceId());
     })();
   }, []);
