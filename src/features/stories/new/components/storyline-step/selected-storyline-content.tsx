@@ -22,14 +22,11 @@ export function SelectedStorylineContent({
   story,
 }: SelectedStorylineContentProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  // 측정 전에는 접힘을 기본값으로 두어, 마운트 시 펼쳐진 상태가 그려졌다가
-  // 접히는 깜빡임을 방지한다. 짧은 콘텐츠는 측정 후 펼침으로 정정된다.
   const [isCollapsible, setIsCollapsible] = useState(true);
   const [collapsedHeight, setCollapsedHeight] = useState<number | null>(null);
   const [isAnimationEnabled, setIsAnimationEnabled] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // 페인트 전에 접힘 여부를 확정해 짧은 콘텐츠의 깜빡임까지 방지한다.
   useIsomorphicLayoutEffect(() => {
     const element = contentRef.current;
 
@@ -46,8 +43,6 @@ export function SelectedStorylineContent({
     );
   }, [story]);
 
-  // 초기 접힘 정착 이후(다음 프레임)부터 애니메이션을 켜서,
-  // 사용자의 더보기/접기 토글에만 전환 애니메이션이 적용되도록 한다.
   useEffect(() => {
     const frameId = requestAnimationFrame(() => setIsAnimationEnabled(true));
 
