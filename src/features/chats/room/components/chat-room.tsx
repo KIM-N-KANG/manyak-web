@@ -3,9 +3,9 @@
 import { type ReactNode, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { AnimatePresence, m } from 'motion/react';
 
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
+import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
@@ -24,13 +24,6 @@ import { ChatMessages } from './messages/chat-messages';
 
 type ChatRoomProps = {
   chatId: string;
-};
-
-const fadeProps = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: { duration: 0.2 },
 };
 
 export function ChatRoom({ chatId }: ChatRoomProps) {
@@ -172,13 +165,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <m.div
-        key={stateKey}
-        className="relative flex h-full min-h-0 flex-col"
-        {...fadeProps}>
-        {content}
-      </m.div>
-    </AnimatePresence>
+    <FadeStateSwitch
+      stateKey={stateKey}
+      className="relative flex h-full min-h-0 flex-col">
+      {content}
+    </FadeStateSwitch>
   );
 }

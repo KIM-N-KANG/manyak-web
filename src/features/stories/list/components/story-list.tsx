@@ -4,9 +4,9 @@ import { Fragment, type ReactNode, useEffect } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { AnimatePresence, m } from 'motion/react';
 import Link from 'next/link';
 
+import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,6 @@ import { useCreatedStories } from '../hooks/use-created-stories';
 import { CreateStoryFab } from './create-story-fab';
 import { StoryCard } from './story-card';
 import { StoryListSkeleton } from './story-list-skeleton';
-
-const fadeProps = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: { duration: 0.2 },
-};
 
 export function StoryList() {
   useEffect(() => {
@@ -98,13 +91,10 @@ export function StoryList() {
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <m.div
-        key={stateKey}
-        className="flex min-h-0 flex-1 flex-col"
-        {...fadeProps}>
-        {content}
-      </m.div>
-    </AnimatePresence>
+    <FadeStateSwitch
+      stateKey={stateKey}
+      className="flex min-h-0 flex-1 flex-col">
+      {content}
+    </FadeStateSwitch>
   );
 }

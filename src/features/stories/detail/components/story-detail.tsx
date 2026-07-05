@@ -8,6 +8,7 @@ import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
+import { FADE_TRANSITION_PROPS } from '@/lib/motion';
 import { track } from '@/observability/analytics';
 
 import { StoryDetailCta } from './story-detail-cta';
@@ -17,13 +18,6 @@ import { StoryInfoSection } from './story-info-section';
 
 type StoryDetailProps = {
   storyId: string;
-};
-
-const fadeProps = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: { duration: 0.2 },
 };
 
 export function StoryDetail({ storyId }: StoryDetailProps) {
@@ -58,7 +52,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
           <m.main
             key="skeleton"
             className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto"
-            {...fadeProps}>
+            {...FADE_TRANSITION_PROPS}>
             <StoryDetailSkeleton />
           </m.main>
         )}
@@ -67,7 +61,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
           <m.main
             key="error"
             className="flex min-h-0 flex-1 items-center justify-center px-4"
-            {...fadeProps}>
+            {...FADE_TRANSITION_PROPS}>
             <section className="flex flex-col items-center gap-8">
               <div className="flex flex-col gap-1 text-center">
                 <h3 className="text-lg font-semibold">
@@ -86,7 +80,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
           <m.div
             key="content"
             className="flex min-h-0 flex-1 flex-col"
-            {...fadeProps}>
+            {...FADE_TRANSITION_PROPS}>
             <main
               ref={contentRef}
               className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
