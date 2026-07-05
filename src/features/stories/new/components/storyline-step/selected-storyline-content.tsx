@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -8,11 +8,9 @@ import { AnimatePresence, m } from 'motion/react';
 
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
+import { useIsomorphicLayoutEffect } from '@/hooks/use-isomorphic-layout-effect';
 
 import { SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT } from '../../constants';
-
-const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 type SelectedStorylineContentProps = {
   story?: string;
