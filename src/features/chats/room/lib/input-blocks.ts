@@ -21,9 +21,12 @@ export function createDefaultInputBlocks(): InputBlock[] {
 
 /**
  * 블럭들을 서버 전송용 텍스트로 직렬화한다.
- * 상황은 *...* 강조 마커로 감싸고, 빈 블럭은 제외하며, 순서대로 공백으로 연결한다.
+ * 상황은 *...* 강조 마커로 감싸고, 빈 블럭은 제외하며, 순서대로 구분자로 연결한다.
  */
-export function serializeInputBlocks(blocks: InputBlock[]): string {
+export function serializeInputBlocks(
+  blocks: InputBlock[],
+  separator = ' ',
+): string {
   return blocks
     .map((block) => {
       const value = block.value.trim();
@@ -33,7 +36,7 @@ export function serializeInputBlocks(blocks: InputBlock[]): string {
       return block.type === 'situation' ? `*${value}*` : value;
     })
     .filter(Boolean)
-    .join(' ');
+    .join(separator);
 }
 
 /**

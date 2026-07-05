@@ -42,7 +42,7 @@ export function useChatBlockComposer({
   };
 
   const send = () => {
-    const text = serializeInputBlocks(blocks);
+    const text = serializeInputBlocks(blocks, '\n\n');
 
     if (submitText(text)) {
       setBlocks(createDefaultInputBlocks());
