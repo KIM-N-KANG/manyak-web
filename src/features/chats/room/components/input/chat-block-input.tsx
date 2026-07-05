@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -16,7 +17,6 @@ import { cn } from '@/lib/utils';
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
 import { type InputBlock, type InputBlockType } from '../../lib/input-blocks';
 import { submitOnShortcut } from '../../lib/submit-shortcut';
-import { ChatBlockDeleteDialog } from './chat-block-delete-dialog';
 
 type ChatBlockInputProps = {
   blocks: InputBlock[];
@@ -142,7 +142,7 @@ export function ChatBlockInput({
         </Button>
       </div>
 
-      <ChatBlockDeleteDialog
+      <ConfirmAlertDialog
         open={pendingDeleteId !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -150,6 +150,10 @@ export function ChatBlockInput({
           }
         }}
         onConfirm={confirmRemoveBlock}
+        title="작성한 내용을 삭제할까요?"
+        description="삭제하면 작성한 내용이 사라져요"
+        cancelLabel="그대로 두기"
+        confirmLabel="삭제하기"
       />
     </section>
   );

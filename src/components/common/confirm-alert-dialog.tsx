@@ -11,33 +11,39 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type ChatBlockDeleteDialogProps = {
+type ConfirmAlertDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  title: string;
+  description: string;
+  cancelLabel: string;
+  confirmLabel: string;
 };
 
-export function ChatBlockDeleteDialog({
+export function ConfirmAlertDialog({
   open,
   onOpenChange,
   onConfirm,
-}: ChatBlockDeleteDialogProps) {
+  title,
+  description,
+  cancelLabel,
+  confirmLabel,
+}: ConfirmAlertDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>작성한 내용을 삭제할까요?</AlertDialogTitle>
-          <AlertDialogDescription>
-            삭제하면 작성한 내용이 사라져요
-          </AlertDialogDescription>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>그대로 두기</AlertDialogCancel>
+          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             type="button"
             variant="destructive"
             onClick={onConfirm}>
-            삭제하기
+            {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

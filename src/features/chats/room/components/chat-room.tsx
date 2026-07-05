@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, m } from 'motion/react';
 
+import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
@@ -19,7 +20,6 @@ import {
 import { useChatStream } from '../hooks/use-chat-stream';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
-import { ChatFillChoiceDialog } from './messages/chat-fill-choice-dialog';
 import { ChatMessages } from './messages/chat-messages';
 
 type ChatRoomProps = {
@@ -154,7 +154,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           />
         </div>
         <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
-        <ChatFillChoiceDialog
+        <ConfirmAlertDialog
           open={pendingFill !== null}
           onOpenChange={(open) => {
             if (!open) {
@@ -162,6 +162,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             }
           }}
           onConfirm={confirmFillChoice}
+          title="작성 중인 내용을 바꿀까요?"
+          description="지금 작성 중인 내용은 사라져요"
+          cancelLabel="그대로 두기"
+          confirmLabel="바꾸기"
         />
       </>
     );
