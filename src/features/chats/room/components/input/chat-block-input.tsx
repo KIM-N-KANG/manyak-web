@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -14,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
 import { type InputBlock, type InputBlockType } from '../../lib/input-blocks';
 import { submitOnShortcut } from '../../lib/submit-shortcut';
+import { ChatBlockDeleteDialog } from './chat-block-delete-dialog';
 
 type ChatBlockInputProps = {
   blocks: InputBlock[];
@@ -34,8 +37,28 @@ export function ChatBlockInput({
   onSend,
   disabled,
 }: ChatBlockInputProps) {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
   const canSend =
     !disabled && blocks.some((block) => block.value.trim().length > 0);
+
+  const requestRemoveBlock = (block: InputBlock) => {
+    if (block.value.trim().length > 0) {
+      setPendingDeleteId(block.id);
+
+      return;
+    }
+
+    onRemoveBlock(block.id);
+  };
+
+  const confirmRemoveBlock = () => {
+    if (pendingDeleteId !== null) {
+      onRemoveBlock(pendingDeleteId);
+    }
+
+    setPendingDeleteId(null);
+  };
 
   return (
     <section className="flex flex-col bg-background pb-[env(safe-area-inset-bottom)]">
@@ -81,7 +104,7 @@ export function ChatBlockInput({
                 variant="ghost"
                 aria-label="입력 삭제"
                 disabled={disabled}
-                onClick={() => onRemoveBlock(block.id)}
+                onClick={() => requestRemoveBlock(block)}
                 className="shrink-0 text-foreground-secondary">
                 <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
               </Button>
@@ -118,6 +141,16 @@ export function ChatBlockInput({
           <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
         </Button>
       </div>
+
+      <ChatBlockDeleteDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteId(null);
+          }
+        }}
+        onConfirm={confirmRemoveBlock}
+      />
     </section>
   );
 }
