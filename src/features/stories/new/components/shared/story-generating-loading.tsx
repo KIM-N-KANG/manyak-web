@@ -1,5 +1,7 @@
 'use client';
 
+import { m } from 'motion/react';
+
 import { Marker, MarkerContent } from '@/components/ui/marker';
 import { type RevealHint, useRevealedHints } from '@/hooks/use-revealed-hints';
 import { useTypewriter } from '@/hooks/use-typewriter';
@@ -31,19 +33,27 @@ export function StoryGeneratingLoading({
       <div aria-live="polite" className="flex flex-col">
         {revealedHints.map(({ hint, isTextRevealed }) => (
           <div key={hint.delayMs} className="mt-4 flex flex-col gap-4">
-            <Marker
-              variant="separator"
-              className="animate-in duration-500 fade-in">
-              <MarkerContent className="text-foreground-tertiary">
-                {Math.round(hint.delayMs / 1000)}초 지남
-              </MarkerContent>
-            </Marker>
-            {isTextRevealed && (
-              <Marker className="animate-in duration-500 fade-in">
+            <m.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}>
+              <Marker variant="separator">
                 <MarkerContent className="text-foreground-tertiary">
-                  {hint.text}
+                  {Math.round(hint.delayMs / 1000)}초 지남
                 </MarkerContent>
               </Marker>
+            </m.div>
+            {isTextRevealed && (
+              <m.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}>
+                <Marker>
+                  <MarkerContent className="text-foreground-tertiary">
+                    {hint.text}
+                  </MarkerContent>
+                </Marker>
+              </m.div>
             )}
           </div>
         ))}

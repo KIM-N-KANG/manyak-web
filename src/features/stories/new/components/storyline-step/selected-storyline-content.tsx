@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { AnimatePresence, m } from 'motion/react';
 
 import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 import { SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT } from '../../constants';
 
@@ -20,12 +20,19 @@ export function SelectedStorylineContent({
 }: SelectedStorylineContentProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCollapsible, setIsCollapsible] = useState(false);
+  const [collapsedHeight, setCollapsedHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = contentRef.current;
 
     if (!element) return;
+
+    const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
+
+    if (!Number.isNaN(lineHeight)) {
+      setCollapsedHeight(lineHeight);
+    }
 
     setIsCollapsible(
       element.scrollHeight > SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT,
@@ -36,20 +43,28 @@ export function SelectedStorylineContent({
 
   return (
     <div className="mt-4 flex flex-col gap-2 bg-muted p-4 pb-2">
-      <div
+      <m.div
         ref={contentRef}
-        className={cn(
-          'relative overflow-hidden transition-[max-height] duration-300 ease-in-out',
-          isCollapsed ? 'max-h-lh' : '',
-        )}>
+        className="relative overflow-hidden"
+        initial={false}
+        animate={{
+          height: isCollapsed ? (collapsedHeight ?? '1lh') : 'auto',
+        }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}>
         <TextContent>{story}</TextContent>
-        {isCollapsed && (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-lh bg-linear-to-t from-muted to-transparent"
-          />
-        )}
-      </div>
+        <AnimatePresence initial={false}>
+          {isCollapsed && (
+            <m.div
+              aria-hidden="true"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-lh bg-linear-to-t from-muted to-transparent"
+            />
+          )}
+        </AnimatePresence>
+      </m.div>
 
       {isCollapsible && (
         <Button

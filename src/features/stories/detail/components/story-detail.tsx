@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
+import { AnimatePresence, m } from 'motion/react';
+
 import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
@@ -15,6 +17,13 @@ import { StoryInfoSection } from './story-info-section';
 
 type StoryDetailProps = {
   storyId: string;
+};
+
+const fadeProps = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.2 },
 };
 
 export function StoryDetail({ storyId }: StoryDetailProps) {
@@ -44,39 +53,50 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         showTitle={Boolean(story) && !isTitleInView}
       />
 
-      {showSkeleton && (
-        <main className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
-          <StoryDetailSkeleton />
-        </main>
-      )}
+      <AnimatePresence mode="wait" initial={false}>
+        {showSkeleton && (
+          <m.main
+            key="skeleton"
+            className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto"
+            {...fadeProps}>
+            <StoryDetailSkeleton />
+          </m.main>
+        )}
 
-      {!showSkeleton && isError && (
-        <main className="flex min-h-0 flex-1 items-center justify-center px-4">
-          <section className="flex flex-col items-center gap-8">
-            <div className="flex flex-col gap-1 text-center">
-              <h3 className="text-lg font-semibold">
-                스토리를 불러오지 못했어요
-              </h3>
-              <p>잠시 후 다시 시도해주세요</p>
-            </div>
-            <Button variant="outline" size="lg" onClick={() => refetch()}>
-              다시 시도
-            </Button>
-          </section>
-        </main>
-      )}
+        {!showSkeleton && isError && (
+          <m.main
+            key="error"
+            className="flex min-h-0 flex-1 items-center justify-center px-4"
+            {...fadeProps}>
+            <section className="flex flex-col items-center gap-8">
+              <div className="flex flex-col gap-1 text-center">
+                <h3 className="text-lg font-semibold">
+                  스토리를 불러오지 못했어요
+                </h3>
+                <p>잠시 후 다시 시도해주세요</p>
+              </div>
+              <Button variant="outline" size="lg" onClick={() => refetch()}>
+                다시 시도
+              </Button>
+            </section>
+          </m.main>
+        )}
 
-      {!showSkeleton && story && (
-        <>
-          <main
-            ref={contentRef}
-            className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
-            <StoryInfoSection story={story} titleRef={titleRef} />
-          </main>
+        {!showSkeleton && story && (
+          <m.div
+            key="content"
+            className="flex min-h-0 flex-1 flex-col"
+            {...fadeProps}>
+            <main
+              ref={contentRef}
+              className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
+              <StoryInfoSection story={story} titleRef={titleRef} />
+            </main>
 
-          <StoryDetailCta storyId={storyId} />
-        </>
-      )}
+            <StoryDetailCta storyId={storyId} />
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

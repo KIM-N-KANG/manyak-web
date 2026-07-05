@@ -1,9 +1,10 @@
 'use client';
 
-import { Fragment, useEffect } from 'react';
+import { Fragment, type ReactNode, useEffect } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { AnimatePresence, m } from 'motion/react';
 import Link from 'next/link';
 
 import { ListStatus } from '@/components/common/list-status';
@@ -19,6 +20,13 @@ import { CreateStoryFab } from './create-story-fab';
 import { StoryCard } from './story-card';
 import { StoryListSkeleton } from './story-list-skeleton';
 
+const fadeProps = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.2 },
+};
+
 export function StoryList() {
   useEffect(() => {
     track('client_storyList_viewed');
@@ -27,25 +35,26 @@ export function StoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const showSkeleton = useDelayedLoading(isLoading);
 
+  let stateKey: string;
+  let content: ReactNode;
+
   if (showSkeleton) {
-    return <StoryListSkeleton />;
-  }
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (isError) {
-    return (
+    stateKey = 'skeleton';
+    content = <StoryListSkeleton />;
+  } else if (isLoading) {
+    stateKey = 'pending';
+    content = null;
+  } else if (isError) {
+    stateKey = 'error';
+    content = (
       <RetryListStatus
         title="스토리를 불러오지 못했어요"
         onRetry={() => refetch()}
       />
     );
-  }
-
-  if (isEmpty) {
-    return (
+  } else if (isEmpty) {
+    stateKey = 'empty';
+    content = (
       <ListStatus
         title="아직 만든 스토리가 없어요"
         description="3단계로 간단하게 스토리를 만들어보세요">
@@ -67,23 +76,35 @@ export function StoryList() {
         </Button>
       </ListStatus>
     );
+  } else {
+    stateKey = 'list';
+    content = (
+      <>
+        <ul className="flex flex-col">
+          {stories.map((story, index) => (
+            <Fragment key={story.id}>
+              <li>
+                <StoryCard story={story} position={index} />
+              </li>
+              {index < stories.length - 1 && (
+                <Separator className="mx-4 data-horizontal:w-auto" />
+              )}
+            </Fragment>
+          ))}
+        </ul>
+        <CreateStoryFab />
+      </>
+    );
   }
 
   return (
-    <>
-      <ul className="flex flex-col">
-        {stories.map((story, index) => (
-          <Fragment key={story.id}>
-            <li>
-              <StoryCard story={story} position={index} />
-            </li>
-            {index < stories.length - 1 && (
-              <Separator className="mx-4 data-horizontal:w-auto" />
-            )}
-          </Fragment>
-        ))}
-      </ul>
-      <CreateStoryFab />
-    </>
+    <AnimatePresence mode="wait" initial={false}>
+      <m.div
+        key={stateKey}
+        className="flex min-h-0 flex-1 flex-col"
+        {...fadeProps}>
+        {content}
+      </m.div>
+    </AnimatePresence>
   );
 }

@@ -2,11 +2,11 @@
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { m } from 'motion/react';
 import Link from 'next/link';
 
 import { useMainScroll } from '@/app/(main)/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
-import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
 export function CreateStoryFab() {
@@ -26,15 +26,18 @@ export function CreateStoryFab() {
           className="size-6 shrink-0"
           aria-hidden="true"
         />
-        <span
-          className={cn(
-            'grid transition-[grid-template-columns,margin] duration-300 ease-out',
-            hasScrolled ? 'grid-cols-[0fr]' : 'ml-1.5 grid-cols-[1fr]',
-          )}>
-          <span className="mr-1 overflow-hidden text-base font-medium whitespace-nowrap">
+        <m.span
+          initial={false}
+          animate={{
+            width: hasScrolled ? 0 : 'auto',
+            marginLeft: hasScrolled ? 0 : 6,
+          }}
+          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+          className="inline-flex overflow-hidden">
+          <span className="mr-1 text-base font-medium whitespace-nowrap">
             만들기
           </span>
-        </span>
+        </m.span>
       </Link>
     </div>
   );
