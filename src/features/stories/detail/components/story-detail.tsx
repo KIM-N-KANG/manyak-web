@@ -70,7 +70,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         <>
           <main
             ref={contentRef}
-            className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+            className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
             <StoryInfoSection story={story} titleRef={titleRef} />
           </main>
 
