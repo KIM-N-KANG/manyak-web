@@ -9,6 +9,7 @@ export type InputBlock = {
   value: string;
 };
 
+/** 고유 ID가 부여된 입력 블럭을 생성한다. */
 export function createInputBlock(type: InputBlockType, value = ''): InputBlock {
   return { id: createClientId(), type, value };
 }

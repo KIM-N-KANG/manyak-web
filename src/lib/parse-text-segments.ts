@@ -1,3 +1,4 @@
+/** 텍스트 한 줄을 스타일별로 나눈 조각 */
 export type TextSegment = {
   text: string;
   /** 단일 *...* — 내레이션/속마음 (보조 색상) */
@@ -6,9 +7,13 @@ export type TextSegment = {
   bold: boolean;
 };
 
-// **...** (볼드)를 먼저, 그다음 이중 '*'가 아닌 단일 *...* (강조)를 매칭
+/** `**...**` (볼드)를 먼저, 그다음 이중 '*'가 아닌 단일 `*...*` (강조)를 매칭 */
 const SEGMENT_PATTERN = /\*\*([^*\n]+?)\*\*|(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)/g;
 
+/**
+ * 텍스트 한 줄을 마크다운 유사 문법에 따라 세그먼트로 분리한다.
+ * `**...**`는 볼드, 단일 `*...*`는 강조(내레이션/속마음)로 파싱한다.
+ */
 export function parseTextSegments(line: string): TextSegment[] {
   const segments: TextSegment[] = [];
   let lastIndex = 0;

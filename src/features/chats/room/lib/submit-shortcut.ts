@@ -11,6 +11,7 @@ function isCoarsePointer(): boolean {
   );
 }
 
+/** 키보드 이벤트가 전송 단축키(Shift 없는 Enter, 조합 입력 중 아님, 데스크톱)인지 판별한다. */
 export function isSubmitShortcut(
   event: KeyboardEvent<HTMLTextAreaElement>,
 ): boolean {
@@ -22,6 +23,7 @@ export function isSubmitShortcut(
   );
 }
 
+/** 전송 단축키 입력 시 기본 동작(줄바꿈)을 막고, 전송 가능하면 `onSubmit`을 호출한다. */
 export function submitOnShortcut(
   event: KeyboardEvent<HTMLTextAreaElement>,
   canSubmit: boolean,

@@ -14,6 +14,10 @@ import {
   markOnboardingSeen,
 } from '../utils/onboarding-storage';
 
+/**
+ * 생성한 스토리와 채팅이 모두 없는 신규 방문자에게 온보딩 다이얼로그를 띄우는 훅.
+ * 한 번 본 뒤에는 로컬스토리지에 기록해 다시 띄우지 않는다.
+ */
 export function useOnboardingDialog() {
   const router = useRouter();
   const storyIds = useCreatedStoryIds();

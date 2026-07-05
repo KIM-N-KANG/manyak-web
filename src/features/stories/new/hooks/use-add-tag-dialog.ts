@@ -12,6 +12,7 @@ type UseAddTagDialogArgs = {
   onAddTag: (tag: string) => void;
 };
 
+/** 커스텀 키워드 추가 다이얼로그의 열림 상태와 입력·제출을 관리하는 훅 */
 export function useAddTagDialog({ category, onAddTag }: UseAddTagDialogArgs) {
   const [isOpen, setIsOpen] = useState(false);
   const [tag, setTag] = useState('');

@@ -19,6 +19,10 @@ type UseChatComposerParams = {
   onSend: (text: string) => void;
 };
 
+/**
+ * 일반/블럭 컴포저를 통합해 채팅 입력의 상태와 동작을 제공하는 훅.
+ * 현재 입력 모드에 맞춰 전송·채우기·모드 전환을 처리하고 분석 이벤트를 기록한다.
+ */
 export function useChatComposer({
   chatId,
   turnCount,

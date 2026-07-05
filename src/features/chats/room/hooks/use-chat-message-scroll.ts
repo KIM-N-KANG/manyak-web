@@ -12,6 +12,10 @@ type UseChatMessageScrollParams = {
   onHeaderVisibleChange: (isVisible: boolean) => void;
 };
 
+/**
+ * 채팅 메시지 영역의 스크롤을 관리하는 훅.
+ * 스트리밍 중 하단 고정 스크롤과 스크롤 방향에 따른 헤더 표시 여부를 처리한다.
+ */
 export function useChatMessageScroll({
   turnCount,
   streamingTurn,

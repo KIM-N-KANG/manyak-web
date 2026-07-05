@@ -13,6 +13,10 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import { track } from '@/observability/analytics';
 
+/**
+ * 스토리 상세에서 채팅을 시작하는 훅.
+ * 채팅 생성 후 ID를 로컬에 저장하고 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
+ */
 export function useStartChat(storyId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();

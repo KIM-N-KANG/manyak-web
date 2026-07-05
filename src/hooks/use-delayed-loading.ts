@@ -6,10 +6,17 @@ const DEFAULT_DELAY = 100;
 const DEFAULT_MIN_DURATION = 300;
 
 type UseDelayedLoadingOptions = {
+  /** 로딩 표시를 시작하기 전 대기 시간(ms) */
   delay?: number;
+  /** 로딩 표시를 유지할 최소 시간(ms) */
   minDuration?: number;
 };
 
+/**
+ * 로딩 UI의 깜빡임을 막는 훅.
+ * 로딩이 delay보다 짧게 끝나면 아예 표시하지 않고,
+ * 일단 표시되면 minDuration만큼은 유지한 뒤 사라진다.
+ */
 export function useDelayedLoading(
   isLoading: boolean,
   options: UseDelayedLoadingOptions = {},

@@ -13,6 +13,9 @@ type UseStoryTagStepArgs = {
   onGenerateStorylines: (request: GenerateSimpleStorylinesRequest) => void;
 };
 
+/**
+ * 키워드 스텝의 태그 선택과 카테고리 이동을 묶어 화면에 필요한 상태로 제공하는 훅.
+ */
 export function useStoryTagStep({
   isGeneratingStorylines,
   onGenerateStorylines,

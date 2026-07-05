@@ -1,9 +1,11 @@
 import * as amplitude from '@amplitude/unified';
 
+/** Amplitude device_id를 백엔드로 전달하는 요청 헤더 이름. */
 export const DEVICE_ID_HEADER = 'X-Manyak-Device-Id';
+/** Amplitude session_id를 백엔드로 전달하는 요청 헤더 이름. */
 export const SESSION_ID_HEADER = 'X-Manyak-Session-Id';
 
-// 식별자 쿠키만 고르고 마케팅용 AMP_MKTG_ 쿠키는 제외하기 위한 접두사.
+/** 식별자 쿠키만 고르고 마케팅용 AMP_MKTG_ 쿠키는 제외하기 위한 접두사. */
 const AMP_COOKIE_PREFIX = 'AMP_';
 const AMP_MKTG_COOKIE_PREFIX = 'AMP_MKTG_';
 
@@ -12,8 +14,10 @@ interface AmplitudeCookieState {
   sessionId?: number;
 }
 
-// SDK가 저장한 쿠키에서 식별자를 읽는다. 값 형식(base64 → URL 디코드 → JSON)은
-// SDK 구현 세부사항이라 파싱 실패 시 빈 값을 반환한다.
+/**
+ * SDK가 저장한 쿠키에서 식별자를 읽는다. 값 형식(base64 → URL 디코드 → JSON)은
+ * SDK 구현 세부사항이라 파싱 실패 시 빈 값을 반환한다.
+ */
 function readAmplitudeCookieState(): AmplitudeCookieState {
   const entry = document.cookie
     .split('; ')
