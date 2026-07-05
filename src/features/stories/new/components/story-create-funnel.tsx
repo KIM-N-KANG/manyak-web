@@ -37,6 +37,7 @@ export function StoryCreateFunnel() {
     addAdditionalInfo,
     removeAdditionalInfo,
     changeAdditionalInfo,
+    registerAdditionalInfoInput,
     handleCompleteStory,
     backDialogOpen,
     onBackDialogOpenChange,
@@ -97,6 +98,7 @@ export function StoryCreateFunnel() {
           onAddAdditionalInfo={addAdditionalInfo}
           onRemoveAdditionalInfo={removeAdditionalInfo}
           onChangeAdditionalInfo={changeAdditionalInfo}
+          onRegisterAdditionalInfoInput={registerAdditionalInfoInput}
           onCompleteStory={handleCompleteStory}
           onBackToStorylineSelect={handleBackToStorylineSelect}
         />

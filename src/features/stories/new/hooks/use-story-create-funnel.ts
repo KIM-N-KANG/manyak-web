@@ -66,6 +66,7 @@ export function useStoryCreateFunnel() {
     addAdditionalInfo,
     removeAdditionalInfo,
     changeAdditionalInfo,
+    registerAdditionalInfoInput,
     getSubmittedAdditionalInfos,
     resetAdditionalInfos,
   } = useAdditionalInfos();
@@ -339,6 +340,7 @@ export function useStoryCreateFunnel() {
     addAdditionalInfo,
     removeAdditionalInfo,
     changeAdditionalInfo,
+    registerAdditionalInfoInput,
     handleCompleteStory,
     backDialogOpen: isBackDialogOpen,
     onBackDialogOpenChange: setIsBackDialogOpen,

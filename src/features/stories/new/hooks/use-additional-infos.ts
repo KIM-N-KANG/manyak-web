@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 
 import { createClientId } from '@/lib/create-client-id';
 import { track } from '@/observability/analytics';
@@ -27,17 +27,35 @@ export function useAdditionalInfos() {
   const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(
     createInitialAdditionalInfos,
   );
+  const inputRefs = useRef(new Map<string, HTMLTextAreaElement>());
+
+  const registerInput = (id: string, element: HTMLTextAreaElement | null) => {
+    if (element) {
+      inputRefs.current.set(id, element);
+    } else {
+      inputRefs.current.delete(id);
+    }
+  };
+
+  const focusInput = (id: string) => {
+    requestAnimationFrame(() => {
+      const element = inputRefs.current.get(id);
+
+      element?.focus({ preventScroll: true });
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
 
   const addAdditionalInfo = () => {
     if (additionalInfos.length >= ADDITIONAL_INFO_MAX_COUNT) {
       return;
     }
 
+    const additionalInfo = createEmptyAdditionalInfo();
+
     track('client_storyCreate_additionalInfoAddButton_clicked');
-    setAdditionalInfos((previous) => [
-      ...previous,
-      createEmptyAdditionalInfo(),
-    ]);
+    setAdditionalInfos((previous) => [...previous, additionalInfo]);
+    focusInput(additionalInfo.id);
   };
 
   const removeAdditionalInfo = (id: string) => {
@@ -75,6 +93,7 @@ export function useAdditionalInfos() {
     addAdditionalInfo,
     removeAdditionalInfo,
     changeAdditionalInfo,
+    registerAdditionalInfoInput: registerInput,
     getSubmittedAdditionalInfos,
     resetAdditionalInfos,
   };
