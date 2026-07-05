@@ -1,4 +1,6 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+
+import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 
 import {
   createDefaultInputBlocks,
@@ -17,24 +19,8 @@ export function useChatBlockComposer({
   submitText,
 }: UseChatBlockComposerParams) {
   const [blocks, setBlocks] = useState<InputBlock[]>(createDefaultInputBlocks);
-  const blockInputRefs = useRef(new Map<string, HTMLTextAreaElement>());
-
-  const focusBlock = (id: string) => {
-    requestAnimationFrame(() => {
-      blockInputRefs.current.get(id)?.focus();
-    });
-  };
-
-  const registerBlockInput = (
-    id: string,
-    element: HTMLTextAreaElement | null,
-  ) => {
-    if (element) {
-      blockInputRefs.current.set(id, element);
-    } else {
-      blockInputRefs.current.delete(id);
-    }
-  };
+  const { registerInput: registerBlockInput, focusInput: focusBlock } =
+    useInputRefRegistry<HTMLTextAreaElement>();
 
   const addBlock = (type: InputBlockType) => {
     const block = createInputBlock(type);
