@@ -9,6 +9,7 @@ export const APP_PATH = {
   CREATOR: {
     STORY: '/stories/new',
   },
+  MY_FEEDBACK: '/my/feedback',
 } as const;
 
 export type MainAppPath = (typeof APP_PATH.MAIN)[keyof typeof APP_PATH.MAIN];
