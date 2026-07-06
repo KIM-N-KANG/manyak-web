@@ -1,3 +1,5 @@
+import { ensureFreshAccessToken } from '@/lib/auth/backend-session';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -86,10 +88,15 @@ const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
     return Response.json('API_BASE_URL is invalid.', { status: 500 });
   }
 
-  const response = await fetch(
-    targetUrl,
-    await createProxyRequestInit(request),
-  );
+  const init = await createProxyRequestInit(request);
+  // 회원 세션이면 BFF가 access 토큰을 주입한다(브라우저 JS는 Authorization을 붙이지 않음 — 스펙 §3-8).
+  const accessToken = await ensureFreshAccessToken();
+
+  if (accessToken) {
+    (init.headers as Headers).set('authorization', `Bearer ${accessToken}`);
+  }
+
+  const response = await fetch(targetUrl, init);
 
   return new Response(response.body, {
     status: response.status,
