@@ -11,12 +11,12 @@ export function SelectedTagGroup({ group }: SelectedTagGroupProps) {
   return (
     <div className="flex flex-col gap-2">
       <Label>{group.label}</Label>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1">
         {group.tags.map((tag, index) => (
           <Badge
             key={`${tag}-${index}`}
             variant="secondary"
-            className="h-auto rounded-sm px-2 py-1.75 text-xs">
+            className="h-auto px-2.5 py-1 text-sm">
             {tag}
           </Badge>
         ))}

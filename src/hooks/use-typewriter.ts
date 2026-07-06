@@ -15,6 +15,11 @@ const DEFAULT_TYPING_DELAY = 90;
 const DEFAULT_DELETING_DELAY = 50;
 const DEFAULT_PAUSE_DELAY = 1200;
 
+/**
+ * 문구 목록을 타자기 효과로 순환하며 표시하는 훅.
+ * 한 글자씩 타이핑한 뒤 잠시 멈추고, 다시 지운 후 다음 문구로 넘어간다.
+ * @returns 현재까지 타이핑된 문자열
+ */
 export function useTypewriter(
   phrases: string[],
   options: TypewriterOptions = {},

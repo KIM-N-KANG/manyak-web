@@ -3,6 +3,10 @@ import type { ContinueChatRequest } from '@/api/generated/models';
 import { resolveApiProxyUrl } from '@/lib/custom-fetch';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
+/**
+ * 채팅 턴 스트리밍 API를 호출해 SSE 응답 본문 스트림을 반환한다.
+ * 응답이 실패하거나 본문이 없으면 예외를 던진다.
+ */
 export async function streamChatTurnRaw(
   chatId: string,
   body: ContinueChatRequest,

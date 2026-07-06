@@ -2,8 +2,10 @@ import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 import { captureApiError } from '@/observability/monitoring/sentry';
 
+/** Orval mutator가 요구하는 요청 바디 타입. */
 export type BodyType<BodyData> = BodyData;
 
+/** Orval mutator가 요구하는 에러 타입. FetchError에 응답 바디 타입을 결합한다. */
 export type ErrorType<ErrorData> = FetchError & {
   data: ErrorData;
 };
@@ -108,6 +110,10 @@ const parseErrorData = async (response: Response) => {
   }
 };
 
+/**
+ * Orval이 생성한 API 클라이언트가 사용하는 공통 fetch 인스턴스.
+ * 익명 식별자 헤더·타임아웃을 적용하고, 실패 시 FetchError를 던지며 Sentry로 보고한다.
+ */
 export const customInstance = async <T>(
   url: string,
   options: RequestInit = {},

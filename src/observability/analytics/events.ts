@@ -1,11 +1,13 @@
 import type { SimpleStoryTagListItemResponseCategory } from '@/api/generated/models';
 
+/** 스토리 생성 플로우의 단계 이름. */
 export type StepName =
   | 'keyword'
   | 'storylineSelect'
   | 'additionalInfo'
   | 'complete';
 
+/** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
   // onboarding
   client_onboarding_viewed: void;
@@ -100,4 +102,5 @@ export type AnalyticsEventProps = {
   client_feedback_form_submitted: void;
 };
 
+/** 전송 가능한 분석 이벤트 이름. */
 export type AnalyticsEventName = keyof AnalyticsEventProps;

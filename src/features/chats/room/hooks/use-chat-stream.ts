@@ -11,6 +11,11 @@ import { parseSseStream } from '../lib/parse-sse-stream';
 import { streamChatTurnRaw } from '../lib/stream-chat-turn';
 import type { StreamingTurn } from '../types';
 
+/**
+ * 채팅 턴 SSE 스트리밍을 관리하는 훅.
+ * 토큰 수신에 따라 진행 중인 턴을 갱신하고, 완료 시 `onCompleted`를 호출한다.
+ * 언마운트 시 진행 중인 요청을 중단한다.
+ */
 export function useChatStream(
   chatId: string,
   turnCount: number,

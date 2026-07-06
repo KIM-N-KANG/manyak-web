@@ -14,14 +14,16 @@ import {
   markOnboardingSeen,
 } from '../utils/onboarding-storage';
 
+/**
+ * 생성한 스토리와 채팅이 모두 없는 신규 방문자에게 온보딩 다이얼로그를 띄우는 훅.
+ * 한 번 본 뒤에는 로컬스토리지에 기록해 다시 띄우지 않는다.
+ */
 export function useOnboardingDialog() {
   const router = useRouter();
   const storyIds = useCreatedStoryIds();
   const chatIds = useCreatedChatIds();
   const [isOpen, setIsOpen] = useState(false);
 
-  // 서버 렌더링 시점(null)에는 보유 여부를 알 수 없으므로 열지 않고,
-  // 클라이언트에서 "보관된 스토리·채팅이 모두 없음"이 확정됐을 때만 게이팅을 통과시킨다.
   const hasNoStories = storyIds != null && storyIds.length === 0;
   const hasNoChats = chatIds != null && chatIds.length === 0;
   const isNewVisitor = hasNoStories && hasNoChats;
@@ -31,9 +33,12 @@ export function useOnboardingDialog() {
       return;
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsOpen(true);
-    track('client_onboarding_viewed');
+    const timeoutId = setTimeout(() => {
+      setIsOpen(true);
+      track('client_onboarding_viewed');
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [isNewVisitor]);
 
   const handleStartCreate = () => {

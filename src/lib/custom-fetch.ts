@@ -10,10 +10,16 @@ const API_PROXY_BASE_PATH = '/api';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+/** customFetch 요청에 사용하는 설정. RequestInit에 타임아웃 옵션을 더한 형태다. */
 export interface RequestConfig extends Omit<RequestInit, 'method' | 'body'> {
+  /** 요청 타임아웃(ms). 기본값은 120초 */
   timeout?: number;
 }
 
+/**
+ * 요청 URL을 Next.js API 프록시(/api) 경로로 변환한다.
+ * 절대 URL은 pathname만 남기고, 이미 /api로 시작하면 그대로 반환한다.
+ */
 export function resolveApiProxyUrl(url: string) {
   const resolvedUrl = /^https?:\/\//.test(url)
     ? new URL(url).pathname + new URL(url).search
@@ -145,6 +151,10 @@ const request = async <T>(
   }
 };
 
+/**
+ * 공통 fetch 래퍼. API 프록시 경로 변환, 타임아웃, JSON 직렬화,
+ * 에러 변환(FetchError), Sentry 리포팅을 일괄 처리한다.
+ */
 export const customFetch = {
   get: <T>(url: string, config?: RequestConfig) =>
     request<T>('GET', url, undefined, config),

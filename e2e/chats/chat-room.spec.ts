@@ -260,7 +260,7 @@ test.describe('블럭 입력 모드 (기본)', () => {
 
     await expect(page.getByText('그녀가 고개를 끄덕였다.')).toBeVisible();
     expect(JSON.parse(streamRequestBody)).toEqual({
-      userInput: '*비가 온다* 우산 챙겼어?',
+      userInput: '*비가 온다*\n\n우산 챙겼어?',
     });
   });
 

@@ -2,12 +2,12 @@
 
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { m } from 'motion/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
-import { cn } from '@/lib/utils';
 
 type StoryDetailHeaderProps = {
   storyId: string;
@@ -33,14 +33,14 @@ export function StoryDetailHeader({
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
 
-      <span
+      <m.span
         aria-hidden="true"
-        className={cn(
-          'min-w-0 flex-1 truncate font-semibold transition-opacity duration-200 ease-out',
-          showTitle ? 'opacity-100' : 'opacity-0',
-        )}>
+        initial={false}
+        animate={{ opacity: showTitle ? 1 : 0, y: showTitle ? 0 : 4 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="min-w-0 flex-1 truncate font-semibold">
         {title}
-      </span>
+      </m.span>
 
       <StoryOptionsMenu
         storyId={storyId}

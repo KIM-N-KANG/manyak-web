@@ -24,22 +24,28 @@ const createEmptyTagCategoryRecord = <Value>(
     {} as Record<TagCategory, Value>,
   );
 
+/** 카테고리별 선택된 사전 정의 태그 ID 목록의 초기값을 생성한다. */
 export const createEmptySelectedTagIdsByCategory =
   (): SelectedTagIdsByCategory => createEmptyTagCategoryRecord(() => []);
 
+/** 카테고리별 선택된 커스텀 태그 ID 목록의 초기값을 생성한다. */
 export const createEmptySelectedCustomTagIdsByCategory =
   (): SelectedCustomTagIdsByCategory => createEmptyTagCategoryRecord(() => []);
 
+/** 카테고리별 커스텀 태그 목록의 초기값을 생성한다. */
 export const createEmptyCustomTagsByCategory = (): CustomTagsByCategory =>
   createEmptyTagCategoryRecord(() => []);
 
+/** 카테고리별 태그 목록의 초기값을 생성한다. */
 export const createEmptyTagsByCategory = (): TagsByCategory =>
   createEmptyTagCategoryRecord(() => []);
 
+/** 카테고리의 최대 선택 가능 개수를 반환한다. */
 export const getMaxSelectionCount = (category: TagCategory) =>
   TAG_CATEGORIES.find((item) => item.value === category)?.maxSelectionCount ??
   0;
 
+/** 전체 태그 목록을 카테고리별로 분류한다. */
 export const getTagsByCategory = (
   tags: SimpleStoryTagListItemResponse[],
 ): TagsByCategory =>

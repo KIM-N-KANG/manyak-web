@@ -10,6 +10,10 @@ type UseChatSubmitActionsParams = {
   onSend: (text: string) => void;
 };
 
+/**
+ * 채팅 입력 전송 동작을 제공하는 훅.
+ * 공백/스트리밍 중 전송을 막고 분석 이벤트를 기록한 뒤 `onSend`를 호출한다.
+ */
 export function useChatSubmitActions({
   chatId,
   turnCount,
