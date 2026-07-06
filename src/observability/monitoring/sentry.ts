@@ -2,10 +2,10 @@ import * as Sentry from '@sentry/nextjs';
 
 import { FetchError } from '@/lib/api-error';
 
-// 이 미만(4xx)은 사용자가 복구할 수 있는 검증 오류로 보고 Sentry로 보내지 않는다(스펙 §AN-2-8).
+/** 이 미만(4xx)은 사용자가 복구할 수 있는 검증 오류로 보고 Sentry로 보내지 않는다(스펙 §AN-2-8). */
 const SERVER_ERROR_STATUS = 500;
 
-// Sentry 상관 키로 올릴 분석 프로퍼티(스펙 §AN-2-8 Tags).
+/** Sentry 상관 키로 올릴 분석 프로퍼티(스펙 §AN-2-8 Tags). */
 const CORRELATION_TAG_KEYS = [
   'screen_name',
   'story_id',
@@ -13,7 +13,7 @@ const CORRELATION_TAG_KEYS = [
   'creation_id',
 ] as const;
 
-// 사용자 취소·페이지 이탈·외부 스크립트에서 유입되는 노이즈는 수집하지 않는다.
+/** 사용자 취소·페이지 이탈·외부 스크립트에서 유입되는 노이즈는 수집하지 않는다. */
 export const SENTRY_IGNORE_ERRORS: (string | RegExp)[] = [
   'AbortError',
   'The operation was aborted',

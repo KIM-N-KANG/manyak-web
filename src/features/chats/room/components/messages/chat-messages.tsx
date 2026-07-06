@@ -2,6 +2,7 @@
 
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { AnimatePresence, m } from 'motion/react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
@@ -91,22 +92,32 @@ export function ChatMessages({
         ) : null}
       </main>
 
-      {streamingTurn || !isAtBottom ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={streamingTurn ? 'AI 응답 생성 중' : '맨 아래로 이동'}
-          disabled={!!streamingTurn}
-          onClick={() => scrollToBottom('smooth')}
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-background/50 shadow-sm backdrop-blur-md disabled:opacity-100">
-          {streamingTurn ? (
-            <Spinner />
-          ) : (
-            <HugeiconsIcon icon={ArrowDown01Icon} aria-hidden="true" />
-          )}
-        </Button>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {streamingTurn || !isAtBottom ? (
+          <m.div
+            key="scroll-to-bottom"
+            className="absolute bottom-2 left-1/2 -translate-x-1/2"
+            initial={{ opacity: 0, scale: 0.8, y: 4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 4 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={streamingTurn ? 'AI 응답 생성 중' : '맨 아래로 이동'}
+              disabled={!!streamingTurn}
+              onClick={() => scrollToBottom('smooth')}
+              className="rounded-full bg-background/50 shadow-sm backdrop-blur-md disabled:opacity-100">
+              {streamingTurn ? (
+                <Spinner />
+              ) : (
+                <HugeiconsIcon icon={ArrowDown01Icon} aria-hidden="true" />
+              )}
+            </Button>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

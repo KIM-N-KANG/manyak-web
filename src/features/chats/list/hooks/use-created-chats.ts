@@ -8,6 +8,7 @@ import type { ChatSummaryResponse } from '@/api/generated/models';
 import type { ChatListItem } from '../types';
 import { useCreatedChatIds } from './use-created-chat-ids';
 
+/** 채팅 ID 목록 일괄 조회 쿼리의 캐시 키 */
 export const CHATS_BATCH_QUERY_KEY = 'chats-batch';
 
 /**
@@ -27,6 +28,7 @@ export const toChatListItems = (
   );
 };
 
+/** 로컬스토리지에 저장된 채팅 ID들로 채팅 목록을 조회하는 훅 */
 export function useCreatedChats() {
   const chatIds = useCreatedChatIds();
 

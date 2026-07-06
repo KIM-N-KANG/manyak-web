@@ -2,6 +2,7 @@
 
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { m } from 'motion/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -32,13 +33,15 @@ export function ChatRoomHeader({
   const goBack = () => router.push(APP_PATH.MAIN.CHATS);
 
   return (
-    <header
+    <m.header
       aria-hidden={!isVisible}
       inert={!isVisible}
+      initial={false}
+      animate={{ y: isVisible ? 0 : '-100%' }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       className={cn(
-        'absolute inset-x-0 top-0 z-50 flex items-center gap-2 bg-background px-2 transition-[translate] duration-300 ease-out',
+        'absolute inset-x-0 top-0 z-50 flex items-center gap-2 bg-background px-2',
         CHAT_HEADER_HEIGHT_CLASS,
-        isVisible ? 'translate-y-0' : '-translate-y-full',
       )}>
       <Button
         type="button"
@@ -54,6 +57,6 @@ export function ChatRoomHeader({
         mode={inputMode}
         onModeChange={onInputModeChange}
       />
-    </header>
+    </m.header>
   );
 }

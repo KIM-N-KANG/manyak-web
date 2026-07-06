@@ -53,7 +53,6 @@ function DrawerContent({
   overlayClassName,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content> & {
-  /** 포탈 대상 엘리먼트. 지정하면 body 대신 해당 컨테이너 안에 렌더링된다. */
   container?: React.ComponentProps<typeof DrawerPortal>['container'];
   overlayClassName?: string;
 }) {

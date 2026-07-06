@@ -29,6 +29,7 @@ const DEFAULT_MUTATION_OPTIONS: Options['mutationOptions'] = {
   throwOnError: false,
 };
 
+/** 앱 공통 기본 옵션(retry/gcTime/staleTime 등)이 적용된 QueryClient를 생성한다. */
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {

@@ -39,6 +39,10 @@ const getGeneratedStorylines = (
     (storyline): storyline is SimpleStorylineResponse => Boolean(storyline),
   );
 
+/**
+ * 스토리 생성 퍼널(키워드 → 스토리라인 선택 → 추가 정보 → 완료)의 전체 상태를 관리하는 훅.
+ * 스토리라인 생성/재생성, 스토리·채팅 생성, 실패 시 복귀, 이탈 확인 다이얼로그까지 담당한다.
+ */
 export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -66,6 +70,7 @@ export function useStoryCreateFunnel() {
     addAdditionalInfo,
     removeAdditionalInfo,
     changeAdditionalInfo,
+    registerAdditionalInfoInput,
     getSubmittedAdditionalInfos,
     resetAdditionalInfos,
   } = useAdditionalInfos();
@@ -339,6 +344,7 @@ export function useStoryCreateFunnel() {
     addAdditionalInfo,
     removeAdditionalInfo,
     changeAdditionalInfo,
+    registerAdditionalInfoInput,
     handleCompleteStory,
     backDialogOpen: isBackDialogOpen,
     onBackDialogOpenChange: setIsBackDialogOpen,

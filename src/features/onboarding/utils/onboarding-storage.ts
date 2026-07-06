@@ -3,6 +3,7 @@ import {
   ONBOARDING_SEEN_VALUE,
 } from '../constants';
 
+/** 로컬스토리지에 저장된 값이 온보딩을 본 상태인지 파싱한다. */
 export function parseOnboardingSeen(value: string | null): boolean {
   return value === ONBOARDING_SEEN_VALUE;
 }
@@ -25,6 +26,7 @@ export function isOnboardingSeen(): boolean {
   }
 }
 
+/** 온보딩을 봤다는 사실을 로컬스토리지에 기록한다. */
 export function markOnboardingSeen(): void {
   if (typeof window === 'undefined') {
     return;

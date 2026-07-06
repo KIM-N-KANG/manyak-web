@@ -6,6 +6,7 @@ type UseChatPlainComposerParams = {
   submitText: (text: string) => boolean;
 };
 
+/** 일반(자유 텍스트) 입력 모드의 텍스트 상태와 전송·채우기·강조 삽입 동작을 관리하는 훅 */
 export function useChatPlainComposer({
   submitText,
 }: UseChatPlainComposerParams) {

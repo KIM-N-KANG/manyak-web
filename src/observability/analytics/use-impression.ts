@@ -6,6 +6,10 @@ const lastEmittedByKey = new Map<string, number>();
 const MIN_VISIBLE_MS = 1000;
 const VISIBLE_RATIO = 0.5;
 
+/**
+ * 요소가 50% 이상 1초 동안 보이면 onImpress를 호출하는 훅.
+ * 같은 항목은 쿨링 시간 내 재전송을 막으며, 관찰 대상에 연결할 ref 콜백을 반환한다.
+ */
 export function useImpression(input: {
   object: string;
   itemId: string | number;

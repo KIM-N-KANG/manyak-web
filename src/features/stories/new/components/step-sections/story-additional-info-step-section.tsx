@@ -40,6 +40,10 @@ type StoryAdditionalInfoStepSectionProps = {
     id: string,
     event: React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
+  onRegisterAdditionalInfoInput: (
+    id: string,
+    element: HTMLTextAreaElement | null,
+  ) => void;
   onCompleteStory: () => void;
   onBackToStorylineSelect: () => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -57,6 +61,7 @@ export function StoryAdditionalInfoStepSection({
   onAddAdditionalInfo,
   onRemoveAdditionalInfo,
   onChangeAdditionalInfo,
+  onRegisterAdditionalInfoInput,
   onCompleteStory,
   onBackToStorylineSelect,
   onScroll,
@@ -140,6 +145,9 @@ export function StoryAdditionalInfoStepSection({
               <div key={additionalInfo.id} className="flex items-center gap-2">
                 <InputGroup>
                   <InputGroupTextarea
+                    ref={(element) =>
+                      onRegisterAdditionalInfoInput(additionalInfo.id, element)
+                    }
                     aria-label={`추가 정보 ${index + 1}`}
                     className="min-h-10"
                     maxLength={ADDITIONAL_INFO_MAX_LENGTH}

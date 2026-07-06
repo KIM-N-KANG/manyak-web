@@ -1,4 +1,6 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+
+import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 
 import {
   createDefaultInputBlocks,
@@ -12,28 +14,13 @@ type UseChatBlockComposerParams = {
   submitText: (text: string) => boolean;
 };
 
+/** 블럭(묘사/대사) 입력 모드의 블럭 목록 상태와 편집·전송 동작을 관리하는 훅 */
 export function useChatBlockComposer({
   submitText,
 }: UseChatBlockComposerParams) {
   const [blocks, setBlocks] = useState<InputBlock[]>(createDefaultInputBlocks);
-  const blockInputRefs = useRef(new Map<string, HTMLTextAreaElement>());
-
-  const focusBlock = (id: string) => {
-    requestAnimationFrame(() => {
-      blockInputRefs.current.get(id)?.focus();
-    });
-  };
-
-  const registerBlockInput = (
-    id: string,
-    element: HTMLTextAreaElement | null,
-  ) => {
-    if (element) {
-      blockInputRefs.current.set(id, element);
-    } else {
-      blockInputRefs.current.delete(id);
-    }
-  };
+  const { registerInput: registerBlockInput, focusInput: focusBlock } =
+    useInputRefRegistry<HTMLTextAreaElement>();
 
   const addBlock = (type: InputBlockType) => {
     const block = createInputBlock(type);
@@ -55,7 +42,7 @@ export function useChatBlockComposer({
   };
 
   const send = () => {
-    const text = serializeInputBlocks(blocks);
+    const text = serializeInputBlocks(blocks, '\n\n');
 
     if (submitText(text)) {
       setBlocks(createDefaultInputBlocks());

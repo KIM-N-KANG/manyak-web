@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+
 import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -34,8 +37,28 @@ export function ChatBlockInput({
   onSend,
   disabled,
 }: ChatBlockInputProps) {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
   const canSend =
     !disabled && blocks.some((block) => block.value.trim().length > 0);
+
+  const requestRemoveBlock = (block: InputBlock) => {
+    if (block.value.trim().length > 0) {
+      setPendingDeleteId(block.id);
+
+      return;
+    }
+
+    onRemoveBlock(block.id);
+  };
+
+  const confirmRemoveBlock = () => {
+    if (pendingDeleteId !== null) {
+      onRemoveBlock(pendingDeleteId);
+    }
+
+    setPendingDeleteId(null);
+  };
 
   return (
     <section className="flex flex-col bg-background pb-[env(safe-area-inset-bottom)]">
@@ -81,7 +104,7 @@ export function ChatBlockInput({
                 variant="ghost"
                 aria-label="입력 삭제"
                 disabled={disabled}
-                onClick={() => onRemoveBlock(block.id)}
+                onClick={() => requestRemoveBlock(block)}
                 className="shrink-0 text-foreground-secondary">
                 <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
               </Button>
@@ -118,6 +141,20 @@ export function ChatBlockInput({
           <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
         </Button>
       </div>
+
+      <ConfirmAlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteId(null);
+          }
+        }}
+        onConfirm={confirmRemoveBlock}
+        title="작성한 내용을 삭제할까요?"
+        description="삭제하면 작성한 내용이 사라져요"
+        cancelLabel="그대로 두기"
+        confirmLabel="삭제하기"
+      />
     </section>
   );
 }

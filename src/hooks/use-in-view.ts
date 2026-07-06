@@ -11,6 +11,7 @@ type UseInViewParams = {
   enabled?: boolean;
 };
 
+/** IntersectionObserver로 대상 요소가 화면(또는 컨테이너)에 보이는지 관찰하는 훅 */
 export function useInView({
   targetRef,
   rootRef,

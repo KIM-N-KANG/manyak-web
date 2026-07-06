@@ -19,6 +19,10 @@ type UseChatComposerParams = {
   onSend: (text: string) => void;
 };
 
+/**
+ * 일반/블럭 컴포저를 통합해 채팅 입력의 상태와 동작을 제공하는 훅.
+ * 현재 입력 모드에 맞춰 전송·채우기·모드 전환을 처리하고 분석 이벤트를 기록한다.
+ */
 export function useChatComposer({
   chatId,
   turnCount,
@@ -35,6 +39,12 @@ export function useChatComposer({
   });
   const plainComposer = useChatPlainComposer({ submitText });
   const blockComposer = useChatBlockComposer({ submitText });
+
+  /** 작성 중인 입력이 있는지 여부. 추천 문구 덮어쓰기 확인에 사용한다. */
+  const hasDraft =
+    inputMode === 'block'
+      ? blockComposer.blocks.some((block) => block.value.trim().length > 0)
+      : plainComposer.value.trim().length > 0;
 
   const addBlock = (type: InputBlockType) => {
     track('client_chat_addBlockButton_clicked', {
@@ -103,6 +113,7 @@ export function useChatComposer({
     setValue: plainComposer.setValue,
     textareaRef: plainComposer.textareaRef,
     blocks: blockComposer.blocks,
+    hasDraft,
     addBlock,
     removeBlock,
     updateBlock: blockComposer.updateBlock,

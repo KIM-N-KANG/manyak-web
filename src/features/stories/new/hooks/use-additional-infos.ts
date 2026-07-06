@@ -2,10 +2,12 @@
 
 import { type ChangeEvent, useState } from 'react';
 
+import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 import { createClientId } from '@/lib/create-client-id';
 import { track } from '@/observability/analytics';
 
 import {
+  ADDITIONAL_INFO_INITIAL_COUNT,
   ADDITIONAL_INFO_MAX_COUNT,
   ADDITIONAL_INFO_MAX_LENGTH,
 } from '../constants';
@@ -16,21 +18,33 @@ const createEmptyAdditionalInfo = (): AdditionalInfoInput => ({
   value: '',
 });
 
+const createInitialAdditionalInfos = (): AdditionalInfoInput[] =>
+  Array.from(
+    { length: ADDITIONAL_INFO_INITIAL_COUNT },
+    createEmptyAdditionalInfo,
+  );
+
+/**
+ * 추가 정보 인풋 목록의 추가·삭제·수정 상태를 관리하는 훅.
+ * 새 인풋을 추가하면 해당 인풋으로 포커스와 스크롤을 이동한다.
+ */
 export function useAdditionalInfos() {
   const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(
-    () => [createEmptyAdditionalInfo()],
+    createInitialAdditionalInfos,
   );
+  const { registerInput, focusInput } =
+    useInputRefRegistry<HTMLTextAreaElement>();
 
   const addAdditionalInfo = () => {
     if (additionalInfos.length >= ADDITIONAL_INFO_MAX_COUNT) {
       return;
     }
 
+    const additionalInfo = createEmptyAdditionalInfo();
+
     track('client_storyCreate_additionalInfoAddButton_clicked');
-    setAdditionalInfos((previous) => [
-      ...previous,
-      createEmptyAdditionalInfo(),
-    ]);
+    setAdditionalInfos((previous) => [...previous, additionalInfo]);
+    focusInput(additionalInfo.id, { scrollIntoView: true });
   };
 
   const removeAdditionalInfo = (id: string) => {
@@ -59,7 +73,7 @@ export function useAdditionalInfos() {
     additionalInfos.map(({ value }) => value.trim()).filter(Boolean);
 
   const resetAdditionalInfos = () => {
-    setAdditionalInfos([createEmptyAdditionalInfo()]);
+    setAdditionalInfos(createInitialAdditionalInfos());
   };
 
   return {
@@ -68,6 +82,7 @@ export function useAdditionalInfos() {
     addAdditionalInfo,
     removeAdditionalInfo,
     changeAdditionalInfo,
+    registerAdditionalInfoInput: registerInput,
     getSubmittedAdditionalInfos,
     resetAdditionalInfos,
   };

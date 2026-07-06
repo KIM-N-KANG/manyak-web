@@ -14,6 +14,10 @@ import { track } from '@/observability/analytics';
 import { STORYLINE_RATING_SYNC_DEBOUNCE_MS } from '../constants';
 import type { StorylineRating } from '../types';
 
+/**
+ * 스토리라인 좋아요/싫어요 평가를 관리하는 훅.
+ * UI에는 즉시 반영하고 서버 동기화는 디바운스하며, 실패 시 마지막 동기화 상태로 되돌린다.
+ */
 export function useStorylineRating() {
   const [storylineRatings, setStorylineRatings] = useState<
     Record<number, StorylineRating>

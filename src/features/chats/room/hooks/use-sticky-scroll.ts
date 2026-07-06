@@ -4,6 +4,11 @@ import { type RefObject, useEffect, useRef, useState } from 'react';
 
 const BOTTOM_THRESHOLD_PX = 64;
 
+/**
+ * 콘텐츠가 늘어나는 스크롤 영역에서 하단 고정을 유지하는 훅.
+ * 사용자가 하단 근처에 있을 때만 `dependency` 변경 시 자동으로 목표 위치까지 스크롤하며,
+ * `anchorRef`가 있으면 anchor가 화면 최상단에 닿는 지점 이상으로는 내려가지 않는다.
+ */
 export function useStickyScroll<T extends HTMLElement>(
   ref: RefObject<T | null>,
   dependency: unknown,
