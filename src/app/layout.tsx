@@ -5,6 +5,8 @@ import type { Metadata, Viewport } from 'next';
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
 import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
+import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
+import { AuthSessionProvider } from '@/components/providers/auth-session-provider';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -52,18 +54,21 @@ export default function RootLayout({
       <body className="bg-border font-sans text-foreground">
         <IosInputZoomLock />
         <AmplitudeProvider>
-          <QueryProvider>
-            <ThemeProvider>
-              <MotionProvider>
-                <div
-                  id={APP_FRAME_ID}
-                  className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
-                  {children}
-                </div>
-                <Toaster />
-              </MotionProvider>
-            </ThemeProvider>
-          </QueryProvider>
+          <AuthSessionProvider>
+            <QueryProvider>
+              <ThemeProvider>
+                <MotionProvider>
+                  <div
+                    id={APP_FRAME_ID}
+                    className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                    {children}
+                  </div>
+                  <Toaster />
+                  <AnalyticsUserSync />
+                </MotionProvider>
+              </ThemeProvider>
+            </QueryProvider>
+          </AuthSessionProvider>
         </AmplitudeProvider>
       </body>
     </html>

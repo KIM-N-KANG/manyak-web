@@ -44,6 +44,7 @@ describe('track (enabled)', () => {
         chat_id: 'c1',
         turn_number: 1,
         input_mode: 'block',
+        is_logged_in: false,
         screen_name: 'chat',
       },
     );
@@ -52,6 +53,7 @@ describe('track (enabled)', () => {
   it('프로퍼티 없는 이벤트도 screen_name만 부착해 호출한다', () => {
     track('client_storyList_viewed');
     expect(trackMock).toHaveBeenCalledWith('client_storyList_viewed', {
+      is_logged_in: false,
       screen_name: 'storyList',
     });
   });
@@ -60,6 +62,7 @@ describe('track (enabled)', () => {
     track('client_chat_viewed', { chat_id: 'c1' });
     expect(breadcrumbMock).toHaveBeenCalledWith('client_chat_viewed', {
       chat_id: 'c1',
+      is_logged_in: false,
       screen_name: 'chat',
     });
   });
