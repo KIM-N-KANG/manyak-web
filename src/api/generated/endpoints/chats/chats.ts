@@ -30,6 +30,7 @@ import type {
   ContinueChatRequest,
   CreateChatRequest,
   CreateChatResponse,
+  RegenerateChatRequest,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -159,6 +160,16 @@ export type streamChatTurnResponse400 = {
   status: 400;
 };
 
+export type streamChatTurnResponse402 = {
+  data: void;
+  status: 402;
+};
+
+export type streamChatTurnResponse403 = {
+  data: void;
+  status: 403;
+};
+
 export type streamChatTurnResponse404 = {
   data: void;
   status: 404;
@@ -169,6 +180,8 @@ export type streamChatTurnResponseSuccess = streamChatTurnResponse200 & {
 };
 export type streamChatTurnResponseError = (
   | streamChatTurnResponse400
+  | streamChatTurnResponse402
+  | streamChatTurnResponse403
   | streamChatTurnResponse404
 ) & {
   headers: Headers;
@@ -264,6 +277,150 @@ export const useStreamChatTurn = <TError = ErrorType<void>, TContext = unknown>(
   TContext
 > => {
   return useMutation(getStreamChatTurnMutationOptions(options), queryClient);
+};
+export type regenerateChatTurnResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type regenerateChatTurnResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type regenerateChatTurnResponse402 = {
+  data: void;
+  status: 402;
+};
+
+export type regenerateChatTurnResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type regenerateChatTurnResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type regenerateChatTurnResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type regenerateChatTurnResponseSuccess =
+  regenerateChatTurnResponse200 & {
+    headers: Headers;
+  };
+export type regenerateChatTurnResponseError = (
+  | regenerateChatTurnResponse400
+  | regenerateChatTurnResponse402
+  | regenerateChatTurnResponse403
+  | regenerateChatTurnResponse404
+  | regenerateChatTurnResponse409
+) & {
+  headers: Headers;
+};
+
+export type regenerateChatTurnResponse =
+  | regenerateChatTurnResponseSuccess
+  | regenerateChatTurnResponseError;
+
+export const getRegenerateChatTurnUrl = (chatId: string) => {
+  return `/api/v1/chats/${chatId}/turns/regenerate/stream`;
+};
+
+/**
+ * 마지막 턴의 AI 출력을 같은 사용자 입력으로 다시 생성해 교체하고 SSE로 스트리밍합니다(스펙 §4-3-9, 리롤이 아니라 재생성). 이어쓰기와 동일하게 started, token, completed 순서로 전달되며, completed에는 교체된 aiOutput 전체와 선택지가 포함됩니다. 새 턴을 추가하지 않고 마지막 턴의 본문·선택지만 교체하므로 사용자 입력과 턴 수(turnCount)는 변하지 않습니다. 이전 본문은 보관하지 않습니다. 요청 turnId가 서버의 마지막 턴과 다르면 409로 거절합니다.
+ * @summary AI 응답 재생성 스트리밍
+ */
+export const regenerateChatTurn = async (
+  chatId: string,
+  regenerateChatRequest: RegenerateChatRequest,
+  options?: RequestInit,
+): Promise<regenerateChatTurnResponse> => {
+  return customInstance<regenerateChatTurnResponse>(
+    getRegenerateChatTurnUrl(chatId),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(regenerateChatRequest),
+    },
+  );
+};
+
+export const getRegenerateChatTurnMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof regenerateChatTurn>>,
+    TError,
+    { chatId: string; data: BodyType<RegenerateChatRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof regenerateChatTurn>>,
+  TError,
+  { chatId: string; data: BodyType<RegenerateChatRequest> },
+  TContext
+> => {
+  const mutationKey = ['regenerateChatTurn'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof regenerateChatTurn>>,
+    { chatId: string; data: BodyType<RegenerateChatRequest> }
+  > = (props) => {
+    const { chatId, data } = props ?? {};
+
+    return regenerateChatTurn(chatId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegenerateChatTurnMutationResult = NonNullable<
+  Awaited<ReturnType<typeof regenerateChatTurn>>
+>;
+export type RegenerateChatTurnMutationBody = BodyType<RegenerateChatRequest>;
+export type RegenerateChatTurnMutationError = ErrorType<void>;
+
+/**
+ * @summary AI 응답 재생성 스트리밍
+ */
+export const useRegenerateChatTurn = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof regenerateChatTurn>>,
+      TError,
+      { chatId: string; data: BodyType<RegenerateChatRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof regenerateChatTurn>>,
+  TError,
+  { chatId: string; data: BodyType<RegenerateChatRequest> },
+  TContext
+> => {
+  return useMutation(
+    getRegenerateChatTurnMutationOptions(options),
+    queryClient,
+  );
 };
 export type getChatsByIdsResponse200 = {
   data: ChatSummaryResponse[];
