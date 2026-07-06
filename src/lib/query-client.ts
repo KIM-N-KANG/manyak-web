@@ -1,6 +1,7 @@
 import {
   type MutationObserverOptions,
   QueryClient,
+  type QueryFunction,
   type QueryObserverOptions,
   type UseInfiniteQueryOptions,
   type UseMutationOptions,
@@ -28,6 +29,26 @@ const DEFAULT_QUERY_OPTIONS: Options['queryOptions'] = {
 const DEFAULT_MUTATION_OPTIONS: Options['mutationOptions'] = {
   throwOnError: false,
 };
+
+/**
+ * React Query의 abort signal을 전달하지 않는 queryFn을 만든다.
+ *
+ * React StrictMode(dev)는 마운트→언마운트→재마운트를 수행하는데, 생성된
+ * queryFn처럼 abort signal을 fetch에 전달하면 전환 언마운트 시점에 첫 요청이
+ * 취소되고 재마운트가 새 요청을 발생시켜 화면 진입 시 같은 조회가 두 번
+ * 실행될 수 있다(레이아웃의 SessionProvider 초기 리렌더 등 타이밍 변화로 표면화).
+ * 멱등한 GET 상세 조회처럼 취소 이득이 없는 쿼리는 이 헬퍼로 signal을 넘기지
+ * 않아 in-flight 요청이 재사용(dedupe)되도록 한다.
+ *
+ * 적용처: 채팅 상세(use-chat-detail), 스토리 상세(story-detail). 마운트 직후
+ * 단일 조회를 가정하는 화면(카운터 기반 E2E 목킹 포함)이 늘어나면 같은 방식으로
+ * 감싸면 된다.
+ */
+export function queryFnWithoutAbortSignal<T>(
+  fetcher: () => Promise<T>,
+): QueryFunction<T> {
+  return () => fetcher();
+}
 
 /** 앱 공통 기본 옵션(retry/gcTime/staleTime 등)이 적용된 QueryClient를 생성한다. */
 export function makeQueryClient() {
