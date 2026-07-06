@@ -59,6 +59,9 @@ const createProxyRequestInit = async (request: Request) => {
   const method = request.method.toUpperCase();
 
   headers.delete('host');
+  // BFF 세션 쿠키(백엔드 토큰·NextAuth 세션)를 백엔드로 흘리지 않는다 —
+  // 인증은 Authorization 헤더 주입으로만 전달한다.
+  headers.delete('cookie');
 
   const init: RequestInit = {
     method,

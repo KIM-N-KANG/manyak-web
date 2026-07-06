@@ -71,6 +71,13 @@ export async function ensureFreshAccessToken(
 /**
  * Google id_token으로 백엔드 세션을 수립하고 세션에 담을 프로필을 반환한다.
  * NextAuth jwt 콜백(최초 로그인)에서 호출한다. 실패 시 던져서 로그인 자체를 실패시킨다.
+ *
+ * 검증 후 쓰기: BFF 세션 쿠키(writeBackendSessionTokens)는 토큰·사용자 정보 검증을
+ * 모두 통과한 마지막 단계에서만 기록한다. 검증 전에 먼저 쓰면, 이후 단계(사용자
+ * 조회 등)가 실패해 NextAuth 로그인이 거부되더라도 BFF 쿠키는 이미 기록된 채로
+ * 남아 "반쪽 세션"(게스트로 보이는 UI + 프록시의 Authorization 주입이 최대 14일
+ * 지속)이 발생할 수 있다. 공유 기기에서는 다음 게스트의 활동이 실패한 계정에
+ * 귀속되는 문제로 이어진다.
  */
 export async function establishBackendSession(idToken: string): Promise<{
   userId: string;
@@ -78,8 +85,6 @@ export async function establishBackendSession(idToken: string): Promise<{
   profileImageUrl: string | null;
 }> {
   const tokens = await loginWithGoogleOnServer(idToken);
-
-  await writeBackendSessionTokens(tokens, Date.now());
 
   if (!tokens.accessToken) {
     throw new Error('토큰 응답에 accessToken이 없습니다.');
@@ -90,6 +95,8 @@ export async function establishBackendSession(idToken: string): Promise<{
   if (!me.id) {
     throw new Error('사용자 정보 응답에 id가 없습니다.');
   }
+
+  await writeBackendSessionTokens(tokens, Date.now());
 
   return {
     userId: me.id,

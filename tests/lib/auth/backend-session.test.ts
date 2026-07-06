@@ -16,6 +16,7 @@ vi.mock('@/lib/auth/backend-client', () => ({
 
 import {
   ensureFreshAccessToken,
+  establishBackendSession,
   refreshWithDedup,
 } from '@/lib/auth/backend-session';
 
@@ -117,5 +118,101 @@ describe('ensureFreshAccessToken', () => {
 
     await expect(ensureFreshAccessToken(1_000)).resolves.toBeNull();
     expect(tokenCookiesMock.clearBackendSession).toHaveBeenCalled();
+  });
+});
+
+describe('establishBackendSession', () => {
+  it('login→me 순으로 호출되고, me 검증 후에 writeBackendSessionTokens가 호출되며, 프로필을 반환한다', async () => {
+    const { loginWithGoogleOnServer, fetchMeOnServer } =
+      await import('@/lib/auth/backend-client');
+
+    const callOrder: string[] = [];
+
+    vi.mocked(loginWithGoogleOnServer).mockImplementation(async () => {
+      callOrder.push('login');
+
+      return {
+        accessToken: 'access-1',
+        refreshToken: 'refresh-1',
+        expiresIn: 1800,
+      };
+    });
+    vi.mocked(fetchMeOnServer).mockImplementation(async () => {
+      callOrder.push('me');
+
+      return {
+        id: 'user-1',
+        nickname: '만냐',
+        profileImageUrl: 'https://example.com/a.png',
+      };
+    });
+    tokenCookiesMock.writeBackendSessionTokens.mockImplementation(async () => {
+      callOrder.push('write');
+    });
+
+    await expect(establishBackendSession('id-token')).resolves.toEqual({
+      userId: 'user-1',
+      nickname: '만냐',
+      profileImageUrl: 'https://example.com/a.png',
+    });
+
+    expect(callOrder).toEqual(['login', 'me', 'write']);
+    expect(loginWithGoogleOnServer).toHaveBeenCalledWith('id-token');
+    expect(fetchMeOnServer).toHaveBeenCalledWith('access-1');
+  });
+
+  it('fetchMeOnServer가 reject되면 throw가 전파되고 writeBackendSessionTokens는 호출되지 않는다', async () => {
+    const { loginWithGoogleOnServer, fetchMeOnServer } =
+      await import('@/lib/auth/backend-client');
+
+    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      expiresIn: 1800,
+    });
+    vi.mocked(fetchMeOnServer).mockRejectedValue(new Error('me failed'));
+
+    await expect(establishBackendSession('id-token')).rejects.toThrow(
+      'me failed',
+    );
+    expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
+  });
+
+  it('me.id가 없으면 throw하고 writeBackendSessionTokens는 호출되지 않는다', async () => {
+    const { loginWithGoogleOnServer, fetchMeOnServer } =
+      await import('@/lib/auth/backend-client');
+
+    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      expiresIn: 1800,
+    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue({
+      id: undefined,
+      nickname: '만냐',
+      profileImageUrl: null,
+    });
+
+    await expect(establishBackendSession('id-token')).rejects.toThrow(
+      '사용자 정보 응답에 id가 없습니다.',
+    );
+    expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
+  });
+
+  it('tokens.accessToken이 없으면 throw하고 fetchMeOnServer·writeBackendSessionTokens는 호출되지 않는다', async () => {
+    const { loginWithGoogleOnServer, fetchMeOnServer } =
+      await import('@/lib/auth/backend-client');
+
+    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
+      accessToken: undefined,
+      refreshToken: 'refresh-1',
+      expiresIn: 1800,
+    });
+
+    await expect(establishBackendSession('id-token')).rejects.toThrow(
+      '토큰 응답에 accessToken이 없습니다.',
+    );
+    expect(fetchMeOnServer).not.toHaveBeenCalled();
+    expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
   });
 });

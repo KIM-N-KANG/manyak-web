@@ -54,6 +54,7 @@ describe('api proxy route', () => {
           headers: {
             host: 'localhost:3000',
             'x-request-id': 'test-request',
+            cookie: 'manyak_session_access=abc',
           },
         }),
         routeContext(['v1', 'stories']),
@@ -80,6 +81,8 @@ describe('api proxy route', () => {
     expect(new Headers(capturedRequest.init.headers).has('authorization')).toBe(
       false,
     );
+    // BFF 세션 쿠키를 백엔드로 흘리지 않는다.
+    expect(new Headers(capturedRequest.init.headers).has('cookie')).toBe(false);
   });
 
   it('forwards mutation bodies and maps proxy paths onto API_BASE_URL prefixes', async () => {
@@ -104,6 +107,7 @@ describe('api proxy route', () => {
           headers: {
             'Content-Type': 'application/json',
             host: 'localhost:3000',
+            cookie: 'manyak_session_access=abc',
           },
           body: JSON.stringify({ title: '테스트' }),
         }),
@@ -128,6 +132,8 @@ describe('api proxy route', () => {
     expect(new Headers(capturedRequest.init.headers).has('authorization')).toBe(
       false,
     );
+    // BFF 세션 쿠키를 백엔드로 흘리지 않는다.
+    expect(new Headers(capturedRequest.init.headers).has('cookie')).toBe(false);
   });
 
   it('injects Authorization: Bearer for authenticated sessions', async () => {
