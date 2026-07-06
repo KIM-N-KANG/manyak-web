@@ -1,7 +1,7 @@
 import {
   Chatting01Icon,
   ClipboardIcon,
-  MailEdit01Icon,
+  User02Icon,
 } from '@hugeicons/core-free-icons';
 import type { IconSvgElement } from '@hugeicons/react';
 
@@ -16,7 +16,7 @@ export interface MainNavigationItem {
 export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
   {
     href: APP_PATH.MAIN.STORIES,
-    label: '스토리',
+    label: '내 이야기',
     icon: ClipboardIcon,
   },
   {
@@ -25,9 +25,9 @@ export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
     icon: Chatting01Icon,
   },
   {
-    href: APP_PATH.MAIN.FEEDBACK,
-    label: '피드백',
-    icon: MailEdit01Icon,
+    href: APP_PATH.MAIN.MY,
+    label: '마이 페이지',
+    icon: User02Icon,
   },
 ];
 

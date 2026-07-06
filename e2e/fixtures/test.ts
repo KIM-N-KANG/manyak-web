@@ -12,3 +12,4 @@ export const test = base.extend({
 
 export { expect };
 export { seedChatIds, seedStoryIds, skipOnboarding } from './storage';
+export { mockMemberSession } from './auth';
