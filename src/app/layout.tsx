@@ -12,6 +12,7 @@ import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_FRAME_ID } from '@/constants/app-frame';
+import { AutoMigration } from '@/features/auth/migration/components/auto-migration';
 
 export const metadata: Metadata = {
   title: '마냑',
@@ -65,6 +66,7 @@ export default function RootLayout({
                   </div>
                   <Toaster />
                   <AnalyticsUserSync />
+                  <AutoMigration />
                 </MotionProvider>
               </ThemeProvider>
             </QueryProvider>
