@@ -6,8 +6,8 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
+import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
-import { Spinner } from '@/components/ui/spinner';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import { track, useTrackOnView } from '@/observability/analytics';
 
@@ -108,11 +108,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   if (isLoading) {
     stateKey = 'loading';
-    content = (
-      <div className="flex flex-1 items-center justify-center">
-        <Spinner className="size-8 text-foreground-secondary" />
-      </div>
-    );
+    content = <PageLoadingSpinner aria-label="채팅을 불러오는 중" />;
   } else if (isError) {
     stateKey = 'error';
     content = (
