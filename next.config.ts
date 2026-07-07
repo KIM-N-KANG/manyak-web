@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  images: {
+    // 프로필 이미지 원격 호스트 화이트리스트. 백엔드가 자체 스토리지로
+    // 이미지를 내려주기로 바뀌면 해당 호스트를 여기에 추가한다.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+    ],
+  },
 };
 
 export default withSentryConfig(nextConfig, {

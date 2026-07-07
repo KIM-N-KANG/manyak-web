@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   ArrowRight01Icon,
   Logout03Icon,
   MailEdit01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 
@@ -16,6 +19,9 @@ import { resetAnalyticsUser } from '@/observability/analytics';
 
 export function MyPage() {
   const { data: session, status } = useSession();
+  const [imageError, setImageError] = useState(false);
+
+  const profileImageUrl = session?.user?.image;
 
   const handleLogout = () => {
     resetAnalyticsUser();
@@ -25,13 +31,14 @@ export function MyPage() {
   return (
     <main className="flex flex-1 flex-col pb-4">
       <section className="mb-4 flex items-center gap-4 p-4">
-        {session?.user?.image ? (
-          // 프로필 이미지는 백엔드가 발급한 프리셋 자산 URL이라 next/image 최적화 대상이 아니다.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={session.user.image}
+        {profileImageUrl && !imageError ? (
+          <Image
+            src={profileImageUrl}
             alt=""
+            width={48}
+            height={48}
             className="size-12 shrink-0 rounded-full object-cover"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div
