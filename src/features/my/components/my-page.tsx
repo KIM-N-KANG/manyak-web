@@ -1,6 +1,10 @@
 'use client';
 
-import { Logout03Icon, MailEdit01Icon } from '@hugeicons/core-free-icons';
+import {
+  AddTeamIcon,
+  Logout03Icon,
+  MailEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
 
 import { Label } from '@/components/ui/label';
@@ -33,6 +37,17 @@ export function MyPage() {
         </section>
       )}
       {isAuthenticated && <CreditBalanceCard />}
+
+      <section className="flex flex-col gap-2 py-4">
+        <div className="px-4">
+          <Label>이벤트</Label>
+        </div>
+        <MyMenuItem
+          icon={AddTeamIcon}
+          label="친구 초대"
+          href={APP_PATH.MY_FEEDBACK} //** 임시로 설정 */
+        />
+      </section>
 
       <section className="flex flex-col gap-2 py-4">
         <div className="px-4">
