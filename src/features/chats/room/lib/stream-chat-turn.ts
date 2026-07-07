@@ -1,5 +1,6 @@
 import { getStreamChatTurnUrl } from '@/api/generated/endpoints/chats/chats';
 import type { ContinueChatRequest } from '@/api/generated/models';
+import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
 import { resolveApiProxyUrl } from '@/lib/custom-fetch';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
@@ -25,6 +26,9 @@ export async function streamChatTurnRaw(
       signal,
     },
   );
+
+  // 프록시가 세션 만료(리프레시 확정 거절)를 알리면 능동 로그아웃 신호를 발행한다.
+  notifyIfSessionExpired(response.headers);
 
   if (!response.ok || !response.body) {
     throw new Error(`스트리밍 요청에 실패했어요 (status: ${response.status})`);

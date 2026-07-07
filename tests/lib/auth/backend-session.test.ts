@@ -1,18 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type * as BackendClient from '@/lib/auth/backend-client';
+
 // vi.mock 팩토리가 참조하는 값은 호이스팅 TDZ를 피하려 vi.hoisted로 선언한다.
 const tokenCookiesMock = vi.hoisted(() => ({
   readBackendSessionTokens: vi.fn(),
+  readRefreshTokenCookie: vi.fn(),
   writeBackendSessionTokens: vi.fn(),
   clearBackendSession: vi.fn(),
+  hasNextAuthSessionCookie: vi.fn(),
 }));
 
 vi.mock('@/lib/auth/token-cookies', () => tokenCookiesMock);
-vi.mock('@/lib/auth/backend-client', () => ({
-  refreshOnServer: vi.fn(),
-  loginWithGoogleOnServer: vi.fn(),
-  fetchMeOnServer: vi.fn(),
-}));
+// 함수만 목킹하고 BackendAuthError 클래스는 실제 구현을 유지한다
+// (ensureFreshAccessToken의 원인 분류가 instanceof로 판별하기 때문).
+vi.mock('@/lib/auth/backend-client', async (importActual) => {
+  const actual = await importActual<typeof BackendClient>();
+
+  return {
+    ...actual,
+    refreshOnServer: vi.fn(),
+    loginWithGoogleOnServer: vi.fn(),
+    fetchMeOnServer: vi.fn(),
+  };
+});
 
 import {
   ensureFreshAccessToken,
@@ -22,6 +33,9 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // 기본값: NextAuth 세션 쿠키 없음, refresh 쿠키 없음. 개별 케이스에서만 override.
+  tokenCookiesMock.hasNextAuthSessionCookie.mockResolvedValue(false);
+  tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
 });
 
 describe('refreshWithDedup', () => {
@@ -38,11 +52,22 @@ describe('refreshWithDedup', () => {
     expect(second).toEqual({ accessToken: 'new' });
   });
 
-  it('완료 후 새 호출은 다시 실행한다', async () => {
+  it('성공한 재발급 결과는 짧게 캐시돼 같은 토큰 재요청 시 재실행하지 않는다', async () => {
+    // 1회용 refresh 토큰을 몰린 요청들이 각자 다시 쓰면 재사용 탐지에 걸리므로,
+    // 완료 직후에도 잠깐은 같은 결과를 공유한다.
     const executor = vi.fn().mockResolvedValue({ accessToken: 'new' });
 
-    await refreshWithDedup('token-b', executor);
-    await refreshWithDedup('token-b', executor);
+    await refreshWithDedup('token-b', executor, 0);
+    await refreshWithDedup('token-b', executor, 1_000);
+
+    expect(executor).toHaveBeenCalledTimes(1);
+  });
+
+  it('캐시 유효기간이 지나면 같은 토큰도 다시 재발급한다', async () => {
+    const executor = vi.fn().mockResolvedValue({ accessToken: 'new' });
+
+    await refreshWithDedup('token-f', executor, 0);
+    await refreshWithDedup('token-f', executor, 60_000);
 
     expect(executor).toHaveBeenCalledTimes(2);
   });
@@ -72,23 +97,91 @@ describe('refreshWithDedup', () => {
 });
 
 describe('ensureFreshAccessToken', () => {
-  it('토큰 쿠키가 없으면(게스트) null을 반환한다', async () => {
+  it('refresh 토큰도 NextAuth 세션 쿠키도 없으면 게스트 상태를 반환한다', async () => {
     tokenCookiesMock.readBackendSessionTokens.mockResolvedValue(null);
+    tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
+    tokenCookiesMock.hasNextAuthSessionCookie.mockResolvedValue(false);
 
-    await expect(ensureFreshAccessToken(0)).resolves.toBeNull();
+    await expect(ensureFreshAccessToken(0)).resolves.toEqual({
+      status: 'guest',
+    });
+    expect(tokenCookiesMock.clearBackendSession).not.toHaveBeenCalled();
   });
 
-  it('만료가 임박하지 않으면 기존 access 토큰을 반환한다', async () => {
+  it('refresh 토큰이 없는데 NextAuth 세션 쿠키가 있으면(복구 불가) 세션을 폐기하고 만료 상태를 반환한다', async () => {
+    tokenCookiesMock.readBackendSessionTokens.mockResolvedValue(null);
+    tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
+    tokenCookiesMock.hasNextAuthSessionCookie.mockResolvedValue(true);
+
+    await expect(ensureFreshAccessToken(0)).resolves.toEqual({
+      status: 'expired',
+    });
+    expect(tokenCookiesMock.clearBackendSession).toHaveBeenCalled();
+  });
+
+  it('access 토큰이 없어도 refresh 토큰이 있으면 재발급해 로그인 상태를 복구한다', async () => {
+    const { refreshOnServer } = await import('@/lib/auth/backend-client');
+
+    // access·expiresAt이 없어 readBackendSessionTokens는 null이지만 refresh 쿠키는 살아 있다.
+    tokenCookiesMock.readBackendSessionTokens.mockResolvedValue(null);
+    tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue('refresh-live');
+    vi.mocked(refreshOnServer).mockResolvedValue({
+      accessToken: 'recovered',
+      refreshToken: 'refresh-next',
+      expiresIn: 1800,
+    });
+
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'authenticated',
+      accessToken: 'recovered',
+    });
+    expect(tokenCookiesMock.writeBackendSessionTokens).toHaveBeenCalled();
+    expect(tokenCookiesMock.clearBackendSession).not.toHaveBeenCalled();
+  });
+
+  it('access는 없고 refresh만 있는데 재발급이 4xx로 거절되면 세션을 폐기하고 만료 상태를 반환한다', async () => {
+    const { refreshOnServer, BackendAuthError } =
+      await import('@/lib/auth/backend-client');
+
+    tokenCookiesMock.readBackendSessionTokens.mockResolvedValue(null);
+    tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue('refresh-dead');
+    vi.mocked(refreshOnServer).mockRejectedValue(
+      new BackendAuthError(401, 'refresh token expired'),
+    );
+
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'expired',
+    });
+    expect(tokenCookiesMock.clearBackendSession).toHaveBeenCalled();
+  });
+
+  it('access는 없고 refresh만 있는데 재발급이 일시 실패하면 세션을 보존하고 게스트로 처리한다', async () => {
+    const { refreshOnServer } = await import('@/lib/auth/backend-client');
+
+    tokenCookiesMock.readBackendSessionTokens.mockResolvedValue(null);
+    tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue('refresh-live-2');
+    vi.mocked(refreshOnServer).mockRejectedValue(new TypeError('fetch failed'));
+
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'guest',
+    });
+    expect(tokenCookiesMock.clearBackendSession).not.toHaveBeenCalled();
+  });
+
+  it('만료가 임박하지 않으면 기존 access 토큰으로 인증 상태를 반환한다', async () => {
     tokenCookiesMock.readBackendSessionTokens.mockResolvedValue({
       accessToken: 'access',
       refreshToken: 'refresh',
       expiresAt: 1_000_000,
     });
 
-    await expect(ensureFreshAccessToken(1_000)).resolves.toBe('access');
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'authenticated',
+      accessToken: 'access',
+    });
   });
 
-  it('만료 임박이면 재발급 후 새 토큰을 저장하고 반환한다', async () => {
+  it('만료 임박이면 재발급 후 새 토큰을 저장하고 인증 상태를 반환한다', async () => {
     const { refreshOnServer } = await import('@/lib/auth/backend-client');
 
     tokenCookiesMock.readBackendSessionTokens.mockResolvedValue({
@@ -102,22 +195,67 @@ describe('ensureFreshAccessToken', () => {
       expiresIn: 1800,
     });
 
-    await expect(ensureFreshAccessToken(1_000)).resolves.toBe('fresh');
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'authenticated',
+      accessToken: 'fresh',
+    });
     expect(tokenCookiesMock.writeBackendSessionTokens).toHaveBeenCalled();
   });
 
-  it('재발급 실패면 세션을 폐기하고 null을 반환한다', async () => {
-    const { refreshOnServer } = await import('@/lib/auth/backend-client');
+  it('재발급이 4xx로 확정 거절되면 세션을 폐기하고 만료 상태를 반환한다', async () => {
+    const { refreshOnServer, BackendAuthError } =
+      await import('@/lib/auth/backend-client');
 
     tokenCookiesMock.readBackendSessionTokens.mockResolvedValue({
       accessToken: 'stale',
       refreshToken: 'refresh-3',
       expiresAt: 1_000,
     });
-    vi.mocked(refreshOnServer).mockRejectedValue(new Error('revoked'));
+    vi.mocked(refreshOnServer).mockRejectedValue(
+      new BackendAuthError(401, 'refresh token revoked'),
+    );
 
-    await expect(ensureFreshAccessToken(1_000)).resolves.toBeNull();
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'expired',
+    });
     expect(tokenCookiesMock.clearBackendSession).toHaveBeenCalled();
+  });
+
+  it('재발급이 5xx로 일시 실패하면 세션을 보존하고 기존 토큰으로 인증 상태를 반환한다', async () => {
+    const { refreshOnServer, BackendAuthError } =
+      await import('@/lib/auth/backend-client');
+
+    tokenCookiesMock.readBackendSessionTokens.mockResolvedValue({
+      accessToken: 'stale',
+      refreshToken: 'refresh-4',
+      expiresAt: 1_000,
+    });
+    vi.mocked(refreshOnServer).mockRejectedValue(
+      new BackendAuthError(503, 'service unavailable'),
+    );
+
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'authenticated',
+      accessToken: 'stale',
+    });
+    expect(tokenCookiesMock.clearBackendSession).not.toHaveBeenCalled();
+  });
+
+  it('재발급이 네트워크 오류로 실패하면 세션을 보존하고 기존 토큰으로 인증 상태를 반환한다', async () => {
+    const { refreshOnServer } = await import('@/lib/auth/backend-client');
+
+    tokenCookiesMock.readBackendSessionTokens.mockResolvedValue({
+      accessToken: 'stale',
+      refreshToken: 'refresh-5',
+      expiresAt: 1_000,
+    });
+    vi.mocked(refreshOnServer).mockRejectedValue(new TypeError('fetch failed'));
+
+    await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
+      status: 'authenticated',
+      accessToken: 'stale',
+    });
+    expect(tokenCookiesMock.clearBackendSession).not.toHaveBeenCalled();
   });
 });
 

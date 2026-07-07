@@ -19,7 +19,9 @@ const routeContext = (path: string[]) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   // 기본값: 게스트(세션 없음). 토큰 주입이 필요한 테스트에서만 개별 override.
-  backendSessionMock.ensureFreshAccessToken.mockResolvedValue(null);
+  backendSessionMock.ensureFreshAccessToken.mockResolvedValue({
+    status: 'guest',
+  });
 });
 
 describe('api proxy route', () => {
@@ -141,9 +143,10 @@ describe('api proxy route', () => {
     const previousApiBaseUrl = process.env.API_BASE_URL;
     let capturedRequest!: { url: unknown; init: RequestInit };
 
-    backendSessionMock.ensureFreshAccessToken.mockResolvedValue(
-      'fresh-access-token',
-    );
+    backendSessionMock.ensureFreshAccessToken.mockResolvedValue({
+      status: 'authenticated',
+      accessToken: 'fresh-access-token',
+    });
     process.env.API_BASE_URL = 'http://backend.test';
     globalThis.fetch = async (url, init) => {
       capturedRequest = { url, init: init ?? {} };
@@ -171,6 +174,45 @@ describe('api proxy route', () => {
     expect(backendSessionMock.ensureFreshAccessToken).toHaveBeenCalledTimes(1);
     expect(new Headers(capturedRequest.init.headers).get('authorization')).toBe(
       'Bearer fresh-access-token',
+    );
+  });
+
+  it('세션이 만료되면 만료 헤더를 붙이고 Authorization은 주입하지 않는다', async () => {
+    const originalFetch = globalThis.fetch;
+    const previousApiBaseUrl = process.env.API_BASE_URL;
+    let capturedRequest!: { url: unknown; init: RequestInit };
+
+    backendSessionMock.ensureFreshAccessToken.mockResolvedValue({
+      status: 'expired',
+    });
+    process.env.API_BASE_URL = 'http://backend.test';
+    globalThis.fetch = async (url, init) => {
+      capturedRequest = { url, init: init ?? {} };
+
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    };
+
+    try {
+      const response = await route.GET(
+        new Request('http://localhost:3000/api/v1/stories', {
+          headers: { host: 'localhost:3000' },
+        }),
+        routeContext(['v1', 'stories']),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('x-manyak-session-expired')).toBe('1');
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.API_BASE_URL = previousApiBaseUrl;
+    }
+
+    // 만료 세션은 Authorization 없이(익명) 백엔드로 전달된다.
+    expect(new Headers(capturedRequest.init.headers).has('authorization')).toBe(
+      false,
     );
   });
 

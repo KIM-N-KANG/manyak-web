@@ -10,6 +10,7 @@ import { BackHeader } from '@/components/layout/back-header';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import { track } from '@/observability/analytics';
 
 import { GoogleLogo } from './google-logo';
@@ -18,6 +19,7 @@ export function LoginScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasError = searchParams.has('error');
+  const isSessionExpired = searchParams.has(SESSION_EXPIRED_PARAM);
 
   useEffect(() => {
     track('client_login_viewed');
@@ -31,6 +33,16 @@ export function LoginScreen() {
     toast.error('로그인에 실패했어요. 다시 시도해 주세요.');
     router.replace(APP_PATH.LOGIN);
   }, [hasError, router]);
+
+  useEffect(() => {
+    if (!isSessionExpired) {
+      return;
+    }
+
+    // 능동 로그아웃으로 이동해 온 경우 안내 후 파라미터를 지워 새로고침 시 재노출을 막는다.
+    toast('세션이 만료되어 로그아웃되었습니다. 다시 로그인해 주세요.');
+    router.replace(APP_PATH.LOGIN);
+  }, [isSessionExpired, router]);
 
   const handleGoogleLogin = () => {
     track('client_login_googleButton_clicked');

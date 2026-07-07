@@ -9,6 +9,7 @@ import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
 import { AuthSessionProvider } from '@/components/providers/auth-session-provider';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
+import { SessionExpiryWatcher } from '@/components/providers/session-expiry-watcher';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_FRAME_ID } from '@/constants/app-frame';
@@ -66,6 +67,7 @@ export default function RootLayout({
                   </div>
                   <Toaster />
                   <AnalyticsUserSync />
+                  <SessionExpiryWatcher />
                   <AutoMigration />
                 </MotionProvider>
               </ThemeProvider>
