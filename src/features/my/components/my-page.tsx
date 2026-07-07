@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 
 import { buttonVariants } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { APP_PATH } from '@/constants/app-path';
 import { resetAnalyticsUser } from '@/observability/analytics';
 
@@ -17,7 +18,6 @@ export function MyPage() {
   const { data: session, status } = useSession();
 
   const handleLogout = () => {
-    // 공용 기기 보호 — 로그아웃 시 분석 식별자를 재발급한다(스펙 §6-2).
     resetAnalyticsUser();
     void signOut({ redirectTo: APP_PATH.MAIN.MY });
   };
@@ -31,15 +31,15 @@ export function MyPage() {
           <img
             src={session.user.image}
             alt=""
-            className="size-16 shrink-0 rounded-full object-cover"
+            className="size-14 shrink-0 rounded-full object-cover"
           />
         ) : (
           <div
             aria-hidden="true"
-            className="size-16 shrink-0 rounded-full bg-muted"
+            className="size-14 shrink-0 rounded-full bg-muted"
           />
         )}
-        <span className="min-w-0 flex-1 truncate text-xl font-bold">
+        <span className="min-w-0 flex-1 truncate text-lg font-semibold">
           {status === 'authenticated' ? session.user.name : '게스트'}
         </span>
         {status === 'unauthenticated' && (
@@ -50,7 +50,7 @@ export function MyPage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm text-foreground-tertiary">기타</h2>
+        <Label>기타</Label>
         <Link
           href={APP_PATH.MY_FEEDBACK}
           className="flex h-12 items-center gap-3">
@@ -70,7 +70,7 @@ export function MyPage() {
 
       {status === 'authenticated' && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm text-foreground-tertiary">계정</h2>
+          <Label>계정</Label>
           <button
             type="button"
             className="flex h-12 items-center gap-3 text-destructive"

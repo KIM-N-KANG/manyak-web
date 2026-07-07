@@ -7,6 +7,7 @@ import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { BackHeader } from '@/components/layout/back-header';
+import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { track } from '@/observability/analytics';
@@ -27,7 +28,6 @@ export function LoginScreen() {
       return;
     }
 
-    // NextAuth가 OAuth·백엔드 로그인 실패 시 ?error=로 되돌린다 — 토스트 후 화면 유지(FE-SCREEN-008).
     toast.error('로그인에 실패했어요. 다시 시도해 주세요.');
     router.replace(APP_PATH.LOGIN);
   }, [hasError, router]);
@@ -41,6 +41,7 @@ export function LoginScreen() {
     <div className="flex h-svh min-h-0 flex-col">
       <BackHeader title="로그인" backHref={APP_PATH.MAIN.MY} />
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 pb-24">
+        <ManyakLogo className="h-6 w-auto text-primary" />
         <p className="text-center text-lg font-semibold">
           로그인하고 내 이야기를
           <br />
