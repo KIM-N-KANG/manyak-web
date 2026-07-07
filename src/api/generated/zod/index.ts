@@ -529,7 +529,7 @@ export const GetStoryDetailParams = zod.object({
 export const GetStoryDetailResponse = zod.unknown();
 
 /**
- * 스토리를 소프트 삭제합니다. 행을 물리 삭제하지 않고 삭제 시각만 기록하며, 이후 목록·상세 조회에서 제외됩니다. 존재하지 않거나 이미 삭제된 스토리는 404로 응답합니다.
+ * 스토리를 소프트 삭제합니다. 행을 물리 삭제하지 않고 삭제 시각만 기록하며, 이후 목록·상세 조회에서 제외됩니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403), 소유자 없는 게스트 스토리는 허용합니다. 존재하지 않거나 이미 삭제된 스토리는 404로 응답합니다.
  * @summary 스토리 삭제 (소프트 삭제)
  */
 export const DeleteStoryParams = zod.object({
@@ -768,7 +768,7 @@ export const GetChatDetailParams = zod.object({
 export const GetChatDetailResponse = zod.unknown();
 
 /**
- * 채팅을 소프트 삭제합니다. 삭제된 채팅은 목록·상세 조회에서 제외됩니다.
+ * 채팅을 소프트 삭제합니다. 삭제된 채팅은 목록·상세 조회에서 제외됩니다. 인증은 선택이며 회원 소유 채팅은 소유자만(타인·미인증 403), 소유자 없는 게스트 채팅은 허용합니다.
  * @summary 채팅 삭제
  */
 export const DeleteChatParams = zod.object({
