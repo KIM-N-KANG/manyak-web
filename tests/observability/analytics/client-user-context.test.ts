@@ -12,11 +12,11 @@ vi.mock('@/observability/analytics/config', () => ({
   IS_ANALYTICS_ENABLED: false,
 }));
 
+import { track } from '@/observability/analytics/client';
 import {
   resetAnalyticsUser,
   setAnalyticsUser,
-  track,
-} from '@/observability/analytics/client';
+} from '@/observability/analytics/user-context';
 
 const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
