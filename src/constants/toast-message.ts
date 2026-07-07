@@ -11,4 +11,6 @@ export const TOAST_MESSAGE = {
   RESPONSE_STREAM_FAILED: '응답 생성에 실패했어요. 잠시 후 다시 시도해주세요.',
   FEEDBACK_SUBMITTED: '소중한 피드백을 보내주셔서 감사해요',
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요. 다시 시도해주세요.',
+  LOGIN_FAILED: '로그인에 실패했어요. 다시 시도해주세요.',
+  SESSION_EXPIRED: '세션이 만료되어 로그아웃되었어요. 다시 로그인해주세요.',
 } as const;
