@@ -23,20 +23,20 @@ export function MyPage() {
   };
 
   return (
-    <main className="flex flex-1 flex-col gap-8 px-4 py-6">
-      <section className="flex items-center gap-4">
+    <main className="flex flex-1 flex-col pb-4">
+      <section className="mb-4 flex items-center gap-4 p-4">
         {session?.user?.image ? (
           // 프로필 이미지는 백엔드가 발급한 프리셋 자산 URL이라 next/image 최적화 대상이 아니다.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={session.user.image}
             alt=""
-            className="size-14 shrink-0 rounded-full object-cover"
+            className="size-12 shrink-0 rounded-full object-cover"
           />
         ) : (
           <div
             aria-hidden="true"
-            className="size-14 shrink-0 rounded-full bg-muted"
+            className="size-12 shrink-0 rounded-full bg-muted"
           />
         )}
         <span className="min-w-0 flex-1 truncate text-lg font-semibold">
@@ -49,11 +49,13 @@ export function MyPage() {
         )}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <Label>기타</Label>
+      <section className="flex flex-col gap-2 py-4">
+        <div className="px-4">
+          <Label>기타</Label>
+        </div>
         <Link
           href={APP_PATH.MY_FEEDBACK}
-          className="flex h-12 items-center gap-3">
+          className="flex h-12 items-center gap-4 px-4">
           <HugeiconsIcon
             icon={MailEdit01Icon}
             className="size-6"
@@ -69,11 +71,13 @@ export function MyPage() {
       </section>
 
       {status === 'authenticated' && (
-        <section className="flex flex-col gap-2">
-          <Label>계정</Label>
+        <section className="flex flex-col gap-2 py-4">
+          <div className="px-4">
+            <Label>계정</Label>
+          </div>
           <button
             type="button"
-            className="flex h-12 items-center gap-3 text-destructive"
+            className="flex h-12 items-center gap-4 px-4 text-destructive"
             onClick={handleLogout}>
             <HugeiconsIcon
               icon={Logout03Icon}
