@@ -39,7 +39,7 @@ export function LoginScreen() {
 
   return (
     <div className="flex h-svh min-h-0 flex-col">
-      <BackHeader title="로그인" />
+      <BackHeader title="로그인" backHref={APP_PATH.MAIN.MY} />
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 pb-24">
         <p className="text-center text-lg font-semibold">
           로그인하고 내 이야기를

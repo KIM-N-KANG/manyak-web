@@ -24,4 +24,17 @@ test.describe('로그인 화면', () => {
 
     await expect(page).toHaveURL('/login');
   });
+
+  test('뒤로가기 버튼은 히스토리와 무관하게 마이 페이지로 이동한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    // OAuth 리다이렉트로 히스토리가 오염된 상황을 재현: 직접 /login에 진입(뒤로 갈 앱 히스토리 없음)
+    await page.goto('/login');
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+
+    await expect(page).toHaveURL('/my');
+  });
 });
