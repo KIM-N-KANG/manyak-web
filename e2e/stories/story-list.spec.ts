@@ -125,4 +125,40 @@ test.describe('스토리 목록', () => {
 
     await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
   });
+
+  test('로그인 상태에서 스토리를 삭제하면 목록에서 사라진다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+
+    let listCallCount = 0;
+
+    await page.route('**/api/v1/users/me/stories**', async (route) => {
+      listCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          listCallCount === 1 ? [story('s1', '회원의 서재')] : [],
+        ),
+      });
+    });
+    await page.route('**/api/v1/stories/s1', async (route) => {
+      await route.fulfill({ status: 204, body: '' });
+    });
+
+    await page.goto('/');
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+    await page.getByRole('menuitem', { name: '삭제하기' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: '삭제하기' })
+      .click();
+
+    await expect(page.getByText('스토리를 삭제했어요')).toBeVisible();
+    await expect(
+      page.getByText('회원의 서재', { exact: true }),
+    ).not.toBeVisible();
+  });
 });
