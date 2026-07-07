@@ -2,12 +2,14 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import {
   getGetChatDetailQueryOptions,
   useCreateChat,
 } from '@/api/generated/endpoints/chats/chats';
+import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
@@ -20,6 +22,7 @@ import { track } from '@/observability/analytics';
 export function useStartChat(storyId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { status } = useSession();
 
   const createChat = useCreateChat({
     mutation: {
@@ -30,7 +33,15 @@ export function useStartChat(storyId: string) {
           return;
         }
 
-        saveCreatedChatId(chatId);
+        // 회원 서재는 서버가 정본 — 로그인 상태에서는 로컬에 ID를 남기지 않는다.
+        if (status === 'authenticated') {
+          void queryClient.invalidateQueries({
+            queryKey: getGetMyChatsQueryKey(),
+          });
+        } else {
+          saveCreatedChatId(chatId);
+        }
+
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
