@@ -33,6 +33,7 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
   ```
 - 브라우저는 백엔드를 직접 호출하지 않고 프록시 라우트(`src/app/api/[...path]/route.ts`)를 거칩니다. `API_BASE_URL`은 서버 전용 환경 변수이며 클라이언트에 노출하면 안 됩니다.
 - 공통 요청 로직(타임아웃, 에러 캡처, 분석 헤더)은 `src/api/mutator/custom-instance.ts`와 `src/lib/custom-fetch.ts`에 있습니다.
+- 서버(BFF)에서 백엔드를 **직접** 호출해야 할 때(예: NextAuth 콜백처럼 프록시/세션이 성립하기 전 실행되는 서버 코드)는 생성된 훅/함수를 쓸 수 없습니다. 이들은 브라우저 → `/api` 프록시 경유가 전제이기 때문입니다(`custom-instance`가 URL을 상대경로 `/api`로 바꾸고 세션 토큰은 프록시가 주입). 이 경우 `src/lib/auth/backend-client.ts`처럼 `API_BASE_URL` 절대 URL로 직접 `fetch` 하되, **경로 문자열은 하드코딩하지 말고 생성된 URL 빌더**(`get*Url`, 예: `getLoginWithGoogleUrl()`)를 재사용하세요. 그래야 `pnpm api:generate` 재생성만으로 경로가 함께 갱신돼 백엔드 스펙과의 드리프트(누락된 `/api` 접두사 등)를 막습니다.
 
 ## 관측성 (Amplitude / Sentry)
 
