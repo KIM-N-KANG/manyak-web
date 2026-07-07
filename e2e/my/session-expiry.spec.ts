@@ -50,9 +50,7 @@ test.describe('세션 만료 능동 로그아웃', () => {
     // 능동 로그아웃이 로그인 페이지로 강제 이동시키고, 도착 후 만료 안내 토스트를 띄운다.
     await page.waitForURL('**/login**');
     await expect(
-      page.getByText(
-        '세션이 만료되어 로그아웃되었습니다. 다시 로그인해 주세요.',
-      ),
+      page.getByText('세션이 만료되어 로그아웃되었어요. 다시 로그인해주세요.'),
     ).toBeVisible();
   });
 });
