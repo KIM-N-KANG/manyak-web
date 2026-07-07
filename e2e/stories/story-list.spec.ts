@@ -1,4 +1,5 @@
-import { expect, seedStoryIds, test } from '../fixtures/test';
+import { mockMemberSession } from '../fixtures/auth';
+import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 목록은 localStorage의 ID로 POST /api/v1/stories/batch 를 호출해 카드를 그린다.
 // customInstance가 응답 body를 { data, status }로 감싸므로, 모킹 body는 StorySummaryResponse 배열이다.
@@ -104,5 +105,24 @@ test.describe('스토리 목록', () => {
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText('스토리를 삭제했어요')).toBeVisible();
+  });
+
+  test('로그인 상태에서는 서버의 내 스토리 목록을 보여준다', async ({
+    page,
+  }) => {
+    // 로컬 ID 없이 회원 목록 API만으로 카드를 그린다(이관도 발동하지 않음).
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/stories**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '회원의 서재')]),
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
   });
 });
