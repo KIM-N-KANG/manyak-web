@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
@@ -39,7 +40,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   } = useChatDetail(chatId);
   const handleStreamCompleted = async () => {
     await refetch();
+    // 게스트(배치)·회원(me/chats) 목록 모두 최근 활동 순서가 바뀌므로 함께 무효화한다.
+    // 비활성 쿼리 무효화는 무해해서 세션 분기 없이 둘 다 처리한다.
     await queryClient.invalidateQueries({ queryKey: [CHATS_BATCH_QUERY_KEY] });
+    await queryClient.invalidateQueries({ queryKey: getGetMyChatsQueryKey() });
   };
 
   const { streamingTurn, isStreaming, send } = useChatStream(
