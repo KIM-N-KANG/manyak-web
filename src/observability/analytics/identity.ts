@@ -47,6 +47,32 @@ function readAmplitudeCookieState(): AmplitudeCookieState {
   }
 }
 
+/** dev 폴백 device_id를 재사용하기 위한 localStorage 키. */
+const DEV_DEVICE_ID_STORAGE_KEY = 'manyak-dev-device-id';
+
+/**
+ * 로컬 개발에서는 Amplitude가 초기화되지 않아(production 전용) device_id가 없고,
+ * 게스트 체험 한도 API가 400을 반환한다. development에 한해 임시 device_id를
+ * 생성·영속화해 헤더를 채운다. localStorage가 막힌 환경에서는 조용히 생략한다.
+ */
+function getDevFallbackDeviceId(): string | undefined {
+  if (process.env.NODE_ENV !== 'development') return undefined;
+
+  try {
+    const stored = window.localStorage.getItem(DEV_DEVICE_ID_STORAGE_KEY);
+
+    if (stored) return stored;
+
+    const generated = crypto.randomUUID();
+
+    window.localStorage.setItem(DEV_DEVICE_ID_STORAGE_KEY, generated);
+
+    return generated;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Amplitude가 채운 익명 식별자(device_id·session_id)를 API 요청 헤더로 싣는다(스펙 §AN-2-3-1).
  * 브라우저에서만 동작하며, SDK 초기화 전(콜드 로드) 첫 요청은 쿠키에서 폴백으로 읽는다.
@@ -63,6 +89,8 @@ export function getAnalyticsIdentityHeaders(): Record<string, string> {
     deviceId ??= cookieState.deviceId;
     sessionId ??= cookieState.sessionId;
   }
+
+  deviceId ??= getDevFallbackDeviceId();
 
   const headers: Record<string, string> = {};
 
