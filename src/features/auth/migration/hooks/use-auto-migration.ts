@@ -2,10 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { useMigrate } from '@/api/generated/endpoints/auth/auth';
+import {
+  getGetMyChatsQueryKey,
+  getGetMyStoriesQueryKey,
+} from '@/api/generated/endpoints/users/users';
 import {
   CREATED_CHAT_IDS_STORAGE_KEY,
   parseCreatedChatIds,
@@ -30,6 +35,7 @@ type MigrationIds = { storyIds: string[]; chatIds: string[] };
  */
 export function useAutoMigration(): void {
   const { status } = useSession();
+  const queryClient = useQueryClient();
   const { mutate } = useMigrate();
   const hasStartedRef = useRef(false);
 
@@ -63,6 +69,14 @@ export function useAutoMigration(): void {
             if (response.status !== 200) {
               return;
             }
+
+            // 이관된 항목이 이미 마운트된 목록 화면에 바로 보이도록 회원 목록을 새로 조회한다.
+            void queryClient.invalidateQueries({
+              queryKey: getGetMyStoriesQueryKey(),
+            });
+            void queryClient.invalidateQueries({
+              queryKey: getGetMyChatsQueryKey(),
+            });
 
             const { storyCount, chatCount } = countMigrated(response.data);
 
@@ -105,5 +119,5 @@ export function useAutoMigration(): void {
     };
 
     submit({ storyIds, chatIds }, false);
-  }, [status, mutate]);
+  }, [status, mutate, queryClient]);
 }
