@@ -13,4 +13,7 @@ export const TOAST_MESSAGE = {
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요. 다시 시도해주세요.',
   LOGIN_FAILED: '로그인에 실패했어요. 다시 시도해주세요.',
   SESSION_EXPIRED: '세션이 만료되어 로그아웃되었어요. 다시 로그인해주세요.',
+  ATTENDANCE_CLAIMED: (amount: number) => `${amount} 크레딧을 받았어요`,
+  ATTENDANCE_ALREADY: '오늘은 이미 출석했어요',
+  ATTENDANCE_FAILED: '출석 체크에 실패했어요. 다시 시도해주세요.',
 } as const;
