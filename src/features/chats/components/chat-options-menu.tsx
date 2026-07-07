@@ -1,8 +1,11 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import type { VariantProps } from 'class-variance-authority';
+import { useSession } from 'next-auth/react';
 
 import { useDeleteChat } from '@/api/generated/endpoints/chats/chats';
+import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { OptionsMenu } from '@/components/common/options-menu';
 import type { buttonVariants } from '@/components/ui/button';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
@@ -27,13 +30,20 @@ export function ChatOptionsMenu({
   size = 'icon-xs',
   triggerClassName,
 }: ChatOptionsMenuProps) {
+  const { status } = useSession();
+  const queryClient = useQueryClient();
   const { mutateAsync, isPending } = useDeleteChat();
   const handleDelete = useOptimisticCreatedResourceDelete({
     id: chatId,
+    isGuest: status !== 'authenticated',
     getSnapshot: getCreatedChatIdsSnapshot,
     parseSnapshot: parseCreatedChatIds,
     removeId: removeCreatedChatId,
     writeIds: writeCreatedChatIds,
+    invalidateServerLists: () =>
+      void queryClient.invalidateQueries({
+        queryKey: getGetMyChatsQueryKey(),
+      }),
     deleteResource: () => mutateAsync({ chatId }),
     successMessage: TOAST_MESSAGE.CHAT_DELETED,
     failureMessage: TOAST_MESSAGE.CHAT_DELETE_FAILED,

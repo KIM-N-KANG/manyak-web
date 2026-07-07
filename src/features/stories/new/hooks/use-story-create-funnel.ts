@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import {
@@ -15,6 +16,10 @@ import {
   useGenerateSimpleStorylines,
   useGetSimpleStoryTags,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
+import {
+  getGetMyChatsQueryKey,
+  getGetMyStoriesQueryKey,
+} from '@/api/generated/endpoints/users/users';
 import type {
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
@@ -46,6 +51,7 @@ const getGeneratedStorylines = (
 export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { status: sessionStatus } = useSession();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -121,7 +127,14 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        saveCreatedChatId(chatId);
+        // 회원 서재는 서버가 정본 — 로그인 상태에서는 로컬에 ID를 남기지 않는다.
+        if (sessionStatus === 'authenticated') {
+          void queryClient.invalidateQueries({
+            queryKey: getGetMyChatsQueryKey(),
+          });
+        } else {
+          saveCreatedChatId(chatId);
+        }
 
         const completedStoryId =
           completedStoryRef.current?.storyId ?? createdStoryId;
@@ -156,7 +169,14 @@ export function useStoryCreateFunnel() {
         const storyId = response.data.id;
 
         if (typeof storyId === 'string') {
-          saveCreatedStoryId(storyId);
+          if (sessionStatus === 'authenticated') {
+            void queryClient.invalidateQueries({
+              queryKey: getGetMyStoriesQueryKey(),
+            });
+          } else {
+            saveCreatedStoryId(storyId);
+          }
+
           setCreatedStoryId(storyId);
           completedStoryRef.current = { storyId, genres: response.data.genres };
         }

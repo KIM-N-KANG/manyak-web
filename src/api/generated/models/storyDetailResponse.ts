@@ -10,6 +10,7 @@ import type { StoryAuthorResponse } from './storyAuthorResponse';
 import type { StoryDetailResponseStatus } from './storyDetailResponseStatus';
 import type { StoryDetailResponseVisibility } from './storyDetailResponseVisibility';
 import type { StoryEndingResponse } from './storyEndingResponse';
+import type { StoryMainEventResponse } from './storyMainEventResponse';
 import type { StoryStartSettingResponse } from './storyStartSettingResponse';
 
 /**
@@ -52,6 +53,8 @@ export interface StoryDetailResponse {
   lorebooks?: LorebookResponse[];
   /** 스토리 엔딩 목록. 없으면 빈 배열입니다. */
   endings?: StoryEndingResponse[];
+  /** 스토리 주요 사건 목록(표시 순서). 없으면 빈 배열입니다. */
+  mainEvents?: StoryMainEventResponse[];
   /** 생성 시각 */
   createdAt?: string;
 }

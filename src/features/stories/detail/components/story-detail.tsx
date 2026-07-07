@@ -4,11 +4,15 @@ import { useEffect, useRef } from 'react';
 
 import { AnimatePresence, m } from 'motion/react';
 
-import { useGetStoryDetail } from '@/api/generated/endpoints/stories/stories';
+import {
+  getStoryDetail,
+  useGetStoryDetail,
+} from '@/api/generated/endpoints/stories/stories';
 import { Button } from '@/components/ui/button';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
+import { queryFnWithoutAbortSignal } from '@/lib/query-client';
 import { track } from '@/observability/analytics';
 
 import { StoryDetailCta } from './story-detail-cta';
@@ -25,7 +29,13 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     track('client_storyDetail_viewed', { story_id: storyId });
   }, [storyId]);
 
-  const { data, isPending, isError, refetch } = useGetStoryDetail(storyId);
+  const { data, isPending, isError, refetch } = useGetStoryDetail(storyId, {
+    query: {
+      // StrictMode 이중 마운트로 상세가 두 번 조회되지 않도록 abort signal을
+      // 전달하지 않는다. 배경은 queryFnWithoutAbortSignal 문서 참고.
+      queryFn: queryFnWithoutAbortSignal(() => getStoryDetail(storyId)),
+    },
+  });
 
   const showSkeleton = useDelayedLoading(isPending);
   const story = data?.status === 200 ? data.data : undefined;

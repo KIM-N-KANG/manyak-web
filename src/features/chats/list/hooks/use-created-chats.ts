@@ -1,8 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 
 import { getChatsByIds } from '@/api/generated/endpoints/chats/chats';
+import { useGetMyChats } from '@/api/generated/endpoints/users/users';
 import type { ChatSummaryResponse } from '@/api/generated/models';
 
 import type { ChatListItem } from '../types';
@@ -28,11 +30,21 @@ export const toChatListItems = (
   );
 };
 
-/** 로컬스토리지에 저장된 채팅 ID들로 채팅 목록을 조회하는 훅 */
+/**
+ * 사용자의 채팅 목록을 조회하는 훅.
+ * 회원은 서버 회원 목록(/users/me/chats), 게스트는 로컬 ID 배치 조회를 사용하며
+ * 두 모드 모두 동일한 형태(목록·로딩·에러·빈 상태)를 반환한다.
+ */
 export function useCreatedChats() {
+  const { status } = useSession();
   const chatIds = useCreatedChatIds();
 
-  const query = useQuery({
+  const myChatsQuery = useGetMyChats(undefined, {
+    query: { enabled: status === 'authenticated' },
+  });
+
+  const hasChatIds = chatIds != null && chatIds.length > 0;
+  const guestQuery = useQuery({
     queryKey: [CHATS_BATCH_QUERY_KEY, chatIds],
     queryFn: async () => {
       const response = await getChatsByIds({ chatIds: chatIds ?? [] });
@@ -40,18 +52,37 @@ export function useCreatedChats() {
 
       return toChatListItems(chats);
     },
-    enabled: chatIds != null && chatIds.length > 0,
+    enabled: status === 'unauthenticated' && hasChatIds,
   });
 
-  const hasChatIds = chatIds != null && chatIds.length > 0;
-  const isLoading = chatIds == null || (hasChatIds && query.isPending);
-  const chats = query.data ?? [];
+  // 세션 판별 중('loading')에는 회원 분기의 로딩 상태를 보여 깜빡임을 막는다.
+  if (status !== 'unauthenticated') {
+    const chats =
+      myChatsQuery.data?.status === 200
+        ? toChatListItems(myChatsQuery.data.data)
+        : [];
+    const isError =
+      myChatsQuery.isError ||
+      (myChatsQuery.data != null && myChatsQuery.data.status !== 200);
+    const isLoading = status === 'loading' || myChatsQuery.isPending;
+
+    return {
+      chats,
+      isLoading,
+      isError,
+      isEmpty: !isLoading && !isError && chats.length === 0,
+      refetch: myChatsQuery.refetch,
+    };
+  }
+
+  const isLoading = chatIds == null || (hasChatIds && guestQuery.isPending);
+  const chats = guestQuery.data ?? [];
 
   return {
     chats,
     isLoading,
-    isError: query.isError,
-    isEmpty: !isLoading && !query.isError && chats.length === 0,
-    refetch: query.refetch,
+    isError: guestQuery.isError,
+    isEmpty: !isLoading && !guestQuery.isError && chats.length === 0,
+    refetch: guestQuery.refetch,
   };
 }

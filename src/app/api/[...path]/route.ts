@@ -1,3 +1,6 @@
+import { ensureFreshAccessToken } from '@/lib/auth/backend-session';
+import { SESSION_EXPIRED_HEADER } from '@/lib/auth/session-expiry';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +60,9 @@ const createProxyRequestInit = async (request: Request) => {
   const method = request.method.toUpperCase();
 
   headers.delete('host');
+  // BFF 세션 쿠키(백엔드 토큰·NextAuth 세션)를 백엔드로 흘리지 않는다 —
+  // 인증은 Authorization 헤더 주입으로만 전달한다.
+  headers.delete('cookie');
 
   const init: RequestInit = {
     method,
@@ -86,16 +92,32 @@ const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
     return Response.json('API_BASE_URL is invalid.', { status: 500 });
   }
 
-  const response = await fetch(
-    targetUrl,
-    await createProxyRequestInit(request),
-  );
+  const init = await createProxyRequestInit(request);
+  // 회원 세션이면 BFF가 access 토큰을 주입한다(브라우저 JS는 Authorization을 붙이지 않음 — 스펙 §3-8).
+  const auth = await ensureFreshAccessToken();
 
-  return new Response(response.body, {
+  if (auth.status === 'authenticated') {
+    (init.headers as Headers).set(
+      'authorization',
+      `Bearer ${auth.accessToken}`,
+    );
+  }
+
+  const response = await fetch(targetUrl, init);
+
+  const proxyResponse = new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: response.headers,
+    headers: new Headers(response.headers),
   });
+
+  // 리프레시가 확정 거절돼 세션이 폐기된 경우, 클라이언트가 능동 로그아웃하도록 신호한다.
+  // 쿠키 삭제(Set-Cookie)는 ensureFreshAccessToken 내부의 clearBackendSession이 처리했다.
+  if (auth.status === 'expired') {
+    proxyResponse.headers.set(SESSION_EXPIRED_HEADER, '1');
+  }
+
+  return proxyResponse;
 };
 
 export const GET = proxyRequest;

@@ -2,8 +2,10 @@ export const APP_PATH = {
   MAIN: {
     STORIES: '/',
     CHATS: '/chats',
-    FEEDBACK: '/feedback',
+    MY: '/my',
   },
+  LOGIN: '/login',
+  MY_FEEDBACK: '/my/feedback',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   CREATOR: {

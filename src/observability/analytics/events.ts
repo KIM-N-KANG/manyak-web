@@ -9,6 +9,9 @@ export type StepName =
 
 /** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
+  // login
+  client_login_viewed: void;
+  client_login_googleButton_clicked: void;
   // onboarding
   client_onboarding_viewed: void;
   client_onboarding_createButton_clicked: void;

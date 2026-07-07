@@ -1,8 +1,11 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import type { VariantProps } from 'class-variance-authority';
+import { useSession } from 'next-auth/react';
 
 import { useDeleteStory } from '@/api/generated/endpoints/stories/stories';
+import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import { OptionsMenu } from '@/components/common/options-menu';
 import type { buttonVariants } from '@/components/ui/button';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
@@ -29,13 +32,20 @@ export function StoryOptionsMenu({
   triggerClassName,
   onDeleteSuccess,
 }: StoryOptionsMenuProps) {
+  const { status } = useSession();
+  const queryClient = useQueryClient();
   const { mutateAsync, isPending } = useDeleteStory();
   const handleDelete = useOptimisticCreatedResourceDelete({
     id: storyId,
+    isGuest: status !== 'authenticated',
     getSnapshot: getCreatedStoryIdsSnapshot,
     parseSnapshot: parseCreatedStoryIds,
     removeId: removeCreatedStoryId,
     writeIds: writeCreatedStoryIds,
+    invalidateServerLists: () =>
+      void queryClient.invalidateQueries({
+        queryKey: getGetMyStoriesQueryKey(),
+      }),
     deleteResource: () => mutateAsync({ storyId }),
     successMessage: TOAST_MESSAGE.STORY_DELETED,
     failureMessage: TOAST_MESSAGE.STORY_DELETE_FAILED,

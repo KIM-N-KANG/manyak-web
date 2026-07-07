@@ -5,22 +5,16 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { StoryEndingRequirementResponse } from './storyEndingRequirementResponse';
 
 /**
- * 스토리 엔딩
+ * 스토리 엔딩(유형 없이 이름으로 식별). 표시 순서는 배열 순서를 따른다.
  */
 export interface StoryEndingResponse {
-  /** 엔딩 제목 */
-  title?: string;
-  /** 엔딩 내용 */
-  content?: string;
-  /**
-   * 도달 조건(자유 텍스트). 없을 수 있습니다.
-   * @nullable
-   */
-  conditionText?: string | null;
-  /** 정렬 순서 */
-  sortOrder?: number;
-  /** 활성화 여부 */
-  enabled?: boolean;
+  /** 엔딩 이름 */
+  name?: string;
+  /** 도달 조건(최소 턴 수 + 달성 조건) */
+  requirement?: StoryEndingRequirementResponse;
+  /** 도달 시 엔딩 응답 생성을 위한 출력 가이드 */
+  epilogue?: string;
 }

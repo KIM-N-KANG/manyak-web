@@ -27,6 +27,8 @@ import type {
   GoogleLoginRequest,
   LogoutRequest,
   MeResponse,
+  MigrationRequest,
+  MigrationResponse,
   RefreshTokenRequest,
   TokenResponse,
 } from '../../models';
@@ -142,6 +144,116 @@ export const useRefresh = <TError = ErrorType<void>, TContext = unknown>(
   TContext
 > => {
   return useMutation(getRefreshMutationOptions(options), queryClient);
+};
+export type migrateResponse200 = {
+  data: MigrationResponse;
+  status: 200;
+};
+
+export type migrateResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type migrateResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type migrateResponseSuccess = migrateResponse200 & {
+  headers: Headers;
+};
+export type migrateResponseError = (migrateResponse400 | migrateResponse401) & {
+  headers: Headers;
+};
+
+export type migrateResponse = migrateResponseSuccess | migrateResponseError;
+
+export const getMigrateUrl = () => {
+  return `/api/v1/auth/migrate`;
+};
+
+/**
+ * 로그인 직후, 기기(localStorage)에 쌓인 게스트 스토리·채팅의 공개 ID 목록을 제출받아 요청자 계정으로 소유권을 이관(클레임)합니다. user_id가 NULL인 행에만 설정하며, 항목별 결과를 status로 반환합니다. 효과는 멱등하고, 일부 항목이 충돌해도 전체를 롤백하지 않습니다.
+ * @summary 게스트 데이터 마이그레이션
+ */
+export const migrate = async (
+  migrationRequest: MigrationRequest,
+  options?: RequestInit,
+): Promise<migrateResponse> => {
+  return customInstance<migrateResponse>(getMigrateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(migrationRequest),
+  });
+};
+
+export const getMigrateMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof migrate>>,
+    TError,
+    { data: BodyType<MigrationRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof migrate>>,
+  TError,
+  { data: BodyType<MigrationRequest> },
+  TContext
+> => {
+  const mutationKey = ['migrate'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof migrate>>,
+    { data: BodyType<MigrationRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return migrate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MigrateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof migrate>>
+>;
+export type MigrateMutationBody = BodyType<MigrationRequest>;
+export type MigrateMutationError = ErrorType<void>;
+
+/**
+ * @summary 게스트 데이터 마이그레이션
+ */
+export const useMigrate = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof migrate>>,
+      TError,
+      { data: BodyType<MigrationRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof migrate>>,
+  TError,
+  { data: BodyType<MigrationRequest> },
+  TContext
+> => {
+  return useMutation(getMigrateMutationOptions(options), queryClient);
 };
 export type logoutResponse204 = {
   data: void;
@@ -282,7 +394,7 @@ export const getLoginWithGoogleUrl = () => {
 };
 
 /**
- * Google ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
+ * Google ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 선택 필드 inviteCode를 최초 가입과 함께 보내면 초대자·피초대자 양쪽에 크레딧을 적립합니다(미해결·자기 코드·이미 가입된 계정의 제출은 무시). 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
  * @summary Google 로그인
  */
 export const loginWithGoogle = async (

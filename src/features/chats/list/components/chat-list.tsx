@@ -11,7 +11,7 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
-import { useCreatedStoryIds } from '@/features/stories/list/hooks/use-created-story-ids';
+import { useHasCreatedStories } from '@/features/stories/list/hooks/use-has-created-stories';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useTrackOnView } from '@/observability/analytics';
 
@@ -23,8 +23,7 @@ export function ChatList() {
   useTrackOnView('client_chatList_viewed');
 
   const { chats, isLoading, isError, isEmpty, refetch } = useCreatedChats();
-  const storyIds = useCreatedStoryIds();
-  const hasStories = (storyIds?.length ?? 0) > 0;
+  const hasStories = useHasCreatedStories();
   const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) {

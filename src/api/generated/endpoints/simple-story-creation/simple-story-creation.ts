@@ -281,6 +281,11 @@ export type createSimpleStoryResponse400 = {
   status: 400;
 };
 
+export type createSimpleStoryResponse402 = {
+  data: void;
+  status: 402;
+};
+
 export type createSimpleStoryResponse404 = {
   data: void;
   status: 404;
@@ -301,6 +306,7 @@ export type createSimpleStoryResponseSuccess = createSimpleStoryResponse201 & {
 };
 export type createSimpleStoryResponseError = (
   | createSimpleStoryResponse400
+  | createSimpleStoryResponse402
   | createSimpleStoryResponse404
   | createSimpleStoryResponse409
   | createSimpleStoryResponse502
@@ -411,6 +417,11 @@ export type generateSimpleStorylinesResponse400 = {
   status: 400;
 };
 
+export type generateSimpleStorylinesResponse402 = {
+  data: void;
+  status: 402;
+};
+
 export type generateSimpleStorylinesResponse502 = {
   data: ApiErrorResponse;
   status: 502;
@@ -422,6 +433,7 @@ export type generateSimpleStorylinesResponseSuccess =
   };
 export type generateSimpleStorylinesResponseError = (
   | generateSimpleStorylinesResponse400
+  | generateSimpleStorylinesResponse402
   | generateSimpleStorylinesResponse502
 ) & {
   headers: Headers;
