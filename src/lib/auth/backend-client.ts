@@ -5,8 +5,13 @@ import type { MeResponse, TokenResponse } from '@/api/generated/models';
  * Orval 생성 훅은 브라우저 → 동일 출처 프록시(/api) 경유가 전제라 서버 내부 호출에는 쓸 수 없다.
  */
 export class BackendAuthError extends Error {
-  constructor(public readonly status: number) {
-    super(`백엔드 인증 요청이 실패했습니다 (${status})`);
+  constructor(
+    public readonly status: number,
+    public readonly body?: string,
+  ) {
+    super(
+      `백엔드 인증 요청이 실패했습니다 (${status})${body ? `: ${body}` : ''}`,
+    );
     this.name = 'BackendAuthError';
   }
 }
@@ -31,7 +36,9 @@ const requestBackend = async <T>(
   });
 
   if (!response.ok) {
-    throw new BackendAuthError(response.status);
+    const body = await response.text().catch(() => '');
+
+    throw new BackendAuthError(response.status, body);
   }
 
   if (response.status === 204) {
@@ -52,18 +59,18 @@ const postJson = <T>(path: string, body: unknown): Promise<T> =>
 export const loginWithGoogleOnServer = (
   idToken: string,
 ): Promise<TokenResponse> =>
-  postJson<TokenResponse>('/v1/auth/login/google', { idToken });
+  postJson<TokenResponse>('/api/v1/auth/login/google', { idToken });
 
 /** refresh 토큰을 회전해 새 토큰 쌍을 발급받는다. 실패(401)는 family 폐기를 뜻할 수 있다. */
 export const refreshOnServer = (refreshToken: string): Promise<TokenResponse> =>
-  postJson<TokenResponse>('/v1/auth/token/refresh', { refreshToken });
+  postJson<TokenResponse>('/api/v1/auth/token/refresh', { refreshToken });
 
 /** refresh 토큰을 폐기한다(멱등 — 이미 폐기된 토큰도 204). */
 export const logoutOnServer = (refreshToken: string): Promise<void> =>
-  postJson<void>('/v1/auth/logout', { refreshToken });
+  postJson<void>('/api/v1/auth/logout', { refreshToken });
 
 /** access 토큰으로 현재 사용자 프로필을 조회한다. */
 export const fetchMeOnServer = (accessToken: string): Promise<MeResponse> =>
-  requestBackend<MeResponse>('/v1/auth/me', {
+  requestBackend<MeResponse>('/api/v1/auth/me', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });

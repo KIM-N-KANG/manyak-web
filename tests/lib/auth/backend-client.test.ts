@@ -9,7 +9,9 @@ import {
 const fetchMock = vi.fn();
 
 beforeEach(() => {
-  vi.stubEnv('API_BASE_URL', 'https://backend.example.com/api');
+  // 실제 환경(.env)의 API_BASE_URL은 /api를 포함하지 않는다. /api 접두사는
+  // 경로 쪽에 있어야 하며(생성된 Orval 클라이언트와 동일), 여기서도 그 전제로 검증한다.
+  vi.stubEnv('API_BASE_URL', 'https://backend.example.com');
   vi.stubGlobal('fetch', fetchMock);
   fetchMock.mockReset();
 });
@@ -20,7 +22,7 @@ afterEach(() => {
 });
 
 describe('loginWithGoogleOnServer', () => {
-  it('idToken을 /v1/auth/login/google로 POST하고 토큰 응답을 반환한다', async () => {
+  it('idToken을 /api/v1/auth/login/google로 POST하고 토큰 응답을 반환한다', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
@@ -36,11 +38,14 @@ describe('loginWithGoogleOnServer', () => {
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
   });
 
-  it('실패 응답은 status를 담은 BackendAuthError를 던진다', async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+  it('실패 응답은 status와 응답 body를 담은 BackendAuthError를 던진다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response('유효하지 않은 Google ID 토큰입니다.', { status: 401 }),
+    );
 
     await expect(loginWithGoogleOnServer('bad')).rejects.toMatchObject({
       status: 401,
+      body: '유효하지 않은 Google ID 토큰입니다.',
     });
     await expect(loginWithGoogleOnServer('bad')).rejects.toBeInstanceOf(
       BackendAuthError,
