@@ -17,7 +17,7 @@ test.describe('로그인 화면', () => {
     ).toBeHidden();
   });
 
-  test('마이 페이지의 로그인 버튼이 /login으로 이동한다', async ({ page }) => {
+  test('마이의 로그인 버튼이 /login으로 이동한다', async ({ page }) => {
     await skipOnboarding(page);
     await page.goto('/my');
     await page.getByRole('link', { name: '로그인' }).click();
@@ -25,7 +25,7 @@ test.describe('로그인 화면', () => {
     await expect(page).toHaveURL('/login');
   });
 
-  test('뒤로가기 버튼은 히스토리와 무관하게 마이 페이지로 이동한다', async ({
+  test('뒤로가기 버튼은 히스토리와 무관하게 마이로 이동한다', async ({
     page,
   }) => {
     await skipOnboarding(page);

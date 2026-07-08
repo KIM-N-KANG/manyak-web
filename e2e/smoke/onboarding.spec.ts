@@ -17,7 +17,7 @@ test.describe('온보딩', () => {
     await page.goto('/');
 
     await expect(
-      page.getByRole('heading', { level: 1, name: '내 이야기' }),
+      page.getByRole('heading', { level: 1, name: '스토리' }),
     ).toBeVisible();
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });

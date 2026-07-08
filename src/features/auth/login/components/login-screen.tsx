@@ -40,7 +40,6 @@ export function LoginScreen() {
       return;
     }
 
-    // 능동 로그아웃으로 이동해 온 경우 안내 후 파라미터를 지워 새로고침 시 재노출을 막는다.
     toast(TOAST_MESSAGE.SESSION_EXPIRED);
     router.replace(APP_PATH.LOGIN);
   }, [isSessionExpired, router]);
@@ -56,7 +55,7 @@ export function LoginScreen() {
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 pb-24">
         <ManyakLogo className="h-6 w-auto text-primary" />
         <p className="text-center text-lg font-semibold">
-          로그인하고 내 이야기를
+          로그인하고 나만의 스토리를
           <br />
           어디서든 이어서 즐겨보세요
         </p>
