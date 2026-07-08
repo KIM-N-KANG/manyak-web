@@ -141,19 +141,17 @@ test.describe('채팅 목록', () => {
     await skipOnboarding(page);
     await mockMemberSession(page);
 
-    let listCallCount = 0;
+    let deleted = false;
 
     await page.route('**/api/v1/users/me/chats**', async (route) => {
-      listCallCount += 1;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          listCallCount === 1 ? [chat('c1', '회원의 채팅')] : [],
-        ),
+        body: JSON.stringify(deleted ? [] : [chat('c1', '회원의 채팅')]),
       });
     });
     await page.route('**/api/v1/chats/c1', async (route) => {
+      deleted = true;
       await route.fulfill({ status: 204, body: '' });
     });
 
