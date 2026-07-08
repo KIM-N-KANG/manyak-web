@@ -18,6 +18,11 @@ import { track } from '@/observability/analytics';
 
 import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
 
+const INVITE_HEADING_LINES = ['친구를 초대하고', '함께 크레딧을 받아보세요'];
+
+const INVITE_HEADING_DESCRIPTION =
+  '친구가 초대 링크로 가입하면 나와 친구 모두 500 크레딧을 받아요';
+
 const INVITE_GUIDE_LINES = [
   '친구가 내 초대 링크로 가입하면 나와 친구 모두 500 크레딧을 받아요.',
   '초대 보상은 계정별로 매월 10회까지 받을 수 있어요 (한국 시간 기준, 매월 초기화).',
@@ -79,49 +84,63 @@ export function InviteScreen() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col">
       <Script
         src={KAKAO_SDK_URL}
         strategy="lazyOnload"
         onLoad={handleSdkLoad}
       />
 
-      <section className="flex flex-col items-center gap-1 rounded-lg bg-muted p-4">
-        <span className="text-sm text-foreground-secondary">내 초대 코드</span>
-        {invite?.inviteCode ? (
-          <span className="text-xl font-bold tracking-widest tabular-nums">
-            {invite.inviteCode}
+      <header className="flex flex-col items-start gap-1 p-4">
+        <div className="text-xl font-semibold">
+          {INVITE_HEADING_LINES.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+        <p className="text-foreground-secondary">
+          {INVITE_HEADING_DESCRIPTION}
+        </p>
+      </header>
+
+      <section className="flex flex-col gap-4 p-4">
+        <div className="flex flex-col items-center gap-1 rounded-lg bg-muted p-4">
+          <span className="text-sm text-foreground-secondary">
+            내 초대 코드
           </span>
-        ) : (
-          <Skeleton className="h-8 w-40 bg-foreground/5" />
-        )}
+          {invite?.inviteCode ? (
+            <span className="text-xl font-bold tracking-widest tabular-nums">
+              {invite.inviteCode}
+            </span>
+          ) : (
+            <Skeleton className="h-7 w-32 bg-foreground/5" />
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            className="flex-1"
+            disabled={!inviteUrl}
+            onClick={handleCopy}>
+            <HugeiconsIcon icon={Copy01Icon} aria-hidden="true" />
+            링크 복사
+          </Button>
+          <Button
+            type="button"
+            size="lg"
+            className="flex-1"
+            disabled={!inviteUrl || !isKakaoReady}
+            onClick={handleKakaoShare}>
+            <HugeiconsIcon icon={Share08Icon} aria-hidden="true" />
+            카카오톡 공유
+          </Button>
+        </div>
       </section>
 
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          size="lg"
-          variant="outline"
-          className="flex-1"
-          disabled={!inviteUrl}
-          onClick={handleCopy}>
-          <HugeiconsIcon icon={Copy01Icon} aria-hidden="true" />
-          링크 복사
-        </Button>
-        <Button
-          type="button"
-          size="lg"
-          className="flex-1"
-          disabled={!inviteUrl || !isKakaoReady}
-          onClick={handleKakaoShare}>
-          <HugeiconsIcon icon={Share08Icon} aria-hidden="true" />
-          카카오톡 공유
-        </Button>
-      </div>
-
-      <section className="mt-4 flex flex-col gap-2">
+      <section className="flex flex-col gap-2 p-4">
         <h2 className="text-lg font-bold">이용 안내</h2>
-        <ul className="flex list-disc flex-col px-4 text-sm leading-normal">
+        <ul className="flex list-disc flex-col pl-5 text-sm leading-normal">
           {INVITE_GUIDE_LINES.map((line) => (
             <li key={line}>{line}</li>
           ))}
