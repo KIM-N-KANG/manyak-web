@@ -4,7 +4,7 @@ import Google from 'next-auth/providers/google';
 import { logoutOnServer } from './backend-client';
 import { establishBackendSession } from './backend-session';
 import { SESSION_COOKIE_MAX_AGE_SECONDS } from './token-cookie-policy';
-import { clearBackendSession, readBackendSessionTokens } from './token-cookies';
+import { clearBackendSession, readRefreshTokenCookie } from './token-cookies';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [Google],
@@ -46,11 +46,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async signOut() {
-      const tokens = await readBackendSessionTokens();
+      // refresh 토큰만 읽는다. access·expiresAt이 손상돼도 refresh가 살아 있으면
+      // 세션이 유효하므로(backend-session의 복구 경로와 동일 전제), 여기서도
+      // refresh 쿠키를 기준으로 백엔드 토큰을 확실히 폐기한다.
+      const refreshToken = await readRefreshTokenCookie();
 
-      if (tokens) {
+      if (refreshToken) {
         try {
-          await logoutOnServer(tokens.refreshToken);
+          await logoutOnServer(refreshToken);
         } catch {
           // 백엔드 실패와 무관하게 로컬 세션은 폐기한다(스펙 FE-SCREEN-008 로그아웃).
         }
