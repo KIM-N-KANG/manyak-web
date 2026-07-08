@@ -63,11 +63,19 @@ const postJson = <T>(path: string, body: unknown): Promise<T> =>
     body: JSON.stringify(body),
   });
 
-/** Google ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다. */
+/**
+ * Google ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
+ * 초대 URL로 진입한 가입이면 inviteCode를 함께 보낸다(스펙 §4-3-7 — 무효 코드는
+ * 서버가 오류 없이 무시하므로 프론트는 판정 없이 전달만 한다).
+ */
 export const loginWithGoogleOnServer = (
   idToken: string,
+  inviteCode?: string | null,
 ): Promise<TokenResponse> =>
-  postJson<TokenResponse>(getLoginWithGoogleUrl(), { idToken });
+  postJson<TokenResponse>(
+    getLoginWithGoogleUrl(),
+    inviteCode ? { idToken, inviteCode } : { idToken },
+  );
 
 /** refresh 토큰을 회전해 새 토큰 쌍을 발급받는다. 실패(401)는 family 폐기를 뜻할 수 있다. */
 export const refreshOnServer = (refreshToken: string): Promise<TokenResponse> =>

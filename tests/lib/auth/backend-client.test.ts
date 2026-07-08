@@ -38,6 +38,33 @@ describe('loginWithGoogleOnServer', () => {
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
   });
 
+  it('inviteCode를 함께 주면 요청 body에 포함한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await loginWithGoogleOnServer('id-token', 'CW6VZX7D');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(JSON.parse(init.body as string)).toEqual({
+      idToken: 'id-token',
+      inviteCode: 'CW6VZX7D',
+    });
+  });
+
+  it('inviteCode가 null이면 body에 싣지 않는다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await loginWithGoogleOnServer('id-token', null);
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
+  });
+
   it('실패 응답은 status와 응답 body를 담은 BackendAuthError를 던진다', async () => {
     fetchMock.mockResolvedValue(
       new Response('유효하지 않은 Google ID 토큰입니다.', { status: 401 }),

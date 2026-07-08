@@ -103,6 +103,10 @@ export type AnalyticsEventProps = {
   // feedback
   client_feedback_viewed: void;
   client_feedback_form_submitted: void;
+  // invite (친구 초대 페이지)
+  client_invite_viewed: void;
+  client_invite_copyButton_clicked: void;
+  client_invite_kakaoShareButton_clicked: void;
 };
 
 /** 전송 가능한 분석 이벤트 이름. */
