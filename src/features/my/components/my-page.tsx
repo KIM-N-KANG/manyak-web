@@ -45,7 +45,7 @@ export function MyPage() {
         <MyMenuItem
           icon={AddTeamIcon}
           label="친구 초대"
-          href={APP_PATH.MY_FEEDBACK} //** 임시로 설정 */
+          href={APP_PATH.MY_INVITE}
         />
       </section>
 
