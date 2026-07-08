@@ -7,7 +7,7 @@ test.describe('약관·개인정보처리방침', () => {
     await skipOnboarding(page);
     await page.goto('/login');
 
-    await expect(page.getByText('이관은 계정당 한 번만 가능')).toBeVisible();
+    await expect(page.getByText('계정당 한 번만 진행돼요')).toBeVisible();
     await expect(
       page.getByRole('link', { name: '서비스이용약관' }),
     ).toBeVisible();
