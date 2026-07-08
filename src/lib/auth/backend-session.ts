@@ -3,6 +3,7 @@ import {
   fetchMeOnServer,
   loginWithGoogleOnServer,
 } from './backend-client';
+import { clearInviteCodeCookie, readInviteCodeCookie } from './invite-cookie';
 import { refreshWithDedup } from './refresh-dedup';
 import { shouldRefreshAccessToken } from './token-cookie-policy';
 import {
@@ -116,7 +117,9 @@ export async function establishBackendSession(idToken: string): Promise<{
   nickname: string;
   profileImageUrl: string | null;
 }> {
-  const tokens = await loginWithGoogleOnServer(idToken);
+  // 초대 URL 진입 시 저장된 코드가 있으면 로그인에 실어 보낸다(무효 코드는 서버가 무시).
+  const inviteCode = await readInviteCodeCookie();
+  const tokens = await loginWithGoogleOnServer(idToken, inviteCode);
 
   if (!tokens.accessToken) {
     throw new Error('토큰 응답에 accessToken이 없습니다.');
@@ -129,6 +132,11 @@ export async function establishBackendSession(idToken: string): Promise<{
   }
 
   await writeBackendSessionTokens(tokens, Date.now());
+
+  // 세션 수립이 끝까지 성공했을 때만 삭제한다. 실패 시 남겨 다음 로그인 시도에서 재전달.
+  if (inviteCode) {
+    await clearInviteCodeCookie();
+  }
 
   return {
     userId: me.id,
