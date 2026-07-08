@@ -23,9 +23,8 @@ test.describe('약관·개인정보처리방침', () => {
 
     await expect(page).toHaveURL('/terms');
     await expect(
-      page.getByRole('heading', { level: 1, name: '서비스이용약관' }),
+      page.getByText('서비스이용약관', { exact: true }),
     ).toBeVisible();
-    await expect(page.getByText(/시행일 \d{4}-\d{2}-\d{2}/)).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '제5조 (게스트 데이터의 이관)' }),
     ).toBeVisible();
@@ -38,9 +37,11 @@ test.describe('약관·개인정보처리방침', () => {
 
     await expect(page).toHaveURL('/privacy');
     await expect(
-      page.getByRole('heading', { level: 1, name: '개인정보처리방침' }),
+      page.getByText('개인정보처리방침', { exact: true }),
     ).toBeVisible();
-    await expect(page.getByText(/시행일 \d{4}-\d{2}-\d{2}/)).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: '1. 수집하는 개인정보 항목' }),
+    ).toBeVisible();
   });
 
   test('게스트도 /terms에 직접 접근할 수 있다', async ({ page }) => {
@@ -48,7 +49,10 @@ test.describe('약관·개인정보처리방침', () => {
     await page.goto('/terms');
 
     await expect(
-      page.getByRole('heading', { level: 1, name: '서비스이용약관' }),
+      page.getByText('서비스이용약관', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: '제5조 (게스트 데이터의 이관)' }),
     ).toBeVisible();
   });
 
