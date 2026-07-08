@@ -10,18 +10,29 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 export const KAKAO_SDK_URL =
   'https://t1.kakaocdn.net/kakao_js_sdk/2.7.7/kakao.min.js';
 
-const KAKAO_SHARE_TEXT =
-  '마냑에서 나만의 스토리를 만들고 채팅해 보세요!\n이 링크로 가입하면 우리 둘 다 500 크레딧을 받아요.';
+const KAKAO_SHARE_TITLE = '500 크레딧 받고 시작하기 🎁';
+const KAKAO_SHARE_DESCRIPTION =
+  '친구 초대 링크로 가입하면 둘 다 500 크레딧을 받아요. 지금 마냑에서 나만의 스토리를 시작해 보세요.';
+
+/** 공유 카드 썸네일. 앱의 opengraph 이미지를 재활용한다(카카오 서버가 가져갈 절대 URL 필요). */
+const shareImageUrl = (): string =>
+  `${window.location.origin}/opengraph-image.png`;
+
+type KakaoShareLink = { mobileWebUrl: string; webUrl: string };
 
 type KakaoSdk = {
   isInitialized: () => boolean;
   init: (appKey: string) => void;
   Share: {
     sendDefault: (settings: {
-      objectType: 'text';
-      text: string;
-      link: { mobileWebUrl: string; webUrl: string };
-      buttonTitle?: string;
+      objectType: 'feed';
+      content: {
+        title: string;
+        description?: string;
+        imageUrl: string;
+        link: KakaoShareLink;
+      };
+      buttons?: { title: string; link: KakaoShareLink }[];
     }) => void;
   };
 };
@@ -59,12 +70,21 @@ export function useKakaoShare() {
       return;
     }
 
+    const link: KakaoShareLink = {
+      mobileWebUrl: inviteUrl,
+      webUrl: inviteUrl,
+    };
+
     try {
       window.Kakao.Share.sendDefault({
-        objectType: 'text',
-        text: KAKAO_SHARE_TEXT,
-        link: { mobileWebUrl: inviteUrl, webUrl: inviteUrl },
-        buttonTitle: '초대 받기',
+        objectType: 'feed',
+        content: {
+          title: KAKAO_SHARE_TITLE,
+          description: KAKAO_SHARE_DESCRIPTION,
+          imageUrl: shareImageUrl(),
+          link,
+        },
+        buttons: [{ title: '초대 받기', link }],
       });
     } catch {
       toast.error(TOAST_MESSAGE.INVITE_SHARE_FAILED);
