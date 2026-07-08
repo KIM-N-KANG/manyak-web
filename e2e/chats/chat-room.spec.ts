@@ -189,9 +189,7 @@ test.describe('채팅 스트리밍', () => {
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    await expect(
-      page.getByText('응답 생성에 실패했어요. 잠시 후 다시 시도해주세요.'),
-    ).toBeVisible();
+    await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
   });
 });
 

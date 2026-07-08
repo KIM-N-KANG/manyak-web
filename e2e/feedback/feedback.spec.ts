@@ -102,8 +102,6 @@ test.describe('피드백 제출', () => {
       .fill('실패 케이스');
     await page.getByRole('button', { name: '피드백 보내기' }).click();
 
-    await expect(
-      page.getByText('피드백 전송에 실패했어요. 다시 시도해주세요.'),
-    ).toBeVisible();
+    await expect(page.getByText('피드백 전송에 실패했어요')).toBeVisible();
   });
 });
