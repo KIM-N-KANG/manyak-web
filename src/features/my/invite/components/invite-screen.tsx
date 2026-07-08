@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { Copy01Icon, Share08Icon } from '@hugeicons/core-free-icons';
+import { CopyLinkIcon, Share08Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
@@ -123,8 +123,8 @@ export function InviteScreen() {
             className="flex-1"
             disabled={!inviteUrl}
             onClick={handleCopy}>
-            <HugeiconsIcon icon={Copy01Icon} aria-hidden="true" />
-            링크 복사
+            <HugeiconsIcon icon={CopyLinkIcon} aria-hidden="true" />
+            링크 복사하기
           </Button>
           <Button
             type="button"
@@ -133,7 +133,7 @@ export function InviteScreen() {
             disabled={!inviteUrl || !isKakaoReady}
             onClick={handleKakaoShare}>
             <HugeiconsIcon icon={Share08Icon} aria-hidden="true" />
-            카카오톡 공유
+            카카오톡 공유하기
           </Button>
         </div>
       </section>
