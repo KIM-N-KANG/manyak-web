@@ -107,6 +107,9 @@ export type AnalyticsEventProps = {
   client_invite_viewed: void;
   client_invite_copyButton_clicked: void;
   client_invite_kakaoShareButton_clicked: void;
+  // legal
+  client_terms_viewed: void;
+  client_privacy_viewed: void;
 };
 
 /** 전송 가능한 분석 이벤트 이름. */
