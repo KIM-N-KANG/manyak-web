@@ -19,6 +19,26 @@ async function mockMyInvite(page: Page): Promise<void> {
   );
 }
 
+/**
+ * 카카오 JS SDK CDN 요청을 window.Kakao를 정의하는 스텁으로 대체한다.
+ * 실제 SDK·네트워크 없이 로드 콜백(onReady) 배선을 결정적으로 검증하기 위함이다.
+ */
+async function mockKakaoSdk(page: Page): Promise<void> {
+  await page.route('**/kakao_js_sdk/**', (route) =>
+    route.fulfill({
+      contentType: 'application/javascript',
+      body: `window.Kakao = (function () {
+        var initialized = false;
+        return {
+          isInitialized: function () { return initialized; },
+          init: function () { initialized = true; },
+          Share: { sendDefault: function () {} },
+        };
+      })();`,
+    }),
+  );
+}
+
 test.describe('초대 링크 진입 (/invite/[code])', () => {
   test('게스트는 초대 코드가 쿠키에 저장되고 로그인 페이지로 이동한다', async ({
     page,
@@ -95,5 +115,33 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
 
     await expect(page).toHaveURL(/\/my\/invite$/);
     await expect(page.getByText('내 초대 코드')).toBeVisible();
+  });
+
+  test('앱 내에서 재진입해도 카카오톡 공유 버튼이 계속 활성 상태다', async ({
+    page,
+  }) => {
+    // SDK 스크립트가 캐시된 뒤 클라이언트 라우팅으로 재진입할 때, 준비 상태 배선이
+    // onLoad(최초 1회)면 버튼이 비활성으로 남는다. onReady(마운트마다)면 계속 활성이다.
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await mockMyInvite(page);
+    await mockKakaoSdk(page);
+    await page.goto('/my');
+
+    const kakaoButton = page.getByRole('button', { name: /카카오톡 공유/ });
+
+    // 첫 진입 — SDK 로드 후 활성화된다.
+    await page.getByRole('link', { name: /친구 초대/ }).click();
+    await expect(kakaoButton).toBeEnabled();
+
+    // 뒤로 갔다가 재진입 — 스크립트는 이미 캐시된 상태다.
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(/\/my$/);
+    await page.getByRole('link', { name: /친구 초대/ }).click();
+
+    await expect(page).toHaveURL(/\/my\/invite$/);
+    await expect(kakaoButton).toBeEnabled();
   });
 });

@@ -88,7 +88,7 @@ export function InviteScreen() {
       <Script
         src={KAKAO_SDK_URL}
         strategy="lazyOnload"
-        onLoad={handleSdkLoad}
+        onReady={handleSdkLoad}
       />
 
       <header className="flex flex-col items-start gap-1 p-4">

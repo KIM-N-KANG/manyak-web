@@ -44,7 +44,10 @@ declare global {
 }
 
 /**
- * 카카오톡 공유 훅. SDK 로드 완료(handleSdkLoad) 시 앱 키로 초기화하고,
+ * 카카오톡 공유 훅. handleSdkLoad를 <Script onReady>에 연결한다 — onReady는 최초
+ * 로드뿐 아니라 재마운트(스크립트가 이미 캐시된 클라이언트 라우팅 재진입 포함)마다
+ * 실행되므로, 그때 앱 키로 초기화하고 isReady=true로 버튼을 활성화한다. onLoad(최초 1회)에
+ * 걸면 재진입 시 콜백이 다시 불리지 않아 버튼이 비활성으로 남는다.
  * 준비 전(키 미설정·로드 실패 포함)에는 isReady=false로 버튼을 비활성화한다.
  */
 export function useKakaoShare() {
