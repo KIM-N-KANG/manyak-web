@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -59,6 +60,11 @@ export function LoginScreen() {
           <br />
           어디서든 이어서 즐겨보세요
         </p>
+        <p className="text-center text-xs leading-relaxed text-foreground-secondary">
+          로그인하면 이 기기에서 만든 스토리·채팅이 계정으로 자동 이관돼요.
+          이관은 계정당 한 번만 가능하며, 다음 로그인부터는 이 기기의
+          스토리·채팅이 이관되지 않아요.
+        </p>
         <Button
           type="button"
           size="lg"
@@ -68,6 +74,17 @@ export function LoginScreen() {
           <GoogleLogo />
           Google로 시작하기
         </Button>
+        <p className="text-center text-xs leading-relaxed text-foreground-secondary">
+          로그인 시{' '}
+          <Link href={APP_PATH.TERMS} className="underline">
+            서비스이용약관
+          </Link>{' '}
+          및{' '}
+          <Link href={APP_PATH.PRIVACY} className="underline">
+            개인정보처리방침
+          </Link>
+          에 동의하는 것으로 간주해요.
+        </p>
       </main>
     </div>
   );
