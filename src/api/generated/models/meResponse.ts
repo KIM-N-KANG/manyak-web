@@ -22,4 +22,8 @@ export interface MeResponse {
   profileImageUrl?: string | null;
   /** 계정 상태 */
   status?: MeResponseStatus;
+  /** 크레딧 잔액. 지갑이 없으면 0 */
+  creditBalance?: number;
+  /** KST 자정 기준 당일 출석체크 적립 완료 여부 */
+  attendedToday?: boolean;
 }
