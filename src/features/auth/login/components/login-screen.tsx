@@ -64,8 +64,8 @@ export function LoginScreen() {
         </div>
         <div className="flex w-full flex-col items-center gap-4">
           <p className="text-center text-sm leading-relaxed text-foreground-secondary">
-            처음 로그인하면 이 기기의 스토리와 채팅이 계정에 저장돼요.
-            <br />이 과정은 계정당 한 번만 진행돼요.
+            처음 로그인하면 이 기기의 스토리와 채팅이 계정에 저장돼요
+            <br />이 과정은 계정당 한 번만 진행돼요
           </p>
           <Button
             type="button"
@@ -85,7 +85,7 @@ export function LoginScreen() {
             <Link href={APP_PATH.PRIVACY} className="underline">
               개인정보처리방침
             </Link>
-            에 동의하는 것으로 간주해요.
+            에 동의하는 것으로 간주해요
           </p>
         </div>
       </main>
