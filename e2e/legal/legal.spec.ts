@@ -51,4 +51,17 @@ test.describe('약관·개인정보처리방침', () => {
       page.getByRole('heading', { level: 1, name: '서비스이용약관' }),
     ).toBeVisible();
   });
+
+  test('게스트가 /terms에 직접 진입한 뒤 뒤로가기를 누르면 홈으로 이동한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.goto('/terms');
+
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+
+    await expect(page).toHaveURL('/');
+  });
 });

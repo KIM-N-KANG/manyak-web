@@ -1,6 +1,7 @@
 'use client';
 
 import { BackHeader } from '@/components/layout/back-header';
+import { APP_PATH } from '@/constants/app-path';
 import { useTrackOnView } from '@/observability/analytics';
 
 import type { LegalDocument } from '../types';
@@ -15,7 +16,7 @@ export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
 
   return (
     <div className="flex h-svh min-h-0 flex-col">
-      <BackHeader title={doc.title} />
+      <BackHeader title={doc.title} fallbackHref={APP_PATH.MAIN.STORIES} />
       <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
         <article className="mx-auto flex max-w-xl flex-col gap-6 text-sm leading-relaxed text-foreground">
           <header className="flex flex-col gap-1">
