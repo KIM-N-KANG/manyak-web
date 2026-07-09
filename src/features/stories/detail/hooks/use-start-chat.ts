@@ -14,7 +14,7 @@ import {
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
+import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
 import { isGuestOverLimit } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import type { GuestLimitTrigger } from '@/observability/analytics';
@@ -53,8 +53,11 @@ export function useStartChat(storyId: string) {
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: (error) => {
-        // 게스트의 체험 한도 초과(402)는 로그인 유도, 그 외(회원 402 포함)는 기존 실패 토스트.
-        if (status === 'unauthenticated' && isPaymentRequiredError(error)) {
+        // 게스트 체험 한도면 로그인 유도, 크레딧 부족이면 실패 토스트.
+        // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
+        if (
+          resolvePaymentRequiredReason(error, status) === 'guest-trial-limit'
+        ) {
           setGuestLimitTrigger('chat_start');
 
           return;
