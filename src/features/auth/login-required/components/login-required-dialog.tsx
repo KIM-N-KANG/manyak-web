@@ -15,8 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { APP_PATH } from '@/constants/app-path';
-import { track } from '@/observability/analytics';
-import type { GuestLimitTrigger } from '@/observability/analytics/events';
+import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredDialogProps = {
   /** 다이어로그를 연 402 발생 지점. null이면 닫힌 상태. */
