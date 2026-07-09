@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
+      {
+        // 프로필 프리셋 이미지(KNK-388, B17). 백엔드가 명사 매핑 프리셋을
+        // static 리소스로 서빙하며 me.profileImageUrl에 전체 URL이 실린다.
+        protocol: 'https',
+        hostname: 'api.manyak.app',
+        pathname: '/profile-presets/**',
+      },
     ],
   },
 };
