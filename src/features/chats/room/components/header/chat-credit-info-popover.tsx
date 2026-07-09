@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useSession } from 'next-auth/react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +13,7 @@ import {
   PopoverDescription,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { GUEST_LIMITS } from '@/features/onboarding/constants';
 
 type ChatCreditInfoPopoverProps = {
   isHeaderVisible: boolean;
@@ -20,6 +22,8 @@ type ChatCreditInfoPopoverProps = {
 export function ChatCreditInfoPopover({
   isHeaderVisible,
 }: ChatCreditInfoPopoverProps) {
+  const { status } = useSession();
+  const isGuest = status === 'unauthenticated';
   const [open, setOpen] = useState(false);
   const [prevHeaderVisible, setPrevHeaderVisible] = useState(isHeaderVisible);
 
@@ -46,7 +50,9 @@ export function ChatCreditInfoPopover({
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64">
         <PopoverDescription>
-          채팅을 한 번 보낼 때마다 10크레딧이 자동으로 차감돼요
+          {isGuest
+            ? `로그인 전에는 채팅방 전체에서 ${GUEST_LIMITS.chat}번까지 대화할 수 있어요`
+            : '채팅을 한 번 보낼 때마다 10크레딧이 자동으로 차감돼요'}
         </PopoverDescription>
       </PopoverContent>
     </Popover>
