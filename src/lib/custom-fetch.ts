@@ -2,9 +2,29 @@ import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 import { captureApiError } from '@/observability/monitoring/sentry';
 
-import { FetchError } from './api-error';
+import { FetchError, getApiErrorCode } from './api-error';
 
-export { FetchError };
+export { FetchError, getApiErrorCode };
+
+/**
+ * 에러 응답 바디를 파싱한다. JSON이면 객체로, JSON이 아니면 원문 문자열로, 비어 있으면 null.
+ * `FetchError.data`에 담아 {@link getApiErrorCode} 등이 `code`를 읽을 수 있게 한다.
+ */
+export async function parseErrorResponseBody(
+  response: Response,
+): Promise<unknown> {
+  const text = await response.text().catch(() => '');
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
 
 const API_TIMEOUT_MS = 120 * 1000;
 const API_PROXY_BASE_PATH = '/api';

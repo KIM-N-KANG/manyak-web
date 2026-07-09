@@ -13,6 +13,7 @@ import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
+import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
 import {
   incrementGuestUsage,
   isGuestOverLimit,
@@ -42,15 +43,18 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
 
-  // 402 통지: 확정된 게스트면 로그인 유도, 그 외(회원 크레딧 부족·세션 미확정)는 실패 토스트 유지.
-  const handlePaymentRequired = () => {
-    if (sessionStatus !== 'unauthenticated') {
-      toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
+  // 402 통지: 게스트 체험 한도면 로그인 유도, 크레딧 부족이면 실패 토스트 유지.
+  // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
+  const handlePaymentRequired = (error: unknown) => {
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) === 'guest-trial-limit'
+    ) {
+      setGuestLimitTrigger('chat_turn');
 
       return;
     }
 
-    setGuestLimitTrigger('chat_turn');
+    toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
   };
   const {
     storyTitle,
@@ -80,10 +84,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     handlePaymentRequired,
   );
 
-  // 게스트가 턴 한도에 도달했으면 전송하지 않고 로그인 유도(기존 402 경로 재사용).
+  // 게스트가 턴 한도에 도달했으면 전송하지 않고 로그인 유도(서버 402 이전의 클라이언트 사전 차단).
   const guardedSend = (userInput: string): Promise<void> => {
     if (isGuestOverLimit(sessionStatus, 'chat')) {
-      handlePaymentRequired();
+      setGuestLimitTrigger('chat_turn');
 
       return Promise.resolve();
     }

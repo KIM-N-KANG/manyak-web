@@ -21,7 +21,7 @@ export function useChatStream(
   chatId: string,
   turnCount: number,
   onCompleted: () => Promise<unknown> | unknown,
-  onPaymentRequired?: () => void,
+  onPaymentRequired?: (error: unknown) => void,
 ) {
   const [streamingTurn, setStreamingTurn] = useState<StreamingTurn | null>(
     null,
@@ -65,9 +65,10 @@ export function useChatStream(
 
       setStreamingTurn(null);
 
-      // 체험 한도 초과(402)는 일반 스트림 실패와 다른 UX(로그인 유도)라 상위에 위임한다.
+      // 402(체험 한도 초과·크레딧 부족)는 일반 스트림 실패와 다른 UX라 상위에 위임한다.
+      // 사유 구분(로그인 유도 vs 실패 토스트)은 세션을 아는 상위에서 code로 판정한다.
       if (onPaymentRequired && isPaymentRequiredError(error)) {
-        onPaymentRequired();
+        onPaymentRequired(error);
 
         return;
       }

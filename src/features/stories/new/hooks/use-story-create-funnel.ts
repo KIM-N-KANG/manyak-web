@@ -27,7 +27,7 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
+import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
 import {
   type GuestUsageAction,
   incrementGuestUsage,
@@ -123,11 +123,14 @@ export function useStoryCreateFunnel() {
 
   // 게스트의 체험 한도 초과(402)면 로그인 유도 다이어로그를 연다.
   // 회원의 402(크레딧 부족)는 기존 일반 에러 UI로 남긴다(후속 티켓에서 별도 처리).
+  // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
   const handleGuestLimitError = (
     error: unknown,
     trigger: GuestLimitTrigger,
   ) => {
-    if (sessionStatus !== 'unauthenticated' || !isPaymentRequiredError(error)) {
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) !== 'guest-trial-limit'
+    ) {
       return;
     }
 
