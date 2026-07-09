@@ -6,7 +6,10 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
-import { getStorylineTabLabel } from '../../constants';
+import {
+  EXPECTED_STORYLINE_COUNT,
+  getStorylineTabLabel,
+} from '../../constants';
 import { useStorylineRating } from '../../hooks/use-storyline-rating';
 import type { StorylineSelectStepSectionProps } from '../../types';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
@@ -63,23 +66,24 @@ export function StorylineSelectStepSection({
       }
       onScroll={onScroll}
       footer={
-        <>
-          <Button
-            type="button"
-            size="lg"
-            variant="secondary"
-            disabled={isRegeneratingStorylines}
-            onClick={onRegenerateStorylines}>
-            다시 만들기
-          </Button>
-          <Button
-            type="button"
-            size="lg"
-            disabled={!selectedStoryline || isRegeneratingStorylines}
-            onClick={onSelectStoryline}>
-            선택하기
-          </Button>
-        </>
+        isRegeneratingStorylines ? undefined : (
+          <>
+            <Button
+              type="button"
+              size="lg"
+              variant="secondary"
+              onClick={onRegenerateStorylines}>
+              다시 만들기
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              disabled={!selectedStoryline}
+              onClick={onSelectStoryline}>
+              선택하기
+            </Button>
+          </>
+        )
       }>
       {isRegeneratingStorylines ? (
         <StorylineSelectLoading />
@@ -95,13 +99,19 @@ export function StorylineSelectStepSection({
                 creationId={creationId}
               />
             }>
-            {storylines.map((storylineItem, index) => (
-              <TabsTrigger
-                key={storylineItem.id ?? index}
-                value={String(index)}>
-                {getStorylineTabLabel(index)}
-              </TabsTrigger>
-            ))}
+            {storylines.length > 0
+              ? storylines.map((storylineItem, index) => (
+                  <TabsTrigger
+                    key={storylineItem.id ?? index}
+                    value={String(index)}>
+                    {getStorylineTabLabel(index)}
+                  </TabsTrigger>
+                ))
+              : Array.from({ length: EXPECTED_STORYLINE_COUNT }, (_, index) => (
+                  <TabsTrigger key={index} value={String(index)} disabled>
+                    {getStorylineTabLabel(index)}
+                  </TabsTrigger>
+                ))}
           </StickyTabsList>
           {storylines.map((storylineItem, index) => (
             <TabsContent
