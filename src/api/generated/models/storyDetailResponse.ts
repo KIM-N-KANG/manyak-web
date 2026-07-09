@@ -55,6 +55,8 @@ export interface StoryDetailResponse {
   endings?: StoryEndingResponse[];
   /** 스토리 주요 사건 목록(표시 순서). 없으면 빈 배열입니다. */
   mainEvents?: StoryMainEventResponse[];
+  /** 요청 회원이 이 스토리에서 도달한 엔딩 이름 목록(엔딩은 이름으로 식별). 게스트는 빈 배열입니다. */
+  reachedEndings?: string[];
   /** 생성 시각 */
   createdAt?: string;
 }

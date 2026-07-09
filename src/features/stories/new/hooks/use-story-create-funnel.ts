@@ -27,7 +27,7 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
+import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
 import {
   type GuestUsageAction,
   incrementGuestUsage,
@@ -36,7 +36,10 @@ import {
 } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import { saveCreatedStoryId } from '@/features/stories/list/utils/story-id-storage';
-import type { GuestLimitTrigger } from '@/observability/analytics';
+import type {
+  CreditShortageTrigger,
+  GuestLimitTrigger,
+} from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
@@ -72,6 +75,8 @@ export function useStoryCreateFunnel() {
   const [hasCompleteStoryError, setHasCompleteStoryError] = useState(false);
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
+  const [creditShortageTrigger, setCreditShortageTrigger] =
+    useState<CreditShortageTrigger | null>(null);
   const [isGuestLimitReached, setIsGuestLimitReached] = useState(false);
   const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
   const [selectedRecommendations, setSelectedRecommendations] = useState<
@@ -121,18 +126,25 @@ export function useStoryCreateFunnel() {
     setHasCompleteStoryError(true);
   };
 
-  // 게스트의 체험 한도 초과(402)면 로그인 유도 다이어로그를 연다.
-  // 회원의 402(크레딧 부족)는 기존 일반 에러 UI로 남긴다(후속 티켓에서 별도 처리).
-  const handleGuestLimitError = (
+  // 402 처리: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도 다이얼로그를 연다.
+  // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
+  // 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행되고, 이 핸들러는 다이얼로그만 얹는다.
+  const handlePaymentRequiredError = (
     error: unknown,
     trigger: GuestLimitTrigger,
   ) => {
-    if (sessionStatus !== 'unauthenticated' || !isPaymentRequiredError(error)) {
+    const reason = resolvePaymentRequiredReason(error, sessionStatus);
+
+    if (reason === 'guest-trial-limit') {
+      setIsGuestLimitReached(true);
+      setGuestLimitTrigger(trigger);
+
       return;
     }
 
-    setIsGuestLimitReached(true);
-    setGuestLimitTrigger(trigger);
+    if (reason === 'insufficient-credit') {
+      setCreditShortageTrigger(trigger);
+    }
   };
 
   // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 다이얼로그를 열고 true를 반환한다.
@@ -174,7 +186,7 @@ export function useStoryCreateFunnel() {
         setStep('storyline-select');
       },
       onError: (error) => {
-        handleGuestLimitError(error, 'storyline_generate');
+        handlePaymentRequiredError(error, 'storyline_generate');
       },
     },
   });
@@ -214,7 +226,7 @@ export function useStoryCreateFunnel() {
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
       onError: (error) => {
-        handleGuestLimitError(error, 'chat_start');
+        handlePaymentRequiredError(error, 'chat_start');
         failToAdditionalInfo('chat');
       },
     },
@@ -248,7 +260,7 @@ export function useStoryCreateFunnel() {
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: (error) => {
-        handleGuestLimitError(error, 'story_create');
+        handlePaymentRequiredError(error, 'story_create');
         failToAdditionalInfo('story');
       },
     },
@@ -447,6 +459,8 @@ export function useStoryCreateFunnel() {
       setGuestLimitTrigger(null);
       setIsBackstopDismissed(true);
     },
+    creditShortageTrigger,
+    closeCreditShortageDialog: () => setCreditShortageTrigger(null),
     handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,

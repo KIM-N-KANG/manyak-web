@@ -61,7 +61,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         {showSkeleton && (
           <m.main
             key="skeleton"
-            className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto"
+            className="flex min-h-0 flex-1 flex-col overflow-y-auto"
             {...FADE_TRANSITION_PROPS}>
             <StoryDetailSkeleton />
           </m.main>
@@ -93,7 +93,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             {...FADE_TRANSITION_PROPS}>
             <main
               ref={contentRef}
-              className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto p-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
               <StoryInfoSection story={story} titleRef={titleRef} />
             </main>
 

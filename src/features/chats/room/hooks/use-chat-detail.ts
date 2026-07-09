@@ -16,7 +16,7 @@ export function useChatDetail(chatId: string) {
       queryFn: queryFnWithoutAbortSignal(() => getChatDetail(chatId)),
     },
   });
-  const detail = query.data?.data;
+  const detail = query.data?.status === 200 ? query.data.data : undefined;
 
   return {
     storyTitle: detail?.storyTitle ?? '',

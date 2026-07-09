@@ -20,6 +20,8 @@ export interface ChatSummaryResponse {
   lastStoryPreview?: string;
   /** 이 채팅에서 사용자가 이어쓴 횟수(완료된 턴 수) */
   turnCount?: number;
+  /** 이 채팅에서 도달한 엔딩 이름(도달 전이면 빈 배열). 프론트가 스토리별로 합산합니다. */
+  reachedEndings?: string[];
   /** 마지막 진행 시각 */
   updatedAt?: string;
 }

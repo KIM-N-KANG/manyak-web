@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 
 import { CHAT_HEADER_HEIGHT_CLASS } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
+import { ChatCreditInfoPopover } from './chat-credit-info-popover';
 import { ChatSettingsDrawer } from './chat-settings-drawer';
 
 type ChatRoomHeaderProps = {
@@ -52,6 +53,7 @@ export function ChatRoomHeader({
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
       <h1 className="min-w-0 flex-1 truncate font-semibold">{storyTitle}</h1>
+      <ChatCreditInfoPopover isHeaderVisible={isVisible} />
       <ChatSettingsDrawer
         chatId={chatId}
         mode={inputMode}

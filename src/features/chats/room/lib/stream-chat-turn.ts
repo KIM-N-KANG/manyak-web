@@ -1,7 +1,11 @@
 import { getStreamChatTurnUrl } from '@/api/generated/endpoints/chats/chats';
 import type { ContinueChatRequest } from '@/api/generated/models';
 import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
-import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
+import {
+  FetchError,
+  parseErrorResponseBody,
+  resolveApiProxyUrl,
+} from '@/lib/custom-fetch';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
 /**
@@ -19,7 +23,9 @@ export async function streamChatTurnRaw(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
+        // 성공 응답은 SSE지만, 402(크레딧 부족·게스트 한도) 같은 에러는 동기 JSON으로 온다.
+        // application/json을 함께 요청해야 서버가 에러 바디(code)를 실어 보낸다(백엔드 KNK-524).
+        Accept: 'text/event-stream, application/json',
         ...getAnalyticsIdentityHeaders(),
       },
       body: JSON.stringify(body),
@@ -34,7 +40,7 @@ export async function streamChatTurnRaw(
     throw new FetchError(
       `스트리밍 요청에 실패했어요 (status: ${response.status})`,
       response.status,
-      await response.text().catch(() => null),
+      await parseErrorResponseBody(response),
     );
   }
 
