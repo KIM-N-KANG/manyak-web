@@ -24,4 +24,10 @@ describe('resolveLoginCallbackUrl', () => {
     expect(resolveLoginCallbackUrl(null)).toBe(APP_PATH.MAIN.STORIES);
     expect(resolveLoginCallbackUrl('')).toBe(APP_PATH.MAIN.STORIES);
   });
+
+  it('제어 문자가 섞인 경로는 기본 경로로 폴백한다 (탭·개행 우회 방지)', () => {
+    expect(resolveLoginCallbackUrl('/\t/evil.com')).toBe(APP_PATH.MAIN.STORIES);
+    expect(resolveLoginCallbackUrl('/\n/evil.com')).toBe(APP_PATH.MAIN.STORIES);
+    expect(resolveLoginCallbackUrl('/\r/evil.com')).toBe(APP_PATH.MAIN.STORIES);
+  });
 });
