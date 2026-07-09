@@ -13,6 +13,10 @@ import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
+import {
+  incrementGuestUsage,
+  isGuestUsageLimitReached,
+} from '@/features/auth/login-required/utils/guest-usage-storage';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
@@ -58,6 +62,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     refetch,
   } = useChatDetail(chatId);
   const handleStreamCompleted = async () => {
+    if (sessionStatus !== 'authenticated') {
+      incrementGuestUsage('chat');
+    }
+
     await refetch();
     // 게스트(배치)·회원(me/chats) 목록 모두 최근 활동 순서가 바뀌므로 함께 무효화한다.
     // 비활성 쿼리 무효화는 무해해서 세션 분기 없이 둘 다 처리한다.
@@ -72,6 +80,17 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     handlePaymentRequired,
   );
 
+  // 게스트가 턴 한도에 도달했으면 전송하지 않고 로그인 유도(기존 402 경로 재사용).
+  const guardedSend = (userInput: string): Promise<void> => {
+    if (sessionStatus !== 'authenticated' && isGuestUsageLimitReached('chat')) {
+      handlePaymentRequired();
+
+      return Promise.resolve();
+    }
+
+    return send(userInput);
+  };
+
   const { mode, changeMode } = useChatInputMode();
 
   const composer = useChatComposer({
@@ -79,7 +98,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnCount: turns.length,
     isStreaming,
     inputMode: mode,
-    onSend: send,
+    onSend: guardedSend,
   });
 
   const [pendingFill, setPendingFill] = useState<{
