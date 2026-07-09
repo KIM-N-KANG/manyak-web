@@ -132,19 +132,17 @@ test.describe('스토리 목록', () => {
     await skipOnboarding(page);
     await mockMemberSession(page);
 
-    let listCallCount = 0;
+    let deleted = false;
 
     await page.route('**/api/v1/users/me/stories**', async (route) => {
-      listCallCount += 1;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          listCallCount === 1 ? [story('s1', '회원의 서재')] : [],
-        ),
+        body: JSON.stringify(deleted ? [] : [story('s1', '회원의 서재')]),
       });
     });
     await page.route('**/api/v1/stories/s1', async (route) => {
+      deleted = true;
       await route.fulfill({ status: 204, body: '' });
     });
 

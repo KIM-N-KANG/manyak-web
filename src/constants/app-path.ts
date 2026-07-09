@@ -5,6 +5,8 @@ export const APP_PATH = {
     MY: '/my',
   },
   LOGIN: '/login',
+  TERMS: '/terms',
+  PRIVACY: '/privacy',
   MY_FEEDBACK: '/my/feedback',
   MY_INVITE: '/my/invite',
   INVITE: (code: string) => `/invite/${code}`,

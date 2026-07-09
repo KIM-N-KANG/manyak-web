@@ -103,9 +103,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     expect(clipboardText).toBe(INVITE_URL);
   });
 
-  test('마이 페이지의 친구 초대 메뉴가 초대 페이지로 연결된다', async ({
-    page,
-  }) => {
+  test('마이의 친구 초대 메뉴가 초대 페이지로 연결된다', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page);
     await mockMyInvite(page);

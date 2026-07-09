@@ -16,7 +16,7 @@ export interface MainNavigationItem {
 export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
   {
     href: APP_PATH.MAIN.STORIES,
-    label: '내 이야기',
+    label: '스토리',
     icon: ClipboardIcon,
   },
   {
@@ -26,7 +26,7 @@ export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
   },
   {
     href: APP_PATH.MAIN.MY,
-    label: '마이 페이지',
+    label: '마이',
     icon: User02Icon,
   },
 ];

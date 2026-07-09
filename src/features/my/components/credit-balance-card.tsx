@@ -1,5 +1,7 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
+
 import { useMe } from '@/api/generated/endpoints/auth/auth';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,17 +10,30 @@ import { Spinner } from '@/components/ui/spinner';
 import { useClaimAttendance } from '../hooks/use-claim-attendance';
 
 export function CreditBalanceCard() {
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+
   const { data, isLoading } = useMe({
-    query: { refetchOnMount: 'always' },
+    query: { refetchOnMount: 'always', enabled: isAuthenticated },
   });
   const { claimAttendance, isClaiming } = useClaimAttendance();
 
   const me = data?.status === 200 ? data.data : undefined;
   const balance = me?.creditBalance ?? undefined;
   const attendedToday = me?.attendedToday ?? false;
-
-  // me가 아직 없으면 출석 여부를 알 수 없어 버튼을 비활성으로 둔다(깜빡임 방지).
   const isMeReady = me !== undefined;
+
+  if (status === 'loading') {
+    return (
+      <section className="-mt-4 mb-4 p-4 pt-0">
+        <Skeleton className="h-18 rounded-lg" />
+      </section>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <section className="-mt-4 mb-4 p-4 pt-0">
@@ -38,7 +53,6 @@ export function CreditBalanceCard() {
           className="relative"
           disabled={!isMeReady || attendedToday || isClaiming}
           onClick={() => claimAttendance()}>
-          {/* 클레임 중엔 라벨을 숨겨 폭을 유지한 채 스피너만 겹쳐 보여준다. */}
           <span className={isClaiming ? 'invisible' : undefined}>
             {attendedToday ? '출석 완료' : '출석 체크'}
           </span>
