@@ -24,6 +24,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
+  ApiErrorResponse,
   BatchChatRequest,
   ChatDetailResponse,
   ChatSummaryResponse,
@@ -41,12 +42,12 @@ export type createChatResponse201 = {
 };
 
 export type createChatResponse400 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 400;
 };
 
 export type createChatResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
@@ -85,7 +86,7 @@ export const createChat = async (
 };
 
 export const getCreateChatMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -126,12 +127,15 @@ export type CreateChatMutationResult = NonNullable<
   Awaited<ReturnType<typeof createChat>>
 >;
 export type CreateChatMutationBody = BodyType<CreateChatRequest>;
-export type CreateChatMutationError = ErrorType<void>;
+export type CreateChatMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 채팅 생성
  */
-export const useCreateChat = <TError = ErrorType<void>, TContext = unknown>(
+export const useCreateChat = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof createChat>>,
@@ -156,22 +160,22 @@ export type streamChatTurnResponse200 = {
 };
 
 export type streamChatTurnResponse400 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 400;
 };
 
 export type streamChatTurnResponse402 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 402;
 };
 
 export type streamChatTurnResponse403 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 403;
 };
 
 export type streamChatTurnResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
@@ -213,7 +217,7 @@ export const streamChatTurn = async (
 };
 
 export const getStreamChatTurnMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -254,12 +258,15 @@ export type StreamChatTurnMutationResult = NonNullable<
   Awaited<ReturnType<typeof streamChatTurn>>
 >;
 export type StreamChatTurnMutationBody = BodyType<ContinueChatRequest>;
-export type StreamChatTurnMutationError = ErrorType<void>;
+export type StreamChatTurnMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 채팅 이어쓰기 스트리밍
  */
-export const useStreamChatTurn = <TError = ErrorType<void>, TContext = unknown>(
+export const useStreamChatTurn = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof streamChatTurn>>,
@@ -284,27 +291,27 @@ export type regenerateChatTurnResponse200 = {
 };
 
 export type regenerateChatTurnResponse400 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 400;
 };
 
 export type regenerateChatTurnResponse402 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 402;
 };
 
 export type regenerateChatTurnResponse403 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 403;
 };
 
 export type regenerateChatTurnResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
 export type regenerateChatTurnResponse409 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 409;
 };
 
@@ -351,7 +358,7 @@ export const regenerateChatTurn = async (
 };
 
 export const getRegenerateChatTurnMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -392,13 +399,13 @@ export type RegenerateChatTurnMutationResult = NonNullable<
   Awaited<ReturnType<typeof regenerateChatTurn>>
 >;
 export type RegenerateChatTurnMutationBody = BodyType<RegenerateChatRequest>;
-export type RegenerateChatTurnMutationError = ErrorType<void>;
+export type RegenerateChatTurnMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary AI 응답 재생성 스트리밍
  */
 export const useRegenerateChatTurn = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -428,7 +435,7 @@ export type getChatsByIdsResponse200 = {
 };
 
 export type getChatsByIdsResponse400 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 400;
 };
 
@@ -464,7 +471,7 @@ export const getChatsByIds = async (
 };
 
 export const getGetChatsByIdsMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -505,12 +512,15 @@ export type GetChatsByIdsMutationResult = NonNullable<
   Awaited<ReturnType<typeof getChatsByIds>>
 >;
 export type GetChatsByIdsMutationBody = BodyType<BatchChatRequest>;
-export type GetChatsByIdsMutationError = ErrorType<void>;
+export type GetChatsByIdsMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 채팅 ID 목록으로 이전 채팅 목록 조회
  */
-export const useGetChatsByIds = <TError = ErrorType<void>, TContext = unknown>(
+export const useGetChatsByIds = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof getChatsByIds>>,
@@ -535,12 +545,12 @@ export type getChatDetailResponse200 = {
 };
 
 export type getChatDetailResponse403 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 403;
 };
 
 export type getChatDetailResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
@@ -582,7 +592,7 @@ export const getGetChatDetailQueryKey = (chatId: string) => {
 
 export const getGetChatDetailQueryOptions = <
   TData = Awaited<ReturnType<typeof getChatDetail>>,
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
 >(
   chatId: string,
   options?: {
@@ -615,11 +625,11 @@ export const getGetChatDetailQueryOptions = <
 export type GetChatDetailQueryResult = NonNullable<
   Awaited<ReturnType<typeof getChatDetail>>
 >;
-export type GetChatDetailQueryError = ErrorType<void>;
+export type GetChatDetailQueryError = ErrorType<ApiErrorResponse>;
 
 export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
 >(
   chatId: string,
   options: {
@@ -642,7 +652,7 @@ export function useGetChatDetail<
 };
 export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
 >(
   chatId: string,
   options?: {
@@ -665,7 +675,7 @@ export function useGetChatDetail<
 };
 export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
 >(
   chatId: string,
   options?: {
@@ -684,7 +694,7 @@ export function useGetChatDetail<
 
 export function useGetChatDetail<
   TData = Awaited<ReturnType<typeof getChatDetail>>,
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
 >(
   chatId: string,
   options?: {
@@ -713,12 +723,12 @@ export type deleteChatResponse204 = {
 };
 
 export type deleteChatResponse403 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 403;
 };
 
 export type deleteChatResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
@@ -755,7 +765,7 @@ export const deleteChat = async (
 };
 
 export const getDeleteChatMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -796,12 +806,15 @@ export type DeleteChatMutationResult = NonNullable<
   Awaited<ReturnType<typeof deleteChat>>
 >;
 
-export type DeleteChatMutationError = ErrorType<void>;
+export type DeleteChatMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 채팅 삭제
  */
-export const useDeleteChat = <TError = ErrorType<void>, TContext = unknown>(
+export const useDeleteChat = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof deleteChat>>,

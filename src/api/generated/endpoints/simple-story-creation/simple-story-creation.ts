@@ -42,12 +42,12 @@ export type rateStorylineResponse200 = {
 };
 
 export type rateStorylineResponse400 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 400;
 };
 
 export type rateStorylineResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
@@ -90,7 +90,7 @@ export const rateStoryline = async (
 };
 
 export const getRateStorylineMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -131,12 +131,15 @@ export type RateStorylineMutationResult = NonNullable<
   Awaited<ReturnType<typeof rateStoryline>>
 >;
 export type RateStorylineMutationBody = BodyType<StorylineRatingRequest>;
-export type RateStorylineMutationError = ErrorType<void>;
+export type RateStorylineMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 스토리라인 평가 설정/변경
  */
-export const useRateStoryline = <TError = ErrorType<void>, TContext = unknown>(
+export const useRateStoryline = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof rateStoryline>>,
@@ -161,7 +164,7 @@ export type cancelStorylineRatingResponse204 = {
 };
 
 export type cancelStorylineRatingResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
@@ -200,7 +203,7 @@ export const cancelStorylineRating = async (
 };
 
 export const getCancelStorylineRatingMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -241,13 +244,13 @@ export type CancelStorylineRatingMutationResult = NonNullable<
   Awaited<ReturnType<typeof cancelStorylineRating>>
 >;
 
-export type CancelStorylineRatingMutationError = ErrorType<void>;
+export type CancelStorylineRatingMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 스토리라인 평가 취소
  */
 export const useCancelStorylineRating = <
-  TError = ErrorType<void>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -277,17 +280,17 @@ export type createSimpleStoryResponse201 = {
 };
 
 export type createSimpleStoryResponse400 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 400;
 };
 
 export type createSimpleStoryResponse402 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 402;
 };
 
 export type createSimpleStoryResponse404 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 404;
 };
 
@@ -339,7 +342,7 @@ export const createSimpleStory = async (
 };
 
 export const getCreateSimpleStoryMutationOptions = <
-  TError = ErrorType<void | ApiErrorResponse>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -380,13 +383,13 @@ export type CreateSimpleStoryMutationResult = NonNullable<
   Awaited<ReturnType<typeof createSimpleStory>>
 >;
 export type CreateSimpleStoryMutationBody = BodyType<CreateSimpleStoryRequest>;
-export type CreateSimpleStoryMutationError = ErrorType<void | ApiErrorResponse>;
+export type CreateSimpleStoryMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 간편 제작 스토리 생성
  */
 export const useCreateSimpleStory = <
-  TError = ErrorType<void | ApiErrorResponse>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(
   options?: {
@@ -413,12 +416,12 @@ export type generateSimpleStorylinesResponse201 = {
 };
 
 export type generateSimpleStorylinesResponse400 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 400;
 };
 
 export type generateSimpleStorylinesResponse402 = {
-  data: void;
+  data: ApiErrorResponse;
   status: 402;
 };
 
@@ -467,7 +470,7 @@ export const generateSimpleStorylines = async (
 };
 
 export const getGenerateSimpleStorylinesMutationOptions = <
-  TError = ErrorType<void | ApiErrorResponse>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -509,14 +512,13 @@ export type GenerateSimpleStorylinesMutationResult = NonNullable<
 >;
 export type GenerateSimpleStorylinesMutationBody =
   BodyType<GenerateSimpleStorylinesRequest>;
-export type GenerateSimpleStorylinesMutationError =
-  ErrorType<void | ApiErrorResponse>;
+export type GenerateSimpleStorylinesMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 간편 제작 스토리라인 생성
  */
 export const useGenerateSimpleStorylines = <
-  TError = ErrorType<void | ApiErrorResponse>,
+  TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(
   options?: {
