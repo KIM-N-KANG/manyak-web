@@ -99,6 +99,20 @@ export function useStoryCreateFunnel() {
     onBackAttempt: () => setIsBackDialogOpen(true),
   });
 
+  // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
+  // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. localStorage는 마운트
+  // 시 한 번만 읽고(lazy 초기화), 차단 여부는 렌더 중 파생값으로 계산해 effect
+  // 내 setState를 피한다. 세션이 확정된 미로그인 상태에서만 판정해 로딩 중 회원을
+  // 오차단하지 않으며, 다이얼로그를 닫으면 재노출하지 않는다.
+  const [storyCreateAtLimitOnMount] = useState(() =>
+    isGuestUsageLimitReached('storyCreate'),
+  );
+  const [isBackstopDismissed, setIsBackstopDismissed] = useState(false);
+  const isStoryCreateBackstopActive =
+    sessionStatus === 'unauthenticated' &&
+    storyCreateAtLimitOnMount &&
+    !isBackstopDismissed;
+
   const failToAdditionalInfo = (stage: 'story' | 'chat') => {
     track('client_storyCreate_completeError_shown', { stage });
     setStep('additional-info');
@@ -431,9 +445,14 @@ export function useStoryCreateFunnel() {
     hasGenerateStorylinesError: generateStorylines.isError,
     isCompletingStory: createStory.isPending || createChat.isPending,
     hasCompleteStoryError,
-    guestLimitTrigger,
-    isGuestLimitReached,
-    closeGuestLimitDialog: () => setGuestLimitTrigger(null),
+    guestLimitTrigger:
+      guestLimitTrigger ??
+      (isStoryCreateBackstopActive ? 'story_create' : null),
+    isGuestLimitReached: isGuestLimitReached || isStoryCreateBackstopActive,
+    closeGuestLimitDialog: () => {
+      setGuestLimitTrigger(null);
+      setIsBackstopDismissed(true);
+    },
     handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,

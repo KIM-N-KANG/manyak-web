@@ -63,7 +63,9 @@ export function LoginRequiredDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleDismiss}>나중에</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleDismiss}>
+            나중에 하기
+          </AlertDialogCancel>
           <AlertDialogAction type="button" onClick={handleLogin}>
             로그인하기
           </AlertDialogAction>
