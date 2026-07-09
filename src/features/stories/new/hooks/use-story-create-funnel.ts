@@ -28,6 +28,10 @@ import type {
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
+import {
+  incrementGuestUsage,
+  isGuestUsageLimitReached,
+} from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import { saveCreatedStoryId } from '@/features/stories/list/utils/story-id-storage';
 import type { GuestLimitTrigger } from '@/observability/analytics';
@@ -127,6 +131,10 @@ export function useStoryCreateFunnel() {
           return;
         }
 
+        if (sessionStatus !== 'authenticated') {
+          incrementGuestUsage('storylineCreate');
+        }
+
         setGenerationRequest(variables.data);
         setGenerationResult(response.data);
         setActiveStorylineIndex(0);
@@ -198,6 +206,7 @@ export function useStoryCreateFunnel() {
             });
           } else {
             saveCreatedStoryId(storyId);
+            incrementGuestUsage('storyCreate');
           }
 
           setCreatedStoryId(storyId);
@@ -228,6 +237,16 @@ export function useStoryCreateFunnel() {
   const handleGenerateStorylines = (
     request: GenerateSimpleStorylinesRequest,
   ) => {
+    if (
+      sessionStatus !== 'authenticated' &&
+      isGuestUsageLimitReached('storylineCreate')
+    ) {
+      setIsGuestLimitReached(true);
+      setGuestLimitTrigger('storyline_generate');
+
+      return;
+    }
+
     setGenerationRequest(request);
     setGenerationResult(null);
     setActiveStorylineIndex(0);
@@ -241,6 +260,16 @@ export function useStoryCreateFunnel() {
 
   const handleRegenerateStorylines = () => {
     if (!generationRequest) {
+      return;
+    }
+
+    if (
+      sessionStatus !== 'authenticated' &&
+      isGuestUsageLimitReached('storylineCreate')
+    ) {
+      setIsGuestLimitReached(true);
+      setGuestLimitTrigger('storyline_generate');
+
       return;
     }
 
@@ -313,6 +342,16 @@ export function useStoryCreateFunnel() {
     setIsGuestLimitReached(false);
 
     if (createdStoryId !== null) {
+      if (
+        sessionStatus !== 'authenticated' &&
+        isGuestUsageLimitReached('chat')
+      ) {
+        setIsGuestLimitReached(true);
+        setGuestLimitTrigger('chat_start');
+
+        return;
+      }
+
       if (typeof simpleCreationId === 'number') {
         track('client_storyCreate_storyCompletion_requested', {
           creation_id: String(simpleCreationId),
@@ -329,6 +368,16 @@ export function useStoryCreateFunnel() {
       typeof simpleCreationId !== 'number' ||
       typeof selectedStoryline?.id !== 'number'
     ) {
+      return;
+    }
+
+    if (
+      sessionStatus !== 'authenticated' &&
+      isGuestUsageLimitReached('storyCreate')
+    ) {
+      setIsGuestLimitReached(true);
+      setGuestLimitTrigger('story_create');
+
       return;
     }
 
