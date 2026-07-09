@@ -1,7 +1,7 @@
 import { getStreamChatTurnUrl } from '@/api/generated/endpoints/chats/chats';
 import type { ContinueChatRequest } from '@/api/generated/models';
 import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
-import { resolveApiProxyUrl } from '@/lib/custom-fetch';
+import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
 /**
@@ -31,7 +31,11 @@ export async function streamChatTurnRaw(
   notifyIfSessionExpired(response.headers);
 
   if (!response.ok || !response.body) {
-    throw new Error(`스트리밍 요청에 실패했어요 (status: ${response.status})`);
+    throw new FetchError(
+      `스트리밍 요청에 실패했어요 (status: ${response.status})`,
+      response.status,
+      await response.text().catch(() => null),
+    );
   }
 
   return response.body;

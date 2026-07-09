@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
 import { track } from '@/observability/analytics';
 
 import { parseSseStream } from '../lib/parse-sse-stream';
@@ -20,6 +21,7 @@ export function useChatStream(
   chatId: string,
   turnCount: number,
   onCompleted: () => Promise<unknown> | unknown,
+  onPaymentRequired?: () => void,
 ) {
   const [streamingTurn, setStreamingTurn] = useState<StreamingTurn | null>(
     null,
@@ -56,8 +58,17 @@ export function useChatStream(
           );
         }
       }
-    } catch {
+    } catch (error) {
       if (controller.signal.aborted) {
+        return;
+      }
+
+      setStreamingTurn(null);
+
+      // 체험 한도 초과(402)는 일반 스트림 실패와 다른 UX(로그인 유도)라 상위에 위임한다.
+      if (onPaymentRequired && isPaymentRequiredError(error)) {
+        onPaymentRequired();
+
         return;
       }
 
@@ -66,7 +77,6 @@ export function useChatStream(
         turn_number: turnCount + 1,
       });
       toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
-      setStreamingTurn(null);
     } finally {
       abortRef.current = null;
     }

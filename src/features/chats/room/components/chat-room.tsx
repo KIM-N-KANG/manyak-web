@@ -3,13 +3,18 @@
 import { type ReactNode, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
+import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
@@ -29,6 +34,20 @@ type ChatRoomProps = {
 
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const queryClient = useQueryClient();
+  const { status: sessionStatus } = useSession();
+  const [guestLimitTrigger, setGuestLimitTrigger] =
+    useState<GuestLimitTrigger | null>(null);
+
+  // 402 통지: 게스트면 로그인 유도, 회원(크레딧 부족)은 기존 실패 토스트 유지.
+  const handlePaymentRequired = () => {
+    if (sessionStatus === 'authenticated') {
+      toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
+
+      return;
+    }
+
+    setGuestLimitTrigger('chat_turn');
+  };
   const {
     storyTitle,
     prologue,
@@ -50,6 +69,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     chatId,
     turns.length,
     handleStreamCompleted,
+    handlePaymentRequired,
   );
 
   const { mode, changeMode } = useChatInputMode();
@@ -159,6 +179,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           description="지금 작성 중인 내용은 사라져요"
           cancelLabel="그대로 두기"
           confirmLabel="바꾸기"
+        />
+        <LoginRequiredDialog
+          trigger={guestLimitTrigger}
+          onOpenChange={(open) => {
+            if (!open) {
+              setGuestLimitTrigger(null);
+            }
+          }}
         />
       </>
     );
