@@ -389,7 +389,7 @@ export const StreamChatTurnBody = zod
 export const StreamChatTurnResponse = zod.unknown();
 
 /**
- * 마지막 턴의 AI 출력을 같은 사용자 입력으로 다시 생성해 교체하고 SSE로 스트리밍합니다(스펙 §4-3-9, 리롤이 아니라 재생성). 이어쓰기와 동일하게 started, token, completed 순서로 전달되며, completed에는 교체된 aiOutput 전체와 선택지가 포함됩니다. 새 턴을 추가하지 않고 마지막 턴의 본문·선택지만 교체하므로 사용자 입력과 턴 수(turnCount)는 변하지 않습니다. 이전 본문은 보관하지 않습니다. 요청 turnId가 서버의 마지막 턴과 다르면 409로 거절합니다.
+ * 마지막 턴의 AI 출력을 같은 사용자 입력으로 다시 생성해 교체하고 SSE로 스트리밍합니다(스펙 §4-3-9, 리롤이 아니라 재생성). 이어쓰기와 동일하게 started, token, completed 순서로 전달되며, completed에는 교체된 aiOutput 전체와 선택지가 포함됩니다. 새 턴을 추가하지 않고 마지막 턴의 본문·선택지만 교체하므로 사용자 입력과 턴 수(turnCount)는 변하지 않습니다. 이전 출력·선택지는 덮어쓰기 직전 버전 이력(story_message_versions, V37)에 보존되며, 상세 조회·completed에는 활성본만 실립니다. 요청 turnId가 서버의 마지막 턴과 다르면 409로 거절합니다.
  * @summary AI 응답 재생성 스트리밍
  */
 export const RegenerateChatTurnParams = zod.object({
@@ -406,7 +406,7 @@ export const RegenerateChatTurnBody = zod
       .number()
       .optional()
       .describe(
-        '재생성할 마지막 턴 ID(공개 채팅 상세의 turns[].id). 서버가 보는 마지막 턴과 다르면 409로 거절합니다. 재생성은 이 마지막 턴의 AI 출력과 선택지만 같은 사용자 입력으로 다시 생성해 교체하며, 이전 본문은 보관하지 않습니다.',
+        '재생성할 마지막 턴 ID(공개 채팅 상세의 turns[].id). 서버가 보는 마지막 턴과 다르면 409로 거절합니다. 재생성은 이 마지막 턴의 AI 출력과 선택지만 같은 사용자 입력으로 다시 생성해 교체하며, 이전 출력·선택지는 버전 이력(V37)에 보존됩니다.',
       ),
   })
   .describe('AI 응답 재생성 요청');
@@ -498,6 +498,9 @@ export const LogoutResponse = zod.void();
  * Google ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 선택 필드 inviteCode를 최초 가입과 함께 보내면 초대자·피초대자 양쪽에 크레딧을 적립합니다(미해결·자기 코드·이미 가입된 계정의 제출은 무시). 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
  * @summary Google 로그인
  */
+export const LoginWithGoogleHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
 
 export const LoginWithGoogleBody = zod
   .object({

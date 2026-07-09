@@ -16,10 +16,15 @@ export interface MeResponse {
   /** 닉네임 */
   nickname?: string;
   /**
-   * 프로필 이미지 URL
+   * 프로필 이미지 URL(원본 전체 해상도)
    * @nullable
    */
   profileImageUrl?: string | null;
+  /**
+   * 48×48 저해상도 인라인 썸네일(base64). 세션 복원 시 이미지 호스트 왕복 없이 헤더 아바타 첫 페인트용. 미배정·미생성이면 null(스펙 §4-3-5 B17).
+   * @nullable
+   */
+  profileThumbnailBase64?: string | null;
   /** 계정 상태 */
   status?: MeResponseStatus;
   /** 크레딧 잔액. 지갑이 없으면 0 */
