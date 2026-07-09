@@ -18,15 +18,10 @@ import { APP_PATH } from '@/constants/app-path';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredDialogProps = {
-  /** 다이어로그를 연 402 발생 지점. null이면 닫힌 상태. */
   trigger: GuestLimitTrigger | null;
   onOpenChange: (open: boolean) => void;
 };
 
-/**
- * 게스트 체험 한도(402) 초과 시 로그인을 유도하는 공용 다이어로그.
- * "로그인하기"는 현재 경로를 callbackUrl로 넘겨 로그인 후 복귀시킨다.
- */
 export function LoginRequiredDialog({
   trigger,
   onOpenChange,
