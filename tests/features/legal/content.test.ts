@@ -21,6 +21,7 @@ describe('법적 문서 콘텐츠', () => {
     expect(termsContent.effectiveDate).not.toHaveLength(0);
     expect(termsContent.version).not.toHaveLength(0);
 
+    const text = collectText(termsContent);
     const headings = termsContent.sections.map((section) => section.heading);
 
     for (const required of [
@@ -35,9 +36,23 @@ describe('법적 문서 콘텐츠', () => {
     }
 
     // 이관 1회 제한이 약관 본문에 명시돼야 한다.
-    expect(collectText(termsContent)).toContain('계정당 1회');
+    expect(text).toContain('계정당 1회');
     // 최종본이므로 placeholder가 남아 있으면 안 된다.
-    expect(collectText(termsContent)).not.toContain('{{');
+    expect(text).not.toContain('{{');
+  });
+
+  it('약관은 게스트 데이터·콘텐츠 이용·면책 범위를 좁혀 고지한다', () => {
+    const text = collectText(termsContent);
+
+    expect(text).toContain(
+      '브라우저에는 해당 콘텐츠를 다시 불러오기 위한 식별자',
+    );
+    expect(text).not.toContain('기기(브라우저)에만 저장');
+    expect(text).toContain('홍보·마케팅 목적으로');
+    expect(text).toContain('별도 동의');
+    expect(text).not.toContain('서비스 운영·개선 및 홍보 목적');
+    expect(text).not.toContain('손해를 배상할 책임이 없습니다');
+    expect(text).toContain('회사의 고의 또는 중대한 과실');
   });
 
   it('개인정보처리방침은 제목·시행일·버전과 필수 항목을 갖는다', () => {
@@ -45,6 +60,7 @@ describe('법적 문서 콘텐츠', () => {
     expect(privacyContent.effectiveDate).not.toHaveLength(0);
     expect(privacyContent.version).not.toHaveLength(0);
 
+    const text = collectText(privacyContent);
     const headings = privacyContent.sections.map((section) => section.heading);
 
     for (const required of [
@@ -57,7 +73,19 @@ describe('법적 문서 콘텐츠', () => {
       expect(headings).toContain(required);
     }
 
-    expect(collectText(privacyContent)).not.toContain('{{');
+    expect(text).not.toContain('{{');
+  });
+
+  it('개인정보처리방침은 보유·파기와 쿠키·분석 도구를 구체적으로 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain('분리 보관한 뒤 파기합니다');
+    expect(text).toContain('서비스 화면과 목록에서 제외');
+    expect(text).toContain('페이지 조회, 세션 정보, 유입 경로');
+    expect(text).toContain(
+      '채팅 메시지·피드백 원문은 분석 도구에 수집하지 않습니다',
+    );
+    expect(text).not.toContain('탈퇴 시 지체 없이 파기합니다');
   });
 
   it('모든 섹션은 최소 한 개의 콘텐츠 블록을 갖는다', () => {
