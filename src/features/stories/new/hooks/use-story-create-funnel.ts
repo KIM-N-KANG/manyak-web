@@ -27,8 +27,10 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import { saveCreatedStoryId } from '@/features/stories/list/utils/story-id-storage';
+import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
@@ -62,6 +64,9 @@ export function useStoryCreateFunnel() {
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const [hasCompleteStoryError, setHasCompleteStoryError] = useState(false);
+  const [guestLimitTrigger, setGuestLimitTrigger] =
+    useState<GuestLimitTrigger | null>(null);
+  const [isGuestLimitReached, setIsGuestLimitReached] = useState(false);
   const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
   const [selectedRecommendations, setSelectedRecommendations] = useState<
     Set<string>
@@ -96,6 +101,20 @@ export function useStoryCreateFunnel() {
     setHasCompleteStoryError(true);
   };
 
+  // 게스트의 체험 한도 초과(402)면 로그인 유도 다이어로그를 연다.
+  // 회원의 402(크레딧 부족)는 기존 일반 에러 UI로 남긴다(후속 티켓에서 별도 처리).
+  const handleGuestLimitError = (
+    error: unknown,
+    trigger: GuestLimitTrigger,
+  ) => {
+    if (sessionStatus === 'authenticated' || !isPaymentRequiredError(error)) {
+      return;
+    }
+
+    setIsGuestLimitReached(true);
+    setGuestLimitTrigger(trigger);
+  };
+
   const resetAdditionalInfoStep = () => {
     resetAdditionalInfos();
     setSelectedRecommendations(new Set());
@@ -113,6 +132,9 @@ export function useStoryCreateFunnel() {
         setActiveStorylineIndex(0);
         setSelectedStoryline(null);
         setStep('storyline-select');
+      },
+      onError: (error) => {
+        handleGuestLimitError(error, 'storyline_generate');
       },
     },
   });
@@ -151,7 +173,8 @@ export function useStoryCreateFunnel() {
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
-      onError: () => {
+      onError: (error) => {
+        handleGuestLimitError(error, 'chat_start');
         failToAdditionalInfo('chat');
       },
     },
@@ -183,7 +206,8 @@ export function useStoryCreateFunnel() {
 
         createChat.mutate({ data: { storyId: response.data.id } });
       },
-      onError: () => {
+      onError: (error) => {
+        handleGuestLimitError(error, 'story_create');
         failToAdditionalInfo('story');
       },
     },
@@ -208,6 +232,7 @@ export function useStoryCreateFunnel() {
     setGenerationResult(null);
     setActiveStorylineIndex(0);
     setSelectedStoryline(null);
+    setIsGuestLimitReached(false);
     resetAdditionalInfoStep();
     setStep('storyline-select');
     track('client_storyCreate_storyGeneration_requested');
@@ -225,6 +250,7 @@ export function useStoryCreateFunnel() {
       });
     }
 
+    setIsGuestLimitReached(false);
     generateStorylines.mutate({ data: generationRequest });
   };
 
@@ -284,6 +310,7 @@ export function useStoryCreateFunnel() {
 
   const handleCompleteStory = () => {
     setHasCompleteStoryError(false);
+    setIsGuestLimitReached(false);
 
     if (createdStoryId !== null) {
       if (typeof simpleCreationId === 'number') {
@@ -355,6 +382,9 @@ export function useStoryCreateFunnel() {
     hasGenerateStorylinesError: generateStorylines.isError,
     isCompletingStory: createStory.isPending || createChat.isPending,
     hasCompleteStoryError,
+    guestLimitTrigger,
+    isGuestLimitReached,
+    closeGuestLimitDialog: () => setGuestLimitTrigger(null),
     handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,

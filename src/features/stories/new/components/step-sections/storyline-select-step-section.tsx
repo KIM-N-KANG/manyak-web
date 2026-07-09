@@ -24,6 +24,7 @@ export function StorylineSelectStepSection({
   activeStorylineIndex,
   isRegeneratingStorylines,
   hasRegenerateStorylinesError,
+  isGuestLimitReached,
   onActiveStorylineIndexChange,
   onRegenerateStorylines,
   onSelectStoryline,
@@ -141,7 +142,9 @@ export function StorylineSelectStepSection({
         )}
       {hasRegenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4 pb-6">
-          스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요.
+          {isGuestLimitReached
+            ? '게스트 스토리라인 생성 횟수를 모두 사용했어요. 로그인하면 계속 만들 수 있어요.'
+            : '스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요.'}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>

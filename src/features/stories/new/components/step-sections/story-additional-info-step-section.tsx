@@ -29,6 +29,7 @@ type StoryAdditionalInfoStepSectionProps = {
   storylineItem: SimpleStorylineResponse;
   isCompletingStory: boolean;
   hasCompleteStoryError: boolean;
+  isGuestLimitReached: boolean;
   canCompleteStory: boolean;
   selectedRecommendations: Set<string>;
   additionalInfos: AdditionalInfoInput[];
@@ -53,6 +54,7 @@ export function StoryAdditionalInfoStepSection({
   storylineItem,
   isCompletingStory,
   hasCompleteStoryError,
+  isGuestLimitReached,
   canCompleteStory,
   selectedRecommendations,
   additionalInfos,
@@ -196,7 +198,9 @@ export function StoryAdditionalInfoStepSection({
 
           {hasCompleteStoryError && (
             <StoryCreateErrorMessage className="px-4 pb-6">
-              스토리를 완성하지 못했어요. 잠시 후 다시 시도해주세요.
+              {isGuestLimitReached
+                ? '게스트 체험 횟수를 모두 사용했어요. 로그인하면 계속 만들 수 있어요.'
+                : '스토리를 완성하지 못했어요. 잠시 후 다시 시도해주세요.'}
             </StoryCreateErrorMessage>
           )}
         </div>
