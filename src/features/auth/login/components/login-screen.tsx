@@ -15,6 +15,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import { track } from '@/observability/analytics';
 
+import { resolveLoginCallbackUrl } from '../utils/login-callback-url';
 import { GoogleLogo } from './google-logo';
 
 export function LoginScreen() {
@@ -47,7 +48,9 @@ export function LoginScreen() {
 
   const handleGoogleLogin = () => {
     track('client_login_googleButton_clicked');
-    void signIn('google', { redirectTo: APP_PATH.MAIN.STORIES });
+    void signIn('google', {
+      redirectTo: resolveLoginCallbackUrl(searchParams.get('callbackUrl')),
+    });
   };
 
   return (
