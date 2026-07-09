@@ -15,6 +15,7 @@ import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
+import { isGuestUsageLimitReached } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
@@ -65,6 +66,12 @@ export function useStartChat(storyId: string) {
   });
 
   const startChat = () => {
+    if (status !== 'authenticated' && isGuestUsageLimitReached('chat')) {
+      setGuestLimitTrigger('chat_start');
+
+      return;
+    }
+
     track('client_storyDetail_chatStartButton_clicked', { story_id: storyId });
     createChat.mutate({ data: { storyId } });
   };
