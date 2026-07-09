@@ -7,7 +7,7 @@ import { StoryCreateStepTitle } from './story-create-step-title';
 type StoryCreateStepLayoutProps = {
   titleLines: readonly string[];
   description: string;
-  footer: ReactNode;
+  footer?: ReactNode;
   children: ReactNode;
   scrollAreaRef?: Ref<HTMLElement>;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -36,7 +36,9 @@ export function StoryCreateStepLayout({
         </section>
       </StoryCreateStepScrollArea>
 
-      <StoryCreateStepFooter>{footer}</StoryCreateStepFooter>
+      {footer != null && (
+        <StoryCreateStepFooter>{footer}</StoryCreateStepFooter>
+      )}
     </>
   );
 }

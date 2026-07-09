@@ -7,11 +7,22 @@ export type StepName =
   | 'additionalInfo'
   | 'complete';
 
+/** 게스트 체험 한도 초과(402) 다이어로그를 연 발생 지점. */
+export type GuestLimitTrigger =
+  | 'storyline_generate'
+  | 'story_create'
+  | 'chat_start'
+  | 'chat_turn';
+
 /** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
   // login
   client_login_viewed: void;
   client_login_googleButton_clicked: void;
+  // guest limit (게스트 체험 한도 초과 → 로그인 유도)
+  client_guestLimitDialog_shown: { trigger: GuestLimitTrigger };
+  client_guestLimitDialog_loginButton_clicked: { trigger: GuestLimitTrigger };
+  client_guestLimitDialog_dismissed: { trigger: GuestLimitTrigger };
   // onboarding
   client_onboarding_viewed: void;
   client_onboarding_createButton_clicked: void;

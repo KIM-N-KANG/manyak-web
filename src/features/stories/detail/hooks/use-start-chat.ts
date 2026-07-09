@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -12,7 +14,10 @@ import {
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
+import { isGuestOverLimit } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
+import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
 /**
@@ -23,6 +28,8 @@ export function useStartChat(storyId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status } = useSession();
+  const [guestLimitTrigger, setGuestLimitTrigger] =
+    useState<GuestLimitTrigger | null>(null);
 
   const createChat = useCreateChat({
     mutation: {
@@ -45,13 +52,26 @@ export function useStartChat(storyId: string) {
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
-      onError: () => {
+      onError: (error) => {
+        // 게스트의 체험 한도 초과(402)는 로그인 유도, 그 외(회원 402 포함)는 기존 실패 토스트.
+        if (status === 'unauthenticated' && isPaymentRequiredError(error)) {
+          setGuestLimitTrigger('chat_start');
+
+          return;
+        }
+
         toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
       },
     },
   });
 
   const startChat = () => {
+    if (isGuestOverLimit(status, 'chat')) {
+      setGuestLimitTrigger('chat_start');
+
+      return;
+    }
+
     track('client_storyDetail_chatStartButton_clicked', { story_id: storyId });
     createChat.mutate({ data: { storyId } });
   };
@@ -60,5 +80,7 @@ export function useStartChat(storyId: string) {
     startChat,
     isStarting: createChat.isPending || createChat.isSuccess,
     isError: createChat.isError,
+    guestLimitTrigger,
+    closeGuestLimitDialog: () => setGuestLimitTrigger(null),
   };
 }

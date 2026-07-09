@@ -7,10 +7,12 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { useMigrate } from '@/api/generated/endpoints/auth/auth';
+import { getGetChatDetailQueryKey } from '@/api/generated/endpoints/chats/chats';
 import {
   getGetMyChatsQueryKey,
   getGetMyStoriesQueryKey,
 } from '@/api/generated/endpoints/users/users';
+import { clearGuestUsage } from '@/features/auth/login-required/utils/guest-usage-storage';
 import {
   CREATED_CHAT_IDS_STORAGE_KEY,
   parseCreatedChatIds,
@@ -38,6 +40,18 @@ export function useAutoMigration(): void {
   const queryClient = useQueryClient();
   const { mutate } = useMigrate();
   const hasStartedRef = useRef(false);
+  const hasClearedUsageRef = useRef(false);
+
+  // 인증이 확정되면 게스트 사용량 카운터를 비운다. 이관 대상 로컬 ID가 없어도(예: 스토리라인만
+  // 생성한 게스트) 실행되므로, 로그인 후 스테일 카운터가 남아 다시 게스트로 게이팅되는 것을 막는다.
+  useEffect(() => {
+    if (status !== 'authenticated' || hasClearedUsageRef.current) {
+      return;
+    }
+
+    hasClearedUsageRef.current = true;
+    clearGuestUsage();
+  }, [status]);
 
   useEffect(() => {
     if (status !== 'authenticated' || hasStartedRef.current) {
@@ -76,6 +90,14 @@ export function useAutoMigration(): void {
             });
             void queryClient.invalidateQueries({
               queryKey: getGetMyChatsQueryKey(),
+            });
+            // 이관으로 채팅 소유권이 게스트→계정으로 바뀌므로, 로그인 직후 곧바로
+            // 열려 있던 채팅방(상세 조회가 이관과 경쟁해 소유권 오류로 실패한 상태)이
+            // 남지 않도록 각 채팅 상세 쿼리도 무효화해 재조회시킨다.
+            ids.chatIds.forEach((chatId) => {
+              void queryClient.invalidateQueries({
+                queryKey: getGetChatDetailQueryKey(chatId),
+              });
             });
 
             const { storyCount, chatCount } = countMigrated(response.data);

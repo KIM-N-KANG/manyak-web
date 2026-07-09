@@ -6,7 +6,10 @@ import { TextContent } from '@/components/common/text-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
-import { getStorylineTabLabel } from '../../constants';
+import {
+  EXPECTED_STORYLINE_COUNT,
+  getStorylineTabLabel,
+} from '../../constants';
 import { useStorylineRating } from '../../hooks/use-storyline-rating';
 import type { StorylineSelectStepSectionProps } from '../../types';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
@@ -24,6 +27,7 @@ export function StorylineSelectStepSection({
   activeStorylineIndex,
   isRegeneratingStorylines,
   hasRegenerateStorylinesError,
+  isGuestLimitReached,
   onActiveStorylineIndexChange,
   onRegenerateStorylines,
   onSelectStoryline,
@@ -62,23 +66,24 @@ export function StorylineSelectStepSection({
       }
       onScroll={onScroll}
       footer={
-        <>
-          <Button
-            type="button"
-            size="lg"
-            variant="secondary"
-            disabled={isRegeneratingStorylines}
-            onClick={onRegenerateStorylines}>
-            다시 만들기
-          </Button>
-          <Button
-            type="button"
-            size="lg"
-            disabled={!selectedStoryline || isRegeneratingStorylines}
-            onClick={onSelectStoryline}>
-            선택하기
-          </Button>
-        </>
+        isRegeneratingStorylines ? undefined : (
+          <>
+            <Button
+              type="button"
+              size="lg"
+              variant="secondary"
+              onClick={onRegenerateStorylines}>
+              다시 만들기
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              disabled={!selectedStoryline}
+              onClick={onSelectStoryline}>
+              선택하기
+            </Button>
+          </>
+        )
       }>
       {isRegeneratingStorylines ? (
         <StorylineSelectLoading />
@@ -94,13 +99,19 @@ export function StorylineSelectStepSection({
                 creationId={creationId}
               />
             }>
-            {storylines.map((storylineItem, index) => (
-              <TabsTrigger
-                key={storylineItem.id ?? index}
-                value={String(index)}>
-                {getStorylineTabLabel(index)}
-              </TabsTrigger>
-            ))}
+            {storylines.length > 0
+              ? storylines.map((storylineItem, index) => (
+                  <TabsTrigger
+                    key={storylineItem.id ?? index}
+                    value={String(index)}>
+                    {getStorylineTabLabel(index)}
+                  </TabsTrigger>
+                ))
+              : Array.from({ length: EXPECTED_STORYLINE_COUNT }, (_, index) => (
+                  <TabsTrigger key={index} value={String(index)} disabled>
+                    {getStorylineTabLabel(index)}
+                  </TabsTrigger>
+                ))}
           </StickyTabsList>
           {storylines.map((storylineItem, index) => (
             <TabsContent
@@ -141,7 +152,9 @@ export function StorylineSelectStepSection({
         )}
       {hasRegenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4 pb-6">
-          스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요.
+          {isGuestLimitReached
+            ? '게스트 스토리라인 생성 횟수를 모두 사용했어요.'
+            : '스토리라인을 다시 만들지 못했어요. 잠시 후 다시 시도해주세요.'}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>

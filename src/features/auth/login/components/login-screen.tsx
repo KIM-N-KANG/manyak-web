@@ -15,6 +15,10 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import { track } from '@/observability/analytics';
 
+import {
+  buildLoginUrl,
+  resolveLoginCallbackUrl,
+} from '../utils/login-callback-url';
 import { GoogleLogo } from './google-logo';
 
 export function LoginScreen() {
@@ -22,6 +26,8 @@ export function LoginScreen() {
   const searchParams = useSearchParams();
   const hasError = searchParams.has('error');
   const isSessionExpired = searchParams.has(SESSION_EXPIRED_PARAM);
+  const callbackUrl = searchParams.get('callbackUrl');
+  const loginPathWithCallback = buildLoginUrl(callbackUrl);
 
   useEffect(() => {
     track('client_login_viewed');
@@ -33,8 +39,8 @@ export function LoginScreen() {
     }
 
     toast.error(TOAST_MESSAGE.LOGIN_FAILED);
-    router.replace(APP_PATH.LOGIN);
-  }, [hasError, router]);
+    router.replace(loginPathWithCallback);
+  }, [hasError, loginPathWithCallback, router]);
 
   useEffect(() => {
     if (!isSessionExpired) {
@@ -42,17 +48,19 @@ export function LoginScreen() {
     }
 
     toast(TOAST_MESSAGE.SESSION_EXPIRED);
-    router.replace(APP_PATH.LOGIN);
-  }, [isSessionExpired, router]);
+    router.replace(loginPathWithCallback);
+  }, [isSessionExpired, loginPathWithCallback, router]);
 
   const handleGoogleLogin = () => {
     track('client_login_googleButton_clicked');
-    void signIn('google', { redirectTo: APP_PATH.MAIN.STORIES });
+    void signIn('google', {
+      redirectTo: resolveLoginCallbackUrl(searchParams.get('callbackUrl')),
+    });
   };
 
   return (
     <div className="flex h-svh min-h-0 flex-col">
-      <BackHeader title="로그인" backHref={APP_PATH.MAIN.MY} />
+      <BackHeader title="로그인" fallbackHref={APP_PATH.MAIN.STORIES} />
       <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4">
         <div className="flex flex-col items-center gap-4">
           <ManyakLogo className="h-6 w-auto text-primary" />

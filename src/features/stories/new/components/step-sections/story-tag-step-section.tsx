@@ -15,6 +15,7 @@ import { StoryTagCategorySection } from '../tag-step/story-tag-category-section'
 type StoryTagStepSectionProps = {
   isGeneratingStorylines: boolean;
   hasGenerateStorylinesError: boolean;
+  isGuestLimitReached: boolean;
   onGenerateStorylines: (request: GenerateSimpleStorylinesRequest) => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
@@ -22,6 +23,7 @@ type StoryTagStepSectionProps = {
 export function StoryTagStepSection({
   isGeneratingStorylines,
   hasGenerateStorylinesError,
+  isGuestLimitReached,
   onGenerateStorylines,
   onScroll,
 }: StoryTagStepSectionProps) {
@@ -135,7 +137,9 @@ export function StoryTagStepSection({
       </Tabs>
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
-          스토리라인을 만들지 못했어요. 잠시 후 다시 시도해주세요.
+          {isGuestLimitReached
+            ? '게스트 스토리라인 생성 횟수를 모두 사용했어요.'
+            : '스토리라인을 만들지 못했어요. 잠시 후 다시 시도해주세요.'}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>

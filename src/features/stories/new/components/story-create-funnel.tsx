@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
 import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
@@ -28,6 +29,9 @@ export function StoryCreateFunnel() {
     hasGenerateStorylinesError,
     isCompletingStory,
     hasCompleteStoryError,
+    guestLimitTrigger,
+    isGuestLimitReached,
+    closeGuestLimitDialog,
     handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
@@ -67,6 +71,7 @@ export function StoryCreateFunnel() {
         <StoryTagStepSection
           isGeneratingStorylines={isGeneratingStorylines}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
+          isGuestLimitReached={isGuestLimitReached}
           onGenerateStorylines={handleGenerateStorylines}
         />
       )}
@@ -79,6 +84,7 @@ export function StoryCreateFunnel() {
           activeStorylineIndex={activeStorylineIndex}
           isRegeneratingStorylines={isGeneratingStorylines}
           hasRegenerateStorylinesError={hasGenerateStorylinesError}
+          isGuestLimitReached={isGuestLimitReached}
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}
           onSelectStoryline={handleSelectStoryline}
@@ -90,6 +96,7 @@ export function StoryCreateFunnel() {
           storylineItem={selectedStoryline}
           isCompletingStory={isCompletingStory}
           hasCompleteStoryError={hasCompleteStoryError}
+          isGuestLimitReached={isGuestLimitReached}
           canCompleteStory={canCompleteStory}
           selectedRecommendations={selectedRecommendations}
           additionalInfos={additionalInfos}
@@ -105,6 +112,15 @@ export function StoryCreateFunnel() {
       )}
 
       {step === 'complete' && <StoryCompletionLoading />}
+
+      <LoginRequiredDialog
+        trigger={guestLimitTrigger}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeGuestLimitDialog();
+          }
+        }}
+      />
     </div>
   );
 }

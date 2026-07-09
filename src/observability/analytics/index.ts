@@ -6,5 +6,6 @@ export { resetAnalyticsUser, setAnalyticsUser } from './user-context';
 export type {
   AnalyticsEventName,
   AnalyticsEventProps,
+  GuestLimitTrigger,
   StepName,
 } from './events';

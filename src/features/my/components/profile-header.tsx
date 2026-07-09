@@ -23,13 +23,18 @@ export function ProfileHeader() {
   });
   const me = meData?.status === 200 ? meData.data : undefined;
   const nickname = me?.nickname ?? session?.user?.name ?? '';
-  const profileImageUrl = me ? me.profileImageUrl : session?.user?.image;
+  // 인증 사용자는 me 응답의 인라인 썸네일(base64 PNG)을 데이터 URI로 바로 렌더한다(이미지 호스트
+  // 왕복 없음). 썸네일이 없으면(프리셋만 있거나 me 로딩 전·게스트) 세션 이미지 URL로 폴백한다.
+  const thumbnailSrc = me?.profileThumbnailBase64
+    ? `data:image/png;base64,${me.profileThumbnailBase64}`
+    : undefined;
+  const profileImageSrc = thumbnailSrc ?? session?.user?.image;
 
   return (
     <section className="mb-4 flex items-center gap-4 p-4">
-      {profileImageUrl && !imageError ? (
+      {profileImageSrc && !imageError ? (
         <Image
-          src={profileImageUrl}
+          src={profileImageSrc}
           alt=""
           width={56}
           height={56}
