@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { useMigrate } from '@/api/generated/endpoints/auth/auth';
+import { getGetChatDetailQueryKey } from '@/api/generated/endpoints/chats/chats';
 import {
   getGetMyChatsQueryKey,
   getGetMyStoriesQueryKey,
@@ -76,6 +77,14 @@ export function useAutoMigration(): void {
             });
             void queryClient.invalidateQueries({
               queryKey: getGetMyChatsQueryKey(),
+            });
+            // 이관으로 채팅 소유권이 게스트→계정으로 바뀌므로, 로그인 직후 곧바로
+            // 열려 있던 채팅방(상세 조회가 이관과 경쟁해 소유권 오류로 실패한 상태)이
+            // 남지 않도록 각 채팅 상세 쿼리도 무효화해 재조회시킨다.
+            ids.chatIds.forEach((chatId) => {
+              void queryClient.invalidateQueries({
+                queryKey: getGetChatDetailQueryKey(chatId),
+              });
             });
 
             const { storyCount, chatCount } = countMigrated(response.data);
