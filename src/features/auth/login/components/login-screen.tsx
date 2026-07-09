@@ -23,6 +23,10 @@ export function LoginScreen() {
   const searchParams = useSearchParams();
   const hasError = searchParams.has('error');
   const isSessionExpired = searchParams.has(SESSION_EXPIRED_PARAM);
+  const callbackUrl = searchParams.get('callbackUrl');
+  const loginPathWithCallback = callbackUrl
+    ? `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : APP_PATH.LOGIN;
 
   useEffect(() => {
     track('client_login_viewed');
@@ -34,8 +38,8 @@ export function LoginScreen() {
     }
 
     toast.error(TOAST_MESSAGE.LOGIN_FAILED);
-    router.replace(APP_PATH.LOGIN);
-  }, [hasError, router]);
+    router.replace(loginPathWithCallback);
+  }, [hasError, loginPathWithCallback, router]);
 
   useEffect(() => {
     if (!isSessionExpired) {
@@ -43,8 +47,8 @@ export function LoginScreen() {
     }
 
     toast(TOAST_MESSAGE.SESSION_EXPIRED);
-    router.replace(APP_PATH.LOGIN);
-  }, [isSessionExpired, router]);
+    router.replace(loginPathWithCallback);
+  }, [isSessionExpired, loginPathWithCallback, router]);
 
   const handleGoogleLogin = () => {
     track('client_login_googleButton_clicked');
