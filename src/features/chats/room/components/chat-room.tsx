@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
+import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
@@ -19,7 +20,10 @@ import {
   isGuestOverLimit,
 } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
-import type { GuestLimitTrigger } from '@/observability/analytics';
+import type {
+  CreditShortageTrigger,
+  GuestLimitTrigger,
+} from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
@@ -42,14 +46,22 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const { status: sessionStatus } = useSession();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
+  const [creditShortageTrigger, setCreditShortageTrigger] =
+    useState<CreditShortageTrigger | null>(null);
 
-  // 402 통지: 게스트 체험 한도면 로그인 유도, 크레딧 부족이면 실패 토스트 유지.
+  // 402 통지: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도, 그 외는 실패 토스트.
   // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
   const handlePaymentRequired = (error: unknown) => {
-    if (
-      resolvePaymentRequiredReason(error, sessionStatus) === 'guest-trial-limit'
-    ) {
+    const reason = resolvePaymentRequiredReason(error, sessionStatus);
+
+    if (reason === 'guest-trial-limit') {
       setGuestLimitTrigger('chat_turn');
+
+      return;
+    }
+
+    if (reason === 'insufficient-credit') {
+      setCreditShortageTrigger('chat_turn');
 
       return;
     }
@@ -208,6 +220,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           onOpenChange={(open) => {
             if (!open) {
               setGuestLimitTrigger(null);
+            }
+          }}
+        />
+        <CreditShortageDialog
+          trigger={creditShortageTrigger}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreditShortageTrigger(null);
             }
           }}
         />

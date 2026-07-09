@@ -17,7 +17,10 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
 import { isGuestOverLimit } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
-import type { GuestLimitTrigger } from '@/observability/analytics';
+import type {
+  CreditShortageTrigger,
+  GuestLimitTrigger,
+} from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
 /**
@@ -30,6 +33,8 @@ export function useStartChat(storyId: string) {
   const { status } = useSession();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
+  const [creditShortageTrigger, setCreditShortageTrigger] =
+    useState<CreditShortageTrigger | null>(null);
 
   const createChat = useCreateChat({
     mutation: {
@@ -53,12 +58,18 @@ export function useStartChat(storyId: string) {
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: (error) => {
-        // 게스트 체험 한도면 로그인 유도, 크레딧 부족이면 실패 토스트.
+        // 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도, 그 외는 실패 토스트.
         // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
-        if (
-          resolvePaymentRequiredReason(error, status) === 'guest-trial-limit'
-        ) {
+        const reason = resolvePaymentRequiredReason(error, status);
+
+        if (reason === 'guest-trial-limit') {
           setGuestLimitTrigger('chat_start');
+
+          return;
+        }
+
+        if (reason === 'insufficient-credit') {
+          setCreditShortageTrigger('chat_start');
 
           return;
         }
@@ -85,5 +96,7 @@ export function useStartChat(storyId: string) {
     isError: createChat.isError,
     guestLimitTrigger,
     closeGuestLimitDialog: () => setGuestLimitTrigger(null),
+    creditShortageTrigger,
+    closeCreditShortageDialog: () => setCreditShortageTrigger(null),
   };
 }

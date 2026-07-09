@@ -14,6 +14,9 @@ export type GuestLimitTrigger =
   | 'chat_start'
   | 'chat_turn';
 
+/** 회원 크레딧 부족(402·INSUFFICIENT_CREDIT) 다이얼로그를 연 발생 지점. 게스트 한도와 동일한 지점 집합이다. */
+export type CreditShortageTrigger = GuestLimitTrigger;
+
 /** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
   // login
@@ -23,6 +26,12 @@ export type AnalyticsEventProps = {
   client_guestLimitDialog_shown: { trigger: GuestLimitTrigger };
   client_guestLimitDialog_loginButton_clicked: { trigger: GuestLimitTrigger };
   client_guestLimitDialog_dismissed: { trigger: GuestLimitTrigger };
+  // credit shortage (회원 크레딧 부족 → 크레딧 획득 유도)
+  client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
+  client_creditShortageDialog_earnButton_clicked: {
+    trigger: CreditShortageTrigger;
+  };
+  client_creditShortageDialog_dismissed: { trigger: CreditShortageTrigger };
   // onboarding
   client_onboarding_viewed: void;
   client_onboarding_createButton_clicked: void;
