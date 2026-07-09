@@ -29,7 +29,9 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
 import {
+  type GuestUsageAction,
   incrementGuestUsage,
+  isGuestOverLimit,
   isGuestUsageLimitReached,
 } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
@@ -125,12 +127,28 @@ export function useStoryCreateFunnel() {
     error: unknown,
     trigger: GuestLimitTrigger,
   ) => {
-    if (sessionStatus === 'authenticated' || !isPaymentRequiredError(error)) {
+    if (sessionStatus !== 'unauthenticated' || !isPaymentRequiredError(error)) {
       return;
     }
 
     setIsGuestLimitReached(true);
     setGuestLimitTrigger(trigger);
+  };
+
+  // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 다이얼로그를 열고 true를 반환한다.
+  // 각 진입점(생성·재생성·완료)의 사전 차단을 한 곳으로 모은다.
+  const guardGuestLimit = (
+    action: GuestUsageAction,
+    trigger: GuestLimitTrigger,
+  ): boolean => {
+    if (!isGuestOverLimit(sessionStatus, action)) {
+      return false;
+    }
+
+    setIsGuestLimitReached(true);
+    setGuestLimitTrigger(trigger);
+
+    return true;
   };
 
   const resetAdditionalInfoStep = () => {
@@ -251,13 +269,7 @@ export function useStoryCreateFunnel() {
   const handleGenerateStorylines = (
     request: GenerateSimpleStorylinesRequest,
   ) => {
-    if (
-      sessionStatus !== 'authenticated' &&
-      isGuestUsageLimitReached('storylineCreate')
-    ) {
-      setIsGuestLimitReached(true);
-      setGuestLimitTrigger('storyline_generate');
-
+    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
       return;
     }
 
@@ -277,13 +289,7 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (
-      sessionStatus !== 'authenticated' &&
-      isGuestUsageLimitReached('storylineCreate')
-    ) {
-      setIsGuestLimitReached(true);
-      setGuestLimitTrigger('storyline_generate');
-
+    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
       return;
     }
 
@@ -356,13 +362,7 @@ export function useStoryCreateFunnel() {
     setIsGuestLimitReached(false);
 
     if (createdStoryId !== null) {
-      if (
-        sessionStatus !== 'authenticated' &&
-        isGuestUsageLimitReached('chat')
-      ) {
-        setIsGuestLimitReached(true);
-        setGuestLimitTrigger('chat_start');
-
+      if (guardGuestLimit('chat', 'chat_start')) {
         return;
       }
 
@@ -385,13 +385,7 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (
-      sessionStatus !== 'authenticated' &&
-      isGuestUsageLimitReached('storyCreate')
-    ) {
-      setIsGuestLimitReached(true);
-      setGuestLimitTrigger('story_create');
-
+    if (guardGuestLimit('storyCreate', 'story_create')) {
       return;
     }
 

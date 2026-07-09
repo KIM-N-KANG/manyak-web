@@ -15,7 +15,7 @@ import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
-import { isGuestUsageLimitReached } from '@/features/auth/login-required/utils/guest-usage-storage';
+import { isGuestOverLimit } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
@@ -54,7 +54,7 @@ export function useStartChat(storyId: string) {
       },
       onError: (error) => {
         // 게스트의 체험 한도 초과(402)는 로그인 유도, 그 외(회원 402 포함)는 기존 실패 토스트.
-        if (status !== 'authenticated' && isPaymentRequiredError(error)) {
+        if (status === 'unauthenticated' && isPaymentRequiredError(error)) {
           setGuestLimitTrigger('chat_start');
 
           return;
@@ -66,7 +66,7 @@ export function useStartChat(storyId: string) {
   });
 
   const startChat = () => {
-    if (status !== 'authenticated' && isGuestUsageLimitReached('chat')) {
+    if (isGuestOverLimit(status, 'chat')) {
       setGuestLimitTrigger('chat_start');
 
       return;

@@ -11,7 +11,7 @@ import { useSession } from 'next-auth/react';
 import { useMainScroll } from '@/app/(main)/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
 import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
-import { isGuestUsageLimitReached } from '@/features/auth/login-required/utils/guest-usage-storage';
+import { isGuestOverLimit } from '@/features/auth/login-required/utils/guest-usage-storage';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
@@ -23,7 +23,7 @@ export function CreateStoryFab() {
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     // 이미 스토리를 만든 게스트는 생성 페이지 진입 자체를 막고 로그인을 유도한다.
-    if (status !== 'authenticated' && isGuestUsageLimitReached('storyCreate')) {
+    if (isGuestOverLimit(status, 'storyCreate')) {
       event.preventDefault();
       setGuestLimitTrigger('story_create');
 

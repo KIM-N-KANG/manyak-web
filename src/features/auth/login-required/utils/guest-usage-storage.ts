@@ -118,3 +118,35 @@ export function incrementGuestUsage(action: GuestUsageAction): void {
 export function isGuestUsageLimitReached(action: GuestUsageAction): boolean {
   return isLimitReached(action, readGuestUsage());
 }
+
+/**
+ * 저장된 게스트 사용량 카운터를 제거한다. 로그인·이관 후 스테일 카운터로 인한
+ * 오게이팅(이미 인증된 기기가 게스트 한도로 판정되는 문제)을 막는다.
+ * localStorage 차단 시 조용히 무시.
+ */
+export function clearGuestUsage(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(GUEST_USAGE_STORAGE_KEY);
+  } catch {
+    // 프라이빗 모드 등 localStorage 차단 환경에서는 건너뛴다.
+  }
+}
+
+/** next-auth `useSession().status` 값 — 게스트 판정에 쓴다. */
+export type SessionStatus = 'authenticated' | 'loading' | 'unauthenticated';
+
+/**
+ * 세션이 확정된 비인증(게스트) 상태에서만 해당 액션의 한도 초과를 판정한다.
+ * 'loading' 동안은 게스트로 단정하지 않아, 세션 확정 전 인증 사용자에게
+ * 로그인 유도가 잘못 뜨는 것을 막는다.
+ */
+export function isGuestOverLimit(
+  status: SessionStatus,
+  action: GuestUsageAction,
+): boolean {
+  return status === 'unauthenticated' && isGuestUsageLimitReached(action);
+}

@@ -15,7 +15,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
 import {
   incrementGuestUsage,
-  isGuestUsageLimitReached,
+  isGuestOverLimit,
 } from '@/features/auth/login-required/utils/guest-usage-storage';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import type { GuestLimitTrigger } from '@/observability/analytics';
@@ -42,9 +42,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
 
-  // 402 통지: 게스트면 로그인 유도, 회원(크레딧 부족)은 기존 실패 토스트 유지.
+  // 402 통지: 확정된 게스트면 로그인 유도, 그 외(회원 크레딧 부족·세션 미확정)는 실패 토스트 유지.
   const handlePaymentRequired = () => {
-    if (sessionStatus === 'authenticated') {
+    if (sessionStatus !== 'unauthenticated') {
       toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
 
       return;
@@ -82,7 +82,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   // 게스트가 턴 한도에 도달했으면 전송하지 않고 로그인 유도(기존 402 경로 재사용).
   const guardedSend = (userInput: string): Promise<void> => {
-    if (sessionStatus !== 'authenticated' && isGuestUsageLimitReached('chat')) {
+    if (isGuestOverLimit(sessionStatus, 'chat')) {
       handlePaymentRequired();
 
       return Promise.resolve();

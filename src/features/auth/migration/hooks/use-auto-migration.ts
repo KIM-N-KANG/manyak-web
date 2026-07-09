@@ -12,6 +12,7 @@ import {
   getGetMyChatsQueryKey,
   getGetMyStoriesQueryKey,
 } from '@/api/generated/endpoints/users/users';
+import { clearGuestUsage } from '@/features/auth/login-required/utils/guest-usage-storage';
 import {
   CREATED_CHAT_IDS_STORAGE_KEY,
   parseCreatedChatIds,
@@ -39,6 +40,18 @@ export function useAutoMigration(): void {
   const queryClient = useQueryClient();
   const { mutate } = useMigrate();
   const hasStartedRef = useRef(false);
+  const hasClearedUsageRef = useRef(false);
+
+  // 인증이 확정되면 게스트 사용량 카운터를 비운다. 이관 대상 로컬 ID가 없어도(예: 스토리라인만
+  // 생성한 게스트) 실행되므로, 로그인 후 스테일 카운터가 남아 다시 게스트로 게이팅되는 것을 막는다.
+  useEffect(() => {
+    if (status !== 'authenticated' || hasClearedUsageRef.current) {
+      return;
+    }
+
+    hasClearedUsageRef.current = true;
+    clearGuestUsage();
+  }, [status]);
 
   useEffect(() => {
     if (status !== 'authenticated' || hasStartedRef.current) {
