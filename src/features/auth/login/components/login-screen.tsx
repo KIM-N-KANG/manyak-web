@@ -15,7 +15,10 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import { track } from '@/observability/analytics';
 
-import { resolveLoginCallbackUrl } from '../utils/login-callback-url';
+import {
+  buildLoginUrl,
+  resolveLoginCallbackUrl,
+} from '../utils/login-callback-url';
 import { GoogleLogo } from './google-logo';
 
 export function LoginScreen() {
@@ -24,9 +27,7 @@ export function LoginScreen() {
   const hasError = searchParams.has('error');
   const isSessionExpired = searchParams.has(SESSION_EXPIRED_PARAM);
   const callbackUrl = searchParams.get('callbackUrl');
-  const loginPathWithCallback = callbackUrl
-    ? `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`
-    : APP_PATH.LOGIN;
+  const loginPathWithCallback = buildLoginUrl(callbackUrl);
 
   useEffect(() => {
     track('client_login_viewed');

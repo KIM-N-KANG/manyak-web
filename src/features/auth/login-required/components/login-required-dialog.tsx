@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { APP_PATH } from '@/constants/app-path';
+import { buildLoginUrl } from '@/features/auth/login/utils/login-callback-url';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredDialogProps = {
@@ -40,9 +40,7 @@ export function LoginRequiredDialog({
       track('client_guestLimitDialog_loginButton_clicked', { trigger });
     }
 
-    router.push(
-      `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(pathname)}`,
-    );
+    router.push(buildLoginUrl(pathname));
   };
 
   const handleDismiss = () => {

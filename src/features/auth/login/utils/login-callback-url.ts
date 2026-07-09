@@ -32,3 +32,15 @@ export function resolveLoginCallbackUrl(raw: string | null): string {
 
   return APP_PATH.MAIN.STORIES;
 }
+
+/**
+ * 로그인 화면 경로에 복귀용 callbackUrl 쿼리를 붙인다.
+ * callbackUrl이 없으면 순수 로그인 경로를 반환한다.
+ */
+export function buildLoginUrl(callbackUrl: string | null): string {
+  if (!callbackUrl) {
+    return APP_PATH.LOGIN;
+  }
+
+  return `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+}

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { APP_PATH } from '@/constants/app-path';
-import { resolveLoginCallbackUrl } from '@/features/auth/login/utils/login-callback-url';
+import {
+  buildLoginUrl,
+  resolveLoginCallbackUrl,
+} from '@/features/auth/login/utils/login-callback-url';
 
 describe('resolveLoginCallbackUrl', () => {
   it('앱 내 상대 경로를 그대로 반환한다', () => {
@@ -29,5 +32,24 @@ describe('resolveLoginCallbackUrl', () => {
     expect(resolveLoginCallbackUrl('/\t/evil.com')).toBe(APP_PATH.MAIN.STORIES);
     expect(resolveLoginCallbackUrl('/\n/evil.com')).toBe(APP_PATH.MAIN.STORIES);
     expect(resolveLoginCallbackUrl('/\r/evil.com')).toBe(APP_PATH.MAIN.STORIES);
+  });
+});
+
+describe('buildLoginUrl', () => {
+  it('callbackUrl을 인코딩해 로그인 경로에 붙인다', () => {
+    expect(buildLoginUrl('/chats/abc-123')).toBe(
+      `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent('/chats/abc-123')}`,
+    );
+  });
+
+  it('쿼리·특수문자가 있는 경로도 안전하게 인코딩한다', () => {
+    expect(buildLoginUrl('/stories?tab=new&x=1')).toBe(
+      `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent('/stories?tab=new&x=1')}`,
+    );
+  });
+
+  it('null·빈 문자열이면 순수 로그인 경로를 반환한다', () => {
+    expect(buildLoginUrl(null)).toBe(APP_PATH.LOGIN);
+    expect(buildLoginUrl('')).toBe(APP_PATH.LOGIN);
   });
 });
