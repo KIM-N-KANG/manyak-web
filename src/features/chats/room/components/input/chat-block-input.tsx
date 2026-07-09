@@ -63,7 +63,7 @@ export function ChatBlockInput({
   return (
     <section className="flex flex-col bg-background pb-[env(safe-area-inset-bottom)]">
       {blocks.length > 0 && (
-        <div className="flex max-h-[30dvh] scrollbar-none flex-col gap-2 overflow-y-auto px-4 py-2">
+        <div className="flex max-h-[30dvh] flex-col gap-2 overflow-y-auto px-4 py-2">
           {blocks.map((block) => (
             <div key={block.id} className="flex items-center gap-2">
               <InputGroup>

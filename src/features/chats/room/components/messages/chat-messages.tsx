@@ -57,7 +57,7 @@ export function ChatMessages({
       <main
         ref={scrollRef}
         onScroll={handleMessageScroll}
-        className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div aria-hidden className={cn('shrink-0', CHAT_HEADER_HEIGHT_CLASS)} />
 
         {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
