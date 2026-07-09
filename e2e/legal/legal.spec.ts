@@ -23,7 +23,7 @@ test.describe('약관·개인정보처리방침', () => {
 
     await expect(page).toHaveURL('/terms');
     await expect(
-      page.getByText('서비스이용약관', { exact: true }),
+      page.getByRole('banner').getByText('서비스이용약관'),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '제5조 (게스트 데이터의 이관)' }),
@@ -37,7 +37,7 @@ test.describe('약관·개인정보처리방침', () => {
 
     await expect(page).toHaveURL('/privacy');
     await expect(
-      page.getByText('개인정보처리방침', { exact: true }),
+      page.getByRole('banner').getByText('개인정보처리방침'),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '1. 수집하는 개인정보 항목' }),
@@ -49,7 +49,7 @@ test.describe('약관·개인정보처리방침', () => {
     await page.goto('/terms');
 
     await expect(
-      page.getByText('서비스이용약관', { exact: true }),
+      page.getByRole('banner').getByText('서비스이용약관'),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '제5조 (게스트 데이터의 이관)' }),
