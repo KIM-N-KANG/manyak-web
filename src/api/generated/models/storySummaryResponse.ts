@@ -14,6 +14,11 @@ import type { StorySummaryResponseStatus } from './storySummaryResponseStatus';
 export interface StorySummaryResponse {
   /** 스토리 ID(공개 식별자) */
   id?: string;
+  /**
+   * 썸네일 축소 변형 URL(§4-3-9 반응형 변형). 목록 카드용. 소스가 없으면 null.
+   * @nullable
+   */
+  thumbnailUrlSm?: string | null;
   /** 제목 */
   title?: string;
   /** 한 줄 소개 */

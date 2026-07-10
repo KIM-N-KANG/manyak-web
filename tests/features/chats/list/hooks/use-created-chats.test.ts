@@ -10,6 +10,7 @@ const makeChat = (
   id,
   storyId: 'story-1',
   storyTitle: `story-${id}`,
+  thumbnailUrlSm: null,
   lastStoryPreview: `preview-${id}`,
   turnCount: 0,
   reachedEndings: [],
