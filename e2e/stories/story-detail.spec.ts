@@ -12,11 +12,21 @@ const storyDetail = {
   oneLineIntro: '잃어버린 용을 찾는 모험',
   description: '깊은 계곡 속 전설의 이야기',
   genres: ['판타지', '모험'],
-  startSetting: {
-    name: '계곡 입구',
-    prologue: '안개 낀 계곡 앞에 섰다',
-    startSituation: '용의 흔적을 따라왔다',
-  },
+  turnCount: 1280,
+  startSettings: [
+    {
+      id: 'ss1',
+      name: '계곡 입구',
+      prologue: '안개 낀 계곡 앞에 섰다',
+      startSituation: '용의 흔적을 따라왔다',
+    },
+    {
+      id: 'ss2',
+      name: '용의 둥지',
+      prologue: '거대한 둥지 앞에 도착했다',
+      startSituation: '용의 숨소리가 들려온다',
+    },
+  ],
 };
 
 const fulfillStoryDetail = async (route: Route) => {
@@ -26,6 +36,14 @@ const fulfillStoryDetail = async (route: Route) => {
     body: JSON.stringify(storyDetail),
   });
 };
+
+const THUMBNAIL_URL = 'https://example.com/thumbnails/dragon.png';
+
+// 1x1 투명 PNG. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 test.describe('스토리 상세', () => {
   test('스토리 제목·소개·설명을 보여준다 (US-4-1)', async ({ page }) => {
@@ -38,6 +56,43 @@ test.describe('스토리 상세', () => {
     ).toBeVisible();
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+  });
+
+  test('썸네일이 있으면 상단 이미지와 턴 수 뱃지를 보여준다 (US-4-1)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, thumbnailUrl: THUMBNAIL_URL }),
+      });
+    });
+    await page.route(THUMBNAIL_URL, async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('img', { name: '스토리 썸네일' }),
+    ).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+  });
+
+  test('채팅 시작 상황을 전체 나열한다 (US-4-1)', async ({ page }) => {
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('heading', { name: '채팅 시작 상황' }),
+    ).toBeVisible();
+    await expect(page.getByText('계곡 입구')).toBeVisible();
+    await expect(page.getByText('안개 낀 계곡 앞에 섰다')).toBeVisible();
+    await expect(page.getByText('용의 둥지')).toBeVisible();
+    await expect(page.getByText('거대한 둥지 앞에 도착했다')).toBeVisible();
   });
 
   test('"채팅 시작하기"를 누르면 채팅 화면으로 이동한다 (US-4-2)', async ({
