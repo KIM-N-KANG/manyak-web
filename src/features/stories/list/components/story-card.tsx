@@ -5,6 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryTurnCount } from '@/features/stories/components/story-turn-count';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
@@ -53,7 +54,9 @@ export function StoryCard({ story, position }: StoryCardProps) {
       )}
       {/* 백엔드 썸네일 호스트가 확정되면 next.config remotePatterns에
           등록하고 unoptimized를 제거한다. */}
-      <div className="relative aspect-3/4 w-full overflow-hidden rounded-lg border border-b border-border bg-muted">
+      <AspectRatio
+        ratio={3 / 4}
+        className="w-full overflow-hidden rounded-lg border border-border bg-muted">
         {thumbnailUrl ? (
           <Image
             src={thumbnailUrl}
@@ -77,7 +80,7 @@ export function StoryCard({ story, position }: StoryCardProps) {
         <div className="absolute right-3 bottom-3">
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
         </div>
-      </div>
+      </AspectRatio>
       <div className="flex h-24 min-w-0 flex-col gap-0.5">
         <p className="line-clamp-2 leading-6 font-semibold">{story.title}</p>
         <p className="line-clamp-1 text-sm text-foreground-secondary">
