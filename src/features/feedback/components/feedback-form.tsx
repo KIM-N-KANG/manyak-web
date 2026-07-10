@@ -42,63 +42,65 @@ export function FeedbackForm() {
   } = useFeedbackForm();
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-      <div className="flex flex-col items-start gap-1 p-4">
-        <div className="text-xl font-semibold">
-          {FEEDBACK_TITLE_LINES.map((titleLine) => (
-            <p key={titleLine}>{titleLine}</p>
-          ))}
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto">
+        <div className="flex flex-col items-start gap-1 p-4">
+          <div className="text-xl font-semibold">
+            {FEEDBACK_TITLE_LINES.map((titleLine) => (
+              <p key={titleLine}>{titleLine}</p>
+            ))}
+          </div>
+          <p className="text-foreground-secondary">{FEEDBACK_DESCRIPTION}</p>
         </div>
-        <p className="text-foreground-secondary">{FEEDBACK_DESCRIPTION}</p>
+
+        <FieldGroup className="gap-8 p-4 pb-6">
+          <Field className="gap-2" aria-labelledby="feedback-body-label">
+            <FieldLabel
+              id="feedback-body-label"
+              htmlFor="feedback-body"
+              className="gap-0.5">
+              피드백 내용
+              <span className="text-destructive">*</span>
+            </FieldLabel>
+            <InputGroup>
+              <InputGroupTextarea
+                id="feedback-body"
+                maxLength={FEEDBACK_BODY_MAX_LENGTH}
+                placeholder="예: 이런 점이 불편했어요, 이런 기능이 있으면 좋겠어요"
+                value={body}
+                disabled={isSubmitting}
+                onChange={handleBodyChange}
+              />
+              <InputGroupAddon align="block-end">
+                <InputGroupText>
+                  {body.length} / {FEEDBACK_BODY_MAX_LENGTH}
+                </InputGroupText>
+              </InputGroupAddon>
+            </InputGroup>
+          </Field>
+
+          <Field className="gap-2" aria-labelledby="feedback-email-label">
+            <FieldLabel id="feedback-email-label" htmlFor="feedback-email">
+              답변 받을 이메일
+            </FieldLabel>
+            <Input
+              id="feedback-email"
+              type="email"
+              inputMode="email"
+              maxLength={FEEDBACK_EMAIL_MAX_LENGTH}
+              placeholder="예: contact@manyak.app"
+              value={email}
+              disabled={isSubmitting}
+              onChange={handleEmailChange}
+            />
+            <FieldDescription className="text-foreground-secondary">
+              답변이 필요하시면 이메일을 남겨주세요
+            </FieldDescription>
+          </Field>
+        </FieldGroup>
       </div>
 
-      <FieldGroup className="gap-8 p-4 pb-6">
-        <Field className="gap-2" aria-labelledby="feedback-body-label">
-          <FieldLabel
-            id="feedback-body-label"
-            htmlFor="feedback-body"
-            className="gap-0.5">
-            피드백 내용
-            <span className="text-destructive">*</span>
-          </FieldLabel>
-          <InputGroup>
-            <InputGroupTextarea
-              id="feedback-body"
-              maxLength={FEEDBACK_BODY_MAX_LENGTH}
-              placeholder="예: 이런 점이 불편했어요, 이런 기능이 있으면 좋겠어요"
-              value={body}
-              disabled={isSubmitting}
-              onChange={handleBodyChange}
-            />
-            <InputGroupAddon align="block-end">
-              <InputGroupText>
-                {body.length} / {FEEDBACK_BODY_MAX_LENGTH}
-              </InputGroupText>
-            </InputGroupAddon>
-          </InputGroup>
-        </Field>
-
-        <Field className="gap-2" aria-labelledby="feedback-email-label">
-          <FieldLabel id="feedback-email-label" htmlFor="feedback-email">
-            답변 받을 이메일
-          </FieldLabel>
-          <Input
-            id="feedback-email"
-            type="email"
-            inputMode="email"
-            maxLength={FEEDBACK_EMAIL_MAX_LENGTH}
-            placeholder="예: contact@manyak.app"
-            value={email}
-            disabled={isSubmitting}
-            onChange={handleEmailChange}
-          />
-          <FieldDescription className="text-foreground-secondary">
-            답변이 필요하시면 이메일을 남겨주세요
-          </FieldDescription>
-        </Field>
-      </FieldGroup>
-
-      <div className="mt-auto flex h-18 items-center p-4 pt-2">
+      <div className="flex h-18 shrink-0 items-center p-4 pt-2">
         <Button
           type="submit"
           size="lg"

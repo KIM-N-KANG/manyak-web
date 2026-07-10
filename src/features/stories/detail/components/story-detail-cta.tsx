@@ -27,7 +27,7 @@ export function StoryDetailCta({
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <nav className="shrink-0 bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex w-full items-center">
           <Button
             type="button"
