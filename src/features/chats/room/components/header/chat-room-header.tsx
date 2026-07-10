@@ -53,12 +53,14 @@ export function ChatRoomHeader({
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
       <h1 className="min-w-0 flex-1 truncate font-semibold">{storyTitle}</h1>
-      <ChatCreditInfoPopover isHeaderVisible={isVisible} />
-      <ChatSettingsDrawer
-        chatId={chatId}
-        mode={inputMode}
-        onModeChange={onInputModeChange}
-      />
+      <div className="flex items-center gap-1">
+        <ChatCreditInfoPopover isHeaderVisible={isVisible} />
+        <ChatSettingsDrawer
+          chatId={chatId}
+          mode={inputMode}
+          onModeChange={onInputModeChange}
+        />
+      </div>
     </m.header>
   );
 }
