@@ -34,8 +34,7 @@ export function StoryCard({ story, position }: StoryCardProps) {
     },
   });
 
-  // TODO: 백엔드 목록 응답에 썸네일이 추가되면 연결한다.
-  const thumbnailUrl: string | null = null;
+  const thumbnailUrl = story.thumbnailUrlSm ?? null;
 
   return (
     <article ref={impressionRef} className="relative flex flex-col gap-2">
@@ -52,8 +51,6 @@ export function StoryCard({ story, position }: StoryCardProps) {
           }
         />
       )}
-      {/* 백엔드 썸네일 호스트가 확정되면 next.config remotePatterns에
-          등록하고 unoptimized를 제거한다. */}
       <AspectRatio
         ratio={3 / 4}
         className="w-full overflow-hidden rounded-lg border border-border bg-muted">
@@ -64,7 +61,6 @@ export function StoryCard({ story, position }: StoryCardProps) {
             fill
             sizes="50vw"
             priority={position != null && position < 4}
-            unoptimized
             className="object-cover"
           />
         ) : (
