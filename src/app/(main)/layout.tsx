@@ -22,12 +22,16 @@ export default function MainLayout({
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
       <MainHeader />
-      <div
-        className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))]"
-        onScroll={handleContentScroll}>
-        <MainScrollProvider value={{ hasScrolled }}>
-          {children}
-        </MainScrollProvider>
+      {/* 스크롤 영역과 같은 박스를 가지는 positioned 래퍼.
+          FAB처럼 스크롤을 따라가지 않아야 하는 오버레이가 absolute로 여기에 붙는다. */}
+      <div className="relative min-h-0 flex-1">
+        <div
+          className="flex h-full flex-col overflow-y-auto overscroll-contain"
+          onScroll={handleContentScroll}>
+          <MainScrollProvider value={{ hasScrolled }}>
+            {children}
+          </MainScrollProvider>
+        </div>
       </div>
       <BottomNavigationBar />
       <OnboardingDialog />

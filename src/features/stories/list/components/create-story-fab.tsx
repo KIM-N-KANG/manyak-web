@@ -34,7 +34,9 @@ export function CreateStoryFab() {
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-end px-4">
+    // absolute 기준은 메인 레이아웃의 스크롤 래퍼(positioned). 스크롤 컨테이너는
+    // static이라 이를 통과해 붙으므로, 스크롤과 무관하게 콘텐츠 영역 우하단에 고정된다.
+    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-end px-4">
       <Link
         href={APP_PATH.CREATOR.STORY}
         onClick={handleClick}
