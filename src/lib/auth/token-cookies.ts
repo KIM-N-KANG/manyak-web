@@ -14,11 +14,20 @@ import {
 /**
  * NextAuth(JWT 전략) 세션 쿠키 이름. 백엔드 세션 폐기(재발급 실패) 시 함께 지워
  * "NextAuth는 회원인데 백엔드는 게스트"인 불일치 상태를 막는다.
+ *
+ * JWT가 약 4KB를 넘으면 Auth.js가 base 이름 없이 `.0`, `.1` 청크 쿠키로 분할하므로,
+ * 정확 일치가 아니라 접두사(`이름` 또는 `이름.`)로 판별해야 한다.
  */
 const NEXTAUTH_SESSION_COOKIES = [
   'authjs.session-token',
   '__Secure-authjs.session-token',
 ];
+
+function isNextAuthSessionCookieName(name: string): boolean {
+  return NEXTAUTH_SESSION_COOKIES.some(
+    (base) => name === base || name.startsWith(`${base}.`),
+  );
+}
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -87,7 +96,9 @@ export async function writeBackendSessionTokens(
 export async function hasNextAuthSessionCookie(): Promise<boolean> {
   const store = await cookies();
 
-  return NEXTAUTH_SESSION_COOKIES.some((name) => store.get(name) != null);
+  return store
+    .getAll()
+    .some((cookie) => isNextAuthSessionCookieName(cookie.name));
 }
 
 /**
@@ -110,12 +121,19 @@ export async function clearBackendSession(): Promise<void> {
     expires: new Date(0),
   } as const;
 
-  for (const name of [
+  // base 이름은 항상 지우고, 실제 존재하는 청크(.0, .1 …) 쿠키도 함께 지운다.
+  const names = new Set([
     ACCESS_TOKEN_COOKIE,
     REFRESH_TOKEN_COOKIE,
     EXPIRES_AT_COOKIE,
     ...NEXTAUTH_SESSION_COOKIES,
-  ]) {
+    ...store
+      .getAll()
+      .map((cookie) => cookie.name)
+      .filter(isNextAuthSessionCookieName),
+  ]);
+
+  for (const name of names) {
     store.set(name, '', expireOptions);
   }
 }
