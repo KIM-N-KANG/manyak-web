@@ -2,6 +2,7 @@ import type { Ref } from 'react';
 
 import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
+import { formatDate } from '@/lib/format-date';
 
 import { StoryDetailTags } from './story-detail-tags';
 import { StoryStartSettings } from './story-start-settings';
@@ -12,6 +13,7 @@ type StoryInfo = {
   description?: string | null;
   genres?: string[];
   startSettings?: StoryStartSettingResponse[];
+  createdAt?: string;
 };
 
 type StoryInfoSectionProps = {
@@ -55,6 +57,17 @@ export function StoryInfoSection({
           value={startSettingValue}
           onValueChange={onStartSettingValueChange}
         />
+      )}
+
+      {story.createdAt && (
+        <div className="flex items-center gap-3 rounded-md bg-muted px-3.5 py-2.5 text-sm">
+          <p className="flex items-center gap-1.5">
+            <span className="text-foreground-secondary">생성일</span>
+            <time dateTime={story.createdAt} className="font-semibold">
+              {formatDate(story.createdAt)}
+            </time>
+          </p>
+        </div>
       )}
     </div>
   );

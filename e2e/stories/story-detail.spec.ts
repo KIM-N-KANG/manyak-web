@@ -13,6 +13,7 @@ const storyDetail = {
   description: '깊은 계곡 속 전설의 이야기',
   genres: ['판타지', '모험'],
   turnCount: 1280,
+  createdAt: '2026-06-24T12:00:00Z',
   startSettings: [
     {
       id: 'ss1',
@@ -57,6 +58,8 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
     await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('생성일')).toBeVisible();
+    await expect(page.getByText('2026-06-24')).toBeVisible();
   });
 
   test('썸네일이 있으면 상단 이미지와 턴 수 뱃지를 보여준다 (US-4-1)', async ({
