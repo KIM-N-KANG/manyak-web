@@ -1,6 +1,5 @@
 'use client';
 
-import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -17,6 +16,7 @@ export function BottomNavigationBar() {
       <ul className="grid h-16 grid-cols-3">
         {MAIN_NAVIGATION_ITEMS.map((item) => {
           const isActive = pathname === item.href;
+          const Icon = item.icon;
 
           return (
             <li key={item.href} className="min-w-0 px-4">
@@ -30,11 +30,7 @@ export function BottomNavigationBar() {
                     ? 'font-semibold text-foreground'
                     : 'text-foreground-tertiary',
                 )}>
-                <HugeiconsIcon
-                  icon={item.icon}
-                  className="size-6"
-                  aria-hidden="true"
-                />
+                <Icon className="size-6" aria-hidden="true" />
                 <span>{item.label}</span>
               </Link>
             </li>
