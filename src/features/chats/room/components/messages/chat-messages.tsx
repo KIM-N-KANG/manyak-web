@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,9 @@ import {
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
+import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled';
 import type { StreamingTurn } from '../../types';
 import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
@@ -39,6 +41,10 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  // 진입 직후 추정 높이 기준의 초기 스크롤이 실제 맨 아래로 정착하기 전
+  // 프레임(중간 걸림·빈 화면)이 노출되지 않도록, 정착까지 스크롤러를 숨긴다.
+  const settled = useInitialScrollSettled(viewportRef, { skip: startedEmpty });
 
   useEffect(() => {
     if (streamingTurn && !hasSent) {
@@ -54,8 +60,12 @@ export function ChatMessages({
       autoScroll={!startedEmpty && !hasSent}
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={0}>
-      <MessageScroller>
-        <MessageScrollerViewport>
+      <MessageScroller
+        className={cn(
+          'transition-opacity duration-150',
+          !settled && 'opacity-0',
+        )}>
+        <MessageScrollerViewport ref={viewportRef}>
           <MessageScrollerContent className="gap-0">
             {prologue ? (
               <MessageScrollerItem>
