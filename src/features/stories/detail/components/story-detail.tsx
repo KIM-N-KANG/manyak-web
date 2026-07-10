@@ -82,7 +82,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   const showTitle = Boolean(story) && !isTitleInView;
 
   return (
-    <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <StoryDetailHeader
         storyId={storyId}
         title={story?.title ?? ''}
@@ -93,7 +93,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         {showSkeleton && (
           <m.main
             key="skeleton"
-            className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+            className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
             {...FADE_TRANSITION_PROPS}>
             <StoryDetailSkeleton />
           </m.main>
@@ -125,7 +125,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             {...FADE_TRANSITION_PROPS}>
             <main
               ref={contentRef}
-              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto pb-4">
+              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain pb-4">
               {/* 백엔드 썸네일 호스트가 확정되면 next.config remotePatterns에
                   등록하고 unoptimized를 제거한다. */}
               <div className="shrink-0 px-4">

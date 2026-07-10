@@ -25,7 +25,7 @@ export function StoryCreateHeader({
 }: StoryCreateHeaderProps) {
   return (
     <>
-      <header className="sticky top-0 z-50 flex flex-col bg-background">
+      <header className="flex shrink-0 flex-col bg-background">
         <div className="flex h-14 items-center justify-between pr-4 pl-2">
           <div className="flex items-center gap-2">
             <Button

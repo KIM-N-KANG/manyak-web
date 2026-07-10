@@ -61,7 +61,7 @@ export function StoryCreateFunnel() {
   }, [step]);
 
   return (
-    <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <StoryCreateHeader
         step={step}
         backDialogOpen={backDialogOpen}

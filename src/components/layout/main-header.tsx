@@ -11,7 +11,7 @@ export function MainHeader() {
   const title = getMainNavigationLabel(pathname);
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center gap-4 bg-background px-4">
+    <header className="flex h-14 shrink-0 items-center gap-4 bg-background px-4">
       <ManyakLogo className="h-6 w-auto text-primary" />
       <h1 className="text-lg font-semibold">{title}</h1>
     </header>

@@ -52,7 +52,7 @@ export function ChatSettingsDrawer({
         <DrawerHeader>
           <DrawerTitle>채팅 설정</DrawerTitle>
         </DrawerHeader>
-        <div className="flex flex-col gap-2 overflow-y-auto p-4">
+        <div className="flex flex-col gap-2 overflow-y-auto overscroll-contain p-4">
           <Label>입력 모드</Label>
           {CHAT_INPUT_MODE_OPTIONS.map((option) => (
             <Button

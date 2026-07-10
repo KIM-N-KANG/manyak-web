@@ -59,7 +59,7 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="flex h-svh min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <BackHeader title="로그인" fallbackHref={APP_PATH.MAIN.STORIES} />
       <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4">
         <div className="flex flex-col items-center gap-4">

@@ -43,7 +43,7 @@ export function FeedbackForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto">
+      <div className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain">
         <div className="flex flex-col items-start gap-1 p-4">
           <div className="text-xl font-semibold">
             {FEEDBACK_TITLE_LINES.map((titleLine) => (
