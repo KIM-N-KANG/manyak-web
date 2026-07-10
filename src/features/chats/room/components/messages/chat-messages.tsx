@@ -1,6 +1,12 @@
 'use client';
 
-import { type UIEvent, useEffect, useRef, useState } from 'react';
+import {
+  type KeyboardEvent,
+  type UIEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
@@ -22,6 +28,18 @@ import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';
+
+const USER_SCROLL_IDLE_TIMEOUT_MS = 150;
+
+const SCROLL_INTENT_KEYS = new Set([
+  'ArrowDown',
+  'ArrowUp',
+  'End',
+  'Home',
+  'PageDown',
+  'PageUp',
+  ' ',
+]);
 
 type ChatMessagesProps = {
   prologue: string;
@@ -45,6 +63,8 @@ export function ChatMessages({
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
   const lastScrollTopRef = useRef(0);
+  const lastUserScrollInputAtRef = useRef(0);
+  const wasStreamingRef = useRef(streamingTurn !== null);
 
   useEffect(() => {
     if (streamingTurn && !hasSent) {
@@ -53,10 +73,38 @@ export function ChatMessages({
     }
   }, [streamingTurn, hasSent]);
 
+  useEffect(() => {
+    const isStreamingNow = streamingTurn !== null;
+
+    if (isStreamingNow && !wasStreamingRef.current) {
+      lastUserScrollInputAtRef.current = 0;
+    }
+
+    wasStreamingRef.current = isStreamingNow;
+  }, [streamingTurn]);
+
+  const markUserScrollIntent = () => {
+    lastUserScrollInputAtRef.current = performance.now();
+  };
+
+  const handleViewportKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (SCROLL_INTENT_KEYS.has(event.key)) {
+      markUserScrollIntent();
+    }
+  };
+
   const handleViewportScroll = (event: UIEvent<HTMLDivElement>) => {
     const current = event.currentTarget.scrollTop;
     const delta = current - lastScrollTopRef.current;
-    const nextVisible = resolveHeaderVisibility(current, delta);
+    const now = performance.now();
+    const isUserScroll =
+      now - lastUserScrollInputAtRef.current <= USER_SCROLL_IDLE_TIMEOUT_MS;
+
+    if (isUserScroll) {
+      markUserScrollIntent();
+    }
+
+    const nextVisible = resolveHeaderVisibility(current, delta, isUserScroll);
 
     if (nextVisible !== null) {
       onHeaderVisibleChange(nextVisible);
@@ -73,7 +121,11 @@ export function ChatMessages({
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={0}>
       <MessageScroller>
-        <MessageScrollerViewport onScroll={handleViewportScroll}>
+        <MessageScrollerViewport
+          onScroll={handleViewportScroll}
+          onWheel={markUserScrollIntent}
+          onTouchMove={markUserScrollIntent}
+          onKeyDown={handleViewportKeyDown}>
           <MessageScrollerContent className="gap-0">
             <div
               aria-hidden
