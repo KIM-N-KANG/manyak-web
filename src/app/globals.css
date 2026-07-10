@@ -156,6 +156,11 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* 모든 스크롤바를 채팅 메시지 스크롤러와 동일한 얇은 썸·투명 트랙으로 통일.
+       --scrollbar-thumb/--scrollbar-track 변수로 개별 오버라이드할 수 있다. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb, var(--color-border))
+      var(--scrollbar-track, transparent);
   }
 
   body {
