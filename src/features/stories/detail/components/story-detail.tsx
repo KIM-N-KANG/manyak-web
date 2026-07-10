@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Image01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -23,6 +23,7 @@ import { StoryDetailCta } from './story-detail-cta';
 import { StoryDetailHeader } from './story-detail-header';
 import { StoryDetailSkeleton } from './story-detail-skeleton';
 import { StoryInfoSection } from './story-info-section';
+import { startSettingValue } from './story-start-settings';
 import { StoryTurnCount } from './story-turn-count';
 
 type StoryDetailProps = {
@@ -45,6 +46,18 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   const showSkeleton = useDelayedLoading(isPending);
   const story = data?.status === 200 ? data.data : undefined;
   const thumbnailUrl = story?.thumbnailUrl ?? undefined;
+
+  // 선택한 시작 설정. 선택 전에는 첫 번째 설정이 기본값이다.
+  const [selectedStartSetting, setSelectedStartSetting] = useState<
+    string | null
+  >(null);
+  const startSettings = story?.startSettings ?? [];
+  const activeStartSetting =
+    selectedStartSetting ?? startSettingValue(startSettings[0], 0);
+  const activeStartSettingId = startSettings.find(
+    (setting, index) =>
+      startSettingValue(setting, index) === activeStartSetting,
+  )?.id;
 
   const contentRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -149,11 +162,19 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                 </div>
               </AspectRatio>
               <div className="px-4 pt-4">
-                <StoryInfoSection story={story} titleRef={titleRef} />
+                <StoryInfoSection
+                  story={story}
+                  titleRef={titleRef}
+                  startSettingValue={activeStartSetting}
+                  onStartSettingValueChange={setSelectedStartSetting}
+                />
               </div>
             </main>
 
-            <StoryDetailCta storyId={storyId} />
+            <StoryDetailCta
+              storyId={storyId}
+              startSettingId={activeStartSettingId}
+            />
           </m.div>
         )}
       </AnimatePresence>

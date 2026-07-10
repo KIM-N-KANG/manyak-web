@@ -26,8 +26,9 @@ import { track } from '@/observability/analytics';
 /**
  * 스토리 상세에서 채팅을 시작하는 훅.
  * 채팅 생성 후 ID를 로컬에 저장하고 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
+ * startSettingId를 넘기면 해당 시작 설정으로 시작한다(생략 시 백엔드가 첫 설정 사용).
  */
-export function useStartChat(storyId: string) {
+export function useStartChat(storyId: string, startSettingId?: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status } = useSession();
@@ -87,7 +88,7 @@ export function useStartChat(storyId: string) {
     }
 
     track('client_storyDetail_chatStartButton_clicked', { story_id: storyId });
-    createChat.mutate({ data: { storyId } });
+    createChat.mutate({ data: { storyId, startSettingId } });
   };
 
   return {
