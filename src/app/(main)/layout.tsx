@@ -21,7 +21,7 @@ export default function MainLayout({
 
   return (
     <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-      <MainHeader hasScrolled={hasScrolled} />
+      <MainHeader />
       <div
         className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))]"
         onScroll={handleContentScroll}>
