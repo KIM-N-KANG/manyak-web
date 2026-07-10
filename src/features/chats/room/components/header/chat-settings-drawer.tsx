@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { LayoutAlignRightIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -7,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Drawer,
   DrawerContent,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -17,6 +20,7 @@ import { track } from '@/observability/analytics';
 
 import { CHAT_INPUT_MODE_OPTIONS } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
+import { ChatDeleteConfirmDialog } from './chat-delete-confirm-dialog';
 
 type ChatSettingsDrawerProps = {
   chatId: string;
@@ -30,45 +34,66 @@ export function ChatSettingsDrawer({
   onModeChange,
 }: ChatSettingsDrawerProps) {
   const container = useAppFrameContainer();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   return (
-    <Drawer direction="right">
-      <DrawerTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          aria-label="채팅 설정 열기"
-          onClick={() =>
-            track('client_chat_settingsButton_clicked', { chat_id: chatId })
-          }>
-          <HugeiconsIcon icon={LayoutAlignRightIcon} aria-hidden="true" />
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent
-        container={container}
-        className="absolute"
-        overlayClassName="absolute">
-        <DrawerHeader>
-          <DrawerTitle>채팅 설정</DrawerTitle>
-        </DrawerHeader>
-        <div className="flex flex-col gap-2 overflow-y-auto overscroll-contain p-4">
-          <Label>입력 모드</Label>
-          {CHAT_INPUT_MODE_OPTIONS.map((option) => (
+    <>
+      <Drawer direction="right" open={isOpen} onOpenChange={setIsOpen}>
+        <DrawerTrigger asChild>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label="채팅 설정 열기"
+            onClick={() =>
+              track('client_chat_settingsButton_clicked', { chat_id: chatId })
+            }>
+            <HugeiconsIcon icon={LayoutAlignRightIcon} aria-hidden="true" />
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent
+          container={container}
+          className="absolute"
+          overlayClassName="absolute">
+          <DrawerHeader>
+            <DrawerTitle>채팅 설정</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex flex-col gap-2 overflow-y-auto overscroll-contain p-4">
+            <Label>입력 모드</Label>
+            {CHAT_INPUT_MODE_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                type="button"
+                variant={mode === option.value ? 'secondary' : 'ghost'}
+                onClick={() => onModeChange(option.value)}
+                className="h-auto w-full flex-col items-start gap-1 whitespace-normal">
+                {option.label}
+                <span className="text-xs text-foreground-secondary">
+                  {option.description}
+                </span>
+              </Button>
+            ))}
+          </div>
+          <DrawerFooter>
             <Button
-              key={option.value}
               type="button"
-              variant={mode === option.value ? 'secondary' : 'ghost'}
-              onClick={() => onModeChange(option.value)}
-              className="h-auto w-full flex-col items-start gap-1 whitespace-normal">
-              {option.label}
-              <span className="text-xs text-foreground-secondary">
-                {option.description}
-              </span>
+              variant="destructive"
+              onClick={() => {
+                setIsOpen(false);
+                setIsDeleteConfirmOpen(true);
+              }}>
+              채팅 삭제하기
             </Button>
-          ))}
-        </div>
-      </DrawerContent>
-    </Drawer>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      <ChatDeleteConfirmDialog
+        chatId={chatId}
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+      />
+    </>
   );
 }

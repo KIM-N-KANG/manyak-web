@@ -1,6 +1,7 @@
 import { type Page } from '@playwright/test';
 
-import { expect, test } from '../fixtures/test';
+import { mockMemberSession } from '../fixtures/auth';
+import { expect, seedChatIds, skipOnboarding, test } from '../fixtures/test';
 
 // 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
@@ -190,6 +191,101 @@ test.describe('채팅 스트리밍', () => {
     await page.getByRole('button', { name: '전송' }).click();
 
     await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
+  });
+});
+
+test.describe('채팅 삭제', () => {
+  // 삭제 버튼은 채팅 설정 드로워 최하단에 있다.
+  // 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
+  const openDeleteDialog = async (page: Page) => {
+    await page.getByRole('button', { name: '채팅 설정 열기' }).click();
+    await page.getByRole('button', { name: '채팅 삭제하기' }).click();
+
+    return page.getByRole('alertdialog');
+  };
+
+  test('드로워에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await seedChatIds(page, ['c1']);
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'DELETE') {
+        await route.fulfill({ status: 204, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const dialog = await openDeleteDialog(page);
+
+    await expect(dialog.getByText('채팅을 삭제할까요?')).toBeVisible();
+    await dialog.getByRole('button', { name: '삭제하기' }).click();
+
+    await expect(page.getByText('채팅을 삭제했어요')).toBeVisible();
+    await expect(page).toHaveURL(/\/chats$/);
+  });
+
+  test('로그인 상태에서 채팅을 삭제하면 목록에서 사라진다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+
+    let deleted = false;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'DELETE') {
+        deleted = true;
+        await route.fulfill({ status: 204, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await page.route('**/api/v1/users/me/chats**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          deleted
+            ? []
+            : [
+                {
+                  id: 'c1',
+                  storyId: 's1',
+                  storyTitle: '용의 계곡',
+                  lastStoryPreview: '이야기 미리보기입니다',
+                  turnCount: 3,
+                  updatedAt: '2026-06-01T00:00:00Z',
+                },
+              ],
+        ),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const dialog = await openDeleteDialog(page);
+
+    await dialog.getByRole('button', { name: '삭제하기' }).click();
+
+    await expect(page.getByText('채팅을 삭제했어요')).toBeVisible();
+    await expect(page).toHaveURL(/\/chats$/);
+    await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
   });
 });
 
