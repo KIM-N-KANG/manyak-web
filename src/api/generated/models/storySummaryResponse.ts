@@ -21,8 +21,8 @@ export interface StorySummaryResponse {
   /** 장르명 목록 */
   genres?: string[];
   author?: StoryAuthorResponse | null;
-  /** 채팅 수 */
-  chatCount?: number;
+  /** 누적 사용자 입력 턴 수(스토리의 모든 채팅 완료 턴 합) */
+  turnCount?: number;
   /** 좋아요 수 */
   likeCount?: number;
   /** 등록 상태 */

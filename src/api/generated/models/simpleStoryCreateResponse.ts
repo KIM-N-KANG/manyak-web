@@ -27,6 +27,6 @@ export interface SimpleStoryCreateResponse {
   description?: string | null;
   /** 장르명 목록. 사용자가 선택한 장르 태그명입니다. */
   genres?: string[];
-  /** 스토리 시작 설정 */
-  startSetting?: StoryStartSettingResponse;
+  /** 스토리 시작 설정 목록(KNK-515 복수화). 간편 제작은 1개다. */
+  startSettings?: StoryStartSettingResponse[];
 }

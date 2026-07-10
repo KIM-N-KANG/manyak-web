@@ -1,3 +1,5 @@
+import { Message, MessageContent } from '@/components/ui/message';
+
 import { ChatMessageContent } from './chat-message-content';
 
 type ChatMessageBubbleProps = {
@@ -6,16 +8,20 @@ type ChatMessageBubbleProps = {
 
 export function UserMessageBubble({ children }: ChatMessageBubbleProps) {
   return (
-    <div className="bg-muted p-4">
-      <ChatMessageContent>{children}</ChatMessageContent>
-    </div>
+    <Message>
+      <MessageContent className="bg-muted p-4">
+        <ChatMessageContent>{children}</ChatMessageContent>
+      </MessageContent>
+    </Message>
   );
 }
 
 export function AiMessageBubble({ children }: ChatMessageBubbleProps) {
   return (
-    <div className="p-4">
-      <ChatMessageContent>{children}</ChatMessageContent>
-    </div>
+    <Message>
+      <MessageContent className="p-4">
+        <ChatMessageContent>{children}</ChatMessageContent>
+      </MessageContent>
+    </Message>
   );
 }

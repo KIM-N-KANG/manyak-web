@@ -35,7 +35,7 @@ export function BackHeader({ title, backHref, fallbackHref }: BackHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center gap-2 bg-background px-2">
+    <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-2">
       <Button
         type="button"
         size="icon"

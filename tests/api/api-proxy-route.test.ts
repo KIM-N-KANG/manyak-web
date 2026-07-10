@@ -177,22 +177,56 @@ describe('api proxy route', () => {
     );
   });
 
-  it('세션이 만료되면 만료 헤더를 붙이고 Authorization은 주입하지 않는다', async () => {
+  it('세션이 만료되면 백엔드로 전달하지 않고 401과 만료 헤더로 즉시 응답한다', async () => {
     const originalFetch = globalThis.fetch;
     const previousApiBaseUrl = process.env.API_BASE_URL;
-    let capturedRequest!: { url: unknown; init: RequestInit };
+    let fetchCalled = false;
 
     backendSessionMock.ensureFreshAccessToken.mockResolvedValue({
       status: 'expired',
     });
     process.env.API_BASE_URL = 'http://backend.test';
-    globalThis.fetch = async (url, init) => {
-      capturedRequest = { url, init: init ?? {} };
+    globalThis.fetch = async () => {
+      fetchCalled = true;
 
-      return new Response(JSON.stringify({ ok: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(null);
+    };
+
+    try {
+      const response = await route.POST(
+        new Request('http://localhost:3000/api/v1/stories', {
+          method: 'POST',
+          headers: { host: 'localhost:3000' },
+          body: JSON.stringify({ title: '테스트' }),
+        }),
+        routeContext(['v1', 'stories']),
+      );
+
+      expect(response.status).toBe(401);
+      expect(response.headers.get('x-manyak-session-expired')).toBe('1');
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.API_BASE_URL = previousApiBaseUrl;
+    }
+
+    // 만료된 회원의 요청이 익명으로 실행되면(특히 변경 요청) 게스트 콘텐츠로
+    // 잘못 귀속되므로, 백엔드로 아예 전달하지 않는다.
+    expect(fetchCalled).toBe(false);
+  });
+
+  it('일시 장애로 인증을 확보하지 못한 회원(degraded)의 요청은 전달하지 않고 503으로 응답한다', async () => {
+    const originalFetch = globalThis.fetch;
+    const previousApiBaseUrl = process.env.API_BASE_URL;
+    let fetchCalled = false;
+
+    backendSessionMock.ensureFreshAccessToken.mockResolvedValue({
+      status: 'degraded',
+    });
+    process.env.API_BASE_URL = 'http://backend.test';
+    globalThis.fetch = async () => {
+      fetchCalled = true;
+
+      return new Response(null);
     };
 
     try {
@@ -203,17 +237,15 @@ describe('api proxy route', () => {
         routeContext(['v1', 'stories']),
       );
 
-      expect(response.status).toBe(200);
-      expect(response.headers.get('x-manyak-session-expired')).toBe('1');
+      expect(response.status).toBe(503);
+      // 세션은 보존된 일시 실패이므로 능동 로그아웃 신호를 보내지 않는다.
+      expect(response.headers.get('x-manyak-session-expired')).toBeNull();
     } finally {
       globalThis.fetch = originalFetch;
       process.env.API_BASE_URL = previousApiBaseUrl;
     }
 
-    // 만료 세션은 Authorization 없이(익명) 백엔드로 전달된다.
-    expect(new Headers(capturedRequest.init.headers).has('authorization')).toBe(
-      false,
-    );
+    expect(fetchCalled).toBe(false);
   });
 
   it('returns 500 when API_BASE_URL is missing', async () => {

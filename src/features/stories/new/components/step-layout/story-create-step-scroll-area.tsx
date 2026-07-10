@@ -14,7 +14,10 @@ export function StoryCreateStepScrollArea({
   return (
     <main
       ref={scrollAreaRef}
-      className={cn('flex min-h-0 flex-1 flex-col overflow-y-auto', className)}
+      className={cn(
+        'flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain',
+        className,
+      )}
       {...props}
     />
   );

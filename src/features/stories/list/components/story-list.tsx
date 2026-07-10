@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -10,7 +10,6 @@ import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
@@ -73,16 +72,11 @@ export function StoryList() {
     stateKey = 'list';
     content = (
       <>
-        <ul className="flex flex-col">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-8 p-4 pb-8">
           {stories.map((story, index) => (
-            <Fragment key={story.id}>
-              <li>
-                <StoryCard story={story} position={index} />
-              </li>
-              {index < stories.length - 1 && (
-                <Separator className="mx-4 data-horizontal:w-auto" />
-              )}
-            </Fragment>
+            <li key={story.id}>
+              <StoryCard story={story} position={index} />
+            </li>
           ))}
         </ul>
         <CreateStoryFab />

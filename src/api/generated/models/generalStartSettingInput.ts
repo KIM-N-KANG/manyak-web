@@ -5,11 +5,17 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { GeneralEndingItem } from './generalEndingItem';
 
 /**
- * 시작 설정 3필드(모두 필수)
+ * 시작 설정. 추천 입력·엔딩이 이 시작 설정에 종속된다(KNK-515 복수화).
  */
 export interface GeneralStartSettingInput {
+  /**
+   * 시작 설정 ID(공개 식별자). 수정 시 기존 시작 설정 매칭 키로만 사용하며, 제작 시에는 무시된다.
+   * @nullable
+   */
+  id?: string | null;
   /**
    * 시작 장면 이름
    * @minLength 0
@@ -26,4 +32,16 @@ export interface GeneralStartSettingInput {
    * @minLength 1
    */
   startSituation: string;
+  /**
+   * 추천 입력(정확히 3개)
+   * @minItems 3
+   * @maxItems 3
+   */
+  suggestedInputs?: string[];
+  /**
+   * 엔딩 목록(시작 설정당 최대 10, 선택). 배열 순서가 표시 순서가 된다.
+   * @minItems 0
+   * @maxItems 10
+   */
+  endings?: GeneralEndingItem[];
 }

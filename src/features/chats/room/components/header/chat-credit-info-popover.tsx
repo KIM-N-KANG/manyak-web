@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useSession } from 'next-auth/react';
@@ -14,26 +12,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { GUEST_LIMITS } from '@/features/onboarding/constants';
+import { useDismissOnScroll } from '@/hooks/use-dismiss-on-scroll';
 
-type ChatCreditInfoPopoverProps = {
-  isHeaderVisible: boolean;
-};
-
-export function ChatCreditInfoPopover({
-  isHeaderVisible,
-}: ChatCreditInfoPopoverProps) {
+export function ChatCreditInfoPopover() {
   const { status } = useSession();
   const isGuest = status === 'unauthenticated';
-  const [open, setOpen] = useState(false);
-  const [prevHeaderVisible, setPrevHeaderVisible] = useState(isHeaderVisible);
-
-  if (prevHeaderVisible !== isHeaderVisible) {
-    setPrevHeaderVisible(isHeaderVisible);
-
-    if (!isHeaderVisible) {
-      setOpen(false);
-    }
-  }
+  const [open, setOpen] = useDismissOnScroll();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

@@ -85,6 +85,7 @@ export type AnalyticsEventProps = {
   // storyDetail
   client_storyDetail_viewed: { story_id: string };
   client_storyDetail_chatStartButton_clicked: { story_id: string };
+  client_storyDetail_thumbnail_clicked: { story_id: string };
   // chatList
   client_chatList_viewed: void;
   client_chatList_chatCard_clicked: { chat_id: string; position?: number };

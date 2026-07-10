@@ -21,7 +21,8 @@ import {
 export type FreshAccessTokenResult =
   | { status: 'authenticated'; accessToken: string }
   | { status: 'guest' } // 처음부터 토큰 없음
-  | { status: 'expired' }; // 회원이었으나 리프레시가 4xx로 확정 거절됨 → 세션 폐기 완료
+  | { status: 'expired' } // 회원이었으나 리프레시가 4xx로 확정 거절됨 → 세션 폐기 완료
+  | { status: 'degraded' }; // 회원인데 일시 실패로 이번 요청의 토큰을 확보하지 못함 → 세션 보존
 
 /**
  * 재발급 실패가 백엔드의 확정 거절(4xx)인지 판별한다. 재사용 탐지로 refresh family가
@@ -46,7 +47,8 @@ function isConfirmedAuthRejection(error: unknown): boolean {
  * - 그 외(만료 임박·access 없음·손상)에는 refresh 토큰으로 재발급
  *   - 성공 → 새 토큰으로 인증
  *   - 4xx 확정 거절 → 세션 폐기 후 expired(능동 로그아웃)
- *   - 일시 실패(네트워크·5xx) → 세션 보존, 이번 요청은 기존 토큰(있으면)으로 best-effort
+ *   - 일시 실패(네트워크·5xx) → 세션 보존, 기존 access 토큰이 있으면 best-effort로
+ *     인증, 없으면 degraded(회원의 요청을 익명으로 흘리지 않도록 게스트와 구분)
  * - refresh 토큰이 없으면 복구 불가: NextAuth 세션 쿠키가 남아 있으면(불일치) 폐기 후
  *   expired, 아니면 guest
  */
@@ -92,12 +94,13 @@ export async function ensureFreshAccessToken(
     }
 
     // 일시 실패: 세션을 보존한다. 기존 access 토큰이 있으면 best-effort로 통과시키고,
-    // 없으면(복구 실패) 이번 요청만 게스트로 처리한다(다음 요청에서 재발급 재시도).
+    // 없으면 degraded로 신호한다(다음 요청에서 재발급 재시도). 여기서 guest로 처리하면
+    // 회원의 변경 요청이 익명으로 백엔드에 전달돼 게스트 콘텐츠로 잘못 귀속된다.
     if (tokens) {
       return { status: 'authenticated', accessToken: tokens.accessToken };
     }
 
-    return { status: 'guest' };
+    return { status: 'degraded' };
   }
 }
 

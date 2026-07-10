@@ -103,15 +103,17 @@ describe('ensureFreshAccessToken', () => {
     expect(tokenCookiesMock.clearBackendSession).toHaveBeenCalled();
   });
 
-  it('access는 없고 refresh만 있는데 재발급이 일시 실패하면 세션을 보존하고 게스트로 처리한다', async () => {
+  it('access는 없고 refresh만 있는데 재발급이 일시 실패하면 세션을 보존하고 강등 상태를 반환한다', async () => {
     const { refreshOnServer } = await import('@/lib/auth/backend-client');
 
     tokenCookiesMock.readBackendSessionTokens.mockResolvedValue(null);
     tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue('refresh-live-2');
     vi.mocked(refreshOnServer).mockRejectedValue(new TypeError('fetch failed'));
 
+    // 게스트로 처리하면 회원의 요청이 익명으로 백엔드에 전달돼 고아 콘텐츠가 되므로,
+    // "회원인데 이번 요청은 인증 불가"를 구분하는 degraded로 신호한다.
     await expect(ensureFreshAccessToken(1_000)).resolves.toEqual({
-      status: 'guest',
+      status: 'degraded',
     });
     expect(tokenCookiesMock.clearBackendSession).not.toHaveBeenCalled();
   });

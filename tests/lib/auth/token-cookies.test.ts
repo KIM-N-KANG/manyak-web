@@ -22,6 +22,7 @@ vi.mock('next/headers', () => ({
       cookieStore.has(name)
         ? { name, value: cookieStore.get(name) as string }
         : undefined,
+    getAll: () => Array.from(cookieStore, ([name, value]) => ({ name, value })),
     set: (name: string, value: string, options?: CookieOption) => {
       cookieStore.set(name, value);
       setCalls.push({ name, value, options });
@@ -105,6 +106,21 @@ describe('hasNextAuthSessionCookie', () => {
 
     await expect(hasNextAuthSessionCookie()).resolves.toBe(true);
   });
+
+  it('청크 분할된(.0, .1) NextAuth 세션 쿠키도 감지한다', async () => {
+    // JWT가 약 4KB를 넘으면 Auth.js는 base 이름 쿠키 없이 `.0`, `.1` 청크만 만든다.
+    cookieStore.set('__Secure-authjs.session-token.0', 'chunk-0');
+    cookieStore.set('__Secure-authjs.session-token.1', 'chunk-1');
+
+    await expect(hasNextAuthSessionCookie()).resolves.toBe(true);
+  });
+
+  it('세션 토큰이 아닌 authjs 쿠키(csrf 등)는 세션으로 감지하지 않는다', async () => {
+    cookieStore.set('authjs.csrf-token', 'csrf-value');
+    cookieStore.set('authjs.callback-url', 'http://localhost:3000');
+
+    await expect(hasNextAuthSessionCookie()).resolves.toBe(false);
+  });
 });
 
 describe('clearBackendSession', () => {
@@ -140,5 +156,19 @@ describe('clearBackendSession', () => {
     const expiresMs = expires instanceof Date ? expires.getTime() : expires;
 
     expect(expiresMs).toBeLessThanOrEqual(0);
+  });
+
+  it('청크 분할된(.0, .1) NextAuth 세션 쿠키도 함께 폐기한다', async () => {
+    cookieStore.set('__Secure-authjs.session-token.0', 'chunk-0');
+    cookieStore.set('__Secure-authjs.session-token.1', 'chunk-1');
+
+    await clearBackendSession();
+
+    const expiredNames = setCalls
+      .filter((entry) => entry.value === '')
+      .map((entry) => entry.name);
+
+    expect(expiredNames).toContain('__Secure-authjs.session-token.0');
+    expect(expiredNames).toContain('__Secure-authjs.session-token.1');
   });
 });

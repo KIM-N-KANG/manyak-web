@@ -6,7 +6,6 @@
  * OpenAPI spec version: v1
  */
 import type { StoryEditSettingsResponse } from './storyEditSettingsResponse';
-import type { StoryEndingResponse } from './storyEndingResponse';
 import type { StoryMainEventResponse } from './storyMainEventResponse';
 import type { StoryStartSettingResponse } from './storyStartSettingResponse';
 
@@ -30,9 +29,7 @@ export interface StoryEditFormResponse {
   genres?: string[];
   /** 스토리 설정 통글 4필드 */
   storySettings?: StoryEditSettingsResponse;
-  startSetting?: StoryStartSettingResponse | null;
-  /** 추천 입력 목록 */
-  suggestedInputs?: string[];
+  /** 시작 설정 목록(등록 순서, KNK-515 복수화). 각 시작 설정에 추천 입력·엔딩이 종속된다. 없으면 빈 배열. */
+  startSettings?: StoryStartSettingResponse[];
   mainEvents?: StoryMainEventResponse[];
-  endings?: StoryEndingResponse[];
 }

@@ -12,11 +12,22 @@ const storyDetail = {
   oneLineIntro: '잃어버린 용을 찾는 모험',
   description: '깊은 계곡 속 전설의 이야기',
   genres: ['판타지', '모험'],
-  startSetting: {
-    name: '계곡 입구',
-    prologue: '안개 낀 계곡 앞에 섰다',
-    startSituation: '용의 흔적을 따라왔다',
-  },
+  turnCount: 1280,
+  createdAt: '2026-06-24T12:00:00Z',
+  startSettings: [
+    {
+      id: 'ss1',
+      name: '계곡 입구',
+      prologue: '안개 낀 계곡 앞에 섰다',
+      startSituation: '용의 흔적을 따라왔다',
+    },
+    {
+      id: 'ss2',
+      name: '용의 둥지',
+      prologue: '거대한 둥지 앞에 도착했다',
+      startSituation: '용의 숨소리가 들려온다',
+    },
+  ],
 };
 
 const fulfillStoryDetail = async (route: Route) => {
@@ -26,6 +37,14 @@ const fulfillStoryDetail = async (route: Route) => {
     body: JSON.stringify(storyDetail),
   });
 };
+
+const THUMBNAIL_URL = 'https://example.com/thumbnails/dragon.png';
+
+// 1x1 투명 PNG. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 test.describe('스토리 상세', () => {
   test('스토리 제목·소개·설명을 보여준다 (US-4-1)', async ({ page }) => {
@@ -38,13 +57,104 @@ test.describe('스토리 상세', () => {
     ).toBeVisible();
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('생성일')).toBeVisible();
+    await expect(page.getByText('2026-06-24')).toBeVisible();
   });
 
-  test('"채팅 시작하기"를 누르면 채팅 화면으로 이동한다 (US-4-2)', async ({
+  test('썸네일이 있으면 상단 이미지와 턴 수 뱃지를 보여준다 (US-4-1)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, thumbnailUrl: THUMBNAIL_URL }),
+      });
+    });
+    await page.route(THUMBNAIL_URL, async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('img', { name: '스토리 썸네일' }),
+    ).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+  });
+
+  test('썸네일을 누르면 이미지 뷰어가 열리고 X·뒤로가기로 닫힌다 (US-4-1)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, thumbnailUrl: THUMBNAIL_URL }),
+      });
+    });
+    await page.route(THUMBNAIL_URL, async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    const viewer = page.getByRole('dialog', {
+      name: '스토리 썸네일 크게 보기',
+    });
+
+    // X 버튼으로 닫기: 뷰어만 닫히고 페이지는 그대로다
+    await page.getByRole('button', { name: '썸네일 크게 보기' }).click();
+    await expect(viewer).toBeVisible();
+    await expect(
+      viewer.getByRole('img', { name: '스토리 썸네일' }),
+    ).toBeVisible();
+    await viewer.getByRole('button', { name: '닫기' }).click();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+
+    // 뒤로가기로 닫기: 뷰어만 닫히고 페이지 이동은 없다
+    await page.getByRole('button', { name: '썸네일 크게 보기' }).click();
+    await expect(viewer).toBeVisible();
+    await page.goBack();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+  });
+
+  test('채팅 시작 상황을 선택하면 상황 설명이 바뀐다 (US-4-1)', async ({
     page,
   }) => {
     await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('heading', { name: '채팅 시작 상황' }),
+    ).toBeVisible();
+
+    // 기본값: 첫 번째 시작 설정
+    const trigger = page.getByRole('combobox', { name: '채팅 시작 상황 선택' });
+
+    await expect(trigger).toContainText('계곡 입구');
+    await expect(page.getByText('용의 흔적을 따라왔다')).toBeVisible();
+
+    await trigger.click();
+    await page.getByRole('option', { name: '용의 둥지' }).click();
+
+    await expect(trigger).toContainText('용의 둥지');
+    await expect(page.getByText('용의 숨소리가 들려온다')).toBeVisible();
+    await expect(page.getByText('용의 흔적을 따라왔다')).not.toBeVisible();
+  });
+
+  test('"채팅 시작하기"를 누르면 선택한 시작 설정으로 채팅 화면에 이동한다 (US-4-2)', async ({
+    page,
+  }) => {
+    let createChatBody: Record<string, unknown> | undefined;
+
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
     await page.route('**/api/v1/chats', async (route) => {
+      createChatBody = route.request().postDataJSON();
       await route.fulfill({
         status: 201,
         contentType: 'application/json',
@@ -53,9 +163,17 @@ test.describe('스토리 상세', () => {
     });
 
     await page.goto('/stories/s1');
+
+    // 두 번째 시작 설정을 선택하고 채팅을 시작한다
+    await page.getByRole('combobox', { name: '채팅 시작 상황 선택' }).click();
+    await page.getByRole('option', { name: '용의 둥지' }).click();
     await page.getByRole('button', { name: '채팅 시작하기' }).click();
 
     await expect(page).toHaveURL(/\/chats\/c1$/);
+    expect(createChatBody).toMatchObject({
+      storyId: 's1',
+      startSettingId: 'ss2',
+    });
   });
 
   test('스토리를 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-4-3)', async ({

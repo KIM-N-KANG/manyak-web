@@ -8,9 +8,14 @@ import { useStartChat } from '../hooks/use-start-chat';
 
 type StoryDetailCtaProps = {
   storyId: string;
+  /** 선택한 시작 설정 ID. 없으면 백엔드가 첫 시작 설정을 사용한다. */
+  startSettingId?: string;
 };
 
-export function StoryDetailCta({ storyId }: StoryDetailCtaProps) {
+export function StoryDetailCta({
+  storyId,
+  startSettingId,
+}: StoryDetailCtaProps) {
   const {
     startChat,
     isStarting,
@@ -18,11 +23,11 @@ export function StoryDetailCta({ storyId }: StoryDetailCtaProps) {
     closeGuestLimitDialog,
     creditShortageTrigger,
     closeCreditShortageDialog,
-  } = useStartChat(storyId);
+  } = useStartChat(storyId, startSettingId);
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <nav className="shrink-0 bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex w-full items-center">
           <Button
             type="button"

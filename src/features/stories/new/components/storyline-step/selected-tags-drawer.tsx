@@ -57,7 +57,7 @@ export function SelectedTagsDrawer({
         <DrawerHeader>
           <DrawerTitle>선택한 키워드</DrawerTitle>
         </DrawerHeader>
-        <div className="flex flex-col gap-8 overflow-y-auto p-4 pb-8">
+        <div className="flex flex-col gap-8 overflow-y-auto overscroll-contain p-4 pb-8">
           {groups.map((group) => (
             <SelectedTagGroup key={group.category} group={group} />
           ))}

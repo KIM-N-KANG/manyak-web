@@ -5,7 +5,6 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { GeneralEndingItem } from './generalEndingItem';
 import type { GeneralStartSettingInput } from './generalStartSettingInput';
 import type { GeneralStorySettingsInput } from './generalStorySettingsInput';
 import type { MainEventItem } from './mainEventItem';
@@ -35,23 +34,16 @@ export interface UpdateStoryRequest {
    */
   genres?: string[] | null;
   storySettings?: GeneralStorySettingsInput | null;
-  startSetting?: GeneralStartSettingInput | null;
   /**
-   * @minItems 3
-   * @maxItems 3
+   * @minItems 1
+   * @maxItems 2147483647
    * @nullable
    */
-  suggestedInputs?: string[] | null;
+  startSettings?: GeneralStartSettingInput[] | null;
   /**
    * @minItems 0
    * @maxItems 10
    * @nullable
    */
   mainEvents?: MainEventItem[] | null;
-  /**
-   * @minItems 0
-   * @maxItems 10
-   * @nullable
-   */
-  endings?: GeneralEndingItem[] | null;
 }

@@ -6,7 +6,6 @@
  * OpenAPI spec version: v1
  */
 import type { CreateGeneralStoryRequestVisibility } from './createGeneralStoryRequestVisibility';
-import type { GeneralEndingItem } from './generalEndingItem';
 import type { GeneralStartSettingInput } from './generalStartSettingInput';
 import type { GeneralStorySettingsInput } from './generalStorySettingsInput';
 import type { MainEventItem } from './mainEventItem';
@@ -40,26 +39,18 @@ export interface CreateGeneralStoryRequest {
   genres?: string[];
   /** 스토리 설정 통글 4필드 */
   storySettings: GeneralStorySettingsInput;
-  /** 시작 설정 3필드 */
-  startSetting: GeneralStartSettingInput;
   /**
-   * 추천 입력(정확히 3개)
-   * @minItems 3
-   * @maxItems 3
+   * 시작 설정 목록(최소 1개). 각 시작 설정에 추천 입력(정확히 3개)·엔딩(최대 10)이 종속된다.
+   * @minItems 1
+   * @maxItems 2147483647
    */
-  suggestedInputs?: string[];
+  startSettings?: GeneralStartSettingInput[];
   /**
-   * 주요 사건 목록(최대 10, 선택). 배열 순서가 표시 순서가 된다.
+   * 주요 사건 목록(최대 10, 선택). 스토리 스코프이며 배열 순서가 표시 순서가 된다.
    * @minItems 0
    * @maxItems 10
    */
   mainEvents?: MainEventItem[];
-  /**
-   * 엔딩 목록(최대 10, 선택). 배열 순서가 표시 순서가 된다.
-   * @minItems 0
-   * @maxItems 10
-   */
-  endings?: GeneralEndingItem[];
   /** 공개 범위. 생략하면 PRIVATE. */
   visibility?: CreateGeneralStoryRequestVisibility;
 }

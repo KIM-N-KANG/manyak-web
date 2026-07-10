@@ -15,10 +15,10 @@ export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
   useTrackOnView(viewEvent);
 
   return (
-    <div className="flex h-svh min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <BackHeader title={doc.title} fallbackHref={APP_PATH.MAIN.STORIES} />
-      <main className="min-h-0 flex-1 overflow-y-auto p-4">
-        <article className="mx-auto flex max-w-md flex-col gap-8 leading-relaxed">
+      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
+        <article className="flex flex-col gap-8 leading-relaxed">
           {doc.intro ? (
             <p className="whitespace-pre-line">{doc.intro}</p>
           ) : null}

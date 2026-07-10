@@ -156,6 +156,11 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* 모든 스크롤바를 채팅 메시지 스크롤러와 동일한 얇은 썸·투명 트랙으로 통일.
+       --scrollbar-thumb/--scrollbar-track 변수로 개별 오버라이드할 수 있다. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb, var(--color-border))
+      var(--scrollbar-track, transparent);
   }
 
   body {
@@ -170,4 +175,25 @@
   html {
     @apply font-sans;
   }
+}
+
+/* 스크롤바 유틸리티.
+   shadcn 생성 컴포넌트(ui/message-scroller.tsx 뷰포트)가 참조하지만
+   shadcn 사이트 전용 CSS라 shadcn/tailwind.css 패키지에는 포함되지 않아 직접 정의한다. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb, var(--color-border))
+    var(--scrollbar-track, transparent);
+}
+
+@utility scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+
+@utility scrollbar-thumb-transparent {
+  --scrollbar-thumb: transparent;
+}
+
+@utility scrollbar-track-transparent {
+  --scrollbar-track: transparent;
 }
