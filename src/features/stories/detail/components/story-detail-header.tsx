@@ -8,30 +8,22 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
-import { cn } from '@/lib/utils';
 
 type StoryDetailHeaderProps = {
   storyId: string;
   title: string;
   showTitle: boolean;
-  /** 헤더 뒤로 썸네일이 비치도록 배경을 투명하게 띄우는 오버레이 모드 */
-  overlay?: boolean;
 };
 
 export function StoryDetailHeader({
   storyId,
   title,
   showTitle,
-  overlay = false,
 }: StoryDetailHeaderProps) {
   const router = useRouter();
 
   return (
-    <header
-      className={cn(
-        'absolute inset-x-0 top-0 z-50 flex h-14 items-center gap-2 px-2 transition-colors',
-        overlay ? 'bg-transparent' : 'bg-background',
-      )}>
+    <header className="sticky top-0 z-50 flex h-14 items-center gap-2 bg-background px-2">
       <Button
         type="button"
         size="icon"

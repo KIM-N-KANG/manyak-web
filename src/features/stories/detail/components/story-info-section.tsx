@@ -37,7 +37,7 @@ export function StoryInfoSection({
           <h1 ref={titleRef} className="text-2xl font-bold">
             {story.title}
           </h1>
-          <p className="text-lg">{story.oneLineIntro}</p>
+          <p>{story.oneLineIntro}</p>
         </div>
         <StoryDetailTags genres={genres} />
       </div>
