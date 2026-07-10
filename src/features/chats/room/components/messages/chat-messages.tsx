@@ -42,14 +42,12 @@ export function ChatMessages({
   onFillChoice,
   onHeaderVisibleChange,
 }: ChatMessagesProps) {
-  // 빈 채팅(프롤로그만)으로 시작하면 최상단, 기존 대화가 있으면 맨 아래에서 시작한다.
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
   const lastScrollTopRef = useRef(0);
 
   useEffect(() => {
     if (streamingTurn && !hasSent) {
-      // 첫 전송 여부. autoScroll을 끄는 시점을 결정한다.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasSent(true);
     }
@@ -70,13 +68,10 @@ export function ChatMessages({
   const lastTurnIndex = turns.length - 1;
 
   return (
-    // autoScroll은 "꼬리(하단) 추적" 모드라 기존 대화 초기 로드의 하단 고정 보정(폰트 로드 등)에만 쓴다.
-    // 전송 이후 켜두면 앵커된 턴 아래 콘텐츠가 뷰포트를 넘는 순간(spacer 붕괴 시)
-    // 앵커(전송한 턴 상단 고정)를 풀고 하단으로 따라가므로, 첫 전송부터는 영구히 끈다.
-    // 빈 채팅은 최상단 시작 상태가 콘텐츠 증가에 끌려 내려가지 않도록 처음부터 끈다.
     <MessageScrollerProvider
       autoScroll={!startedEmpty && !hasSent}
-      defaultScrollPosition={startedEmpty ? 'start' : 'end'}>
+      defaultScrollPosition={startedEmpty ? 'start' : 'end'}
+      scrollPreviousItemPeek={0}>
       <MessageScroller>
         <MessageScrollerViewport onScroll={handleViewportScroll}>
           <MessageScrollerContent className="gap-0">
@@ -116,8 +111,6 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
-            {/* 앵커는 스트리밍 아이템에만 건다. 완료 후 교체되는 마지막 턴에도 걸면
-                사용자가 스크롤해 둔 위치가 완료 시점에 앵커로 재조정(끌려감)된다. */}
             {streamingTurn ? (
               <MessageScrollerItem scrollAnchor>
                 <ChatStreamingTurn turn={streamingTurn} />
