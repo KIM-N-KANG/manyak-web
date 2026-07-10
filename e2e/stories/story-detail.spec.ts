@@ -84,6 +84,44 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
   });
 
+  test('썸네일을 누르면 이미지 뷰어가 열리고 X·뒤로가기로 닫힌다 (US-4-1)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, thumbnailUrl: THUMBNAIL_URL }),
+      });
+    });
+    await page.route(THUMBNAIL_URL, async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    const viewer = page.getByRole('dialog', {
+      name: '스토리 썸네일 크게 보기',
+    });
+
+    // X 버튼으로 닫기: 뷰어만 닫히고 페이지는 그대로다
+    await page.getByRole('button', { name: '썸네일 크게 보기' }).click();
+    await expect(viewer).toBeVisible();
+    await expect(
+      viewer.getByRole('img', { name: '스토리 썸네일' }),
+    ).toBeVisible();
+    await viewer.getByRole('button', { name: '닫기' }).click();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+
+    // 뒤로가기로 닫기: 뷰어만 닫히고 페이지 이동은 없다
+    await page.getByRole('button', { name: '썸네일 크게 보기' }).click();
+    await expect(viewer).toBeVisible();
+    await page.goBack();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+  });
+
   test('채팅 시작 상황을 선택하면 상황 설명이 바뀐다 (US-4-1)', async ({
     page,
   }) => {

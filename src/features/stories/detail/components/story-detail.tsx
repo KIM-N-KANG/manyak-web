@@ -24,6 +24,7 @@ import { StoryDetailHeader } from './story-detail-header';
 import { StoryDetailSkeleton } from './story-detail-skeleton';
 import { StoryInfoSection } from './story-info-section';
 import { startSettingValue } from './story-start-settings';
+import { StoryThumbnailViewer } from './story-thumbnail-viewer';
 import { StoryTurnCount } from './story-turn-count';
 
 type StoryDetailProps = {
@@ -57,6 +58,17 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     (setting, index) =>
       startSettingValue(setting, index) === activeStartSetting,
   )?.id;
+
+  const [isThumbnailViewerOpen, setIsThumbnailViewerOpen] = useState(false);
+
+  const handleThumbnailClick = () => {
+    if (!thumbnailUrl) {
+      return;
+    }
+
+    track('client_storyDetail_thumbnail_clicked', { story_id: storyId });
+    setIsThumbnailViewerOpen(true);
+  };
 
   const contentRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -117,33 +129,39 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
               {/* 백엔드 썸네일 호스트가 확정되면 next.config remotePatterns에
                   등록하고 unoptimized를 제거한다. */}
               <div className="shrink-0 px-4">
-                <AspectRatio
-                  ratio={3 / 4}
-                  className="w-full overflow-hidden rounded-xl border border-border">
-                  {thumbnailUrl ? (
-                    <Image
-                      src={thumbnailUrl}
-                      alt="스토리 썸네일"
-                      fill
-                      sizes="100vw"
-                      priority
-                      unoptimized
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div
-                      aria-hidden="true"
-                      className="flex size-full items-center justify-center bg-muted">
-                      <HugeiconsIcon
-                        icon={Image01Icon}
-                        className="size-12 text-foreground-tertiary"
+                <button
+                  type="button"
+                  aria-label="썸네일 크게 보기"
+                  className="block w-full"
+                  onClick={handleThumbnailClick}>
+                  <AspectRatio
+                    ratio={3 / 4}
+                    className="w-full overflow-hidden rounded-xl border border-border">
+                    {thumbnailUrl ? (
+                      <Image
+                        src={thumbnailUrl}
+                        alt="스토리 썸네일"
+                        fill
+                        sizes="100vw"
+                        priority
+                        unoptimized
+                        className="object-cover"
                       />
+                    ) : (
+                      <div
+                        aria-hidden="true"
+                        className="flex size-full items-center justify-center bg-muted">
+                        <HugeiconsIcon
+                          icon={Image01Icon}
+                          className="size-12 text-foreground-tertiary"
+                        />
+                      </div>
+                    )}
+                    <div className="absolute right-4 bottom-4">
+                      <StoryTurnCount turnCount={story.turnCount ?? 0} />
                     </div>
-                  )}
-                  <div className="absolute right-4 bottom-4">
-                    <StoryTurnCount turnCount={story.turnCount ?? 0} />
-                  </div>
-                </AspectRatio>
+                  </AspectRatio>
+                </button>
               </div>
               <div className="px-4 pt-4">
                 <StoryInfoSection
@@ -159,6 +177,14 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
               storyId={storyId}
               startSettingId={activeStartSettingId}
             />
+
+            {thumbnailUrl && (
+              <StoryThumbnailViewer
+                open={isThumbnailViewerOpen}
+                onOpenChange={setIsThumbnailViewerOpen}
+                imageUrl={thumbnailUrl}
+              />
+            )}
           </m.div>
         )}
       </AnimatePresence>
