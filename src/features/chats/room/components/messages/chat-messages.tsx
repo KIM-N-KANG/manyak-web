@@ -49,8 +49,7 @@ export function ChatMessages({
 
   useEffect(() => {
     if (streamingTurn && !hasSent) {
-      // 첫 전송 이후부터 마지막 턴 앵커(하단 공간 예약)를 유지한다.
-      // 초기 로드부터 앵커를 걸면 spacer가 하단 여백을 만들어 초기 화면이 달라진다.
+      // 첫 전송 여부. autoScroll을 끄는 시점을 결정한다.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasSent(true);
     }
@@ -96,9 +95,7 @@ export function ChatMessages({
               const isLast = !streamingTurn && index === lastTurnIndex;
 
               return (
-                <MessageScrollerItem
-                  key={turn.id ?? index}
-                  scrollAnchor={isLast && hasSent}>
+                <MessageScrollerItem key={turn.id ?? index}>
                   <ChatTurnItem
                     turn={turn}
                     isLast={isLast}
@@ -119,6 +116,8 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
+            {/* 앵커는 스트리밍 아이템에만 건다. 완료 후 교체되는 마지막 턴에도 걸면
+                사용자가 스크롤해 둔 위치가 완료 시점에 앵커로 재조정(끌려감)된다. */}
             {streamingTurn ? (
               <MessageScrollerItem scrollAnchor>
                 <ChatStreamingTurn turn={streamingTurn} />
