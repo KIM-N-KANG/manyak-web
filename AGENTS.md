@@ -4,13 +4,6 @@
 
 - `../knk-harness`
 
-## Next.js 프론트엔드 전용 지침
-
-- React Compiler를 사용 중이기 때문에 `useMemo`, `useCallback`을 사용하지마세요.
-- `<form onSubmit>` 핸들러를 작성할 때는 deprecated된 `FormEvent` 대신 `SubmitEvent<HTMLFormElement>`를 사용하세요.
-- 페이지의 `params`는 `Promise`입니다. `await params`로 풀어서 사용하세요.
-- 모바일 웹이 기준입니다. E2E도 Mobile Chrome(Pixel 5) 뷰포트로 실행됩니다.
-
 ## 자주 쓰는 명령어
 
 ```bash
@@ -50,15 +43,30 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 - 파일명은 kebab-case, named export가 기본입니다. default export는 App Router 규약 파일(page, layout 등)에만 사용합니다.
 - import는 `@/` 별칭(→ `src/`)을 사용하고, 정렬은 ESLint(simple-import-sort)가 강제합니다. 타입 import는 inline `type` 키워드를 사용합니다.
 - 라우트 경로 문자열을 하드코딩하지 말고 `src/constants/app-path.ts`의 `APP_PATH`를 사용하세요.
+- React Compiler를 사용 중이기 때문에 `useMemo`, `useCallback`을 사용하지 마세요.
+- `<form onSubmit>` 핸들러를 작성할 때는 deprecated된 `FormEvent` 대신 `SubmitEvent<HTMLFormElement>`를 사용하세요.
+- 페이지의 `params`는 `Promise`입니다. `await params`로 풀어서 사용하세요.
 
 ## UI·스타일
 
+- 모바일 웹이 기준입니다.
 - `src/components/ui/`는 shadcn 기반(cva 변형 패턴), `common/`은 공용 컴포넌트, `layout/`은 앱 레이아웃, `providers/`는 루트 프로바이더입니다.
 - 조건부 클래스는 반드시 `cn()`(`@/lib/utils`)으로 병합하세요.
 - Tailwind CSS v4입니다. `tailwind.config` 파일이 없고 디자인 토큰은 `src/app/globals.css`의 `@theme`에 정의되어 있습니다. 색상은 하드코딩(`text-blue-500`) 대신 시맨틱 토큰(`text-primary`, `text-foreground-secondary` 등)을 사용하세요.
 - 다크 모드는 next-themes의 `.dark` 클래스 방식입니다.
 
+## 레이아웃·스크롤
+
+앱은 단일 프레임(루트 `src/app/layout.tsx`의 `h-svh overflow-hidden max-w-md` 컨테이너) 안에서 화면별 flex 컬럼(헤더 / 스크롤 영역 / 푸터)으로 구성됩니다.
+
+- 뷰포트 높이(`h-svh`)는 루트 앱 프레임만 소유합니다. 화면 셸은 `h-full`로 부모 높이를 따르고, `h-svh`를 재선언하지 마세요. (예외: 루트 레이아웃을 대체하는 `global-error.tsx`)
+- 스크롤 컨테이너(`overflow-y-auto`)에는 `overscroll-contain`을 함께 붙이세요. 없으면 스크롤 끝에서 문서로 체이닝돼 macOS/iOS에서 앱 프레임 전체가 러버밴드로 밀립니다.
+- 앱 프레임 내부 UI에 `position: fixed`를 쓰지 마세요(조상에 transform이 생기면 기준이 조용히 깨집니다). 하단 네비·푸터는 flex 컬럼의 in-flow 요소로 두고, 스크롤을 따라가지 않는 오버레이(FAB 등)는 `(main)/layout.tsx`의 positioned 스크롤 래퍼에 `absolute`로 붙입니다. `fixed`는 body로 포털되는 다이얼로그·드로어 전용입니다.
+- 헤더·네비 높이를 다른 요소의 패딩/오프셋 매직 넘버로 보정하지 마세요. 공간 분배는 flex 레이아웃에 맡깁니다.
+- `sticky`는 스크롤 컨테이너 안에 있을 때만 동작합니다. 스크롤러의 형제인 헤더에는 붙이지 마세요.
+- 콘텐츠 스크롤 영역의 하단 페이드는 `scroll-fade-b`(shadcn 유틸)로 통일합니다.
+
 ## 테스트
 
 - 단위 테스트: `tests/` 아래에 소스 구조를 미러링해 배치하고 `*.test.ts`로 명명합니다 (예: `tests/features/chats/room/lib/parse-sse-stream.test.ts`). Vitest node 환경이므로 DOM 없는 순수 로직 위주로 작성합니다.
-- E2E 테스트: `e2e/` 아래 `*.spec.ts`. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다.
+- E2E 테스트: `e2e/` 아래 `*.spec.ts`. Mobile Chrome(Pixel 5) 뷰포트로 실행됩니다. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다.
