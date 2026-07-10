@@ -1,8 +1,6 @@
 import type { ChatInputMode } from './lib/chat-input-config';
 import type { InputBlockType } from './lib/input-blocks';
 
-export const CHAT_HEADER_HEIGHT_CLASS = 'h-14';
-
 export const CHAT_INPUT_MODE_STORAGE_KEY = 'manyak:chat-input-mode';
 
 export const DEFAULT_CHAT_INPUT_MODE: ChatInputMode = 'block';

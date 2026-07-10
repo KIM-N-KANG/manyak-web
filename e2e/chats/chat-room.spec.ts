@@ -195,9 +195,7 @@ test.describe('채팅 스트리밍', () => {
 });
 
 test.describe('채팅 헤더', () => {
-  test('아래로 스크롤해 숨긴 헤더는 메시지를 전송해도 다시 나타나지 않는다', async ({
-    page,
-  }) => {
+  test('스크롤해도 헤더는 상단에 고정되어 계속 보인다', async ({ page }) => {
     // 스크롤이 생기도록 충분히 긴 대화 이력을 만든다.
     const longTurns = Array.from({ length: 10 }, (_, i) => ({
       id: i + 1,
@@ -206,52 +204,25 @@ test.describe('채팅 헤더', () => {
       choices: [],
       createdAt: '2026-06-01T00:00:00Z',
     }));
-    const completedTurn = {
-      id: 99,
-      userInput: '앞으로 나아간다',
-      aiOutput: '어둠이 너를 삼킨다.',
-      choices: [],
-      createdAt: '2026-06-01T00:00:00Z',
-    };
-
-    let detailCallCount = 0;
 
     await page.route(CHAT_DETAIL, async (route) => {
-      detailCallCount += 1;
-
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          detailCallCount === 1
-            ? chatDetail(longTurns)
-            : chatDetail([...longTurns, completedTurn]),
-        ),
-      });
-    });
-    await page.route(CHAT_STREAM, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        body: sse([
-          'event: started\ndata: {}\n\n',
-          'event: token\ndata: {"text":"어둠이 너를 삼킨다."}\n\n',
-          'event: completed\ndata: {"aiOutput":"어둠이 너를 삼킨다."}\n\n',
-        ]),
+        body: JSON.stringify(chatDetail(longTurns)),
       });
     });
 
-    await setPlainInputMode(page);
     await page.goto('/chats/c1');
 
-    const header = page.locator('header');
+    const header = page.getByRole('banner');
     const viewport = page.locator('[data-slot="message-scroller-viewport"]');
     const scrollTop = () => viewport.evaluate((el) => el.scrollTop);
 
     await expect(page.getByText('AI 응답 10', { exact: false })).toBeVisible();
-    await expect(header).toHaveAttribute('aria-hidden', 'false');
+    await expect(header.getByText('용의 계곡')).toBeVisible();
 
-    // 최하단에서는 더 내릴 수 없으니, 위로 올렸다가 다시 아래로 내려 헤더를 숨긴다.
+    // 최하단에서 시작하므로 위로 올렸다가 다시 아래로 내려도 헤더가 유지되는지 본다.
     await page.mouse.move(200, 300);
 
     const initialTop = await scrollTop();
@@ -259,17 +230,8 @@ test.describe('채팅 헤더', () => {
     await page.mouse.wheel(0, -300);
     await expect.poll(scrollTop).toBeLessThan(initialTop);
     await page.mouse.wheel(0, 150);
-    await expect(header).toHaveAttribute('aria-hidden', 'true');
 
-    await page
-      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
-      .fill('앞으로 나아간다');
-    await page.getByRole('button', { name: '전송' }).click();
-
-    // 전송 시 새 메시지가 최상단으로 앵커되는 프로그래매틱 스크롤이 발생해도
-    // 사용자가 숨긴 헤더는 그대로 유지되어야 한다.
-    await expect(page.getByText('어둠이 너를 삼킨다.')).toBeVisible();
-    await expect(header).toHaveAttribute('aria-hidden', 'true');
+    await expect(header.getByText('용의 계곡')).toBeVisible();
   });
 });
 

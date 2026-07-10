@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  type KeyboardEvent,
-  type UIEvent,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useState } from 'react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
@@ -19,27 +13,12 @@ import {
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller';
 import { Spinner } from '@/components/ui/spinner';
-import { cn } from '@/lib/utils';
 
-import { CHAT_HEADER_HEIGHT_CLASS } from '../../constants';
-import { resolveHeaderVisibility } from '../../lib/resolve-header-visibility';
 import type { StreamingTurn } from '../../types';
 import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';
-
-const USER_SCROLL_IDLE_TIMEOUT_MS = 150;
-
-const SCROLL_INTENT_KEYS = new Set([
-  'ArrowDown',
-  'ArrowUp',
-  'End',
-  'Home',
-  'PageDown',
-  'PageUp',
-  ' ',
-]);
 
 type ChatMessagesProps = {
   prologue: string;
@@ -48,7 +27,6 @@ type ChatMessagesProps = {
   streamingTurn: StreamingTurn | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
-  onHeaderVisibleChange: (isVisible: boolean) => void;
 };
 
 export function ChatMessages({
@@ -58,13 +36,9 @@ export function ChatMessages({
   streamingTurn,
   onSendChoice,
   onFillChoice,
-  onHeaderVisibleChange,
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
-  const lastScrollTopRef = useRef(0);
-  const lastUserScrollInputAtRef = useRef(0);
-  const wasStreamingRef = useRef(streamingTurn !== null);
 
   useEffect(() => {
     if (streamingTurn && !hasSent) {
@@ -72,46 +46,6 @@ export function ChatMessages({
       setHasSent(true);
     }
   }, [streamingTurn, hasSent]);
-
-  useEffect(() => {
-    const isStreamingNow = streamingTurn !== null;
-
-    if (isStreamingNow && !wasStreamingRef.current) {
-      lastUserScrollInputAtRef.current = 0;
-    }
-
-    wasStreamingRef.current = isStreamingNow;
-  }, [streamingTurn]);
-
-  const markUserScrollIntent = () => {
-    lastUserScrollInputAtRef.current = performance.now();
-  };
-
-  const handleViewportKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (SCROLL_INTENT_KEYS.has(event.key)) {
-      markUserScrollIntent();
-    }
-  };
-
-  const handleViewportScroll = (event: UIEvent<HTMLDivElement>) => {
-    const current = event.currentTarget.scrollTop;
-    const delta = current - lastScrollTopRef.current;
-    const now = performance.now();
-    const isUserScroll =
-      now - lastUserScrollInputAtRef.current <= USER_SCROLL_IDLE_TIMEOUT_MS;
-
-    if (isUserScroll) {
-      markUserScrollIntent();
-    }
-
-    const nextVisible = resolveHeaderVisibility(current, delta, isUserScroll);
-
-    if (nextVisible !== null) {
-      onHeaderVisibleChange(nextVisible);
-    }
-
-    lastScrollTopRef.current = current;
-  };
 
   const lastTurnIndex = turns.length - 1;
 
@@ -121,17 +55,8 @@ export function ChatMessages({
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={0}>
       <MessageScroller>
-        <MessageScrollerViewport
-          onScroll={handleViewportScroll}
-          onWheel={markUserScrollIntent}
-          onTouchMove={markUserScrollIntent}
-          onKeyDown={handleViewportKeyDown}>
+        <MessageScrollerViewport>
           <MessageScrollerContent className="gap-0">
-            <div
-              aria-hidden
-              className={cn('shrink-0', CHAT_HEADER_HEIGHT_CLASS)}
-            />
-
             {prologue ? (
               <MessageScrollerItem>
                 <AiMessageBubble>{prologue}</AiMessageBubble>

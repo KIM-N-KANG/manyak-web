@@ -160,8 +160,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
   }, [isError, chatId]);
 
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-
   let stateKey: string;
   let content: ReactNode;
 
@@ -186,7 +184,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
         <ChatRoomHeader
           chatId={chatId}
           storyTitle={storyTitle}
-          isVisible={isHeaderVisible}
           inputMode={mode}
           onInputModeChange={handleModeChange}
         />
@@ -198,7 +195,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             streamingTurn={streamingTurn}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}
-            onHeaderVisibleChange={setIsHeaderVisible}
           />
         </div>
         <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
