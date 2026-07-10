@@ -13,6 +13,7 @@ import {
 } from '@/api/generated/endpoints/stories/stories';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
+import { StoryTurnCount } from '@/features/stories/components/story-turn-count';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
@@ -25,7 +26,6 @@ import { StoryDetailSkeleton } from './story-detail-skeleton';
 import { StoryInfoSection } from './story-info-section';
 import { startSettingValue } from './story-start-settings';
 import { StoryThumbnailViewer } from './story-thumbnail-viewer';
-import { StoryTurnCount } from './story-turn-count';
 
 type StoryDetailProps = {
   storyId: string;
