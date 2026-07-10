@@ -1,7 +1,5 @@
 'use client';
 
-import { Fragment } from 'react';
-
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
@@ -9,7 +7,6 @@ import Link from 'next/link';
 import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { APP_PATH } from '@/constants/app-path';
 import { useHasCreatedStories } from '@/features/stories/list/hooks/use-has-created-stories';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
@@ -75,14 +72,9 @@ export function ChatList() {
   return (
     <ul className="flex flex-col">
       {chats.map((chat, index) => (
-        <Fragment key={chat.id}>
-          <li>
-            <ChatCard chat={chat} position={index} />
-          </li>
-          {index < chats.length - 1 && (
-            <Separator className="mx-4 data-horizontal:w-auto" />
-          )}
-        </Fragment>
+        <li key={chat.id}>
+          <ChatCard chat={chat} position={index} />
+        </li>
       ))}
     </ul>
   );
