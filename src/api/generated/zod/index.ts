@@ -142,25 +142,27 @@ export const createGeneralStoryBodyOneLineIntroMax = 255;
 
 export const createGeneralStoryBodyGenresMax = 8;
 
-export const createGeneralStoryBodyStartSettingNameMin = 0;
-export const createGeneralStoryBodyStartSettingNameMax = 100;
+export const createGeneralStoryBodyStartSettingsItemNameMin = 0;
+export const createGeneralStoryBodyStartSettingsItemNameMax = 100;
 
-export const createGeneralStoryBodySuggestedInputsMin = 3;
-export const createGeneralStoryBodySuggestedInputsMax = 3;
+export const createGeneralStoryBodyStartSettingsItemSuggestedInputsMin = 3;
+export const createGeneralStoryBodyStartSettingsItemSuggestedInputsMax = 3;
+
+export const createGeneralStoryBodyStartSettingsItemEndingsItemNameMin = 0;
+export const createGeneralStoryBodyStartSettingsItemEndingsItemNameMax = 100;
+
+export const createGeneralStoryBodyStartSettingsItemEndingsItemRequirementMinTurnsMin = 0;
+
+export const createGeneralStoryBodyStartSettingsItemEndingsMin = 0;
+export const createGeneralStoryBodyStartSettingsItemEndingsMax = 10;
+
+export const createGeneralStoryBodyStartSettingsMax = 2147483647;
 
 export const createGeneralStoryBodyMainEventsItemNameMin = 0;
 export const createGeneralStoryBodyMainEventsItemNameMax = 100;
 
 export const createGeneralStoryBodyMainEventsMin = 0;
 export const createGeneralStoryBodyMainEventsMax = 10;
-
-export const createGeneralStoryBodyEndingsItemNameMin = 0;
-export const createGeneralStoryBodyEndingsItemNameMax = 100;
-
-export const createGeneralStoryBodyEndingsItemRequirementMinTurnsMin = 0;
-
-export const createGeneralStoryBodyEndingsMin = 0;
-export const createGeneralStoryBodyEndingsMax = 10;
 
 export const createGeneralStoryBodyVisibilityDefault = `PRIVATE`;
 
@@ -194,23 +196,81 @@ export const CreateGeneralStoryBody = zod
         ruleSetting: zod.string().min(1).describe('규칙 설정'),
       })
       .describe('스토리 설정 통글 4필드'),
-    startSetting: zod
-      .object({
-        name: zod
-          .string()
-          .min(createGeneralStoryBodyStartSettingNameMin)
-          .max(createGeneralStoryBodyStartSettingNameMax)
-          .describe('시작 장면 이름'),
-        prologue: zod.string().min(1).describe('도입부 내레이션(프롤로그)'),
-        startSituation: zod.string().min(1).describe('시작 상황'),
-      })
-      .describe('시작 설정 3필드'),
-    suggestedInputs: zod
-      .array(zod.string())
-      .min(createGeneralStoryBodySuggestedInputsMin)
-      .max(createGeneralStoryBodySuggestedInputsMax)
+    startSettings: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .string()
+              .nullish()
+              .describe(
+                '시작 설정 ID(공개 식별자). 수정 시 기존 시작 설정 매칭 키로만 사용하며, 제작 시에는 무시된다.',
+              ),
+            name: zod
+              .string()
+              .min(createGeneralStoryBodyStartSettingsItemNameMin)
+              .max(createGeneralStoryBodyStartSettingsItemNameMax)
+              .describe('시작 장면 이름'),
+            prologue: zod.string().min(1).describe('도입부 내레이션(프롤로그)'),
+            startSituation: zod.string().min(1).describe('시작 상황'),
+            suggestedInputs: zod
+              .array(zod.string())
+              .min(createGeneralStoryBodyStartSettingsItemSuggestedInputsMin)
+              .max(createGeneralStoryBodyStartSettingsItemSuggestedInputsMax)
+              .optional()
+              .describe('추천 입력(정확히 3개)'),
+            endings: zod
+              .array(
+                zod
+                  .object({
+                    name: zod
+                      .string()
+                      .min(
+                        createGeneralStoryBodyStartSettingsItemEndingsItemNameMin,
+                      )
+                      .max(
+                        createGeneralStoryBodyStartSettingsItemEndingsItemNameMax,
+                      )
+                      .describe('엔딩 이름'),
+                    requirement: zod
+                      .object({
+                        minTurns: zod
+                          .number()
+                          .min(
+                            createGeneralStoryBodyStartSettingsItemEndingsItemRequirementMinTurnsMin,
+                          )
+                          .optional()
+                          .describe('최소 턴 수(백엔드 결정적 판정)'),
+                        achievementCondition: zod
+                          .string()
+                          .min(1)
+                          .describe('달성 조건(자연어, AI 정성 판정)'),
+                      })
+                      .describe('도달 조건(최소 턴 수 + 달성 조건)'),
+                    epilogue: zod
+                      .string()
+                      .min(1)
+                      .describe('도달 시 엔딩 응답 생성을 위한 출력 가이드'),
+                  })
+                  .describe('엔딩 입력 항목(유형 없이 이름으로 식별)'),
+              )
+              .min(createGeneralStoryBodyStartSettingsItemEndingsMin)
+              .max(createGeneralStoryBodyStartSettingsItemEndingsMax)
+              .optional()
+              .describe(
+                '엔딩 목록(시작 설정당 최대 10, 선택). 배열 순서가 표시 순서가 된다.',
+              ),
+          })
+          .describe(
+            '시작 설정. 추천 입력·엔딩이 이 시작 설정에 종속된다(KNK-515 복수화).',
+          ),
+      )
+      .min(1)
+      .max(createGeneralStoryBodyStartSettingsMax)
       .optional()
-      .describe('추천 입력(정확히 3개)'),
+      .describe(
+        '시작 설정 목록(최소 1개). 각 시작 설정에 추천 입력(정확히 3개)·엔딩(최대 10)이 종속된다.',
+      ),
     mainEvents: zod
       .array(
         zod
@@ -231,40 +291,9 @@ export const CreateGeneralStoryBody = zod
       .min(createGeneralStoryBodyMainEventsMin)
       .max(createGeneralStoryBodyMainEventsMax)
       .optional()
-      .describe('주요 사건 목록(최대 10, 선택). 배열 순서가 표시 순서가 된다.'),
-    endings: zod
-      .array(
-        zod
-          .object({
-            name: zod
-              .string()
-              .min(createGeneralStoryBodyEndingsItemNameMin)
-              .max(createGeneralStoryBodyEndingsItemNameMax)
-              .describe('엔딩 이름'),
-            requirement: zod
-              .object({
-                minTurns: zod
-                  .number()
-                  .min(createGeneralStoryBodyEndingsItemRequirementMinTurnsMin)
-                  .optional()
-                  .describe('최소 턴 수(백엔드 결정적 판정)'),
-                achievementCondition: zod
-                  .string()
-                  .min(1)
-                  .describe('달성 조건(자연어, AI 정성 판정)'),
-              })
-              .describe('도달 조건(최소 턴 수 + 달성 조건)'),
-            epilogue: zod
-              .string()
-              .min(1)
-              .describe('도달 시 엔딩 응답 생성을 위한 출력 가이드'),
-          })
-          .describe('엔딩 입력 항목(유형 없이 이름으로 식별)'),
-      )
-      .min(createGeneralStoryBodyEndingsMin)
-      .max(createGeneralStoryBodyEndingsMax)
-      .optional()
-      .describe('엔딩 목록(최대 10, 선택). 배열 순서가 표시 순서가 된다.'),
+      .describe(
+        '주요 사건 목록(최대 10, 선택). 스토리 스코프이며 배열 순서가 표시 순서가 된다.',
+      ),
     visibility: zod
       .enum(['PUBLIC', 'PRIVATE'])
       .default(createGeneralStoryBodyVisibilityDefault)
@@ -354,6 +383,12 @@ export const CreateChatBody = zod
       .string()
       .optional()
       .describe('채팅을 시작할 스토리 ID(공개 식별자)'),
+    startSettingId: zod
+      .string()
+      .nullish()
+      .describe(
+        '채팅을 시작할 시작 설정 ID(공개 식별자). 생략하면 스토리의 첫 시작 설정을 사용한다.',
+      ),
   })
   .describe('채팅 생성 요청');
 
@@ -557,25 +592,27 @@ export const updateStoryBodyOneLineIntroMax = 255;
 
 export const updateStoryBodyGenresMax = 8;
 
-export const updateStoryBodyStartSettingOneNameMin = 0;
-export const updateStoryBodyStartSettingOneNameMax = 100;
+export const updateStoryBodyStartSettingsItemNameMin = 0;
+export const updateStoryBodyStartSettingsItemNameMax = 100;
 
-export const updateStoryBodySuggestedInputsMin = 3;
-export const updateStoryBodySuggestedInputsMax = 3;
+export const updateStoryBodyStartSettingsItemSuggestedInputsMin = 3;
+export const updateStoryBodyStartSettingsItemSuggestedInputsMax = 3;
+
+export const updateStoryBodyStartSettingsItemEndingsItemNameMin = 0;
+export const updateStoryBodyStartSettingsItemEndingsItemNameMax = 100;
+
+export const updateStoryBodyStartSettingsItemEndingsItemRequirementMinTurnsMin = 0;
+
+export const updateStoryBodyStartSettingsItemEndingsMin = 0;
+export const updateStoryBodyStartSettingsItemEndingsMax = 10;
+
+export const updateStoryBodyStartSettingsMax = 2147483647;
 
 export const updateStoryBodyMainEventsItemNameMin = 0;
 export const updateStoryBodyMainEventsItemNameMax = 100;
 
 export const updateStoryBodyMainEventsMin = 0;
 export const updateStoryBodyMainEventsMax = 10;
-
-export const updateStoryBodyEndingsItemNameMin = 0;
-export const updateStoryBodyEndingsItemNameMax = 100;
-
-export const updateStoryBodyEndingsItemRequirementMinTurnsMin = 0;
-
-export const updateStoryBodyEndingsMin = 0;
-export const updateStoryBodyEndingsMax = 10;
 
 export const UpdateStoryBody = zod
   .object({
@@ -611,26 +648,73 @@ export const UpdateStoryBody = zod
         zod.null(),
       ])
       .optional(),
-    startSetting: zod
-      .union([
+    startSettings: zod
+      .array(
         zod
           .object({
+            id: zod
+              .string()
+              .nullish()
+              .describe(
+                '시작 설정 ID(공개 식별자). 수정 시 기존 시작 설정 매칭 키로만 사용하며, 제작 시에는 무시된다.',
+              ),
             name: zod
               .string()
-              .min(updateStoryBodyStartSettingOneNameMin)
-              .max(updateStoryBodyStartSettingOneNameMax)
+              .min(updateStoryBodyStartSettingsItemNameMin)
+              .max(updateStoryBodyStartSettingsItemNameMax)
               .describe('시작 장면 이름'),
             prologue: zod.string().min(1).describe('도입부 내레이션(프롤로그)'),
             startSituation: zod.string().min(1).describe('시작 상황'),
+            suggestedInputs: zod
+              .array(zod.string())
+              .min(updateStoryBodyStartSettingsItemSuggestedInputsMin)
+              .max(updateStoryBodyStartSettingsItemSuggestedInputsMax)
+              .optional()
+              .describe('추천 입력(정확히 3개)'),
+            endings: zod
+              .array(
+                zod
+                  .object({
+                    name: zod
+                      .string()
+                      .min(updateStoryBodyStartSettingsItemEndingsItemNameMin)
+                      .max(updateStoryBodyStartSettingsItemEndingsItemNameMax)
+                      .describe('엔딩 이름'),
+                    requirement: zod
+                      .object({
+                        minTurns: zod
+                          .number()
+                          .min(
+                            updateStoryBodyStartSettingsItemEndingsItemRequirementMinTurnsMin,
+                          )
+                          .optional()
+                          .describe('최소 턴 수(백엔드 결정적 판정)'),
+                        achievementCondition: zod
+                          .string()
+                          .min(1)
+                          .describe('달성 조건(자연어, AI 정성 판정)'),
+                      })
+                      .describe('도달 조건(최소 턴 수 + 달성 조건)'),
+                    epilogue: zod
+                      .string()
+                      .min(1)
+                      .describe('도달 시 엔딩 응답 생성을 위한 출력 가이드'),
+                  })
+                  .describe('엔딩 입력 항목(유형 없이 이름으로 식별)'),
+              )
+              .min(updateStoryBodyStartSettingsItemEndingsMin)
+              .max(updateStoryBodyStartSettingsItemEndingsMax)
+              .optional()
+              .describe(
+                '엔딩 목록(시작 설정당 최대 10, 선택). 배열 순서가 표시 순서가 된다.',
+              ),
           })
-          .describe('시작 설정 3필드(모두 필수)'),
-        zod.null(),
-      ])
-      .optional(),
-    suggestedInputs: zod
-      .array(zod.string())
-      .min(updateStoryBodySuggestedInputsMin)
-      .max(updateStoryBodySuggestedInputsMax)
+          .describe(
+            '시작 설정. 추천 입력·엔딩이 이 시작 설정에 종속된다(KNK-515 복수화).',
+          ),
+      )
+      .min(1)
+      .max(updateStoryBodyStartSettingsMax)
       .nullish(),
     mainEvents: zod
       .array(
@@ -651,38 +735,6 @@ export const UpdateStoryBody = zod
       )
       .min(updateStoryBodyMainEventsMin)
       .max(updateStoryBodyMainEventsMax)
-      .nullish(),
-    endings: zod
-      .array(
-        zod
-          .object({
-            name: zod
-              .string()
-              .min(updateStoryBodyEndingsItemNameMin)
-              .max(updateStoryBodyEndingsItemNameMax)
-              .describe('엔딩 이름'),
-            requirement: zod
-              .object({
-                minTurns: zod
-                  .number()
-                  .min(updateStoryBodyEndingsItemRequirementMinTurnsMin)
-                  .optional()
-                  .describe('최소 턴 수(백엔드 결정적 판정)'),
-                achievementCondition: zod
-                  .string()
-                  .min(1)
-                  .describe('달성 조건(자연어, AI 정성 판정)'),
-              })
-              .describe('도달 조건(최소 턴 수 + 달성 조건)'),
-            epilogue: zod
-              .string()
-              .min(1)
-              .describe('도달 시 엔딩 응답 생성을 위한 출력 가이드'),
-          })
-          .describe('엔딩 입력 항목(유형 없이 이름으로 식별)'),
-      )
-      .min(updateStoryBodyEndingsMin)
-      .max(updateStoryBodyEndingsMax)
       .nullish(),
   })
   .describe('스토리 부분 갱신 요청. 보낸 필드만 교체하고 나머지는 유지한다.');
