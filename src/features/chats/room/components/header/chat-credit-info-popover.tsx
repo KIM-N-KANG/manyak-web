@@ -12,13 +12,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { GUEST_LIMITS } from '@/features/onboarding/constants';
+import { useDismissOnScroll } from '@/hooks/use-dismiss-on-scroll';
 
 export function ChatCreditInfoPopover() {
   const { status } = useSession();
   const isGuest = status === 'unauthenticated';
+  const [open, setOpen] = useDismissOnScroll();
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button
