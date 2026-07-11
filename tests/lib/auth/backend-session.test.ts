@@ -11,13 +11,7 @@ const tokenCookiesMock = vi.hoisted(() => ({
   hasNextAuthSessionCookie: vi.fn(),
 }));
 
-const inviteCookieMock = vi.hoisted(() => ({
-  readInviteCodeCookie: vi.fn(),
-  clearInviteCodeCookie: vi.fn(),
-}));
-
 vi.mock('@/lib/auth/token-cookies', () => tokenCookiesMock);
-vi.mock('@/lib/auth/invite-cookie', () => inviteCookieMock);
 // 함수만 목킹하고 BackendAuthError 클래스는 실제 구현을 유지한다
 // (ensureFreshAccessToken의 원인 분류가 instanceof로 판별하기 때문).
 vi.mock('@/lib/auth/backend-client', async (importActual) => {
@@ -38,10 +32,9 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // 기본값: NextAuth 세션 쿠키 없음, refresh 쿠키 없음, 초대 쿠키 없음. 개별 케이스에서만 override.
+  // 기본값: NextAuth 세션 쿠키와 refresh 쿠키 없음. 개별 케이스에서만 override.
   tokenCookiesMock.hasNextAuthSessionCookie.mockResolvedValue(false);
   tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
-  inviteCookieMock.readInviteCodeCookie.mockResolvedValue(null);
 });
 
 describe('ensureFreshAccessToken', () => {
@@ -223,6 +216,7 @@ describe('establishBackendSession', () => {
         accessToken: 'access-1',
         refreshToken: 'refresh-1',
         expiresIn: 1800,
+        newUser: true,
       };
     });
     vi.mocked(fetchMeOnServer).mockImplementation(async () => {
@@ -242,39 +236,15 @@ describe('establishBackendSession', () => {
       userId: 'user-1',
       nickname: '만냐',
       profileImageUrl: 'https://example.com/a.png',
+      isNewUser: true,
     });
 
     expect(callOrder).toEqual(['login', 'me', 'write']);
-    expect(loginWithGoogleOnServer).toHaveBeenCalledWith('id-token', null);
+    expect(loginWithGoogleOnServer).toHaveBeenCalledWith('id-token');
     expect(fetchMeOnServer).toHaveBeenCalledWith('access-1');
   });
 
-  it('초대 쿠키가 있으면 코드를 로그인에 전달하고, 세션 수립 성공 후 쿠키를 삭제한다', async () => {
-    const { loginWithGoogleOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
-
-    inviteCookieMock.readInviteCodeCookie.mockResolvedValue('CW6VZX7D');
-    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
-    });
-    vi.mocked(fetchMeOnServer).mockResolvedValue({
-      id: 'user-1',
-      nickname: '만냐',
-      profileImageUrl: null,
-    });
-
-    await establishBackendSession('id-token');
-
-    expect(loginWithGoogleOnServer).toHaveBeenCalledWith(
-      'id-token',
-      'CW6VZX7D',
-    );
-    expect(inviteCookieMock.clearInviteCodeCookie).toHaveBeenCalled();
-  });
-
-  it('초대 쿠키가 없으면 삭제를 시도하지 않는다', async () => {
+  it('로그인 응답에 newUser가 없으면 기존 회원으로 반환한다', async () => {
     const { loginWithGoogleOnServer, fetchMeOnServer } =
       await import('@/lib/auth/backend-client');
 
@@ -289,40 +259,12 @@ describe('establishBackendSession', () => {
       profileImageUrl: null,
     });
 
-    await establishBackendSession('id-token');
-
-    expect(inviteCookieMock.clearInviteCodeCookie).not.toHaveBeenCalled();
-  });
-
-  it('로그인이 실패하면 초대 쿠키를 남겨 다음 시도에서 다시 전달되게 한다', async () => {
-    const { loginWithGoogleOnServer, BackendAuthError } =
-      await import('@/lib/auth/backend-client');
-
-    inviteCookieMock.readInviteCodeCookie.mockResolvedValue('CW6VZX7D');
-    vi.mocked(loginWithGoogleOnServer).mockRejectedValue(
-      new BackendAuthError(401, 'invalid token'),
-    );
-
-    await expect(establishBackendSession('id-token')).rejects.toThrow();
-    expect(inviteCookieMock.clearInviteCodeCookie).not.toHaveBeenCalled();
-  });
-
-  it('세션 수립 도중(me 조회) 실패해도 초대 쿠키를 남긴다', async () => {
-    const { loginWithGoogleOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
-
-    inviteCookieMock.readInviteCodeCookie.mockResolvedValue('CW6VZX7D');
-    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
+    await expect(establishBackendSession('id-token')).resolves.toEqual({
+      userId: 'user-1',
+      nickname: '만냐',
+      profileImageUrl: null,
+      isNewUser: false,
     });
-    vi.mocked(fetchMeOnServer).mockRejectedValue(new Error('me failed'));
-
-    await expect(establishBackendSession('id-token')).rejects.toThrow(
-      'me failed',
-    );
-    expect(inviteCookieMock.clearInviteCodeCookie).not.toHaveBeenCalled();
   });
 
   it('fetchMeOnServer가 reject되면 throw가 전파되고 writeBackendSessionTokens는 호출되지 않는다', async () => {
