@@ -5,6 +5,7 @@ import {
   getRefreshUrl,
 } from '@/api/generated/endpoints/auth/auth';
 import type { MeResponse, TokenResponse } from '@/api/generated/models';
+import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 
 /**
  * BFF(서버)에서 백엔드 인증 API를 직접 호출하는 클라이언트.
@@ -38,7 +39,7 @@ const requestBackend = async <T>(
   path: string,
   init: RequestInit,
 ): Promise<T> => {
-  const response = await fetch(`${resolveApiBaseUrl()}${path}`, {
+  const response = await fetchWithTimeout(`${resolveApiBaseUrl()}${path}`, {
     ...init,
     cache: 'no-store',
   });
