@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import {
   AddTeamIcon,
   Logout03Icon,
@@ -9,7 +11,7 @@ import { signOut, useSession } from 'next-auth/react';
 
 import { Label } from '@/components/ui/label';
 import { APP_PATH } from '@/constants/app-path';
-import { resetAnalyticsUser } from '@/observability/analytics';
+import { resetAnalyticsUser, track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
 import { MyMenuItem } from './my-menu-item';
@@ -20,7 +22,12 @@ export function MyPage() {
 
   const isAuthenticated = status === 'authenticated';
 
+  useEffect(() => {
+    track('client_account_viewed');
+  }, []);
+
   const handleLogout = () => {
+    track('client_account_logoutButton_clicked');
     resetAnalyticsUser();
     void signOut({ redirectTo: APP_PATH.MAIN.MY });
   };

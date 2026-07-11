@@ -42,6 +42,7 @@ export type AnalyticsEventProps = {
   client_storyList_storyCard_impressed: { story_id: string; position?: number };
   // storyCreate
   client_storyCreate_viewed: void;
+  client_storyCreate_creditInfoButton_clicked: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
   client_storyCreate_tagCategory_selected: {
     from_category: SimpleStoryTagListItemResponseCategory;
@@ -121,6 +122,11 @@ export type AnalyticsEventProps = {
   client_chat_streamError_shown: { chat_id: string; turn_number: number };
   client_chat_loadError_shown: { chat_id: string };
   client_chat_retryButton_clicked: { chat_id: string };
+  // account (마이 페이지)
+  client_account_viewed: void;
+  client_account_loginButton_clicked: void;
+  client_account_attendanceButton_clicked: void;
+  client_account_logoutButton_clicked: void;
   // feedback
   client_feedback_viewed: void;
   client_feedback_form_submitted: void;

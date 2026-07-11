@@ -10,6 +10,7 @@ import { useMe } from '@/api/generated/endpoints/auth/auth';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
+import { track } from '@/observability/analytics';
 
 export function ProfileHeader() {
   const { data: session, status } = useSession();
@@ -57,7 +58,10 @@ export function ProfileHeader() {
         </span>
       )}
       {status === 'unauthenticated' && (
-        <Link href={APP_PATH.LOGIN} className={buttonVariants()}>
+        <Link
+          href={APP_PATH.LOGIN}
+          className={buttonVariants()}
+          onClick={() => track('client_account_loginButton_clicked')}>
           로그인
         </Link>
       )}

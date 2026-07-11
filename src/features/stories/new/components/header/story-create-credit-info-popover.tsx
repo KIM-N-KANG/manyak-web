@@ -13,14 +13,23 @@ import {
 } from '@/components/ui/popover';
 import { GUEST_LIMITS } from '@/features/onboarding/constants';
 import { useDismissOnScroll } from '@/hooks/use-dismiss-on-scroll';
+import { track } from '@/observability/analytics';
 
 export function StoryCreateCreditInfoPopover() {
   const { status } = useSession();
   const isGuest = status === 'unauthenticated';
   const [open, setOpen] = useDismissOnScroll();
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      track('client_storyCreate_creditInfoButton_clicked');
+    }
+
+    setOpen(nextOpen);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         render={
           <Button
