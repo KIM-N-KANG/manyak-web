@@ -18,6 +18,11 @@ export interface ChatTurnResponse {
   aiOutput?: string;
   /** 이 턴에서 AI가 제안한 다음 행동 선택지 목록 */
   choices?: string[];
+  /**
+   * 이번 턴에 도달한 엔딩 이름(도달 아니면 null)
+   * @nullable
+   */
+  reachedEnding?: string | null;
   /** 생성 시각 */
   createdAt?: string;
 }

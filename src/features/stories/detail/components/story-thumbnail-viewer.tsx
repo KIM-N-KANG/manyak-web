@@ -43,13 +43,11 @@ export function StoryThumbnailViewer({
           <DialogPrimitive.Title className="sr-only">
             스토리 썸네일 크게 보기
           </DialogPrimitive.Title>
-          {/* 백엔드 썸네일 호스트가 확정되면 unoptimized를 제거한다(상세 본문과 동일). */}
           <Image
             src={imageUrl}
             alt="스토리 썸네일"
             fill
             sizes="100vw"
-            unoptimized
             className="object-contain"
           />
           <DialogClose

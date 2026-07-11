@@ -330,6 +330,10 @@ export const GetStoriesByIdsResponse = zod.unknown();
  * 사용자 피드백을 등록합니다. 본문만 필수이며, 답변용 이메일은 선택입니다. platform/appVersion 은 앱이 자동으로 채워 보내는 메타이며, 로그인 상태면 서버가 user_id 를 채웁니다(인증 도입 후).
  * @summary 피드백 등록
  */
+export const CreateFeedbackHeader = zod.object({
+  'User-Agent': zod.string().optional(),
+});
+
 export const createFeedbackBodyBodyMin = 0;
 export const createFeedbackBodyBodyMax = 2000;
 

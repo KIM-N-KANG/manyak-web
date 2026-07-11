@@ -126,8 +126,6 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             <main
               ref={contentRef}
               className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain pb-4">
-              {/* 백엔드 썸네일 호스트가 확정되면 next.config remotePatterns에
-                  등록하고 unoptimized를 제거한다. */}
               <div className="shrink-0 px-4">
                 <button
                   type="button"
@@ -144,7 +142,6 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                         fill
                         sizes="100vw"
                         priority
-                        unoptimized
                         className="object-cover"
                       />
                     ) : (

@@ -38,7 +38,7 @@ const fulfillStoryDetail = async (route: Route) => {
   });
 };
 
-const THUMBNAIL_URL = 'https://example.com/thumbnails/dragon.png';
+const THUMBNAIL_URL = 'https://cdn.manyak.app/thumbnails/dragon.png';
 
 // 1x1 투명 PNG. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
@@ -72,7 +72,10 @@ test.describe('스토리 상세', () => {
         body: JSON.stringify({ ...storyDetail, thumbnailUrl: THUMBNAIL_URL }),
       });
     });
-    await page.route(THUMBNAIL_URL, async (route) => {
+    // 썸네일 <Image>는 Next 최적화(/_next/image)를 타므로, 원본 URL 대신
+    // 브라우저가 실제로 요청하는 최적화 엔드포인트를 가로챈다. (서버사이드
+    // fetch·remotePatterns 검증을 우회)
+    await page.route('**/_next/image**', async (route) => {
       await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
     });
 
@@ -94,7 +97,10 @@ test.describe('스토리 상세', () => {
         body: JSON.stringify({ ...storyDetail, thumbnailUrl: THUMBNAIL_URL }),
       });
     });
-    await page.route(THUMBNAIL_URL, async (route) => {
+    // 썸네일 <Image>는 Next 최적화(/_next/image)를 타므로, 원본 URL 대신
+    // 브라우저가 실제로 요청하는 최적화 엔드포인트를 가로챈다. (서버사이드
+    // fetch·remotePatterns 검증을 우회)
+    await page.route('**/_next/image**', async (route) => {
       await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
     });
 
