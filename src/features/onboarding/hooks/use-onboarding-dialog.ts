@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 import { APP_PATH } from '@/constants/app-path';
 import { useCreatedChatIds } from '@/features/chats/list/hooks/use-created-chat-ids';
@@ -20,6 +21,7 @@ import {
  */
 export function useOnboardingDialog() {
   const router = useRouter();
+  const { status } = useSession();
   const storyIds = useCreatedStoryIds();
   const chatIds = useCreatedChatIds();
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +31,7 @@ export function useOnboardingDialog() {
   const isNewVisitor = hasNoStories && hasNoChats;
 
   useEffect(() => {
-    if (!isNewVisitor || isOnboardingSeen()) {
+    if (status !== 'unauthenticated' || !isNewVisitor || isOnboardingSeen()) {
       return;
     }
 
@@ -39,7 +41,7 @@ export function useOnboardingDialog() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [isNewVisitor]);
+  }, [isNewVisitor, status]);
 
   const handleStartCreate = () => {
     markOnboardingSeen();
