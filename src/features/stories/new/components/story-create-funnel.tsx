@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 
+import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
+import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
 import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
@@ -28,6 +30,11 @@ export function StoryCreateFunnel() {
     hasGenerateStorylinesError,
     isCompletingStory,
     hasCompleteStoryError,
+    guestLimitTrigger,
+    isGuestLimitReached,
+    closeGuestLimitDialog,
+    creditShortageTrigger,
+    closeCreditShortageDialog,
     handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
@@ -54,7 +61,7 @@ export function StoryCreateFunnel() {
   }, [step]);
 
   return (
-    <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <StoryCreateHeader
         step={step}
         backDialogOpen={backDialogOpen}
@@ -67,6 +74,7 @@ export function StoryCreateFunnel() {
         <StoryTagStepSection
           isGeneratingStorylines={isGeneratingStorylines}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
+          isGuestLimitReached={isGuestLimitReached}
           onGenerateStorylines={handleGenerateStorylines}
         />
       )}
@@ -79,6 +87,7 @@ export function StoryCreateFunnel() {
           activeStorylineIndex={activeStorylineIndex}
           isRegeneratingStorylines={isGeneratingStorylines}
           hasRegenerateStorylinesError={hasGenerateStorylinesError}
+          isGuestLimitReached={isGuestLimitReached}
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}
           onSelectStoryline={handleSelectStoryline}
@@ -90,6 +99,7 @@ export function StoryCreateFunnel() {
           storylineItem={selectedStoryline}
           isCompletingStory={isCompletingStory}
           hasCompleteStoryError={hasCompleteStoryError}
+          isGuestLimitReached={isGuestLimitReached}
           canCompleteStory={canCompleteStory}
           selectedRecommendations={selectedRecommendations}
           additionalInfos={additionalInfos}
@@ -105,6 +115,23 @@ export function StoryCreateFunnel() {
       )}
 
       {step === 'complete' && <StoryCompletionLoading />}
+
+      <LoginRequiredDialog
+        trigger={guestLimitTrigger}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeGuestLimitDialog();
+          }
+        }}
+      />
+      <CreditShortageDialog
+        trigger={creditShortageTrigger}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeCreditShortageDialog();
+          }
+        }}
+      />
     </div>
   );
 }

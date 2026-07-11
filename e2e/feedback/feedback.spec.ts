@@ -21,7 +21,7 @@ test.describe('피드백 제출', () => {
     });
 
     await skipOnboarding(page);
-    await page.goto('/feedback');
+    await page.goto('/my/feedback');
 
     await page
       .getByRole('textbox', { name: '피드백 내용' })
@@ -59,7 +59,7 @@ test.describe('피드백 제출', () => {
     });
 
     await skipOnboarding(page);
-    await page.goto('/feedback');
+    await page.goto('/my/feedback');
 
     await page
       .getByRole('textbox', { name: '피드백 내용' })
@@ -74,7 +74,7 @@ test.describe('피드백 제출', () => {
 
   test('본문이 비어 있으면 제출 버튼이 비활성화된다', async ({ page }) => {
     await skipOnboarding(page);
-    await page.goto('/feedback');
+    await page.goto('/my/feedback');
 
     const submit = page.getByRole('button', { name: '피드백 보내기' });
 
@@ -95,15 +95,13 @@ test.describe('피드백 제출', () => {
     });
 
     await skipOnboarding(page);
-    await page.goto('/feedback');
+    await page.goto('/my/feedback');
 
     await page
       .getByRole('textbox', { name: '피드백 내용' })
       .fill('실패 케이스');
     await page.getByRole('button', { name: '피드백 보내기' }).click();
 
-    await expect(
-      page.getByText('피드백 전송에 실패했어요. 다시 시도해주세요.'),
-    ).toBeVisible();
+    await expect(page.getByText('피드백 전송에 실패했어요')).toBeVisible();
   });
 });

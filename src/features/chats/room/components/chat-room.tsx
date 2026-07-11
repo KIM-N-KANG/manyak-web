@@ -3,12 +3,27 @@
 import { type ReactNode, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
+import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
+import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
+import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
+import {
+  incrementGuestUsage,
+  isGuestOverLimit,
+} from '@/features/auth/login-required/utils/guest-usage-storage';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
+import type {
+  CreditShortageTrigger,
+  GuestLimitTrigger,
+} from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatComposer } from '../hooks/use-chat-composer';
@@ -28,6 +43,31 @@ type ChatRoomProps = {
 
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const queryClient = useQueryClient();
+  const { status: sessionStatus } = useSession();
+  const [guestLimitTrigger, setGuestLimitTrigger] =
+    useState<GuestLimitTrigger | null>(null);
+  const [creditShortageTrigger, setCreditShortageTrigger] =
+    useState<CreditShortageTrigger | null>(null);
+
+  // 402 통지: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도, 그 외는 실패 토스트.
+  // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
+  const handlePaymentRequired = (error: unknown) => {
+    const reason = resolvePaymentRequiredReason(error, sessionStatus);
+
+    if (reason === 'guest-trial-limit') {
+      setGuestLimitTrigger('chat_turn');
+
+      return;
+    }
+
+    if (reason === 'insufficient-credit') {
+      setCreditShortageTrigger('chat_turn');
+
+      return;
+    }
+
+    toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
+  };
   const {
     storyTitle,
     prologue,
@@ -38,15 +78,34 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     refetch,
   } = useChatDetail(chatId);
   const handleStreamCompleted = async () => {
+    if (sessionStatus !== 'authenticated') {
+      incrementGuestUsage('chat');
+    }
+
     await refetch();
+    // 게스트(배치)·회원(me/chats) 목록 모두 최근 활동 순서가 바뀌므로 함께 무효화한다.
+    // 비활성 쿼리 무효화는 무해해서 세션 분기 없이 둘 다 처리한다.
     await queryClient.invalidateQueries({ queryKey: [CHATS_BATCH_QUERY_KEY] });
+    await queryClient.invalidateQueries({ queryKey: getGetMyChatsQueryKey() });
   };
 
   const { streamingTurn, isStreaming, send } = useChatStream(
     chatId,
     turns.length,
     handleStreamCompleted,
+    handlePaymentRequired,
   );
+
+  // 게스트가 턴 한도에 도달했으면 전송하지 않고 로그인 유도(서버 402 이전의 클라이언트 사전 차단).
+  const guardedSend = (userInput: string): Promise<void> => {
+    if (isGuestOverLimit(sessionStatus, 'chat')) {
+      setGuestLimitTrigger('chat_turn');
+
+      return Promise.resolve();
+    }
+
+    return send(userInput);
+  };
 
   const { mode, changeMode } = useChatInputMode();
 
@@ -55,7 +114,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnCount: turns.length,
     isStreaming,
     inputMode: mode,
-    onSend: send,
+    onSend: guardedSend,
   });
 
   const [pendingFill, setPendingFill] = useState<{
@@ -101,8 +160,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
   }, [isError, chatId]);
 
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-
   let stateKey: string;
   let content: ReactNode;
 
@@ -127,7 +184,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
         <ChatRoomHeader
           chatId={chatId}
           storyTitle={storyTitle}
-          isVisible={isHeaderVisible}
           inputMode={mode}
           onInputModeChange={handleModeChange}
         />
@@ -139,7 +195,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             streamingTurn={streamingTurn}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}
-            onHeaderVisibleChange={setIsHeaderVisible}
           />
         </div>
         <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
@@ -155,6 +210,22 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           description="지금 작성 중인 내용은 사라져요"
           cancelLabel="그대로 두기"
           confirmLabel="바꾸기"
+        />
+        <LoginRequiredDialog
+          trigger={guestLimitTrigger}
+          onOpenChange={(open) => {
+            if (!open) {
+              setGuestLimitTrigger(null);
+            }
+          }}
+        />
+        <CreditShortageDialog
+          trigger={creditShortageTrigger}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreditShortageTrigger(null);
+            }
+          }}
         />
       </>
     );

@@ -25,14 +25,136 @@ import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
   BatchStoryRequest,
+  CreateGeneralStoryRequest,
   GetLorebooksParams,
   LorebookListItemResponse,
+  SimpleStoryCreateResponse,
   StoryDetailResponse,
+  StoryEditFormResponse,
   StorySummaryResponse,
+  UpdateStoryRequest,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export type createGeneralStoryResponse201 = {
+  data: SimpleStoryCreateResponse;
+  status: 201;
+};
+
+export type createGeneralStoryResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type createGeneralStoryResponseSuccess =
+  createGeneralStoryResponse201 & {
+    headers: Headers;
+  };
+export type createGeneralStoryResponseError = createGeneralStoryResponse400 & {
+  headers: Headers;
+};
+
+export type createGeneralStoryResponse =
+  | createGeneralStoryResponseSuccess
+  | createGeneralStoryResponseError;
+
+export const getCreateGeneralStoryUrl = () => {
+  return `/api/v1/stories/general`;
+};
+
+/**
+ * 폼에 직접 입력한 스토리 구성 항목을 한 번에 등록합니다(단발, 임시저장 없음). 인증은 선택이며 유효 토큰이면 생성자 소유가 됩니다. AI를 호출하지 않아 크레딧 소모·게스트 한도 카운트가 없습니다. 응답은 간편 제작과 동일합니다.
+ * @summary 일반 제작 스토리 등록
+ */
+export const createGeneralStory = async (
+  createGeneralStoryRequest: CreateGeneralStoryRequest,
+  options?: RequestInit,
+): Promise<createGeneralStoryResponse> => {
+  return customInstance<createGeneralStoryResponse>(
+    getCreateGeneralStoryUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(createGeneralStoryRequest),
+    },
+  );
+};
+
+export const getCreateGeneralStoryMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGeneralStory>>,
+    TError,
+    { data: BodyType<CreateGeneralStoryRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createGeneralStory>>,
+  TError,
+  { data: BodyType<CreateGeneralStoryRequest> },
+  TContext
+> => {
+  const mutationKey = ['createGeneralStory'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createGeneralStory>>,
+    { data: BodyType<CreateGeneralStoryRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createGeneralStory(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateGeneralStoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createGeneralStory>>
+>;
+export type CreateGeneralStoryMutationBody =
+  BodyType<CreateGeneralStoryRequest>;
+export type CreateGeneralStoryMutationError = ErrorType<void>;
+
+/**
+ * @summary 일반 제작 스토리 등록
+ */
+export const useCreateGeneralStory = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createGeneralStory>>,
+      TError,
+      { data: BodyType<CreateGeneralStoryRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createGeneralStory>>,
+  TError,
+  { data: BodyType<CreateGeneralStoryRequest> },
+  TContext
+> => {
+  return useMutation(
+    getCreateGeneralStoryMutationOptions(options),
+    queryClient,
+  );
+};
 export type getStoriesByIdsResponse200 = {
   data: StorySummaryResponse[];
   status: 200;
@@ -318,6 +440,11 @@ export type deleteStoryResponse204 = {
   status: 204;
 };
 
+export type deleteStoryResponse403 = {
+  data: void;
+  status: 403;
+};
+
 export type deleteStoryResponse404 = {
   data: void;
   status: 404;
@@ -326,7 +453,10 @@ export type deleteStoryResponse404 = {
 export type deleteStoryResponseSuccess = deleteStoryResponse204 & {
   headers: Headers;
 };
-export type deleteStoryResponseError = deleteStoryResponse404 & {
+export type deleteStoryResponseError = (
+  | deleteStoryResponse403
+  | deleteStoryResponse404
+) & {
   headers: Headers;
 };
 
@@ -339,7 +469,7 @@ export const getDeleteStoryUrl = (storyId: string) => {
 };
 
 /**
- * 스토리를 소프트 삭제합니다. 행을 물리 삭제하지 않고 삭제 시각만 기록하며, 이후 목록·상세 조회에서 제외됩니다. 존재하지 않거나 이미 삭제된 스토리는 404로 응답합니다.
+ * 스토리를 소프트 삭제합니다. 행을 물리 삭제하지 않고 삭제 시각만 기록하며, 이후 목록·상세 조회에서 제외됩니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403), 소유자 없는 게스트 스토리는 허용합니다. 존재하지 않거나 이미 삭제된 스토리는 404로 응답합니다.
  * @summary 스토리 삭제 (소프트 삭제)
  */
 export const deleteStory = async (
@@ -418,6 +548,306 @@ export const useDeleteStory = <TError = ErrorType<void>, TContext = unknown>(
 > => {
   return useMutation(getDeleteStoryMutationOptions(options), queryClient);
 };
+export type updateStoryResponse200 = {
+  data: StoryEditFormResponse;
+  status: 200;
+};
+
+export type updateStoryResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type updateStoryResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type updateStoryResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type updateStoryResponseSuccess = updateStoryResponse200 & {
+  headers: Headers;
+};
+export type updateStoryResponseError = (
+  | updateStoryResponse400
+  | updateStoryResponse403
+  | updateStoryResponse404
+) & {
+  headers: Headers;
+};
+
+export type updateStoryResponse =
+  | updateStoryResponseSuccess
+  | updateStoryResponseError;
+
+export const getUpdateStoryUrl = (storyId: string) => {
+  return `/api/v1/stories/${storyId}`;
+};
+
+/**
+ * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404.
+ * @summary 스토리 수정(부분 갱신)
+ */
+export const updateStory = async (
+  storyId: string,
+  updateStoryRequest: UpdateStoryRequest,
+  options?: RequestInit,
+): Promise<updateStoryResponse> => {
+  return customInstance<updateStoryResponse>(getUpdateStoryUrl(storyId), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateStoryRequest),
+  });
+};
+
+export const getUpdateStoryMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStory>>,
+    TError,
+    { storyId: string; data: BodyType<UpdateStoryRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateStory>>,
+  TError,
+  { storyId: string; data: BodyType<UpdateStoryRequest> },
+  TContext
+> => {
+  const mutationKey = ['updateStory'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateStory>>,
+    { storyId: string; data: BodyType<UpdateStoryRequest> }
+  > = (props) => {
+    const { storyId, data } = props ?? {};
+
+    return updateStory(storyId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateStoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateStory>>
+>;
+export type UpdateStoryMutationBody = BodyType<UpdateStoryRequest>;
+export type UpdateStoryMutationError = ErrorType<void>;
+
+/**
+ * @summary 스토리 수정(부분 갱신)
+ */
+export const useUpdateStory = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateStory>>,
+      TError,
+      { storyId: string; data: BodyType<UpdateStoryRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateStory>>,
+  TError,
+  { storyId: string; data: BodyType<UpdateStoryRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateStoryMutationOptions(options), queryClient);
+};
+export type getEditFormResponse200 = {
+  data: StoryEditFormResponse;
+  status: 200;
+};
+
+export type getEditFormResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type getEditFormResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type getEditFormResponseSuccess = getEditFormResponse200 & {
+  headers: Headers;
+};
+export type getEditFormResponseError = (
+  | getEditFormResponse403
+  | getEditFormResponse404
+) & {
+  headers: Headers;
+};
+
+export type getEditFormResponse =
+  | getEditFormResponseSuccess
+  | getEditFormResponseError;
+
+export const getGetEditFormUrl = (storyId: string) => {
+  return `/api/v1/stories/${storyId}/edit`;
+};
+
+/**
+ * 수정 폼을 채우기 위한 편집 가능 필드 전체(통글 4필드 포함)를 조회합니다. 인증은 선택이며, 회원 소유 스토리는 소유자만(타인·미인증 403), 소유자 없는 게스트 스토리는 허용합니다. 없는 스토리는 404입니다.
+ * @summary 스토리 수정 폼 조회
+ */
+export const getEditForm = async (
+  storyId: string,
+  options?: RequestInit,
+): Promise<getEditFormResponse> => {
+  return customInstance<getEditFormResponse>(getGetEditFormUrl(storyId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetEditFormQueryKey = (storyId: string) => {
+  return [`/api/v1/stories/${storyId}/edit`] as const;
+};
+
+export const getGetEditFormQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEditForm>>,
+  TError = ErrorType<void>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getEditForm>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetEditFormQueryKey(storyId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEditForm>>> = ({
+    signal,
+  }) => getEditForm(storyId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: storyId !== null && storyId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEditForm>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetEditFormQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getEditForm>>
+>;
+export type GetEditFormQueryError = ErrorType<void>;
+
+export function useGetEditForm<
+  TData = Awaited<ReturnType<typeof getEditForm>>,
+  TError = ErrorType<void>,
+>(
+  storyId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getEditForm>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEditForm>>,
+          TError,
+          Awaited<ReturnType<typeof getEditForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetEditForm<
+  TData = Awaited<ReturnType<typeof getEditForm>>,
+  TError = ErrorType<void>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getEditForm>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEditForm>>,
+          TError,
+          Awaited<ReturnType<typeof getEditForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetEditForm<
+  TData = Awaited<ReturnType<typeof getEditForm>>,
+  TError = ErrorType<void>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getEditForm>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 스토리 수정 폼 조회
+ */
+
+export function useGetEditForm<
+  TData = Awaited<ReturnType<typeof getEditForm>>,
+  TError = ErrorType<void>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getEditForm>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetEditFormQueryOptions(storyId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export type getLorebooksResponse200 = {
   data: LorebookListItemResponse[];
   status: 200;

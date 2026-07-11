@@ -4,6 +4,7 @@ import { recordAnalyticsBreadcrumb } from '@/observability/monitoring/sentry';
 
 import { IS_ANALYTICS_ENABLED } from './config';
 import type { AnalyticsEventName, AnalyticsEventProps } from './events';
+import { getAnalyticsUserContext } from './user-context';
 
 /** 이벤트 이름(client_{screen}_...)에서 screen_name을 추출한다. */
 export function deriveScreenName(name: AnalyticsEventName): string {
@@ -22,7 +23,11 @@ export function track<K extends AnalyticsEventName>(
   ...args: TrackArgs<K>
 ): void {
   const props = (args[0] ?? {}) as Record<string, unknown>;
-  const payload = { ...props, screen_name: deriveScreenName(name) };
+  const payload = {
+    ...props,
+    ...getAnalyticsUserContext(),
+    screen_name: deriveScreenName(name),
+  };
 
   // 사용자 행동 흐름과 상관 키를 Sentry에 남겨 에러 재현을 돕는다(스펙 §AN-2-8).
   recordAnalyticsBreadcrumb(name, payload);

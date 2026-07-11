@@ -1,16 +1,21 @@
 'use client';
 
-import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { AnimatePresence, m } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from '@/components/ui/message-scroller';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
-import { CHAT_HEADER_HEIGHT_CLASS } from '../../constants';
-import { useChatMessageScroll } from '../../hooks/use-chat-message-scroll';
+import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled';
 import type { StreamingTurn } from '../../types';
 import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
@@ -24,7 +29,6 @@ type ChatMessagesProps = {
   streamingTurn: StreamingTurn | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
-  onHeaderVisibleChange: (isVisible: boolean) => void;
 };
 
 export function ChatMessages({
@@ -34,90 +38,88 @@ export function ChatMessages({
   streamingTurn,
   onSendChoice,
   onFillChoice,
-  onHeaderVisibleChange,
 }: ChatMessagesProps) {
-  const {
-    scrollRef,
-    streamingBlockRef,
-    lastTurnRef,
-    hasSent,
-    isAtBottom,
-    scrollToBottom,
-    handleMessageScroll,
-  } = useChatMessageScroll({
-    turnCount: turns.length,
-    streamingTurn,
-    onHeaderVisibleChange,
-  });
+  const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
+  const [hasSent, setHasSent] = useState(false);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  // 진입 직후 추정 높이 기준의 초기 스크롤이 실제 맨 아래로 정착하기 전
+  // 프레임(중간 걸림·빈 화면)이 노출되지 않도록, 정착까지 스크롤러를 숨긴다.
+  const settled = useInitialScrollSettled(viewportRef, { skip: startedEmpty });
+
+  useEffect(() => {
+    if (streamingTurn && !hasSent) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHasSent(true);
+    }
+  }, [streamingTurn, hasSent]);
 
   const lastTurnIndex = turns.length - 1;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
-      <main
-        ref={scrollRef}
-        onScroll={handleMessageScroll}
-        className="flex min-h-0 flex-1 scrollbar-none flex-col overflow-y-auto">
-        <div aria-hidden className={cn('shrink-0', CHAT_HEADER_HEIGHT_CLASS)} />
+    <MessageScrollerProvider
+      autoScroll={!startedEmpty && !hasSent}
+      defaultScrollPosition={startedEmpty ? 'start' : 'end'}
+      scrollPreviousItemPeek={0}>
+      <MessageScroller
+        className={cn(
+          'transition-opacity duration-150',
+          !settled && 'opacity-0',
+        )}>
+        <MessageScrollerViewport ref={viewportRef}>
+          <MessageScrollerContent className="gap-0">
+            {prologue ? (
+              <MessageScrollerItem>
+                <AiMessageBubble>{prologue}</AiMessageBubble>
+              </MessageScrollerItem>
+            ) : null}
 
-        {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
+            {turns.map((turn, index) => {
+              const isLast = !streamingTurn && index === lastTurnIndex;
 
-        {turns.map((turn, index) => {
-          const isLast = !streamingTurn && index === lastTurnIndex;
-          const reserveSpace = isLast && hasSent;
+              return (
+                <MessageScrollerItem key={turn.id ?? index}>
+                  <ChatTurnItem
+                    turn={turn}
+                    isLast={isLast}
+                    onSendChoice={onSendChoice}
+                    onFillChoice={onFillChoice}
+                  />
+                </MessageScrollerItem>
+              );
+            })}
 
-          return (
-            <ChatTurnItem
-              key={turn.id ?? index}
-              ref={reserveSpace ? lastTurnRef : undefined}
-              turn={turn}
-              isLast={isLast}
-              reserveSpace={reserveSpace}
-              onSendChoice={onSendChoice}
-              onFillChoice={onFillChoice}
-            />
-          );
-        })}
+            {turns.length === 0 && !streamingTurn ? (
+              <MessageScrollerItem>
+                <ChatChoices
+                  choices={suggestedInputs}
+                  onSend={onSendChoice}
+                  onFill={onFillChoice}
+                />
+              </MessageScrollerItem>
+            ) : null}
 
-        {turns.length === 0 && !streamingTurn ? (
-          <ChatChoices
-            choices={suggestedInputs}
-            onSend={onSendChoice}
-            onFill={onFillChoice}
-          />
-        ) : null}
+            {streamingTurn ? (
+              <MessageScrollerItem scrollAnchor>
+                <ChatStreamingTurn turn={streamingTurn} />
+              </MessageScrollerItem>
+            ) : null}
+          </MessageScrollerContent>
+        </MessageScrollerViewport>
 
         {streamingTurn ? (
-          <ChatStreamingTurn ref={streamingBlockRef} turn={streamingTurn} />
-        ) : null}
-      </main>
-
-      <AnimatePresence initial={false}>
-        {streamingTurn || !isAtBottom ? (
-          <m.div
-            key="scroll-to-bottom"
-            className="absolute bottom-2 left-1/2 -translate-x-1/2"
-            initial={{ opacity: 0, scale: 0.8, y: 4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 4 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={streamingTurn ? 'AI 응답 생성 중' : '맨 아래로 이동'}
-              disabled={!!streamingTurn}
-              onClick={() => scrollToBottom('smooth')}
-              className="rounded-full bg-background/50 shadow-sm backdrop-blur-md disabled:opacity-100">
-              {streamingTurn ? (
-                <Spinner />
-              ) : (
-                <HugeiconsIcon icon={ArrowDown01Icon} aria-hidden="true" />
-              )}
-            </Button>
-          </m.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon-sm"
+            disabled
+            aria-label="AI 응답 생성 중"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 border-border bg-background text-foreground disabled:opacity-100">
+            <Spinner />
+          </Button>
+        ) : (
+          <MessageScrollerButton aria-label="맨 아래로 이동" />
+        )}
+      </MessageScroller>
+    </MessageScrollerProvider>
   );
 }

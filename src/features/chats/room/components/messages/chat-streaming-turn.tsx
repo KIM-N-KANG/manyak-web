@@ -1,5 +1,3 @@
-import type { Ref } from 'react';
-
 import { AnimatePresence, m } from 'motion/react';
 
 import type { StreamingTurn } from '../../types';
@@ -11,12 +9,11 @@ import { ChatStreamLoading } from './chat-stream-loading';
 
 type ChatStreamingTurnProps = {
   turn: StreamingTurn;
-  ref?: Ref<HTMLDivElement>;
 };
 
-export function ChatStreamingTurn({ turn, ref }: ChatStreamingTurnProps) {
+export function ChatStreamingTurn({ turn }: ChatStreamingTurnProps) {
   return (
-    <div ref={ref} className="min-h-full">
+    <div>
       <UserMessageBubble>{turn.userInput}</UserMessageBubble>
       <AnimatePresence mode="wait" initial={false}>
         {turn.aiOutput ? (

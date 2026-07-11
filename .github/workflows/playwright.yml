@@ -21,6 +21,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests
         run: pnpm exec playwright test
+        env:
+          # webServer가 CI에서 `pnpm build && pnpm start`로 실행되며, NEXT_PUBLIC_ 값은
+          # 빌드 시점에 인라인된다. E2E가 카카오 SDK를 스텁하므로 실제 키는 불필요하고,
+          # isReady 배선을 활성화할 truthy 더미 값만 있으면 된다(use-kakao-share.ts 참고).
+          NEXT_PUBLIC_KAKAO_JS_KEY: test-kakao-key
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

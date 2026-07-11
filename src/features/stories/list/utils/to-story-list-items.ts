@@ -17,3 +17,12 @@ export const toStoryListItems = (
     .filter((story): story is StorySummaryResponse => story != null)
     .map((story) => ({ ...story, genres: story.genres ?? [] }));
 };
+
+/**
+ * 회원 목록 응답을 서버 순서 그대로 목록 아이템으로 변환한다.
+ * 서버가 생성 최신순으로 응답하므로 재정렬하지 않고 누락 장르만 빈 배열로 보정한다.
+ */
+export const toMyStoryListItems = (
+  stories: StorySummaryResponse[],
+): StoryListItem[] =>
+  stories.map((story) => ({ ...story, genres: story.genres ?? [] }));

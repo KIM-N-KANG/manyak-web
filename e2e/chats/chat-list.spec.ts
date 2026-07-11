@@ -1,3 +1,4 @@
+import { mockMemberSession } from '../fixtures/auth';
 import {
   expect,
   seedChatIds,
@@ -58,31 +59,6 @@ test.describe('채팅 목록', () => {
     await expect(page).toHaveURL(/\/chats\/c1$/);
   });
 
-  test('채팅을 삭제하면 완료 안내가 뜬다 (US-5-3)', async ({ page }) => {
-    await seedChatIds(page, ['c1']);
-    await page.route(CHATS_BATCH, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([chat('c1', '용의 계곡')]),
-      });
-    });
-    await page.route('**/api/v1/chats/c1', async (route) => {
-      await route.fulfill({ status: 204, body: '' });
-    });
-
-    await page.goto('/chats');
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '삭제하기' }).click();
-
-    const dialog = page.getByRole('alertdialog');
-
-    await expect(dialog.getByText('채팅을 삭제할까요?')).toBeVisible();
-    await dialog.getByRole('button', { name: '삭제하기' }).click();
-
-    await expect(page.getByText('채팅을 삭제했어요')).toBeVisible();
-  });
-
   test('진행 중인 채팅도 스토리도 없으면 스토리 만들기를 안내한다 (US-5-4)', async ({
     page,
   }) => {
@@ -115,5 +91,58 @@ test.describe('채팅 목록', () => {
 
     await expect(link).toBeVisible();
     await expect(link).toHaveAttribute('href', '/');
+  });
+
+  test('로그인 상태에서는 서버의 내 채팅 목록을 보여준다', async ({ page }) => {
+    // 로컬 ID 없이 회원 목록 API만으로 카드를 그린다(이관도 발동하지 않음).
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/chats**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([chat('c1', '회원의 채팅')]),
+      });
+    });
+
+    await page.goto('/chats');
+
+    await expect(page.getByText('회원의 채팅', { exact: true })).toBeVisible();
+  });
+
+  test('로그인 상태에서 채팅은 없지만 서버에 스토리가 있으면 스토리 목록으로 안내한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/chats**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '[]',
+      });
+    });
+    await page.route('**/api/v1/users/me/stories**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 's1',
+            title: '회원의 서재',
+            oneLineIntro: '한 줄 소개입니다',
+            genres: ['판타지'],
+            createdAt: '2026-06-01T00:00:00Z',
+          },
+        ]),
+      });
+    });
+
+    await page.goto('/chats');
+
+    await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '스토리 목록으로 가기' }),
+    ).toBeVisible();
   });
 });

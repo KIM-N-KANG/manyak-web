@@ -1,9 +1,30 @@
+import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 import { captureApiError } from '@/observability/monitoring/sentry';
 
-import { FetchError } from './api-error';
+import { FetchError, getApiErrorCode } from './api-error';
 
-export { FetchError };
+export { FetchError, getApiErrorCode };
+
+/**
+ * 에러 응답 바디를 파싱한다. JSON이면 객체로, JSON이 아니면 원문 문자열로, 비어 있으면 null.
+ * `FetchError.data`에 담아 {@link getApiErrorCode} 등이 `code`를 읽을 수 있게 한다.
+ */
+export async function parseErrorResponseBody(
+  response: Response,
+): Promise<unknown> {
+  const text = await response.text().catch(() => '');
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
 
 const API_TIMEOUT_MS = 120 * 1000;
 const API_PROXY_BASE_PATH = '/api';
@@ -106,6 +127,10 @@ const request = async <T>(
       options,
       timeout,
     );
+
+    // 프록시가 세션 만료(리프레시 확정 거절)를 알리면 능동 로그아웃 신호를 발행한다.
+    // 성공/실패 응답 모두에서 감지되어야 하므로 ok 분기보다 먼저 확인한다.
+    notifyIfSessionExpired(response.headers);
 
     if (!response.ok) {
       let errorData: unknown = null;

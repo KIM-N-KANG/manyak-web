@@ -1,8 +1,8 @@
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
-// 하단 탭으로 스토리↔채팅↔피드백을 오간다(US-8-1).
+// 하단 탭으로 스토리↔채팅↔마이를 오간다(US-8-1).
 // 온보딩 다이얼로그가 탭을 가리므로 스킵 상태에서 검증한다.
-test('하단 탭으로 스토리·채팅·피드백을 오간다', async ({ page }) => {
+test('하단 탭으로 스토리·채팅·마이를 오간다', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/');
 
@@ -24,11 +24,11 @@ test('하단 탭으로 스토리·채팅·피드백을 오간다', async ({ page
     'page',
   );
 
-  // 피드백으로 이동
-  await bottomNav.getByRole('link', { name: '피드백' }).click();
-  await expect(page).toHaveURL(/\/feedback$/);
+  // 마이로 이동
+  await bottomNav.getByRole('link', { name: '마이' }).click();
+  await expect(page).toHaveURL(/\/my$/);
   await expect(
-    page.getByRole('heading', { level: 1, name: '피드백' }),
+    page.getByRole('heading', { level: 1, name: '마이' }),
   ).toBeVisible();
 
   // 스토리로 복귀

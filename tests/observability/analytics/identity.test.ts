@@ -103,6 +103,94 @@ describe('getAnalyticsIdentityHeaders', () => {
     expect(getAnalyticsIdentityHeaders()).toEqual({});
   });
 
+  describe('dev 전용 device_id 폴백', () => {
+    const createStorage = (initial: Record<string, string> = {}) => {
+      const store = new Map(Object.entries(initial));
+
+      return {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => void store.set(key, value),
+        store,
+      };
+    };
+
+    const stubDevBrowser = (storage: ReturnType<typeof createStorage>) => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubGlobal('window', { localStorage: storage });
+      vi.stubGlobal('document', { cookie: '' });
+    };
+
+    it('development에서 SDK·쿠키 모두 없으면 device_id를 생성해 localStorage에 저장한다', () => {
+      const storage = createStorage();
+
+      stubDevBrowser(storage);
+      getDeviceIdMock.mockReturnValue(undefined);
+      getSessionIdMock.mockReturnValue(undefined);
+
+      const headers = getAnalyticsIdentityHeaders();
+
+      const deviceId = headers[DEVICE_ID_HEADER];
+
+      expect(deviceId).toBeTruthy();
+      expect(storage.store.get('manyak-dev-device-id')).toBe(deviceId);
+    });
+
+    it('development에서 저장된 dev device_id가 있으면 재사용한다', () => {
+      const storage = createStorage({ 'manyak-dev-device-id': 'dev-device' });
+
+      stubDevBrowser(storage);
+      getDeviceIdMock.mockReturnValue(undefined);
+      getSessionIdMock.mockReturnValue(undefined);
+
+      expect(getAnalyticsIdentityHeaders()).toEqual({
+        [DEVICE_ID_HEADER]: 'dev-device',
+      });
+    });
+
+    it('development에서도 SDK 값이 있으면 dev 폴백을 쓰지 않는다', () => {
+      const storage = createStorage({ 'manyak-dev-device-id': 'dev-device' });
+
+      stubDevBrowser(storage);
+      getDeviceIdMock.mockReturnValue('sdk-device');
+      getSessionIdMock.mockReturnValue(undefined);
+
+      expect(getAnalyticsIdentityHeaders()).toEqual({
+        [DEVICE_ID_HEADER]: 'sdk-device',
+      });
+    });
+
+    it('development가 아니면 dev 폴백을 적용하지 않는다', () => {
+      const storage = createStorage({ 'manyak-dev-device-id': 'dev-device' });
+
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubGlobal('window', { localStorage: storage });
+      vi.stubGlobal('document', { cookie: '' });
+      getDeviceIdMock.mockReturnValue(undefined);
+      getSessionIdMock.mockReturnValue(undefined);
+
+      expect(getAnalyticsIdentityHeaders()).toEqual({});
+    });
+
+    it('localStorage 접근이 실패하면 dev 폴백을 생략한다', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubGlobal('window', {
+        localStorage: {
+          getItem: () => {
+            throw new Error('blocked');
+          },
+          setItem: () => {
+            throw new Error('blocked');
+          },
+        },
+      });
+      vi.stubGlobal('document', { cookie: '' });
+      getDeviceIdMock.mockReturnValue(undefined);
+      getSessionIdMock.mockReturnValue(undefined);
+
+      expect(getAnalyticsIdentityHeaders()).toEqual({});
+    });
+  });
+
   it('session_id가 0이어도 헤더로 싣는다', () => {
     stubBrowser('');
     getDeviceIdMock.mockReturnValue(undefined);

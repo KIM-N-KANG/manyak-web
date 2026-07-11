@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import {
@@ -15,6 +16,10 @@ import {
   useGenerateSimpleStorylines,
   useGetSimpleStoryTags,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
+import {
+  getGetMyChatsQueryKey,
+  getGetMyStoriesQueryKey,
+} from '@/api/generated/endpoints/users/users';
 import type {
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
@@ -22,8 +27,19 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
+import {
+  type GuestUsageAction,
+  incrementGuestUsage,
+  isGuestOverLimit,
+  isGuestUsageLimitReached,
+} from '@/features/auth/login-required/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
 import { saveCreatedStoryId } from '@/features/stories/list/utils/story-id-storage';
+import type {
+  CreditShortageTrigger,
+  GuestLimitTrigger,
+} from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
@@ -46,6 +62,7 @@ const getGeneratedStorylines = (
 export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { status: sessionStatus } = useSession();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -56,6 +73,11 @@ export function useStoryCreateFunnel() {
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const [hasCompleteStoryError, setHasCompleteStoryError] = useState(false);
+  const [guestLimitTrigger, setGuestLimitTrigger] =
+    useState<GuestLimitTrigger | null>(null);
+  const [creditShortageTrigger, setCreditShortageTrigger] =
+    useState<CreditShortageTrigger | null>(null);
+  const [isGuestLimitReached, setIsGuestLimitReached] = useState(false);
   const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
   const [selectedRecommendations, setSelectedRecommendations] = useState<
     Set<string>
@@ -84,10 +106,61 @@ export function useStoryCreateFunnel() {
     onBackAttempt: () => setIsBackDialogOpen(true),
   });
 
+  // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
+  // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. localStorage는 마운트
+  // 시 한 번만 읽고(lazy 초기화), 차단 여부는 렌더 중 파생값으로 계산해 effect
+  // 내 setState를 피한다. 세션이 확정된 미로그인 상태에서만 판정해 로딩 중 회원을
+  // 오차단하지 않으며, 다이얼로그를 닫으면 재노출하지 않는다.
+  const [storyCreateAtLimitOnMount] = useState(() =>
+    isGuestUsageLimitReached('storyCreate'),
+  );
+  const [isBackstopDismissed, setIsBackstopDismissed] = useState(false);
+  const isStoryCreateBackstopActive =
+    sessionStatus === 'unauthenticated' &&
+    storyCreateAtLimitOnMount &&
+    !isBackstopDismissed;
+
   const failToAdditionalInfo = (stage: 'story' | 'chat') => {
     track('client_storyCreate_completeError_shown', { stage });
     setStep('additional-info');
     setHasCompleteStoryError(true);
+  };
+
+  // 402 처리: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도 다이얼로그를 연다.
+  // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
+  // 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행되고, 이 핸들러는 다이얼로그만 얹는다.
+  const handlePaymentRequiredError = (
+    error: unknown,
+    trigger: GuestLimitTrigger,
+  ) => {
+    const reason = resolvePaymentRequiredReason(error, sessionStatus);
+
+    if (reason === 'guest-trial-limit') {
+      setIsGuestLimitReached(true);
+      setGuestLimitTrigger(trigger);
+
+      return;
+    }
+
+    if (reason === 'insufficient-credit') {
+      setCreditShortageTrigger(trigger);
+    }
+  };
+
+  // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 다이얼로그를 열고 true를 반환한다.
+  // 각 진입점(생성·재생성·완료)의 사전 차단을 한 곳으로 모은다.
+  const guardGuestLimit = (
+    action: GuestUsageAction,
+    trigger: GuestLimitTrigger,
+  ): boolean => {
+    if (!isGuestOverLimit(sessionStatus, action)) {
+      return false;
+    }
+
+    setIsGuestLimitReached(true);
+    setGuestLimitTrigger(trigger);
+
+    return true;
   };
 
   const resetAdditionalInfoStep = () => {
@@ -102,11 +175,18 @@ export function useStoryCreateFunnel() {
           return;
         }
 
+        if (sessionStatus !== 'authenticated') {
+          incrementGuestUsage('storylineCreate');
+        }
+
         setGenerationRequest(variables.data);
         setGenerationResult(response.data);
         setActiveStorylineIndex(0);
         setSelectedStoryline(null);
         setStep('storyline-select');
+      },
+      onError: (error) => {
+        handlePaymentRequiredError(error, 'storyline_generate');
       },
     },
   });
@@ -121,7 +201,14 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        saveCreatedChatId(chatId);
+        // 회원 서재는 서버가 정본 — 로그인 상태에서는 로컬에 ID를 남기지 않는다.
+        if (sessionStatus === 'authenticated') {
+          void queryClient.invalidateQueries({
+            queryKey: getGetMyChatsQueryKey(),
+          });
+        } else {
+          saveCreatedChatId(chatId);
+        }
 
         const completedStoryId =
           completedStoryRef.current?.storyId ?? createdStoryId;
@@ -138,7 +225,8 @@ export function useStoryCreateFunnel() {
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
-      onError: () => {
+      onError: (error) => {
+        handlePaymentRequiredError(error, 'chat_start');
         failToAdditionalInfo('chat');
       },
     },
@@ -156,14 +244,23 @@ export function useStoryCreateFunnel() {
         const storyId = response.data.id;
 
         if (typeof storyId === 'string') {
-          saveCreatedStoryId(storyId);
+          if (sessionStatus === 'authenticated') {
+            void queryClient.invalidateQueries({
+              queryKey: getGetMyStoriesQueryKey(),
+            });
+          } else {
+            saveCreatedStoryId(storyId);
+            incrementGuestUsage('storyCreate');
+          }
+
           setCreatedStoryId(storyId);
           completedStoryRef.current = { storyId, genres: response.data.genres };
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
       },
-      onError: () => {
+      onError: (error) => {
+        handlePaymentRequiredError(error, 'story_create');
         failToAdditionalInfo('story');
       },
     },
@@ -184,10 +281,15 @@ export function useStoryCreateFunnel() {
   const handleGenerateStorylines = (
     request: GenerateSimpleStorylinesRequest,
   ) => {
+    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
+      return;
+    }
+
     setGenerationRequest(request);
     setGenerationResult(null);
     setActiveStorylineIndex(0);
     setSelectedStoryline(null);
+    setIsGuestLimitReached(false);
     resetAdditionalInfoStep();
     setStep('storyline-select');
     track('client_storyCreate_storyGeneration_requested');
@@ -199,12 +301,17 @@ export function useStoryCreateFunnel() {
       return;
     }
 
+    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
+      return;
+    }
+
     if (typeof simpleCreationId === 'number') {
       track('client_storyCreate_regenerateButton_clicked', {
         creation_id: String(simpleCreationId),
       });
     }
 
+    setIsGuestLimitReached(false);
     generateStorylines.mutate({ data: generationRequest });
   };
 
@@ -264,8 +371,13 @@ export function useStoryCreateFunnel() {
 
   const handleCompleteStory = () => {
     setHasCompleteStoryError(false);
+    setIsGuestLimitReached(false);
 
     if (createdStoryId !== null) {
+      if (guardGuestLimit('chat', 'chat_start')) {
+        return;
+      }
+
       if (typeof simpleCreationId === 'number') {
         track('client_storyCreate_storyCompletion_requested', {
           creation_id: String(simpleCreationId),
@@ -282,6 +394,10 @@ export function useStoryCreateFunnel() {
       typeof simpleCreationId !== 'number' ||
       typeof selectedStoryline?.id !== 'number'
     ) {
+      return;
+    }
+
+    if (guardGuestLimit('storyCreate', 'story_create')) {
       return;
     }
 
@@ -335,6 +451,16 @@ export function useStoryCreateFunnel() {
     hasGenerateStorylinesError: generateStorylines.isError,
     isCompletingStory: createStory.isPending || createChat.isPending,
     hasCompleteStoryError,
+    guestLimitTrigger:
+      guestLimitTrigger ??
+      (isStoryCreateBackstopActive ? 'story_create' : null),
+    isGuestLimitReached: isGuestLimitReached || isStoryCreateBackstopActive,
+    closeGuestLimitDialog: () => {
+      setGuestLimitTrigger(null);
+      setIsBackstopDismissed(true);
+    },
+    creditShortageTrigger,
+    closeCreditShortageDialog: () => setCreditShortageTrigger(null),
     handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,

@@ -9,7 +9,7 @@ import type { LorebookResponse } from './lorebookResponse';
 import type { StoryAuthorResponse } from './storyAuthorResponse';
 import type { StoryDetailResponseStatus } from './storyDetailResponseStatus';
 import type { StoryDetailResponseVisibility } from './storyDetailResponseVisibility';
-import type { StoryEndingResponse } from './storyEndingResponse';
+import type { StoryMainEventResponse } from './storyMainEventResponse';
 import type { StoryStartSettingResponse } from './storyStartSettingResponse';
 
 /**
@@ -19,10 +19,10 @@ export interface StoryDetailResponse {
   /** 스토리 ID(공개 식별자) */
   id?: string;
   /**
-   * 커버 이미지 URL
+   * 썸네일 이미지 URL(§4-3-9). 소스가 없으면 null.
    * @nullable
    */
-  coverImageUrl?: string | null;
+  thumbnailUrl?: string | null;
   /** 제목 */
   title?: string;
   /** 한 줄 소개 */
@@ -37,21 +37,22 @@ export interface StoryDetailResponse {
   /** 해시태그 */
   hashtags?: string[];
   author?: StoryAuthorResponse | null;
-  /** 채팅 수 */
-  chatCount?: number;
+  /** 누적 사용자 입력 턴 수(스토리의 모든 채팅 완료 턴 합) */
+  turnCount?: number;
   /** 좋아요 수 */
   likeCount?: number;
-  startSetting?: StoryStartSettingResponse | null;
-  /** 추천 입력 */
-  suggestedInputs?: string[];
+  /** 스토리 시작 설정 목록(등록 순서, KNK-515 복수화). 각 시작 설정에 추천 입력·엔딩이 종속된다. 시작 설정이 없는 스토리는 빈 배열입니다. */
+  startSettings?: StoryStartSettingResponse[];
   /** 스토리 공개 여부. 기본 생성 시 PRIVATE입니다. */
   visibility?: StoryDetailResponseVisibility;
   /** 등록 상태 */
   status?: StoryDetailResponseStatus;
   /** 스토리가 참조하는 로어북(장르 공용 용어 사전) 목록. 없으면 빈 배열입니다. */
   lorebooks?: LorebookResponse[];
-  /** 스토리 엔딩 목록. 없으면 빈 배열입니다. */
-  endings?: StoryEndingResponse[];
+  /** 스토리 주요 사건 목록(표시 순서). 없으면 빈 배열입니다. */
+  mainEvents?: StoryMainEventResponse[];
+  /** 요청 회원이 이 스토리에서 도달한 엔딩 이름 목록(엔딩은 이름으로 식별). 게스트는 빈 배열입니다. */
+  reachedEndings?: string[];
   /** 생성 시각 */
   createdAt?: string;
 }

@@ -14,6 +14,11 @@ import type { StorySummaryResponseStatus } from './storySummaryResponseStatus';
 export interface StorySummaryResponse {
   /** 스토리 ID(공개 식별자) */
   id?: string;
+  /**
+   * 썸네일 축소 변형 URL(§4-3-9 반응형 변형). 목록 카드용. 소스가 없으면 null.
+   * @nullable
+   */
+  thumbnailUrlSm?: string | null;
   /** 제목 */
   title?: string;
   /** 한 줄 소개 */
@@ -21,8 +26,8 @@ export interface StorySummaryResponse {
   /** 장르명 목록 */
   genres?: string[];
   author?: StoryAuthorResponse | null;
-  /** 채팅 수 */
-  chatCount?: number;
+  /** 누적 사용자 입력 턴 수(스토리의 모든 채팅 완료 턴 합) */
+  turnCount?: number;
   /** 좋아요 수 */
   likeCount?: number;
   /** 등록 상태 */

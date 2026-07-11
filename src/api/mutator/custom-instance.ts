@@ -1,3 +1,4 @@
+import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
 import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 import { captureApiError } from '@/observability/monitoring/sentry';
@@ -127,6 +128,10 @@ export const customInstance = async <T>(
       },
       API_TIMEOUT_MS,
     );
+
+    // 프록시가 세션 만료(리프레시 확정 거절)를 알리면 능동 로그아웃 신호를 발행한다.
+    // 성공/실패 응답 모두에서 감지되어야 하므로 ok 분기보다 먼저 확인한다.
+    notifyIfSessionExpired(response.headers);
 
     if (!response.ok) {
       throw new FetchError(

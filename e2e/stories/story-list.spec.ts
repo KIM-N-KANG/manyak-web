@@ -1,4 +1,7 @@
-import { expect, seedStoryIds, test } from '../fixtures/test';
+import type { Page } from '@playwright/test';
+
+import { mockMemberSession } from '../fixtures/auth';
+import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 목록은 localStorage의 ID로 POST /api/v1/stories/batch 를 호출해 카드를 그린다.
 // customInstance가 응답 body를 { data, status }로 감싸므로, 모킹 body는 StorySummaryResponse 배열이다.
@@ -11,6 +14,30 @@ const story = (id: string, title: string) => ({
   genres: ['판타지'],
   createdAt: '2026-06-01T00:00:00Z',
 });
+
+// 목록 카드에는 옵션 메뉴가 없어 삭제는 상세 페이지를 경유한다.
+// 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
+const mockStoryDetailWithDelete = async (
+  page: Page,
+  id: string,
+  title: string,
+  onDelete?: () => void,
+) => {
+  await page.route(`**/api/v1/stories/${id}`, async (route) => {
+    if (route.request().method() === 'DELETE') {
+      onDelete?.();
+      await route.fulfill({ status: 204, body: '' });
+
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ...story(id, title), startSettings: [] }),
+    });
+  });
+};
 
 test.describe('스토리 목록', () => {
   test('보관한 ID로 스토리 카드 목록을 보여준다 (US-2-1)', async ({ page }) => {
@@ -90,11 +117,10 @@ test.describe('스토리 목록', () => {
         body: JSON.stringify([story('s1', '용의 계곡')]),
       });
     });
-    await page.route('**/api/v1/stories/s1', async (route) => {
-      await route.fulfill({ status: 204, body: '' });
-    });
+    await mockStoryDetailWithDelete(page, 's1', '용의 계곡');
 
     await page.goto('/');
+    await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
 
@@ -104,5 +130,59 @@ test.describe('스토리 목록', () => {
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText('스토리를 삭제했어요')).toBeVisible();
+  });
+
+  test('로그인 상태에서는 서버의 내 스토리 목록을 보여준다', async ({
+    page,
+  }) => {
+    // 로컬 ID 없이 회원 목록 API만으로 카드를 그린다(이관도 발동하지 않음).
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/stories**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '회원의 서재')]),
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
+  });
+
+  test('로그인 상태에서 스토리를 삭제하면 목록에서 사라진다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+
+    let deleted = false;
+
+    await page.route('**/api/v1/users/me/stories**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(deleted ? [] : [story('s1', '회원의 서재')]),
+      });
+    });
+    await mockStoryDetailWithDelete(page, 's1', '회원의 서재', () => {
+      deleted = true;
+    });
+
+    await page.goto('/');
+    await page.getByRole('link', { name: '회원의 서재 상세 보기' }).click();
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+    await page.getByRole('menuitem', { name: '삭제하기' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: '삭제하기' })
+      .click();
+
+    await expect(page.getByText('스토리를 삭제했어요')).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(
+      page.getByText('회원의 서재', { exact: true }),
+    ).not.toBeVisible();
   });
 });

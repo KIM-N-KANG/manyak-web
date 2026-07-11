@@ -8,6 +8,30 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  images: {
+    // 프로필 이미지 원격 호스트 화이트리스트. 백엔드가 자체 스토리지로
+    // 이미지를 내려주기로 바뀌면 해당 호스트를 여기에 추가한다.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        // 프로필 프리셋 이미지(KNK-388, B17). 백엔드가 명사 매핑 프리셋을
+        // static 리소스로 서빙하며 me.profileImageUrl에 전체 URL이 실린다.
+        protocol: 'https',
+        hostname: 'api.manyak.app',
+        pathname: '/profile-presets/**',
+      },
+      {
+        // 스토리 썸네일(KNK-552). 백엔드가 CDN으로 서빙하며
+        // story.thumbnailUrl에 전체 URL이 실린다.
+        protocol: 'https',
+        hostname: 'cdn.manyak.app',
+        pathname: '/thumbnails/**',
+      },
+    ],
+  },
 };
 
 export default withSentryConfig(nextConfig, {

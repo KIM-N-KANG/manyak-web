@@ -9,6 +9,10 @@ type UseInViewParams = {
   rootRef?: RefObject<Element | null>;
   /** 대상이 마운트된 뒤 관찰을 시작하기 위한 활성화 플래그 */
   enabled?: boolean;
+  /** 교차 영역을 확장/축소하는 마진 (IntersectionObserver rootMargin) */
+  rootMargin?: string;
+  /** in-view로 판정할 최소 가시 비율 (0~1). 예: 0.99면 거의 전부 보여야 true */
+  threshold?: number;
 };
 
 /** IntersectionObserver로 대상 요소가 화면(또는 컨테이너)에 보이는지 관찰하는 훅 */
@@ -16,6 +20,8 @@ export function useInView({
   targetRef,
   rootRef,
   enabled = true,
+  rootMargin,
+  threshold = 0,
 }: UseInViewParams) {
   const [isInView, setIsInView] = useState(true);
 
@@ -27,14 +33,17 @@ export function useInView({
     if (!target) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry.isIntersecting),
-      { root: rootRef?.current ?? null },
+      ([entry]) =>
+        setIsInView(
+          entry.isIntersecting && entry.intersectionRatio >= threshold,
+        ),
+      { root: rootRef?.current ?? null, rootMargin, threshold },
     );
 
     observer.observe(target);
 
     return () => observer.disconnect();
-  }, [enabled, targetRef, rootRef]);
+  }, [enabled, targetRef, rootRef, rootMargin, threshold]);
 
   return isInView;
 }

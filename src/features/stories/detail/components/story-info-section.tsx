@@ -2,24 +2,35 @@ import type { Ref } from 'react';
 
 import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
+import { formatDate } from '@/lib/format-date';
 
 import { StoryDetailTags } from './story-detail-tags';
+import { StoryStartSettings } from './story-start-settings';
 
 type StoryInfo = {
   title?: string;
   oneLineIntro?: string | null;
   description?: string | null;
   genres?: string[];
-  startSetting?: StoryStartSettingResponse | null;
+  startSettings?: StoryStartSettingResponse[];
+  createdAt?: string;
 };
 
 type StoryInfoSectionProps = {
   story: StoryInfo;
   titleRef?: Ref<HTMLHeadingElement>;
+  startSettingValue: string;
+  onStartSettingValueChange: (value: string) => void;
 };
 
-export function StoryInfoSection({ story, titleRef }: StoryInfoSectionProps) {
+export function StoryInfoSection({
+  story,
+  titleRef,
+  startSettingValue,
+  onStartSettingValueChange,
+}: StoryInfoSectionProps) {
   const genres = story.genres ?? [];
+  const startSettings = story.startSettings ?? [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -28,9 +39,9 @@ export function StoryInfoSection({ story, titleRef }: StoryInfoSectionProps) {
           <h1 ref={titleRef} className="text-2xl font-bold">
             {story.title}
           </h1>
-          <StoryDetailTags genres={genres} />
+          <p>{story.oneLineIntro}</p>
         </div>
-        <p className="text-base">{story.oneLineIntro}</p>
+        <StoryDetailTags genres={genres} />
       </div>
 
       {story.description && (
@@ -40,33 +51,22 @@ export function StoryInfoSection({ story, titleRef }: StoryInfoSectionProps) {
         </div>
       )}
 
-      {story.startSetting && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold">채팅 시작 상황</h2>
-          <div className="flex flex-col gap-4">
-            {story.startSetting.name && (
-              <div className="flex flex-col gap-2">
-                <h3 className="font-semibold">상황 이름</h3>
-                <TextContent>{story.startSetting.name}</TextContent>
-              </div>
-            )}
-            {story.startSetting.startSituation && (
-              <div className="flex flex-col gap-2">
-                <h3 className="font-semibold">상황 설명</h3>
-                <TextContent>{story.startSetting.startSituation}</TextContent>
-              </div>
-            )}
-            {story.startSetting.prologue && (
-              <div className="flex flex-col gap-2">
-                <h3 className="font-semibold">채팅 첫 메시지</h3>
-                <div className="rounded-md bg-muted px-3.5 py-2.5">
-                  <TextContent size="sm" font="maruburi">
-                    {story.startSetting.prologue}
-                  </TextContent>
-                </div>
-              </div>
-            )}
-          </div>
+      {startSettings.length > 0 && (
+        <StoryStartSettings
+          startSettings={startSettings}
+          value={startSettingValue}
+          onValueChange={onStartSettingValueChange}
+        />
+      )}
+
+      {story.createdAt && (
+        <div className="flex items-center gap-3 rounded-md bg-muted px-3.5 py-2.5 text-sm">
+          <p className="flex items-center gap-1.5">
+            <span className="text-foreground-secondary">생성일</span>
+            <time dateTime={story.createdAt} className="font-semibold">
+              {formatDate(story.createdAt)}
+            </time>
+          </p>
         </div>
       )}
     </div>

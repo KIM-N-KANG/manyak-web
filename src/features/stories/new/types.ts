@@ -58,6 +58,7 @@ export type StorylineSelectStepSectionProps = {
   activeStorylineIndex: number;
   isRegeneratingStorylines: boolean;
   hasRegenerateStorylinesError: boolean;
+  isGuestLimitReached: boolean;
   onActiveStorylineIndexChange: (index: number) => void;
   onRegenerateStorylines: () => void;
   onSelectStoryline: () => void;

@@ -1,5 +1,6 @@
 import { track } from '@/observability/analytics';
 
+import { parseInputBlocks, serializeInputBlocks } from '../lib/input-blocks';
 import { type ChatInputMode } from './use-chat-input-mode';
 
 type UseChatSubmitActionsParams = {
@@ -57,7 +58,10 @@ export function useChatSubmitActions({
       position,
     });
 
-    return submitText(trimmed, 'choice');
+    // 블럭 입력과 동일하게 상황(*...*)·대사를 빈 줄로 띄워 전송한다.
+    const normalized = serializeInputBlocks(parseInputBlocks(trimmed), '\n\n');
+
+    return submitText(normalized, 'choice');
   };
 
   const trackChoiceFill = (position: number) => {

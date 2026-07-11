@@ -5,11 +5,14 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { StoryEndingResponse } from './storyEndingResponse';
 
 /**
- * 스토리 시작 설정
+ * 스토리 시작 설정. 추천 입력·엔딩이 이 시작 설정에 종속된다(KNK-515 복수화).
  */
 export interface StoryStartSettingResponse {
+  /** 시작 설정 ID(공개 식별자). POST /chats의 startSettingId로 이 값을 넘겨 특정 시작 설정으로 채팅을 시작한다. */
+  id?: string;
   /** 시작 장면 이름 */
   name?: string;
   /**
@@ -22,4 +25,8 @@ export interface StoryStartSettingResponse {
    * @nullable
    */
   startSituation?: string | null;
+  /** 이 시작 설정의 추천 입력 목록. 등록된 추천 입력이 없으면 빈 배열입니다. */
+  suggestedInputs?: string[];
+  /** 이 시작 설정의 엔딩 목록. 없으면 빈 배열입니다. */
+  endings?: StoryEndingResponse[];
 }
