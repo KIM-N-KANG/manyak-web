@@ -156,6 +156,12 @@ OpenAPI는 오류 바디를 `void`로 생성하지만 런타임 `FetchError.data
 클릭 이벤트 안에서 즉시 `navigator.clipboard.writeText`에 전달해 iOS Safari의 사용자
 제스처 제약을 지킵니다.
 
+내 코드 조회가 실패하거나 200 응답에 `inviteCode`가 없으면 코드 패널에 “초대 코드를
+불러오지 못했어요”와 재시도 버튼을 표시합니다. 받은 코드 입력 폼은 조회 결과와
+독립적으로 계속 사용할 수 있습니다.
+`client_invite_viewed`는 인증 상태가 확인된 뒤 한 번만 기록해 게스트 리다이렉트를
+페이지 조회로 집계하지 않습니다.
+
 ### 카카오톡 공유
 
 - 제목: `초대 코드 {CODE}`
@@ -176,7 +182,9 @@ OpenAPI는 오류 바디를 `void`로 생성하지만 런타임 `FetchError.data
 다이얼로그는 명시적인 두 액션으로만 끝냅니다. 제출 중에는 입력과 두 버튼을
 비활성화해 중복 요청을 막습니다. 입력에는 `autoCapitalize="characters"`,
 `autoComplete="off"`, `spellCheck={false}`를 적용하고 오류 영역은 `role="alert"`로
-노출합니다.
+노출합니다. `aria-describedby`로 입력과 오류를 연결합니다. 입력과 버튼 높이는 48px로
+두어 모바일 터치 영역을 확보합니다. Escape와 오버레이 클릭은 pending 플래그를
+소비하지 않으며 다이얼로그를 닫지 않습니다.
 
 ## 분석 이벤트
 
@@ -217,6 +225,7 @@ OpenAPI는 오류 바디를 `void`로 생성하지만 런타임 `FetchError.data
 ### Playwright
 
 - 회원이 초대 코드와 월 진행을 보고 코드를 복사
+- 내 코드 조회가 실패해도 재시도 UI와 받은 코드 입력 폼이 유지됨
 - 카카오 공유 설정에 코드, 확정 본문, 홈 링크, 확정 버튼이 포함됨
 - 소문자·공백 코드가 정규화되어 redeem 요청으로 전송되고 성공 토스트가 표시됨
 - 404와 두 409가 각각 확정 문구로 표시됨
@@ -239,6 +248,11 @@ pnpm exec playwright test e2e/my/invite.spec.ts
 - 로그인 endpoint 설명은 `isNewUser`라고 쓰지만 생성 모델 필드는 `newUser`입니다.
 - 성공 응답 필드가 모두 optional입니다.
 - 생성된 `InviteRedeemResponse.amount` 설명은 사용자 확정 월 상한 정책과 충돌합니다.
+- 400을 `not_found`, 401·403·5xx를 `network`로 기록하는 것은 현재 분석 enum 안에서
+  택한 구현 분류이며 상류 분석 스펙의 용어 정렬이 남아 있습니다.
+- 백엔드가 `newUser: true`로 계정을 만든 뒤 BFF의 사용자 조회나 쿠키 기록이 실패하면
+  다음 로그인에서 `newUser: false`가 되어 온보딩을 놓칠 수 있습니다. 웹만으로 복구할
+  신호가 없어 백엔드 신규 가입 판정의 재전달 정책이 필요합니다.
 
 프론트엔드는 런타임 오류 가드와 optional 방어를 적용합니다. 생성 파일은 직접 수정하지
 않으며, 백엔드 OpenAPI 정렬은 별도 서버 작업으로 남깁니다.
