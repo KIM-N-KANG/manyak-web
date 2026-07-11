@@ -48,6 +48,23 @@ async function mockKakaoSdk(page: Page): Promise<void> {
   );
 }
 
+test.describe('폐기된 초대 링크', () => {
+  test('/invite/[code]는 쿠키나 로그인 리다이렉트 없이 404를 반환한다', async ({
+    page,
+  }) => {
+    const response = await page.goto(`/invite/${INVITE_CODE}`);
+
+    expect(response?.status()).toBe(404);
+    await expect(page).toHaveURL(`/invite/${INVITE_CODE}`);
+
+    const cookies = await page.context().cookies();
+
+    expect(cookies.some((cookie) => cookie.name === 'manyak_invite_code')).toBe(
+      false,
+    );
+  });
+});
+
 test.describe('친구 초대 페이지 (/my/invite)', () => {
   test('게스트는 로그인 페이지로 이동한다', async ({ page }) => {
     await skipOnboarding(page);
