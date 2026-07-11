@@ -49,5 +49,8 @@ export function useOnboardingDialog() {
     router.push(APP_PATH.CREATOR.STORY);
   };
 
-  return { isOpen, handleStartCreate };
+  return {
+    isOpen: status === 'unauthenticated' && isOpen,
+    handleStartCreate,
+  };
 }

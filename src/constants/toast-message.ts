@@ -20,5 +20,7 @@ export const TOAST_MESSAGE = {
   INVITE_CODE_COPIED: '초대 코드를 복사했어요',
   INVITE_CODE_COPY_FAILED: '초대 코드 복사에 실패했어요',
   INVITE_REDEEMED: '크레딧 500개를 받았어요',
+  INVITE_ONBOARDING_SAVE_FAILED:
+    '초대 코드 안내 상태를 저장하지 못했어요. 다시 시도해 주세요',
   INVITE_SHARE_FAILED: '카카오톡 공유를 열지 못했어요',
 } as const;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { CopyLinkIcon, Share08Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -28,14 +28,15 @@ const INVITE_GUIDE_LINES = [
 ];
 
 export function InviteScreen() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const viewedUserIdRef = useRef<string | null>(null);
   const router = useRouter();
   const {
     isReady: isKakaoReady,
     handleSdkLoad,
     shareInviteCode,
   } = useKakaoShare();
-  const { data, isPending, isError, isFetching, refetch } = useGetMyInvite({
+  const { data, isPending, isFetching, refetch } = useGetMyInvite({
     query: {
       refetchOnMount: 'always',
       enabled: status === 'authenticated',
@@ -43,7 +44,7 @@ export function InviteScreen() {
   });
   const invite = data?.status === 200 ? data.data : undefined;
   const inviteCode = invite?.inviteCode;
-  const isInviteUnavailable = isError || (!isPending && !inviteCode);
+  const isInviteUnavailable = !isPending && !inviteCode;
   const hasMonthlyProgress =
     Boolean(inviteCode) &&
     typeof invite?.monthlyRewardCount === 'number' &&
@@ -54,10 +55,17 @@ export function InviteScreen() {
       router.replace(APP_PATH.LOGIN);
     }
 
-    if (status === 'authenticated') {
+    const userId = session?.user.id;
+
+    if (
+      status === 'authenticated' &&
+      userId &&
+      viewedUserIdRef.current !== userId
+    ) {
+      viewedUserIdRef.current = userId;
       track('client_invite_viewed');
     }
-  }, [status, router]);
+  }, [session?.user.id, status, router]);
 
   const handleCopy = () => {
     track('client_invite_copyButton_clicked');

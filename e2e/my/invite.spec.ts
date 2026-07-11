@@ -97,6 +97,34 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     ).toBeVisible();
   });
 
+  test('세션 갱신 뒤에도 페이지 조회 이벤트는 사용자당 한 번만 전송한다', async ({
+    page,
+  }) => {
+    const viewedEvents: string[] = [];
+
+    page.on('console', (message) => {
+      if (message.text().includes('client_invite_viewed')) {
+        viewedEvents.push(message.text());
+      }
+    });
+    await skipOnboarding(page);
+    await mockMemberSession(page, { inviteOnboardingPending: true });
+    await mockMyInvite(page);
+    await page.goto('/my/invite');
+
+    const updateResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') &&
+        response.request().method() === 'POST',
+    );
+
+    await page.getByRole('button', { name: '나중에 입력하기' }).click();
+    await updateResponse;
+    await page.waitForTimeout(200);
+
+    expect(viewedEvents).toHaveLength(1);
+  });
+
   test('코드 복사 버튼은 초대 코드만 복사하고 성공 토스트를 띄운다', async ({
     page,
     context,
@@ -263,6 +291,60 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     expect(requestCount).toBe(2);
   });
 
+  test('캐시된 코드의 백그라운드 재조회가 실패해도 기존 코드와 공유 액션을 유지한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await mockKakaoSdk(page);
+
+    let requestCount = 0;
+    let shouldFail = false;
+
+    await page.route(INVITE_API, async (route) => {
+      requestCount += 1;
+
+      if (!shouldFail) {
+        await route.fulfill({
+          json: {
+            inviteCode: INVITE_CODE,
+            monthlyRewardCount: 3,
+            monthlyRewardLimit: 10,
+          },
+        });
+
+        return;
+      }
+
+      await route.fulfill({ status: 500, json: { code: 'SERVER_ERROR' } });
+    });
+    await page.goto('/my');
+    await page.getByRole('link', { name: /친구 초대/ }).click();
+    await expect(page.getByText(INVITE_CODE)).toBeVisible();
+
+    const successfulRequestCount = requestCount;
+
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    shouldFail = true;
+    await page.getByRole('link', { name: /친구 초대/ }).click();
+
+    await expect
+      .poll(() => requestCount)
+      .toBeGreaterThan(successfulRequestCount);
+    await expect(page.getByText(INVITE_CODE)).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '코드 복사하기' }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole('button', { name: '카카오톡 공유하기' }),
+    ).toBeEnabled();
+    await expect(page.getByText('초대 코드를 불러오지 못했어요')).toHaveCount(
+      0,
+    );
+  });
+
   test('조회 응답에 코드가 없어도 실패 안내와 입력 폼을 표시한다', async ({
     page,
   }) => {
@@ -274,7 +356,9 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     });
     await page.goto('/my/invite');
 
-    await expect(page.getByText('초대 코드를 불러오지 못했어요')).toBeVisible();
+    await expect(page.getByText('초대 코드를 불러오지 못했어요')).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.getByRole('button', { name: '다시 시도' })).toBeVisible();
     await expect(page.getByLabel('친구 초대 코드')).toBeEnabled();
   });
@@ -406,12 +490,130 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     const response = await updateResponse;
 
     expect(response.request().postDataJSON()).toMatchObject({
-      data: { inviteOnboardingPending: false },
+      data: {
+        inviteOnboardingPending: false,
+        expectedUserId: 'user-1',
+      },
     });
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
 
     await page.reload();
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
+  test('세션 상태 저장에 실패하면 다이얼로그를 유지하고 재시도를 안내한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, {
+      inviteOnboardingPending: true,
+      sessionUpdateStatus: 500,
+    });
+    await page.goto('/');
+
+    const updateResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') &&
+        response.request().method() === 'POST',
+    );
+
+    await page.getByRole('button', { name: '나중에 입력하기' }).click();
+    await updateResponse;
+
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await expect(
+      page.getByText(
+        '초대 코드 안내 상태를 저장하지 못했어요. 다시 시도해 주세요',
+      ),
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+  });
+
+  test('코드 적립 후 세션 저장에 실패하면 코드를 다시 받지 않고 상태 저장 재시도를 제공한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, {
+      inviteOnboardingPending: true,
+      sessionUpdateStatus: 500,
+    });
+    await page.route(REDEEM_API, (route) =>
+      route.fulfill({ json: { amount: 500, balance: 1_000 } }),
+    );
+    await page.goto('/');
+
+    const updateResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') &&
+        response.request().method() === 'POST',
+    );
+
+    await page.getByLabel('친구 초대 코드').fill('friend1');
+    await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+    await updateResponse;
+
+    await expect(page.getByText('크레딧 500개를 받았어요')).toBeVisible();
+    await expect(
+      page.getByText(
+        '초대 코드 안내 상태를 저장하지 못했어요. 다시 시도해 주세요',
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await expect(page.getByLabel('친구 초대 코드')).toHaveCount(0);
+    await expect(
+      page.getByText(
+        '크레딧은 받았어요. 안내를 닫으려면 상태 저장을 다시 시도해 주세요.',
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: '다시 시도' })).toBeVisible();
+  });
+
+  test('열려 있던 게스트 온보딩은 인증 전환 시 닫혀 초대 다이얼로그와 겹치지 않는다', async ({
+    page,
+  }) => {
+    let isAuthenticated = false;
+
+    await page.route('**/api/auth/session', (route) =>
+      route.fulfill({
+        json: isAuthenticated
+          ? {
+              user: { id: 'user-1', name: '배고픈 송아지', image: null },
+              expires: '2099-01-01T00:00:00.000Z',
+              inviteOnboardingPending: true,
+            }
+          : null,
+      }),
+    );
+    await page.goto('/');
+
+    await expect(
+      page.getByRole('heading', {
+        name: '나만의 스토리, 바로 만들어볼까요?',
+      }),
+    ).toBeVisible();
+
+    isAuthenticated = true;
+    await page.evaluate(() => {
+      const channel = new BroadcastChannel('next-auth');
+
+      channel.postMessage({
+        event: 'session',
+        data: { trigger: 'getSession' },
+      });
+      channel.close();
+    });
+
+    await expect(
+      page.getByRole('heading', { name: '초대 코드가 있나요?' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        name: '나만의 스토리, 바로 만들어볼까요?',
+      }),
+    ).toHaveCount(0);
+    await expect(page.getByRole('alertdialog')).toHaveCount(1);
   });
 
   test('코드 입력 성공 시 다이얼로그를 닫고 새로고침 후에도 다시 열지 않는다', async ({

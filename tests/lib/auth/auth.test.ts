@@ -44,7 +44,10 @@ type JwtCallback = (args: {
   token: TestToken;
   account?: { id_token?: string | null } | null;
   trigger?: 'signIn' | 'signUp' | 'update';
-  session?: { inviteOnboardingPending?: unknown };
+  session?: {
+    inviteOnboardingPending?: unknown;
+    expectedUserId?: unknown;
+  };
 }) => Promise<TestToken>;
 
 type TestSession = {
@@ -111,19 +114,49 @@ describe('NextAuth 초대 온보딩 세션', () => {
 
     await expect(
       jwt({
-        token: { inviteOnboardingPending: true },
+        token: { userId: 'user-1', inviteOnboardingPending: true },
         trigger: 'update',
-        session: { inviteOnboardingPending: false },
+        session: {
+          inviteOnboardingPending: false,
+          expectedUserId: 'user-1',
+        },
       }),
-    ).resolves.toEqual({ inviteOnboardingPending: false });
+    ).resolves.toEqual({
+      userId: 'user-1',
+      inviteOnboardingPending: false,
+    });
 
     await expect(
       jwt({
-        token: { inviteOnboardingPending: false },
+        token: { userId: 'user-1', inviteOnboardingPending: false },
         trigger: 'update',
-        session: { inviteOnboardingPending: true },
+        session: {
+          inviteOnboardingPending: true,
+          expectedUserId: 'user-1',
+        },
       }),
-    ).resolves.toEqual({ inviteOnboardingPending: false });
+    ).resolves.toEqual({
+      userId: 'user-1',
+      inviteOnboardingPending: false,
+    });
+  });
+
+  it('세션 update의 사용자가 현재 JWT 사용자와 다르면 pending을 소비하지 않는다', async () => {
+    const { jwt } = getAuthConfig().callbacks;
+
+    await expect(
+      jwt({
+        token: { userId: 'user-2', inviteOnboardingPending: true },
+        trigger: 'update',
+        session: {
+          inviteOnboardingPending: false,
+          expectedUserId: 'user-1',
+        },
+      }),
+    ).resolves.toEqual({
+      userId: 'user-2',
+      inviteOnboardingPending: true,
+    });
   });
 
   it('JWT 값이 정확히 true일 때만 클라이언트 세션을 pending으로 노출한다', () => {

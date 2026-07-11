@@ -17,7 +17,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, account, trigger, session }) {
       // 클라이언트는 온보딩 완료 신호(false)만 소비할 수 있다. true 업데이트는
       // 신규 가입 응답으로만 설정해 기존 회원이 임의로 온보딩을 다시 열지 못하게 한다.
-      if (trigger === 'update' && session?.inviteOnboardingPending === false) {
+      if (
+        trigger === 'update' &&
+        session?.inviteOnboardingPending === false &&
+        typeof session.expectedUserId === 'string' &&
+        session.expectedUserId === token.userId
+      ) {
         token.inviteOnboardingPending = false;
       }
 

@@ -14,11 +14,13 @@ export function InviteCodeForm({
   onSuccess,
   onPendingChange,
   autoFocus = false,
+  disabled = false,
 }: {
   source: InviteCodeSource;
   onSuccess?: () => void;
   onPendingChange?: (pending: boolean) => void;
   autoFocus?: boolean;
+  disabled?: boolean;
 }) {
   const inputId = useId();
   const errorId = `${inputId}-error`;
@@ -31,20 +33,26 @@ export function InviteCodeForm({
         onSuccess?.();
       },
     });
+  const isBusy = isRedeeming || disabled;
 
   useEffect(() => {
-    onPendingChange?.(isRedeeming);
-  }, [isRedeeming, onPendingChange]);
+    onPendingChange?.(isBusy);
+  }, [isBusy, onPendingChange]);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isBusy) {
+      return;
+    }
+
     redeemInviteCode(code);
   };
 
   return (
     <form
       className="flex w-full flex-col gap-3"
-      aria-busy={isRedeeming}
+      aria-busy={isBusy}
       onSubmit={handleSubmit}>
       <Field data-invalid={Boolean(errorMessage)}>
         <FieldLabel htmlFor={inputId}>친구 초대 코드</FieldLabel>
@@ -52,7 +60,7 @@ export function InviteCodeForm({
           id={inputId}
           className="h-12 uppercase"
           value={code}
-          disabled={isRedeeming}
+          disabled={isBusy}
           aria-invalid={Boolean(errorMessage)}
           aria-describedby={errorMessage ? errorId : undefined}
           autoFocus={autoFocus}
@@ -67,7 +75,7 @@ export function InviteCodeForm({
         />
         <FieldError id={errorId}>{errorMessage}</FieldError>
       </Field>
-      <Button className="w-full" type="submit" size="lg" disabled={isRedeeming}>
+      <Button className="w-full" type="submit" size="lg" disabled={isBusy}>
         {isRedeeming ? '입력 중...' : '500 크레딧 받기'}
       </Button>
     </form>
