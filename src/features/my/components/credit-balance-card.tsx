@@ -6,6 +6,7 @@ import { useMe } from '@/api/generated/endpoints/auth/auth';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { track } from '@/observability/analytics';
 
 import { useClaimAttendance } from '../hooks/use-claim-attendance';
 
@@ -52,7 +53,10 @@ export function CreditBalanceCard() {
           type="button"
           className="relative"
           disabled={!isMeReady || attendedToday || isClaiming}
-          onClick={() => claimAttendance()}>
+          onClick={() => {
+            track('client_account_attendanceButton_clicked');
+            claimAttendance();
+          }}>
           <span className={isClaiming ? 'invisible' : undefined}>
             {attendedToday ? '출석 완료' : '출석 체크'}
           </span>
