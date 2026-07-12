@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   normalizeInviteCode,
   resolveInviteCodeError,
+  sanitizeInviteCodeInput,
 } from '@/features/my/invite/utils/invite-code';
 import { FetchError } from '@/lib/api-error';
 
@@ -13,6 +14,20 @@ describe('normalizeInviteCode', () => {
 
   it('공백뿐인 값은 빈 문자열이 된다', () => {
     expect(normalizeInviteCode('   ')).toBe('');
+  });
+});
+
+describe('sanitizeInviteCodeInput', () => {
+  it('공백을 제거하고 대문자로 변환한다', () => {
+    expect(sanitizeInviteCodeInput('cw6vzx7d')).toBe('CW6VZX7D');
+  });
+
+  it('공백이 포함된 8자 코드를 손실 없이 정리한다', () => {
+    expect(sanitizeInviteCodeInput(' CW6VZX7D ')).toBe('CW6VZX7D');
+  });
+
+  it('최대 길이를 초과한 입력은 8자로 자른다', () => {
+    expect(sanitizeInviteCodeInput('CW6VZX7DEXTRA')).toBe('CW6VZX7D');
   });
 });
 
