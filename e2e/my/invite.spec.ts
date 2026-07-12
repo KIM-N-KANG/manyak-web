@@ -91,7 +91,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await expect(
       page.getByRole('button', { name: '카카오톡 공유하기' }),
     ).toBeVisible();
-    await expect(page.getByLabel('친구 초대 코드')).toBeVisible();
+    await expect(page.getByLabel('초대 코드', { exact: true })).toBeVisible();
     await expect(
       page.getByRole('button', { name: '등록', exact: true }),
     ).toBeVisible();
@@ -224,7 +224,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     });
     await page.goto('/my/invite');
 
-    await page.getByLabel('친구 초대 코드').fill('cw6vzx7d');
+    await page.getByLabel('초대 코드', { exact: true }).fill('cw6vzx7d');
     await page.getByRole('button', { name: '등록', exact: true }).click();
 
     await expect(
@@ -251,7 +251,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await expect(
       page.locator('[data-slot="field-error"][role="alert"]'),
     ).toHaveText('코드를 입력해 주세요');
-    await expect(page.getByLabel('친구 초대 코드')).toHaveAttribute(
+    await expect(page.getByLabel('초대 코드', { exact: true })).toHaveAttribute(
       'aria-invalid',
       'true',
     );
@@ -286,7 +286,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await page.goto('/my/invite');
 
     await expect(page.getByText('초대 코드를 불러오지 못했어요')).toBeVisible();
-    await expect(page.getByLabel('친구 초대 코드')).toBeEnabled();
+    await expect(page.getByLabel('초대 코드', { exact: true })).toBeEnabled();
     await page.getByRole('button', { name: '다시 시도' }).click();
 
     await expect(page.getByText(INVITE_CODE)).toBeVisible();
@@ -362,7 +362,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       timeout: 10_000,
     });
     await expect(page.getByRole('button', { name: '다시 시도' })).toBeVisible();
-    await expect(page.getByLabel('친구 초대 코드')).toBeEnabled();
+    await expect(page.getByLabel('초대 코드', { exact: true })).toBeEnabled();
   });
 
   const errorCases = [
@@ -396,13 +396,15 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       );
       await page.goto('/my/invite');
 
-      await page.getByLabel('친구 초대 코드').fill('friend1');
+      await page.getByLabel('초대 코드', { exact: true }).fill('friend1');
       await page.getByRole('button', { name: '등록', exact: true }).click();
 
       await expect(
         page.locator('[data-slot="field-error"][role="alert"]'),
       ).toHaveText(message);
-      await expect(page.getByLabel('친구 초대 코드')).toHaveValue('FRIEND1');
+      await expect(page.getByLabel('초대 코드', { exact: true })).toHaveValue(
+        'FRIEND1',
+      );
     });
   }
 
@@ -462,7 +464,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(dialog).toContainText(
       '친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
     );
-    await expect(dialog.getByLabel('친구 초대 코드')).toBeFocused();
+    await expect(dialog.getByLabel('초대 코드', { exact: true })).toBeFocused();
     await expect(
       dialog.getByRole('button', { name: '나중에 하기' }),
     ).toBeVisible();
@@ -548,7 +550,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByLabel('친구 초대 코드').fill('friend1');
+    await page.getByLabel('초대 코드', { exact: true }).fill('friend1');
     await page.getByRole('button', { name: '등록하기' }).click();
     await updateResponse;
 
@@ -556,7 +558,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
       page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
     ).toBeVisible();
     await expect(page.getByRole('alertdialog')).toBeVisible();
-    await expect(page.getByLabel('친구 초대 코드')).toHaveCount(0);
+    await expect(page.getByLabel('초대 코드', { exact: true })).toHaveCount(0);
     await expect(
       page.getByText('500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요'),
     ).toBeVisible();
@@ -625,7 +627,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByLabel('친구 초대 코드').fill('friend1');
+    await page.getByLabel('초대 코드', { exact: true }).fill('friend1');
     await page.getByRole('button', { name: '등록하기' }).click();
     await updateResponse;
 
@@ -673,14 +675,14 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     );
     await page.goto('/');
 
-    await page.getByLabel('친구 초대 코드').fill('friend1');
+    await page.getByLabel('초대 코드', { exact: true }).fill('friend1');
     await page.getByRole('button', { name: '등록하기' }).click();
     await updateReceived;
 
     await expect(
       page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
     ).toBeVisible();
-    await expect(page.getByLabel('친구 초대 코드')).toBeVisible();
+    await expect(page.getByLabel('초대 코드', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '등록 중' })).toBeDisabled();
     await expect(
       page.getByText('500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요'),
@@ -712,7 +714,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     });
     await page.goto('/');
 
-    const input = page.getByLabel('친구 초대 코드');
+    const input = page.getByLabel('초대 코드', { exact: true });
 
     await input.fill('friend1');
     await page.getByRole('button', { name: '등록하기' }).click();
@@ -764,7 +766,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     );
     await page.goto('/');
 
-    const input = page.getByLabel('친구 초대 코드');
+    const input = page.getByLabel('초대 코드', { exact: true });
 
     await input.fill('mycode');
     await page.getByRole('button', { name: '등록하기' }).click();

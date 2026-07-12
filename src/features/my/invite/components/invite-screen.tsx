@@ -108,7 +108,7 @@ export function InviteScreen() {
           함께 크레딧을 받아보세요
         </h1>
         <p className="text-foreground-secondary">
-          친구가 내 초대 코드를 등록하면 둘 다 500 크레딧을 받아요
+          친구가 내 초대 코드를 등록하면 모두 500 크레딧을 받아요
         </p>
       </header>
 
@@ -171,7 +171,7 @@ export function InviteScreen() {
       </section>
 
       <section className="flex flex-col gap-4 p-4">
-        <h2 className="text-lg font-bold">친구의 초대 코드가 있나요?</h2>
+        <h2 className="text-lg font-bold">받은 초대 코드가 있나요?</h2>
         <InviteCodeForm />
       </section>
 

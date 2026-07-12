@@ -36,7 +36,7 @@ export function InviteCodeForm() {
         data-invalid={Boolean(errorMessage)}
         className="gap-2"
         aria-labelledby={inputId}>
-        <FieldLabel htmlFor={inputId}>친구 초대 코드</FieldLabel>
+        <FieldLabel htmlFor={inputId}>초대 코드</FieldLabel>
         <div className="flex gap-2">
           <Input
             id={inputId}

@@ -20,7 +20,6 @@ export function InviteOnboardingCodeForm({
   onSkip,
 }: {
   disabled?: boolean;
-  /** 적립 성공 후 세션 마무리까지 등록 버튼 스피너를 유지할 때 true. */
   isSubmitPending?: boolean;
   onSuccess?: () => void;
   onSkip?: () => void;
@@ -57,7 +56,7 @@ export function InviteOnboardingCodeForm({
         data-invalid={Boolean(errorMessage)}
         className="gap-2"
         aria-labelledby={inputId}>
-        <FieldLabel htmlFor={inputId}>친구 초대 코드</FieldLabel>
+        <FieldLabel htmlFor={inputId}>초대 코드</FieldLabel>
         <Input
           id={inputId}
           className="uppercase"
