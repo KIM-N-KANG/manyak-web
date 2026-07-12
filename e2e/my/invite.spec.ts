@@ -173,10 +173,10 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     );
     const homeUrl = new URL('/', page.url()).toString();
 
-    expect(settings?.content.title).toBe(`초대 코드 ${INVITE_CODE}`);
-    expect(settings?.content.description).toBe(
-      '로그인하고 코드를 입력하면 나와 친구 모두 500 크레딧을 받아요.',
+    expect(settings?.content.title).toBe(
+      '초대 코드 등록하고 500 크레딧 받기 🎁',
     );
+    expect(settings?.content.description).toBe(`초대 코드: ${INVITE_CODE}`);
     expect(settings?.content.link).toEqual({
       mobileWebUrl: homeUrl,
       webUrl: homeUrl,
@@ -460,7 +460,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
       dialog.getByRole('heading', { name: '초대 코드가 있나요?' }),
     ).toBeVisible();
     await expect(dialog).toContainText(
-      '친구에게 받은 초대 코드를 입력하면 500 크레딧을 받을 수 있어요',
+      '친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
     );
     await expect(dialog.getByLabel('친구 초대 코드')).toBeFocused();
     await expect(

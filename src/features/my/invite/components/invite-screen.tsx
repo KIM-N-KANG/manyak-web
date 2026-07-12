@@ -20,7 +20,6 @@ import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
 import { InviteCodeForm } from './invite-code-form';
 
 const INVITE_GUIDE_LINES = [
-  '친구가 내 초대 코드를 입력하면 나와 친구 모두 500 크레딧을 받아요.',
   '초대 보상은 매월 최대 10회까지 받을 수 있어요. (한국 시간 기준)',
   '초대 코드는 계정당 한 번 입력할 수 있어요.',
   '보상으로 받은 크레딧은 적립일부터 30일 동안 사용할 수 있어요.',
@@ -109,7 +108,7 @@ export function InviteScreen() {
           함께 크레딧을 받아보세요
         </h1>
         <p className="text-foreground-secondary">
-          친구가 내 초대 코드를 입력하면 둘 다 500 크레딧을 받아요
+          친구가 내 초대 코드를 등록하면 둘 다 500 크레딧을 받아요
         </p>
       </header>
 

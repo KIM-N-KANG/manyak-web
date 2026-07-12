@@ -11,8 +11,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 export const KAKAO_SDK_URL =
   'https://t1.kakaocdn.net/kakao_js_sdk/2.7.7/kakao.min.js';
 
-const KAKAO_SHARE_DESCRIPTION =
-  '로그인하고 코드를 입력하면 나와 친구 모두 500 크레딧을 받아요.';
+const KAKAO_SHARE_TITLE = '초대 코드 등록하고 500 크레딧 받기 🎁';
 
 /** 공유 카드 썸네일. 카카오 서버가 가져갈 수 있도록 절대 URL을 사용한다. */
 const shareImageUrl = (): string =>
@@ -83,8 +82,8 @@ export function useKakaoShare() {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: `초대 코드 ${inviteCode}`,
-          description: KAKAO_SHARE_DESCRIPTION,
+          title: KAKAO_SHARE_TITLE,
+          description: `초대 코드: ${inviteCode}`,
           imageUrl: shareImageUrl(),
           link,
         },

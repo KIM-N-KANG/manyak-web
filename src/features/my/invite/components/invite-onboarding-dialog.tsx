@@ -109,7 +109,7 @@ export function InviteOnboardingDialog() {
         <AlertDialogHeader>
           <AlertDialogTitle>초대 코드가 있나요?</AlertDialogTitle>
           <AlertDialogDescription className="leading-relaxed">
-            친구에게 받은 초대 코드를 입력하면 500 크레딧을 받을 수 있어요
+            친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요
           </AlertDialogDescription>
         </AlertDialogHeader>
 
