@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useRedeemInviteCode } from '../hooks/use-redeem-invite-code';
+import { sanitizeInviteCodeInput } from '../utils/invite-code';
 
 export function InviteOnboardingCodeForm({
   disabled = false,
@@ -56,7 +57,6 @@ export function InviteOnboardingCodeForm({
           <Input
             id={inputId}
             className="uppercase"
-            maxLength={8}
             value={code}
             disabled={isBusy}
             aria-invalid={Boolean(errorMessage)}
@@ -67,7 +67,7 @@ export function InviteOnboardingCodeForm({
             spellCheck={false}
             placeholder="예: ABCD1234"
             onChange={(event) => {
-              setCode(event.target.value.toUpperCase());
+              setCode(sanitizeInviteCodeInput(event.target.value));
               clearError();
             }}
           />

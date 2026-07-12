@@ -8,6 +8,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
 import { useRedeemInviteCode } from '../hooks/use-redeem-invite-code';
+import { sanitizeInviteCodeInput } from '../utils/invite-code';
 
 export function InviteCodeForm() {
   const inputId = useId();
@@ -42,7 +43,6 @@ export function InviteCodeForm() {
           <Input
             id={inputId}
             className="flex-1 uppercase"
-            maxLength={8}
             value={code}
             disabled={isRedeeming}
             aria-invalid={Boolean(errorMessage)}
@@ -52,7 +52,7 @@ export function InviteCodeForm() {
             spellCheck={false}
             placeholder="예: ABCD1234"
             onChange={(event) => {
-              setCode(event.target.value.toUpperCase());
+              setCode(sanitizeInviteCodeInput(event.target.value));
               clearError();
             }}
           />

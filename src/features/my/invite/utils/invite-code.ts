@@ -12,8 +12,19 @@ export type InviteCodeError = {
   message: string;
 };
 
+/** 초대 코드 길이(영문·숫자 8자). */
+export const INVITE_CODE_MAX_LENGTH = 8;
+
 export const normalizeInviteCode = (value: string): string =>
   value.trim().toUpperCase();
+
+/**
+ * 입력 단계에서 초대 코드를 정리한다. 공백을 제거하고 대문자화한 뒤 최대 길이로 자른다.
+ * `maxLength` 속성은 붙여넣기 원문을 trim 이전에 잘라 공백 포함 코드를 손상시키므로,
+ * 입력값을 여기서 정규화해 제한한다.
+ */
+export const sanitizeInviteCodeInput = (value: string): string =>
+  value.replace(/\s+/g, '').toUpperCase().slice(0, INVITE_CODE_MAX_LENGTH);
 
 export function resolveInviteCodeError(error: unknown): InviteCodeError {
   if (error instanceof FetchError) {

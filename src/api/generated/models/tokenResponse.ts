@@ -18,5 +18,5 @@ export interface TokenResponse {
   expiresIn?: number;
   /** 토큰 타입. 항상 Bearer. */
   tokenType?: string;
-  newUser?: boolean;
+  isNewUser?: boolean;
 }

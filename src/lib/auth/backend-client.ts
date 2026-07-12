@@ -7,10 +7,6 @@ import {
 import type { MeResponse, TokenResponse } from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 
-type GoogleLoginTokenResponse = Omit<TokenResponse, 'newUser'> & {
-  isNewUser?: boolean;
-};
-
 /**
  * BFF(서버)에서 백엔드 인증 API를 직접 호출하는 클라이언트.
  * Orval 생성 훅/함수는 브라우저 → 동일 출처 프록시(/api) 경유가 전제라(customInstance가
@@ -71,8 +67,8 @@ const postJson = <T>(path: string, body: unknown): Promise<T> =>
 /** Google ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다. */
 export const loginWithGoogleOnServer = (
   idToken: string,
-): Promise<GoogleLoginTokenResponse> =>
-  postJson<GoogleLoginTokenResponse>(getLoginWithGoogleUrl(), { idToken });
+): Promise<TokenResponse> =>
+  postJson<TokenResponse>(getLoginWithGoogleUrl(), { idToken });
 
 /** refresh 토큰을 회전해 새 토큰 쌍을 발급받는다. 실패(401)는 family 폐기를 뜻할 수 있다. */
 export const refreshOnServer = (refreshToken: string): Promise<TokenResponse> =>
