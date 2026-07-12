@@ -65,10 +65,10 @@ test.describe('폐기된 초대 링크', () => {
   });
 });
 
-test.describe('친구 초대 페이지 (/my/invite)', () => {
+test.describe('친구 초대 페이지 (/more/invite)', () => {
   test('게스트는 로그인 페이지로 이동한다', async ({ page }) => {
     await skipOnboarding(page);
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await expect(page).toHaveURL(/\/login$/);
   });
@@ -77,7 +77,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     page,
   }) => {
     await prepareMemberInvitePage(page);
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
       '친구를 초대하고',
@@ -110,7 +110,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await skipOnboarding(page);
     await mockMemberSession(page, { inviteOnboardingPending: true });
     await mockMyInvite(page);
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     const updateResponse = page.waitForResponse(
       (response) =>
@@ -131,7 +131,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await prepareMemberInvitePage(page);
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await page.getByRole('button', { name: '코드 복사하기' }).click();
 
@@ -144,7 +144,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   test('카카오 공유는 코드·확정 문구·홈 링크를 전송한다', async ({ page }) => {
     await prepareMemberInvitePage(page);
     await mockKakaoSdk(page);
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     const shareButton = page.getByRole('button', {
       name: '카카오톡 공유하기',
@@ -200,7 +200,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       monthlyRewardLimit: 10,
     });
     await mockKakaoSdk(page);
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await expect(page.getByText('이번 달 받은 보상 10/10회')).toBeVisible();
     await expect(
@@ -222,7 +222,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       requestBody = route.request().postDataJSON();
       await route.fulfill({ json: { amount: 500, balance: 1_000 } });
     });
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await page.getByLabel('초대 코드', { exact: true }).fill('cw6vzx7d');
     await page.getByRole('button', { name: '등록', exact: true }).click();
@@ -231,6 +231,56 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
     ).toBeVisible();
     expect(requestBody).toEqual({ code: INVITE_CODE });
+  });
+
+  test('코드 등록 중 버튼 크기를 유지한 채 스피너를 표시한다', async ({
+    page,
+  }) => {
+    await prepareMemberInvitePage(page);
+
+    let markRequestReceived = () => {};
+    let releaseRedeem = () => {};
+    const requestReceived = new Promise<void>((resolve) => {
+      markRequestReceived = resolve;
+    });
+    const redeemReleased = new Promise<void>((resolve) => {
+      releaseRedeem = resolve;
+    });
+
+    await page.route(REDEEM_API, async (route) => {
+      markRequestReceived();
+      await redeemReleased;
+      await route.fulfill({ json: { amount: 500, balance: 1_000 } });
+    });
+    await page.goto('/more/invite');
+
+    await page.getByLabel('초대 코드', { exact: true }).fill('friend1');
+
+    const submitButton = page.getByRole('button', {
+      name: '등록',
+      exact: true,
+    });
+    const initialWidth = await submitButton.evaluate(
+      (button) => (button as HTMLElement).offsetWidth,
+    );
+
+    await submitButton.click();
+    await requestReceived;
+
+    try {
+      const loadingSpinner = page.getByLabel('초대 코드 등록 중');
+      const loadingButton = loadingSpinner.locator('xpath=ancestor::button');
+
+      await expect(loadingSpinner).toBeVisible();
+      await expect(loadingButton).toBeDisabled();
+      expect(
+        await loadingButton.evaluate(
+          (button) => (button as HTMLElement).offsetWidth,
+        ),
+      ).toBe(initialWidth);
+    } finally {
+      releaseRedeem();
+    }
   });
 
   test('빈 코드는 API를 호출하지 않고 인라인 오류를 표시한다', async ({
@@ -244,13 +294,13 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       requestCount += 1;
       await route.fulfill({ json: { amount: 500, balance: 1_000 } });
     });
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await page.getByRole('button', { name: '등록', exact: true }).click();
 
     await expect(
       page.locator('[data-slot="field-error"][role="alert"]'),
-    ).toHaveText('코드를 입력해 주세요');
+    ).toHaveText('코드를 입력해주세요');
     await expect(page.getByLabel('초대 코드', { exact: true })).toHaveAttribute(
       'aria-invalid',
       'true',
@@ -283,7 +333,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
         },
       });
     });
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await expect(page.getByText('초대 코드를 불러오지 못했어요')).toBeVisible();
     await expect(page.getByLabel('초대 코드', { exact: true })).toBeEnabled();
@@ -320,7 +370,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
 
       await route.fulfill({ status: 500, json: { code: 'SERVER_ERROR' } });
     });
-    await page.goto('/my');
+    await page.goto('/more');
     await page.getByRole('link', { name: /친구 초대/ }).click();
     await expect(page.getByText(INVITE_CODE)).toBeVisible();
 
@@ -356,7 +406,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       monthlyRewardCount: 3,
       monthlyRewardLimit: 10,
     });
-    await page.goto('/my/invite');
+    await page.goto('/more/invite');
 
     await expect(page.getByText('초대 코드를 불러오지 못했어요')).toBeVisible({
       timeout: 10_000,
@@ -369,7 +419,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     {
       status: 404,
       code: 'NOT_FOUND',
-      message: '코드를 다시 확인해 주세요',
+      message: '코드를 다시 확인해주세요',
     },
     {
       status: 409,
@@ -384,7 +434,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     {
       status: 500,
       code: 'INTERNAL_SERVER_ERROR',
-      message: '초대 코드 입력에 실패했어요. 잠시 후 다시 시도해 주세요',
+      message: '초대 코드 입력에 실패했어요',
     },
   ] as const;
 
@@ -394,7 +444,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       await page.route(REDEEM_API, (route) =>
         route.fulfill({ status, json: { code } }),
       );
-      await page.goto('/my/invite');
+      await page.goto('/more/invite');
 
       await page.getByLabel('초대 코드', { exact: true }).fill('friend1');
       await page.getByRole('button', { name: '등록', exact: true }).click();
@@ -408,13 +458,13 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     });
   }
 
-  test('마이의 친구 초대 메뉴가 초대 페이지로 연결된다', async ({ page }) => {
+  test('더보기의 친구 초대 메뉴가 초대 페이지로 연결된다', async ({ page }) => {
     await prepareMemberInvitePage(page);
-    await page.goto('/my');
+    await page.goto('/more');
 
     await page.getByRole('link', { name: /친구 초대/ }).click();
 
-    await expect(page).toHaveURL(/\/my\/invite$/);
+    await expect(page).toHaveURL(/\/more\/invite$/);
     await expect(page.getByText('내 초대 코드', { exact: true })).toBeVisible();
   });
 
@@ -423,7 +473,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   }) => {
     await prepareMemberInvitePage(page);
     await mockKakaoSdk(page);
-    await page.goto('/my');
+    await page.goto('/more');
 
     const kakaoButton = page.getByRole('button', {
       name: '카카오톡 공유하기',
@@ -435,10 +485,10 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await page
       .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
       .click();
-    await expect(page).toHaveURL(/\/my$/);
+    await expect(page).toHaveURL(/\/more$/);
     await page.getByRole('link', { name: /친구 초대/ }).click();
 
-    await expect(page).toHaveURL(/\/my\/invite$/);
+    await expect(page).toHaveURL(/\/more\/invite$/);
     await expect(kakaoButton).toBeEnabled();
   });
 });
@@ -715,16 +765,27 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await page.goto('/');
 
     const input = page.getByLabel('초대 코드', { exact: true });
+    const submitButton = page.getByRole('button', { name: '등록하기' });
+    const initialWidth = await submitButton.evaluate(
+      (button) => (button as HTMLElement).offsetWidth,
+    );
 
     await input.fill('friend1');
-    await page.getByRole('button', { name: '등록하기' }).click();
+    await submitButton.click();
     await requestReceived;
 
     try {
       await expect(input).toBeDisabled();
-      await expect(
-        page.getByRole('button', { name: '등록 중' }),
-      ).toBeDisabled();
+
+      const loadingSpinner = page.getByLabel('등록 중');
+      const loadingButton = loadingSpinner.locator('xpath=ancestor::button');
+
+      await expect(loadingButton).toBeDisabled();
+      expect(
+        await loadingButton.evaluate(
+          (button) => (button as HTMLElement).offsetWidth,
+        ),
+      ).toBe(initialWidth);
       await expect(
         page.getByRole('button', { name: '나중에 하기' }),
       ).toBeDisabled();

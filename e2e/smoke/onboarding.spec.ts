@@ -17,8 +17,9 @@ test.describe('온보딩', () => {
     await page.goto('/');
 
     await expect(
-      page.getByRole('heading', { level: 1, name: '스토리' }),
+      page.getByRole('heading', { level: 1, name: '홈' }),
     ).toBeVisible();
+    await expect(page.getByRole('img', { name: '마냑' })).toBeVisible();
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });
 

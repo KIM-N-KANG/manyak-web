@@ -20,7 +20,7 @@ import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
 import { InviteCodeForm } from './invite-code-form';
 
 const INVITE_GUIDE_LINES = [
-  '초대 보상은 매월 최대 10회까지 받을 수 있어요. (한국 시간 기준)',
+  '초대 보상은 매월 최대 10회까지 받을 수 있으며, 매월 1일 초기화돼요. (한국 시간 기준)',
   '초대 코드는 계정당 한 번 입력할 수 있어요.',
   '보상으로 받은 크레딧은 적립일부터 30일 동안 사용할 수 있어요.',
   '본 이벤트는 사전 고지 없이 변경되거나 종료될 수 있어요.',
@@ -114,10 +114,12 @@ export function InviteScreen() {
 
       <section className="flex flex-col gap-2 p-4" aria-label="내 초대 코드">
         <div
-          className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl bg-muted p-4 text-center"
+          className="flex flex-col items-center justify-center gap-2 rounded-lg bg-muted p-4 text-center"
           aria-busy={isPending || isFetching}
           aria-live="polite">
-          <span className="text-foreground-secondary">내 초대 코드</span>
+          <span className="text-sm font-semibold text-foreground-secondary">
+            내 초대 코드
+          </span>
           {isPending ? <Skeleton className="h-7 w-32 bg-foreground/5" /> : null}
           {!isPending && !isInviteUnavailable ? (
             <span className="text-xl font-bold tracking-widest tabular-nums">
@@ -150,7 +152,6 @@ export function InviteScreen() {
         <div className="flex gap-2">
           <Button
             type="button"
-            size="lg"
             variant="outline"
             className="min-w-0 flex-1"
             disabled={!inviteCode}
@@ -160,7 +161,6 @@ export function InviteScreen() {
           </Button>
           <Button
             type="button"
-            size="lg"
             className="min-w-0 flex-1"
             disabled={!inviteCode || !isKakaoReady}
             onClick={handleKakaoShare}>

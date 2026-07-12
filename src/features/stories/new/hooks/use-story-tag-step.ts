@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
+import type { TagCategory } from '../types';
 import { getTagsByCategory } from '../utils/tag-categories';
 import { useCategoryNavigation } from './use-category-navigation';
 import { useTagSelection } from './use-tag-selection';
@@ -24,10 +27,59 @@ export function useStoryTagStep({
   const navigation = useCategoryNavigation({
     isCategoryComplete: tagSelection.isCategoryComplete,
   });
+  const [validationErrorCategory, setValidationErrorCategory] =
+    useState<TagCategory | null>(null);
 
   const simpleStoryTags = useGetSimpleStoryTags();
   const showTagsSkeleton = useDelayedLoading(simpleStoryTags.isLoading);
   const tagsByCategory = getTagsByCategory(simpleStoryTags.data?.data ?? []);
+
+  const clearValidationErrorOnSelection = (
+    category: TagCategory,
+    pressed = true,
+  ) => {
+    if (!pressed) {
+      return;
+    }
+
+    setValidationErrorCategory((previous) =>
+      previous === category ? null : previous,
+    );
+  };
+
+  const togglePredefinedTag = (
+    category: TagCategory,
+    tagId: number,
+    pressed: boolean,
+  ) => {
+    clearValidationErrorOnSelection(category, pressed);
+    tagSelection.togglePredefinedTag(category, tagId, pressed);
+  };
+
+  const toggleCustomTag = (
+    category: TagCategory,
+    tagId: string,
+    pressed: boolean,
+  ) => {
+    clearValidationErrorOnSelection(category, pressed);
+    tagSelection.toggleCustomTag(category, tagId, pressed);
+  };
+
+  const addCustomTag = (category: TagCategory, tag: string) => {
+    clearValidationErrorOnSelection(category);
+    tagSelection.addCustomTag(category, tag);
+  };
+
+  const goToNextCategory = () => {
+    if (!tagSelection.isCategoryComplete(navigation.activeCategory)) {
+      setValidationErrorCategory(navigation.activeCategory);
+
+      return;
+    }
+
+    setValidationErrorCategory(null);
+    navigation.goToNextCategory();
+  };
 
   const handleGenerateStorylines = () => {
     if (!tagSelection.canGenerateStorylines) {
@@ -47,17 +99,17 @@ export function useStoryTagStep({
     showTagsSkeleton,
     isGeneratingStorylines,
     tagsByCategory,
-    canGenerateStorylines: tagSelection.canGenerateStorylines,
+    hasCategoryValidationError:
+      validationErrorCategory === navigation.activeCategory,
     isMaxSelectionReached: tagSelection.isMaxSelectionReached,
-    isCategoryComplete: tagSelection.isCategoryComplete,
     isCategoryUnlocked: navigation.isCategoryUnlocked,
     isFirstCategory: navigation.isFirstCategory,
     isLastCategory: navigation.isLastCategory,
-    goToNextCategory: navigation.goToNextCategory,
+    goToNextCategory,
     goToPreviousCategory: navigation.goToPreviousCategory,
-    togglePredefinedTag: tagSelection.togglePredefinedTag,
-    toggleCustomTag: tagSelection.toggleCustomTag,
-    addCustomTag: tagSelection.addCustomTag,
+    togglePredefinedTag,
+    toggleCustomTag,
+    addCustomTag,
     handleGenerateStorylines,
   };
 }

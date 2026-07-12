@@ -21,6 +21,8 @@ export function ChatInput({ mode, composer, disabled }: ChatInputProps) {
         onUpdateBlock={composer.updateBlock}
         onRegisterInput={composer.registerBlockInput}
         onSend={composer.sendBlocks}
+        hasSuggestions={composer.hasSuggestions}
+        onSendRandomSuggestion={composer.sendRandomSuggestion}
         disabled={disabled}
       />
     );
@@ -31,6 +33,8 @@ export function ChatInput({ mode, composer, disabled }: ChatInputProps) {
       value={composer.value}
       onChange={composer.setValue}
       onSend={composer.send}
+      hasSuggestions={composer.hasSuggestions}
+      onSendRandomSuggestion={composer.sendRandomSuggestion}
       onInsertEmphasis={composer.insertEmphasis}
       disabled={disabled}
       textareaRef={composer.textareaRef}

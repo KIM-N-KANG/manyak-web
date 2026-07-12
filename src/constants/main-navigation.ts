@@ -2,8 +2,8 @@ import type { ComponentType, SVGProps } from 'react';
 
 import {
   ChatRoundFilledIcon,
-  ClipboardFilledIcon,
-  UserFilledIcon,
+  HomeFilledIcon,
+  MoreFilledIcon,
 } from '@/components/layout/bottom-navigation-icons';
 import { APP_PATH, type MainAppPath } from '@/constants/app-path';
 
@@ -16,8 +16,8 @@ export interface MainNavigationItem {
 export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
   {
     href: APP_PATH.MAIN.STORIES,
-    label: '스토리',
-    icon: ClipboardFilledIcon,
+    label: '홈',
+    icon: HomeFilledIcon,
   },
   {
     href: APP_PATH.MAIN.CHATS,
@@ -25,9 +25,9 @@ export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
     icon: ChatRoundFilledIcon,
   },
   {
-    href: APP_PATH.MAIN.MY,
-    label: '마이',
-    icon: UserFilledIcon,
+    href: APP_PATH.MAIN.MORE,
+    label: '더보기',
+    icon: MoreFilledIcon,
   },
 ];
 

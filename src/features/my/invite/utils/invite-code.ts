@@ -18,7 +18,7 @@ export const normalizeInviteCode = (value: string): string =>
 export function resolveInviteCodeError(error: unknown): InviteCodeError {
   if (error instanceof FetchError) {
     if (error.status === 400 || error.status === 404) {
-      return { errorType: 'not_found', message: '코드를 다시 확인해 주세요' };
+      return { errorType: 'not_found', message: '코드를 다시 확인해주세요' };
     }
 
     if (error.status === 409) {
@@ -42,6 +42,6 @@ export function resolveInviteCodeError(error: unknown): InviteCodeError {
 
   return {
     errorType: 'network',
-    message: '초대 코드 입력에 실패했어요. 잠시 후 다시 시도해 주세요',
+    message: '초대 코드 입력에 실패했어요',
   };
 }

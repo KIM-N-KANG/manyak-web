@@ -8,6 +8,7 @@ type StoryCreateStepLayoutProps = {
   titleLines: readonly string[];
   description: string;
   footer?: ReactNode;
+  footerMessage?: ReactNode;
   children: ReactNode;
   scrollAreaRef?: Ref<HTMLElement>;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -17,6 +18,7 @@ export function StoryCreateStepLayout({
   titleLines,
   description,
   footer,
+  footerMessage,
   children,
   scrollAreaRef,
   onScroll,
@@ -37,7 +39,9 @@ export function StoryCreateStepLayout({
       </StoryCreateStepScrollArea>
 
       {footer != null && (
-        <StoryCreateStepFooter>{footer}</StoryCreateStepFooter>
+        <StoryCreateStepFooter message={footerMessage}>
+          {footer}
+        </StoryCreateStepFooter>
       )}
     </>
   );

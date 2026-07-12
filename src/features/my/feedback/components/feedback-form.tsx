@@ -2,10 +2,12 @@
 
 import { useEffect } from 'react';
 
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -37,7 +39,7 @@ export function FeedbackForm() {
     handleBodyChange,
     handleEmailChange,
     handleSubmit,
-    canSubmit,
+    validationError,
     isSubmitting,
   } = useFeedbackForm();
 
@@ -100,14 +102,19 @@ export function FeedbackForm() {
         </FieldGroup>
       </div>
 
-      <div className="flex h-18 shrink-0 items-center p-4 pt-2">
+      <div className="flex shrink-0 flex-col gap-2 p-4 pt-2">
+        <FieldError>{validationError}</FieldError>
         <Button
           type="submit"
           size="lg"
-          className="w-full"
+          className="relative w-full"
           aria-busy={isSubmitting}
-          disabled={!canSubmit || isSubmitting}>
-          피드백 보내기
+          disabled={isSubmitting}>
+          <LoadingButtonContent
+            isLoading={isSubmitting}
+            loadingLabel="피드백 전송 중">
+            피드백 보내기
+          </LoadingButtonContent>
         </Button>
       </div>
     </form>

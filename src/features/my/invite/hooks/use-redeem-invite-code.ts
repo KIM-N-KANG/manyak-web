@@ -54,7 +54,7 @@ export function useRedeemInviteCode({
     const code = normalizeInviteCode(value);
 
     if (!code) {
-      setErrorMessage('코드를 입력해 주세요');
+      setErrorMessage('코드를 입력해주세요');
 
       return false;
     }

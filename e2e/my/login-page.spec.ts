@@ -17,9 +17,9 @@ test.describe('로그인 화면', () => {
     ).toBeHidden();
   });
 
-  test('마이의 로그인 버튼이 /login으로 이동한다', async ({ page }) => {
+  test('더보기의 로그인 버튼이 /login으로 이동한다', async ({ page }) => {
     await skipOnboarding(page);
-    await page.goto('/my');
+    await page.goto('/more');
     await page.getByRole('link', { name: '로그인' }).click();
 
     await expect(page).toHaveURL('/login');
@@ -42,7 +42,7 @@ test.describe('로그인 화면', () => {
     page,
   }) => {
     await skipOnboarding(page);
-    await page.goto('/my');
+    await page.goto('/more');
     await page.getByRole('link', { name: '로그인' }).click();
     await expect(page).toHaveURL('/login');
 
@@ -50,6 +50,6 @@ test.describe('로그인 화면', () => {
       .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
       .click();
 
-    await expect(page).toHaveURL('/my');
+    await expect(page).toHaveURL('/more');
   });
 });

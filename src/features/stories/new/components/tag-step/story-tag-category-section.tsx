@@ -69,7 +69,7 @@ export function StoryTagCategorySection({
         )}
         {hasTagsError && (
           <StoryCreateErrorMessage className="py-2">
-            키워드를 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+            키워드를 불러오지 못했어요
           </StoryCreateErrorMessage>
         )}
         {!isLoadingTags &&

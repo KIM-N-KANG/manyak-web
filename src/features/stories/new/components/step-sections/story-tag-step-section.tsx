@@ -1,6 +1,7 @@
 'use client';
 
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
@@ -36,10 +37,9 @@ export function StoryTagStepSection({
     simpleStoryTags,
     showTagsSkeleton,
     tagsByCategory,
-    canGenerateStorylines,
+    hasCategoryValidationError,
     isMaxSelectionReached,
     isCategoryUnlocked,
-    isCategoryComplete,
     isFirstCategory,
     isLastCategory,
     goToNextCategory,
@@ -58,6 +58,13 @@ export function StoryTagStepSection({
       titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
       description="선택한 키워드로 AI가 스토리라인을 생성해요"
       onScroll={onScroll}
+      footerMessage={
+        hasCategoryValidationError ? (
+          <StoryCreateErrorMessage>
+            키워드를 하나 이상 선택해주세요
+          </StoryCreateErrorMessage>
+        ) : null
+      }
       footer={
         <>
           {!isFirstCategory && (
@@ -73,16 +80,21 @@ export function StoryTagStepSection({
           <Button
             type="button"
             size="lg"
-            disabled={
-              isGeneratingStorylines ||
-              (isLastCategory
-                ? !canGenerateStorylines
-                : !isCategoryComplete(activeCategory))
-            }
+            className="relative"
+            aria-busy={isGeneratingStorylines}
+            disabled={isGeneratingStorylines}
             onClick={
               isLastCategory ? handleGenerateStorylines : goToNextCategory
             }>
-            {isLastCategory ? '스토리라인 만들기' : '다음'}
+            {isLastCategory ? (
+              <LoadingButtonContent
+                isLoading={isGeneratingStorylines}
+                loadingLabel="스토리라인 생성 중">
+                스토리라인 만들기
+              </LoadingButtonContent>
+            ) : (
+              '다음'
+            )}
           </Button>
         </>
       }>
@@ -138,8 +150,8 @@ export function StoryTagStepSection({
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
           {isGuestLimitReached
-            ? '게스트 스토리라인 생성 횟수를 모두 사용했어요.'
-            : '스토리라인을 만들지 못했어요. 잠시 후 다시 시도해주세요.'}
+            ? '게스트 스토리라인 생성 횟수를 모두 사용했어요'
+            : '스토리라인을 만들지 못했어요'}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>
