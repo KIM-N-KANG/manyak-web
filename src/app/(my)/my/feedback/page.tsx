@@ -1,5 +1,5 @@
 import { BackHeader } from '@/components/layout/back-header';
-import { FeedbackForm } from '@/features/feedback/components/feedback-form';
+import { FeedbackForm } from '@/features/my/feedback/components/feedback-form';
 
 export default function MyFeedbackPage() {
   return (
