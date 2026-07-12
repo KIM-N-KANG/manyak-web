@@ -1,13 +1,7 @@
-import { BackHeader } from '@/components/layout/back-header';
-import { FeedbackForm } from '@/features/my/feedback/components/feedback-form';
+import { redirect } from 'next/navigation';
 
-export default function MyFeedbackPage() {
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <BackHeader title="피드백" />
-      <main className="flex min-h-0 flex-1 flex-col">
-        <FeedbackForm />
-      </main>
-    </div>
-  );
+import { APP_PATH } from '@/constants/app-path';
+
+export default function LegacyMyFeedbackPage() {
+  redirect(APP_PATH.MORE_FEEDBACK);
 }

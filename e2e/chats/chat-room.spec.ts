@@ -8,6 +8,8 @@ import { expect, seedChatIds, skipOnboarding, test } from '../fixtures/test';
 // SSE 포맷: started → token({"text":...})×N → completed({"aiOutput":...}) | error({"message":...})
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
+const PLAY_FILLED_PATH =
+  'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
 
 // 기본 모드가 블럭 입력이므로, textarea 기반 테스트는 일반 모드를 고정한다.
 const setPlainInputMode = async (page: Page) => {
@@ -91,6 +93,10 @@ test.describe('채팅 스트리밍', () => {
     });
 
     await expect(randomSendButton).toBeEnabled();
+    await expect(randomSendButton.locator('path')).toHaveAttribute(
+      'd',
+      new RegExp(`^${PLAY_FILLED_PATH}`),
+    );
     await randomSendButton.click();
     await expect(page.getByText('던전에 진입한다')).toBeVisible();
   });
@@ -109,9 +115,15 @@ test.describe('채팅 스트리밍', () => {
     await setPlainInputMode(page);
     await page.goto('/chats/c1');
 
-    await expect(
-      page.getByRole('button', { name: '추천 입력 랜덤 전송' }),
-    ).toBeDisabled();
+    const randomSendButton = page.getByRole('button', {
+      name: '추천 입력 랜덤 전송',
+    });
+
+    await expect(randomSendButton).toBeDisabled();
+    await expect(randomSendButton.locator('path')).toHaveAttribute(
+      'd',
+      new RegExp(`^${PLAY_FILLED_PATH}`),
+    );
 
     await page
       .getByPlaceholder('이야기를 어떻게 이어갈까요?')

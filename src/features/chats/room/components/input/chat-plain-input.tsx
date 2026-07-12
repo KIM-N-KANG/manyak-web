@@ -2,9 +2,10 @@
 
 import { type SubmitEvent } from 'react';
 
-import { ArrowUp02Icon, PlayIcon } from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { PlayFilledIcon } from '@/components/icons/play-filled-icon';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -87,10 +88,11 @@ export function ChatPlainInput({
               aria-label={hasInput ? '전송' : '추천 입력 랜덤 전송'}
               disabled={!canSend}
               className="ml-auto">
-              <HugeiconsIcon
-                icon={hasInput ? ArrowUp02Icon : PlayIcon}
-                aria-hidden="true"
-              />
+              {hasInput ? (
+                <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
+              ) : (
+                <PlayFilledIcon aria-hidden="true" />
+              )}
             </Button>
           </InputGroupAddon>
         </InputGroup>

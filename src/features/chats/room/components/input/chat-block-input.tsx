@@ -2,14 +2,11 @@
 
 import { useState } from 'react';
 
-import {
-  ArrowUp02Icon,
-  Cancel01Icon,
-  PlayIcon,
-} from '@hugeicons/core-free-icons';
+import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
+import { PlayFilledIcon } from '@/components/icons/play-filled-icon';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -156,10 +153,11 @@ export function ChatBlockInput({
           disabled={!canSend}
           onClick={handleSend}
           className="ml-auto">
-          <HugeiconsIcon
-            icon={hasInput ? ArrowUp02Icon : PlayIcon}
-            aria-hidden="true"
-          />
+          {hasInput ? (
+            <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
+          ) : (
+            <PlayFilledIcon aria-hidden="true" />
+          )}
         </Button>
       </div>
 

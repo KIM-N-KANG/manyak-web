@@ -39,7 +39,7 @@ export function CreditShortageDialog({
       track('client_creditShortageDialog_earnButton_clicked', { trigger });
     }
 
-    router.push(APP_PATH.MAIN.MY);
+    router.push(APP_PATH.MAIN.MORE);
   };
 
   const handleDismiss = () => {

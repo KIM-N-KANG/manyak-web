@@ -13,7 +13,7 @@ export function BottomNavigationBar() {
     <nav
       aria-label="하단 네비게이션"
       className="shrink-0 border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
-      <ul className="grid h-16 grid-cols-3">
+      <ul className="grid grid-cols-3">
         {MAIN_NAVIGATION_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -23,15 +23,13 @@ export function BottomNavigationBar() {
               <Link
                 href={item.href}
                 replace
+                aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'flex h-full flex-col items-center justify-center gap-1 text-xs leading-none',
-                  isActive
-                    ? 'font-semibold text-foreground'
-                    : 'text-foreground-tertiary',
+                  'flex items-center justify-center py-4',
+                  isActive ? 'text-foreground' : 'text-foreground-tertiary',
                 )}>
                 <Icon className="size-6" aria-hidden="true" />
-                <span>{item.label}</span>
               </Link>
             </li>
           );
