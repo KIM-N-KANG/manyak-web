@@ -5,15 +5,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { track } from '@/observability/analytics';
@@ -70,7 +70,6 @@ export function InviteOnboardingDialog() {
 
       setDismissedUserId(expectedUserId);
     } catch {
-      // 적립 경로는 토스트 대신 다이얼로그 안에서 실패 안내·재시도를 제공한다.
       if (fromRedeem) {
         setCloseFailedUserId(expectedUserId);
       } else {
@@ -102,34 +101,31 @@ export function InviteOnboardingDialog() {
   };
 
   return (
-    <AlertDialog open={isOpen}>
-      <AlertDialogContent
-        size="sm"
-        className="max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] overflow-y-auto overscroll-contain">
-        <AlertDialogHeader>
-          <AlertDialogTitle>초대 코드가 있나요?</AlertDialogTitle>
-          <AlertDialogDescription className="leading-relaxed">
+    <Dialog open={isOpen}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain">
+        <DialogHeader>
+          <DialogTitle>초대 코드가 있나요?</DialogTitle>
+          <DialogDescription className="leading-relaxed">
             친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         {hasCloseFailed ? (
-          <div
-            className="flex flex-col gap-6"
-            role="status"
-            aria-busy={isCompleting}>
+          <div className="contents" role="status" aria-busy={isCompleting}>
             <p className="rounded-lg bg-muted p-4 text-sm">
               500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요
             </p>
-            <AlertDialogFooter>
-              <AlertDialogAction
+            <DialogFooter>
+              <Button
                 type="button"
                 className="col-span-full"
                 disabled={isCompleting}
                 onClick={() => void complete({ fromRedeem: true })}>
                 {isCompleting ? <Spinner /> : '닫기'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
+              </Button>
+            </DialogFooter>
           </div>
         ) : (
           <InviteOnboardingCodeForm
@@ -140,7 +136,7 @@ export function InviteOnboardingDialog() {
             onSkip={handleSkip}
           />
         )}
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -2,13 +2,11 @@
 
 import { type SubmitEvent, useId, useState } from 'react';
 
-import {
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogFooter,
-} from '@/components/ui/alert-dialog';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Button } from '@/components/ui/button';
+import { DialogFooter } from '@/components/ui/dialog';
+import { Field, FieldError, FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 
 import { useRedeemInviteCode } from '../hooks/use-redeem-invite-code';
@@ -48,48 +46,51 @@ export function InviteOnboardingCodeForm({
   };
 
   return (
-    <form
-      className="flex w-full flex-col gap-6"
-      aria-busy={isBusy}
-      onSubmit={handleSubmit}>
-      <Field
-        data-invalid={Boolean(errorMessage)}
-        className="gap-2"
-        aria-labelledby={inputId}>
-        <FieldLabel htmlFor={inputId}>초대 코드</FieldLabel>
-        <Input
-          id={inputId}
-          className="uppercase"
-          maxLength={8}
-          value={code}
-          disabled={isBusy}
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? errorId : undefined}
-          autoFocus
-          autoCapitalize="characters"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="예: ABCD1234"
-          onChange={(event) => {
-            setCode(event.target.value.toUpperCase());
-            clearError();
-          }}
-        />
-        <FieldError id={errorId}>{errorMessage}</FieldError>
-      </Field>
+    <form className="contents" aria-busy={isBusy} onSubmit={handleSubmit}>
+      <FieldGroup>
+        <Field
+          data-invalid={Boolean(errorMessage)}
+          className="gap-2"
+          aria-labelledby={inputId}>
+          <Label htmlFor={inputId}>초대 코드</Label>
+          <Input
+            id={inputId}
+            className="uppercase"
+            maxLength={8}
+            value={code}
+            disabled={isBusy}
+            aria-invalid={Boolean(errorMessage)}
+            aria-describedby={errorMessage ? errorId : undefined}
+            autoFocus
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="예: ABCD1234"
+            onChange={(event) => {
+              setCode(event.target.value.toUpperCase());
+              clearError();
+            }}
+          />
+          <FieldError id={errorId}>{errorMessage}</FieldError>
+        </Field>
+      </FieldGroup>
 
-      <AlertDialogFooter>
-        <AlertDialogCancel type="button" disabled={isBusy} onClick={onSkip}>
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={isBusy}
+          onClick={onSkip}>
           나중에 하기
-        </AlertDialogCancel>
-        <AlertDialogAction type="submit" disabled={isBusy}>
+        </Button>
+        <Button type="submit" disabled={isBusy}>
           {isRedeeming || isSubmitPending ? (
             <Spinner aria-label="등록 중" />
           ) : (
             '등록하기'
           )}
-        </AlertDialogAction>
-      </AlertDialogFooter>
+        </Button>
+      </DialogFooter>
     </form>
   );
 }

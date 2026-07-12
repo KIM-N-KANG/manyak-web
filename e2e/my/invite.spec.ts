@@ -449,13 +449,13 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
   }
 
-  test('신규 회원에게만 초대 코드 AlertDialog를 표시하고 입력에 초점을 둔다', async ({
+  test('신규 회원에게만 초대 코드 다이얼로그를 표시하고 입력에 초점을 둔다', async ({
     page,
   }) => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
     await page.goto('/');
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
     await expect(dialog).toBeVisible();
     await expect(
@@ -499,10 +499,10 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         expectedUserId: 'user-1',
       },
     });
-    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     await page.reload();
-    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('세션 상태 저장에 실패하면 다이얼로그를 유지하고 재시도를 안내한다', async ({
@@ -524,11 +524,11 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await page.getByRole('button', { name: '나중에 하기' }).click();
     await updateResponse;
 
-    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByText('창을 닫지 못했어요')).toBeVisible();
 
     await page.reload();
-    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible();
   });
 
   test('코드 적립 후 세션 저장에 실패하면 코드를 다시 받지 않고 상태 저장 재시도를 제공한다', async ({
@@ -557,7 +557,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(
       page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
     ).toBeVisible();
-    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByLabel('초대 코드', { exact: true })).toHaveCount(0);
     await expect(
       page.getByText('500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요'),
@@ -609,7 +609,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         name: '나만의 스토리, 바로 만들어볼까요?',
       }),
     ).toHaveCount(0);
-    await expect(page.getByRole('alertdialog')).toHaveCount(1);
+    await expect(page.getByRole('dialog')).toHaveCount(1);
   });
 
   test('코드 입력 성공 시 다이얼로그를 닫고 새로고침 후에도 다시 열지 않는다', async ({
@@ -634,10 +634,10 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(
       page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
     ).toBeVisible();
-    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     await page.reload();
-    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('코드 적립 후 세션 저장이 끝날 때까지 폼과 등록 스피너를 유지하고 실패 안내를 보이지 않는다', async ({
@@ -690,7 +690,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(page.getByRole('button', { name: '닫기' })).toHaveCount(0);
 
     releaseUpdate();
-    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('코드 제출 중에는 입력과 제출·건너뛰기를 모두 잠근다', async ({
@@ -728,9 +728,10 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
       await expect(
         page.getByRole('button', { name: '나중에 하기' }),
       ).toBeDisabled();
-      await expect(
-        page.getByRole('alertdialog').locator('form'),
-      ).toHaveAttribute('aria-busy', 'true');
+      await expect(page.getByRole('dialog').locator('form')).toHaveAttribute(
+        'aria-busy',
+        'true',
+      );
     } finally {
       releaseRedeem();
     }
@@ -746,13 +747,13 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await preparePendingMember(page);
     await page.goto('/');
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dialog).toBeVisible();
     await page
-      .locator('[data-slot="alert-dialog-overlay"]')
+      .locator('[data-slot="dialog-overlay"]')
       .click({ position: { x: 4, y: 4 } });
     await expect(dialog).toBeVisible();
   });
@@ -771,7 +772,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await input.fill('mycode');
     await page.getByRole('button', { name: '등록하기' }).click();
 
-    await expect(page.getByRole('alertdialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible();
     await expect(input).toHaveAttribute('aria-invalid', 'true');
     await expect(
       page.locator('[data-slot="field-error"][role="alert"]'),
