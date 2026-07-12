@@ -9,15 +9,19 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 
 import { useRedeemInviteCode } from '../hooks/use-redeem-invite-code';
 
 export function InviteOnboardingCodeForm({
   disabled = false,
+  isSubmitPending = false,
   onSuccess,
   onSkip,
 }: {
   disabled?: boolean;
+  /** 적립 성공 후 세션 마무리까지 등록 버튼 스피너를 유지할 때 true. */
+  isSubmitPending?: boolean;
   onSuccess?: () => void;
   onSkip?: () => void;
 }) {
@@ -80,7 +84,11 @@ export function InviteOnboardingCodeForm({
           나중에 하기
         </AlertDialogCancel>
         <AlertDialogAction type="submit" disabled={isBusy}>
-          {isRedeeming ? '등록 중...' : '등록하기'}
+          {isRedeeming || isSubmitPending ? (
+            <Spinner aria-label="등록 중" />
+          ) : (
+            '등록하기'
+          )}
         </AlertDialogAction>
       </AlertDialogFooter>
     </form>

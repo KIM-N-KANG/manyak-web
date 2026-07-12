@@ -25,10 +25,14 @@ export function InviteOnboardingDialog() {
   const [dismissedUserId, setDismissedUserId] = useState<string | null>(null);
   const [completingUserId, setCompletingUserId] = useState<string | null>(null);
   const [redeemedUserId, setRedeemedUserId] = useState<string | null>(null);
+  const [closeFailedUserId, setCloseFailedUserId] = useState<string | null>(
+    null,
+  );
   const shownUserIdRef = useRef<string | null>(null);
   const userId = session?.user.id ?? null;
   const isCompleting = userId !== null && completingUserId === userId;
   const hasRedeemed = userId !== null && redeemedUserId === userId;
+  const hasCloseFailed = userId !== null && closeFailedUserId === userId;
   const isOpen =
     (status === 'authenticated' || isCompleting) &&
     userId !== null &&
@@ -42,7 +46,7 @@ export function InviteOnboardingDialog() {
     }
   }, [isOpen, userId]);
 
-  const complete = async ({ suppressErrorToast = false } = {}) => {
+  const complete = async ({ fromRedeem = false } = {}) => {
     if (!userId || isCompleting) {
       return;
     }
@@ -66,7 +70,10 @@ export function InviteOnboardingDialog() {
 
       setDismissedUserId(expectedUserId);
     } catch {
-      if (!suppressErrorToast) {
+      // 적립 경로는 토스트 대신 다이얼로그 안에서 실패 안내·재시도를 제공한다.
+      if (fromRedeem) {
+        setCloseFailedUserId(expectedUserId);
+      } else {
         toast.error(TOAST_MESSAGE.INVITE_ONBOARDING_SAVE_FAILED);
       }
     } finally {
@@ -91,7 +98,7 @@ export function InviteOnboardingDialog() {
     }
 
     setRedeemedUserId(userId);
-    void complete({ suppressErrorToast: true });
+    void complete({ fromRedeem: true });
   };
 
   return (
@@ -106,22 +113,20 @@ export function InviteOnboardingDialog() {
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        {hasRedeemed ? (
+        {hasCloseFailed ? (
           <div
-            className="flex flex-col gap-3"
+            className="flex flex-col gap-6"
             role="status"
             aria-busy={isCompleting}>
-            {!isCompleting ? (
-              <p className="rounded-lg bg-muted p-4 text-sm">
-                500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요
-              </p>
-            ) : null}
+            <p className="rounded-lg bg-muted p-4 text-sm">
+              500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요
+            </p>
             <AlertDialogFooter>
               <AlertDialogAction
                 type="button"
                 className="col-span-full"
                 disabled={isCompleting}
-                onClick={() => void complete({ suppressErrorToast: true })}>
+                onClick={() => void complete({ fromRedeem: true })}>
                 {isCompleting ? <Spinner /> : '닫기'}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -130,6 +135,7 @@ export function InviteOnboardingDialog() {
           <InviteOnboardingCodeForm
             key={userId}
             disabled={isCompleting}
+            isSubmitPending={isCompleting && hasRedeemed}
             onSuccess={handleRedeemSuccess}
             onSkip={handleSkip}
           />
