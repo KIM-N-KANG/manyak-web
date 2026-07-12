@@ -2,6 +2,7 @@
 
 import { type SubmitEvent, useId, useState } from 'react';
 
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -55,8 +56,15 @@ export function InviteCodeForm() {
               clearError();
             }}
           />
-          <Button className="shrink-0" type="submit" disabled={isRedeeming}>
-            {isRedeeming ? '등록 중...' : '등록'}
+          <Button
+            className="relative shrink-0"
+            type="submit"
+            disabled={isRedeeming}>
+            <LoadingButtonContent
+              isLoading={isRedeeming}
+              loadingLabel="초대 코드 등록 중">
+              등록
+            </LoadingButtonContent>
           </Button>
         </div>
         <FieldError id={errorId}>{errorMessage}</FieldError>

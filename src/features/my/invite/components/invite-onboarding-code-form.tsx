@@ -2,12 +2,12 @@
 
 import { type SubmitEvent, useId, useState } from 'react';
 
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 
 import { useRedeemInviteCode } from '../hooks/use-redeem-invite-code';
 
@@ -83,12 +83,12 @@ export function InviteOnboardingCodeForm({
           onClick={onSkip}>
           나중에 하기
         </Button>
-        <Button type="submit" disabled={isBusy}>
-          {isRedeeming || isSubmitPending ? (
-            <Spinner aria-label="등록 중" />
-          ) : (
-            '등록하기'
-          )}
+        <Button className="relative" type="submit" disabled={isBusy}>
+          <LoadingButtonContent
+            isLoading={isRedeeming || isSubmitPending}
+            loadingLabel="등록 중">
+            등록하기
+          </LoadingButtonContent>
         </Button>
       </DialogFooter>
     </form>

@@ -72,17 +72,60 @@ test.describe('피드백 제출', () => {
     expect(submittedBody).toMatchObject({ email: null });
   });
 
-  test('본문이 비어 있으면 제출 버튼이 비활성화된다', async ({ page }) => {
+  test('본문이 비어 있으면 버튼 위에 오류를 표시하고 입력하면 해제한다', async ({
+    page,
+  }) => {
     await skipOnboarding(page);
     await page.goto('/my/feedback');
 
     const submit = page.getByRole('button', { name: '피드백 보내기' });
+    const footer = submit.locator('..');
+    const validationError = page.getByText('피드백 내용을 입력해주세요');
 
-    await expect(submit).toBeDisabled();
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(footer.getByText('피드백 내용을 입력해주세요')).toBeVisible();
 
-    // 공백만 입력해도 trim 후 비어 있으므로 비활성 유지
-    await page.getByRole('textbox', { name: '피드백 내용' }).fill('   ');
-    await expect(submit).toBeDisabled();
+    await page.getByRole('textbox', { name: '피드백 내용' }).fill('개선 의견');
+    await expect(validationError).toBeHidden();
+  });
+
+  test('피드백 제출 중 버튼 문구 대신 스피너를 표시한다', async ({ page }) => {
+    let releaseResponse!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+
+    await page.route(FEEDBACK_ENDPOINT, async (route) => {
+      await responseGate;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: '',
+      });
+    });
+
+    await skipOnboarding(page);
+    await page.goto('/my/feedback');
+    await page
+      .getByRole('textbox', { name: '피드백 내용' })
+      .fill('로딩 상태 확인');
+
+    const submit = page.getByRole('button', { name: '피드백 보내기' });
+
+    await submit.click();
+
+    const loadingSpinner = page.getByLabel('피드백 전송 중');
+
+    await expect(loadingSpinner).toBeVisible();
+    await expect(
+      loadingSpinner.locator('xpath=ancestor::button'),
+    ).toBeDisabled();
+
+    releaseResponse();
+    await expect(
+      page.getByText('소중한 피드백을 보내주셔서 감사해요'),
+    ).toBeVisible();
   });
 
   test('제출이 실패하면 오류 안내가 뜬다 (US-7-3)', async ({ page }) => {

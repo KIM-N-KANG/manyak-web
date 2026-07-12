@@ -21,12 +21,12 @@ describe('resolveInviteCodeError', () => {
     [
       new FetchError('bad', 400, { code: 'BAD_REQUEST' }),
       'not_found',
-      '코드를 다시 확인해 주세요',
+      '코드를 다시 확인해주세요',
     ],
     [
       new FetchError('missing', 404, { code: 'NOT_FOUND' }),
       'not_found',
-      '코드를 다시 확인해 주세요',
+      '코드를 다시 확인해주세요',
     ],
     [
       new FetchError('self', 409, { code: 'INVITE_SELF_CODE' }),
@@ -48,7 +48,7 @@ describe('resolveInviteCodeError', () => {
   it('알 수 없는 오류는 network로 분류한다', () => {
     expect(resolveInviteCodeError(new Error('offline'))).toEqual({
       errorType: 'network',
-      message: '초대 코드 입력에 실패했어요. 잠시 후 다시 시도해 주세요',
+      message: '초대 코드 입력에 실패했어요',
     });
   });
 
@@ -60,7 +60,7 @@ describe('resolveInviteCodeError', () => {
   ])('재시도 가능한 API 오류는 network로 분류한다', (error) => {
     expect(resolveInviteCodeError(error)).toEqual({
       errorType: 'network',
-      message: '초대 코드 입력에 실패했어요. 잠시 후 다시 시도해 주세요',
+      message: '초대 코드 입력에 실패했어요',
     });
   });
 });

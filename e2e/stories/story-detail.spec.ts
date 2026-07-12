@@ -182,6 +182,36 @@ test.describe('스토리 상세', () => {
     });
   });
 
+  test('새 채팅 시작 중 버튼 문구 대신 스피너를 표시한다', async ({ page }) => {
+    let releaseResponse!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+    await page.route('**/api/v1/chats', async (route) => {
+      await responseGate;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'c1', storyId: 's1', prologue: '프롤로그' }),
+      });
+    });
+
+    await page.goto('/stories/s1');
+    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+
+    const loadingSpinner = page.getByLabel('새 채팅 시작 중');
+
+    await expect(loadingSpinner).toBeVisible();
+    await expect(
+      loadingSpinner.locator('xpath=ancestor::button'),
+    ).toBeDisabled();
+
+    releaseResponse();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+  });
+
   test('스토리를 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-4-3)', async ({
     page,
   }) => {

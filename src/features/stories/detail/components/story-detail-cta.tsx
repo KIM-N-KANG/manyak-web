@@ -1,6 +1,7 @@
 'use client';
 
 import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
 
@@ -32,10 +33,15 @@ export function StoryDetailCta({
           <Button
             type="button"
             size="lg"
-            className="w-full"
+            className="relative w-full"
+            aria-busy={isStarting}
             disabled={isStarting}
             onClick={startChat}>
-            {isStarting ? '새 채팅을 시작하는 중...' : '새 채팅 시작하기'}
+            <LoadingButtonContent
+              isLoading={isStarting}
+              loadingLabel="새 채팅 시작 중">
+              새 채팅 시작하기
+            </LoadingButtonContent>
           </Button>
         </div>
       </nav>

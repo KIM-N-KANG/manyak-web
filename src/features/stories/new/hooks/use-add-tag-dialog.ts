@@ -16,9 +16,24 @@ type UseAddTagDialogArgs = {
 export function useAddTagDialog({ category, onAddTag }: UseAddTagDialogArgs) {
   const [isOpen, setIsOpen] = useState(false);
   const [tag, setTag] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleTagChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    setTag(event.target.value.slice(0, ADD_TAG_MAX_LENGTH));
+    const nextTag = event.target.value.slice(0, ADD_TAG_MAX_LENGTH);
+
+    setTag(nextTag);
+
+    if (nextTag.trim()) {
+      setValidationError(null);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+
+    if (!open) {
+      setValidationError(null);
+    }
   };
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -27,9 +42,12 @@ export function useAddTagDialog({ category, onAddTag }: UseAddTagDialogArgs) {
     const trimmedTag = tag.trim();
 
     if (!trimmedTag) {
+      setValidationError('키워드를 입력해주세요');
+
       return;
     }
 
+    setValidationError(null);
     track('client_storyCreate_addTag_submitted', { category });
     onAddTag(trimmedTag);
     setTag('');
@@ -38,10 +56,10 @@ export function useAddTagDialog({ category, onAddTag }: UseAddTagDialogArgs) {
 
   return {
     isOpen,
-    setIsOpen,
+    handleOpenChange,
     tag,
+    validationError,
     handleTagChange,
     handleSubmit,
-    isSubmitDisabled: tag.trim().length === 0,
   };
 }

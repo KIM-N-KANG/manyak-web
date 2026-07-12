@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Field, FieldGroup } from '@/components/ui/field';
+import { Field, FieldError, FieldGroup } from '@/components/ui/field';
 import {
   InputGroup,
   InputGroupAddon,
@@ -44,15 +44,16 @@ export function AddTagDialog({
 }: AddTagDialogProps) {
   const {
     isOpen,
-    setIsOpen,
+    handleOpenChange,
     tag,
+    validationError,
     handleTagChange,
     handleSubmit,
-    isSubmitDisabled,
   } = useAddTagDialog({ category, onAddTag });
+  const errorId = `${category}-tag-error`;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
           <Button type="button" variant="secondary" disabled={disabled}>
@@ -68,7 +69,10 @@ export function AddTagDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="contents">
           <FieldGroup>
-            <Field className="gap-2" aria-labelledby={`${category}-tag`}>
+            <Field
+              className="gap-2"
+              data-invalid={validationError ? true : undefined}
+              aria-labelledby={`${category}-tag`}>
               <Label htmlFor={`${category}-tag`}>키워드</Label>
               <InputGroup>
                 <InputGroupTextarea
@@ -78,6 +82,8 @@ export function AddTagDialog({
                   maxLength={ADD_TAG_MAX_LENGTH}
                   rows={1}
                   value={tag}
+                  aria-invalid={validationError ? true : undefined}
+                  aria-describedby={validationError ? errorId : undefined}
                   onChange={handleTagChange}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
@@ -92,6 +98,7 @@ export function AddTagDialog({
                   </InputGroupText>
                 </InputGroupAddon>
               </InputGroup>
+              <FieldError id={errorId}>{validationError}</FieldError>
             </Field>
           </FieldGroup>
           <DialogFooter>
@@ -102,9 +109,7 @@ export function AddTagDialog({
                 </Button>
               }
             />
-            <Button type="submit" disabled={isSubmitDisabled}>
-              추가하기
-            </Button>
+            <Button type="submit">추가하기</Button>
           </DialogFooter>
         </form>
       </DialogContent>

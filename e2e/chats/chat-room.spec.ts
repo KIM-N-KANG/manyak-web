@@ -50,6 +50,75 @@ test.describe('채팅 스트리밍', () => {
     ).toBeVisible();
   });
 
+  test('빈 입력의 Play 버튼이 추천 입력을 랜덤 전송한다', async ({ page }) => {
+    const completedTurn = {
+      id: 1,
+      userInput: '던전에 진입한다',
+      aiOutput: '문이 서서히 열린다.',
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1
+            ? chatDetail([], ['던전에 진입한다'])
+            : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"문이 서서히 열린다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"문이 서서히 열린다."}\n\n',
+        ]),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const randomSendButton = page.getByRole('button', {
+      name: '추천 입력 랜덤 전송',
+    });
+
+    await expect(randomSendButton).toBeEnabled();
+    await randomSendButton.click();
+    await expect(page.getByText('던전에 진입한다')).toBeVisible();
+  });
+
+  test('입력과 추천이 모두 없으면 Play 버튼이 비활성화되고 입력하면 전송 상태가 된다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([], [])),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    await expect(
+      page.getByRole('button', { name: '추천 입력 랜덤 전송' }),
+    ).toBeDisabled();
+
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('직접 입력한다');
+    await expect(page.getByRole('button', { name: '전송' })).toBeEnabled();
+  });
+
   test('메시지를 전송하면 응답이 스트리밍되어 누적된다 (US-6-2·6-3)', async ({
     page,
   }) => {

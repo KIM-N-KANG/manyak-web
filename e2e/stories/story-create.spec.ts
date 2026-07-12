@@ -30,6 +30,36 @@ const storylinesResponse = {
 };
 
 test.describe('스토리 생성', () => {
+  test('직접 키워드가 비어 있으면 인풋 아래 오류를 표시하고 입력하면 해제한다', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tags),
+      });
+    });
+
+    await page.goto('/stories/new');
+    await page.getByRole('button', { name: '키워드 추가' }).click();
+
+    const dialog = page.getByRole('dialog');
+    const input = dialog.getByRole('textbox', { name: '키워드' });
+    const addButton = dialog.getByRole('button', { name: '추가하기' });
+    const validationError = dialog.getByText('키워드를 입력해주세요', {
+      exact: true,
+    });
+
+    await expect(addButton).toBeEnabled();
+    await addButton.click();
+    await expect(validationError).toBeVisible();
+    await input.fill('타임루프');
+    await expect(validationError).toBeHidden();
+    await addButton.click();
+    await expect(page.getByRole('button', { name: '타임루프' })).toBeVisible();
+  });
+
   test('필수 키워드 없이 다음을 누르면 오류를 표시하고 선택하면 해제한다', async ({
     page,
   }) => {
@@ -44,13 +74,13 @@ test.describe('스토리 생성', () => {
     await page.goto('/stories/new');
 
     const nextButton = page.getByRole('button', { name: '다음' });
-    const validationError = page.getByText('키워드를 하나 이상 선택해주세요.');
+    const validationError = page.getByText('키워드를 하나 이상 선택해주세요');
     const footer = page.getByRole('navigation').filter({ has: nextButton });
 
     await expect(nextButton).toBeEnabled();
     await nextButton.click();
     await expect(
-      footer.getByText('키워드를 하나 이상 선택해주세요.'),
+      footer.getByText('키워드를 하나 이상 선택해주세요'),
     ).toBeVisible();
     await expect(page.getByRole('tab', { name: /장르/ })).toHaveAttribute(
       'aria-selected',
@@ -181,9 +211,7 @@ test.describe('스토리 생성', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    await expect(
-      page.getByText('스토리를 완성하지 못했어요. 잠시 후 다시 시도해주세요.'),
-    ).toBeVisible();
+    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );

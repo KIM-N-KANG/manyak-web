@@ -233,6 +233,56 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     expect(requestBody).toEqual({ code: INVITE_CODE });
   });
 
+  test('코드 등록 중 버튼 크기를 유지한 채 스피너를 표시한다', async ({
+    page,
+  }) => {
+    await prepareMemberInvitePage(page);
+
+    let markRequestReceived = () => {};
+    let releaseRedeem = () => {};
+    const requestReceived = new Promise<void>((resolve) => {
+      markRequestReceived = resolve;
+    });
+    const redeemReleased = new Promise<void>((resolve) => {
+      releaseRedeem = resolve;
+    });
+
+    await page.route(REDEEM_API, async (route) => {
+      markRequestReceived();
+      await redeemReleased;
+      await route.fulfill({ json: { amount: 500, balance: 1_000 } });
+    });
+    await page.goto('/my/invite');
+
+    await page.getByLabel('초대 코드', { exact: true }).fill('friend1');
+
+    const submitButton = page.getByRole('button', {
+      name: '등록',
+      exact: true,
+    });
+    const initialWidth = await submitButton.evaluate(
+      (button) => (button as HTMLElement).offsetWidth,
+    );
+
+    await submitButton.click();
+    await requestReceived;
+
+    try {
+      const loadingSpinner = page.getByLabel('초대 코드 등록 중');
+      const loadingButton = loadingSpinner.locator('xpath=ancestor::button');
+
+      await expect(loadingSpinner).toBeVisible();
+      await expect(loadingButton).toBeDisabled();
+      expect(
+        await loadingButton.evaluate(
+          (button) => (button as HTMLElement).offsetWidth,
+        ),
+      ).toBe(initialWidth);
+    } finally {
+      releaseRedeem();
+    }
+  });
+
   test('빈 코드는 API를 호출하지 않고 인라인 오류를 표시한다', async ({
     page,
   }) => {
@@ -250,7 +300,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
 
     await expect(
       page.locator('[data-slot="field-error"][role="alert"]'),
-    ).toHaveText('코드를 입력해 주세요');
+    ).toHaveText('코드를 입력해주세요');
     await expect(page.getByLabel('초대 코드', { exact: true })).toHaveAttribute(
       'aria-invalid',
       'true',
@@ -369,7 +419,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     {
       status: 404,
       code: 'NOT_FOUND',
-      message: '코드를 다시 확인해 주세요',
+      message: '코드를 다시 확인해주세요',
     },
     {
       status: 409,
@@ -384,7 +434,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     {
       status: 500,
       code: 'INTERNAL_SERVER_ERROR',
-      message: '초대 코드 입력에 실패했어요. 잠시 후 다시 시도해 주세요',
+      message: '초대 코드 입력에 실패했어요',
     },
   ] as const;
 
@@ -715,16 +765,27 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await page.goto('/');
 
     const input = page.getByLabel('초대 코드', { exact: true });
+    const submitButton = page.getByRole('button', { name: '등록하기' });
+    const initialWidth = await submitButton.evaluate(
+      (button) => (button as HTMLElement).offsetWidth,
+    );
 
     await input.fill('friend1');
-    await page.getByRole('button', { name: '등록하기' }).click();
+    await submitButton.click();
     await requestReceived;
 
     try {
       await expect(input).toBeDisabled();
-      await expect(
-        page.getByRole('button', { name: '등록 중' }),
-      ).toBeDisabled();
+
+      const loadingSpinner = page.getByLabel('등록 중');
+      const loadingButton = loadingSpinner.locator('xpath=ancestor::button');
+
+      await expect(loadingButton).toBeDisabled();
+      expect(
+        await loadingButton.evaluate(
+          (button) => (button as HTMLElement).offsetWidth,
+        ),
+      ).toBe(initialWidth);
       await expect(
         page.getByRole('button', { name: '나중에 하기' }),
       ).toBeDisabled();

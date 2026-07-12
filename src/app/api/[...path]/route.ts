@@ -110,7 +110,7 @@ const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
   // 일시 오류로 응답해 클라이언트 재시도에 맡긴다. 세션은 보존돼 있다.
   if (auth.status === 'degraded') {
     return Response.json(
-      '일시적인 인증 오류입니다. 잠시 후 다시 시도해 주세요.',
+      '일시적인 인증 오류입니다. 잠시 후 다시 시도해주세요.',
       {
         status: 503,
       },
