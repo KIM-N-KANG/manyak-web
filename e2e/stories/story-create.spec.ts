@@ -112,7 +112,13 @@ test.describe('스토리 생성', () => {
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '용감한' }).click();
     await page.getByRole('button', { name: '다음' }).click();
-    await page.getByRole('button', { name: '스토리라인 만들기' }).click();
+
+    const createStorylineButton = page.getByRole('button', {
+      name: '스토리라인 만들기',
+    });
+
+    await expect(createStorylineButton).toHaveAttribute('aria-busy', 'false');
+    await createStorylineButton.click();
 
     // Step 2: 스토리라인 선택
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();

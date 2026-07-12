@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { TAG_CATEGORIES } from '../../constants';
 import { useStoryTagStep } from '../../hooks/use-story-tag-step';
 import type { TagCategory } from '../../types';
+import { LoadingButtonContent } from '../shared/loading-button-content';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
@@ -79,11 +80,21 @@ export function StoryTagStepSection({
           <Button
             type="button"
             size="lg"
+            className="relative"
+            aria-busy={isGeneratingStorylines}
             disabled={isGeneratingStorylines}
             onClick={
               isLastCategory ? handleGenerateStorylines : goToNextCategory
             }>
-            {isLastCategory ? '스토리라인 만들기' : '다음'}
+            {isLastCategory ? (
+              <LoadingButtonContent
+                isLoading={isGeneratingStorylines}
+                loadingLabel="스토리라인 생성 중">
+                스토리라인 만들기
+              </LoadingButtonContent>
+            ) : (
+              '다음'
+            )}
           </Button>
         </>
       }>
