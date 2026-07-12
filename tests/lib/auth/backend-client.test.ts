@@ -22,6 +22,39 @@ afterEach(() => {
 });
 
 describe('loginWithGoogleOnServer', () => {
+  it('백엔드 요청의 기본 타임아웃은 180초다', async () => {
+    vi.useFakeTimers();
+    fetchMock.mockImplementation(
+      (_url: string, options: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = options.signal;
+
+          signal?.addEventListener('abort', () => {
+            reject(signal.reason);
+          });
+        }),
+    );
+
+    try {
+      const promise = loginWithGoogleOnServer('id-token');
+      const assertion = expect(promise).rejects.toMatchObject({
+        name: 'TimeoutError',
+      });
+
+      await vi.advanceTimersByTimeAsync(180 * 1000 - 1);
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+      expect(init.signal).toBeDefined();
+      expect(init.signal?.aborted).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('idToken을 /api/v1/auth/login/google로 POST하고 토큰 응답을 반환한다', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
@@ -35,33 +68,6 @@ describe('loginWithGoogleOnServer', () => {
 
     expect(url).toBe('https://backend.example.com/api/v1/auth/login/google');
     expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
-  });
-
-  it('inviteCode를 함께 주면 요청 body에 포함한다', async () => {
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
-    );
-
-    await loginWithGoogleOnServer('id-token', 'CW6VZX7D');
-
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-
-    expect(JSON.parse(init.body as string)).toEqual({
-      idToken: 'id-token',
-      inviteCode: 'CW6VZX7D',
-    });
-  });
-
-  it('inviteCode가 null이면 body에 싣지 않는다', async () => {
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
-    );
-
-    await loginWithGoogleOnServer('id-token', null);
-
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
   });
 

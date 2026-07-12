@@ -29,7 +29,7 @@ export function MyPage() {
   const handleLogout = () => {
     track('client_account_logoutButton_clicked');
     resetAnalyticsUser();
-    void signOut({ redirectTo: APP_PATH.MAIN.MY });
+    void signOut({ redirectTo: APP_PATH.MAIN.MORE });
   };
 
   return (
@@ -44,7 +44,7 @@ export function MyPage() {
           <MyMenuItem
             icon={AddTeamIcon}
             label="친구 초대"
-            href={APP_PATH.MY_INVITE}
+            href={APP_PATH.MORE_INVITE}
           />
         </section>
       )}
@@ -55,7 +55,7 @@ export function MyPage() {
         <MyMenuItem
           icon={MailEdit01Icon}
           label="피드백"
-          href={APP_PATH.MY_FEEDBACK}
+          href={APP_PATH.MORE_FEEDBACK}
         />
       </section>
       {isAuthenticated && (

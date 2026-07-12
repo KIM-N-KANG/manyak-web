@@ -6,6 +6,7 @@ import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
+import { PlayFilledIcon } from '@/components/icons/play-filled-icon';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -25,6 +26,8 @@ type ChatBlockInputProps = {
   onUpdateBlock: (id: string, value: string) => void;
   onRegisterInput: (id: string, element: HTMLTextAreaElement | null) => void;
   onSend: () => void;
+  hasSuggestions: boolean;
+  onSendRandomSuggestion: () => void;
   disabled: boolean;
 };
 
@@ -35,12 +38,24 @@ export function ChatBlockInput({
   onUpdateBlock,
   onRegisterInput,
   onSend,
+  hasSuggestions,
+  onSendRandomSuggestion,
   disabled,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const canSend =
-    !disabled && blocks.some((block) => block.value.trim().length > 0);
+  const hasInput = blocks.some((block) => block.value.trim().length > 0);
+  const canSend = !disabled && (hasInput || hasSuggestions);
+
+  const handleSend = () => {
+    if (hasInput) {
+      onSend();
+
+      return;
+    }
+
+    onSendRandomSuggestion();
+  };
 
   const requestRemoveBlock = (block: InputBlock) => {
     if (block.value.trim().length > 0) {
@@ -88,7 +103,7 @@ export function ChatBlockInput({
                     onUpdateBlock(block.id, event.target.value)
                   }
                   onKeyDown={(event) =>
-                    submitOnShortcut(event, canSend, onSend)
+                    submitOnShortcut(event, canSend, handleSend)
                   }
                   className={cn(
                     'max-h-[4lh] resize-none py-2.25',
@@ -134,11 +149,15 @@ export function ChatBlockInput({
         <Button
           type="button"
           size="icon-sm"
-          aria-label="전송"
+          aria-label={hasInput ? '전송' : '추천 입력 랜덤 전송'}
           disabled={!canSend}
-          onClick={onSend}
+          onClick={handleSend}
           className="ml-auto">
-          <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
+          {hasInput ? (
+            <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
+          ) : (
+            <PlayFilledIcon aria-hidden="true" />
+          )}
         </Button>
       </div>
 

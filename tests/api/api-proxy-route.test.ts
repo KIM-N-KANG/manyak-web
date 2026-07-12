@@ -238,6 +238,9 @@ describe('api proxy route', () => {
       );
 
       expect(response.status).toBe(503);
+      await expect(response.json()).resolves.toBe(
+        '일시적인 인증 오류입니다. 잠시 후 다시 시도해주세요.',
+      );
       // 세션은 보존된 일시 실패이므로 능동 로그아웃 신호를 보내지 않는다.
       expect(response.headers.get('x-manyak-session-expired')).toBeNull();
     } finally {

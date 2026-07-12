@@ -2,14 +2,13 @@ export const APP_PATH = {
   MAIN: {
     STORIES: '/',
     CHATS: '/chats',
-    MY: '/my',
+    MORE: '/more',
   },
   LOGIN: '/login',
   TERMS: '/terms',
   PRIVACY: '/privacy',
-  MY_FEEDBACK: '/my/feedback',
-  MY_INVITE: '/my/invite',
-  INVITE: (code: string) => `/invite/${code}`,
+  MORE_FEEDBACK: '/more/feedback',
+  MORE_INVITE: '/more/invite',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   CREATOR: {

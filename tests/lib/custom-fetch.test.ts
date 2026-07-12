@@ -8,6 +8,8 @@ vi.mock('@/observability/monitoring/sentry', () => ({
 
 import { customFetch } from '@/lib/custom-fetch';
 
+const API_TIMEOUT_MS = 180 * 1000;
+
 /** signal이 abort되면 그 reason으로 거부하는 fetch 목. */
 function abortAwareFetch() {
   return vi.fn(
@@ -31,6 +33,26 @@ describe('customFetch 타임아웃', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it('기본 타임아웃은 180초다', async () => {
+    const fetchMock = abortAwareFetch();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = customFetch.get('/stories');
+    const assertion = expect(promise).rejects.toMatchObject({
+      name: 'TimeoutError',
+    });
+
+    await vi.advanceTimersByTimeAsync(API_TIMEOUT_MS - 1);
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(options.signal?.aborted).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await assertion;
   });
 
   it('타임아웃은 AbortError가 아닌 TimeoutError로 거부하고 Sentry로 캡처한다', async () => {

@@ -108,12 +108,15 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   };
 
   const { mode, changeMode } = useChatInputMode();
+  const suggestions =
+    turns.length === 0 ? suggestedInputs : (turns.at(-1)?.choices ?? []);
 
   const composer = useChatComposer({
     chatId,
     turnCount: turns.length,
     isStreaming,
     inputMode: mode,
+    suggestions,
     onSend: guardedSend,
   });
 

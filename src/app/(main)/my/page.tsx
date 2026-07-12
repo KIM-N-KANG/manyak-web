@@ -1,5 +1,7 @@
-import { MyPage } from '@/features/my/components/my-page';
+import { redirect } from 'next/navigation';
 
-export default function MyRoutePage() {
-  return <MyPage />;
+import { APP_PATH } from '@/constants/app-path';
+
+export default function LegacyMyPage() {
+  redirect(APP_PATH.MAIN.MORE);
 }

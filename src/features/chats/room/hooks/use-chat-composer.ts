@@ -6,6 +6,7 @@ import {
   parseInputBlocks,
   serializeInputBlocks,
 } from '../lib/input-blocks';
+import { getRandomSuggestion } from '../lib/random-suggestion';
 import { useChatBlockComposer } from './use-chat-block-composer';
 import { type ChatInputMode } from './use-chat-input-mode';
 import { useChatPlainComposer } from './use-chat-plain-composer';
@@ -16,6 +17,7 @@ type UseChatComposerParams = {
   turnCount: number;
   isStreaming: boolean;
   inputMode: ChatInputMode;
+  suggestions: string[];
   onSend: (text: string) => void;
 };
 
@@ -28,6 +30,7 @@ export function useChatComposer({
   turnCount,
   isStreaming,
   inputMode,
+  suggestions,
   onSend,
 }: UseChatComposerParams) {
   const { submitText, submitChoice, trackChoiceFill } = useChatSubmitActions({
@@ -79,6 +82,14 @@ export function useChatComposer({
     }
   };
 
+  const sendRandomSuggestion = () => {
+    const suggestion = getRandomSuggestion(suggestions);
+
+    if (suggestion) {
+      sendChoice(suggestion.text, suggestion.position);
+    }
+  };
+
   const fillChoice = (text: string, position: number) => {
     trackChoiceFill(position);
 
@@ -114,6 +125,7 @@ export function useChatComposer({
     textareaRef: plainComposer.textareaRef,
     blocks: blockComposer.blocks,
     hasDraft,
+    hasSuggestions: suggestions.some((suggestion) => suggestion.trim()),
     addBlock,
     removeBlock,
     updateBlock: blockComposer.updateBlock,
@@ -121,6 +133,7 @@ export function useChatComposer({
     sendBlocks: blockComposer.send,
     send: plainComposer.send,
     sendChoice,
+    sendRandomSuggestion,
     fillChoice,
     insertEmphasis,
     convertTo,

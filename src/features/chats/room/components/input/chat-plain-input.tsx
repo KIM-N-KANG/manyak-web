@@ -5,6 +5,7 @@ import { type SubmitEvent } from 'react';
 import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { PlayFilledIcon } from '@/components/icons/play-filled-icon';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -18,6 +19,8 @@ type ChatPlainInputProps = {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
+  hasSuggestions: boolean;
+  onSendRandomSuggestion: () => void;
   onInsertEmphasis: () => void;
   disabled: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -27,17 +30,30 @@ export function ChatPlainInput({
   value,
   onChange,
   onSend,
+  hasSuggestions,
+  onSendRandomSuggestion,
   onInsertEmphasis,
   disabled,
   textareaRef,
 }: ChatPlainInputProps) {
-  const canSend = value.trim().length > 0 && !disabled;
+  const hasInput = value.trim().length > 0;
+  const canSend = !disabled && (hasInput || hasSuggestions);
+
+  const handleSend = () => {
+    if (hasInput) {
+      onSend();
+
+      return;
+    }
+
+    onSendRandomSuggestion();
+  };
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (canSend) {
-      onSend();
+      handleSend();
     }
   };
 
@@ -52,7 +68,7 @@ export function ChatPlainInput({
             placeholder="이야기를 어떻게 이어갈까요?"
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
-            onKeyDown={(event) => submitOnShortcut(event, canSend, onSend)}
+            onKeyDown={(event) => submitOnShortcut(event, canSend, handleSend)}
             className="max-h-[20dvh] pb-0"
           />
           <InputGroupAddon align="block-end" className="pt-2.5">
@@ -69,10 +85,14 @@ export function ChatPlainInput({
               type="submit"
               variant="default"
               size="icon-sm"
-              aria-label="전송"
+              aria-label={hasInput ? '전송' : '추천 입력 랜덤 전송'}
               disabled={!canSend}
               className="ml-auto">
-              <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
+              {hasInput ? (
+                <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
+              ) : (
+                <PlayFilledIcon aria-hidden="true" />
+              )}
             </Button>
           </InputGroupAddon>
         </InputGroup>

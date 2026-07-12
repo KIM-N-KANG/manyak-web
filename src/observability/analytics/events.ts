@@ -1,4 +1,8 @@
 import type { SimpleStoryTagListItemResponseCategory } from '@/api/generated/models';
+import {
+  type InviteCodeErrorType,
+  type InviteCodeSource,
+} from '@/features/my/invite/utils/invite-code';
 
 /** 스토리 생성 플로우의 단계 이름. */
 export type StepName =
@@ -134,6 +138,14 @@ export type AnalyticsEventProps = {
   client_invite_viewed: void;
   client_invite_copyButton_clicked: void;
   client_invite_kakaoShareButton_clicked: void;
+  client_invite_codeInput_submitted: { source: InviteCodeSource };
+  client_invite_codeInput_succeeded: { source: InviteCodeSource };
+  client_invite_codeInput_failed: {
+    source: InviteCodeSource;
+    error_type: InviteCodeErrorType;
+  };
+  client_inviteOnboarding_shown: void;
+  client_inviteOnboarding_skipped: void;
   // legal
   client_terms_viewed: void;
   client_privacy_viewed: void;

@@ -6,7 +6,12 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   reactCompiler: true,
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // 프로덕션 빌드에서 콘솔 로그를 제거하되, debug 레벨은 남긴다.
+    // 분석 비활성 환경(키 미주입 CI E2E·Vercel Preview)에서 track()이
+    // console.debug로 이벤트를 대체 출력하는 계약을 유지하기 위함이다.
+    removeConsole: process.env.NODE_ENV === 'production' && {
+      exclude: ['debug'],
+    },
   },
   images: {
     // 프로필 이미지 원격 호스트 화이트리스트. 백엔드가 자체 스토리지로

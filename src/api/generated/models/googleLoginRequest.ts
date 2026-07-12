@@ -15,9 +15,4 @@ export interface GoogleLoginRequest {
    * @minLength 1
    */
   idToken: string;
-  /**
-   * 초대 코드(선택). 최초 가입 시 함께 보내면 초대자·피초대자 양쪽에 크레딧을 적립한다. 미해결·자기 코드·이미 가입된 계정의 제출은 오류 없이 무시된다.
-   * @nullable
-   */
-  inviteCode?: string | null;
 }

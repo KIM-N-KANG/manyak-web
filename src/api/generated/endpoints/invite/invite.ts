@@ -9,21 +9,164 @@ import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
-import type { ErrorType } from '../../../mutator/custom-instance';
+import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
-import type { InviteResponse } from '../../models';
+import type {
+  InviteRedeemRequest,
+  InviteRedeemResponse,
+  InviteResponse,
+} from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export type redeemInviteCodeResponse200 = {
+  data: InviteRedeemResponse;
+  status: 200;
+};
+
+export type redeemInviteCodeResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type redeemInviteCodeResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type redeemInviteCodeResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type redeemInviteCodeResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type redeemInviteCodeResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type redeemInviteCodeResponseSuccess = redeemInviteCodeResponse200 & {
+  headers: Headers;
+};
+export type redeemInviteCodeResponseError = (
+  | redeemInviteCodeResponse400
+  | redeemInviteCodeResponse401
+  | redeemInviteCodeResponse403
+  | redeemInviteCodeResponse404
+  | redeemInviteCodeResponse409
+) & {
+  headers: Headers;
+};
+
+export type redeemInviteCodeResponse =
+  | redeemInviteCodeResponseSuccess
+  | redeemInviteCodeResponseError;
+
+export const getRedeemInviteCodeUrl = () => {
+  return `/api/v1/users/me/invite/redeem`;
+};
+
+/**
+ * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 각 500 크레딧을 적립합니다(스펙 §4-3-7, KNK-567). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한(10회)에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
+ * @summary 초대 코드 입력·보상 적립
+ */
+export const redeemInviteCode = async (
+  inviteRedeemRequest: InviteRedeemRequest,
+  options?: RequestInit,
+): Promise<redeemInviteCodeResponse> => {
+  return customInstance<redeemInviteCodeResponse>(getRedeemInviteCodeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(inviteRedeemRequest),
+  });
+};
+
+export const getRedeemInviteCodeMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof redeemInviteCode>>,
+    TError,
+    { data: BodyType<InviteRedeemRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof redeemInviteCode>>,
+  TError,
+  { data: BodyType<InviteRedeemRequest> },
+  TContext
+> => {
+  const mutationKey = ['redeemInviteCode'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof redeemInviteCode>>,
+    { data: BodyType<InviteRedeemRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return redeemInviteCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RedeemInviteCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof redeemInviteCode>>
+>;
+export type RedeemInviteCodeMutationBody = BodyType<InviteRedeemRequest>;
+export type RedeemInviteCodeMutationError = ErrorType<void>;
+
+/**
+ * @summary 초대 코드 입력·보상 적립
+ */
+export const useRedeemInviteCode = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof redeemInviteCode>>,
+      TError,
+      { data: BodyType<InviteRedeemRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof redeemInviteCode>>,
+  TError,
+  { data: BodyType<InviteRedeemRequest> },
+  TContext
+> => {
+  return useMutation(getRedeemInviteCodeMutationOptions(options), queryClient);
+};
 export type getMyInviteResponse200 = {
   data: InviteResponse;
   status: 200;
@@ -50,8 +193,8 @@ export const getGetMyInviteUrl = () => {
 };
 
 /**
- * 요청자의 고유 초대 코드와 공유 링크, 이번 KST 월 초대 보상 진행(monthlyRewardCount·monthlyRewardLimit)을 반환합니다. 코드가 없으면 최초 조회 시 발급하며, 이후에는 같은 코드를 반환합니다. 인증 필수입니다.
- * @summary 내 초대 코드·링크 조회
+ * 요청자의 고유 초대 코드와 이번 KST 월 초대 보상 진행(monthlyRewardCount·monthlyRewardLimit)을 반환합니다. 코드가 없으면 최초 조회 시 발급하며, 이후에는 같은 코드를 반환합니다. 인증 필수입니다.
+ * @summary 내 초대 코드 조회
  */
 export const getMyInvite = async (
   options?: RequestInit,
@@ -154,7 +297,7 @@ export function useGetMyInvite<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary 내 초대 코드·링크 조회
+ * @summary 내 초대 코드 조회
  */
 
 export function useGetMyInvite<

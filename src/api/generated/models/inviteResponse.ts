@@ -7,14 +7,12 @@
  */
 
 /**
- * 내 초대 코드·공유 링크
+ * 내 초대 코드·보상 진행
  */
 export interface InviteResponse {
-  /** 내 고유 초대 코드. 피초대자가 로그인 시 함께 보내면 양쪽에 크레딧이 적립된다. */
+  /** 내 고유 초대 코드(혼동 문자를 제외한 대문자+숫자 8자). 다른 회원이 이 코드를 POST /users/me/invite/redeem에 제출하면 양쪽에 크레딧이 적립된다(KNK-567). */
   inviteCode?: string;
-  /** 공유용 초대 링크(코드 포함). */
-  inviteUrl?: string;
-  /** 이번 KST 월에 요청자가 수령한 초대 보상 횟수. 초대 보상 판정과 동일하게 피초대자 가입 월 귀속 INVITE_REWARD 원장 집계이며, 상한에 도달하면 monthlyRewardLimit과 같아진다. */
+  /** 이번 KST 월에 요청자가 수령한 초대 보상 횟수. 초대 보상 판정과 동일하게 적립 시점 월 귀속 INVITE_REWARD 원장 집계이며, 상한에 도달하면 monthlyRewardLimit과 같아진다. */
   monthlyRewardCount?: number;
   /** 초대 보상 월 상한(현재 10). 정책 수치라 클라이언트 하드코딩을 피하도록 응답에 함께 싣는다. */
   monthlyRewardLimit?: number;

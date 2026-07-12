@@ -18,6 +18,7 @@ import {
 export function useFeedbackForm() {
   const [body, setBody] = useState('');
   const [email, setEmail] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const createFeedback = useCreateFeedback({
     mutation: {
@@ -25,6 +26,7 @@ export function useFeedbackForm() {
         toast.success(TOAST_MESSAGE.FEEDBACK_SUBMITTED);
         setBody('');
         setEmail('');
+        setValidationError(null);
       },
       onError: () => {
         toast.error(TOAST_MESSAGE.FEEDBACK_SUBMIT_FAILED);
@@ -33,7 +35,13 @@ export function useFeedbackForm() {
   });
 
   const handleBodyChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    setBody(event.target.value.slice(0, FEEDBACK_BODY_MAX_LENGTH));
+    const nextBody = event.target.value.slice(0, FEEDBACK_BODY_MAX_LENGTH);
+
+    setBody(nextBody);
+
+    if (nextBody.trim()) {
+      setValidationError(null);
+    }
   };
 
   const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -46,8 +54,12 @@ export function useFeedbackForm() {
     const trimmedBody = body.trim();
 
     if (!trimmedBody) {
+      setValidationError('피드백 내용을 입력해주세요');
+
       return;
     }
+
+    setValidationError(null);
 
     const trimmedEmail = email.trim();
 
@@ -67,7 +79,7 @@ export function useFeedbackForm() {
     handleBodyChange,
     handleEmailChange,
     handleSubmit,
-    canSubmit: body.trim().length > 0,
+    validationError,
     isSubmitting: createFeedback.isPending,
   };
 }

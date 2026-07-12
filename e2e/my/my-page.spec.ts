@@ -5,10 +5,10 @@ import {
   test,
 } from '../fixtures/test';
 
-test.describe('마이', () => {
+test.describe('더보기', () => {
   test('게스트는 게스트 표시와 로그인 버튼을 본다', async ({ page }) => {
     await skipOnboarding(page);
-    await page.goto('/my');
+    await page.goto('/more');
 
     await expect(page.getByText('게스트')).toBeVisible();
     await expect(page.getByRole('link', { name: '로그인' })).toBeVisible();
@@ -19,7 +19,7 @@ test.describe('마이', () => {
   test('회원은 닉네임과 로그아웃 버튼을 본다', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
-    await page.goto('/my');
+    await page.goto('/more');
 
     await expect(page.getByText('배고픈 송아지')).toBeVisible();
     await expect(page.getByRole('button', { name: /로그아웃/ })).toBeVisible();
@@ -48,7 +48,7 @@ test.describe('마이', () => {
         },
       }),
     );
-    await page.goto('/my');
+    await page.goto('/more');
 
     const avatar = page.locator('img[src^="data:image/png;base64,"]');
 
@@ -59,15 +59,31 @@ test.describe('마이', () => {
     );
   });
 
-  test('하단 탭은 스토리·채팅·마이 3개다', async ({ page }) => {
+  test('하단 탭은 홈·채팅·더보기 3개다', async ({ page }) => {
     await skipOnboarding(page);
-    await page.goto('/my');
+    await page.goto('/more');
 
     const nav = page.getByRole('navigation', { name: '하단 네비게이션' });
 
     await expect(nav.getByRole('link')).toHaveCount(3);
-    await expect(nav.getByRole('link', { name: /스토리/ })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /홈/ })).toBeVisible();
     await expect(nav.getByRole('link', { name: /채팅/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /마이/ })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /더보기/ })).toBeVisible();
   });
 });
+
+const legacyMoreRoutes = [
+  ['/my', '/more'],
+  ['/my/invite', '/more/invite'],
+  ['/my/feedback', '/more/feedback'],
+] as const;
+
+for (const [legacyPath, morePath] of legacyMoreRoutes) {
+  test(`${legacyPath}는 ${morePath}로 리다이렉트한다`, async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.goto(legacyPath);
+
+    await expect(page).toHaveURL(morePath);
+  });
+}

@@ -4,6 +4,7 @@ import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { SimpleStorylineResponse } from '@/api/generated/models';
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -20,7 +21,6 @@ import {
   ADDITIONAL_INFO_PLACEHOLDERS,
 } from '../../constants';
 import type { AdditionalInfoInput } from '../../types';
-import { LoadingButtonContent } from '../shared/loading-button-content';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
 import { SelectedStorylineContent } from '../storyline-step/selected-storyline-content';
@@ -199,8 +199,8 @@ export function StoryAdditionalInfoStepSection({
           {hasCompleteStoryError && (
             <StoryCreateErrorMessage className="px-4 pb-6">
               {isGuestLimitReached
-                ? '게스트 체험 횟수를 모두 사용했어요.'
-                : '스토리를 완성하지 못했어요. 잠시 후 다시 시도해주세요.'}
+                ? '게스트 체험 횟수를 모두 사용했어요'
+                : '스토리를 완성하지 못했어요'}
             </StoryCreateErrorMessage>
           )}
         </div>

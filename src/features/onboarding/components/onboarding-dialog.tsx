@@ -46,7 +46,9 @@ export function OnboardingDialog() {
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogAction className="w-full" onClick={handleStartCreate}>
+          <AlertDialogAction
+            className="col-span-full"
+            onClick={handleStartCreate}>
             첫 스토리 만들기
           </AlertDialogAction>
         </AlertDialogFooter>
