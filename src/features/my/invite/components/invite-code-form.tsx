@@ -1,48 +1,29 @@
 'use client';
 
-import { type SubmitEvent, useEffect, useId, useState } from 'react';
+import { type SubmitEvent, useId, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
 import { useRedeemInviteCode } from '../hooks/use-redeem-invite-code';
-import { type InviteCodeSource } from '../utils/invite-code';
 
-export function InviteCodeForm({
-  source,
-  onSuccess,
-  onPendingChange,
-  autoFocus = false,
-  disabled = false,
-}: {
-  source: InviteCodeSource;
-  onSuccess?: () => void;
-  onPendingChange?: (pending: boolean) => void;
-  autoFocus?: boolean;
-  disabled?: boolean;
-}) {
+export function InviteCodeForm() {
   const inputId = useId();
   const errorId = `${inputId}-error`;
   const [code, setCode] = useState('');
   const { redeemInviteCode, isRedeeming, errorMessage, clearError } =
     useRedeemInviteCode({
-      source,
+      source: 'invite_page',
       onSuccess: () => {
         setCode('');
-        onSuccess?.();
       },
     });
-  const isBusy = isRedeeming || disabled;
-
-  useEffect(() => {
-    onPendingChange?.(isBusy);
-  }, [isBusy, onPendingChange]);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (isBusy) {
+    if (isRedeeming) {
       return;
     }
 
@@ -50,34 +31,36 @@ export function InviteCodeForm({
   };
 
   return (
-    <form
-      className="flex w-full flex-col gap-3"
-      aria-busy={isBusy}
-      onSubmit={handleSubmit}>
-      <Field data-invalid={Boolean(errorMessage)}>
+    <form aria-busy={isRedeeming} onSubmit={handleSubmit}>
+      <Field
+        data-invalid={Boolean(errorMessage)}
+        className="gap-2"
+        aria-labelledby={inputId}>
         <FieldLabel htmlFor={inputId}>친구 초대 코드</FieldLabel>
-        <Input
-          id={inputId}
-          className="h-12 uppercase"
-          value={code}
-          disabled={isBusy}
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? errorId : undefined}
-          autoFocus={autoFocus}
-          autoCapitalize="characters"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="초대 코드를 입력해 주세요"
-          onChange={(event) => {
-            setCode(event.target.value.toUpperCase());
-            clearError();
-          }}
-        />
+        <div className="flex gap-2">
+          <Input
+            id={inputId}
+            className="flex-1 uppercase"
+            maxLength={8}
+            value={code}
+            disabled={isRedeeming}
+            aria-invalid={Boolean(errorMessage)}
+            aria-describedby={errorMessage ? errorId : undefined}
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="예: ABCD1234"
+            onChange={(event) => {
+              setCode(event.target.value.toUpperCase());
+              clearError();
+            }}
+          />
+          <Button className="shrink-0" type="submit" disabled={isRedeeming}>
+            {isRedeeming ? '등록 중...' : '등록'}
+          </Button>
+        </div>
         <FieldError id={errorId}>{errorMessage}</FieldError>
       </Field>
-      <Button className="w-full" type="submit" size="lg" disabled={isBusy}>
-        {isRedeeming ? '입력 중...' : '500 크레딧 받기'}
-      </Button>
     </form>
   );
 }

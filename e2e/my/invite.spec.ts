@@ -84,7 +84,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     );
     await expect(page.getByText('내 초대 코드', { exact: true })).toBeVisible();
     await expect(page.getByText(INVITE_CODE)).toBeVisible();
-    await expect(page.getByText('이번 달 3/10회')).toBeVisible();
+    await expect(page.getByText('이번 달 받은 보상 3/10회')).toBeVisible();
     await expect(
       page.getByRole('button', { name: '코드 복사하기' }),
     ).toBeVisible();
@@ -93,7 +93,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     ).toBeVisible();
     await expect(page.getByLabel('친구 초대 코드')).toBeVisible();
     await expect(
-      page.getByRole('button', { name: '500 크레딧 받기' }),
+      page.getByRole('button', { name: '등록', exact: true }),
     ).toBeVisible();
   });
 
@@ -118,7 +118,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 입력하기' }).click();
+    await page.getByRole('button', { name: '나중에 하기' }).click();
     await updateResponse;
     await page.waitForTimeout(200);
 
@@ -202,7 +202,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await mockKakaoSdk(page);
     await page.goto('/my/invite');
 
-    await expect(page.getByText('이번 달 10/10회')).toBeVisible();
+    await expect(page.getByText('이번 달 받은 보상 10/10회')).toBeVisible();
     await expect(
       page.getByRole('button', { name: '코드 복사하기' }),
     ).toBeEnabled();
@@ -224,8 +224,8 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     });
     await page.goto('/my/invite');
 
-    await page.getByLabel('친구 초대 코드').fill('  cw6vzx7d  ');
-    await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+    await page.getByLabel('친구 초대 코드').fill('cw6vzx7d');
+    await page.getByRole('button', { name: '등록', exact: true }).click();
 
     await expect(page.getByText('크레딧 500개를 받았어요')).toBeVisible();
     expect(requestBody).toEqual({ code: INVITE_CODE });
@@ -244,7 +244,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     });
     await page.goto('/my/invite');
 
-    await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+    await page.getByRole('button', { name: '등록', exact: true }).click();
 
     await expect(
       page.locator('[data-slot="field-error"][role="alert"]'),
@@ -395,7 +395,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
       await page.goto('/my/invite');
 
       await page.getByLabel('친구 초대 코드').fill('friend1');
-      await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+      await page.getByRole('button', { name: '등록', exact: true }).click();
 
       await expect(
         page.locator('[data-slot="field-error"][role="alert"]'),
@@ -458,11 +458,11 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
       dialog.getByRole('heading', { name: '초대 코드가 있나요?' }),
     ).toBeVisible();
     await expect(dialog).toContainText(
-      '친구에게 받은 초대 코드를 입력하면 나와 친구 모두 500 크레딧을 받아요.',
+      '친구에게 받은 초대 코드를 입력하면 500 크레딧을 받을 수 있어요',
     );
     await expect(dialog.getByLabel('친구 초대 코드')).toBeFocused();
     await expect(
-      dialog.getByRole('button', { name: '나중에 입력하기' }),
+      dialog.getByRole('button', { name: '나중에 하기' }),
     ).toBeVisible();
 
     await page.waitForTimeout(400);
@@ -473,7 +473,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     ).toHaveCount(0);
   });
 
-  test('나중에 입력하기를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
+  test('나중에 하기를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
     page,
   }) => {
     await preparePendingMember(page);
@@ -485,7 +485,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 입력하기' }).click();
+    await page.getByRole('button', { name: '나중에 하기' }).click();
 
     const response = await updateResponse;
 
@@ -517,14 +517,12 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 입력하기' }).click();
+    await page.getByRole('button', { name: '나중에 하기' }).click();
     await updateResponse;
 
     await expect(page.getByRole('alertdialog')).toBeVisible();
     await expect(
-      page.getByText(
-        '초대 코드 안내 상태를 저장하지 못했어요. 다시 시도해 주세요',
-      ),
+      page.getByText('안내 창을 닫지 못했어요. 다시 시도해 주세요'),
     ).toBeVisible();
 
     await page.reload();
@@ -551,23 +549,19 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     );
 
     await page.getByLabel('친구 초대 코드').fill('friend1');
-    await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+    await page.getByRole('button', { name: '등록하기' }).click();
     await updateResponse;
 
     await expect(page.getByText('크레딧 500개를 받았어요')).toBeVisible();
-    await expect(
-      page.getByText(
-        '초대 코드 안내 상태를 저장하지 못했어요. 다시 시도해 주세요',
-      ),
-    ).toBeVisible();
     await expect(page.getByRole('alertdialog')).toBeVisible();
     await expect(page.getByLabel('친구 초대 코드')).toHaveCount(0);
     await expect(
-      page.getByText(
-        '크레딧은 받았어요. 안내를 닫으려면 상태 저장을 다시 시도해 주세요.',
-      ),
+      page.getByText('500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요'),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: '다시 시도' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '닫기' })).toBeVisible();
+    await expect(
+      page.getByText('안내 창을 닫지 못했어요. 다시 시도해 주세요'),
+    ).toHaveCount(0);
   });
 
   test('열려 있던 게스트 온보딩은 인증 전환 시 닫혀 초대 다이얼로그와 겹치지 않는다', async ({
@@ -632,7 +626,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     );
 
     await page.getByLabel('친구 초대 코드').fill('friend1');
-    await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+    await page.getByRole('button', { name: '등록하기' }).click();
     await updateResponse;
 
     await expect(page.getByText('크레딧 500개를 받았어요')).toBeVisible();
@@ -666,16 +660,16 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     const input = page.getByLabel('친구 초대 코드');
 
     await input.fill('friend1');
-    await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+    await page.getByRole('button', { name: '등록하기' }).click();
     await requestReceived;
 
     try {
       await expect(input).toBeDisabled();
       await expect(
-        page.getByRole('button', { name: '입력 중...' }),
+        page.getByRole('button', { name: '등록 중...' }),
       ).toBeDisabled();
       await expect(
-        page.getByRole('button', { name: '나중에 입력하기' }),
+        page.getByRole('button', { name: '나중에 하기' }),
       ).toBeDisabled();
       await expect(
         page.getByRole('alertdialog').locator('form'),
@@ -716,7 +710,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     const input = page.getByLabel('친구 초대 코드');
 
     await input.fill('mycode');
-    await page.getByRole('button', { name: '500 크레딧 받기' }).click();
+    await page.getByRole('button', { name: '등록하기' }).click();
 
     await expect(page.getByRole('alertdialog')).toBeVisible();
     await expect(input).toHaveAttribute('aria-invalid', 'true');

@@ -7,25 +7,24 @@ import { toast } from 'sonner';
 
 import {
   AlertDialog,
-  AlertDialogCancel,
+  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { track } from '@/observability/analytics';
 
-import { InviteCodeForm } from './invite-code-form';
+import { InviteOnboardingCodeForm } from './invite-onboarding-code-form';
 
 export function InviteOnboardingDialog() {
   const { data: session, status, update } = useSession();
   const [dismissedUserId, setDismissedUserId] = useState<string | null>(null);
   const [completingUserId, setCompletingUserId] = useState<string | null>(null);
   const [redeemedUserId, setRedeemedUserId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const shownUserIdRef = useRef<string | null>(null);
   const userId = session?.user.id ?? null;
   const isCompleting = userId !== null && completingUserId === userId;
@@ -43,7 +42,7 @@ export function InviteOnboardingDialog() {
     }
   }, [isOpen, userId]);
 
-  const complete = async () => {
+  const complete = async ({ suppressErrorToast = false } = {}) => {
     if (!userId || isCompleting) {
       return;
     }
@@ -67,7 +66,9 @@ export function InviteOnboardingDialog() {
 
       setDismissedUserId(expectedUserId);
     } catch {
-      toast.error(TOAST_MESSAGE.INVITE_ONBOARDING_SAVE_FAILED);
+      if (!suppressErrorToast) {
+        toast.error(TOAST_MESSAGE.INVITE_ONBOARDING_SAVE_FAILED);
+      }
     } finally {
       setCompletingUserId((currentUserId) =>
         currentUserId === expectedUserId ? null : currentUserId,
@@ -90,7 +91,7 @@ export function InviteOnboardingDialog() {
     }
 
     setRedeemedUserId(userId);
-    void complete();
+    void complete({ suppressErrorToast: true });
   };
 
   return (
@@ -101,49 +102,38 @@ export function InviteOnboardingDialog() {
         <AlertDialogHeader>
           <AlertDialogTitle>초대 코드가 있나요?</AlertDialogTitle>
           <AlertDialogDescription className="leading-relaxed">
-            친구에게 받은 초대 코드를 입력하면 나와 친구 모두 500 크레딧을
-            받아요.
+            친구에게 받은 초대 코드를 입력하면 500 크레딧을 받을 수 있어요
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {hasRedeemed ? (
           <div
-            className="flex flex-col gap-3 rounded-lg bg-muted p-4 text-sm"
+            className="flex flex-col gap-3"
             role="status"
             aria-busy={isCompleting}>
-            <p className="leading-relaxed">
-              {isCompleting
-                ? '초대 코드 안내 상태를 저장하고 있어요.'
-                : '크레딧은 받았어요. 안내를 닫으려면 상태 저장을 다시 시도해 주세요.'}
-            </p>
             {!isCompleting ? (
-              <Button type="button" size="lg" onClick={() => void complete()}>
-                다시 시도
-              </Button>
+              <p className="rounded-lg bg-muted p-4 text-sm">
+                500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요
+              </p>
             ) : null}
+            <AlertDialogFooter>
+              <AlertDialogAction
+                type="button"
+                className="col-span-full"
+                disabled={isCompleting}
+                onClick={() => void complete({ suppressErrorToast: true })}>
+                {isCompleting ? <Spinner /> : '닫기'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
           </div>
         ) : (
-          <InviteCodeForm
+          <InviteOnboardingCodeForm
             key={userId}
-            source="onboarding"
-            autoFocus
             disabled={isCompleting}
-            onPendingChange={setIsSubmitting}
             onSuccess={handleRedeemSuccess}
+            onSkip={handleSkip}
           />
         )}
-
-        {!hasRedeemed ? (
-          <AlertDialogFooter className="grid-cols-1">
-            <AlertDialogCancel
-              className="h-12 w-full"
-              size="lg"
-              disabled={isSubmitting || isCompleting}
-              onClick={handleSkip}>
-              나중에 입력하기
-            </AlertDialogCancel>
-          </AlertDialogFooter>
-        ) : null}
       </AlertDialogContent>
     </AlertDialog>
   );
