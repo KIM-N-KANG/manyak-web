@@ -45,7 +45,7 @@ export function StoryInfoSection({
       </div>
 
       {story.description && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <h2 className="text-lg font-bold">주요 내용</h2>
           <TextContent>{story.description}</TextContent>
         </div>

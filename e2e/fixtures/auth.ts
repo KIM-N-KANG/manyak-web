@@ -4,6 +4,8 @@ type MemberSessionOptions = {
   userId?: string;
   nickname?: string;
   profileImageUrl?: string | null;
+  inviteOnboardingPending?: boolean;
+  sessionUpdateStatus?: number;
 };
 
 /**
@@ -16,14 +18,44 @@ export async function mockMemberSession(
     userId = 'user-1',
     nickname = '배고픈 송아지',
     profileImageUrl = null,
+    inviteOnboardingPending = false,
+    sessionUpdateStatus = 200,
   }: MemberSessionOptions = {},
 ): Promise<void> {
-  await page.route('**/api/auth/session', (route) =>
-    route.fulfill({
+  let pending = inviteOnboardingPending;
+
+  await page.route('**/api/auth/session', async (route) => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON() as {
+        data?: {
+          inviteOnboardingPending?: boolean;
+          expectedUserId?: string;
+        };
+      };
+
+      if (sessionUpdateStatus >= 400) {
+        await route.fulfill({
+          status: sessionUpdateStatus,
+          json: { code: 'SESSION_UPDATE_FAILED' },
+        });
+
+        return;
+      }
+
+      if (
+        body.data?.inviteOnboardingPending === false &&
+        body.data.expectedUserId === userId
+      ) {
+        pending = false;
+      }
+    }
+
+    await route.fulfill({
       json: {
         user: { id: userId, name: nickname, image: profileImageUrl },
         expires: '2099-01-01T00:00:00.000Z',
+        inviteOnboardingPending: pending,
       },
-    }),
-  );
+    });
+  });
 }

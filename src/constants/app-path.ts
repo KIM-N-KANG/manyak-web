@@ -9,7 +9,6 @@ export const APP_PATH = {
   PRIVACY: '/privacy',
   MY_FEEDBACK: '/my/feedback',
   MY_INVITE: '/my/invite',
-  INVITE: (code: string) => `/invite/${code}`,
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   CREATOR: {

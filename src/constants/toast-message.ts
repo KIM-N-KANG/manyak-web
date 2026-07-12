@@ -17,7 +17,9 @@ export const TOAST_MESSAGE = {
     `출석 체크 보상으로 ${amount} 크레딧을 받았어요`,
   ATTENDANCE_ALREADY: '오늘은 이미 출석 체크했어요',
   ATTENDANCE_FAILED: '출석 체크에 실패했어요',
-  INVITE_LINK_COPIED: '초대 링크를 복사했어요',
-  INVITE_LINK_COPY_FAILED: '초대 링크 복사에 실패했어요',
+  INVITE_CODE_COPIED: '초대 코드를 복사했어요',
+  INVITE_CODE_COPY_FAILED: '초대 코드 복사에 실패했어요',
+  INVITE_REDEEMED: '친구 초대 보상으로 500 크레딧을 받았어요',
+  INVITE_ONBOARDING_SAVE_FAILED: '창을 닫지 못했어요',
   INVITE_SHARE_FAILED: '카카오톡 공유를 열지 못했어요',
 } as const;

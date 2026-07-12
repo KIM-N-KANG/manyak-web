@@ -52,6 +52,7 @@ test('orval config reads backend OpenAPI and generates API plus Zod outputs', ()
 
 test('custom mutator preserves request behavior expected by generated clients', () => {
   const source = read('src/api/mutator/custom-instance.ts');
+  const timeoutSource = read('src/lib/fetch-with-timeout.ts');
 
   assert.match(source, /export const customInstance/);
   assert.match(source, /BodyType/);
@@ -63,7 +64,10 @@ test('custom mutator preserves request behavior expected by generated clients', 
   assert.match(source, /resolveApiProxyUrl/);
   assert.match(source, /text\/event-stream/);
   assert.match(source, /response\.body/);
-  assert.match(source, /signal/);
+  assert.match(source, /fetchWithTimeout/);
+  assert.match(timeoutSource, /signal/);
+  assert.match(timeoutSource, /180\s*\*\s*1000/);
+  assert.match(timeoutSource, /TimeoutError/);
   assert.match(source, /data:/);
   assert.match(source, /status:\s*response\.status/);
   assert.match(source, /headers:\s*response\.headers/);

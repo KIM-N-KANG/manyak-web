@@ -1,5 +1,6 @@
 import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
 import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
+import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 import { captureApiError } from '@/observability/monitoring/sentry';
 
@@ -10,8 +11,6 @@ export type BodyType<BodyData> = BodyData;
 export type ErrorType<ErrorData> = FetchError & {
   data: ErrorData;
 };
-
-const API_TIMEOUT_MS = 120 * 1000;
 
 const resolveHeaders = (headers?: HeadersInit) => {
   // 익명 식별자 헤더를 기본값으로 깔고, 호출부가 지정한 헤더가 우선하도록 덮어쓴다.
@@ -26,43 +25,6 @@ const resolveHeaders = (headers?: HeadersInit) => {
   }
 
   return resolvedHeaders;
-};
-
-const fetchWithTimeout = async (
-  url: string,
-  options: RequestInit,
-  timeout: number,
-): Promise<Response> => {
-  const controller = new AbortController();
-  const externalSignal = options.signal;
-  const abortRequest = () => controller.abort(externalSignal?.reason);
-  // 타임아웃은 사용자 취소(AbortError)와 구분되도록 TimeoutError로 중단해
-  // Sentry가 실제 백엔드 지연·장애로 인식하게 한다(스펙 §AN-2-8).
-  const timeoutId = setTimeout(
-    () =>
-      controller.abort(
-        new DOMException('요청 시간이 초과되었습니다.', 'TimeoutError'),
-      ),
-    timeout,
-  );
-
-  if (externalSignal?.aborted) {
-    abortRequest();
-  } else {
-    externalSignal?.addEventListener('abort', abortRequest, {
-      once: true,
-    });
-  }
-
-  try {
-    return await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeoutId);
-    externalSignal?.removeEventListener('abort', abortRequest);
-  }
 };
 
 const parseResponseData = async (response: Response) => {
@@ -120,14 +82,10 @@ export const customInstance = async <T>(
   options: RequestInit = {},
 ): Promise<T> => {
   try {
-    const response = await fetchWithTimeout(
-      resolveApiProxyUrl(url),
-      {
-        ...options,
-        headers: resolveHeaders(options.headers),
-      },
-      API_TIMEOUT_MS,
-    );
+    const response = await fetchWithTimeout(resolveApiProxyUrl(url), {
+      ...options,
+      headers: resolveHeaders(options.headers),
+    });
 
     // 프록시가 세션 만료(리프레시 확정 거절)를 알리면 능동 로그아웃 신호를 발행한다.
     // 성공/실패 응답 모두에서 감지되어야 하므로 ok 분기보다 먼저 확인한다.

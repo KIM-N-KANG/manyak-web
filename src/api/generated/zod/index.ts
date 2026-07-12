@@ -34,6 +34,24 @@ export const CancelStorylineRatingParams = zod.object({
 export const CancelStorylineRatingResponse = zod.void();
 
 /**
+ * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 각 500 크레딧을 적립합니다(스펙 §4-3-7, KNK-567). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한(10회)에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
+ * @summary 초대 코드 입력·보상 적립
+ */
+
+export const RedeemInviteCodeBody = zod
+  .object({
+    code: zod
+      .string()
+      .min(1)
+      .describe(
+        '제출할 초대 코드. 서버가 trim·대문자 정규화 후 비교하므로 소문자·앞뒤 공백은 허용된다.',
+      ),
+  })
+  .describe('초대 코드 입력 요청(스펙 §4-3-7, KNK-567)');
+
+export const RedeemInviteCodeResponse = zod.unknown();
+
+/**
  * 출석 보상 크레딧을 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
  * @summary 출석체크 보상
  */
@@ -534,7 +552,7 @@ export const LogoutBody = zod
 export const LogoutResponse = zod.void();
 
 /**
- * Google ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 선택 필드 inviteCode를 최초 가입과 함께 보내면 초대자·피초대자 양쪽에 크레딧을 적립합니다(미해결·자기 코드·이미 가입된 계정의 제출은 무시). 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
+ * Google ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 응답의 isNewUser로 신규 가입 여부를 알 수 있습니다(신규 가입 온보딩 판정 신호 — KNK-567). 초대 보상 적립은 이 API가 아니라 POST /users/me/invite/redeem에서 합니다. 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
  * @summary Google 로그인
  */
 export const LoginWithGoogleHeader = zod.object({
@@ -548,12 +566,6 @@ export const LoginWithGoogleBody = zod
       .min(1)
       .describe(
         'Google에서 발급받은 ID 토큰(JWT). 서버가 Google 공개키로 검증한다.',
-      ),
-    inviteCode: zod
-      .string()
-      .nullish()
-      .describe(
-        '초대 코드(선택). 최초 가입 시 함께 보내면 초대자·피초대자 양쪽에 크레딧을 적립한다. 미해결·자기 코드·이미 가입된 계정의 제출은 오류 없이 무시된다.',
       ),
   })
   .describe('Google 로그인 요청');
@@ -761,8 +773,8 @@ export const GetMyStoriesQueryParams = zod.object({
 export const GetMyStoriesResponse = zod.unknown();
 
 /**
- * 요청자의 고유 초대 코드와 공유 링크, 이번 KST 월 초대 보상 진행(monthlyRewardCount·monthlyRewardLimit)을 반환합니다. 코드가 없으면 최초 조회 시 발급하며, 이후에는 같은 코드를 반환합니다. 인증 필수입니다.
- * @summary 내 초대 코드·링크 조회
+ * 요청자의 고유 초대 코드와 이번 KST 월 초대 보상 진행(monthlyRewardCount·monthlyRewardLimit)을 반환합니다. 코드가 없으면 최초 조회 시 발급하며, 이후에는 같은 코드를 반환합니다. 인증 필수입니다.
+ * @summary 내 초대 코드 조회
  */
 export const GetMyInviteResponse = zod.unknown();
 

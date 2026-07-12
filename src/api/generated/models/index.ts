@@ -33,6 +33,8 @@ export * from './getLorebooksParams';
 export * from './getMyChatsParams';
 export * from './getMyStoriesParams';
 export * from './googleLoginRequest';
+export * from './inviteRedeemRequest';
+export * from './inviteRedeemResponse';
 export * from './inviteResponse';
 export * from './logoutRequest';
 export * from './lorebookListItemResponse';

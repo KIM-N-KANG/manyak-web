@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -60,13 +61,14 @@ export function AddTagDialog({
           </Button>
         }
       />
-      <DialogContent showCloseButton={false} className="sm:max-w-sm">
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>{categoryLabel} 키워드 추가</DialogTitle>
+          <DialogDescription>원하는 키워드를 입력해주세요</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="contents">
           <FieldGroup>
-            <Field>
+            <Field className="gap-2" aria-labelledby={`${category}-tag`}>
               <Label htmlFor={`${category}-tag`}>키워드</Label>
               <InputGroup>
                 <InputGroupTextarea

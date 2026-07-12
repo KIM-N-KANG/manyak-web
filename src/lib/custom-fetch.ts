@@ -3,6 +3,7 @@ import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity'
 import { captureApiError } from '@/observability/monitoring/sentry';
 
 import { FetchError, getApiErrorCode } from './api-error';
+import { fetchWithTimeout } from './fetch-with-timeout';
 
 export { FetchError, getApiErrorCode };
 
@@ -26,14 +27,13 @@ export async function parseErrorResponseBody(
   }
 }
 
-const API_TIMEOUT_MS = 120 * 1000;
 const API_PROXY_BASE_PATH = '/api';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** customFetch 요청에 사용하는 설정. RequestInit에 타임아웃 옵션을 더한 형태다. */
 export interface RequestConfig extends Omit<RequestInit, 'method' | 'body'> {
-  /** 요청 타임아웃(ms). 기본값은 120초 */
+  /** 요청 타임아웃(ms). 기본값은 180초 */
   timeout?: number;
 }
 
@@ -60,50 +60,13 @@ export function resolveApiProxyUrl(url: string) {
   return `${API_PROXY_BASE_PATH}${normalizedUrl}`;
 }
 
-const fetchWithTimeout = async (
-  url: string,
-  options: RequestInit,
-  timeout: number,
-): Promise<Response> => {
-  const controller = new AbortController();
-  const externalSignal = options.signal;
-  const abortRequest = () => controller.abort(externalSignal?.reason);
-  // 타임아웃은 사용자 취소(AbortError)와 구분되도록 TimeoutError로 중단해
-  // Sentry가 실제 백엔드 지연·장애로 인식하게 한다(스펙 §AN-2-8).
-  const timeoutId = setTimeout(
-    () =>
-      controller.abort(
-        new DOMException('요청 시간이 초과되었습니다.', 'TimeoutError'),
-      ),
-    timeout,
-  );
-
-  if (externalSignal?.aborted) {
-    abortRequest();
-  } else {
-    externalSignal?.addEventListener('abort', abortRequest, {
-      once: true,
-    });
-  }
-
-  try {
-    return await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeoutId);
-    externalSignal?.removeEventListener('abort', abortRequest);
-  }
-};
-
 const request = async <T>(
   method: RequestMethod,
   url: string,
   data?: unknown,
   config: RequestConfig = {},
 ): Promise<T> => {
-  const { timeout = API_TIMEOUT_MS, ...restConfig } = config;
+  const { timeout, ...restConfig } = config;
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
