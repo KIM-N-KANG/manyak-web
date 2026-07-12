@@ -36,10 +36,9 @@ export function StoryTagStepSection({
     simpleStoryTags,
     showTagsSkeleton,
     tagsByCategory,
-    canGenerateStorylines,
+    hasCategoryValidationError,
     isMaxSelectionReached,
     isCategoryUnlocked,
-    isCategoryComplete,
     isFirstCategory,
     isLastCategory,
     goToNextCategory,
@@ -58,6 +57,13 @@ export function StoryTagStepSection({
       titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
       description="선택한 키워드로 AI가 스토리라인을 생성해요"
       onScroll={onScroll}
+      footerMessage={
+        hasCategoryValidationError ? (
+          <StoryCreateErrorMessage>
+            키워드를 하나 이상 선택해주세요.
+          </StoryCreateErrorMessage>
+        ) : null
+      }
       footer={
         <>
           {!isFirstCategory && (
@@ -73,12 +79,7 @@ export function StoryTagStepSection({
           <Button
             type="button"
             size="lg"
-            disabled={
-              isGeneratingStorylines ||
-              (isLastCategory
-                ? !canGenerateStorylines
-                : !isCategoryComplete(activeCategory))
-            }
+            disabled={isGeneratingStorylines}
             onClick={
               isLastCategory ? handleGenerateStorylines : goToNextCategory
             }>

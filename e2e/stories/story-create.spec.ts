@@ -30,6 +30,45 @@ const storylinesResponse = {
 };
 
 test.describe('스토리 생성', () => {
+  test('필수 키워드 없이 다음을 누르면 오류를 표시하고 선택하면 해제한다', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tags),
+      });
+    });
+
+    await page.goto('/stories/new');
+
+    const nextButton = page.getByRole('button', { name: '다음' });
+    const validationError = page.getByText('키워드를 하나 이상 선택해주세요.');
+    const footer = page.getByRole('navigation').filter({ has: nextButton });
+
+    await expect(nextButton).toBeEnabled();
+    await nextButton.click();
+    await expect(
+      footer.getByText('키워드를 하나 이상 선택해주세요.'),
+    ).toBeVisible();
+    await expect(page.getByRole('tab', { name: /장르/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
+    await page.getByRole('button', { name: '판타지' }).click();
+    await expect(validationError).toBeHidden();
+    await nextButton.click();
+    await expect(
+      page.getByRole('tab', { name: /주인공 특징/ }),
+    ).toHaveAttribute('aria-selected', 'true');
+
+    await expect(nextButton).toBeEnabled();
+    await nextButton.click();
+    await expect(validationError).toBeVisible();
+  });
+
   test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅 화면으로 이동한다 (US-3)', async ({
     page,
   }) => {
