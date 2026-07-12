@@ -42,8 +42,6 @@ export function ChatMessages({
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
-  // 진입 직후 추정 높이 기준의 초기 스크롤이 실제 맨 아래로 정착하기 전
-  // 프레임(중간 걸림·빈 화면)이 노출되지 않도록, 정착까지 스크롤러를 숨긴다.
   const settled = useInitialScrollSettled(viewportRef, { skip: startedEmpty });
 
   useEffect(() => {
@@ -59,7 +57,7 @@ export function ChatMessages({
     <MessageScrollerProvider
       autoScroll={!startedEmpty && !hasSent}
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
-      scrollPreviousItemPeek={0}>
+      scrollPreviousItemPeek={64}>
       <MessageScroller
         className={cn(
           'transition-opacity duration-150',
