@@ -138,6 +138,6 @@ export async function establishBackendSession(idToken: string): Promise<{
     userId: me.id,
     nickname: me.nickname ?? '',
     profileImageUrl: me.profileImageUrl ?? null,
-    isNewUser: tokens.newUser === true,
+    isNewUser: tokens.isNewUser === true,
   };
 }

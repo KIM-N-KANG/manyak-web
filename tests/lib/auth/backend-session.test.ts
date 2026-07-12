@@ -216,7 +216,7 @@ describe('establishBackendSession', () => {
         accessToken: 'access-1',
         refreshToken: 'refresh-1',
         expiresIn: 1800,
-        newUser: true,
+        isNewUser: true,
       };
     });
     vi.mocked(fetchMeOnServer).mockImplementation(async () => {
@@ -244,7 +244,7 @@ describe('establishBackendSession', () => {
     expect(fetchMeOnServer).toHaveBeenCalledWith('access-1');
   });
 
-  it('로그인 응답에 newUser가 없으면 기존 회원으로 반환한다', async () => {
+  it('로그인 응답에 isNewUser가 없으면 기존 회원으로 반환한다', async () => {
     const { loginWithGoogleOnServer, fetchMeOnServer } =
       await import('@/lib/auth/backend-client');
 
