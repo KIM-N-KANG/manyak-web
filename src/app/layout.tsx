@@ -3,6 +3,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
+import { InAppBrowserEscape } from '@/components/layout/in-app-browser-escape';
 import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
@@ -54,7 +55,10 @@ export default function RootLayout({
       lang="ko"
       className={`${pretendard.variable} ${maruburi.variable} antialiased`}
       suppressHydrationWarning>
-      <body className="bg-border font-sans text-foreground">
+      {/* suppressHydrationWarning: 카카오톡 iOS 웹뷰가 body에 -webkit-text-size-adjust 스타일을 주입해 속성 불일치 경고가 발생 */}
+      <body
+        className="bg-border font-sans text-foreground"
+        suppressHydrationWarning>
         <IosInputZoomLock />
         <AmplitudeProvider>
           <AuthSessionProvider>
@@ -65,6 +69,7 @@ export default function RootLayout({
                     id={APP_FRAME_ID}
                     className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                     {children}
+                    <InAppBrowserEscape />
                   </div>
                   <Toaster />
                   <AnalyticsUserSync />
