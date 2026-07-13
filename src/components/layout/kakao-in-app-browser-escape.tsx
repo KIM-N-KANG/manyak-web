@@ -9,6 +9,10 @@ function openInExternalBrowser() {
   window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(window.location.href)}`;
 }
 
+function closeInAppBrowser() {
+  window.location.href = 'kakaotalk://inappbrowser/close';
+}
+
 const emptySubscribe = () => () => {};
 
 /**
@@ -24,9 +28,20 @@ export function KakaoInAppBrowserEscape() {
   );
 
   useEffect(() => {
-    if (isInAppBrowser) {
-      openInExternalBrowser();
+    if (!isInAppBrowser) {
+      return;
     }
+
+    // 앱 전환 전에 안내 오버레이가 먼저 페인트되도록 자동 이동을 지연한다.
+    // (즉시 이동하면 웹뷰가 오버레이 없는 프레임에서 정지된 채 남는다)
+    const openTimer = setTimeout(openInExternalBrowser, 300);
+    // 외부 브라우저로 전환된 뒤 카톡에 남은 인앱 브라우저를 닫는다.
+    const closeTimer = setTimeout(closeInAppBrowser, 1300);
+
+    return () => {
+      clearTimeout(openTimer);
+      clearTimeout(closeTimer);
+    };
   }, [isInAppBrowser]);
 
   if (!isInAppBrowser) {
