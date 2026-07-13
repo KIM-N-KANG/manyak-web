@@ -36,6 +36,8 @@ export function KakaoInAppBrowserEscape() {
     // (즉시 이동하면 웹뷰가 오버레이 없는 프레임에서 정지된 채 남는다)
     const openTimer = setTimeout(openInExternalBrowser, 300);
     // 외부 브라우저로 전환된 뒤 카톡에 남은 인앱 브라우저를 닫는다.
+    // (iOS는 앱 전환 후 웹뷰 스킴 내비게이션이 무시돼 닫히지 않는다.
+    //  대신 안내 오버레이가 남아 수동 버튼으로 재이동할 수 있다)
     const closeTimer = setTimeout(closeInAppBrowser, 1300);
 
     return () => {
