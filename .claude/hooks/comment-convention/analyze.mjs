@@ -1,7 +1,7 @@
 import ts from 'typescript';
 
 const DIRECTIVE_RE =
-  /^(eslint-disable|eslint-enable|@ts-expect-error|@ts-ignore|@ts-nocheck|biome-ignore)/;
+  /^(eslint-disable|eslint-enable|@ts-expect-error|@ts-ignore|@ts-nocheck|biome-ignore)\b/;
 
 /**
  * 훅 검사 대상 파일인지 판별한다.
@@ -105,10 +105,18 @@ function collectDeclarations(stmt) {
       name: stmt.name.text,
       fnNode: stmt,
       commentNode: stmt,
+      innerNode: stmt,
+      checkLeading: true,
       wrapper: false,
     });
   } else if (ts.isVariableStatement(stmt)) {
+    let idx = 0;
+
     for (const d of stmt.declarationList.declarations) {
+      const isFirst = idx === 0;
+
+      idx += 1;
+
       if (!d.name || !ts.isIdentifier(d.name) || !d.initializer) continue;
 
       const init = d.initializer;
@@ -118,6 +126,8 @@ function collectDeclarations(stmt) {
           name: d.name.text,
           fnNode: init,
           commentNode: stmt,
+          innerNode: init,
+          checkLeading: isFirst,
           wrapper: false,
         });
       } else if (isComponentWrapperCall(init)) {
@@ -125,6 +135,8 @@ function collectDeclarations(stmt) {
           name: d.name.text,
           fnNode: null,
           commentNode: stmt,
+          innerNode: init,
+          checkLeading: isFirst,
           wrapper: true,
         });
       }
@@ -229,33 +241,36 @@ function innerComments(node, sourceText, sf) {
 function checkComponent(decl, sourceText, sf, violations) {
   const node = decl.commentNode;
   const nodeStart = node.getStart(sf);
-  const leads = leadingComments(node, sourceText);
-  let nextStart = nodeStart;
 
-  for (let idx = leads.length - 1; idx >= 0; idx -= 1) {
-    const r = leads[idx];
+  if (decl.checkLeading) {
+    const leads = leadingComments(node, sourceText);
+    let nextStart = nodeStart;
 
-    if (
-      !isOwnLine(sourceText, r.pos) ||
-      !isAdjacent(sourceText, r.end, nextStart)
-    )
-      break;
+    for (let idx = leads.length - 1; idx >= 0; idx -= 1) {
+      const r = leads[idx];
 
-    const text = sourceText.slice(r.pos, r.end);
+      if (
+        !isOwnLine(sourceText, r.pos) ||
+        !isAdjacent(sourceText, r.end, nextStart)
+      )
+        break;
 
-    if (!isDirective(text)) {
-      violations.push({
-        line: lineOf(sf, r.pos),
-        kind: 'component-comment',
-        name: decl.name,
-        message: `컴포넌트 \`${decl.name}\` 위의 설명 주석을 제거하세요 (도구 지시자 외 주석 금지).`,
-      });
+      const text = sourceText.slice(r.pos, r.end);
+
+      if (!isDirective(text)) {
+        violations.push({
+          line: lineOf(sf, r.pos),
+          kind: 'component-comment',
+          name: decl.name,
+          message: `컴포넌트 \`${decl.name}\` 위의 설명 주석을 제거하세요 (도구 지시자 외 주석 금지).`,
+        });
+      }
+
+      nextStart = r.pos;
     }
-
-    nextStart = r.pos;
   }
 
-  for (const r of innerComments(node, sourceText, sf)) {
+  for (const r of innerComments(decl.innerNode, sourceText, sf)) {
     const text = sourceText.slice(r.pos, r.end);
 
     if (isDirective(text)) continue;
@@ -308,13 +323,17 @@ function jsDocHasTag(jsDoc, tagNames) {
   );
 }
 
+function isVoidLikeType(typeText) {
+  const norm = typeText.replace(/\s/g, '');
+  const VOID = new Set(['void', 'undefined', 'never']);
+  const inner = norm.replace(/^Promise<(.+)>$/, '$1');
+
+  return inner.split('|').every((m) => VOID.has(m));
+}
+
 function returnsValue(fn) {
   if (fn.type) {
-    const t = fn.type.getText().trim();
-
-    return !/^(void|undefined|never|Promise<void>|Promise<undefined>|Promise<never>)$/.test(
-      t,
-    );
+    return !isVoidLikeType(fn.type.getText());
   }
 
   if (ts.isArrowFunction(fn) && fn.body && !ts.isBlock(fn.body)) return true;
@@ -477,7 +496,7 @@ export function analyzeSource(sourceText, fileName) {
 /**
  * 위반 목록을 훅 reason 문자열로 변환한다.
  *
- * @param {Array<{ line: number, message: string }>} violations 위반 목록
+ * @param {Array<{ line: number, kind: string, name: string, message: string }>} violations 위반 목록
  * @param {string} relPath 리포트에 표시할 상대 경로
  * @returns {string} Claude에게 전달할 안내 텍스트
  */

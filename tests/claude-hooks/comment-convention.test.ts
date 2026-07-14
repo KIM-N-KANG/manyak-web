@@ -200,6 +200,52 @@ describe('analyzeSource - 훅/유틸 JSDoc', () => {
   });
 });
 
+describe('analyzeSource - Minor 하드닝', () => {
+  it('지시자처럼 시작하지만 다른 단어(eslint-enablement)는 지시자가 아니라 위반', () => {
+    const src = `// eslint-enablement 메모\nexport function Card() {\n  return <div />;\n}`;
+    const v = analyzeSource(src, 'src/a/components/card.tsx');
+
+    expect(v.filter((x) => x.kind === 'component-comment')).toHaveLength(1);
+  });
+
+  it('Promise< void > 처럼 공백 있는 void 반환은 @returns를 요구하지 않는다', () => {
+    const src = [
+      '/**',
+      ' * 대기.',
+      ' * @param ms 밀리초',
+      ' */',
+      'export async function wait(ms: number): Promise< void > {',
+      '  return undefined;',
+      '}',
+    ].join('\n');
+    const v = analyzeSource(src, 'src/a/utils/wait.ts');
+
+    expect(v.map((x) => x.kind)).not.toContain('missing-returns');
+  });
+
+  it('Promise<string> 반환은 여전히 @returns를 요구한다', () => {
+    const src = [
+      '/**',
+      ' * 조회.',
+      ' * @param id 아이디',
+      ' */',
+      'export async function load(id: string): Promise<string> {',
+      '  return id;',
+      '}',
+    ].join('\n');
+    const v = analyzeSource(src, 'src/a/utils/load.ts');
+
+    expect(v.map((x) => x.kind)).toContain('missing-returns');
+  });
+
+  it('다중 선언문에서 sibling 유틸의 내부 주석을 컴포넌트에 오귀속하지 않는다', () => {
+    const src = `export const A = () => <div />, make = () => { /* note */ return 1; };`;
+    const v = analyzeSource(src, 'src/a/components/a.tsx');
+
+    expect(v.filter((x) => x.kind === 'component-comment')).toEqual([]);
+  });
+});
+
 describe('formatViolations', () => {
   it('파일:라인 — 메시지 형태로 합친다', () => {
     const out = formatViolations(
