@@ -77,3 +77,92 @@ describe('analyzeSource - 컴포넌트 주석 금지', () => {
     expect(v[0].kind).toBe('component-comment');
   });
 });
+
+describe('analyzeSource - 훅/유틸 JSDoc', () => {
+  it('완전한 JSDoc 유틸은 통과', () => {
+    const src = [
+      '/**',
+      ' * 날짜를 포맷한다.',
+      ' * @param date 대상 날짜',
+      ' * @returns 포맷 문자열',
+      ' */',
+      'export function formatDate(date: Date): string {',
+      '  return String(date);',
+      '}',
+    ].join('\n');
+
+    expect(analyzeSource(src, 'src/a/utils/format.ts')).toEqual([]);
+  });
+
+  it('JSDoc 없는 유틸은 missing-jsdoc', () => {
+    const src = `export function formatDate(date: Date): string {\n  return String(date);\n}`;
+    const v = analyzeSource(src, 'src/a/utils/format.ts');
+
+    expect(v.map((x) => x.kind)).toContain('missing-jsdoc');
+  });
+
+  it('@param 누락은 missing-param', () => {
+    const src = [
+      '/**',
+      ' * 더한다.',
+      ' * @returns 합',
+      ' */',
+      'export function add(a: number, b: number): number {',
+      '  return a + b;',
+      '}',
+    ].join('\n');
+    const v = analyzeSource(src, 'src/a/utils/add.ts');
+
+    expect(v.filter((x) => x.kind === 'missing-param')).toHaveLength(2);
+  });
+
+  it('값 반환인데 @returns 누락은 missing-returns', () => {
+    const src = [
+      '/**',
+      ' * 하나 증가.',
+      ' * @param a 입력',
+      ' */',
+      'export const inc = (a: number) => a + 1;',
+    ].join('\n');
+    const v = analyzeSource(src, 'src/a/utils/inc.ts');
+
+    expect(v.map((x) => x.kind)).toContain('missing-returns');
+  });
+
+  it('throw 있는데 @throws 누락은 missing-throws', () => {
+    const src = [
+      '/**',
+      ' * 검증.',
+      ' * @param ok 여부',
+      ' */',
+      'export function assertOk(ok: boolean): void {',
+      '  if (!ok) throw new Error("no");',
+      '}',
+    ].join('\n');
+    const v = analyzeSource(src, 'src/a/utils/assert.ts');
+
+    expect(v.map((x) => x.kind)).toContain('missing-throws');
+  });
+
+  it('use 훅도 JSDoc 필수', () => {
+    const src = `export function useThing() {\n  return 1;\n}`;
+    const v = analyzeSource(src, 'src/a/hooks/use-thing.ts');
+
+    expect(v.map((x) => x.kind)).toContain('missing-jsdoc');
+  });
+
+  it('컴포넌트 내부 핸들러는 JSDoc 요구하지 않는다', () => {
+    const src = [
+      'export function Card() {',
+      '  const handleClick = (e: unknown) => { console.log(e); };',
+      '  return <button onClick={handleClick} />;',
+      '}',
+    ].join('\n');
+
+    expect(analyzeSource(src, 'src/a/components/card.tsx')).toEqual([]);
+  });
+
+  it('제외 경로는 위반 코드라도 통과 (shouldCheckFile 게이트)', () => {
+    expect(shouldCheckFile('src/api/generated/x.ts')).toBe(false);
+  });
+});

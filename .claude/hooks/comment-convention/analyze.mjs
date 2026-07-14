@@ -255,6 +255,179 @@ function checkComponent(decl, sourceText, sf, violations) {
   }
 }
 
+function getJsDoc(node) {
+  const arr = node.jsDoc;
+
+  if (!arr || !arr.length) return null;
+
+  return arr[arr.length - 1];
+}
+
+function jsDocDescription(jsDoc) {
+  const c = jsDoc.comment;
+
+  if (!c) return '';
+
+  return typeof c === 'string'
+    ? c.trim()
+    : c
+        .map((p) => p.text || '')
+        .join('')
+        .trim();
+}
+
+function jsDocParamNames(jsDoc) {
+  const names = [];
+
+  for (const t of jsDoc.tags || []) {
+    if (t.tagName && t.tagName.text === 'param') {
+      names.push(t.name ? t.name.getText() : null);
+    }
+  }
+
+  return names;
+}
+
+function jsDocHasTag(jsDoc, tagNames) {
+  return (jsDoc.tags || []).some(
+    (t) => t.tagName && tagNames.includes(t.tagName.text),
+  );
+}
+
+function returnsValue(fn) {
+  if (fn.type) {
+    const t = fn.type.getText().trim();
+
+    return !/^(void|undefined|never|Promise<void>|Promise<undefined>|Promise<never>)$/.test(
+      t,
+    );
+  }
+
+  if (ts.isArrowFunction(fn) && fn.body && !ts.isBlock(fn.body)) return true;
+
+  let has = false;
+  const visit = (n) => {
+    if (has) return;
+
+    if (isFunctionLike(n) || ts.isFunctionDeclaration(n)) return;
+
+    if (ts.isReturnStatement(n) && n.expression) {
+      has = true;
+
+      return;
+    }
+
+    ts.forEachChild(n, visit);
+  };
+
+  if (fn.body) ts.forEachChild(fn.body, visit);
+
+  return has;
+}
+
+function throwsError(fn) {
+  let has = false;
+  const visit = (n) => {
+    if (has) return;
+
+    if (isFunctionLike(n) || ts.isFunctionDeclaration(n)) return;
+
+    if (ts.isThrowStatement(n)) {
+      has = true;
+
+      return;
+    }
+
+    ts.forEachChild(n, visit);
+  };
+
+  if (fn.body) ts.forEachChild(fn.body, visit);
+
+  return has;
+}
+
+function checkDocumented(decl, kind, sf, violations) {
+  const fn = decl.fnNode;
+  const line = lineOf(sf, decl.commentNode.getStart(sf));
+  const label = kind === 'hook' ? '훅' : '유틸 함수';
+  const namedParams = fn.parameters
+    .filter((p) => ts.isIdentifier(p.name))
+    .map((p) => p.name.text);
+  const paramCount = fn.parameters.length;
+  const destructuredCount = paramCount - namedParams.length;
+  const needReturns = returnsValue(fn);
+  const needThrows = throwsError(fn);
+  const jsDoc = getJsDoc(decl.commentNode);
+
+  if (!jsDoc) {
+    const req = ['설명'];
+
+    if (paramCount) req.push('@param');
+
+    if (needReturns) req.push('@returns');
+
+    if (needThrows) req.push('@throws');
+
+    violations.push({
+      line,
+      kind: 'missing-jsdoc',
+      name: decl.name,
+      message: `${label} \`${decl.name}\`에 JSDoc이 없습니다 (${req.join(' + ')} 필요).`,
+    });
+
+    return;
+  }
+
+  if (!jsDocDescription(jsDoc)) {
+    violations.push({
+      line,
+      kind: 'missing-description',
+      name: decl.name,
+      message: `${label} \`${decl.name}\` JSDoc에 설명 문장이 없습니다.`,
+    });
+  }
+
+  const paramTags = jsDocParamNames(jsDoc);
+
+  for (const pName of namedParams) {
+    if (!paramTags.includes(pName)) {
+      violations.push({
+        line,
+        kind: 'missing-param',
+        name: decl.name,
+        message: `${label} \`${decl.name}\` JSDoc에 @param ${pName} 누락.`,
+      });
+    }
+  }
+
+  if (destructuredCount > 0 && paramTags.length < paramCount) {
+    violations.push({
+      line,
+      kind: 'missing-param',
+      name: decl.name,
+      message: `${label} \`${decl.name}\` JSDoc @param 개수 부족 (파라미터 ${paramCount}개).`,
+    });
+  }
+
+  if (needReturns && !jsDocHasTag(jsDoc, ['returns', 'return'])) {
+    violations.push({
+      line,
+      kind: 'missing-returns',
+      name: decl.name,
+      message: `${label} \`${decl.name}\` JSDoc에 @returns 누락.`,
+    });
+  }
+
+  if (needThrows && !jsDocHasTag(jsDoc, ['throws', 'exception'])) {
+    violations.push({
+      line,
+      kind: 'missing-throws',
+      name: decl.name,
+      message: `${label} \`${decl.name}\` JSDoc에 @throws 누락.`,
+    });
+  }
+}
+
 /**
  * 소스 텍스트를 AST 파싱해 주석 컨벤션 위반 목록을 반환한다.
  *
@@ -279,6 +452,8 @@ export function analyzeSource(sourceText, fileName) {
 
       if (kind === 'component')
         checkComponent(decl, sourceText, sf, violations);
+      else if (kind === 'hook' || kind === 'util')
+        checkDocumented(decl, kind, sf, violations);
     }
   }
 
