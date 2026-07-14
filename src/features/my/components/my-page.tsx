@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import {
   AddTeamIcon,
+  InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
 } from '@hugeicons/core-free-icons';
@@ -52,6 +53,11 @@ export function MyPage() {
         <div className="px-4">
           <Label>기타</Label>
         </div>
+        <MyMenuItem
+          icon={InformationCircleIcon}
+          label="서비스 안내"
+          href={APP_PATH.MORE_ABOUT}
+        />
         <MyMenuItem
           icon={MailEdit01Icon}
           label="피드백"
