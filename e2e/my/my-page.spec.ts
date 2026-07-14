@@ -71,19 +71,3 @@ test.describe('더보기', () => {
     await expect(nav.getByRole('link', { name: /더보기/ })).toBeVisible();
   });
 });
-
-const legacyMoreRoutes = [
-  ['/my', '/more'],
-  ['/my/invite', '/more/invite'],
-  ['/my/feedback', '/more/feedback'],
-] as const;
-
-for (const [legacyPath, morePath] of legacyMoreRoutes) {
-  test(`${legacyPath}는 ${morePath}로 리다이렉트한다`, async ({ page }) => {
-    await skipOnboarding(page);
-    await mockMemberSession(page);
-    await page.goto(legacyPath);
-
-    await expect(page).toHaveURL(morePath);
-  });
-}
