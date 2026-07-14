@@ -38,8 +38,8 @@ export function MyPage() {
       <ProfileHeader />
       <CreditBalanceCard />
       {isAuthenticated && (
-        <section className="flex flex-col gap-2 py-4">
-          <div className="px-4">
+        <section className="flex flex-col py-4">
+          <div className="mb-2 px-4">
             <Label>이벤트</Label>
           </div>
           <MyMenuItem
@@ -49,8 +49,8 @@ export function MyPage() {
           />
         </section>
       )}
-      <section className="flex flex-col gap-2 py-4">
-        <div className="px-4">
+      <section className="flex flex-col py-4">
+        <div className="mb-2 px-4">
           <Label>기타</Label>
         </div>
         <MyMenuItem
@@ -65,8 +65,8 @@ export function MyPage() {
         />
       </section>
       {isAuthenticated && (
-        <section className="flex flex-col gap-2 py-4">
-          <div className="px-4">
+        <section className="flex flex-col py-4">
+          <div className="mb-2 px-4">
             <Label>계정</Label>
           </div>
           <MyMenuItem

@@ -15,12 +15,11 @@ export function ServiceInfoView() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <BackHeader title="서비스 안내" fallbackHref={APP_PATH.MAIN.MORE} />
-      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
-        <article className="flex flex-col gap-8 leading-relaxed">
+      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4 pb-8">
+        <article className="flex flex-col gap-8">
           <section className="flex flex-col gap-2">
             <h2 className="text-lg font-bold">크레딧 안내</h2>
-            {/* 크레딧 수치의 정본은 백엔드 정책 — 제작·채팅 크레딧 팝오버, 초대 화면 문구와 같은 값을 유지해야 한다 */}
-            <ul className="flex list-disc flex-col pl-5 leading-normal">
+            <ul className="flex list-disc flex-col pl-5">
               <li>스토리를 완성할 때 20크레딧이 차감돼요.</li>
               <li>
                 채팅을 한 번 보내거나 다시 생성할 때마다 10크레딧이 차감돼요.
@@ -37,7 +36,7 @@ export function ServiceInfoView() {
           </section>
           <section className="flex flex-col gap-2">
             <h2 className="text-lg font-bold">게스트 이용 안내</h2>
-            <ul className="flex list-disc flex-col pl-5 leading-normal">
+            <ul className="flex list-disc flex-col pl-5">
               <li>
                 로그인 없이도 스토리라인 생성 {GUEST_LIMITS.storylineCreate}회,
                 스토리 생성 {GUEST_LIMITS.storyCreate}회, 채팅{' '}
@@ -45,18 +44,18 @@ export function ServiceInfoView() {
               </li>
               <li>
                 게스트로 만든 스토리와 채팅은 지금 쓰는 브라우저에만 연결돼요.
-                브라우저 데이터를 지우거나 기기를 바꾸면 다시 불러오기 어려울 수
-                있어요.
+                브라우저 데이터를 지우거나 기기를 바꾸면 다시 불러올 수 없어요.
               </li>
               <li>
-                처음 로그인할 때 한 번에 한해 이 브라우저의 스토리·채팅이
-                계정으로 옮겨져요. 그 다음 로그인부터는 옮겨지지 않아요.
+                처음 로그인할 때 만들어져 있는 스토리·채팅이 있다면 한 번에 한해
+                이 브라우저의 스토리·채팅이 계정으로 옮겨져요. 그 다음
+                로그인부터는 옮겨지지 않아요.
               </li>
             </ul>
           </section>
           <section className="flex flex-col gap-2">
             <h2 className="text-lg font-bold">AI 콘텐츠 안내</h2>
-            <ul className="flex list-disc flex-col pl-5 leading-normal">
+            <ul className="flex list-disc flex-col pl-5">
               <li>스토리와 채팅 응답은 AI가 만든 허구의 창작물이에요.</li>
               <li>
                 실제 인물·사건과 관련이 없으며, 부정확하거나 부적절한 내용이
@@ -66,7 +65,7 @@ export function ServiceInfoView() {
           </section>
           <section className="flex flex-col gap-2">
             <h2 className="text-lg font-bold">회원 탈퇴·문의</h2>
-            <ul className="flex list-disc flex-col pl-5 leading-normal">
+            <ul className="flex list-disc flex-col pl-5">
               <li>
                 회원 탈퇴를 원하시면{' '}
                 <a
@@ -74,7 +73,7 @@ export function ServiceInfoView() {
                   className="underline underline-offset-4">
                   {CONTACT_EMAIL}
                 </a>
-                로 요청해 주세요. 확인 후 지체 없이 처리해 드려요.
+                로 요청해 주세요. 확인 후 처리해드려요.
               </li>
               <li>
                 서비스 개선 의견은{' '}
