@@ -117,7 +117,7 @@ const request = async <T>(
       try {
         errorData = await response.json();
       } catch {
-        // JSON 형태의 에러 응답이 아니면 null로 처리합니다.
+        // JSON 형태의 에러 응답이 아니면 null로 처리한다.
       }
 
       throw new FetchError(

@@ -14,8 +14,8 @@ import type { ChatListItem } from '../types';
 export const CHATS_BATCH_QUERY_KEY = 'chats-batch';
 
 /**
- * 서버는 채팅 목록을 최신순(마지막 활동순)으로 응답하므로 그 순서를 그대로 보존합니다.
- * localStorage의 chatId 순서(생성순)로 재정렬하지 않습니다.
+ * 서버는 채팅 목록을 최신순(마지막 활동순)으로 응답하므로 그 순서를 그대로 보존한다.
+ * localStorage의 chatId 순서(생성순)로 재정렬하지 않는다.
  *
  * @param chats 서버가 응답한 채팅 요약 목록
  * @returns 필수 필드가 모두 채워진 채팅 목록 아이템 배열

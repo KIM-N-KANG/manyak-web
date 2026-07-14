@@ -30,7 +30,7 @@ function toCount(value: unknown): number {
 }
 
 /**
- * 저장된 원본 문자열을 사용량 객체로 파싱한다. 파싱 실패·누락은 0으로 보정.
+ * 저장된 원본 문자열을 사용량 객체로 파싱한다. 파싱 실패·누락은 0으로 보정한다.
  *
  * @param raw 로컬스토리지에 저장된 원본 문자열(없으면 null)
  * @returns 파싱된 게스트 사용량 객체
@@ -121,7 +121,7 @@ export function readGuestUsage(): GuestUsage {
 }
 
 /**
- * 해당 액션의 누적 카운터를 +1 한다. localStorage 차단 시 조용히 무시.
+ * 해당 액션의 누적 카운터를 +1 한다. localStorage 차단 시 조용히 무시한다.
  *
  * @param action 카운터를 증가시킬 게스트 액션
  */
@@ -153,7 +153,7 @@ export function isGuestUsageLimitReached(action: GuestUsageAction): boolean {
 /**
  * 저장된 게스트 사용량 카운터를 제거한다. 로그인·이관 후 스테일 카운터로 인한
  * 오게이팅(이미 인증된 기기가 게스트 한도로 판정되는 문제)을 막는다.
- * localStorage 차단 시 조용히 무시.
+ * localStorage 차단 시 조용히 무시한다.
  */
 export function clearGuestUsage(): void {
   if (typeof window === 'undefined') {
