@@ -68,4 +68,12 @@ describe('analyzeSource - 컴포넌트 주석 금지', () => {
       'component-comment',
     );
   });
+
+  it('컴포넌트 위 도구 지시자 뒤에 숨은 설명 주석도 위반', () => {
+    const src = `// TODO: 리팩터링 필요\n// eslint-disable-next-line react/display-name\nexport const Foo = () => <div />;`;
+    const v = analyzeSource(src, 'src/a/components/foo.tsx');
+
+    expect(v).toHaveLength(1);
+    expect(v[0].kind).toBe('component-comment');
+  });
 });

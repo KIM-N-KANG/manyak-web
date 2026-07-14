@@ -216,23 +216,29 @@ function checkComponent(decl, sourceText, sf, violations) {
   const node = decl.commentNode;
   const nodeStart = node.getStart(sf);
   const leads = leadingComments(node, sourceText);
+  let nextStart = nodeStart;
 
-  if (leads.length) {
-    const last = leads[leads.length - 1];
-    const text = sourceText.slice(last.pos, last.end);
+  for (let idx = leads.length - 1; idx >= 0; idx -= 1) {
+    const r = leads[idx];
 
     if (
-      !isDirective(text) &&
-      isOwnLine(sourceText, last.pos) &&
-      isAdjacent(sourceText, last.end, nodeStart)
-    ) {
+      !isOwnLine(sourceText, r.pos) ||
+      !isAdjacent(sourceText, r.end, nextStart)
+    )
+      break;
+
+    const text = sourceText.slice(r.pos, r.end);
+
+    if (!isDirective(text)) {
       violations.push({
-        line: lineOf(sf, last.pos),
+        line: lineOf(sf, r.pos),
         kind: 'component-comment',
         name: decl.name,
         message: `컴포넌트 \`${decl.name}\` 위의 설명 주석을 제거하세요 (도구 지시자 외 주석 금지).`,
       });
     }
+
+    nextStart = r.pos;
   }
 
   for (const r of innerComments(node, sourceText, sf)) {
