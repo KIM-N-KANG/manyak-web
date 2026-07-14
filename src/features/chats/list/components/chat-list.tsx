@@ -70,7 +70,7 @@ export function ChatList() {
   }
 
   return (
-    <ul className="flex flex-col">
+    <ul className="flex flex-col pb-4">
       {chats.map((chat, index) => (
         <li key={chat.id}>
           <ChatCard chat={chat} position={index} />
