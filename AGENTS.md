@@ -42,7 +42,7 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 - 도메인 폴더의 직속 자식은 "유닛"(라우트 폴더 또는 `_shared`)만 둡니다. `components`/`hooks`/`utils`/`lib` 같은 카테고리 폴더가 라우트 폴더와 같은 층에 뒤섞이지 않게 하세요.
   - 여러 라우트가 함께 쓰는 공용 코드는 `{도메인}/_shared/{components|hooks|utils}`에 둡니다 (예: `features/stories/_shared/components/story-turn-count.tsx`).
   - 도메인 간에도 같은 원칙을 적용합니다. 다른 도메인에서 import되는 코드는 소유 도메인의 `_shared`에 두고, 타 도메인의 라우트 유닛 내부(`{도메인}/{라우트}/...`)를 직접 import 하지 마세요. 그래야 라우트 유닛 내부를 그 유닛 전용으로 자유롭게 리팩터링할 수 있습니다.
-  - 도메인 폴더명은 실제 live 라우트 세그먼트와 맞춥니다 (예: `/more` 화면을 담는 도메인은 `features/more`). 도메인 인덱스 페이지(`/{도메인}` 자체) 코드는 app router의 섹션 `page.tsx`처럼 도메인 직속 `components`/`hooks`에 두는 것을 허용합니다.
+  - 도메인 폴더명은 실제 live 라우트 세그먼트와 맞춥니다 (예: `/more` 화면을 담는 도메인은 `features/more`). 도메인 인덱스 페이지(`/{도메인}` 자체) 코드도 의미에 맞는 이름의 유닛으로 둡니다 (예: `stories/list`, `more/menu`).
   - 라우트가 하나뿐이거나 모든 라우트가 코드를 전부 공유하는 단일 기능 도메인(예: `onboarding`, `legal`)은 `components`/`hooks`/`utils`를 도메인 직속에 평평하게 두어도 됩니다(라우트 폴더와 섞일 일이 없으므로).
 - 배럴 파일(`index.ts`)을 만들지 않습니다(`src/observability`는 예외). 구체 경로로 직접 import 하세요.
 - 파일명은 kebab-case, named export가 기본입니다. default export는 App Router 규약 파일(page, layout 등)에만 사용합니다.
