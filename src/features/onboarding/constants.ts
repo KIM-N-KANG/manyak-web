@@ -6,7 +6,7 @@ export const ONBOARDING_SEEN_VALUE = '1';
  * 정책 변경 시 이 값과 백엔드를 함께 맞춰야 한다.
  */
 export const GUEST_LIMITS = {
-  storylineCreate: 10,
+  storylineCreate: 5,
   storyCreate: 1,
   chat: 5,
 } as const;

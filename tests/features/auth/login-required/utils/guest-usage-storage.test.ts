@@ -92,10 +92,17 @@ describe('isLimitReached', () => {
     ).toBe(true);
     expect(
       isLimitReached('storylineCreate', {
-        storylineCreate: 9,
+        storylineCreate: 4,
         storyCreate: 0,
         chat: 0,
       }),
     ).toBe(false);
+    expect(
+      isLimitReached('storylineCreate', {
+        storylineCreate: 5,
+        storyCreate: 0,
+        chat: 0,
+      }),
+    ).toBe(true);
   });
 });
