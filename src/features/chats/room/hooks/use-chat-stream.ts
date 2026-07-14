@@ -162,6 +162,14 @@ export function useChatStream(
         return;
       }
 
+      // 명시적 error 이벤트 없이 던져진 예외(네트워크 절단 등)는 서버 교체 여부가 불명하다.
+      // completed·error 없이 끊긴 EOF와 동일하게 refetch로 확정 상태를 가져온다(스펙 §3-6).
+      if (!terminalReceived) {
+        await onIndeterminate?.();
+
+        return;
+      }
+
       track('client_chat_streamError_shown', {
         chat_id: chatId,
         turn_number: turnCount,
