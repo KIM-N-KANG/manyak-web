@@ -9,6 +9,9 @@ const VISIBLE_RATIO = 0.5;
 /**
  * 요소가 50% 이상 1초 동안 보이면 onImpress를 호출하는 훅.
  * 같은 항목은 쿨링 시간 내 재전송을 막으며, 관찰 대상에 연결할 ref 콜백을 반환한다.
+ *
+ * @param input object·itemId·screen(노출 식별 정보)과 onImpress(노출 시 호출 콜백)를 담은 객체
+ * @returns 관찰 대상 요소에 연결할 ref 콜백
  */
 export function useImpression(input: {
   object: string;

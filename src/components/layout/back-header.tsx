@@ -22,9 +22,6 @@ export function BackHeader({ title, backHref, fallbackHref }: BackHeaderProps) {
       return;
     }
 
-    // 브라우저(및 Playwright)는 새 탭의 최초 about:blank도 세션 히스토리에
-    // 포함시켜 history.length가 최소 2로 시작하므로, 실질적으로 "뒤로 갈 곳이
-    // 없는" 딥링크 진입은 length <= 2로 판별한다.
     if (fallbackHref && window.history.length <= 2) {
       router.replace(fallbackHref);
 

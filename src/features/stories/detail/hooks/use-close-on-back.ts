@@ -12,6 +12,9 @@ type UseCloseOnBackOptions = {
  * - 열릴 때 더미 히스토리 항목을 1개 쌓고, popstate가 오면 `onClose`만 호출한다.
  * - X·배경 탭 등 UI로 닫힐 때는 `history.back()`으로 더미를 소비해
  *   히스토리에 잔여 항목이 남지 않게 한다(`use-prevent-page-leave`와 같은 원리).
+ *
+ * @param open 오버레이 열림 여부
+ * @param onClose 뒤로가기 시 호출할 닫기 콜백
  */
 export function useCloseOnBack({ open, onClose }: UseCloseOnBackOptions) {
   const onCloseRef = useRef(onClose);

@@ -27,6 +27,10 @@ import { track } from '@/observability/analytics';
  * 스토리 상세에서 채팅을 시작하는 훅.
  * 채팅 생성 후 ID를 로컬에 저장하고 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
  * startSettingId를 넘기면 해당 시작 설정으로 시작한다(생략 시 백엔드가 첫 설정 사용).
+ *
+ * @param storyId 채팅을 시작할 스토리 id
+ * @param startSettingId 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용)
+ * @returns 채팅 시작 함수와 진행/에러 상태, 한도·크레딧 다이얼로그 제어값
  */
 export function useStartChat(storyId: string, startSettingId?: string) {
   const router = useRouter();

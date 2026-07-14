@@ -21,6 +21,13 @@ import type { StreamingTurn } from '../types';
  * 채팅 턴 SSE 스트리밍을 관리하는 훅.
  * 토큰 수신에 따라 진행 중인 턴을 갱신하고, 완료 시 `onCompleted`를 호출한다.
  * 언마운트 시 진행 중인 요청을 중단한다.
+ *
+ * @param chatId 대상 채팅 ID
+ * @param turnCount 현재까지의 턴 개수
+ * @param onCompleted 스트림 완료 시 호출되는 콜백
+ * @param onPaymentRequired 402(체험 한도·크레딧 부족) 발생 시 호출되는 콜백
+ * @param onIndeterminate 서버 확정 상태가 불명(EOF·409)일 때 호출되는 콜백
+ * @returns 진행 중인 턴·스트리밍 여부와 전송·재생성 동작
  */
 export function useChatStream(
   chatId: string,

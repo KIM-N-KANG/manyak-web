@@ -14,7 +14,15 @@ import {
 } from '@/lib/custom-fetch';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
-/** 채팅 SSE 엔드포인트에 POST 요청을 보내고 응답 본문 스트림을 반환한다. */
+/**
+ * 채팅 SSE 엔드포인트에 POST 요청을 보내고 응답 본문 스트림을 반환한다.
+ *
+ * @param url 요청할 API 경로
+ * @param body 요청 본문(JSON 직렬화됨)
+ * @param signal 요청 중단 시그널
+ * @returns SSE 응답 본문 스트림
+ * @throws 응답이 실패하거나 본문이 없으면 FetchError를 던진다
+ */
 async function postSseStream(
   url: string,
   body: unknown,
@@ -50,6 +58,11 @@ async function postSseStream(
 /**
  * 채팅 턴 스트리밍 API를 호출해 SSE 응답 본문 스트림을 반환한다.
  * 응답이 실패하거나 본문이 없으면 예외를 던진다.
+ *
+ * @param chatId 대상 채팅 ID
+ * @param body 이어쓰기 요청 본문
+ * @param signal 요청 중단 시그널
+ * @returns SSE 응답 본문 스트림
  */
 export function streamChatTurnRaw(
   chatId: string,
@@ -62,6 +75,11 @@ export function streamChatTurnRaw(
 /**
  * 마지막 턴의 AI 응답 재생성 스트리밍 API를 호출한다.
  * SSE 이벤트 계약은 턴 진행과 동일하다(스펙 §3-6). 낡은 turnId면 서버가 동기 409로 거절한다.
+ *
+ * @param chatId 대상 채팅 ID
+ * @param body 재생성 요청 본문
+ * @param signal 요청 중단 시그널
+ * @returns SSE 응답 본문 스트림
  */
 export function streamRegenerateChatTurnRaw(
   chatId: string,

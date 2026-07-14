@@ -3,6 +3,11 @@ export const API_TIMEOUT_MS = 180 * 1000;
 /**
  * 외부 취소 신호를 유지하면서 지정 시간이 지나면 TimeoutError로 요청을 중단한다.
  * TimeoutError는 사용자 취소(AbortError)와 구분해 백엔드 지연·장애로 관측할 수 있다.
+ *
+ * @param url 요청 URL
+ * @param options fetch 요청 옵션(외부 signal 포함 가능)
+ * @param timeout 타임아웃(ms), 기본값 API_TIMEOUT_MS
+ * @returns fetch 응답
  */
 export async function fetchWithTimeout(
   url: string,

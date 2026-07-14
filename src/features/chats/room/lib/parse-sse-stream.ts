@@ -14,8 +14,21 @@ const SSE_FIELD = {
   MESSAGE: 'message',
 } as const;
 
+/**
+ * 문자열의 CRLF 줄바꿈을 LF로 통일한다.
+ *
+ * @param text 정규화할 문자열
+ * @returns CRLF가 LF로 치환된 문자열
+ */
 const normalizeNewlines = (text: string): string => text.replace(/\r\n/g, '\n');
 
+/**
+ * SSE data 문자열(JSON 또는 평문)에서 지정한 필드 값을 추출한다.
+ *
+ * @param dataStr SSE data 필드 원문
+ * @param field 추출할 필드 이름
+ * @returns 추출한 필드 값. 없으면 null(단, TEXT 필드는 JSON 파싱 실패 시 평문 반환)
+ */
 function extractField(dataStr: string, field: string): string | null {
   const trimmed = dataStr.trim();
 
@@ -34,6 +47,13 @@ function extractField(dataStr: string, field: string): string | null {
   }
 }
 
+/**
+ * SSE 이벤트 이름과 data 문자열을 내부 `SseEvent` 객체로 변환한다.
+ *
+ * @param eventName SSE 이벤트 이름
+ * @param dataStr SSE data 필드 원문
+ * @returns 변환된 이벤트. 알 수 없는 이벤트거나 필수 필드가 없으면 null
+ */
 function toSseEvent(eventName: string, dataStr: string): SseEvent | null {
   switch (eventName) {
     case 'started':
@@ -59,6 +79,12 @@ function toSseEvent(eventName: string, dataStr: string): SseEvent | null {
   }
 }
 
+/**
+ * 하나의 SSE 이벤트 블록(event·data 줄 묶음)을 파싱해 이벤트로 변환한다.
+ *
+ * @param block 빈 줄로 구분된 하나의 SSE 이벤트 블록
+ * @returns 파싱된 이벤트. 데이터가 없거나 변환 불가면 null
+ */
 function parseEventBlock(block: string): SseEvent | null {
   const lines = block.split('\n');
   let eventName = 'message';
@@ -82,6 +108,9 @@ function parseEventBlock(block: string): SseEvent | null {
 /**
  * SSE 바이트 스트림을 이벤트 단위로 파싱해 순차적으로 내보낸다.
  * 빈 줄(\n\n)을 이벤트 경계로 사용하며, 스트림 종료 시 남은 버퍼도 처리한다.
+ *
+ * @param stream 파싱할 SSE 바이트 스트림
+ * @returns 파싱된 SSE 이벤트를 순차적으로 내보내는 async generator
  */
 export async function* parseSseStream(
   stream: ReadableStream<Uint8Array>,

@@ -22,12 +22,22 @@ export const SENTRY_IGNORE_ERRORS: (string | RegExp)[] = [
   'ResizeObserver loop completed with undelivered notifications',
 ];
 
-/** 사용자가 취소했거나 페이지를 떠나며 발생한 정상적인 요청 중단인지 판별한다. */
+/**
+ * 사용자가 취소했거나 페이지를 떠나며 발생한 정상적인 요청 중단인지 판별한다.
+ *
+ * @param error 판별할 오류 값
+ * @returns 요청 중단(AbortError) 여부
+ */
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError';
 }
 
-/** 사용자가 복구할 수 있는 4xx 검증 오류인지 판별한다(스펙 §AN-2-8). */
+/**
+ * 사용자가 복구할 수 있는 4xx 검증 오류인지 판별한다(스펙 §AN-2-8).
+ *
+ * @param error 판별할 오류 값
+ * @returns 복구 가능한 4xx 클라이언트 오류 여부
+ */
 function isRecoverableClientError(error: unknown): boolean {
   return error instanceof FetchError && error.status < SERVER_ERROR_STATUS;
 }
@@ -35,6 +45,9 @@ function isRecoverableClientError(error: unknown): boolean {
 /**
  * API 호출 실패를 Sentry로 보낸다.
  * 네트워크 오류와 5xx만 캡처하고, 복구 가능한 4xx와 요청 중단은 무시한다(스펙 §AN-2-8).
+ *
+ * @param error 캡처할 오류 값
+ * @param context 요청 url과 method를 담은 컨텍스트
  */
 export function captureApiError(
   error: unknown,
@@ -56,6 +69,10 @@ export function captureApiError(
 /**
  * Sentry beforeSend 훅. 자동 캡처·unhandledrejection 등 captureApiError를 거치지 않은
  * 경로로 유입되는 복구 가능한 4xx 응답을 최종적으로 걸러낸다.
+ *
+ * @param event Sentry로 전송될 오류 이벤트
+ * @param hint 원본 예외 등을 담은 이벤트 힌트
+ * @returns 전송할 이벤트, 복구 가능한 4xx면 null
  */
 export function dropRecoverableApiError(
   event: Sentry.ErrorEvent,
@@ -66,7 +83,11 @@ export function dropRecoverableApiError(
   return event;
 }
 
-/** Amplitude device_id를 Sentry 사용자로 연결한다(스펙 §AN-2-8 User). */
+/**
+ * Amplitude device_id를 Sentry 사용자로 연결한다(스펙 §AN-2-8 User).
+ *
+ * @param deviceId Sentry 사용자로 연결할 Amplitude device_id
+ */
 export function identifyUser(deviceId: string | undefined): void {
   if (!deviceId) return;
 
@@ -76,6 +97,9 @@ export function identifyUser(deviceId: string | undefined): void {
 /**
  * 분석 행동 이벤트를 Sentry breadcrumb로 남기고 상관 키를 tag로 올린다
  * (스펙 §AN-2-8 Breadcrumb·Tags). payload는 §AN-2-9에 따라 원문이 없는 값만 담긴다.
+ *
+ * @param name breadcrumb 메시지로 남길 이벤트 이름
+ * @param payload breadcrumb 데이터와 상관 태그로 올릴 분석 프로퍼티
  */
 export function recordAnalyticsBreadcrumb(
   name: string,

@@ -17,6 +17,15 @@ const refreshCache = new Map<
   { promise: Promise<TokenResponse>; cachedAtMs: number }
 >();
 
+/**
+ * 같은 refresh 토큰의 재발급을 짧게 캐시해 한 버스트의 요청들이 결과를 공유하게 한다.
+ * 실패는 캐시하지 않아 재시도를 허용한다.
+ *
+ * @param refreshToken 재발급에 사용할 refresh 토큰
+ * @param executor 실제 재발급을 수행하는 함수(기본값 refreshOnServer)
+ * @param nowMs 현재 시각(ms epoch)
+ * @returns 재발급된 토큰 응답 Promise(캐시 적중 시 공유된 Promise)
+ */
 export function refreshWithDedup(
   refreshToken: string,
   executor: (refreshToken: string) => Promise<TokenResponse> = refreshOnServer,

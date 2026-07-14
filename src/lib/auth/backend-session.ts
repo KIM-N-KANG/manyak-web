@@ -27,6 +27,9 @@ export type FreshAccessTokenResult =
  * 재발급 실패가 백엔드의 확정 거절(4xx)인지 판별한다. 재사용 탐지로 refresh family가
  * 폐기된 경우 등 재시도해도 소용없는 실패만 능동 로그아웃 대상으로 삼는다. 네트워크
  * 오류·5xx는 회복 가능한 일시 실패이므로 세션을 보존한다.
+ *
+ * @param error 재발급 과정에서 잡힌 에러
+ * @returns 4xx 확정 거절이면 true
  */
 function isConfirmedAuthRejection(error: unknown): boolean {
   return (
@@ -50,6 +53,9 @@ function isConfirmedAuthRejection(error: unknown): boolean {
  *     인증, 없으면 degraded(회원의 요청을 익명으로 흘리지 않도록 게스트와 구분)
  * - refresh 토큰이 없으면 복구 불가: NextAuth 세션 쿠키가 남아 있으면(불일치) 폐기 후
  *   expired, 아니면 guest
+ *
+ * @param nowMs 현재 시각(ms epoch)
+ * @returns access 토큰 확보 결과(판별 유니온)
  */
 export async function ensureFreshAccessToken(
   nowMs = Date.now(),
@@ -113,6 +119,10 @@ export async function ensureFreshAccessToken(
  * 남아 "반쪽 세션"(게스트로 보이는 UI + 프록시의 Authorization 주입이 최대 14일
  * 지속)이 발생할 수 있다. 공유 기기에서는 다음 게스트의 활동이 실패한 계정에
  * 귀속되는 문제로 이어진다.
+ *
+ * @param idToken Google에서 발급한 ID 토큰
+ * @returns 세션에 담을 사용자 프로필(userId, nickname, profileImageUrl, isNewUser)
+ * @throws 토큰 응답에 accessToken이 없거나 사용자 정보에 id가 없으면 에러
  */
 export async function establishBackendSession(idToken: string): Promise<{
   userId: string;

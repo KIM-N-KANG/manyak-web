@@ -16,7 +16,9 @@ export class FetchError extends Error {
 
 /**
  * FetchError 응답 바디(JSON)에서 앱 수준 에러 코드(`ApiErrorResponse.code`)를 꺼낸다.
- * FetchError가 아니거나, 바디가 객체가 아니거나, code가 문자열이 아니면 undefined.
+ *
+ * @param error 검사할 에러 객체
+ * @returns 앱 수준 에러 코드. FetchError가 아니거나 바디가 객체가 아니거나 code가 문자열이 아니면 undefined
  */
 export function getApiErrorCode(error: unknown): string | undefined {
   if (!(error instanceof FetchError)) {

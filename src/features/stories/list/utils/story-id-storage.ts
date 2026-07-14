@@ -24,7 +24,11 @@ export const subscribeCreatedStoryIds = storyIdListStorage.subscribe;
 /** 로컬스토리지에 저장된 스토리 ID 목록의 현재 스냅샷을 반환한다. */
 export const getCreatedStoryIdsSnapshot = storyIdListStorage.getSnapshot;
 
-/** 서버 렌더링 시점의 스냅샷으로 센티넬 값을 반환한다. */
+/**
+ * 서버 렌더링 시점의 스냅샷으로 센티넬 값을 반환한다.
+ *
+ * @returns 서버 스냅샷 센티넬 값
+ */
 export const getServerCreatedStoryIdsSnapshot =
   (): typeof SERVER_STORY_IDS_SNAPSHOT => SERVER_STORY_IDS_SNAPSHOT;
 

@@ -14,6 +14,13 @@ type UseChatSubmitActionsParams = {
 /**
  * 채팅 입력 전송 동작을 제공하는 훅.
  * 공백/스트리밍 중 전송을 막고 분석 이벤트를 기록한 뒤 `onSend`를 호출한다.
+ *
+ * @param chatId 대상 채팅 ID
+ * @param turnCount 현재까지의 턴 개수
+ * @param isStreaming 응답 스트리밍 진행 여부
+ * @param inputMode 현재 입력 모드(일반/블럭)
+ * @param onSend 완성된 텍스트를 전송하는 콜백
+ * @returns 텍스트·선택지 전송과 채우기 트래킹 동작
  */
 export function useChatSubmitActions({
   chatId,

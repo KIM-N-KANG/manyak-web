@@ -24,7 +24,11 @@ export const subscribeCreatedChatIds = chatIdListStorage.subscribe;
 /** 로컬스토리지에서 채팅 ID 목록의 현재 스냅샷을 읽는다. */
 export const getCreatedChatIdsSnapshot = chatIdListStorage.getSnapshot;
 
-/** 서버 렌더링용 스냅샷. 항상 센티넬 값을 반환한다. */
+/**
+ * 서버 렌더링용 스냅샷. 항상 센티넬 값을 반환한다.
+ *
+ * @returns 서버 렌더링용 센티넬 스냅샷 값
+ */
 export const getServerCreatedChatIdsSnapshot =
   (): typeof SERVER_CHAT_IDS_SNAPSHOT => SERVER_CHAT_IDS_SNAPSHOT;
 

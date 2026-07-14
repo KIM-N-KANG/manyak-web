@@ -15,6 +15,9 @@ type UseCategoryNavigationArgs = {
 
 /**
  * 키워드 스텝의 카테고리 탭 이동(버튼/스와이프)과 잠금 규칙을 관리한다.
+ *
+ * @param isCategoryComplete 해당 카테고리의 필수 선택이 완료됐는지 판별하는 함수
+ * @returns 현재 카테고리와 이동·잠금 상태 및 이동 함수들
  */
 export function useCategoryNavigation({
   isCategoryComplete,

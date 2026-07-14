@@ -14,7 +14,11 @@ import {
   FEEDBACK_EMAIL_MAX_LENGTH,
 } from '../constants';
 
-/** 피드백 폼의 입력 상태와 제출(글자 수 제한, 성공/실패 토스트)을 관리하는 훅 */
+/**
+ * 피드백 폼의 입력 상태와 제출(글자 수 제한, 성공/실패 토스트)을 관리하는 훅.
+ *
+ * @returns 피드백 입력값, 입력·제출 핸들러, 검증 에러, 제출 중 여부
+ */
 export function useFeedbackForm() {
   const [body, setBody] = useState('');
   const [email, setEmail] = useState('');

@@ -16,6 +16,8 @@ const SCROLL_END_THRESHOLD = 4;
  * 진짜 맨 끝으로 재보정되기까지 몇 프레임이 걸린다. 이 정착 전 상태가 화면에
  * 노출되지 않도록, "맨 아래 도달 + 직전 프레임과 scrollHeight 동일(높이 안정)"을
  * 모두 만족할 때만 정착으로 판정한다. 첫 프레임은 비교 대상이 없어 항상 false다.
+ *
+ * @returns 프레임을 받아 정착 여부(맨 아래 도달 + 높이 안정)를 반환하는 판정 함수
  */
 export function createInitialScrollSettleTracker() {
   let previousScrollHeight: number | null = null;

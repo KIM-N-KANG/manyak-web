@@ -13,7 +13,11 @@ export const KAKAO_SDK_URL =
 
 const KAKAO_SHARE_TITLE = '초대 코드 등록하고 500 크레딧 받기 🎁';
 
-/** 공유 카드 썸네일. 카카오 서버가 가져갈 수 있도록 절대 URL을 사용한다. */
+/**
+ * 공유 카드 썸네일. 카카오 서버가 가져갈 수 있도록 절대 URL을 사용한다.
+ *
+ * @returns 오픈그래프 이미지의 절대 URL
+ */
 const shareImageUrl = (): string =>
   `${window.location.origin}/opengraph-image.png`;
 
@@ -45,6 +49,8 @@ declare global {
 /**
  * 카카오톡 공유 훅. onReady는 스크립트가 캐시된 재진입에서도 실행되므로 SDK 준비
  * 상태를 매 마운트마다 복구할 수 있다. 키 미설정·로드 실패 때는 버튼을 비활성화한다.
+ *
+ * @returns SDK 준비 여부, SDK 로드 핸들러, 초대 코드 공유 함수
  */
 export function useKakaoShare() {
   const [isReady, setIsReady] = useState(false);

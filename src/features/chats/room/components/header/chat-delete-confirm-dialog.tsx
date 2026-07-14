@@ -33,7 +33,6 @@ type ChatDeleteConfirmDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/** 채팅 삭제 확인 다이얼로그. 드로워에 가려지지 않도록 드로워 밖에서 렌더한다. */
 export function ChatDeleteConfirmDialog({
   chatId,
   open,
@@ -57,7 +56,6 @@ export function ChatDeleteConfirmDialog({
     deleteResource: () => mutateAsync({ chatId }),
     successMessage: TOAST_MESSAGE.CHAT_DELETED,
     failureMessage: TOAST_MESSAGE.CHAT_DELETE_FAILED,
-    // 삭제된 채팅으로 뒤로가기하지 않도록 replace로 목록에 돌아간다.
     onDeleteSuccess: () => router.replace(APP_PATH.MAIN.CHATS),
   });
 

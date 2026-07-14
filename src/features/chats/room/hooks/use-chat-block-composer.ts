@@ -14,7 +14,12 @@ type UseChatBlockComposerParams = {
   submitText: (text: string) => boolean;
 };
 
-/** 블럭(묘사/대사) 입력 모드의 블럭 목록 상태와 편집·전송 동작을 관리하는 훅 */
+/**
+ * 블럭(묘사/대사) 입력 모드의 블럭 목록 상태와 편집·전송 동작을 관리하는 훅
+ *
+ * @param submitText 완성된 텍스트를 전송하고 성공 여부를 반환하는 함수
+ * @returns 블럭 목록과 추가·삭제·수정·전송·교체·초기화 동작
+ */
 export function useChatBlockComposer({
   submitText,
 }: UseChatBlockComposerParams) {

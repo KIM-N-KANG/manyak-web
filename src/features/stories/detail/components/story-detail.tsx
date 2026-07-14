@@ -38,8 +38,6 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
 
   const { data, isPending, isError, refetch } = useGetStoryDetail(storyId, {
     query: {
-      // StrictMode 이중 마운트로 상세가 두 번 조회되지 않도록 abort signal을
-      // 전달하지 않는다. 배경은 queryFnWithoutAbortSignal 문서 참고.
       queryFn: queryFnWithoutAbortSignal(() => getStoryDetail(storyId)),
     },
   });

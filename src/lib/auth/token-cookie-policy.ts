@@ -11,7 +11,13 @@ export const SESSION_COOKIE_MAX_AGE_SECONDS = 14 * 24 * 60 * 60;
 /** 만료 전 이 여유(ms)에 들어오면 백엔드 요청 전에 선제 재발급한다(스펙 §3-8 토큰 세션). */
 const ACCESS_TOKEN_REFRESH_SKEW_MS = 60 * 1000;
 
-/** 로그인·재발급 응답의 expiresIn(초)을 만료 시각(epoch ms)으로 변환한다. */
+/**
+ * 로그인·재발급 응답의 expiresIn(초)을 만료 시각(epoch ms)으로 변환한다.
+ *
+ * @param nowMs 현재 시각(ms epoch)
+ * @param expiresInSeconds 만료까지 남은 초
+ * @returns 만료 시각(ms epoch)
+ */
 export function computeExpiresAt(
   nowMs: number,
   expiresInSeconds: number,
@@ -19,7 +25,12 @@ export function computeExpiresAt(
   return nowMs + expiresInSeconds * 1000;
 }
 
-/** 쿠키에 저장된 만료 시각 문자열을 파싱한다. 손상된 값은 null. */
+/**
+ * 쿠키에 저장된 만료 시각 문자열을 파싱한다. 손상된 값은 null.
+ *
+ * @param value 쿠키에 저장된 만료 시각 문자열
+ * @returns 파싱된 만료 시각(ms epoch), 손상 시 null
+ */
 export function parseExpiresAt(value: string | undefined): number | null {
   if (!value) {
     return null;
@@ -30,7 +41,13 @@ export function parseExpiresAt(value: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-/** 만료 토큰이 백엔드로 나가 익명 통과(고아 콘텐츠)되지 않도록 만료 임박 여부를 판정한다. */
+/**
+ * 만료 토큰이 백엔드로 나가 익명 통과(고아 콘텐츠)되지 않도록 만료 임박 여부를 판정한다.
+ *
+ * @param expiresAtMs access 토큰 만료 시각(ms epoch)
+ * @param nowMs 현재 시각(ms epoch)
+ * @returns 선제 재발급이 필요하면 true
+ */
 export function shouldRefreshAccessToken(
   expiresAtMs: number,
   nowMs: number,

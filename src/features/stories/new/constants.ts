@@ -102,6 +102,12 @@ const KOREAN_ORDINAL_WORDS = [
   '열',
 ] as const;
 
+/**
+ * 스토리라인 탭의 순번 라벨을 반환한다. 한글 서수 단어가 있으면 그것을, 없으면 숫자를 쓴다.
+ *
+ * @param index 0부터 시작하는 스토리라인 탭 인덱스
+ * @returns 표시용 순번 라벨(예: `첫 번째`, `11번째`)
+ */
 export const getStorylineTabLabel = (index: number): string => {
   const ordinal = KOREAN_ORDINAL_WORDS[index];
 

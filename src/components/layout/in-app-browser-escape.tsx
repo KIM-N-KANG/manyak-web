@@ -7,16 +7,25 @@ import { ListStatus } from '@/components/common/list-status';
 import { Button } from '@/components/ui/button';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
+/**
+ * 카카오톡 인앱 브라우저에서 현재 URL을 외부 브라우저로 여는 스킴을 호출한다.
+ */
 function openExternalViaKakaoScheme() {
   window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(
     window.location.href,
   )}`;
 }
 
+/**
+ * 카카오톡 인앱 브라우저 창을 닫는 스킴을 호출한다.
+ */
 function closeKakaoInAppBrowser() {
   window.location.href = 'kakaotalk://inappbrowser/close';
 }
 
+/**
+ * 일반 인앱 브라우저에서 플랫폼별 스킴으로 현재 URL을 외부 브라우저로 연다.
+ */
 function openExternalViaGenericScheme() {
   const { href, host, pathname, search, hash, protocol } = window.location;
 
@@ -31,6 +40,11 @@ function openExternalViaGenericScheme() {
   window.location.href = `x-safari-${href}`;
 }
 
+/**
+ * 아무 것도 구독하지 않는 useSyncExternalStore용 빈 구독 함수를 만든다.
+ *
+ * @returns 구독 해제용 no-op 함수
+ */
 const emptySubscribe = () => () => {};
 
 export function InAppBrowserEscape() {

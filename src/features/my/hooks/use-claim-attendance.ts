@@ -10,6 +10,8 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 /**
  * 출석 보상을 요청하고 결과에 따라 토스트를 띄우는 훅.
  * 성공 시 사용자 조회(me) 쿼리를 무효화해 잔액·출석 여부를 자동 갱신한다.
+ *
+ * @returns 출석 요청 함수와 요청 중 여부
  */
 export function useClaimAttendance() {
   const queryClient = useQueryClient();

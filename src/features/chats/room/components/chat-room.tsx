@@ -50,8 +50,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const [creditShortageTrigger, setCreditShortageTrigger] =
     useState<CreditShortageTrigger | null>(null);
 
-  // 402 통지: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도, 그 외는 실패 토스트.
-  // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
   const handlePaymentRequired = (error: unknown) => {
     const reason = resolvePaymentRequiredReason(error, sessionStatus);
 
@@ -84,8 +82,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
 
     await refetch();
-    // 게스트(배치)·회원(me/chats) 목록 모두 최근 활동 순서가 바뀌므로 함께 무효화한다.
-    // 비활성 쿼리 무효화는 무해해서 세션 분기 없이 둘 다 처리한다.
     await queryClient.invalidateQueries({ queryKey: [CHATS_BATCH_QUERY_KEY] });
     await queryClient.invalidateQueries({ queryKey: getGetMyChatsQueryKey() });
   };
@@ -96,10 +92,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       turns.length,
       handleStreamCompleted,
       handlePaymentRequired,
-      refetch, // onIndeterminate: EOF·409 시 서버 확정 상태 반영
+      refetch,
     );
 
-  // 게스트가 턴 한도에 도달했으면 전송하지 않고 로그인 유도(서버 402 이전의 클라이언트 사전 차단).
   const guardedSend = (userInput: string): Promise<void> => {
     if (isGuestOverLimit(sessionStatus, 'chat')) {
       setGuestLimitTrigger('chat_turn');
@@ -110,7 +105,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     return send(userInput);
   };
 
-  // 게스트 한도 사전 차단은 전송과 동일 — 재생성도 chat_turn 한도를 공유한다(4-backend.md §4-3).
   const guardedRegenerate = (turn: ChatTurnResponse): Promise<void> => {
     track('client_chat_regenerateButton_clicked', {
       chat_id: chatId,

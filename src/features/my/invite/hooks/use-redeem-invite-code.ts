@@ -16,6 +16,14 @@ import {
   resolveInviteCodeError,
 } from '../utils/invite-code';
 
+/**
+ * 초대 코드를 입력·검증하고 등록 요청을 처리하는 훅.
+ * 성공 시 사용자 조회(me) 쿼리를 무효화하고, 실패 시 에러 메시지를 노출한다.
+ *
+ * @param source 초대 코드를 입력한 경로(초대 페이지/온보딩) — 분석 이벤트에 사용
+ * @param onSuccess 등록 성공 후 호출되는 콜백
+ * @returns 코드 등록 함수, 등록 중 여부, 에러 메시지, 에러 초기화 함수
+ */
 export function useRedeemInviteCode({
   source,
   onSuccess,

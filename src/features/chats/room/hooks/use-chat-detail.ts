@@ -7,7 +7,12 @@ import {
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { queryFnWithoutAbortSignal } from '@/lib/query-client';
 
-/** 채팅 상세(스토리 제목, 프롤로그, 턴 목록, 추천 입력)를 조회하는 훅 */
+/**
+ * 채팅 상세(스토리 제목, 프롤로그, 턴 목록, 추천 입력)를 조회하는 훅
+ *
+ * @param chatId 조회할 채팅 ID
+ * @returns 스토리 제목·프롤로그·턴 목록·추천 입력과 로딩·에러 상태, refetch 함수
+ */
 export function useChatDetail(chatId: string) {
   const query = useGetChatDetail(chatId, {
     query: {
