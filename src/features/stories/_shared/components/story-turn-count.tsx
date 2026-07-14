@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 
 type StoryTurnCountProps = {
   turnCount: number;
-  /** sm은 목록 카드용 축소 크기, md는 상세 페이지 기본 크기 */
   size?: 'sm' | 'md';
 };
 
