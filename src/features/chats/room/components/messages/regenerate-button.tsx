@@ -14,6 +14,7 @@ export function RegenerateButton({ onClick }: RegenerateButtonProps) {
         type="button"
         variant="ghost"
         size="icon-sm"
+        aria-label="다시 생성"
         className="text-foreground-secondary"
         onClick={onClick}>
         <HugeiconsIcon icon={Refresh04Icon} aria-hidden="true" />
