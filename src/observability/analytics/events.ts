@@ -123,6 +123,10 @@ export type AnalyticsEventProps = {
     turn_number: number;
     position?: number;
   };
+  client_chat_regenerateButton_clicked: {
+    chat_id: string;
+    turn_number: number;
+  };
   client_chat_streamError_shown: { chat_id: string; turn_number: number };
   client_chat_loadError_shown: { chat_id: string };
   client_chat_retryButton_clicked: { chat_id: string };
