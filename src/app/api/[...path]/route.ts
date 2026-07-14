@@ -13,8 +13,20 @@ type ApiProxyContext = {
 const PROXY_BASE_PATH = '/api';
 const BODYLESS_METHODS = new Set(['GET', 'HEAD']);
 
+/**
+ * 문자열 끝의 슬래시를 모두 제거한다.
+ *
+ * @param value 다듬을 경로 문자열
+ * @returns 끝 슬래시가 제거된 문자열
+ */
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
+/**
+ * 프록시 기준 경로(`/api`) 접두사를 경로에서 제거한다.
+ *
+ * @param pathname 요청 경로
+ * @returns 프록시 접두사가 제거된 경로
+ */
 const stripProxyBasePath = (pathname: string) => {
   if (pathname === PROXY_BASE_PATH) {
     return '';
@@ -27,6 +39,13 @@ const stripProxyBasePath = (pathname: string) => {
   return pathname;
 };
 
+/**
+ * 백엔드 기준 경로와 요청 경로를 결합해 최종 대상 경로를 만든다.
+ *
+ * @param basePath 백엔드 기준 경로
+ * @param pathname 요청 경로
+ * @returns 결합된 대상 경로
+ */
 const joinPaths = (basePath: string, pathname: string) => {
   const normalizedBasePath = trimTrailingSlash(basePath);
 
@@ -44,6 +63,13 @@ const joinPaths = (basePath: string, pathname: string) => {
   return `${normalizedBasePath}${stripProxyBasePath(pathname)}`;
 };
 
+/**
+ * 요청 URL과 백엔드 기준 URL로 프록시 대상 URL을 만든다.
+ *
+ * @param requestUrl 원본 요청 URL
+ * @param apiBaseUrl 백엔드 기준 URL
+ * @returns 프록시 대상 URL 문자열
+ */
 const buildTargetUrl = (requestUrl: string, apiBaseUrl: string) => {
   const sourceUrl = new URL(requestUrl);
   const targetBaseUrl = new URL(apiBaseUrl);
@@ -55,6 +81,12 @@ const buildTargetUrl = (requestUrl: string, apiBaseUrl: string) => {
   return targetUrl.href;
 };
 
+/**
+ * 프록시 전달용 요청 초기화 객체를 생성한다(호스트·쿠키 헤더 제거, 본문 복사).
+ *
+ * @param request 원본 요청
+ * @returns fetch에 전달할 RequestInit 객체
+ */
 const createProxyRequestInit = async (request: Request) => {
   const headers = new Headers(request.headers);
   const method = request.method.toUpperCase();
@@ -77,6 +109,13 @@ const createProxyRequestInit = async (request: Request) => {
   return init;
 };
 
+/**
+ * 요청을 백엔드로 프록시하며 회원 세션 토큰 주입과 만료·장애 처리를 수행한다.
+ *
+ * @param request 원본 요청
+ * @param _context 라우트 컨텍스트(경로 파라미터)
+ * @returns 백엔드 응답 또는 오류 응답
+ */
 const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
   const apiBaseUrl = process.env.API_BASE_URL;
 

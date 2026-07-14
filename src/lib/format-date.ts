@@ -8,7 +8,12 @@ import {
   isYesterday,
 } from 'date-fns';
 
-/** ISO 날짜 문자열에서 날짜 부분(yyyy-MM-dd)만 잘라 반환한다. */
+/**
+ * ISO 날짜 문자열에서 날짜 부분(yyyy-MM-dd)만 잘라 반환한다.
+ *
+ * @param isoDate ISO 8601 날짜 문자열
+ * @returns yyyy-MM-dd 형식의 날짜 문자열
+ */
 export function formatDate(isoDate: string): string {
   return isoDate.slice(0, 10);
 }
@@ -20,6 +25,9 @@ const DAY_THRESHOLD = 7;
  * ISO 날짜 문자열을 상대 시간 표현으로 변환한다.
  * "방금 전" → "n분 전" → "n시간 전" → "오늘/어제" → "n일 전" 순으로 표시하고,
  * 7일 이상 지난 날짜는 yyyy-MM-dd 형식으로 표시한다.
+ *
+ * @param isoDate ISO 8601 날짜 문자열
+ * @returns 상대 시간 표현 문자열(7일 이상은 yyyy-MM-dd)
  */
 export function formatRelativeDate(isoDate: string): string {
   const date = new Date(isoDate);

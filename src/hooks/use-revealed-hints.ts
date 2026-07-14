@@ -15,13 +15,24 @@ export type RevealedHint = {
 const TEXT_REVEAL_MIN_OFFSET_MS = 1000;
 const TEXT_REVEAL_MAX_OFFSET_MS = 2000;
 
+/**
+ * 텍스트 공개용 랜덤 오프셋(ms)을 계산한다.
+ *
+ * @returns 최소~최대 범위 내의 랜덤 오프셋(ms)
+ */
 function randomTextRevealOffsetMs(): number {
   const span = TEXT_REVEAL_MAX_OFFSET_MS - TEXT_REVEAL_MIN_OFFSET_MS;
 
   return TEXT_REVEAL_MIN_OFFSET_MS + Math.floor(Math.random() * (span + 1));
 }
 
-/** 경과 시간(elapsedMs)이 지연 시간을 넘긴 힌트만 골라 반환한다. */
+/**
+ * 경과 시간(elapsedMs)이 지연 시간을 넘긴 힌트만 골라 반환한다.
+ *
+ * @param hints 지연 시간이 지정된 힌트 목록
+ * @param elapsedMs 경과 시간(ms)
+ * @returns 지연 시간이 지난 힌트 목록
+ */
 export function selectRevealedHints(
   hints: ReadonlyArray<RevealHint>,
   elapsedMs: number,
@@ -32,6 +43,9 @@ export function selectRevealedHints(
 /**
  * 각 힌트를 delayMs가 지난 시점에 순차적으로 노출하는 훅.
  * 텍스트는 힌트 노출 후 1~2초의 랜덤 오프셋을 두고 추가로 공개된다.
+ *
+ * @param hints 지연 시간이 지정된 힌트 목록
+ * @returns 노출된 힌트와 각 텍스트 공개 여부 목록
  */
 export function useRevealedHints(
   hints: ReadonlyArray<RevealHint>,

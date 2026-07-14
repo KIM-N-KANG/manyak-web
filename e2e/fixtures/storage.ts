@@ -1,11 +1,11 @@
 import type { Page } from '@playwright/test';
 
-import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/list/utils/chat-id-storage';
+import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
   ONBOARDING_SEEN_STORAGE_KEY,
   ONBOARDING_SEEN_VALUE,
 } from '@/features/onboarding/constants';
-import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/list/utils/story-id-storage';
+import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 
 /** 온보딩을 "이미 봄"으로 표시해 다이얼로그가 뜨지 않게 한다(US-8-3). */
 export async function skipOnboarding(page: Page): Promise<void> {

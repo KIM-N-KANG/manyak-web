@@ -14,6 +14,11 @@ type GlobalErrorProps = {
   reset: () => void;
 };
 
+/**
+ * 저장된 테마 설정과 시스템 선호도로 다크 모드 여부를 판별한다.
+ *
+ * @returns 다크 모드이면 true
+ */
 function resolveIsDark() {
   if (typeof window === 'undefined') return false;
 

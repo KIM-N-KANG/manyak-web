@@ -14,7 +14,13 @@ type StoryStartSettingsProps = {
   onValueChange: (value: string) => void;
 };
 
-/** 시작 설정의 Select 값. id가 없는 설정은 인덱스로 폴백한다. */
+/**
+ * 시작 설정의 Select 값. id가 없는 설정은 인덱스로 폴백한다.
+ *
+ * @param setting 대상 시작 설정(없을 수 있음)
+ * @param index 목록 내 인덱스(id 폴백용)
+ * @returns 설정 id 또는 인덱스 문자열
+ */
 export const startSettingValue = (
   setting: StoryStartSettingResponse | undefined,
   index: number,

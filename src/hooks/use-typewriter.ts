@@ -18,6 +18,9 @@ const DEFAULT_PAUSE_DELAY = 1200;
 /**
  * 문구 목록을 타자기 효과로 순환하며 표시하는 훅.
  * 한 글자씩 타이핑한 뒤 잠시 멈추고, 다시 지운 후 다음 문구로 넘어간다.
+ *
+ * @param phrases 순환하며 표시할 문구 목록
+ * @param options 타이핑/삭제 간격과 멈춤 시간 옵션
  * @returns 현재까지 타이핑된 문자열
  */
 export function useTypewriter(

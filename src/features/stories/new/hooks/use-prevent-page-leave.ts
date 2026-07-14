@@ -15,6 +15,10 @@ type UsePreventPageLeaveOptions = {
  *
  * `enabled`인 동안 더미 항목은 항상 1개만 유지된다(popstate마다 다시 쌓음).
  * 따라서 실제 이탈 시 `confirmLeave`는 더미 + 현재 페이지를 건너뛰어야 한다.
+ *
+ * @param enabled 이탈 가드를 활성화할지 여부
+ * @param onBackAttempt 뒤로가기를 흡수했을 때 호출되는 콜백
+ * @returns 이탈 확정(`confirmLeave`)과 정리 후 이동(`leaveAfterCleanup`) 함수
  */
 export function usePreventPageLeave({
   enabled,

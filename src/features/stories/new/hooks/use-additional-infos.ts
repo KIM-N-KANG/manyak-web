@@ -13,11 +13,21 @@ import {
 } from '../constants';
 import type { AdditionalInfoInput } from '../types';
 
+/**
+ * 빈 추가 정보 인풋 하나를 새 클라이언트 id와 함께 생성한다.
+ *
+ * @returns 값이 비어 있는 추가 정보 인풋
+ */
 const createEmptyAdditionalInfo = (): AdditionalInfoInput => ({
   id: createClientId(),
   value: '',
 });
 
+/**
+ * 초기 개수만큼 빈 추가 정보 인풋 목록을 생성한다.
+ *
+ * @returns 초기 추가 정보 인풋 배열
+ */
 const createInitialAdditionalInfos = (): AdditionalInfoInput[] =>
   Array.from(
     { length: ADDITIONAL_INFO_INITIAL_COUNT },
@@ -27,6 +37,8 @@ const createInitialAdditionalInfos = (): AdditionalInfoInput[] =>
 /**
  * 추가 정보 인풋 목록의 추가·삭제·수정 상태를 관리하는 훅.
  * 새 인풋을 추가하면 해당 인풋으로 포커스와 스크롤을 이동한다.
+ *
+ * @returns 추가 정보 목록과 추가·삭제·수정·리셋·제출값 조회 함수들
  */
 export function useAdditionalInfos() {
   const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(

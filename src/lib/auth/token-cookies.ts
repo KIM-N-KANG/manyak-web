@@ -23,6 +23,12 @@ const NEXTAUTH_SESSION_COOKIES = [
   '__Secure-authjs.session-token',
 ];
 
+/**
+ * 쿠키 이름이 NextAuth 세션 쿠키(청크 분할 포함)인지 접두사로 판별한다.
+ *
+ * @param name 검사할 쿠키 이름
+ * @returns NextAuth 세션 쿠키면 true
+ */
 function isNextAuthSessionCookieName(name: string): boolean {
   return NEXTAUTH_SESSION_COOKIES.some(
     (base) => name === base || name.startsWith(`${base}.`),
@@ -43,7 +49,11 @@ export type BackendSessionTokens = {
   expiresAt: number;
 };
 
-/** BFF 쿠키에서 백엔드 세션 토큰을 읽는다. 하나라도 없거나 손상이면 null(게스트 취급). */
+/**
+ * BFF 쿠키에서 백엔드 세션 토큰을 읽는다. 하나라도 없거나 손상이면 null(게스트 취급).
+ *
+ * @returns 백엔드 세션 토큰, 없거나 손상이면 null
+ */
 export async function readBackendSessionTokens(): Promise<BackendSessionTokens | null> {
   const store = await cookies();
   const accessToken = store.get(ACCESS_TOKEN_COOKIE)?.value;
@@ -60,6 +70,8 @@ export async function readBackendSessionTokens(): Promise<BackendSessionTokens |
 /**
  * refresh 토큰 쿠키만 읽는다. access·expiresAt이 없거나 손상돼 readBackendSessionTokens가
  * null이어도, refresh 토큰이 살아 있으면 재발급으로 세션을 복구할 수 있다.
+ *
+ * @returns refresh 토큰, 없으면 null
  */
 export async function readRefreshTokenCookie(): Promise<string | null> {
   const store = await cookies();
@@ -67,7 +79,13 @@ export async function readRefreshTokenCookie(): Promise<string | null> {
   return store.get(REFRESH_TOKEN_COOKIE)?.value ?? null;
 }
 
-/** 로그인·재발급 응답의 토큰 쌍을 httpOnly 쿠키로 보관한다(브라우저 JS 비노출 — 스펙 §3-8). */
+/**
+ * 로그인·재발급 응답의 토큰 쌍을 httpOnly 쿠키로 보관한다(브라우저 JS 비노출 — 스펙 §3-8).
+ *
+ * @param tokens 백엔드 토큰 응답(accessToken·refreshToken·expiresIn)
+ * @param nowMs 만료 시각 계산 기준이 되는 현재 시각(ms epoch)
+ * @throws 토큰 응답에 필수 값이 없으면 에러
+ */
 export async function writeBackendSessionTokens(
   tokens: TokenResponse,
   nowMs: number,
@@ -92,6 +110,8 @@ export async function writeBackendSessionTokens(
 /**
  * NextAuth 세션 쿠키가 존재하는지 확인한다. BFF 토큰이 없는데도 이 쿠키가 남아 있으면
  * "화면은 회원인데 서버엔 열쇠 없음"인 불일치 상태로, 능동 로그아웃 대상이다.
+ *
+ * @returns NextAuth 세션 쿠키가 존재하면 true
  */
 export async function hasNextAuthSessionCookie(): Promise<boolean> {
   const store = await cookies();

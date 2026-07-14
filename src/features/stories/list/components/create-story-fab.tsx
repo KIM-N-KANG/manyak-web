@@ -8,10 +8,10 @@ import { m } from 'motion/react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
-import { useMainScroll } from '@/app/(main)/main-scroll-context';
+import { useMainScroll } from '@/components/layout/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
-import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
-import { isGuestOverLimit } from '@/features/auth/login-required/utils/guest-usage-storage';
+import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
+import { isGuestOverLimit } from '@/features/auth/_shared/utils/guest-usage-storage';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
@@ -22,7 +22,6 @@ export function CreateStoryFab() {
     useState<GuestLimitTrigger | null>(null);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    // 이미 스토리를 만든 게스트는 생성 페이지 진입 자체를 막고 로그인을 유도한다.
     if (isGuestOverLimit(status, 'storyCreate')) {
       event.preventDefault();
       setGuestLimitTrigger('story_create');
@@ -34,8 +33,6 @@ export function CreateStoryFab() {
   };
 
   return (
-    // absolute 기준은 메인 레이아웃의 스크롤 래퍼(positioned). 스크롤 컨테이너는
-    // static이라 이를 통과해 붙으므로, 스크롤과 무관하게 콘텐츠 영역 우하단에 고정된다.
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-end px-4">
       <Link
         href={APP_PATH.CREATOR.STORY}

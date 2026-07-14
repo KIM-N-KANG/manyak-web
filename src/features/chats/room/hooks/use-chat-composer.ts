@@ -5,8 +5,8 @@ import {
   type InputBlockType,
   parseInputBlocks,
   serializeInputBlocks,
-} from '../lib/input-blocks';
-import { getRandomSuggestion } from '../lib/random-suggestion';
+} from '../utils/input-blocks';
+import { getRandomSuggestion } from '../utils/random-suggestion';
 import { useChatBlockComposer } from './use-chat-block-composer';
 import { type ChatInputMode } from './use-chat-input-mode';
 import { useChatPlainComposer } from './use-chat-plain-composer';
@@ -24,6 +24,14 @@ type UseChatComposerParams = {
 /**
  * 일반/블럭 컴포저를 통합해 채팅 입력의 상태와 동작을 제공하는 훅.
  * 현재 입력 모드에 맞춰 전송·채우기·모드 전환을 처리하고 분석 이벤트를 기록한다.
+ *
+ * @param chatId 대상 채팅 ID
+ * @param turnCount 현재까지의 턴 개수
+ * @param isStreaming 응답 스트리밍 진행 여부
+ * @param inputMode 현재 입력 모드(일반/블럭)
+ * @param suggestions 추천 입력 문구 목록
+ * @param onSend 완성된 텍스트를 전송하는 콜백
+ * @returns 입력 값·블럭 상태와 전송·채우기·모드 전환 등의 동작
  */
 export function useChatComposer({
   chatId,

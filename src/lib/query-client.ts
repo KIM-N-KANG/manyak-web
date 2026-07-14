@@ -43,6 +43,9 @@ const DEFAULT_MUTATION_OPTIONS: Options['mutationOptions'] = {
  * 적용처: 채팅 상세(use-chat-detail), 스토리 상세(story-detail). 마운트 직후
  * 단일 조회를 가정하는 화면(카운터 기반 E2E 목킹 포함)이 늘어나면 같은 방식으로
  * 감싸면 된다.
+ *
+ * @param fetcher abort signal 없이 실행할 데이터 페처
+ * @returns signal을 전달하지 않는 React Query queryFn
  */
 export function queryFnWithoutAbortSignal<T>(
   fetcher: () => Promise<T>,
@@ -50,7 +53,11 @@ export function queryFnWithoutAbortSignal<T>(
   return () => fetcher();
 }
 
-/** 앱 공통 기본 옵션(retry/gcTime/staleTime 등)이 적용된 QueryClient를 생성한다. */
+/**
+ * 앱 공통 기본 옵션(retry/gcTime/staleTime 등)이 적용된 QueryClient를 생성한다.
+ *
+ * @returns 기본 옵션이 적용된 QueryClient 인스턴스
+ */
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {

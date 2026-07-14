@@ -21,10 +21,6 @@ type StoryThumbnailViewerProps = {
   imageUrl: string;
 };
 
-/**
- * 스토리 썸네일을 풀스크린으로 크게 보여주는 심플 뷰어(라이트박스).
- * X·화면 탭·ESC·브라우저 뒤로가기로 닫힌다.
- */
 export function StoryThumbnailViewer({
   open,
   onOpenChange,

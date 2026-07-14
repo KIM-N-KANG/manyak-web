@@ -4,7 +4,6 @@ type PageLoadingSpinnerProps = {
   'aria-label'?: string;
 };
 
-/** 페이지·콘텐츠 로딩 시 화면 중앙에 표시하는 공통 스피너 */
 export function PageLoadingSpinner({
   'aria-label': ariaLabel,
 }: PageLoadingSpinnerProps) {

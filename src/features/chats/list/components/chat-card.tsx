@@ -51,7 +51,6 @@ export function ChatCard({ chat, position }: ChatCardProps) {
           })
         }
       />
-      {/* 스토리 목록과 같은 3:4 크롭을 유지해 커버 이미지 인지 일관성을 지킨다. */}
       <AspectRatio
         ratio={3 / 4}
         className="w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">

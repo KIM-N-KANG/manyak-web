@@ -1,5 +1,5 @@
 import { BackHeader } from '@/components/layout/back-header';
-import { InviteScreen } from '@/features/my/invite/components/invite-screen';
+import { InviteScreen } from '@/features/more/invite/components/invite-screen';
 
 export default function MoreInvitePage() {
   return (

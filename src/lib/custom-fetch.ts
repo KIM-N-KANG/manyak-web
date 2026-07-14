@@ -10,6 +10,9 @@ export { FetchError, getApiErrorCode };
 /**
  * 에러 응답 바디를 파싱한다. JSON이면 객체로, JSON이 아니면 원문 문자열로, 비어 있으면 null.
  * `FetchError.data`에 담아 {@link getApiErrorCode} 등이 `code`를 읽을 수 있게 한다.
+ *
+ * @param response 파싱할 에러 응답
+ * @returns 파싱된 객체 또는 원문 문자열, 비어 있으면 null
  */
 export async function parseErrorResponseBody(
   response: Response,
@@ -40,6 +43,9 @@ export interface RequestConfig extends Omit<RequestInit, 'method' | 'body'> {
 /**
  * 요청 URL을 Next.js API 프록시(/api) 경로로 변환한다.
  * 절대 URL은 pathname만 남기고, 이미 /api로 시작하면 그대로 반환한다.
+ *
+ * @param url 변환할 요청 URL(절대 또는 상대)
+ * @returns /api 프록시 경로로 변환된 URL
  */
 export function resolveApiProxyUrl(url: string) {
   const resolvedUrl = /^https?:\/\//.test(url)
@@ -60,6 +66,16 @@ export function resolveApiProxyUrl(url: string) {
   return `${API_PROXY_BASE_PATH}${normalizedUrl}`;
 }
 
+/**
+ * 프록시 경로 변환·타임아웃·JSON 직렬화·에러 변환·Sentry 리포팅을 적용해 요청을 보낸다.
+ *
+ * @param method HTTP 메서드
+ * @param url 요청 URL
+ * @param data 요청 본문(GET이 아니면 JSON으로 직렬화)
+ * @param config 헤더·타임아웃 등 요청 설정
+ * @returns 파싱된 응답 본문(204·빈 응답은 undefined, SSE는 스트림)
+ * @throws 응답이 ok가 아니면 FetchError
+ */
 const request = async <T>(
   method: RequestMethod,
   url: string,
@@ -101,7 +117,7 @@ const request = async <T>(
       try {
         errorData = await response.json();
       } catch {
-        // JSON 형태의 에러 응답이 아니면 null로 처리합니다.
+        // JSON 형태의 에러 응답이 아니면 null로 처리한다.
       }
 
       throw new FetchError(

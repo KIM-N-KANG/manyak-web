@@ -16,6 +16,8 @@ import {
 
 /**
  * 키워드 스텝의 태그/커스텀 키워드 선택 상태와 그에 파생되는 규칙을 관리한다.
+ *
+ * @returns 카테고리별 선택 상태와 태그 토글·추가·완료 판별 함수들
  */
 export function useTagSelection() {
   const [selectedTagIdsByCategory, setSelectedTagIdsByCategory] = useState(

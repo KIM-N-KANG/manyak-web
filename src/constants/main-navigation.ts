@@ -31,6 +31,12 @@ export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
   },
 ];
 
+/**
+ * 경로에 해당하는 메인 내비게이션 라벨을 찾는다.
+ *
+ * @param pathname 현재 경로
+ * @returns 일치하는 항목의 라벨, 없으면 빈 문자열
+ */
 export function getMainNavigationLabel(pathname: string): string {
   return (
     MAIN_NAVIGATION_ITEMS.find((item) => item.href === pathname)?.label ?? ''
