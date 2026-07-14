@@ -39,7 +39,7 @@ export function ChatRoomHeader({
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
       <h1 className="min-w-0 flex-1 truncate font-semibold">{storyTitle}</h1>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center">
         <ChatCreditInfoPopover />
         <ChatSettingsDrawer
           chatId={chatId}

@@ -11,6 +11,7 @@ import {
   MessageScrollerItem,
   MessageScrollerProvider,
   MessageScrollerViewport,
+  useMessageScroller,
 } from '@/components/ui/message-scroller';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
@@ -22,13 +23,31 @@ import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';
 
+type RegenerateAnchorProps = {
+  turnId: number | null;
+};
+
+function RegenerateAnchor({ turnId }: RegenerateAnchorProps) {
+  const { scrollToMessage } = useMessageScroller();
+
+  useEffect(() => {
+    if (turnId != null) {
+      scrollToMessage(String(turnId), { align: 'start', scrollMargin: 64 });
+    }
+  }, [turnId, scrollToMessage]);
+
+  return null;
+}
+
 type ChatMessagesProps = {
   prologue: string;
   turns: ChatTurnResponse[];
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
+  regeneratingTurnId: number | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
+  onRegenerate: (turn: ChatTurnResponse) => void;
 };
 
 export function ChatMessages({
@@ -36,8 +55,10 @@ export function ChatMessages({
   turns,
   suggestedInputs,
   streamingTurn,
+  regeneratingTurnId,
   onSendChoice,
   onFillChoice,
+  onRegenerate,
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
@@ -55,15 +76,20 @@ export function ChatMessages({
 
   return (
     <MessageScrollerProvider
-      autoScroll={!startedEmpty && !hasSent}
+      autoScroll={!startedEmpty && !hasSent && regeneratingTurnId == null}
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={64}>
+      <RegenerateAnchor turnId={regeneratingTurnId} />
       <MessageScroller
         className={cn(
           'transition-opacity duration-150',
           !settled && 'opacity-0',
         )}>
-        <MessageScrollerViewport ref={viewportRef}>
+        <MessageScrollerViewport
+          ref={viewportRef}
+          className={cn(
+            regeneratingTurnId != null && '[overflow-anchor:none]',
+          )}>
           <MessageScrollerContent className="gap-0">
             {prologue ? (
               <MessageScrollerItem>
@@ -73,15 +99,26 @@ export function ChatMessages({
 
             {turns.map((turn, index) => {
               const isLast = !streamingTurn && index === lastTurnIndex;
+              const isRegenerating =
+                streamingTurn !== null &&
+                regeneratingTurnId != null &&
+                turn.id === regeneratingTurnId;
 
               return (
-                <MessageScrollerItem key={turn.id ?? index}>
-                  <ChatTurnItem
-                    turn={turn}
-                    isLast={isLast}
-                    onSendChoice={onSendChoice}
-                    onFillChoice={onFillChoice}
-                  />
+                <MessageScrollerItem
+                  key={turn.id ?? index}
+                  messageId={turn.id != null ? String(turn.id) : undefined}>
+                  {isRegenerating ? (
+                    <ChatStreamingTurn turn={streamingTurn} />
+                  ) : (
+                    <ChatTurnItem
+                      turn={turn}
+                      isLast={isLast}
+                      onSendChoice={onSendChoice}
+                      onFillChoice={onFillChoice}
+                      onRegenerate={onRegenerate}
+                    />
+                  )}
                 </MessageScrollerItem>
               );
             })}
@@ -96,7 +133,7 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
-            {streamingTurn ? (
+            {streamingTurn && regeneratingTurnId == null ? (
               <MessageScrollerItem scrollAnchor>
                 <ChatStreamingTurn turn={streamingTurn} />
               </MessageScrollerItem>

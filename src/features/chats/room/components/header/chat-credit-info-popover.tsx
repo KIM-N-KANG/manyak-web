@@ -36,7 +36,7 @@ export function ChatCreditInfoPopover() {
         <PopoverDescription>
           {isGuest
             ? `로그인 전에는 채팅방 전체에서 ${GUEST_LIMITS.chat}번까지 대화할 수 있어요`
-            : '채팅을 한 번 보낼 때마다 10크레딧이 자동으로 차감돼요'}
+            : '채팅을 한 번 보내거나 재생성할 때마다 10크레딧이 자동으로 차감돼요'}
         </PopoverDescription>
       </PopoverContent>
     </Popover>

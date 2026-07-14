@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
+import type { ChatTurnResponse } from '@/api/generated/models';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
@@ -89,12 +90,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     await queryClient.invalidateQueries({ queryKey: getGetMyChatsQueryKey() });
   };
 
-  const { streamingTurn, isStreaming, send } = useChatStream(
-    chatId,
-    turns.length,
-    handleStreamCompleted,
-    handlePaymentRequired,
-  );
+  const { streamingTurn, isStreaming, send, regenerate, regeneratingTurnId } =
+    useChatStream(
+      chatId,
+      turns.length,
+      handleStreamCompleted,
+      handlePaymentRequired,
+      refetch, // onIndeterminate: EOF·409 시 서버 확정 상태 반영
+    );
 
   // 게스트가 턴 한도에 도달했으면 전송하지 않고 로그인 유도(서버 402 이전의 클라이언트 사전 차단).
   const guardedSend = (userInput: string): Promise<void> => {
@@ -105,6 +108,22 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
 
     return send(userInput);
+  };
+
+  // 게스트 한도 사전 차단은 전송과 동일 — 재생성도 chat_turn 한도를 공유한다(4-backend.md §4-3).
+  const guardedRegenerate = (turn: ChatTurnResponse): Promise<void> => {
+    track('client_chat_regenerateButton_clicked', {
+      chat_id: chatId,
+      turn_number: turns.length,
+    });
+
+    if (isGuestOverLimit(sessionStatus, 'chat')) {
+      setGuestLimitTrigger('chat_turn');
+
+      return Promise.resolve();
+    }
+
+    return regenerate(turn);
   };
 
   const { mode, changeMode } = useChatInputMode();
@@ -196,8 +215,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             turns={turns}
             suggestedInputs={suggestedInputs}
             streamingTurn={streamingTurn}
+            regeneratingTurnId={regeneratingTurnId}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}
+            onRegenerate={guardedRegenerate}
           />
         </div>
         <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
