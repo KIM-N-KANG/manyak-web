@@ -17,7 +17,7 @@ export function ServiceInfoView() {
       <BackHeader title="서비스 안내" fallbackHref={APP_PATH.MAIN.MORE} />
       <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4 pb-8">
         <article className="flex flex-col gap-8">
-          <section className="flex flex-col gap-2">
+          <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">크레딧 안내</h2>
             <ul className="flex list-disc flex-col pl-5">
               <li>스토리를 완성할 때 20크레딧이 차감돼요.</li>
@@ -34,7 +34,7 @@ export function ServiceInfoView() {
               </li>
             </ul>
           </section>
-          <section className="flex flex-col gap-2">
+          <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">게스트 이용 안내</h2>
             <ul className="flex list-disc flex-col pl-5">
               <li>
@@ -53,7 +53,7 @@ export function ServiceInfoView() {
               </li>
             </ul>
           </section>
-          <section className="flex flex-col gap-2">
+          <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">AI 콘텐츠 안내</h2>
             <ul className="flex list-disc flex-col pl-5">
               <li>스토리와 채팅 응답은 AI가 만든 허구의 창작물이에요.</li>
@@ -63,7 +63,7 @@ export function ServiceInfoView() {
               </li>
             </ul>
           </section>
-          <section className="flex flex-col gap-2">
+          <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">회원 탈퇴·문의</h2>
             <ul className="flex list-disc flex-col pl-5">
               <li>
@@ -86,7 +86,7 @@ export function ServiceInfoView() {
               </li>
             </ul>
           </section>
-          <section className="flex flex-col gap-2">
+          <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">약관 및 정책</h2>
             <ul className="flex flex-col gap-1">
               <li>
