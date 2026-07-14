@@ -92,7 +92,15 @@ export function ChatMessages({
           'transition-opacity duration-150',
           !settled && 'opacity-0',
         )}>
-        <MessageScrollerViewport ref={viewportRef}>
+        <MessageScrollerViewport
+          ref={viewportRef}
+          // 재생성 중에만 브라우저 scroll anchoring을 끈다. 켜져 있으면 스트리밍 성장을
+          // 따라 스크롤이 바닥으로 끌려 내려가 RegenerateAnchor의 상단 고정이 무효화된다.
+          // 전역으로 끄면 전송 완료 시 항목 교체(스트리밍 블록→확정 턴)에서 브라우저가
+          // 해주던 위치 보정까지 사라져 사용자 입력 버블이 아래로 점프한다.
+          className={cn(
+            regeneratingTurnId != null && '[overflow-anchor:none]',
+          )}>
           <MessageScrollerContent className="gap-0">
             {prologue ? (
               <MessageScrollerItem>
