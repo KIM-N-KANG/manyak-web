@@ -55,13 +55,7 @@ export function ChatMessages({
     }
   }, [streamingTurn, hasSent]);
 
-  // 재생성 중인 턴은 숨긴다 — 스트리밍 블록이 사용자 입력 버블과 새 AI 출력을 대신 렌더한다.
-  // error 이벤트로 실패하면 regeneratingTurnId 해제만으로 기존 본문·선택지가 복원된다(스펙 §3-6).
-  const visibleTurns =
-    regeneratingTurnId == null
-      ? turns
-      : turns.filter((turn) => turn.id !== regeneratingTurnId);
-  const lastTurnIndex = visibleTurns.length - 1;
+  const lastTurnIndex = turns.length - 1;
 
   return (
     <MessageScrollerProvider
@@ -81,18 +75,30 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
-            {visibleTurns.map((turn, index) => {
+            {turns.map((turn, index) => {
               const isLast = !streamingTurn && index === lastTurnIndex;
+              // 재생성 중인 턴은 같은 아이템 안에서 스트리밍 블록으로 교체한다(스펙 §3-6 "대체").
+              // 아이템을 제거+추가하면 MessageScroller의 동수(same-count) 앵커 경로를 타며
+              // 전환 애니메이션 동안 리앵커가 반복돼 스크롤이 상하로 진동한다.
+              // error 이벤트로 실패하면 regeneratingTurnId 해제만으로 기존 본문·선택지가 복원된다.
+              const isRegenerating =
+                streamingTurn !== null &&
+                regeneratingTurnId != null &&
+                turn.id === regeneratingTurnId;
 
               return (
                 <MessageScrollerItem key={turn.id ?? index}>
-                  <ChatTurnItem
-                    turn={turn}
-                    isLast={isLast}
-                    onSendChoice={onSendChoice}
-                    onFillChoice={onFillChoice}
-                    onRegenerate={onRegenerate}
-                  />
+                  {isRegenerating ? (
+                    <ChatStreamingTurn turn={streamingTurn} />
+                  ) : (
+                    <ChatTurnItem
+                      turn={turn}
+                      isLast={isLast}
+                      onSendChoice={onSendChoice}
+                      onFillChoice={onFillChoice}
+                      onRegenerate={onRegenerate}
+                    />
+                  )}
                 </MessageScrollerItem>
               );
             })}
@@ -107,7 +113,7 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
-            {streamingTurn ? (
+            {streamingTurn && regeneratingTurnId == null ? (
               <MessageScrollerItem scrollAnchor>
                 <ChatStreamingTurn turn={streamingTurn} />
               </MessageScrollerItem>
