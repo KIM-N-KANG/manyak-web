@@ -5,9 +5,11 @@ import process from 'node:process';
 
 import {
   analyzeSource,
+  filterByChangedLines,
   formatViolations,
   shouldCheckFile,
 } from './comment-convention/analyze.mjs';
+import { changedLines } from './comment-convention/git-diff.mjs';
 
 async function readStdin() {
   const chunks = [];
@@ -50,12 +52,26 @@ async function main() {
   if (!violations.length) process.exit(0);
 
   const repoRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+
+  let filtered = violations;
+
+  try {
+    filtered = filterByChangedLines(
+      violations,
+      changedLines(filePath, repoRoot),
+    );
+  } catch {
+    filtered = violations;
+  }
+
+  if (!filtered.length) process.exit(0);
+
   const rel = path.relative(repoRoot, filePath) || filePath;
 
   process.stdout.write(
     JSON.stringify({
       decision: 'block',
-      reason: formatViolations(violations, rel),
+      reason: formatViolations(filtered, rel),
     }),
   );
   process.exit(0);

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   analyzeSource,
+  filterByChangedLines,
   formatViolations,
+  parseChangedLines,
   shouldCheckFile,
 } from '../../.claude/hooks/comment-convention/analyze.mjs';
 
@@ -263,5 +265,64 @@ describe('formatViolations', () => {
     expect(out).toContain(
       'src/a/utils/add.ts:3 — 유틸 함수 `add` JSDoc에 @returns 누락.',
     );
+  });
+});
+
+describe('parseChangedLines', () => {
+  it('+ 훙크의 추가 라인 번호를 모은다', () => {
+    const diff = [
+      'diff --git a/x.ts b/x.ts',
+      '@@ -1,0 +4,3 @@',
+      '+a',
+      '+b',
+      '+c',
+      '@@ -10 +20 @@',
+      '+d',
+    ].join('\n');
+    const s = parseChangedLines(diff);
+
+    expect([...s].sort((a, b) => a - b)).toEqual([4, 5, 6, 20]);
+  });
+});
+
+describe('filterByChangedLines', () => {
+  const vs = [
+    {
+      line: 2,
+      kind: 'missing-jsdoc',
+      name: 'old',
+      message: 'x',
+      declStart: 1,
+      declEnd: 3,
+    },
+    {
+      line: 6,
+      kind: 'missing-jsdoc',
+      name: 'neu',
+      message: 'y',
+      declStart: 5,
+      declEnd: 7,
+    },
+  ];
+
+  it('changed가 null이면 그대로 반환', () => {
+    expect(filterByChangedLines(vs, null)).toHaveLength(2);
+  });
+  it('선언 스팬이 변경 라인과 교차하는 위반만 남긴다', () => {
+    const out = filterByChangedLines(vs, new Set([6]));
+
+    expect(out).toHaveLength(1);
+    expect(out[0].name).toBe('neu');
+  });
+});
+
+describe('analyzeSource - 선언 스팬', () => {
+  it('위반에 declStart/declEnd를 포함한다', () => {
+    const src = `export function add(a) {\n  return a;\n}`;
+    const v = analyzeSource(src, 'src/a/utils/add.ts');
+
+    expect(v[0]).toMatchObject({ kind: 'missing-jsdoc' });
+    expect(typeof v[0].declStart).toBe('number');
+    expect(typeof v[0].declEnd).toBe('number');
   });
 });

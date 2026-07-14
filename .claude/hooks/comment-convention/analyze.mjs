@@ -241,6 +241,7 @@ function innerComments(node, sourceText, sf) {
 function checkComponent(decl, sourceText, sf, violations) {
   const node = decl.commentNode;
   const nodeStart = node.getStart(sf);
+  const before = violations.length;
 
   if (decl.checkLeading) {
     const leads = leadingComments(node, sourceText);
@@ -281,6 +282,14 @@ function checkComponent(decl, sourceText, sf, violations) {
       name: decl.name,
       message: `컴포넌트 \`${decl.name}\` 내부의 주석을 제거하세요 (도구 지시자 외 주석 금지).`,
     });
+  }
+
+  const declStart = lineOf(sf, nodeStart);
+  const declEnd = lineOf(sf, node.getEnd());
+
+  for (let i = before; i < violations.length; i += 1) {
+    violations[i].declStart = declStart;
+    violations[i].declEnd = declEnd;
   }
 }
 
@@ -382,6 +391,9 @@ function throwsError(fn) {
 function checkDocumented(decl, kind, sf, violations) {
   const fn = decl.fnNode;
   const line = lineOf(sf, decl.commentNode.getStart(sf));
+  const declStart = line;
+  const declEnd = lineOf(sf, decl.commentNode.getEnd());
+  const before = violations.length;
   const label = kind === 'hook' ? '훅' : '유틸 함수';
   const namedParams = fn.parameters
     .filter((p) => ts.isIdentifier(p.name))
@@ -403,6 +415,8 @@ function checkDocumented(decl, kind, sf, violations) {
 
     violations.push({
       line,
+      declStart,
+      declEnd,
       kind: 'missing-jsdoc',
       name: decl.name,
       message: `${label} \`${decl.name}\`에 JSDoc이 없습니다 (${req.join(' + ')} 필요).`,
@@ -459,6 +473,11 @@ function checkDocumented(decl, kind, sf, violations) {
       message: `${label} \`${decl.name}\` JSDoc에 @throws 누락.`,
     });
   }
+
+  for (let i = before; i < violations.length; i += 1) {
+    violations[i].declStart = declStart;
+    violations[i].declEnd = declEnd;
+  }
 }
 
 /**
@@ -466,7 +485,7 @@ function checkDocumented(decl, kind, sf, violations) {
  *
  * @param {string} sourceText 검사할 소스 코드 전체
  * @param {string} fileName 파일명 (확장자로 TS/TSX 판별에 사용)
- * @returns {Array<{ line: number, kind: string, name: string, message: string }>} 라인 오름차순 위반 목록
+ * @returns {Array<{ line: number, kind: string, name: string, message: string, declStart: number, declEnd: number }>} 라인 오름차순 위반 목록
  */
 export function analyzeSource(sourceText, fileName) {
   const isTsx = /\.tsx$/.test(fileName);
@@ -508,4 +527,49 @@ export function formatViolations(violations, relPath) {
     '',
     ...lines,
   ].join('\n');
+}
+
+/**
+ * unified diff 텍스트에서 새 파일 기준으로 추가된 라인 번호를 모은다.
+ *
+ * @param {string} diffText `git diff --unified=0` 출력
+ * @returns {Set<number>} 추가된 라인 번호 집합
+ */
+export function parseChangedLines(diffText) {
+  const changed = new Set();
+  const re = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gm;
+  let m = re.exec(diffText);
+
+  while (m !== null) {
+    const start = Number(m[1]);
+    const count = m[2] === undefined ? 1 : Number(m[2]);
+
+    for (let i = 0; i < count; i += 1) changed.add(start + i);
+
+    m = re.exec(diffText);
+  }
+
+  return changed;
+}
+
+/**
+ * 변경된 라인과 선언 스팬이 교차하는 위반만 남긴다.
+ *
+ * @param {Array<{ line: number, name?: string, declStart?: number, declEnd?: number }>} violations 위반 목록
+ * @param {Set<number>|null} changed 변경 라인 집합. null이면 필터하지 않음
+ * @returns {Array<{ line: number, name?: string, declStart?: number, declEnd?: number }>} 걸러진 위반 목록
+ */
+export function filterByChangedLines(violations, changed) {
+  if (changed === null) return violations;
+
+  return violations.filter((v) => {
+    const lo = Math.min(v.line, v.declStart ?? v.line);
+    const hi = v.declEnd ?? v.line;
+
+    for (let ln = lo; ln <= hi; ln += 1) {
+      if (changed.has(ln)) return true;
+    }
+
+    return false;
+  });
 }
