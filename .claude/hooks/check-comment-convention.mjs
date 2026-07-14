@@ -8,8 +8,8 @@ import {
   filterByChangedLines,
   formatViolations,
   shouldCheckFile,
-} from './comment-convention/analyze.mjs';
-import { changedLines } from './comment-convention/git-diff.mjs';
+} from '../../tools/comment-convention/analyze.mjs';
+import { changedLines } from '../../tools/comment-convention/git-diff.mjs';
 
 async function readStdin() {
   const chunks = [];

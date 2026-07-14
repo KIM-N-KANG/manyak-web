@@ -7,9 +7,9 @@ import {
   analyzeSource,
   filterByChangedLines,
   shouldCheckFile,
-} from './comment-convention/analyze.mjs';
-import { extractEditedPaths } from './comment-convention/apply-patch.mjs';
-import { changedLines } from './comment-convention/git-diff.mjs';
+} from '../../tools/comment-convention/analyze.mjs';
+import { extractEditedPaths } from '../../tools/comment-convention/apply-patch.mjs';
+import { changedLines } from '../../tools/comment-convention/git-diff.mjs';
 
 async function readStdin() {
   const chunks = [];

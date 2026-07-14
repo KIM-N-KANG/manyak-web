@@ -6,7 +6,7 @@ import {
   formatViolations,
   parseChangedLines,
   shouldCheckFile,
-} from '../../.claude/hooks/comment-convention/analyze.mjs';
+} from '../../tools/comment-convention/analyze.mjs';
 
 describe('shouldCheckFile', () => {
   it('src 아래 .ts / .tsx 는 검사한다', () => {

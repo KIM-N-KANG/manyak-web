@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractEditedPaths } from '../../.codex/hooks/comment-convention/apply-patch.mjs';
+import { extractEditedPaths } from '../../tools/comment-convention/apply-patch.mjs';
 
 describe('extractEditedPaths', () => {
   it('apply_patch 본문의 Update/Add File 경로를 뽑는다', () => {
