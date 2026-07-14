@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
-import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
+import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
 import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';

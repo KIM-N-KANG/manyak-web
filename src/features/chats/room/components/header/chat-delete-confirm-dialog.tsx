@@ -24,7 +24,7 @@ import {
   parseCreatedChatIds,
   removeCreatedChatId,
   writeCreatedChatIds,
-} from '@/features/chats/list/utils/chat-id-storage';
+} from '@/features/chats/_shared/utils/chat-id-storage';
 import { useOptimisticCreatedResourceDelete } from '@/hooks/use-optimistic-created-resource-delete';
 
 type ChatDeleteConfirmDialogProps = {

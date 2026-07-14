@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { filterValidUuids, isUuid } from '@/features/auth/migration/utils/uuid';
+import { filterValidUuids, isUuid } from '@/features/auth/_shared/utils/uuid';
 
 describe('isUuid', () => {
   it('표준 UUID 형식을 통과시킨다', () => {

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { isPaymentRequiredError } from '@/features/auth/login-required/utils/guest-limit-error';
+import { isPaymentRequiredError } from '@/features/auth/_shared/utils/guest-limit-error';
 import { track } from '@/observability/analytics';
 
 import { parseSseStream } from '../lib/parse-sse-stream';

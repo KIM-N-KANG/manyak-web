@@ -8,7 +8,7 @@ import {
   parseCreatedStoryIds,
   SERVER_STORY_IDS_SNAPSHOT,
   subscribeCreatedStoryIds,
-} from '@/features/stories/list/utils/story-id-storage';
+} from '@/features/stories/_shared/utils/story-id-storage';
 
 /**
  * 로컬스토리지에 보관 중인 스토리 ID 목록을 읽어옵니다.

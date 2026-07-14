@@ -27,15 +27,15 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
+import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   type GuestUsageAction,
   incrementGuestUsage,
   isGuestOverLimit,
   isGuestUsageLimitReached,
-} from '@/features/auth/login-required/utils/guest-usage-storage';
-import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
-import { saveCreatedStoryId } from '@/features/stories/list/utils/story-id-storage';
+} from '@/features/auth/_shared/utils/guest-usage-storage';
+import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
 import type {
   CreditShortageTrigger,
   GuestLimitTrigger,

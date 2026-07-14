@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import { APP_PATH } from '@/constants/app-path';
-import { useCreatedChatIds } from '@/features/chats/list/hooks/use-created-chat-ids';
-import { useCreatedStoryIds } from '@/features/stories/list/hooks/use-created-story-ids';
+import { useCreatedChatIds } from '@/features/chats/_shared/hooks/use-created-chat-ids';
+import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 import { track } from '@/observability/analytics';
 
 import {

@@ -4,7 +4,7 @@ import { API_ERROR_CODE } from '@/constants/api-error-code';
 import {
   isPaymentRequiredError,
   resolvePaymentRequiredReason,
-} from '@/features/auth/login-required/utils/guest-limit-error';
+} from '@/features/auth/_shared/utils/guest-limit-error';
 import { FetchError } from '@/lib/custom-fetch';
 
 const fetchError = (status: number, data?: unknown) =>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { countMigrated } from '@/features/auth/migration/utils/migration-result';
+import { countMigrated } from '@/features/auth/_shared/utils/migration-result';
 
 describe('countMigrated', () => {
   it('MIGRATED 상태만 센다', () => {

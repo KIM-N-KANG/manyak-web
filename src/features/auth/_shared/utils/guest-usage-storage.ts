@@ -2,7 +2,7 @@ import { GUEST_LIMITS } from '@/features/onboarding/constants';
 import {
   getCreatedStoryIdsSnapshot,
   parseCreatedStoryIds,
-} from '@/features/stories/list/utils/story-id-storage';
+} from '@/features/stories/_shared/utils/story-id-storage';
 
 /** 게스트 누적 사용량을 보관하는 로컬스토리지 키 */
 export const GUEST_USAGE_STORAGE_KEY = 'manyak:guest-usage';

@@ -14,7 +14,7 @@ import {
   parseCreatedStoryIds,
   removeCreatedStoryId,
   writeCreatedStoryIds,
-} from '@/features/stories/list/utils/story-id-storage';
+} from '@/features/stories/_shared/utils/story-id-storage';
 import { useOptimisticCreatedResourceDelete } from '@/hooks/use-optimistic-created-resource-delete';
 
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;

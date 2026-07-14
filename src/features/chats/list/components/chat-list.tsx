@@ -8,7 +8,7 @@ import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
-import { useHasCreatedStories } from '@/features/stories/list/hooks/use-has-created-stories';
+import { useHasCreatedStories } from '@/features/stories/_shared/hooks/use-has-created-stories';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useTrackOnView } from '@/observability/analytics';
 

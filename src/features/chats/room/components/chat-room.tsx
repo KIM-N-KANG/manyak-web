@@ -14,12 +14,12 @@ import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
-import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
+import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
+import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   incrementGuestUsage,
   isGuestOverLimit,
-} from '@/features/auth/login-required/utils/guest-usage-storage';
+} from '@/features/auth/_shared/utils/guest-usage-storage';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import type {
   CreditShortageTrigger,

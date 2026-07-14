@@ -12,17 +12,17 @@ import {
   getGetMyChatsQueryKey,
   getGetMyStoriesQueryKey,
 } from '@/api/generated/endpoints/users/users';
-import { clearGuestUsage } from '@/features/auth/login-required/utils/guest-usage-storage';
+import { clearGuestUsage } from '@/features/auth/_shared/utils/guest-usage-storage';
 import {
   CREATED_CHAT_IDS_STORAGE_KEY,
   parseCreatedChatIds,
   writeCreatedChatIds,
-} from '@/features/chats/list/utils/chat-id-storage';
+} from '@/features/chats/_shared/utils/chat-id-storage';
 import {
   CREATED_STORY_IDS_STORAGE_KEY,
   parseCreatedStoryIds,
   writeCreatedStoryIds,
-} from '@/features/stories/list/utils/story-id-storage';
+} from '@/features/stories/_shared/utils/story-id-storage';
 import { FetchError } from '@/lib/custom-fetch';
 
 import { countMigrated } from '../utils/migration-result';

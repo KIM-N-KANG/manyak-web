@@ -4,7 +4,7 @@ import {
   isLimitReached,
   parseGuestUsage,
   seedGuestUsage,
-} from '@/features/auth/login-required/utils/guest-usage-storage';
+} from '@/features/auth/_shared/utils/guest-usage-storage';
 
 describe('parseGuestUsage', () => {
   it('null이면 모든 값이 0이다', () => {

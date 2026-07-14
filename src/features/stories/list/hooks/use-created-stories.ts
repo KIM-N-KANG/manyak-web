@@ -5,12 +5,12 @@ import { useSession } from 'next-auth/react';
 
 import { getStoriesByIds } from '@/api/generated/endpoints/stories/stories';
 import { useGetMyStories } from '@/api/generated/endpoints/users/users';
+import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 
 import {
   toMyStoryListItems,
   toStoryListItems,
 } from '../utils/to-story-list-items';
-import { useCreatedStoryIds } from './use-created-story-ids';
 
 /** 스토리 ID 목록으로 일괄 조회하는 쿼리의 키 접두사 */
 export const STORIES_BATCH_QUERY_KEY = 'stories-batch';

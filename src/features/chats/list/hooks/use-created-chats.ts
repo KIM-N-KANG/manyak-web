@@ -6,9 +6,9 @@ import { useSession } from 'next-auth/react';
 import { getChatsByIds } from '@/api/generated/endpoints/chats/chats';
 import { useGetMyChats } from '@/api/generated/endpoints/users/users';
 import type { ChatSummaryResponse } from '@/api/generated/models';
+import { useCreatedChatIds } from '@/features/chats/_shared/hooks/use-created-chat-ids';
 
 import type { ChatListItem } from '../types';
-import { useCreatedChatIds } from './use-created-chat-ids';
 
 /** 채팅 ID 목록 일괄 조회 쿼리의 캐시 키 */
 export const CHATS_BATCH_QUERY_KEY = 'chats-batch';

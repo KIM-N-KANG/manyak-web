@@ -14,9 +14,9 @@ import {
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
-import { isGuestOverLimit } from '@/features/auth/login-required/utils/guest-usage-storage';
-import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
+import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
+import { isGuestOverLimit } from '@/features/auth/_shared/utils/guest-usage-storage';
+import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 import type {
   CreditShortageTrigger,
   GuestLimitTrigger,

@@ -3,7 +3,7 @@
 import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
-import { LoginRequiredDialog } from '@/features/auth/login-required/components/login-required-dialog';
+import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
 
 import { useStartChat } from '../hooks/use-start-chat';
 
