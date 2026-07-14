@@ -27,8 +27,10 @@ type ChatMessagesProps = {
   turns: ChatTurnResponse[];
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
+  regeneratingTurnId: number | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
+  onRegenerate: (turn: ChatTurnResponse) => void;
 };
 
 export function ChatMessages({
@@ -36,8 +38,10 @@ export function ChatMessages({
   turns,
   suggestedInputs,
   streamingTurn,
+  regeneratingTurnId,
   onSendChoice,
   onFillChoice,
+  onRegenerate,
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
@@ -51,7 +55,13 @@ export function ChatMessages({
     }
   }, [streamingTurn, hasSent]);
 
-  const lastTurnIndex = turns.length - 1;
+  // 재생성 중인 턴은 숨긴다 — 스트리밍 블록이 사용자 입력 버블과 새 AI 출력을 대신 렌더한다.
+  // error 이벤트로 실패하면 regeneratingTurnId 해제만으로 기존 본문·선택지가 복원된다(스펙 §3-6).
+  const visibleTurns =
+    regeneratingTurnId == null
+      ? turns
+      : turns.filter((turn) => turn.id !== regeneratingTurnId);
+  const lastTurnIndex = visibleTurns.length - 1;
 
   return (
     <MessageScrollerProvider
@@ -71,7 +81,7 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
-            {turns.map((turn, index) => {
+            {visibleTurns.map((turn, index) => {
               const isLast = !streamingTurn && index === lastTurnIndex;
 
               return (
@@ -81,6 +91,7 @@ export function ChatMessages({
                     isLast={isLast}
                     onSendChoice={onSendChoice}
                     onFillChoice={onFillChoice}
+                    onRegenerate={onRegenerate}
                   />
                 </MessageScrollerItem>
               );
