@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { shouldCheckFile } from '../../.claude/hooks/comment-convention/analyze.mjs';
+import {
+  analyzeSource,
+  shouldCheckFile,
+} from '../../.claude/hooks/comment-convention/analyze.mjs';
 
 describe('shouldCheckFile', () => {
   it('src 아래 .ts / .tsx 는 검사한다', () => {
@@ -17,5 +20,52 @@ describe('shouldCheckFile', () => {
     expect(shouldCheckFile('/repo/tests/lib/x.test.ts')).toBe(false);
     expect(shouldCheckFile('/repo/src/app/globals.css')).toBe(false);
     expect(shouldCheckFile('/repo/README.md')).toBe(false);
+  });
+});
+
+describe('analyzeSource - 컴포넌트 주석 금지', () => {
+  it('주석 없는 컴포넌트는 통과', () => {
+    const src = `export function StoryCard() {\n  return <div />;\n}`;
+
+    expect(
+      analyzeSource(src, 'src/features/a/components/story-card.tsx'),
+    ).toEqual([]);
+  });
+
+  it('컴포넌트 위 설명 주석은 위반', () => {
+    const src = `// 스토리 카드\nexport function StoryCard() {\n  return <div />;\n}`;
+    const v = analyzeSource(src, 'src/features/a/components/story-card.tsx');
+
+    expect(v).toHaveLength(1);
+    expect(v[0].kind).toBe('component-comment');
+    expect(v[0].name).toBe('StoryCard');
+  });
+
+  it('컴포넌트 위 도구 지시자 주석은 허용', () => {
+    const src = `// eslint-disable-next-line react/display-name\nexport const Row = () => <div />;`;
+
+    expect(analyzeSource(src, 'src/features/a/components/row.tsx')).toEqual([]);
+  });
+
+  it('컴포넌트 내부 주석은 위반', () => {
+    const src = `export function Card() {\n  // 내부 설명\n  return <div />;\n}`;
+    const v = analyzeSource(src, 'src/features/a/components/card.tsx');
+
+    expect(v).toHaveLength(1);
+    expect(v[0].kind).toBe('component-comment');
+  });
+
+  it('PascalCase 화살표 / forwardRef 도 컴포넌트로 본다', () => {
+    const arrow = `/** 카드 */\nexport const Card = () => <div />;`;
+
+    expect(analyzeSource(arrow, 'src/a/components/card.tsx')[0].kind).toBe(
+      'component-comment',
+    );
+
+    const fwd = `/** 인풋 */\nexport const Input = forwardRef((p, ref) => <input ref={ref} />);`;
+
+    expect(analyzeSource(fwd, 'src/a/components/input.tsx')[0].kind).toBe(
+      'component-comment',
+    );
   });
 });
