@@ -27,11 +27,6 @@ type RegenerateAnchorProps = {
   turnId: number | null;
 };
 
-/**
- * 재생성 시작 시 대상 턴을 전송 앵커와 같은 위치(상단 고정, 이전 아이템 64px 피크)로
- * 1회 스크롤한다. 인플레이스 교체는 아이템 추가가 없어 프리미티브의 자동 앵커가 동작하지
- * 않으므로 명시적으로 호출한다. settling-jump 모드라 꼬리 추적·리앵커 진동이 없다.
- */
 function RegenerateAnchor({ turnId }: RegenerateAnchorProps) {
   const { scrollToMessage } = useMessageScroller();
 
@@ -81,8 +76,6 @@ export function ChatMessages({
 
   return (
     <MessageScrollerProvider
-      // 재생성 중에는 꼬리 추적을 즉시 끈다 — hasSent 효과가 켜지기 전 한 프레임 동안
-      // following-bottom 모드의 scrollToEnd가 실행돼 바닥에 붙는 것을 막는다.
       autoScroll={!startedEmpty && !hasSent && regeneratingTurnId == null}
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={64}>
@@ -94,10 +87,6 @@ export function ChatMessages({
         )}>
         <MessageScrollerViewport
           ref={viewportRef}
-          // 재생성 중에만 브라우저 scroll anchoring을 끈다. 켜져 있으면 스트리밍 성장을
-          // 따라 스크롤이 바닥으로 끌려 내려가 RegenerateAnchor의 상단 고정이 무효화된다.
-          // 전역으로 끄면 전송 완료 시 항목 교체(스트리밍 블록→확정 턴)에서 브라우저가
-          // 해주던 위치 보정까지 사라져 사용자 입력 버블이 아래로 점프한다.
           className={cn(
             regeneratingTurnId != null && '[overflow-anchor:none]',
           )}>
@@ -110,10 +99,6 @@ export function ChatMessages({
 
             {turns.map((turn, index) => {
               const isLast = !streamingTurn && index === lastTurnIndex;
-              // 재생성 중인 턴은 같은 아이템 안에서 스트리밍 블록으로 교체한다(스펙 §3-6 "대체").
-              // 아이템을 제거+추가하면 MessageScroller의 동수(same-count) 앵커 경로를 타며
-              // 전환 애니메이션 동안 리앵커가 반복돼 스크롤이 상하로 진동한다.
-              // error 이벤트로 실패하면 regeneratingTurnId 해제만으로 기존 본문·선택지가 복원된다.
               const isRegenerating =
                 streamingTurn !== null &&
                 regeneratingTurnId != null &&
