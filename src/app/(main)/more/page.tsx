@@ -1,5 +1,5 @@
-import { MyPage } from '@/features/more/components/my-page';
+import { MoreScreen } from '@/features/more/components/more-screen';
 
 export default function MorePage() {
-  return <MyPage />;
+  return <MoreScreen />;
 }

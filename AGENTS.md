@@ -39,6 +39,10 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 ## 디렉터리·코드 컨벤션
 
 - 도메인 로직은 `src/features/{도메인}/{라우트}/components|hooks|utils` 구조를 따릅니다 (예: `features/stories/detail/components/story-detail.tsx`). `src/app`의 페이지는 feature 컴포넌트를 감싸는 얇은 서버 컴포넌트로 유지합니다.
+- 도메인 폴더의 직속 자식은 "유닛"(라우트 폴더 또는 `_shared`)만 둡니다. `components`/`hooks`/`utils`/`lib` 같은 카테고리 폴더가 라우트 폴더와 같은 층에 뒤섞이지 않게 하세요.
+  - 여러 라우트가 함께 쓰는 공용 코드는 `{도메인}/_shared/{components|hooks|utils}`에 둡니다 (예: `features/stories/_shared/components/story-turn-count.tsx`).
+  - 도메인 폴더명은 실제 live 라우트 세그먼트와 맞춥니다 (예: `/more` 화면을 담는 도메인은 `features/more`). 도메인 인덱스 페이지(`/{도메인}` 자체) 코드는 app router의 섹션 `page.tsx`처럼 도메인 직속 `components`/`hooks`에 두는 것을 허용합니다.
+  - 라우트가 하나뿐인 단일 기능 도메인(예: `onboarding`, `legal`)은 `components`/`hooks`/`utils`를 도메인 직속에 평평하게 두어도 됩니다(라우트 폴더와 섞일 일이 없으므로).
 - 배럴 파일(`index.ts`)을 만들지 않습니다(`src/observability`는 예외). 구체 경로로 직접 import 하세요.
 - 파일명은 kebab-case, named export가 기본입니다. default export는 App Router 규약 파일(page, layout 등)에만 사용합니다.
 - import는 `@/` 별칭(→ `src/`)을 사용하고, 정렬은 ESLint(simple-import-sort)가 강제합니다. 타입 import는 inline `type` 키워드를 사용합니다.

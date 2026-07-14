@@ -4,22 +4,22 @@ import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 
-type MyMenuItemBaseProps = {
+type MoreMenuItemBaseProps = {
   icon: IconSvgElement;
   label: string;
   destructive?: boolean;
 };
 
-type MyMenuItemProps = MyMenuItemBaseProps &
+type MoreMenuItemProps = MoreMenuItemBaseProps &
   ({ href: string; onClick?: never } | { href?: never; onClick: () => void });
 
-export function MyMenuItem({
+export function MoreMenuItem({
   icon,
   label,
   destructive,
   href,
   onClick,
-}: MyMenuItemProps) {
+}: MoreMenuItemProps) {
   const className = cn(
     'flex h-12 items-center gap-4 px-4',
     destructive && 'text-destructive',

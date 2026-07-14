@@ -15,10 +15,10 @@ import { APP_PATH } from '@/constants/app-path';
 import { resetAnalyticsUser, track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
-import { MyMenuItem } from './my-menu-item';
+import { MoreMenuItem } from './more-menu-item';
 import { ProfileHeader } from './profile-header';
 
-export function MyPage() {
+export function MoreScreen() {
   const { status } = useSession();
 
   const isAuthenticated = status === 'authenticated';
@@ -42,7 +42,7 @@ export function MyPage() {
           <div className="mb-2 px-4">
             <Label>이벤트</Label>
           </div>
-          <MyMenuItem
+          <MoreMenuItem
             icon={AddTeamIcon}
             label="친구 초대"
             href={APP_PATH.MORE_INVITE}
@@ -53,12 +53,12 @@ export function MyPage() {
         <div className="mb-2 px-4">
           <Label>기타</Label>
         </div>
-        <MyMenuItem
+        <MoreMenuItem
           icon={InformationCircleIcon}
           label="서비스 안내"
           href={APP_PATH.MORE_ABOUT}
         />
-        <MyMenuItem
+        <MoreMenuItem
           icon={MailEdit01Icon}
           label="피드백"
           href={APP_PATH.MORE_FEEDBACK}
@@ -69,7 +69,7 @@ export function MyPage() {
           <div className="mb-2 px-4">
             <Label>계정</Label>
           </div>
-          <MyMenuItem
+          <MoreMenuItem
             icon={Logout03Icon}
             label="로그아웃"
             destructive
