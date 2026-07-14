@@ -1,6 +1,6 @@
 import { track } from '@/observability/analytics';
 
-import { parseInputBlocks, serializeInputBlocks } from '../lib/input-blocks';
+import { parseInputBlocks, serializeInputBlocks } from '../utils/input-blocks';
 import { type ChatInputMode } from './use-chat-input-mode';
 
 type UseChatSubmitActionsParams = {

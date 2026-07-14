@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { insertEmphasisMarkers } from '@/features/chats/room/lib/insert-emphasis-markers';
+import { insertEmphasisMarkers } from '@/features/chats/room/utils/insert-emphasis-markers';
 
 describe('insertEmphasisMarkers', () => {
   it('inserts ** and places the cursor between the markers when nothing is selected', () => {

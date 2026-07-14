@@ -1,6 +1,6 @@
 import type { ChatTurnResponse } from '@/api/generated/models';
 
-import { canRegenerate } from '../../lib/regenerate';
+import { canRegenerate } from '../../utils/regenerate';
 import {
   AiMessageBubble,
   UserMessageBubble,

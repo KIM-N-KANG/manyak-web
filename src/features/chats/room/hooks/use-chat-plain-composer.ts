@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-import { insertEmphasisMarkers } from '../lib/insert-emphasis-markers';
+import { insertEmphasisMarkers } from '../utils/insert-emphasis-markers';
 
 type UseChatPlainComposerParams = {
   submitText: (text: string) => boolean;

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   isSubmitShortcut,
   submitOnShortcut,
-} from '@/features/chats/room/lib/submit-shortcut';
+} from '@/features/chats/room/utils/submit-shortcut';
 
 type EventOverrides = {
   key?: string;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getRandomSuggestion } from '@/features/chats/room/lib/random-suggestion';
+import { getRandomSuggestion } from '@/features/chats/room/utils/random-suggestion';
 
 describe('getRandomSuggestion', () => {
   it('추천이 없거나 공백뿐이면 null을 반환한다', () => {

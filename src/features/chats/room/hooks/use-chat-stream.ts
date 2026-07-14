@@ -9,13 +9,13 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/_shared/utils/guest-limit-error';
 import { track } from '@/observability/analytics';
 
-import { parseSseStream } from '../lib/parse-sse-stream';
-import { isStaleTurnError } from '../lib/regenerate';
+import type { StreamingTurn } from '../types';
+import { parseSseStream } from '../utils/parse-sse-stream';
+import { isStaleTurnError } from '../utils/regenerate';
 import {
   streamChatTurnRaw,
   streamRegenerateChatTurnRaw,
-} from '../lib/stream-chat-turn';
-import type { StreamingTurn } from '../types';
+} from '../utils/stream-chat-turn';
 
 /**
  * 채팅 턴 SSE 스트리밍을 관리하는 훅.

@@ -2,7 +2,7 @@
 
 import { type RefObject, useEffect, useState } from 'react';
 
-import { createInitialScrollSettleTracker } from '../lib/initial-scroll-settle';
+import { createInitialScrollSettleTracker } from '../utils/initial-scroll-settle';
 
 /** 정착 감지가 이 시간을 넘기면 무조건 공개해 영구 숨김을 방지한다(ms) */
 const SETTLE_TIMEOUT_MS = 500;

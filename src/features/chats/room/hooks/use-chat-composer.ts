@@ -5,8 +5,8 @@ import {
   type InputBlockType,
   parseInputBlocks,
   serializeInputBlocks,
-} from '../lib/input-blocks';
-import { getRandomSuggestion } from '../lib/random-suggestion';
+} from '../utils/input-blocks';
+import { getRandomSuggestion } from '../utils/random-suggestion';
 import { useChatBlockComposer } from './use-chat-block-composer';
 import { type ChatInputMode } from './use-chat-input-mode';
 import { useChatPlainComposer } from './use-chat-plain-composer';

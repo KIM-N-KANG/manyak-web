@@ -4,9 +4,12 @@ import {
   CHAT_INPUT_MODE_STORAGE_KEY,
   DEFAULT_CHAT_INPUT_MODE,
 } from '../constants';
-import { type ChatInputMode, isChatInputMode } from '../lib/chat-input-config';
+import {
+  type ChatInputMode,
+  isChatInputMode,
+} from '../utils/chat-input-config';
 
-export type { ChatInputMode } from '../lib/chat-input-config';
+export type { ChatInputMode } from '../utils/chat-input-config';
 
 /**
  * 채팅 입력 모드를 localStorage에 전역 저장한다. 기본값은 블럭 모드.

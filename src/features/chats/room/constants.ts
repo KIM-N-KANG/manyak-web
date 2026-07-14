@@ -1,5 +1,5 @@
-import type { ChatInputMode } from './lib/chat-input-config';
-import type { InputBlockType } from './lib/input-blocks';
+import type { ChatInputMode } from './utils/chat-input-config';
+import type { InputBlockType } from './utils/input-blocks';
 
 export const CHAT_INPUT_MODE_STORAGE_KEY = 'manyak:chat-input-mode';
 

@@ -8,7 +8,7 @@ import {
   type InputBlock,
   type InputBlockType,
   serializeInputBlocks,
-} from '../lib/input-blocks';
+} from '../utils/input-blocks';
 
 type UseChatBlockComposerParams = {
   submitText: (text: string) => boolean;

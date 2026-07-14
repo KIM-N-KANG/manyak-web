@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createInitialScrollSettleTracker } from '@/features/chats/room/lib/initial-scroll-settle';
+import { createInitialScrollSettleTracker } from '@/features/chats/room/utils/initial-scroll-settle';
 
 describe('createInitialScrollSettleTracker', () => {
   it('첫 프레임은 맨 아래에 있어도 정착으로 판정하지 않는다', () => {

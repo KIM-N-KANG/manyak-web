@@ -16,8 +16,8 @@ import {
 import { cn } from '@/lib/utils';
 
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
-import { type InputBlock, type InputBlockType } from '../../lib/input-blocks';
-import { submitOnShortcut } from '../../lib/submit-shortcut';
+import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
+import { submitOnShortcut } from '../../utils/submit-shortcut';
 
 type ChatBlockInputProps = {
   blocks: InputBlock[];

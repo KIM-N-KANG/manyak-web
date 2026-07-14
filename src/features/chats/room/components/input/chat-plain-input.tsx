@@ -13,7 +13,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 
-import { submitOnShortcut } from '../../lib/submit-shortcut';
+import { submitOnShortcut } from '../../utils/submit-shortcut';
 
 type ChatPlainInputProps = {
   value: string;

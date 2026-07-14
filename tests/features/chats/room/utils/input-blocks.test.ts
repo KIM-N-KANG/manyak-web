@@ -4,7 +4,7 @@ import {
   createInputBlock,
   parseInputBlocks,
   serializeInputBlocks,
-} from '@/features/chats/room/lib/input-blocks';
+} from '@/features/chats/room/utils/input-blocks';
 
 describe('serializeInputBlocks', () => {
   it('상황은 *...* 마커로 감싸고 대사는 그대로 공백으로 연결한다', () => {

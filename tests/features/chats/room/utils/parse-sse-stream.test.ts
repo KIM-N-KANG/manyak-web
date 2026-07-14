@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   parseSseStream,
   type SseEvent,
-} from '@/features/chats/room/lib/parse-sse-stream';
+} from '@/features/chats/room/utils/parse-sse-stream';
 
 function streamFrom(chunks: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();

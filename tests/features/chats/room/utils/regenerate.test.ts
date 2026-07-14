@@ -4,7 +4,7 @@ import type { ChatTurnResponse } from '@/api/generated/models';
 import {
   canRegenerate,
   isStaleTurnError,
-} from '@/features/chats/room/lib/regenerate';
+} from '@/features/chats/room/utils/regenerate';
 import { FetchError } from '@/lib/api-error';
 
 const baseTurn: ChatTurnResponse = {
