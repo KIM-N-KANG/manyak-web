@@ -7,6 +7,7 @@ export const APP_PATH = {
   LOGIN: '/login',
   TERMS: '/terms',
   PRIVACY: '/privacy',
+  MORE_ABOUT: '/more/about',
   MORE_FEEDBACK: '/more/feedback',
   MORE_INVITE: '/more/invite',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,

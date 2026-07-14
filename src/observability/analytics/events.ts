@@ -153,6 +153,8 @@ export type AnalyticsEventProps = {
   // legal
   client_terms_viewed: void;
   client_privacy_viewed: void;
+  // service info (서비스 안내 페이지)
+  client_serviceInfo_viewed: void;
 };
 
 /** 전송 가능한 분석 이벤트 이름. */

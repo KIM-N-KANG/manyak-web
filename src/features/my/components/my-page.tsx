@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import {
   AddTeamIcon,
+  InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
 } from '@hugeicons/core-free-icons';
@@ -37,8 +38,8 @@ export function MyPage() {
       <ProfileHeader />
       <CreditBalanceCard />
       {isAuthenticated && (
-        <section className="flex flex-col gap-2 py-4">
-          <div className="px-4">
+        <section className="flex flex-col py-4">
+          <div className="mb-2 px-4">
             <Label>이벤트</Label>
           </div>
           <MyMenuItem
@@ -48,10 +49,15 @@ export function MyPage() {
           />
         </section>
       )}
-      <section className="flex flex-col gap-2 py-4">
-        <div className="px-4">
+      <section className="flex flex-col py-4">
+        <div className="mb-2 px-4">
           <Label>기타</Label>
         </div>
+        <MyMenuItem
+          icon={InformationCircleIcon}
+          label="서비스 안내"
+          href={APP_PATH.MORE_ABOUT}
+        />
         <MyMenuItem
           icon={MailEdit01Icon}
           label="피드백"
@@ -59,8 +65,8 @@ export function MyPage() {
         />
       </section>
       {isAuthenticated && (
-        <section className="flex flex-col gap-2 py-4">
-          <div className="px-4">
+        <section className="flex flex-col py-4">
+          <div className="mb-2 px-4">
             <Label>계정</Label>
           </div>
           <MyMenuItem

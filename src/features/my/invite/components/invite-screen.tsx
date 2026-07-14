@@ -177,7 +177,7 @@ export function InviteScreen() {
 
       <section className="flex flex-col gap-4 p-4">
         <h2 className="text-lg font-bold">이용 안내</h2>
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-sm leading-relaxed text-foreground-secondary">
+        <ul className="flex list-disc flex-col pl-5">
           {INVITE_GUIDE_LINES.map((line) => (
             <li key={line}>{line}</li>
           ))}

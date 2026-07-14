@@ -21,7 +21,7 @@ export function MyMenuItem({
   onClick,
 }: MyMenuItemProps) {
   const className = cn(
-    'flex h-12 items-center gap-4 px-4 transition-colors active:bg-muted',
+    'flex h-12 items-center gap-4 px-4',
     destructive && 'text-destructive',
   );
 
