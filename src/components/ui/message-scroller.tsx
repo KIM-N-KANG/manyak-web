@@ -44,7 +44,10 @@ function MessageScrollerViewport({
     <MessageScrollerPrimitive.Viewport
       data-slot="message-scroller-viewport"
       className={cn(
-        'size-full min-h-0 min-w-0 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain contain-content data-autoscrolling:scrollbar-thumb-transparent data-autoscrolling:scrollbar-track-transparent',
+        // [overflow-anchor:none]: 스크롤 위치는 라이브러리가 직접 계산·관리한다.
+        // 브라우저 네이티브 scroll anchoring이 켜져 있으면 스트리밍 성장 시
+        // 성장 지점 아래 노드를 앵커로 잡아 스크롤을 임의로 끌어내린다.
+        'size-full min-h-0 min-w-0 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain contain-content [overflow-anchor:none] data-autoscrolling:scrollbar-thumb-transparent data-autoscrolling:scrollbar-track-transparent',
         className,
       )}
       {...props}

@@ -11,6 +11,7 @@ import {
   MessageScrollerItem,
   MessageScrollerProvider,
   MessageScrollerViewport,
+  useMessageScroller,
 } from '@/components/ui/message-scroller';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,27 @@ import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';
+
+type RegenerateAnchorProps = {
+  turnId: number | null;
+};
+
+/**
+ * 재생성 시작 시 대상 턴을 전송 앵커와 같은 위치(상단 고정, 이전 아이템 64px 피크)로
+ * 1회 스크롤한다. 인플레이스 교체는 아이템 추가가 없어 프리미티브의 자동 앵커가 동작하지
+ * 않으므로 명시적으로 호출한다. settling-jump 모드라 꼬리 추적·리앵커 진동이 없다.
+ */
+function RegenerateAnchor({ turnId }: RegenerateAnchorProps) {
+  const { scrollToMessage } = useMessageScroller();
+
+  useEffect(() => {
+    if (turnId != null) {
+      scrollToMessage(String(turnId), { align: 'start', scrollMargin: 64 });
+    }
+  }, [turnId, scrollToMessage]);
+
+  return null;
+}
 
 type ChatMessagesProps = {
   prologue: string;
@@ -59,9 +81,12 @@ export function ChatMessages({
 
   return (
     <MessageScrollerProvider
-      autoScroll={!startedEmpty && !hasSent}
+      // 재생성 중에는 꼬리 추적을 즉시 끈다 — hasSent 효과가 켜지기 전 한 프레임 동안
+      // following-bottom 모드의 scrollToEnd가 실행돼 바닥에 붙는 것을 막는다.
+      autoScroll={!startedEmpty && !hasSent && regeneratingTurnId == null}
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={64}>
+      <RegenerateAnchor turnId={regeneratingTurnId} />
       <MessageScroller
         className={cn(
           'transition-opacity duration-150',
@@ -87,7 +112,9 @@ export function ChatMessages({
                 turn.id === regeneratingTurnId;
 
               return (
-                <MessageScrollerItem key={turn.id ?? index}>
+                <MessageScrollerItem
+                  key={turn.id ?? index}
+                  messageId={turn.id != null ? String(turn.id) : undefined}>
                   {isRegenerating ? (
                     <ChatStreamingTurn turn={streamingTurn} />
                   ) : (
