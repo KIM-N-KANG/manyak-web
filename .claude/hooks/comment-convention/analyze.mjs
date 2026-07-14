@@ -473,3 +473,20 @@ export function analyzeSource(sourceText, fileName) {
 
   return violations.sort((a, b) => a.line - b.line);
 }
+
+/**
+ * 위반 목록을 훅 reason 문자열로 변환한다.
+ *
+ * @param {Array<{ line: number, message: string }>} violations 위반 목록
+ * @param {string} relPath 리포트에 표시할 상대 경로
+ * @returns {string} Claude에게 전달할 안내 텍스트
+ */
+export function formatViolations(violations, relPath) {
+  const lines = violations.map((v) => `${relPath}:${v.line} — ${v.message}`);
+
+  return [
+    '주석 컨벤션 위반이 발견되었습니다. 아래 항목을 수정하세요:',
+    '',
+    ...lines,
+  ].join('\n');
+}

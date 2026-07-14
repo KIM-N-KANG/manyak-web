@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   analyzeSource,
+  formatViolations,
   shouldCheckFile,
 } from '../../.claude/hooks/comment-convention/analyze.mjs';
 
@@ -196,5 +197,25 @@ describe('analyzeSource - 훅/유틸 JSDoc', () => {
     const v = analyzeSource(src, 'src/a/utils/build.ts');
 
     expect(v.map((x) => x.kind)).not.toContain('missing-throws');
+  });
+});
+
+describe('formatViolations', () => {
+  it('파일:라인 — 메시지 형태로 합친다', () => {
+    const out = formatViolations(
+      [
+        {
+          line: 3,
+          kind: 'missing-returns',
+          name: 'add',
+          message: '유틸 함수 `add` JSDoc에 @returns 누락.',
+        },
+      ],
+      'src/a/utils/add.ts',
+    );
+
+    expect(out).toContain(
+      'src/a/utils/add.ts:3 — 유틸 함수 `add` JSDoc에 @returns 누락.',
+    );
   });
 });
