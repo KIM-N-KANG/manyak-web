@@ -165,4 +165,36 @@ describe('analyzeSource - 훅/유틸 JSDoc', () => {
   it('제외 경로는 위반 코드라도 통과 (shouldCheckFile 게이트)', () => {
     expect(shouldCheckFile('src/api/generated/x.ts')).toBe(false);
   });
+
+  it('중첩 객체 메서드의 return은 유틸의 @returns를 요구하지 않는다', () => {
+    const src = [
+      '/**',
+      ' * 설명.',
+      ' * @param a 입력',
+      ' */',
+      'export function util(a) {',
+      '  const obj = { method() { return 5; } };',
+      '}',
+    ].join('\n');
+    const v = analyzeSource(src, 'src/a/utils/util.ts');
+
+    expect(v).toEqual([]);
+  });
+
+  it('중첩 객체 메서드의 throw는 유틸의 @throws를 요구하지 않는다', () => {
+    const src = [
+      '/**',
+      ' * 설명.',
+      ' * @param a 입력',
+      ' * @returns 객체',
+      ' */',
+      'export function build(a) {',
+      '  const obj = { method() { throw new Error("x"); } };',
+      '  return obj;',
+      '}',
+    ].join('\n');
+    const v = analyzeSource(src, 'src/a/utils/build.ts');
+
+    expect(v.map((x) => x.kind)).not.toContain('missing-throws');
+  });
 });

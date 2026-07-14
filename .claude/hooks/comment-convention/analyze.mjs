@@ -83,6 +83,20 @@ function isFunctionLike(node) {
   return ts.isArrowFunction(node) || ts.isFunctionExpression(node);
 }
 
+function isFunctionScopeBoundary(n) {
+  return (
+    ts.isArrowFunction(n) ||
+    ts.isFunctionExpression(n) ||
+    ts.isFunctionDeclaration(n) ||
+    ts.isMethodDeclaration(n) ||
+    ts.isGetAccessorDeclaration(n) ||
+    ts.isSetAccessorDeclaration(n) ||
+    ts.isConstructorDeclaration(n) ||
+    ts.isClassDeclaration(n) ||
+    ts.isClassExpression(n)
+  );
+}
+
 function collectDeclarations(stmt) {
   const out = [];
 
@@ -135,7 +149,7 @@ function containsJsx(node) {
       return;
     }
 
-    if (isFunctionLike(n) || ts.isFunctionDeclaration(n)) return;
+    if (isFunctionScopeBoundary(n)) return;
 
     ts.forEachChild(n, visit);
   };
@@ -156,7 +170,7 @@ function returnsJsx(fn) {
   const visit = (n) => {
     if (found) return;
 
-    if (isFunctionLike(n) || ts.isFunctionDeclaration(n)) return;
+    if (isFunctionScopeBoundary(n)) return;
 
     if (ts.isReturnStatement(n) && n.expression && containsJsx(n.expression)) {
       found = true;
@@ -309,7 +323,7 @@ function returnsValue(fn) {
   const visit = (n) => {
     if (has) return;
 
-    if (isFunctionLike(n) || ts.isFunctionDeclaration(n)) return;
+    if (isFunctionScopeBoundary(n)) return;
 
     if (ts.isReturnStatement(n) && n.expression) {
       has = true;
@@ -330,7 +344,7 @@ function throwsError(fn) {
   const visit = (n) => {
     if (has) return;
 
-    if (isFunctionLike(n) || ts.isFunctionDeclaration(n)) return;
+    if (isFunctionScopeBoundary(n)) return;
 
     if (ts.isThrowStatement(n)) {
       has = true;
