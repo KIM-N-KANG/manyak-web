@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
-import { StoryOptionsMenu } from '@/features/stories/components/story-options-menu';
+import { StoryOptionsMenu } from '@/features/stories/_shared/components/story-options-menu';
 
 type StoryDetailHeaderProps = {
   storyId: string;

@@ -1,4 +1,4 @@
-import { MyPage } from '@/features/my/components/my-page';
+import { MyPage } from '@/features/more/components/my-page';
 
 export default function MorePage() {
   return <MyPage />;

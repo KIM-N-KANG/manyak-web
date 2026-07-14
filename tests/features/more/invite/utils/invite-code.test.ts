@@ -4,7 +4,7 @@ import {
   normalizeInviteCode,
   resolveInviteCodeError,
   sanitizeInviteCodeInput,
-} from '@/features/my/invite/utils/invite-code';
+} from '@/features/more/invite/utils/invite-code';
 import { FetchError } from '@/lib/api-error';
 
 describe('normalizeInviteCode', () => {

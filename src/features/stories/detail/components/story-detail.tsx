@@ -13,7 +13,7 @@ import {
 } from '@/api/generated/endpoints/stories/stories';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
-import { StoryTurnCount } from '@/features/stories/components/story-turn-count';
+import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
