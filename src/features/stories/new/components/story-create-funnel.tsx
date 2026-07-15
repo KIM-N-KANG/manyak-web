@@ -8,11 +8,11 @@ import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { mapStepToSpec } from '../utils/step-analytics';
+import { StoryAdditionalInfoStepSection } from './additional-info-step/story-additional-info-step-section';
+import { StoryCompletionLoading } from './complete-step/story-completion-loading';
 import { StoryCreateHeader } from './header/story-create-header';
-import { StoryAdditionalInfoStepSection } from './step-sections/story-additional-info-step-section';
-import { StoryCompletionLoading } from './step-sections/story-completion-loading';
-import { StoryTagStepSection } from './step-sections/story-tag-step-section';
-import { StorylineSelectStepSection } from './step-sections/storyline-select-step-section';
+import { StorylineSelectStepSection } from './storyline-step/storyline-select-step-section';
+import { StoryTagStepSection } from './tag-step/story-tag-step-section';
 
 export function StoryCreateFunnel() {
   const {

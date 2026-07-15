@@ -15,10 +15,10 @@ import type { StorylineSelectStepSectionProps } from '../../types';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
-import { SelectedTagsDrawer } from '../storyline-step/selected-tags-drawer';
-import { StorylineNavButtons } from '../storyline-step/storyline-nav-buttons';
-import { StorylineRatingButtons } from '../storyline-step/storyline-rating-buttons';
-import { StorylineSelectLoading } from '../storyline-step/storyline-select-loading';
+import { SelectedTagsDrawer } from './selected-tags-drawer';
+import { StorylineNavButtons } from './storyline-nav-buttons';
+import { StorylineRatingButtons } from './storyline-rating-buttons';
+import { StorylineSelectLoading } from './storyline-select-loading';
 
 export function StorylineSelectStepSection({
   storylines,
