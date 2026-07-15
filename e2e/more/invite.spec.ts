@@ -522,7 +522,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await page.waitForTimeout(400);
     await expect(
       page.getByRole('heading', {
-        name: '나만의 스토리, 바로 만들어볼까요?',
+        name: '키워드 몇 개로, 나만의 스토리 완성',
       }),
     ).toHaveCount(0);
   });
@@ -636,7 +636,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: '나만의 스토리, 바로 만들어볼까요?',
+        name: '키워드 몇 개로, 나만의 스토리 완성',
       }),
     ).toBeVisible();
 
@@ -656,7 +656,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     ).toBeVisible();
     await expect(
       page.getByRole('heading', {
-        name: '나만의 스토리, 바로 만들어볼까요?',
+        name: '키워드 몇 개로, 나만의 스토리 완성',
       }),
     ).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(1);
