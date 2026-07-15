@@ -14,7 +14,7 @@ pnpm test:e2e         # Playwright E2E
 pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 필요)
 ```
 
-작업 완료 전 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요.
+작업 완료 전 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요. 화면·컴포넌트 코드(`src/app`·`src/features`·`src/components`)를 건드렸다면 `pnpm test:e2e`도 함께 돌리세요 — `pnpm test`는 Vitest만 실행하므로 문구·구조 변경으로 깨진 E2E를 잡지 못합니다.
 
 ## API 레이어 (Orval)
 
