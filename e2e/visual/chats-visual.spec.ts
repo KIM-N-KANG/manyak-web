@@ -225,7 +225,7 @@ test.describe('채팅 오버레이 비주얼', () => {
     await page.goto('/chats/c1');
     await page.getByRole('button', { name: '크레딧 안내 열기' }).click();
 
-    // 팝오버 대표 스냅샷이다(퍼널 헤더의 크레딧 안내도 같은 컴포넌트 패턴).
+    // 팝오버 대표 스냅샷이다.
     await expect(
       page.getByText('로그인 전에는 채팅방 전체에서 5번까지 대화할 수 있어요'),
     ).toBeVisible();

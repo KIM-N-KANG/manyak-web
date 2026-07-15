@@ -46,7 +46,6 @@ export type AnalyticsEventProps = {
   client_storyList_storyCard_impressed: { story_id: string; position?: number };
   // storyCreate
   client_storyCreate_viewed: void;
-  client_storyCreate_creditInfoButton_clicked: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
   client_storyCreate_tagCategory_selected: {
     from_category: SimpleStoryTagListItemResponseCategory;

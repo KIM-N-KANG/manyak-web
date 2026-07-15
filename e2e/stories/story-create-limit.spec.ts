@@ -4,7 +4,7 @@ import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
 
 /**
- * 스토리 생성 퍼널의 게스트 한도·크레딧 게이팅 스펙(QA STORY-LIMIT-02~06·09·10).
+ * 스토리 생성 퍼널의 게스트 한도·크레딧 게이팅 스펙(QA STORY-LIMIT-02~06·09).
  * 로컬 카운터 선차단, 서버 402 사유별 다이얼로그 분기, 카운터 증가 규칙을 검증한다.
  * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`
  * (스토리라인 5·스토리 1)를 따른다.
@@ -281,35 +281,6 @@ test.describe('스토리 완성 한도·크레딧', () => {
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
-  });
-});
-
-test.describe('생성 퍼널 크레딧 안내', () => {
-  test('게스트는 스토리 1개 한도를, 회원은 20크레딧 차감을 안내받는다 (STORY-LIMIT-10)', async ({
-    page,
-  }) => {
-    await mockTags(page);
-
-    await page.goto('/stories/new');
-    await page.getByRole('button', { name: '크레딧 안내 열기' }).click();
-
-    await expect(
-      page.getByText('로그인 전에는 스토리를 1개까지 만들 수 있어요'),
-    ).toBeVisible();
-  });
-
-  test('회원 크레딧 안내는 소모량을 알린다 (STORY-LIMIT-10)', async ({
-    page,
-  }) => {
-    await mockTags(page);
-    await mockMemberSession(page);
-
-    await page.goto('/stories/new');
-    await page.getByRole('button', { name: '크레딧 안내 열기' }).click();
-
-    await expect(
-      page.getByText('스토리를 완성할 때 20크레딧이 자동으로 차감돼요'),
-    ).toBeVisible();
   });
 });
 
