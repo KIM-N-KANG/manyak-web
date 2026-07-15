@@ -6,7 +6,7 @@ import {
   skipOnboarding,
   test,
 } from '../fixtures/test';
-import { waitForFonts } from '../fixtures/visual';
+import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
 
 /**
  * 더보기·피드백·친구 초대·서비스 안내 화면의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
@@ -116,5 +116,24 @@ test.describe('더보기 비주얼', () => {
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('service-info-top.png');
+  });
+});
+
+/** 다크 모드 대표 스냅샷. 크레딧 카드·섹션 메뉴와 destructive(로그아웃) 토큰을 덮는다. */
+test.describe('더보기 다크 모드 비주얼', () => {
+  test.use({ colorScheme: 'dark' });
+
+  test('더보기 회원 상태 (다크)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/more');
+
+    await expect(page.getByText('배고픈 송아지')).toBeVisible();
+    await expect(page.getByRole('button', { name: /로그아웃/ })).toBeVisible();
+    await waitForDarkTheme(page);
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('more-member-dark.png');
   });
 });
