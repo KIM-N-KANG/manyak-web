@@ -16,7 +16,6 @@ import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
 import { SelectedTagsDrawer } from './selected-tags-drawer';
-import { StorylineNavButtons } from './storyline-nav-buttons';
 import { StorylineRatingButtons } from './storyline-rating-buttons';
 import { StorylineSelectLoading } from './storyline-select-loading';
 
@@ -119,8 +118,10 @@ export function StorylineSelectStepSection({
               value={String(index)}
               className="p-4 pt-2 pb-6">
               <div className="flex h-full flex-col gap-4">
-                <TextContent>{storylineItem.storyline}</TextContent>
-                <div className="flex items-center justify-between">
+                <TextContent font="maruburi">
+                  {storylineItem.storyline}
+                </TextContent>
+                <div className="flex justify-end">
                   <StorylineRatingButtons
                     rating={activeRating}
                     disabled={activeStorylineId === undefined}
@@ -129,12 +130,6 @@ export function StorylineSelectStepSection({
                         toggleStorylineRating(activeStorylineId, rating);
                       }
                     }}
-                  />
-                  <StorylineNavButtons
-                    canGoPrev={index > 0}
-                    canGoNext={index < storylines.length - 1}
-                    onPrev={() => onActiveStorylineIndexChange(index - 1)}
-                    onNext={() => onActiveStorylineIndexChange(index + 1)}
                   />
                 </div>
               </div>
