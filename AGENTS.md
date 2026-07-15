@@ -14,7 +14,7 @@ pnpm test:e2e         # Playwright E2E
 pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 필요)
 ```
 
-작업 완료 전 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요.
+작업 완료 전 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요. 화면·컴포넌트 코드(`src/app`·`src/features`·`src/components`)를 건드렸다면 `pnpm test:e2e`도 함께 돌리세요 — `pnpm test`는 Vitest만 실행하므로 문구·구조 변경으로 깨진 E2E를 잡지 못합니다.
 
 ## API 레이어 (Orval)
 
@@ -75,4 +75,6 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 ## 테스트
 
 - 단위 테스트: `tests/` 아래에 소스 구조를 미러링해 배치하고 `*.test.ts`로 명명합니다 (예: `tests/features/chats/room/utils/parse-sse-stream.test.ts`). Vitest node 환경이므로 DOM 없는 순수 로직 위주로 작성합니다.
-- E2E 테스트: `e2e/` 아래 `*.spec.ts`. Mobile Chrome(Pixel 5) 뷰포트로 실행됩니다. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다.
+- E2E 테스트: `e2e/` 아래 `*.spec.ts`. 전체 E2E는 Mobile Chrome(Pixel 5)에서 실행하고, `e2e/smoke/` 스펙은 Desktop Chrome과 Mobile Safari(iPhone 13)에서도 실행합니다. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다.
+- 비주얼 회귀 테스트: `e2e/visual/` 아래 `*-visual.spec.ts`. Mobile Chrome(Pixel 5) 프로젝트에서만 실행하며, 화면의 **안정된 정적 상태만** `toHaveScreenshot()`으로 비교합니다(동작·요청 계약 검증은 일반 E2E 담당, 스트리밍 진행 중 같은 동적 상태 금지). 상대 시간 등 시간 의존 값은 `page.clock.setFixedTime()`으로 고정하세요. 기준 이미지는 Linux 렌더링만 정본이라 로컬에서는 비교를 건너뛰며(`ignoreSnapshots`), 갱신은 `pnpm test:e2e:visual:update`(Docker 필요)로 합니다. UI를 의도적으로 바꾼 PR은 이 명령으로 기준 이미지를 함께 갱신해야 CI가 통과합니다.
+- QA 문서: 화면 동작(상태·문구·흐름)을 바꾸는 작업은 `../knk-harness/docs/qa/`의 해당 도메인 QA 문서 케이스를 함께 갱신하세요(추가·수정·삭제). E2E 스펙을 추가·변경했다면 대응 케이스의 자동화 컬럼도 갱신합니다.

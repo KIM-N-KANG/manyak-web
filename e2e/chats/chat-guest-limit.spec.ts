@@ -1,0 +1,114 @@
+import { type Page } from '@playwright/test';
+
+import { mockMemberSession } from '../fixtures/auth';
+import { expect, seedGuestUsage, test } from '../fixtures/test';
+
+/**
+ * 채팅 턴의 게스트 체험 한도(전 채팅방 합산 5회)·크레딧 게이팅 스펙.
+ * 로컬 카운터 선차단, 서버 402 사유별 다이얼로그 분기를 검증한다(QA CHAT-LIMIT-01~03).
+ * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`를 따른다.
+ */
+const CHAT_DETAIL = '**/api/v1/chats/c1';
+const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
+
+const chatDetail = {
+  id: 'c1',
+  storyId: 's1',
+  storyTitle: '용의 계곡',
+  prologue: '안개 낀 계곡 앞에 한 용사가 섰다.',
+  turns: [],
+  suggestedInputs: [],
+};
+
+/**
+ * 상세 응답을 목킹하고 textarea 기반 검증을 위해 일반 입력 모드를 고정한다.
+ *
+ * @param page 대상 페이지
+ */
+const prepareChatRoom = async (page: Page) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('manyak:chat-input-mode', 'plain');
+  });
+  await page.route(CHAT_DETAIL, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(chatDetail),
+    });
+  });
+};
+
+test.describe('채팅 게스트 한도·크레딧 게이팅', () => {
+  test('게스트 로컬 카운터가 한도(5)에 도달하면 요청 없이 로그인 유도 다이얼로그를 띄운다 (US-10-5)', async ({
+    page,
+  }) => {
+    let streamRequestCount = 0;
+
+    await prepareChatRoom(page);
+    await seedGuestUsage(page, { chat: 5 });
+    await page.route(CHAT_STREAM, async (route) => {
+      streamRequestCount += 1;
+      await route.abort();
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    const dialog = page.getByRole('alertdialog');
+
+    await expect(dialog.getByText('로그인이 필요해요')).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: '로그인하기' }),
+    ).toBeVisible();
+    expect(streamRequestCount).toBe(0);
+  });
+
+  test('게스트가 서버 402(체험 한도)를 받으면 낙관적 버블을 제거하고 로그인 유도 다이얼로그를 띄운다 (US-10-5)', async ({
+    page,
+  }) => {
+    // 로컬 카운터는 미달이어도 서버 판정이 우선한다(카운터 우회·기기 변경 케이스).
+    await prepareChatRoom(page);
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 402,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'GUEST_TRIAL_LIMIT_EXCEEDED' }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('한계를 넘어선다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(
+      page.getByRole('alertdialog').getByText('로그인이 필요해요'),
+    ).toBeVisible();
+    // 전송 실패한 낙관적 사용자 버블은 화면에서 제거된다.
+    await expect(page.getByText('한계를 넘어선다')).toBeHidden();
+  });
+
+  test('회원이 서버 402(크레딧 부족)를 받으면 크레딧 부족 다이얼로그를 띄운다 (US-10-4)', async ({
+    page,
+  }) => {
+    await prepareChatRoom(page);
+    await mockMemberSession(page);
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 402,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'INSUFFICIENT_CREDIT' }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(
+      page.getByRole('alertdialog').getByText('크레딧이 부족해요'),
+    ).toBeVisible();
+  });
+});
