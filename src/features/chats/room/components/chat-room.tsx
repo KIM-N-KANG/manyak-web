@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
@@ -11,8 +12,11 @@ import type { ChatTurnResponse } from '@/api/generated/models';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
+import { ListStatus } from '@/components/common/list-status';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
+import { Button } from '@/components/ui/button';
+import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
@@ -74,6 +78,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     suggestedInputs,
     isLoading,
     isError,
+    isForbidden,
     refetch,
   } = useChatDetail(chatId);
   const handleStreamCompleted = async () => {
@@ -182,6 +187,21 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   if (isLoading) {
     stateKey = 'loading';
     content = <PageLoadingSpinner aria-label="채팅을 불러오는 중" />;
+  } else if (isForbidden) {
+    stateKey = 'forbidden';
+    content = (
+      <ListStatus
+        title="지금 계정에서는 볼 수 없어요"
+        description="로그인 전에 만든 채팅은 로그아웃하면 다시 볼 수 있어요">
+        <Button
+          nativeButton={false}
+          variant="outline"
+          size="lg"
+          render={<Link href={APP_PATH.MAIN.CHATS} />}>
+          채팅 목록으로 가기
+        </Button>
+      </ListStatus>
+    );
   } else if (isError) {
     stateKey = 'error';
     content = (
