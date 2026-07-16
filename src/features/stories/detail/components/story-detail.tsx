@@ -110,7 +110,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                 <p>잠시 후 다시 시도해주세요</p>
               </div>
               <Button variant="outline" size="lg" onClick={() => refetch()}>
-                다시 시도
+                다시 시도하기
               </Button>
             </section>
           </m.main>

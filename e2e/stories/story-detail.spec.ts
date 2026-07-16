@@ -260,7 +260,7 @@ test.describe('스토리 상세', () => {
     await page.goto('/stories/s1');
 
     await expect(page.getByText('스토리를 불러오지 못했어요')).toBeVisible();
-    await page.getByRole('button', { name: '다시 시도' }).click();
+    await page.getByRole('button', { name: '다시 시도하기' }).click();
 
     await expect(
       page.getByRole('heading', { level: 1, name: '용의 계곡' }),

@@ -149,7 +149,9 @@ test.describe('로그인 직후 게스트 데이터 이관', () => {
     // 이관이 닫혀 채팅은 영영 403이다. 무의미한 "다시 시도" 대신 사유를 밝힌다.
     // 설명 문구는 다듬을 여지가 있어 상태를 구분하는 타이틀만 검증한다(정본은 QA 시트).
     await expect(page.getByText('지금 계정에서는 볼 수 없어요')).toBeVisible();
-    await expect(page.getByRole('button', { name: '다시 시도' })).toBeHidden();
+    await expect(
+      page.getByRole('button', { name: '다시 시도하기' }),
+    ).toBeHidden();
     await expect(page.getByText('채팅을 불러오지 못했어요')).toBeHidden();
     // base-ui Button(render=Link)은 role="button"인 앵커라 button 역할로 잡힌다.
     await expect(
