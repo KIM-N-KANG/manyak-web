@@ -318,16 +318,16 @@ test.describe('채팅 헤더', () => {
 });
 
 test.describe('채팅 삭제', () => {
-  // 삭제 버튼은 채팅 설정 드로워 최하단에 있다.
+  // 삭제 항목은 헤더 우측 옵션 드랍다운 메뉴 안에 있다.
   // 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
   const openDeleteDialog = async (page: Page) => {
-    await page.getByRole('button', { name: '채팅 설정 열기' }).click();
-    await page.getByRole('button', { name: '채팅 삭제하기' }).click();
+    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await page.getByRole('menuitem', { name: '채팅 삭제하기' }).click();
 
     return page.getByRole('alertdialog');
   };
 
-  test('드로워에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
+  test('옵션 메뉴에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -428,6 +428,28 @@ test.describe('블럭 입력 모드 (기본)', () => {
       page.getByPlaceholder('어떤 상황을 묘사할까요?'),
     ).toBeVisible();
     await expect(page.getByPlaceholder('어떤 대사를 건넬까요?')).toBeVisible();
+  });
+
+  test('입력 모드 메뉴에서 일반 입력을 선택하면 입력창이 전환된다 (US-6-16)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await page.getByRole('button', { name: '입력 모드 변경' }).click();
+    await page.getByRole('menuitemradio', { name: /일반 입력/ }).click();
+
+    await expect(
+      page.getByPlaceholder('이야기를 어떻게 이어갈까요?'),
+    ).toBeVisible();
+    await expect(page.getByPlaceholder('어떤 상황을 묘사할까요?')).toBeHidden();
   });
 
   test('기본 상황·대사 블럭을 채워 전송하면 하나의 메시지로 직렬화된다', async ({

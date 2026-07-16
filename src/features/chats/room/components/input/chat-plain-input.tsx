@@ -13,7 +13,9 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 
+import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
+import { ChatInputModeMenu } from './chat-input-mode-menu';
 
 type ChatPlainInputProps = {
   value: string;
@@ -24,6 +26,8 @@ type ChatPlainInputProps = {
   onInsertEmphasis: () => void;
   disabled: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  mode: ChatInputMode;
+  onModeChange: (mode: ChatInputMode) => void;
 };
 
 export function ChatPlainInput({
@@ -35,6 +39,8 @@ export function ChatPlainInput({
   onInsertEmphasis,
   disabled,
   textareaRef,
+  mode,
+  onModeChange,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
   const canSend = !disabled && (hasInput || hasSuggestions);
@@ -81,6 +87,7 @@ export function ChatPlainInput({
               onClick={onInsertEmphasis}>
               상황 추가
             </Button>
+            <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
             <Button
               type="submit"
               variant="default"

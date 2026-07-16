@@ -96,7 +96,6 @@ export type AnalyticsEventProps = {
   client_chatList_chatCard_impressed: { chat_id: string; position?: number };
   // chat
   client_chat_viewed: { chat_id: string };
-  client_chat_settingsButton_clicked: { chat_id: string };
   client_chat_inputMode_selected: { chat_id: string; mode: 'block' | 'plain' };
   client_chat_messageInput_submitted: {
     chat_id: string;

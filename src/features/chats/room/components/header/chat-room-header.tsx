@@ -7,23 +7,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 
-import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
-import { ChatCreditInfoPopover } from './chat-credit-info-popover';
-import { ChatSettingsDrawer } from './chat-settings-drawer';
+import { ChatOptionsMenu } from './chat-options-menu';
 
 type ChatRoomHeaderProps = {
   chatId: string;
   storyTitle: string;
-  inputMode: ChatInputMode;
-  onInputModeChange: (mode: ChatInputMode) => void;
 };
 
-export function ChatRoomHeader({
-  chatId,
-  storyTitle,
-  inputMode,
-  onInputModeChange,
-}: ChatRoomHeaderProps) {
+export function ChatRoomHeader({ chatId, storyTitle }: ChatRoomHeaderProps) {
   const router = useRouter();
 
   const goBack = () => router.push(APP_PATH.MAIN.CHATS);
@@ -39,14 +30,7 @@ export function ChatRoomHeader({
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
       <h1 className="min-w-0 flex-1 truncate font-semibold">{storyTitle}</h1>
-      <div className="flex items-center">
-        <ChatCreditInfoPopover />
-        <ChatSettingsDrawer
-          chatId={chatId}
-          mode={inputMode}
-          onModeChange={onInputModeChange}
-        />
-      </div>
+      <ChatOptionsMenu chatId={chatId} />
     </header>
   );
 }

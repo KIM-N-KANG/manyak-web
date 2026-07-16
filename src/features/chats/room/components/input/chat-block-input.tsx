@@ -16,8 +16,10 @@ import {
 import { cn } from '@/lib/utils';
 
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
+import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
+import { ChatInputModeMenu } from './chat-input-mode-menu';
 
 type ChatBlockInputProps = {
   blocks: InputBlock[];
@@ -29,6 +31,8 @@ type ChatBlockInputProps = {
   hasSuggestions: boolean;
   onSendRandomSuggestion: () => void;
   disabled: boolean;
+  mode: ChatInputMode;
+  onModeChange: (mode: ChatInputMode) => void;
 };
 
 export function ChatBlockInput({
@@ -41,6 +45,8 @@ export function ChatBlockInput({
   hasSuggestions,
   onSendRandomSuggestion,
   disabled,
+  mode,
+  onModeChange,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -146,6 +152,7 @@ export function ChatBlockInput({
           onClick={() => onAddBlock('dialogue')}>
           대사 추가
         </Button>
+        <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
         <Button
           type="button"
           size="icon-sm"

@@ -217,12 +217,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     stateKey = 'content';
     content = (
       <>
-        <ChatRoomHeader
-          chatId={chatId}
-          storyTitle={storyTitle}
-          inputMode={mode}
-          onInputModeChange={handleModeChange}
-        />
+        <ChatRoomHeader chatId={chatId} storyTitle={storyTitle} />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages
             prologue={prologue}
@@ -235,7 +230,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             onRegenerate={guardedRegenerate}
           />
         </div>
-        <ChatInput mode={mode} composer={composer} disabled={isStreaming} />
+        <ChatInput
+          mode={mode}
+          onModeChange={handleModeChange}
+          composer={composer}
+          disabled={isStreaming}
+        />
         <ConfirmAlertDialog
           open={pendingFill !== null}
           onOpenChange={(open) => {
