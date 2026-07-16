@@ -11,8 +11,8 @@ import {
   getStoryDetail,
   useGetStoryDetail,
 } from '@/api/generated/endpoints/stories/stories';
+import { RetryListStatus } from '@/components/common/retry-list-status';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Button } from '@/components/ui/button';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
@@ -100,19 +100,12 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         {!showSkeleton && isError && (
           <m.main
             key="error"
-            className="flex min-h-0 flex-1 items-center justify-center px-4"
+            className="flex min-h-0 flex-1 flex-col"
             {...FADE_TRANSITION_PROPS}>
-            <section className="flex flex-col items-center gap-8">
-              <div className="flex flex-col gap-1 text-center">
-                <h3 className="text-lg font-semibold">
-                  스토리를 불러오지 못했어요
-                </h3>
-                <p>잠시 후 다시 시도해주세요</p>
-              </div>
-              <Button variant="outline" size="lg" onClick={() => refetch()}>
-                다시 시도하기
-              </Button>
-            </section>
+            <RetryListStatus
+              title="스토리를 불러오지 못했어요"
+              onRetry={() => refetch()}
+            />
           </m.main>
         )}
 
