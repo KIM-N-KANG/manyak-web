@@ -59,6 +59,10 @@ export function useSpacerCollapse(
       }
     };
 
+    // 스트리밍 종료 직후에도 한 번 실행해, 사용자가 아래(스페이서 영역)에서
+    // 기다리던 경우 확정 턴이 채워지고 남은 여백을 스크롤 없이 즉시 회수한다.
+    collapse();
+
     viewport.addEventListener('scroll', collapse, { passive: true });
 
     return () => viewport.removeEventListener('scroll', collapse);

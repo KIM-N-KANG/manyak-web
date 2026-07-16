@@ -21,16 +21,16 @@ const historyTurns = Array.from({ length: 6 }, (_, i) => ({
   createdAt: '2026-06-01T00:00:00Z',
 }));
 
-const completedTurn = {
+const completedTurnOf = (tokenCount: number) => ({
   id: 99,
   userInput: '앞으로 나아간다',
   aiOutput: Array.from(
-    { length: STREAM_TOKEN_COUNT },
+    { length: tokenCount },
     (_, i) => `스트리밍 토큰 ${i}이 이어진다. `,
   ).join(''),
-  choices: [],
+  choices: ['왼쪽 갈림길로 향한다', '횃불을 들어 주변을 살핀다'],
   createdAt: '2026-06-01T00:10:00Z',
-};
+});
 
 const chatDetail = (turns: unknown[]) => ({
   id: 'c1',
@@ -49,47 +49,55 @@ const setPlainInputMode = async (page: Page) => {
 
 // route.fulfill은 본문을 한 번에 내려 스트리밍 중 상호작용을 재현할 수 없어,
 // 스트림 fetch만 느린 SSE(ReadableStream)로 대체한다.
-const installSlowStream = async (page: Page, tokenCount: number) => {
-  await page.addInitScript((count) => {
-    const origFetch = window.fetch.bind(window);
+const installSlowStream = async (
+  page: Page,
+  tokenCount: number,
+  completedDelayMs = 0,
+) => {
+  await page.addInitScript(
+    ({ count, completedDelay }) => {
+      const origFetch = window.fetch.bind(window);
 
-    window.fetch = async (input, init) => {
-      const url =
-        typeof input === 'string'
-          ? input
-          : input instanceof Request
-            ? input.url
-            : String(input);
+      window.fetch = async (input, init) => {
+        const url =
+          typeof input === 'string'
+            ? input
+            : input instanceof Request
+              ? input.url
+              : String(input);
 
-      if (!url.includes('/turns/stream')) {
-        return origFetch(input, init);
-      }
+        if (!url.includes('/turns/stream')) {
+          return origFetch(input, init);
+        }
 
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        async start(controller) {
-          const send = (s: string) => controller.enqueue(encoder.encode(s));
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          async start(controller) {
+            const send = (s: string) => controller.enqueue(encoder.encode(s));
 
-          send('event: started\ndata: {}\n\n');
+            send('event: started\ndata: {}\n\n');
 
-          for (let i = 0; i < count; i++) {
-            await new Promise((r) => setTimeout(r, 80));
-            send(
-              `event: token\ndata: {"text":"스트리밍 토큰 ${i}이 이어진다. "}\n\n`,
-            );
-          }
+            for (let i = 0; i < count; i++) {
+              await new Promise((r) => setTimeout(r, 80));
+              send(
+                `event: token\ndata: {"text":"스트리밍 토큰 ${i}이 이어진다. "}\n\n`,
+              );
+            }
 
-          send('event: completed\ndata: {"aiOutput":"done"}\n\n');
-          controller.close();
-        },
-      });
+            await new Promise((r) => setTimeout(r, completedDelay));
+            send('event: completed\ndata: {"aiOutput":"done"}\n\n');
+            controller.close();
+          },
+        });
 
-      return new Response(stream, {
-        status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-      });
-    };
-  }, tokenCount);
+        return new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        });
+      };
+    },
+    { count: tokenCount, completedDelay: completedDelayMs },
+  );
 };
 
 // rAF마다 뷰포트 scrollTop 최솟값을 추적해 순간적인 위 방향 튐을 잡아낸다.
@@ -121,7 +129,10 @@ const installScrollDipTracker = async (page: Page) => {
   });
 };
 
-const mockChatDetail = async (page: Page) => {
+const mockChatDetail = async (
+  page: Page,
+  tokenCount: number = STREAM_TOKEN_COUNT,
+) => {
   let detailCallCount = 0;
 
   await page.route(CHAT_DETAIL, async (route) => {
@@ -132,7 +143,7 @@ const mockChatDetail = async (page: Page) => {
       body: JSON.stringify(
         detailCallCount === 1
           ? chatDetail(historyTurns)
-          : chatDetail([...historyTurns, completedTurn]),
+          : chatDetail([...historyTurns, completedTurnOf(tokenCount)]),
       ),
     });
   });
@@ -243,5 +254,62 @@ test.describe('채팅 스크롤 앵커', () => {
 
     // 뷰포트 하단 패딩(스크롤 페이드) 이상의 빈 공간이 없어야 한다.
     expect(gap).toBeLessThan(60);
+  });
+
+  test('확정 턴(추천 입력) 대기 중 바닥으로 내려도 도착 시 본문이 밀리지 않는다', async ({
+    page,
+  }) => {
+    // 응답이 짧아야 완료 시점에도 앵커 스페이서(여백)가 남는다.
+    const shortTokenCount = 6;
+
+    await mockChatDetail(page, shortTokenCount);
+    await setPlainInputMode(page);
+    // 토큰 완료 후 completed(확정 턴 refetch)까지 대기 구간을 만든다.
+    await installSlowStream(page, shortTokenCount, 1500);
+
+    await page.goto('/chats/c1');
+    await sendMessage(page);
+    await expect(
+      page.getByText(`스트리밍 토큰 ${shortTokenCount - 1}이 이어진다.`),
+    ).toBeVisible({ timeout: 10_000 });
+
+    // 대기 구간에 맨 아래(스페이서 영역)로 스크롤한다.
+    const viewport = viewportHandle(page);
+
+    await viewport.hover();
+
+    for (let i = 0; i < 10; i++) {
+      await page.mouse.wheel(0, 400);
+    }
+
+    await page.waitForTimeout(200);
+
+    const readMetrics = () =>
+      viewport.evaluate((el) => {
+        const items = el.querySelectorAll<HTMLElement>(
+          '[data-slot="message-scroller-item"]',
+        );
+        const lastItem = items[items.length - 1];
+
+        return {
+          scrollHeight: el.scrollHeight,
+          lastItemTop: lastItem?.getBoundingClientRect().top ?? -1,
+        };
+      });
+
+    const before = await readMetrics();
+
+    // 확정 턴(선택지 포함) 도착까지 대기한다.
+    await expect(
+      page.getByRole('button', { name: 'AI 응답 생성 중' }),
+    ).toBeHidden({ timeout: 10_000 });
+    await page.waitForTimeout(300);
+
+    const after = await readMetrics();
+
+    // 보고 있던 본문(마지막 아이템)이 위로 밀려나지 않는다.
+    expect(Math.abs(after.lastItemTop - before.lastItemTop)).toBeLessThan(3);
+    // 늘어난 콘텐츠만큼 스페이서가 즉시 회수돼 스크롤 길이도 늘지 않는다.
+    expect(after.scrollHeight).toBeLessThanOrEqual(before.scrollHeight + 10);
   });
 });

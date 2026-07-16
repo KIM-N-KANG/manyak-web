@@ -54,12 +54,14 @@ function MessageScrollerViewport({
 
 function MessageScrollerContent({
   className,
+  spacerClassName,
   ...props
 }: React.ComponentProps<typeof MessageScrollerPrimitive.Content>) {
   return (
     <MessageScrollerPrimitive.Content
       data-slot="message-scroller-content"
       className={cn('flex h-max min-h-full flex-col gap-8', className)}
+      spacerClassName={cn('[overflow-anchor:none]', spacerClassName)}
       {...props}
     />
   );
