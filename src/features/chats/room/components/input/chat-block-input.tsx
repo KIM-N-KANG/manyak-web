@@ -86,7 +86,7 @@ export function ChatBlockInput({
       {blocks.length > 0 && (
         <div className="flex max-h-[30dvh] flex-col gap-2 overflow-y-auto overscroll-contain px-4 py-2">
           {blocks.map((block) => (
-            <div key={block.id} className="flex items-center gap-2">
+            <div key={block.id} className="flex items-center gap-1">
               <InputGroup>
                 <InputGroupAddon>
                   <span
@@ -133,7 +133,7 @@ export function ChatBlockInput({
           ))}
         </div>
       )}
-      <div className="flex items-center gap-2 p-4 pt-2">
+      <div className="flex items-center gap-1 p-4 pt-2">
         <Button
           type="button"
           aria-label="상황 묘사 추가"

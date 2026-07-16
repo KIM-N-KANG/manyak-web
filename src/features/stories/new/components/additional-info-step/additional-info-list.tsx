@@ -56,7 +56,7 @@ export function AdditionalInfoList({
       </div>
 
       {additionalInfos.map((additionalInfo, index) => (
-        <div key={additionalInfo.id} className="flex items-center gap-2">
+        <div key={additionalInfo.id} className="flex items-center gap-1">
           <InputGroup>
             <InputGroupTextarea
               ref={(element) =>
