@@ -4,7 +4,7 @@ import { APP_PATH } from '@/constants/app-path';
 import {
   buildLoginUrl,
   resolveLoginCallbackUrl,
-} from '@/features/auth/login/utils/login-callback-url';
+} from '@/features/auth/_shared/utils/login-callback-url';
 
 describe('resolveLoginCallbackUrl', () => {
   it('앱 내 상대 경로를 그대로 반환한다', () => {

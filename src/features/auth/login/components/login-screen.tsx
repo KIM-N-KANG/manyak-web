@@ -12,14 +12,13 @@ import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
-import { track } from '@/observability/analytics';
-
+import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import {
   buildLoginUrl,
   resolveLoginCallbackUrl,
-} from '../utils/login-callback-url';
-import { GoogleLogo } from './google-logo';
+} from '@/features/auth/_shared/utils/login-callback-url';
+import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
+import { track } from '@/observability/analytics';
 
 export function LoginScreen() {
   const router = useRouter();

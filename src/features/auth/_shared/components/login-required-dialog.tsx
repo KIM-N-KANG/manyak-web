@@ -2,19 +2,22 @@
 
 import { useEffect } from 'react';
 
-import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
+import { Button } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { buildLoginUrl } from '@/features/auth/login/utils/login-callback-url';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { APP_PATH } from '@/constants/app-path';
+import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
+import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredDialogProps = {
@@ -26,7 +29,6 @@ export function LoginRequiredDialog({
   trigger,
   onOpenChange,
 }: LoginRequiredDialogProps) {
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -35,40 +37,52 @@ export function LoginRequiredDialog({
     }
   }, [trigger]);
 
-  const handleLogin = () => {
+  const handleGoogleLogin = () => {
     if (trigger) {
       track('client_guestLimitDialog_loginButton_clicked', { trigger });
     }
 
-    router.push(buildLoginUrl(pathname));
+    void signIn('google', {
+      redirectTo: resolveLoginCallbackUrl(pathname),
+    });
   };
 
-  const handleDismiss = () => {
-    if (trigger) {
+  const handleOpenChange = (open: boolean) => {
+    if (!open && trigger) {
       track('client_guestLimitDialog_dismissed', { trigger });
     }
+
+    onOpenChange(open);
   };
 
   return (
-    <AlertDialog open={trigger !== null} onOpenChange={onOpenChange}>
-      <AlertDialogContent size="sm">
-        <AlertDialogHeader>
-          <AlertDialogTitle>로그인이 필요해요</AlertDialogTitle>
-          <AlertDialogDescription>
-            게스트 체험 횟수를 모두 사용했어요. 로그인하면 크레딧으로 횟수 제한
-            없이 이용할 수 있고, 지금까지 만든 스토리와 채팅도 계정으로
-            옮겨드려요.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleDismiss}>
-            나중에 하기
-          </AlertDialogCancel>
-          <AlertDialogAction type="button" onClick={handleLogin}>
-            로그인하기
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Dialog open={trigger !== null} onOpenChange={handleOpenChange}>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>게스트 체험 횟수를 모두 사용했어요</DialogTitle>
+          <DialogDescription>
+            로그인하면 크레딧으로 횟수 제한 없이 이용할 수 있고, 지금까지 만든
+            스토리와 채팅도 계정으로 옮겨드려요
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="grid-cols-1 gap-3">
+          <Button type="button" variant="outline" onClick={handleGoogleLogin}>
+            <GoogleLogo className="size-4" />
+            Google로 시작하기
+          </Button>
+          <p className="text-center text-xs leading-relaxed text-foreground-secondary">
+            로그인 시{' '}
+            <Link href={APP_PATH.TERMS} className="underline">
+              서비스이용약관
+            </Link>{' '}
+            및{' '}
+            <Link href={APP_PATH.PRIVACY} className="underline">
+              개인정보처리방침
+            </Link>
+            에 동의하는 것으로 간주해요
+          </p>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

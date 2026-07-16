@@ -55,11 +55,13 @@ test.describe('채팅 게스트 한도·크레딧 게이팅', () => {
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('로그인이 필요해요')).toBeVisible();
     await expect(
-      dialog.getByRole('button', { name: '로그인하기' }),
+      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: 'Google로 시작하기' }),
     ).toBeVisible();
     expect(streamRequestCount).toBe(0);
   });
@@ -84,7 +86,7 @@ test.describe('채팅 게스트 한도·크레딧 게이팅', () => {
     await page.getByRole('button', { name: '전송' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('로그인이 필요해요'),
+      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
     // 전송 실패한 낙관적 사용자 버블은 화면에서 제거된다.
     await expect(page.getByText('한계를 넘어선다')).toBeHidden();
