@@ -32,6 +32,7 @@ type OptionsMenuProps = {
   isDeleting?: boolean;
   triggerAriaLabel: string;
   confirmTitle: string;
+  deleteLabel?: string;
   size?: ButtonSize;
   triggerClassName?: string;
 };
@@ -41,6 +42,7 @@ export function OptionsMenu({
   isDeleting = false,
   triggerAriaLabel,
   confirmTitle,
+  deleteLabel = '삭제하기',
   size = 'icon-xs',
   triggerClassName,
 }: OptionsMenuProps) {
@@ -71,7 +73,7 @@ export function OptionsMenu({
             variant="destructive"
             onClick={() => setIsConfirmOpen(true)}>
             <HugeiconsIcon icon={Delete02Icon} aria-hidden="true" />
-            삭제하기
+            {deleteLabel}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

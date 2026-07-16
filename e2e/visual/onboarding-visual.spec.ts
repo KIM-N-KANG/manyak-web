@@ -16,7 +16,7 @@ test.describe('온보딩 비주얼', () => {
     await page.goto('/');
 
     await expect(
-      page.getByRole('heading', { name: '나만의 스토리, 바로 만들어볼까요?' }),
+      page.getByRole('heading', { name: '키워드 몇 개로, 나만의 스토리 완성' }),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('onboarding-guest-dialog.png');

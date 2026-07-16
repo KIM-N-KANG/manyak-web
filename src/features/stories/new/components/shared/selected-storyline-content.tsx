@@ -62,7 +62,7 @@ export function SelectedStorylineContent({
           duration: isAnimationEnabled ? 0.3 : 0,
           ease: 'easeInOut',
         }}>
-        <TextContent>{story}</TextContent>
+        <TextContent font="maruburi">{story}</TextContent>
         <AnimatePresence initial={false}>
           {isCollapsed && (
             <m.div

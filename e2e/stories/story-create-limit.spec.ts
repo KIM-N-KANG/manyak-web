@@ -4,7 +4,7 @@ import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
 
 /**
- * 스토리 생성 퍼널의 게스트 한도·크레딧 게이팅 스펙(QA STORY-LIMIT-02~06·09·10).
+ * 스토리 생성 퍼널의 게스트 한도·크레딧 게이팅 스펙(QA STORY-LIMIT-02~06·09).
  * 로컬 카운터 선차단, 서버 402 사유별 다이얼로그 분기, 카운터 증가 규칙을 검증한다.
  * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`
  * (스토리라인 5·스토리 1)를 따른다.
@@ -91,11 +91,14 @@ test.describe('생성 퍼널 진입 백스톱', () => {
     // FAB를 우회한 딥링크 진입을 재현한다.
     await page.goto('/stories/new');
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('로그인이 필요해요')).toBeVisible();
+    await expect(
+      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+    ).toBeVisible();
 
-    await dialog.getByRole('button', { name: '나중에 하기' }).click();
+    // 닫기 버튼이 없는 다이얼로그라 바깥(백드롭) 터치로 닫는다.
+    await page.mouse.click(10, 10);
 
     await expect(dialog).toBeHidden();
 
@@ -126,13 +129,16 @@ test.describe('스토리라인 생성 한도', () => {
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('로그인이 필요해요')).toBeVisible();
+    await expect(
+      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+    ).toBeVisible();
     expect(storylineRequestCount).toBe(0);
 
-    // 다이얼로그가 배경을 aria-hidden 처리하므로, 닫은 뒤에 단계 유지를 확인한다.
-    await dialog.getByRole('button', { name: '나중에 하기' }).click();
+    // 다이얼로그가 배경을 aria-hidden 처리하므로, 바깥 터치로 닫은 뒤에 단계 유지를 확인한다.
+    await page.mouse.click(10, 10);
+    await expect(dialog).toBeHidden();
 
     // 선차단은 요청 자체를 막으므로 스토리라인 선택 단계로 넘어가지 않는다.
     await expect(
@@ -159,7 +165,7 @@ test.describe('스토리라인 생성 한도', () => {
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('로그인이 필요해요'),
+      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
     await expect(
       page.getByText('게스트 스토리라인 생성 횟수를 모두 사용했어요'),
@@ -193,7 +199,7 @@ test.describe('스토리라인 생성 한도', () => {
     await page.getByRole('button', { name: '다시 만들기' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('로그인이 필요해요'),
+      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
     expect(storylineRequestCount).toBe(1);
   });
@@ -229,17 +235,20 @@ test.describe('스토리 완성 한도·크레딧', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('로그인이 필요해요')).toBeVisible();
-    // 다이얼로그 설명에도 같은 문장이 있어 인라인 문구는 정확 일치로 구분한다.
+    await expect(
+      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+    ).toBeVisible();
+
+    // 다이얼로그가 배경을 aria-hidden 처리하고 제목이 인라인 문구와 같은 문장이라,
+    // 바깥 터치로 닫은 뒤에 인라인 문구와 입력 유지를 확인한다.
+    await page.mouse.click(10, 10);
+    await expect(dialog).toBeHidden();
+
     await expect(
       page.getByText('게스트 체험 횟수를 모두 사용했어요', { exact: true }),
     ).toBeVisible();
-
-    // 다이얼로그가 배경을 aria-hidden 처리하므로, 닫은 뒤에 입력 유지를 확인한다.
-    await dialog.getByRole('button', { name: '나중에 하기' }).click();
-
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
@@ -272,44 +281,15 @@ test.describe('스토리 완성 한도·크레딧', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
     await expect(dialog.getByText('크레딧이 부족해요')).toBeVisible();
     await expect(
-      dialog.getByRole('button', { name: '받으러 가기' }),
+      dialog.getByRole('button', { name: '친구 초대 하러 가기' }),
     ).toBeVisible();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
-  });
-});
-
-test.describe('생성 퍼널 크레딧 안내', () => {
-  test('게스트는 스토리 1개 한도를, 회원은 20크레딧 차감을 안내받는다 (STORY-LIMIT-10)', async ({
-    page,
-  }) => {
-    await mockTags(page);
-
-    await page.goto('/stories/new');
-    await page.getByRole('button', { name: '크레딧 안내 열기' }).click();
-
-    await expect(
-      page.getByText('로그인 전에는 스토리를 1개까지 만들 수 있어요'),
-    ).toBeVisible();
-  });
-
-  test('회원 크레딧 안내는 소모량을 알린다 (STORY-LIMIT-10)', async ({
-    page,
-  }) => {
-    await mockTags(page);
-    await mockMemberSession(page);
-
-    await page.goto('/stories/new');
-    await page.getByRole('button', { name: '크레딧 안내 열기' }).click();
-
-    await expect(
-      page.getByText('스토리를 완성할 때 20크레딧이 자동으로 차감돼요'),
-    ).toBeVisible();
   });
 });
 
@@ -324,7 +304,7 @@ test.describe('게스트 카운터 시드', () => {
     await page.goto('/stories/new');
 
     await expect(
-      page.getByRole('alertdialog').getByText('로그인이 필요해요'),
+      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
   });
 });

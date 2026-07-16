@@ -47,7 +47,7 @@ export function useChatStream(
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const send = async (userInput: string) => {
-    setStreamingTurn({ userInput, aiOutput: '' });
+    setStreamingTurn({ userInput, aiOutput: '', baseTurnCount: turnCount });
 
     const controller = new AbortController();
 

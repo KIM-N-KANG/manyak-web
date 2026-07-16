@@ -163,21 +163,34 @@ test.describe('채팅 오버레이 비주얼', () => {
     });
   });
 
-  test('채팅 설정 드로어 (CHAT-SET-01)', async ({ page }) => {
+  test('채팅 옵션 메뉴 (CHAT-SET-01)', async ({ page }) => {
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 설정 열기' }).click();
+    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
 
+    // 드랍다운 메뉴(destructive 항목) 대표 스냅샷이다(스토리 옵션 메뉴도 같은 컴포넌트).
     await expect(
-      page.getByRole('button', { name: '채팅 삭제하기' }),
+      page.getByRole('menuitem', { name: '채팅 삭제하기' }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('chat-settings-drawer.png');
+    await expect(page).toHaveScreenshot('chat-options-menu.png');
+  });
+
+  test('입력 모드 메뉴 (CHAT-BLOCK-07)', async ({ page }) => {
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: '입력 모드 변경' }).click();
+
+    // 드랍다운 라디오 항목 대표 스냅샷이다.
+    await expect(
+      page.getByRole('menuitemradio', { name: /블럭 입력/ }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-input-mode-menu.png');
   });
 
   test('삭제 확인 다이얼로그 (CHAT-SET-02)', async ({ page }) => {
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 설정 열기' }).click();
-    await page.getByRole('button', { name: '채팅 삭제하기' }).click();
+    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await page.getByRole('menuitem', { name: '채팅 삭제하기' }).click();
 
     // ConfirmAlertDialog 공용 컴포넌트의 대표 스냅샷이다(스토리 삭제·퍼널 이탈도 같은 컴포넌트).
     await expect(
@@ -195,7 +208,7 @@ test.describe('채팅 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('로그인이 필요해요'),
+      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('login-required-dialog.png');
@@ -215,22 +228,10 @@ test.describe('채팅 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('크레딧이 부족해요'),
+      page.getByRole('dialog').getByText('크레딧이 부족해요'),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('credit-shortage-dialog.png');
-  });
-
-  test('크레딧 안내 팝오버 (CHAT-LIMIT-05)', async ({ page }) => {
-    await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '크레딧 안내 열기' }).click();
-
-    // 팝오버 대표 스냅샷이다(퍼널 헤더의 크레딧 안내도 같은 컴포넌트 패턴).
-    await expect(
-      page.getByText('로그인 전에는 채팅방 전체에서 5번까지 대화할 수 있어요'),
-    ).toBeVisible();
-    await waitForFonts(page);
-    await expect(page).toHaveScreenshot('credit-info-popover.png');
   });
 });
 

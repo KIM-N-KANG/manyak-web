@@ -6,9 +6,8 @@ import { useMe } from '@/api/generated/endpoints/auth/auth';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { useClaimAttendance } from '@/features/more/_shared/hooks/use-claim-attendance';
 import { track } from '@/observability/analytics';
-
-import { useClaimAttendance } from '../hooks/use-claim-attendance';
 
 export function CreditBalanceCard() {
   const { status } = useSession();

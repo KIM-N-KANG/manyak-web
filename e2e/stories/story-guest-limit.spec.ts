@@ -61,9 +61,11 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await page.goto('/');
     await page.getByRole('link', { name: '스토리 만들기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('로그인이 필요해요')).toBeVisible();
+    await expect(
+      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+    ).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
   });
 
@@ -82,9 +84,11 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await page.goto('/stories/s1');
     await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
-    await expect(dialog.getByText('로그인이 필요해요')).toBeVisible();
+    await expect(
+      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+    ).toBeVisible();
     await expect(page).toHaveURL(/\/stories\/s1$/);
     expect(createChatCount).toBe(0);
   });
@@ -102,7 +106,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('로그인이 필요해요'),
+      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
     await expect(page.getByText('채팅을 시작하지 못했어요')).toBeHidden();
     await expect(page).toHaveURL(/\/stories\/s1$/);
@@ -120,11 +124,11 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await page.goto('/stories/s1');
     await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
     await expect(dialog.getByText('크레딧이 부족해요')).toBeVisible();
     await expect(
-      dialog.getByRole('button', { name: '받으러 가기' }),
+      dialog.getByRole('button', { name: '친구 초대 하러 가기' }),
     ).toBeVisible();
     await expect(page.getByText('채팅을 시작하지 못했어요')).toBeHidden();
   });

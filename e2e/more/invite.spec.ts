@@ -337,7 +337,7 @@ test.describe('친구 초대 페이지 (/more/invite)', () => {
 
     await expect(page.getByText('초대 코드를 불러오지 못했어요')).toBeVisible();
     await expect(page.getByLabel('초대 코드', { exact: true })).toBeEnabled();
-    await page.getByRole('button', { name: '다시 시도' }).click();
+    await page.getByRole('button', { name: '다시 시도하기' }).click();
 
     await expect(page.getByText(INVITE_CODE)).toBeVisible();
     expect(requestCount).toBe(2);
@@ -411,7 +411,9 @@ test.describe('친구 초대 페이지 (/more/invite)', () => {
     await expect(page.getByText('초대 코드를 불러오지 못했어요')).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole('button', { name: '다시 시도' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '다시 시도하기' }),
+    ).toBeVisible();
     await expect(page.getByLabel('초대 코드', { exact: true })).toBeEnabled();
   });
 
@@ -522,7 +524,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await page.waitForTimeout(400);
     await expect(
       page.getByRole('heading', {
-        name: '나만의 스토리, 바로 만들어볼까요?',
+        name: '키워드 몇 개로, 나만의 스토리 완성',
       }),
     ).toHaveCount(0);
   });
@@ -636,7 +638,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: '나만의 스토리, 바로 만들어볼까요?',
+        name: '키워드 몇 개로, 나만의 스토리 완성',
       }),
     ).toBeVisible();
 
@@ -656,7 +658,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     ).toBeVisible();
     await expect(
       page.getByRole('heading', {
-        name: '나만의 스토리, 바로 만들어볼까요?',
+        name: '키워드 몇 개로, 나만의 스토리 완성',
       }),
     ).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(1);

@@ -9,7 +9,7 @@ type RegenerateButtonProps = {
 
 export function RegenerateButton({ onClick }: RegenerateButtonProps) {
   return (
-    <div className="-ml-1 px-4">
+    <div className="mb-4 -ml-1 px-4">
       <Button
         type="button"
         variant="ghost"

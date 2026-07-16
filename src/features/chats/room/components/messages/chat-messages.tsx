@@ -17,7 +17,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled';
+import { useSpacerCollapse } from '../../hooks/use-spacer-collapse';
 import type { StreamingTurn } from '../../types';
+import { isStreamingTurnSuperseded } from '../../utils/streaming-turn';
 import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
@@ -32,7 +34,7 @@ function RegenerateAnchor({ turnId }: RegenerateAnchorProps) {
 
   useEffect(() => {
     if (turnId != null) {
-      scrollToMessage(String(turnId), { align: 'start', scrollMargin: 64 });
+      scrollToMessage(String(turnId), { align: 'start' });
     }
   }, [turnId, scrollToMessage]);
 
@@ -65,6 +67,13 @@ export function ChatMessages({
   const viewportRef = useRef<HTMLDivElement>(null);
   const settled = useInitialScrollSettled(viewportRef, { skip: startedEmpty });
 
+  const activeStreamingTurn =
+    streamingTurn && !isStreamingTurnSuperseded(streamingTurn, turns.length)
+      ? streamingTurn
+      : null;
+
+  useSpacerCollapse(viewportRef, streamingTurn !== null);
+
   useEffect(() => {
     if (streamingTurn && !hasSent) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -78,7 +87,7 @@ export function ChatMessages({
     <MessageScrollerProvider
       autoScroll={!startedEmpty && !hasSent && regeneratingTurnId == null}
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
-      scrollPreviousItemPeek={64}>
+      scrollPreviousItemPeek={0}>
       <RegenerateAnchor turnId={regeneratingTurnId} />
       <MessageScroller
         className={cn(
@@ -98,18 +107,23 @@ export function ChatMessages({
             ) : null}
 
             {turns.map((turn, index) => {
-              const isLast = !streamingTurn && index === lastTurnIndex;
+              const isLast = !activeStreamingTurn && index === lastTurnIndex;
               const isRegenerating =
-                streamingTurn !== null &&
+                activeStreamingTurn !== null &&
                 regeneratingTurnId != null &&
                 turn.id === regeneratingTurnId;
 
               return (
                 <MessageScrollerItem
                   key={turn.id ?? index}
-                  messageId={turn.id != null ? String(turn.id) : undefined}>
+                  messageId={turn.id != null ? String(turn.id) : undefined}
+                  className={cn(
+                    hasSent &&
+                      index === lastTurnIndex &&
+                      '[content-visibility:visible]',
+                  )}>
                   {isRegenerating ? (
-                    <ChatStreamingTurn turn={streamingTurn} />
+                    <ChatStreamingTurn turn={activeStreamingTurn} />
                   ) : (
                     <ChatTurnItem
                       turn={turn}
@@ -133,9 +147,11 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
-            {streamingTurn && regeneratingTurnId == null ? (
-              <MessageScrollerItem scrollAnchor>
-                <ChatStreamingTurn turn={streamingTurn} />
+            {activeStreamingTurn && regeneratingTurnId == null ? (
+              <MessageScrollerItem
+                scrollAnchor
+                className="[content-visibility:visible]">
+                <ChatStreamingTurn turn={activeStreamingTurn} />
               </MessageScrollerItem>
             ) : null}
           </MessageScrollerContent>

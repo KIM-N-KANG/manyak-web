@@ -11,7 +11,7 @@ import type { TagCategory } from '../../types';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
-import { StoryTagCategorySection } from '../tag-step/story-tag-category-section';
+import { StoryTagCategorySection } from './story-tag-category-section';
 
 type StoryTagStepSectionProps = {
   isGeneratingStorylines: boolean;

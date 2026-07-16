@@ -7,11 +7,17 @@ import { ChatPlainInput } from './chat-plain-input';
 
 type ChatInputProps = {
   mode: ChatInputMode;
+  onModeChange: (mode: ChatInputMode) => void;
   composer: ReturnType<typeof useChatComposer>;
   disabled: boolean;
 };
 
-export function ChatInput({ mode, composer, disabled }: ChatInputProps) {
+export function ChatInput({
+  mode,
+  onModeChange,
+  composer,
+  disabled,
+}: ChatInputProps) {
   if (mode === 'block') {
     return (
       <ChatBlockInput
@@ -24,6 +30,8 @@ export function ChatInput({ mode, composer, disabled }: ChatInputProps) {
         hasSuggestions={composer.hasSuggestions}
         onSendRandomSuggestion={composer.sendRandomSuggestion}
         disabled={disabled}
+        mode={mode}
+        onModeChange={onModeChange}
       />
     );
   }
@@ -38,6 +46,8 @@ export function ChatInput({ mode, composer, disabled }: ChatInputProps) {
       onInsertEmphasis={composer.insertEmphasis}
       disabled={disabled}
       textareaRef={composer.textareaRef}
+      mode={mode}
+      onModeChange={onModeChange}
     />
   );
 }

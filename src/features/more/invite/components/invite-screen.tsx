@@ -137,7 +137,7 @@ export function InviteScreen() {
                 variant="secondary"
                 disabled={isFetching}
                 onClick={() => void refetch()}>
-                {isFetching ? '다시 시도 중...' : '다시 시도'}
+                {isFetching ? '다시 시도 중...' : '다시 시도하기'}
               </Button>
             </>
           ) : null}

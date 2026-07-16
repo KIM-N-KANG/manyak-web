@@ -35,12 +35,12 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
       variants={listVariants}
       initial="hidden"
       animate="show"
-      className="flex flex-col gap-2 p-4 pt-8 pb-6">
+      className="flex flex-col gap-2 p-4 pb-6">
       {choices.map((choice, index) => (
         <m.div
           key={`${index}-${choice}`}
           variants={itemVariants}
-          className="flex items-center justify-end gap-2">
+          className="flex items-center justify-end gap-1">
           <Button
             type="button"
             variant="ghost"

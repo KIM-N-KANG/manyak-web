@@ -35,6 +35,9 @@ export type AnalyticsEventProps = {
   client_creditShortageDialog_earnButton_clicked: {
     trigger: CreditShortageTrigger;
   };
+  client_creditShortageDialog_attendanceButton_clicked: {
+    trigger: CreditShortageTrigger;
+  };
   client_creditShortageDialog_dismissed: { trigger: CreditShortageTrigger };
   // onboarding
   client_onboarding_viewed: void;
@@ -46,7 +49,6 @@ export type AnalyticsEventProps = {
   client_storyList_storyCard_impressed: { story_id: string; position?: number };
   // storyCreate
   client_storyCreate_viewed: void;
-  client_storyCreate_creditInfoButton_clicked: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
   client_storyCreate_tagCategory_selected: {
     from_category: SimpleStoryTagListItemResponseCategory;
@@ -97,7 +99,6 @@ export type AnalyticsEventProps = {
   client_chatList_chatCard_impressed: { chat_id: string; position?: number };
   // chat
   client_chat_viewed: { chat_id: string };
-  client_chat_settingsButton_clicked: { chat_id: string };
   client_chat_inputMode_selected: { chat_id: string; mode: 'block' | 'plain' };
   client_chat_messageInput_submitted: {
     chat_id: string;
