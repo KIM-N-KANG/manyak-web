@@ -160,6 +160,23 @@ const viewportHandle = (page: Page) =>
   page.locator('[data-slot="message-scroller-viewport"]');
 
 test.describe('채팅 스크롤 앵커', () => {
+  test('진입 후 자동 스크롤 상태가 풀려 스크롤바가 표시된다', async ({
+    page,
+  }) => {
+    await mockChatDetail(page);
+    await setPlainInputMode(page);
+
+    await page.goto('/chats/c1');
+    await expect(page.getByText('과거 질문 6')).toBeVisible();
+
+    // data-autoscrolling이 남아 있으면 스크롤바 썸·트랙이 투명으로 유지된다.
+    const viewport = viewportHandle(page);
+
+    await expect(viewport).not.toHaveAttribute('data-autoscrolling', '', {
+      timeout: 3_000,
+    });
+  });
+
   test('스트림 완료 시 스크롤이 위로 튀지 않는다', async ({ page }) => {
     await mockChatDetail(page);
     await setPlainInputMode(page);

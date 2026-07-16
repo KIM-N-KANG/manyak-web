@@ -118,7 +118,9 @@ export function ChatMessages({
                   key={turn.id ?? index}
                   messageId={turn.id != null ? String(turn.id) : undefined}
                   className={cn(
-                    index === lastTurnIndex && '[content-visibility:visible]',
+                    hasSent &&
+                      index === lastTurnIndex &&
+                      '[content-visibility:visible]',
                   )}>
                   {isRegenerating ? (
                     <ChatStreamingTurn turn={activeStreamingTurn} />
