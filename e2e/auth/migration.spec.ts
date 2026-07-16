@@ -37,6 +37,10 @@ type SetupOptions = {
  * 이관 전 403 → 이관 후 200으로 바뀌는 백엔드를 목킹한다.
  * 소유권 판정은 실제 백엔드와 같이 "요청 도착 시점" 상태로 고정한다.
  *
+ * 검증 대상은 "상세 조회가 이관보다 먼저 도착해 403으로 확정되는" 경쟁이므로, 그 순서를
+ * 우연에 맡기지 않고 이관 응답을 첫 상세 요청 도착까지 붙잡아 고정한다. 부하에 따라
+ * 이관이 먼저 도착하면 첫 조회가 곧바로 200을 받아 경쟁 자체가 재현되지 않는다.
+ *
  * @param page 대상 페이지
  * @param options 이관 잠금 여부와 상세 응답 지연
  * @returns 이관·조회 진행 상태(어서션용)
@@ -51,6 +55,11 @@ const mockMigrationBackend = async (
     migrateRequests: 0,
   };
 
+  let markDetailArrived = () => {};
+  const detailArrived = new Promise<void>((resolve) => {
+    markDetailArrived = resolve;
+  });
+
   await page.route(MIGRATE, async (route) => {
     state.migrateRequests += 1;
 
@@ -63,6 +72,8 @@ const mockMigrationBackend = async (
 
       return;
     }
+
+    await detailArrived;
 
     state.migrated = true;
     await route.fulfill({
@@ -80,6 +91,8 @@ const mockMigrationBackend = async (
     state.detailRequests += 1;
 
     const migratedAtArrival = state.migrated;
+
+    markDetailArrived();
 
     if (detailDelayMs > 0 && state.detailRequests === 1) {
       await new Promise((resolve) => setTimeout(resolve, detailDelayMs));
