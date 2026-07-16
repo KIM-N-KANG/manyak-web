@@ -61,8 +61,8 @@ export function LoginRequiredDialog({
         <DialogHeader>
           <DialogTitle>게스트 체험 횟수를 모두 사용했어요</DialogTitle>
           <DialogDescription>
-            로그인하면 크레딧으로 횟수 제한 없이 이용할 수 있고, 지금까지 만든
-            스토리와 채팅도 계정으로 옮겨드려요
+            로그인하면 횟수 제한 없이 이용할 수 있고, 지금까지 만든 스토리와
+            채팅도 1회 한정으로 옮겨드려요
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="grid-cols-1 gap-3">

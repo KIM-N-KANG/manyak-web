@@ -15,7 +15,7 @@ export function RetryListStatus({
   return (
     <ListStatus title={title} description={description}>
       <Button variant="outline" size="lg" onClick={onRetry}>
-        다시 시도
+        다시 시도하기
       </Button>
     </ListStatus>
   );
