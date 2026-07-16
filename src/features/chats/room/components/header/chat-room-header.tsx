@@ -4,6 +4,7 @@ import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
+import { HomeOutlineIcon } from '@/components/icons/home-outline-icon';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 
@@ -30,7 +31,17 @@ export function ChatRoomHeader({ chatId, storyTitle }: ChatRoomHeaderProps) {
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
       <h1 className="min-w-0 flex-1 truncate font-semibold">{storyTitle}</h1>
-      <ChatOptionsMenu chatId={chatId} />
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          aria-label="홈 화면으로 이동 버튼"
+          onClick={() => router.push(APP_PATH.MAIN.STORIES)}>
+          <HomeOutlineIcon aria-hidden="true" />
+        </Button>
+        <ChatOptionsMenu chatId={chatId} />
+      </div>
     </header>
   );
 }
