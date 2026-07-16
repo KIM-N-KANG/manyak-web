@@ -281,11 +281,11 @@ test.describe('스토리 완성 한도·크레딧', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    const dialog = page.getByRole('dialog');
 
     await expect(dialog.getByText('크레딧이 부족해요')).toBeVisible();
     await expect(
-      dialog.getByRole('button', { name: '받으러 가기' }),
+      dialog.getByRole('button', { name: '친구 초대 하러 가기' }),
     ).toBeVisible();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',

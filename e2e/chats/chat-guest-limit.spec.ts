@@ -10,6 +10,8 @@ import { expect, seedGuestUsage, test } from '../fixtures/test';
  */
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
+const ME_API = '**/api/v1/auth/me';
+const ATTENDANCE_API = '**/api/v1/users/me/credits/attendance';
 
 const chatDetail = {
   id: 'c1',
@@ -25,6 +27,27 @@ const chatDetail = {
  *
  * @param page 대상 페이지
  */
+/**
+ * 사용자 조회(me) 응답을 출석 여부만 바꿔 목킹한다.
+ *
+ * @param page 대상 페이지
+ * @param attendedToday 오늘 출석 완료 여부
+ */
+const mockMe = async (page: Page, attendedToday: boolean) => {
+  await page.route(ME_API, async (route) => {
+    await route.fulfill({
+      json: {
+        id: 'user-1',
+        nickname: '배고픈 송아지',
+        profileImageUrl: null,
+        status: 'ACTIVE',
+        creditBalance: 5,
+        attendedToday,
+      },
+    });
+  });
+};
+
 const prepareChatRoom = async (page: Page) => {
   await page.addInitScript(() => {
     window.localStorage.setItem('manyak:chat-input-mode', 'plain');
@@ -110,7 +133,93 @@ test.describe('채팅 게스트 한도·크레딧 게이팅', () => {
     await page.getByRole('button', { name: '전송' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('크레딧이 부족해요'),
+      page.getByRole('dialog').getByText('크레딧이 부족해요'),
     ).toBeVisible();
+  });
+
+  test('크레딧 부족 다이얼로그에서 출석 체크에 성공하면 다이얼로그가 닫힌다 (CHAT-LIMIT-03)', async ({
+    page,
+  }) => {
+    await prepareChatRoom(page);
+    await mockMemberSession(page);
+    await mockMe(page, false);
+    await page.route(ATTENDANCE_API, async (route) => {
+      await route.fulfill({ json: { rewarded: true, amount: 100 } });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 402,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'INSUFFICIENT_CREDIT' }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await dialog.getByRole('button', { name: '출석 체크하기' }).click();
+
+    await expect(dialog).toBeHidden();
+  });
+
+  test('출석 요청이 이미 출석으로 응답하면 토스트만 띄우고 다이얼로그는 유지된다 (CHAT-LIMIT-03)', async ({
+    page,
+  }) => {
+    // 캐시된 me가 미출석이어도 서버 판정(멱등 200·rewarded=false)이 우선인 케이스.
+    await prepareChatRoom(page);
+    await mockMemberSession(page);
+    await mockMe(page, false);
+    await page.route(ATTENDANCE_API, async (route) => {
+      await route.fulfill({ json: { rewarded: false, amount: null } });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 402,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'INSUFFICIENT_CREDIT' }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await dialog.getByRole('button', { name: '출석 체크하기' }).click();
+
+    await expect(page.getByText('오늘은 이미 출석 체크했어요')).toBeVisible();
+    await expect(dialog).toBeVisible();
+  });
+
+  test('오늘 이미 출석했으면 크레딧 부족 다이얼로그의 출석 버튼이 비활성화된다 (CHAT-LIMIT-03)', async ({
+    page,
+  }) => {
+    await prepareChatRoom(page);
+    await mockMemberSession(page);
+    await mockMe(page, true);
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 402,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'INSUFFICIENT_CREDIT' }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+      dialog.getByRole('button', { name: '출석 완료' }),
+    ).toBeDisabled();
+    await expect(
+      dialog.getByRole('button', { name: '친구 초대 하러 가기' }),
+    ).toBeEnabled();
   });
 });

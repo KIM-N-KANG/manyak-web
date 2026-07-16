@@ -228,7 +228,7 @@ test.describe('채팅 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 
     await expect(
-      page.getByRole('alertdialog').getByText('크레딧이 부족해요'),
+      page.getByRole('dialog').getByText('크레딧이 부족해요'),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('credit-shortage-dialog.png');

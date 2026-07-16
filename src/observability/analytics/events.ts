@@ -35,6 +35,9 @@ export type AnalyticsEventProps = {
   client_creditShortageDialog_earnButton_clicked: {
     trigger: CreditShortageTrigger;
   };
+  client_creditShortageDialog_attendanceButton_clicked: {
+    trigger: CreditShortageTrigger;
+  };
   client_creditShortageDialog_dismissed: { trigger: CreditShortageTrigger };
   // onboarding
   client_onboarding_viewed: void;

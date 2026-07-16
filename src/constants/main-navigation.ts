@@ -4,7 +4,7 @@ import {
   ChatRoundFilledIcon,
   HomeFilledIcon,
   MoreFilledIcon,
-} from '@/components/layout/bottom-navigation-icons';
+} from '@/components/icons/bottom-navigation-icons';
 import { APP_PATH, type MainAppPath } from '@/constants/app-path';
 
 export interface MainNavigationItem {
