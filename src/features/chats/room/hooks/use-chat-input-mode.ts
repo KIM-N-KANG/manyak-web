@@ -4,14 +4,19 @@ import {
   CHAT_INPUT_MODE_STORAGE_KEY,
   DEFAULT_CHAT_INPUT_MODE,
 } from '../constants';
-import { type ChatInputMode, isChatInputMode } from '../lib/chat-input-config';
+import {
+  type ChatInputMode,
+  isChatInputMode,
+} from '../utils/chat-input-config';
 
-export type { ChatInputMode } from '../lib/chat-input-config';
+export type { ChatInputMode } from '../utils/chat-input-config';
 
 /**
- * 채팅 입력 모드를 localStorage에 전역 저장한다. 기본값은 블럭 모드.
+ * 채팅 입력 모드를 localStorage에 전역 저장한다. 기본값은 블럭 모드다.
  * 서버 렌더링 시점에는 localStorage에 접근할 수 없으므로
  * 기본값으로 렌더링한 뒤 마운트 후 저장된 값을 반영한다.
+ *
+ * @returns 현재 입력 모드와 모드를 변경하는 함수
  */
 export function useChatInputMode() {
   const [mode, setMode] = useState<ChatInputMode>(DEFAULT_CHAT_INPUT_MODE);

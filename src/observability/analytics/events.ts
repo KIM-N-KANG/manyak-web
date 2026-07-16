@@ -2,7 +2,7 @@ import type { SimpleStoryTagListItemResponseCategory } from '@/api/generated/mod
 import {
   type InviteCodeErrorType,
   type InviteCodeSource,
-} from '@/features/my/invite/utils/invite-code';
+} from '@/features/more/invite/utils/invite-code';
 
 /** 스토리 생성 플로우의 단계 이름. */
 export type StepName =
@@ -35,6 +35,9 @@ export type AnalyticsEventProps = {
   client_creditShortageDialog_earnButton_clicked: {
     trigger: CreditShortageTrigger;
   };
+  client_creditShortageDialog_attendanceButton_clicked: {
+    trigger: CreditShortageTrigger;
+  };
   client_creditShortageDialog_dismissed: { trigger: CreditShortageTrigger };
   // onboarding
   client_onboarding_viewed: void;
@@ -46,7 +49,6 @@ export type AnalyticsEventProps = {
   client_storyList_storyCard_impressed: { story_id: string; position?: number };
   // storyCreate
   client_storyCreate_viewed: void;
-  client_storyCreate_creditInfoButton_clicked: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
   client_storyCreate_tagCategory_selected: {
     from_category: SimpleStoryTagListItemResponseCategory;
@@ -97,7 +99,6 @@ export type AnalyticsEventProps = {
   client_chatList_chatCard_impressed: { chat_id: string; position?: number };
   // chat
   client_chat_viewed: { chat_id: string };
-  client_chat_settingsButton_clicked: { chat_id: string };
   client_chat_inputMode_selected: { chat_id: string; mode: 'block' | 'plain' };
   client_chat_messageInput_submitted: {
     chat_id: string;
@@ -122,6 +123,10 @@ export type AnalyticsEventProps = {
     chat_id: string;
     turn_number: number;
     position?: number;
+  };
+  client_chat_regenerateButton_clicked: {
+    chat_id: string;
+    turn_number: number;
   };
   client_chat_streamError_shown: { chat_id: string; turn_number: number };
   client_chat_loadError_shown: { chat_id: string };
@@ -149,6 +154,8 @@ export type AnalyticsEventProps = {
   // legal
   client_terms_viewed: void;
   client_privacy_viewed: void;
+  // service info (서비스 안내 페이지)
+  client_serviceInfo_viewed: void;
 };
 
 /** 전송 가능한 분석 이벤트 이름. */

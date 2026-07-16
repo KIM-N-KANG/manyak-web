@@ -27,15 +27,15 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { resolvePaymentRequiredReason } from '@/features/auth/login-required/utils/guest-limit-error';
+import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   type GuestUsageAction,
   incrementGuestUsage,
   isGuestOverLimit,
   isGuestUsageLimitReached,
-} from '@/features/auth/login-required/utils/guest-usage-storage';
-import { saveCreatedChatId } from '@/features/chats/list/utils/chat-id-storage';
-import { saveCreatedStoryId } from '@/features/stories/list/utils/story-id-storage';
+} from '@/features/auth/_shared/utils/guest-usage-storage';
+import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
 import type {
   CreditShortageTrigger,
   GuestLimitTrigger,
@@ -48,6 +48,12 @@ import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { usePreventPageLeave } from './use-prevent-page-leave';
 
+/**
+ * 생성 응답에서 유효한 스토리라인만 걸러 배열로 반환한다.
+ *
+ * @param generationResult 스토리라인 생성 응답(없을 수 있음)
+ * @returns null이 아닌 스토리라인 목록
+ */
 const getGeneratedStorylines = (
   generationResult: GenerateSimpleStorylinesResponse | null,
 ) =>
@@ -58,6 +64,8 @@ const getGeneratedStorylines = (
 /**
  * 스토리 생성 퍼널(키워드 → 스토리라인 선택 → 추가 정보 → 완료)의 전체 상태를 관리하는 훅.
  * 스토리라인 생성/재생성, 스토리·채팅 생성, 실패 시 복귀, 이탈 확인 다이얼로그까지 담당한다.
+ *
+ * @returns 현재 스텝과 퍼널 상태·데이터 및 단계 전환·생성 핸들러들
  */
 export function useStoryCreateFunnel() {
   const router = useRouter();

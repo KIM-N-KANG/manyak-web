@@ -29,6 +29,9 @@ type UseOptimisticCreatedResourceDeleteParams<Id> = {
  * 게스트는 로컬 ID를 먼저 제거(낙관적)한 뒤 서버 삭제를 시도하고 실패하면 롤백한다.
  * 회원은 서버 목록이 정본이므로 서버 삭제가 확정되면 회원 목록 쿼리를 무효화한다.
  * 404는 이미 삭제된 것으로 간주해 성공으로 처리한다.
+ *
+ * @param params 삭제 대상 ID와 게스트 여부, 로컬 저장소 조작·서버 삭제 콜백 등
+ * @returns 삭제를 수행하는 비동기 핸들러
  */
 export function useOptimisticCreatedResourceDelete<Id>({
   id,

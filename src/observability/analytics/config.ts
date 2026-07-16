@@ -1,4 +1,9 @@
-/** API 키가 있고 production 환경일 때만 분석 전송을 활성화한다. */
+/**
+ * API 키가 있고 production 환경일 때만 분석 전송을 활성화한다.
+ *
+ * @param input apiKey(Amplitude API 키)와 nodeEnv(빌드 환경)를 담은 객체
+ * @returns 분석 전송 활성화 여부
+ */
 export function resolveAnalyticsEnabled(input: {
   apiKey?: string;
   nodeEnv?: string;

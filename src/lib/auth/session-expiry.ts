@@ -21,14 +21,23 @@ export function notifySessionExpired(): void {
   }
 }
 
-/** 응답 헤더에 세션 만료 신호가 있으면 구독자에게 알린다(브라우저 fetch 레이어용). */
+/**
+ * 응답 헤더에 세션 만료 신호가 있으면 구독자에게 알린다(브라우저 fetch 레이어용).
+ *
+ * @param headers 검사할 응답 헤더
+ */
 export function notifyIfSessionExpired(headers: Headers): void {
   if (headers.get(SESSION_EXPIRED_HEADER) === '1') {
     notifySessionExpired();
   }
 }
 
-/** 세션 만료 신호를 구독한다. 반환된 함수로 해제한다. */
+/**
+ * 세션 만료 신호를 구독한다. 반환된 함수로 해제한다.
+ *
+ * @param listener 세션 만료 시 호출할 콜백
+ * @returns 구독을 해제하는 함수
+ */
 export function subscribeSessionExpired(listener: Listener): () => void {
   listeners.add(listener);
 

@@ -18,6 +18,10 @@ type UseStoryTagStepArgs = {
 
 /**
  * 키워드 스텝의 태그 선택과 카테고리 이동을 묶어 화면에 필요한 상태로 제공하는 훅.
+ *
+ * @param isGeneratingStorylines 스토리라인 생성 진행 여부
+ * @param onGenerateStorylines 스토리라인 생성 요청을 실행하는 콜백
+ * @returns 태그 선택·카테고리 이동 상태와 화면에 필요한 핸들러들
  */
 export function useStoryTagStep({
   isGeneratingStorylines,

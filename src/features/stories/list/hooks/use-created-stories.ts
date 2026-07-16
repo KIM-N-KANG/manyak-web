@@ -5,12 +5,12 @@ import { useSession } from 'next-auth/react';
 
 import { getStoriesByIds } from '@/api/generated/endpoints/stories/stories';
 import { useGetMyStories } from '@/api/generated/endpoints/users/users';
+import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 
 import {
   toMyStoryListItems,
   toStoryListItems,
 } from '../utils/to-story-list-items';
-import { useCreatedStoryIds } from './use-created-story-ids';
 
 /** 스토리 ID 목록으로 일괄 조회하는 쿼리의 키 접두사 */
 export const STORIES_BATCH_QUERY_KEY = 'stories-batch';
@@ -19,6 +19,8 @@ export const STORIES_BATCH_QUERY_KEY = 'stories-batch';
  * 사용자가 생성한 스토리 목록을 조회하는 훅.
  * 회원은 서버 회원 목록(/users/me/stories), 게스트는 로컬 ID 배치 조회를 사용하며
  * 두 모드 모두 동일한 형태(목록·로딩·에러·빈 상태)를 반환한다.
+ *
+ * @returns 스토리 목록과 로딩·에러·빈 상태, refetch 함수
  */
 export function useCreatedStories() {
   const { status } = useSession();

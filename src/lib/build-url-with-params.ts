@@ -13,9 +13,11 @@ type Params<PathParams, QueryParams> = {
 
 /**
  * pathParams 혹은 queryParams 를 사용해 URL 을 완성하는 유틸 함수
+ *
  * @param url - 파라미터를 넣기 전 원본 URL (예: `/info/{id}` 또는 `/list?sort=desc`)
  * @param pathParams - path parameter (예: `{ id: 1 }`)
  * @param queryParams - query parameter (예: `{ bojUsername: 'alsdn1360' }`)
+ * @returns 파라미터가 치환·결합된 최종 URL 문자열
  */
 export function buildUrlWithParams<
   PathParams extends DefaultPathParams = DefaultPathParams,

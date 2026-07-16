@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
-import { StoryTurnCount } from '@/features/stories/components/story-turn-count';
+import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
 import type { StoryListItem } from '../types';

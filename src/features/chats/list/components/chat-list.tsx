@@ -8,7 +8,7 @@ import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
-import { useHasCreatedStories } from '@/features/stories/list/hooks/use-has-created-stories';
+import { useHasCreatedStories } from '@/features/stories/_shared/hooks/use-has-created-stories';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useTrackOnView } from '@/observability/analytics';
 
@@ -70,7 +70,7 @@ export function ChatList() {
   }
 
   return (
-    <ul className="flex flex-col">
+    <ul className="flex flex-col pb-4">
       {chats.map((chat, index) => (
         <li key={chat.id}>
           <ChatCard chat={chat} position={index} />

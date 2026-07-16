@@ -8,6 +8,12 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    # 비주얼 회귀 기준 이미지를 만드는 환경(scripts/update-visual-snapshots.sh)과
+    # 동일한 컨테이너에서 실행해야 스크린샷 비교가 폰트 렌더링 차이로 깨지지 않는다.
+    # 브라우저가 이미지에 포함되어 있어 별도 playwright install 단계도 필요 없다.
+    # 태그는 package.json의 @playwright/test 버전과 반드시 맞춘다.
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -17,8 +23,6 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests
         run: pnpm exec playwright test
         env:

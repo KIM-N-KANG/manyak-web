@@ -17,8 +17,8 @@ export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <BackHeader title={doc.title} fallbackHref={APP_PATH.MAIN.STORIES} />
-      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
-        <article className="flex flex-col gap-8 leading-relaxed">
+      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4 pb-8">
+        <article className="flex flex-col gap-8">
           {doc.intro ? (
             <p className="whitespace-pre-line">{doc.intro}</p>
           ) : null}
@@ -35,7 +35,7 @@ export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
                 ) : (
                   <ul
                     key={`${section.heading}-${index}`}
-                    className="flex list-disc flex-col pl-5 leading-normal">
+                    className="flex list-disc flex-col pl-5">
                     {block.items.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
