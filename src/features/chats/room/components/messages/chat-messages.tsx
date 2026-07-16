@@ -32,7 +32,7 @@ function RegenerateAnchor({ turnId }: RegenerateAnchorProps) {
 
   useEffect(() => {
     if (turnId != null) {
-      scrollToMessage(String(turnId), { align: 'start', scrollMargin: 64 });
+      scrollToMessage(String(turnId), { align: 'start' });
     }
   }, [turnId, scrollToMessage]);
 
@@ -78,7 +78,7 @@ export function ChatMessages({
     <MessageScrollerProvider
       autoScroll={!startedEmpty && !hasSent && regeneratingTurnId == null}
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
-      scrollPreviousItemPeek={64}>
+      scrollPreviousItemPeek={0}>
       <RegenerateAnchor turnId={regeneratingTurnId} />
       <MessageScroller
         className={cn(
