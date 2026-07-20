@@ -1,5 +1,13 @@
 import type { LegalDocument } from '../types';
 
+/**
+ * 개인정보처리방침 본문. 이 파일이 정본이며 별도 마크다운 원본은 두지 않는다.
+ *
+ * 스펙은 knk-harness `docs/product-specs/3-frontend.md`의 FE-SCREEN-010이고,
+ * 사실관계 근거는 `7-deployment.md`(AWS·Cloudflare), `6-analytics.md` §6-7(원문 미수집),
+ * `5-ai-server.md`(DeepSeek 호출 구조), KNK-616(Meta 픽셀 행태정보 고지)이다.
+ * 개정 시 시행일·버전과 부칙의 개정 이력을 함께 갱신하며, 배포 전 법무 검토를 권장한다.
+ */
 export const privacyContent: LegalDocument = {
   title: '개인정보처리방침',
   effectiveDate: '2026-07-27',
