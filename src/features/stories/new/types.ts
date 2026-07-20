@@ -18,6 +18,7 @@ export type StorylineRating =
 export type TagCategoryConfig = {
   value: TagCategory;
   label: string;
+  description: string;
   placeholder: string;
   required: boolean;
   maxSelectionCount: number;

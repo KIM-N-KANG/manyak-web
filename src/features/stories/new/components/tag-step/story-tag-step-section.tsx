@@ -53,6 +53,10 @@ export function StoryTagStepSection({
     onGenerateStorylines,
   });
 
+  const activeCategoryConfig = TAG_CATEGORIES.find(
+    (category) => category.value === activeCategory,
+  );
+
   return (
     <StoryCreateStepLayout
       titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
@@ -114,38 +118,40 @@ export function StoryTagStepSection({
             </TabsTrigger>
           ))}
         </StickyTabsList>
-        {TAG_CATEGORIES.map(
-          ({ value: category, label, placeholder, maxSelectionCount }) => {
-            const selectedTagIds = selectedTagIdsByCategory[category];
-            const selectedCustomTagIds =
-              selectedCustomTagIdsByCategory[category];
-
-            return (
-              <TabsContent
-                key={category}
-                value={category}
-                className="p-4 pt-2 pb-6">
-                <StoryTagCategorySection
-                  category={category}
-                  label={label}
-                  placeholder={placeholder}
-                  maxSelectionCount={maxSelectionCount}
-                  isMaxSelectionReached={isMaxSelectionReached(category)}
-                  selectedTagIds={selectedTagIds}
-                  selectedCustomTagIds={selectedCustomTagIds}
-                  predefinedTags={tagsByCategory[category]}
-                  customTags={customTagsByCategory[category]}
-                  isLoadingTags={showTagsSkeleton}
-                  hasTagsError={simpleStoryTags.isError}
-                  isGeneratingStorylines={isGeneratingStorylines}
-                  onTogglePredefinedTag={togglePredefinedTag}
-                  onToggleCustomTag={toggleCustomTag}
-                  onAddCustomTag={addCustomTag}
-                />
-              </TabsContent>
-            );
-          },
+        {activeCategoryConfig && (
+          <p className="px-4 pt-2 text-sm text-foreground-secondary">
+            {activeCategoryConfig.description} (최대{' '}
+            {activeCategoryConfig.maxSelectionCount}개)
+          </p>
         )}
+        {TAG_CATEGORIES.map(({ value: category, label, placeholder }) => {
+          const selectedTagIds = selectedTagIdsByCategory[category];
+          const selectedCustomTagIds = selectedCustomTagIdsByCategory[category];
+
+          return (
+            <TabsContent
+              key={category}
+              value={category}
+              className="p-4 pt-2 pb-6">
+              <StoryTagCategorySection
+                category={category}
+                label={label}
+                placeholder={placeholder}
+                isMaxSelectionReached={isMaxSelectionReached(category)}
+                selectedTagIds={selectedTagIds}
+                selectedCustomTagIds={selectedCustomTagIds}
+                predefinedTags={tagsByCategory[category]}
+                customTags={customTagsByCategory[category]}
+                isLoadingTags={showTagsSkeleton}
+                hasTagsError={simpleStoryTags.isError}
+                isGeneratingStorylines={isGeneratingStorylines}
+                onTogglePredefinedTag={togglePredefinedTag}
+                onToggleCustomTag={toggleCustomTag}
+                onAddCustomTag={addCustomTag}
+              />
+            </TabsContent>
+          );
+        })}
       </Tabs>
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
