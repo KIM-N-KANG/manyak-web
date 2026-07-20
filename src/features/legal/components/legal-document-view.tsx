@@ -19,6 +19,12 @@ export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
       <BackHeader title={doc.title} fallbackHref={APP_PATH.MAIN.STORIES} />
       <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4 pb-8">
         <article className="flex flex-col gap-8">
+          <header className="flex flex-col gap-1">
+            <h1 className="text-xl font-bold">{doc.title}</h1>
+            <p className="text-sm text-foreground-secondary">
+              시행일 {doc.effectiveDate} · {doc.version}
+            </p>
+          </header>
           {doc.intro ? (
             <p className="whitespace-pre-line">{doc.intro}</p>
           ) : null}
