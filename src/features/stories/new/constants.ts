@@ -37,7 +37,7 @@ export const TAG_CATEGORIES = [
   },
   {
     value: 'PROTAGONIST',
-    label: '주인공 특징',
+    label: '주인공(나) 특징',
     placeholder: '예: 사랑에 서툰, 타인을 믿지 못하는',
     required: true,
     maxSelectionCount: 3,
