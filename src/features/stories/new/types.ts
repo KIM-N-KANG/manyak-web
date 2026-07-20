@@ -57,8 +57,8 @@ export type StorylineSelectStepSectionProps = {
   creationId?: string;
   selectedTagGroups: SelectedTagGroup[];
   activeStorylineIndex: number;
-  isRegeneratingStorylines: boolean;
-  hasRegenerateStorylinesError: boolean;
+  isGeneratingStorylines: boolean;
+  hasGenerateStorylinesError: boolean;
   isGuestLimitReached: boolean;
   onActiveStorylineIndexChange: (index: number) => void;
   onRegenerateStorylines: () => void;

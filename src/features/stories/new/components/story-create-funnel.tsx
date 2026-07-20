@@ -85,8 +85,8 @@ export function StoryCreateFunnel() {
           creationId={creationId}
           selectedTagGroups={selectedTagGroups}
           activeStorylineIndex={activeStorylineIndex}
-          isRegeneratingStorylines={isGeneratingStorylines}
-          hasRegenerateStorylinesError={hasGenerateStorylinesError}
+          isGeneratingStorylines={isGeneratingStorylines}
+          hasGenerateStorylinesError={hasGenerateStorylinesError}
           isGuestLimitReached={isGuestLimitReached}
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}

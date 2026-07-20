@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { TAG_CATEGORIES } from '../../constants';
 import { useStoryTagStep } from '../../hooks/use-story-tag-step';
 import type { TagCategory } from '../../types';
+import { getGenerateStorylinesErrorMessage } from '../../utils/generate-storylines-error-message';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
@@ -157,9 +158,10 @@ export function StoryTagStepSection({
       </Tabs>
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
-          {isGuestLimitReached
-            ? '게스트 스토리라인 생성 횟수를 모두 사용했어요'
-            : '스토리라인을 만들지 못했어요'}
+          {getGenerateStorylinesErrorMessage({
+            isGuestLimitReached,
+            isRegeneration: false,
+          })}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>
