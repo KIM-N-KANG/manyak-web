@@ -40,7 +40,7 @@ test.describe('약관·개인정보처리방침', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: '개인정보처리방침' }),
     ).toBeVisible();
-    await expect(page.getByText('시행일 2026-07-27 · v1.1')).toBeVisible();
+    await expect(page.getByText('시행일 2026-07-20 · v1.1')).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '1. 수집하는 개인정보 항목' }),
     ).toBeVisible();
