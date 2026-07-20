@@ -106,7 +106,15 @@ export function StoryTagStepSection({
         value={activeCategory}
         onValueChange={(value) => changeCategory(value as TagCategory)}
         className="gap-0">
-        <StickyTabsList>
+        <StickyTabsList
+          bottomSlot={
+            activeCategoryConfig && (
+              <p className="pt-2 text-sm text-foreground-secondary">
+                {activeCategoryConfig.description} (최대{' '}
+                {activeCategoryConfig.maxSelectionCount}개)
+              </p>
+            )
+          }>
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
               key={value}
@@ -118,12 +126,6 @@ export function StoryTagStepSection({
             </TabsTrigger>
           ))}
         </StickyTabsList>
-        {activeCategoryConfig && (
-          <p className="px-4 pt-2 text-sm text-foreground-secondary">
-            {activeCategoryConfig.description} (최대{' '}
-            {activeCategoryConfig.maxSelectionCount}개)
-          </p>
-        )}
         {TAG_CATEGORIES.map(({ value: category, label, placeholder }) => {
           const selectedTagIds = selectedTagIdsByCategory[category];
           const selectedCustomTagIds = selectedCustomTagIdsByCategory[category];
