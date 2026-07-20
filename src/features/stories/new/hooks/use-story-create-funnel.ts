@@ -233,9 +233,6 @@ export function useStoryCreateFunnel() {
           });
         }
 
-        // 최종 스토리 생성 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회).
-        trackMetaPixelOnce('StoryCompiled');
-
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
@@ -270,6 +267,9 @@ export function useStoryCreateFunnel() {
 
           setCreatedStoryId(storyId);
           completedStoryRef.current = { storyId, genres: response.data.genres };
+
+          // 최종 스토리 컴파일 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회).
+          trackMetaPixelOnce('StoryCompiled');
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
