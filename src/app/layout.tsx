@@ -8,6 +8,7 @@ import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
 import { AuthSessionProvider } from '@/components/providers/auth-session-provider';
+import { MetaPixelProvider } from '@/components/providers/meta-pixel-provider';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { SessionExpiryWatcher } from '@/components/providers/session-expiry-watcher';
@@ -61,25 +62,27 @@ export default function RootLayout({
         suppressHydrationWarning>
         <IosInputZoomLock />
         <AmplitudeProvider>
-          <AuthSessionProvider>
-            <QueryProvider>
-              <ThemeProvider>
-                <MotionProvider>
-                  <div
-                    id={APP_FRAME_ID}
-                    className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
-                    {children}
-                    <InAppBrowserEscape />
-                  </div>
-                  <Toaster />
-                  <AnalyticsUserSync />
-                  <SessionExpiryWatcher />
-                  <AutoMigration />
-                  <InviteOnboardingDialog />
-                </MotionProvider>
-              </ThemeProvider>
-            </QueryProvider>
-          </AuthSessionProvider>
+          <MetaPixelProvider>
+            <AuthSessionProvider>
+              <QueryProvider>
+                <ThemeProvider>
+                  <MotionProvider>
+                    <div
+                      id={APP_FRAME_ID}
+                      className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                      {children}
+                      <InAppBrowserEscape />
+                    </div>
+                    <Toaster />
+                    <AnalyticsUserSync />
+                    <SessionExpiryWatcher />
+                    <AutoMigration />
+                    <InviteOnboardingDialog />
+                  </MotionProvider>
+                </ThemeProvider>
+              </QueryProvider>
+            </AuthSessionProvider>
+          </MetaPixelProvider>
         </AmplitudeProvider>
       </body>
     </html>
