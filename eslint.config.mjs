@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     'public/sw.js',
     'public/workbox-*.js',
+    // 디자인 시스템 번들은 외부 생성 산출물이라 린트 대상이 아니다.
+    'ds-bundle/**',
   ]),
   {
     settings: {
