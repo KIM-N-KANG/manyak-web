@@ -68,7 +68,8 @@ describe('법적 문서 콘텐츠', () => {
       '3. 개인정보의 이용 목적',
       '4. 개인정보의 보유 및 이용 기간',
       '7. 개인정보의 국외 이전',
-      '12. 개인정보 보호책임자 및 문의처',
+      '12. 행태정보의 수집 및 맞춤형 광고',
+      '13. 개인정보 보호책임자 및 문의처',
     ]) {
       expect(headings).toContain(required);
     }
@@ -86,6 +87,20 @@ describe('법적 문서 콘텐츠', () => {
       '채팅 메시지·피드백 원문은 분석 도구에 수집하지 않습니다',
     );
     expect(text).not.toContain('탈퇴 시 지체 없이 파기합니다');
+  });
+
+  it('개인정보처리방침은 Meta 픽셀 행태정보 수집을 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    // 광고 사업자 명칭과 국외 이전 대상에 Meta가 명시돼야 한다.
+    expect(text).toContain('Meta Platforms, Inc.');
+    // 수집 도구(픽셀)와 수집 목적이 고지돼야 한다.
+    expect(text).toContain('Meta 픽셀');
+    expect(text).toContain('광고 성과 측정');
+    // 입력 원문 제외 원칙은 행태정보에도 유지돼야 한다.
+    expect(text).toContain('이용자가 입력한 원문 제외');
+    // 이용자 통제 수단이 고지돼야 한다.
+    expect(text).toContain('맞춤형 광고를 차단');
   });
 
   it('모든 섹션은 최소 한 개의 콘텐츠 블록을 갖는다', () => {

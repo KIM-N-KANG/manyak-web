@@ -8,6 +8,7 @@ import type { ChatTurnResponse } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/_shared/utils/guest-limit-error';
 import { track } from '@/observability/analytics';
+import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StreamingTurn } from '../types';
 import { parseSseStream } from '../utils/parse-sse-stream';
@@ -66,6 +67,12 @@ export function useChatStream(
             prev ? { ...prev, aiOutput: prev.aiOutput + event.content } : prev,
           );
         } else if (event.type === 'completed') {
+          // 첫 턴의 AI 답변 정상 수신 = Meta 광고 전환 신호(StartTrial, 브라우저당 1회).
+          // 스트림이 error 없이 완료된 시점에만 발화한다(캠페인 문서 "26/07" 결정).
+          if (turnCount === 0) {
+            trackMetaPixelOnce('StartTrial');
+          }
+
           await onCompleted();
           setStreamingTurn(null);
         } else if (event.type === 'error') {

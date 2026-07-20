@@ -11,7 +11,6 @@ type StoryTagCategorySectionProps = {
   category: TagCategory;
   label: string;
   placeholder: string;
-  maxSelectionCount: number;
   isMaxSelectionReached: boolean;
   selectedTagIds: number[];
   selectedCustomTagIds: string[];
@@ -37,7 +36,6 @@ export function StoryTagCategorySection({
   category,
   label,
   placeholder,
-  maxSelectionCount,
   isMaxSelectionReached,
   selectedTagIds,
   selectedCustomTagIds,
@@ -52,9 +50,6 @@ export function StoryTagCategorySection({
 }: StoryTagCategorySectionProps) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm text-foreground-secondary">
-        최대 {maxSelectionCount}개까지 선택할 수 있어요
-      </p>
       <div className="flex flex-wrap gap-2">
         {isLoadingTags && (
           <>

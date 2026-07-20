@@ -55,5 +55,6 @@ jobs:
           build-args: |
             NEXT_PUBLIC_AMPLITUDE_API_KEY=${{ secrets.AMPLITUDE_API_KEY }}
             NEXT_PUBLIC_APP_VERSION=${{ github.ref_name }}
+            NEXT_PUBLIC_META_PIXEL_ID=${{ secrets.META_PIXEL_ID }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

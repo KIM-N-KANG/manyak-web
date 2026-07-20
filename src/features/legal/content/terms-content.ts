@@ -1,5 +1,11 @@
 import type { LegalDocument } from '../types';
 
+/**
+ * 서비스이용약관 본문. 이 파일이 정본이며 별도 마크다운 원본은 두지 않는다.
+ *
+ * 스펙은 knk-harness `docs/product-specs/3-frontend.md`의 FE-SCREEN-010이다.
+ * 개정 시 시행일·버전과 부칙을 함께 갱신하며, 배포 전 법무 검토를 권장한다.
+ */
 export const termsContent: LegalDocument = {
   title: '서비스이용약관',
   effectiveDate: '2026-07-10',

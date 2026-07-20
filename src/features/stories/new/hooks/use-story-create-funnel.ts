@@ -41,6 +41,7 @@ import type {
   GuestLimitTrigger,
 } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
+import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateStep } from '../types';
 import { mapStepToSpec } from '../utils/step-analytics';
@@ -187,6 +188,9 @@ export function useStoryCreateFunnel() {
           incrementGuestUsage('storylineCreate');
         }
 
+        // 스토리라인 생성 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회, 재생성 제외).
+        trackMetaPixelOnce('StorylinesGenerated');
+
         setGenerationRequest(variables.data);
         setGenerationResult(response.data);
         setActiveStorylineIndex(0);
@@ -263,6 +267,9 @@ export function useStoryCreateFunnel() {
 
           setCreatedStoryId(storyId);
           completedStoryRef.current = { storyId, genres: response.data.genres };
+
+          // 최종 스토리 컴파일 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회).
+          trackMetaPixelOnce('StoryCompiled');
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });

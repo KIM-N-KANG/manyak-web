@@ -170,6 +170,14 @@ test.describe('채팅 스트리밍', () => {
       });
     });
 
+    const pixelLogs: string[] = [];
+
+    page.on('console', (msg) => {
+      if (msg.text().includes('[meta-pixel]')) {
+        pixelLogs.push(msg.text());
+      }
+    });
+
     await setPlainInputMode(page);
     await page.goto('/chats/c1');
     await page
@@ -179,6 +187,11 @@ test.describe('채팅 스트리밍', () => {
 
     await expect(page.getByText('앞으로 나아간다')).toBeVisible();
     await expect(page.getByText('어둠이 너를 삼킨다.')).toBeVisible();
+
+    // 첫 턴 스트림 정상 완료 = Meta StartTrial 발화(비활성 환경에서는 디버그 로그로 대체).
+    await expect
+      .poll(() => pixelLogs.filter((log) => log.includes('StartTrial')).length)
+      .toBe(1);
   });
 
   test('추천 입력의 수정 버튼을 누르면 입력창에 채워진다 (US-6-4)', async ({
@@ -267,12 +280,25 @@ test.describe('채팅 스트리밍', () => {
       });
     });
 
+    const pixelLogs: string[] = [];
+
+    page.on('console', (msg) => {
+      if (msg.text().includes('[meta-pixel]')) {
+        pixelLogs.push(msg.text());
+      }
+    });
+
     await setPlainInputMode(page);
     await page.goto('/chats/c1');
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
     await page.getByRole('button', { name: '전송' }).click();
 
     await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
+
+    // 스트림 실패 시 Meta StartTrial은 발화되지 않아야 한다.
+    expect(pixelLogs.filter((log) => log.includes('StartTrial'))).toHaveLength(
+      0,
+    );
   });
 });
 
