@@ -18,6 +18,7 @@ export type StorylineRating =
 export type TagCategoryConfig = {
   value: TagCategory;
   label: string;
+  description: string;
   placeholder: string;
   required: boolean;
   maxSelectionCount: number;
@@ -56,8 +57,8 @@ export type StorylineSelectStepSectionProps = {
   creationId?: string;
   selectedTagGroups: SelectedTagGroup[];
   activeStorylineIndex: number;
-  isRegeneratingStorylines: boolean;
-  hasRegenerateStorylinesError: boolean;
+  isGeneratingStorylines: boolean;
+  hasGenerateStorylinesError: boolean;
   isGuestLimitReached: boolean;
   onActiveStorylineIndexChange: (index: number) => void;
   onRegenerateStorylines: () => void;

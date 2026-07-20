@@ -217,4 +217,64 @@ test.describe('스토리 생성', () => {
     );
     await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
   });
+
+  test('스토리라인 생성 실패 시 첫 생성과 재생성을 구분해 안내한다', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tags),
+      });
+    });
+
+    // 1·3번째 요청은 실패, 2번째 요청만 성공시켜 첫 생성 실패 → 재생성 성공 → 재생성 실패를 재현한다.
+    let storylineRequestCount = 0;
+
+    await page.route(STORYLINES, async (route) => {
+      storylineRequestCount += 1;
+
+      if (storylineRequestCount === 2) {
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify(storylinesResponse),
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'failed to generate storylines' }),
+      });
+    });
+
+    await page.goto('/stories/new');
+
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '스토리라인 만들기' }).click();
+
+    // 첫 생성 실패: 재생성 문구가 아닌 첫 생성 실패 문구를 보여준다.
+    await expect(page.getByText('스토리라인을 만들지 못했어요')).toBeVisible();
+    await expect(
+      page.getByText('스토리라인을 다시 만들지 못했어요'),
+    ).toBeHidden();
+
+    // 재생성 성공: 스토리라인이 표시된다.
+    await page.getByRole('button', { name: '다시 만들기' }).click();
+    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+
+    // 재생성 실패: 이전 결과가 남아 있으므로 재생성 실패 문구를 보여준다.
+    await page.getByRole('button', { name: '다시 만들기' }).click();
+    await expect(
+      page.getByText('스토리라인을 다시 만들지 못했어요'),
+    ).toBeVisible();
+    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+  });
 });

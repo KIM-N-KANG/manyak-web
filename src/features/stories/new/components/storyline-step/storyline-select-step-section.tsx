@@ -12,6 +12,7 @@ import {
 } from '../../constants';
 import { useStorylineRating } from '../../hooks/use-storyline-rating';
 import type { StorylineSelectStepSectionProps } from '../../types';
+import { getGenerateStorylinesErrorMessage } from '../../utils/generate-storylines-error-message';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
@@ -24,15 +25,15 @@ export function StorylineSelectStepSection({
   creationId,
   selectedTagGroups,
   activeStorylineIndex,
-  isRegeneratingStorylines,
-  hasRegenerateStorylinesError,
+  isGeneratingStorylines,
+  hasGenerateStorylinesError,
   isGuestLimitReached,
   onActiveStorylineIndexChange,
   onRegenerateStorylines,
   onSelectStoryline,
   onScroll,
 }: StorylineSelectStepSectionProps) {
-  const selectedStoryline = isRegeneratingStorylines
+  const selectedStoryline = isGeneratingStorylines
     ? undefined
     : storylines[activeStorylineIndex];
 
@@ -54,18 +55,18 @@ export function StorylineSelectStepSection({
     <StoryCreateStepLayout
       scrollAreaRef={scrollAreaRef}
       titleLines={
-        isRegeneratingStorylines
+        isGeneratingStorylines
           ? ['스토리라인을 만들고 있어요', '잠시만 기다려 주세요']
           : ['마음에 드는', '스토리라인을 선택해주세요']
       }
       description={
-        isRegeneratingStorylines
+        isGeneratingStorylines
           ? '키워드를 바탕으로 스토리라인을 구상하고 있어요'
           : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
       }
       onScroll={onScroll}
       footer={
-        isRegeneratingStorylines ? undefined : (
+        isGeneratingStorylines ? undefined : (
           <>
             <Button
               type="button"
@@ -84,7 +85,7 @@ export function StorylineSelectStepSection({
           </>
         )
       }>
-      {isRegeneratingStorylines ? (
+      {isGeneratingStorylines ? (
         <StorylineSelectLoading />
       ) : (
         <Tabs
@@ -138,18 +139,19 @@ export function StorylineSelectStepSection({
         </Tabs>
       )}
 
-      {!isRegeneratingStorylines &&
-        !hasRegenerateStorylinesError &&
+      {!isGeneratingStorylines &&
+        !hasGenerateStorylinesError &&
         storylines.length === 0 && (
           <p className="px-4 py-8 text-sm text-foreground-secondary">
             생성된 스토리라인이 없어요
           </p>
         )}
-      {hasRegenerateStorylinesError && (
+      {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4 pb-6">
-          {isGuestLimitReached
-            ? '게스트 스토리라인 생성 횟수를 모두 사용했어요'
-            : '스토리라인을 다시 만들지 못했어요'}
+          {getGenerateStorylinesErrorMessage({
+            isGuestLimitReached,
+            isRegeneration: storylines.length > 0,
+          })}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>

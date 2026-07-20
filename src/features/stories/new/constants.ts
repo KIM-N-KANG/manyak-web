@@ -31,6 +31,7 @@ export const TAG_CATEGORIES = [
   {
     value: 'GENRE',
     label: '장르',
+    description: '스토리의 분위기와 소재를 정해요',
     placeholder: '예: 타임루프, 영지물, 먼치킨',
     required: true,
     maxSelectionCount: 3,
@@ -38,6 +39,7 @@ export const TAG_CATEGORIES = [
   {
     value: 'PROTAGONIST',
     label: '주인공 특징',
+    description: '이야기 속 나의 성격과 특징을 정해요',
     placeholder: '예: 사랑에 서툰, 타인을 믿지 못하는',
     required: true,
     maxSelectionCount: 3,
@@ -45,6 +47,7 @@ export const TAG_CATEGORIES = [
   {
     value: 'SUPPORTING_CHARACTER',
     label: '주변 인물 특징',
+    description: '주변 인물의 성격과 특징을 정해요',
     placeholder: '예: 상냥해서 더 위험한, 어딘가 망가진',
     required: false,
     maxSelectionCount: 5,
