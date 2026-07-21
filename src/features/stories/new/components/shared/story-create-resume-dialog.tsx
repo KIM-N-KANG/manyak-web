@@ -28,15 +28,17 @@ export function StoryCreateResumeDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>만들다 만 스토리가 있어요</AlertDialogTitle>
+          <AlertDialogTitle>만들고 있는 스토리가 있어요</AlertDialogTitle>
           <AlertDialogDescription>
-            이어서 만들까요? 새로 만들면 임시 저장된 내용은 사라져요
+            새로 만들면 임시 저장된 내용은 사라져요
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onDiscard}>새로 만들기</AlertDialogCancel>
-          <AlertDialogAction type="button" onClick={onContinue}>
+          <AlertDialogCancel onClick={onContinue}>
             이어서 만들기
+          </AlertDialogCancel>
+          <AlertDialogAction type="button" onClick={onDiscard}>
+            새로 만들기
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

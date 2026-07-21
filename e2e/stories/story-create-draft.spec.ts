@@ -117,7 +117,7 @@ test.describe('스토리 임시 저장·재개', () => {
 
     await page.goto('/stories/new');
 
-    await expect(page.getByText('만들다 만 스토리가 있어요')).toBeVisible();
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page.getByRole('button', { name: '이어서 만들기' }).click();
 
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
@@ -135,11 +135,11 @@ test.describe('스토리 임시 저장·재개', () => {
 
     await page.goto('/stories/new');
 
-    await expect(page.getByText('만들다 만 스토리가 있어요')).toBeVisible();
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page.getByRole('button', { name: '새로 만들기' }).click();
 
     await expect(page.getByRole('tab', { name: /장르/ })).toBeVisible();
-    await expect(page.getByText('만들다 만 스토리가 있어요')).toBeHidden();
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeHidden();
     await expect
       .poll(() =>
         page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
