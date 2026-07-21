@@ -46,7 +46,10 @@ export function ChatChoicesMenu({
           value={enabled ? 'on' : 'off'}
           onValueChange={(value) => onEnabledChange(value === 'on')}>
           {CHAT_CHOICES_TOGGLE_OPTIONS.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
+            <DropdownMenuRadioItem
+              key={option.value}
+              value={option.value}
+              closeOnClick>
               <div className="flex flex-col gap-0.5">
                 <span>{option.label}</span>
                 <span className="text-xs break-keep text-foreground-secondary">
