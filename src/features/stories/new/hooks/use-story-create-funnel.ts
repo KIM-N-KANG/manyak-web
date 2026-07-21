@@ -36,7 +36,10 @@ import {
   isGuestUsageLimitReached,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type {
+  PendingCreationRequest,
+  StoryDraftRecord,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   loadPendingCreationRequest,
   savePendingCreationRequest,
@@ -60,6 +63,7 @@ import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { useCreationRequestRecovery } from './use-creation-request-recovery';
 import { usePreventPageLeave } from './use-prevent-page-leave';
+import { useStoryCreateDraft } from './use-story-create-draft';
 
 /**
  * 생성 응답에서 유효한 스토리라인만 걸러 배열로 반환한다.
@@ -439,6 +443,30 @@ export function useStoryCreateFunnel() {
     },
   });
 
+  // 임시 저장(draft) 복원: 레코드의 퍼널 컨텍스트를 통째로 되살리고 저장된
+  // 스텝으로 이동한다. createdStoryId·completionRequest는 완성 재시도 멱등
+  // 로직(requestId 재사용, 스토리 중복 생성 방지)에 합류시킨다.
+  const restoreDraft = (record: StoryDraftRecord) => {
+    setGenerationRequest(record.generationRequest);
+    setGenerationResult(record.generationResult);
+    setActiveStorylineIndex(record.activeStorylineIndex);
+    setSelectedStoryline(record.selectedStoryline);
+    setSelectedRecommendations(new Set(record.selectedRecommendations));
+    restoreAdditionalInfos(record.additionalInfos);
+    setCreatedStoryId(record.createdStoryId);
+
+    if (record.createdStoryId !== null) {
+      completedStoryRef.current = { storyId: record.createdStoryId };
+    }
+
+    lastCompletionRequestRef.current = record.completionRequest;
+    setHasCompleteStoryError(false);
+    setHasRecoveredGenerateError(false);
+    setStep(record.step);
+  };
+
+  const draft = useStoryCreateDraft({ onRestore: restoreDraft });
+
   const storylines = getGeneratedStorylines(generationResult);
   const selectedTagGroups = getSelectedTagsByCategory(
     generationRequest,
@@ -733,6 +761,10 @@ export function useStoryCreateFunnel() {
     backDialogOpen: isBackDialogOpen,
     onBackDialogOpenChange: setIsBackDialogOpen,
     willSaveDraftOnExit,
+    resumeDialogOpen: draft.isResumeDialogOpen,
+    handleResumeContinue: draft.handleResumeContinue,
+    handleResumeDiscard: draft.handleResumeDiscard,
+    closeResumeDialog: draft.closeResumeDialog,
     handleHeaderBack,
     handleConfirmBack,
   };

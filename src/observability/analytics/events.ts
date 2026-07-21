@@ -83,6 +83,9 @@ export type AnalyticsEventProps = {
   client_storyCreate_draftSaved: {
     step: 'storyline-select' | 'additional-info';
   };
+  client_storyCreate_resumeDialog_shown: void;
+  client_storyCreate_resumeDialog_continued: void;
+  client_storyCreate_resumeDialog_discarded: void;
   client_storyCreate_continueBanner_shown: {
     stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' | 'STORY_DRAFT';
   };
