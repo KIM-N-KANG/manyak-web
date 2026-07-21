@@ -31,12 +31,12 @@ export function StoryCreateBackDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>
             {willSaveDraft
-              ? '스토리 만들기를 멈출까요?'
+              ? '나중에 이어서 만들까요?'
               : '스토리를 그만 만들까요?'}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {willSaveDraft
-              ? '만들던 내용은 임시 저장되고, 나중에 이어서 만들 수 있어요'
+              ? '지금까지 만든 내용은 임시 저장돼요'
               : '지금 나가면 만들고 있는 내용이 사라져요'}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -46,7 +46,7 @@ export function StoryCreateBackDialog({
             type="button"
             variant={willSaveDraft ? 'default' : 'destructive'}
             onClick={onConfirm}>
-            {willSaveDraft ? '나가기' : '그만 만들기'}
+            {willSaveDraft ? '나중에 만들기' : '그만 만들기'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

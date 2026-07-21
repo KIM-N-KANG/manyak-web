@@ -85,13 +85,11 @@ test.describe('스토리 임시 저장·재개', () => {
     await page
       .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
       .click();
-    await expect(page.getByText('스토리 만들기를 멈출까요?')).toBeVisible();
+    await expect(page.getByText('나중에 이어서 만들까요?')).toBeVisible();
     await expect(
-      page.getByText(
-        '만들던 내용은 임시 저장되고, 나중에 이어서 만들 수 있어요',
-      ),
+      page.getByText('지금까지 만든 내용은 임시 저장돼요'),
     ).toBeVisible();
-    await page.getByRole('button', { name: '나가기' }).click();
+    await page.getByRole('button', { name: '나중에 만들기' }).click();
 
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByText('만들다 만 스토리가 있어요')).toBeVisible();
