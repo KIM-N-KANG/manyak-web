@@ -92,11 +92,11 @@ export function ChatPlainInput({
               onClick={onInsertEmphasis}>
               상황 추가
             </Button>
-            <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
             <ChatChoicesToggleButton
               enabled={choicesEnabled}
               onToggle={onChoicesToggle}
             />
+            <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
             <Button
               type="submit"
               variant="default"

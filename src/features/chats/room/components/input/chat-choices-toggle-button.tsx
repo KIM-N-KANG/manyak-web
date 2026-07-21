@@ -1,6 +1,6 @@
 'use client';
 
-import { AiIdeaIcon } from '@hugeicons/core-free-icons';
+import { AiChat02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
@@ -18,13 +18,15 @@ export function ChatChoicesToggleButton({
   return (
     <Button
       type="button"
-      variant="ghost"
+      variant="secondary"
       size="icon-sm"
       aria-label="추천 입력 켜기/끄기"
       aria-pressed={enabled}
       onClick={onToggle}
-      className={cn(enabled ? 'text-primary' : 'text-foreground-secondary')}>
-      <HugeiconsIcon icon={AiIdeaIcon} aria-hidden="true" />
+      className={cn(
+        enabled && 'bg-primary/20 text-primary hover:bg-primary/20',
+      )}>
+      <HugeiconsIcon icon={AiChat02Icon} aria-hidden="true" />
     </Button>
   );
 }

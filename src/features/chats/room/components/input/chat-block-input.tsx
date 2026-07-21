@@ -157,11 +157,11 @@ export function ChatBlockInput({
           onClick={() => onAddBlock('dialogue')}>
           대사 추가
         </Button>
-        <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
         <ChatChoicesToggleButton
           enabled={choicesEnabled}
           onToggle={onChoicesToggle}
         />
+        <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
         <Button
           type="button"
           size="icon-sm"
