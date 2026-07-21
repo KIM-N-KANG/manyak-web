@@ -3,6 +3,8 @@ import type { InputBlockType } from './utils/input-blocks';
 
 export const CHAT_INPUT_MODE_STORAGE_KEY = 'manyak:chat-input-mode';
 
+export const CHAT_CHOICES_ENABLED_STORAGE_KEY = 'manyak:chat-choices-enabled';
+
 export const DEFAULT_CHAT_INPUT_MODE: ChatInputMode = 'block';
 
 export const CHAT_INPUT_MODE_OPTIONS: {
