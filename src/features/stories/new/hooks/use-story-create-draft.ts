@@ -8,6 +8,10 @@ import {
   loadPendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  clearDraftResumeIntent,
+  peekDraftResumeIntent,
+} from '@/features/stories/_shared/utils/draft-resume-intent';
 import { track } from '@/observability/analytics';
 
 type UseStoryCreateDraftArgs = {
@@ -43,8 +47,7 @@ export function useStoryCreateDraft({ onRestore }: UseStoryCreateDraftArgs) {
 
     return {
       record,
-      isResumeEntry:
-        new URLSearchParams(window.location.search).get('resume') === '1',
+      isResumeEntry: peekDraftResumeIntent() === record.requestId,
     };
   });
   const [resumeDialogRecord, setResumeDialogRecord] =
@@ -59,9 +62,12 @@ export function useStoryCreateDraft({ onRestore }: UseStoryCreateDraftArgs) {
     onRestoreRef.current = onRestore;
   });
 
-  // 배너 경유(?resume=1) 진입은 묻지 않고 즉시 복원한다. 복원은 부모 상태를
-  // 갱신하므로 렌더 중이 아닌 커밋 이후에 수행한다.
+  // 배너 경유(재개 의도) 진입은 묻지 않고 즉시 복원한다. 복원은 부모 상태를
+  // 갱신하므로 렌더 중이 아닌 커밋 이후에 수행한다. 의도 플래그는 어떤 경로로
+  // 들어왔든 한 번 쓰고 지워 다음 진입에 새지 않게 한다.
   useEffect(() => {
+    clearDraftResumeIntent();
+
     if (entryDraft === null || !entryDraft.isResumeEntry) {
       return;
     }

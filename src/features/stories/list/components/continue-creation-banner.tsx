@@ -15,13 +15,8 @@ import {
   parsePendingCreationRequest,
   subscribePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
+import { markDraftResumeIntent } from '@/features/stories/_shared/utils/draft-resume-intent';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
-
-/**
- * 임시 저장본 재개 진입임을 퍼널에 알리는 경로.
- * 이 경로로 들어오면 퍼널이 재개 다이얼로그 없이 곧바로 복원한다.
- */
-const RESUME_CREATOR_PATH = `${APP_PATH.CREATOR.STORY}?resume=1`;
 
 export function ContinueCreationBanner() {
   const router = useRouter();
@@ -60,7 +55,12 @@ export function ContinueCreationBanner() {
 
   const handleContinue = () => {
     track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
-    router.push(isDraftStage ? RESUME_CREATOR_PATH : APP_PATH.CREATOR.STORY);
+
+    if (isDraftStage) {
+      markDraftResumeIntent(record.requestId);
+    }
+
+    router.push(APP_PATH.CREATOR.STORY);
   };
 
   const handleDismiss = () => {
