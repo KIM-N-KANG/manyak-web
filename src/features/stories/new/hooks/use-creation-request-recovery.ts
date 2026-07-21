@@ -7,7 +7,7 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStoryCreateResponse,
 } from '@/api/generated/models';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type { InFlightCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   clearPendingCreationRequest,
   getPendingCreationRequestSnapshot,
@@ -27,19 +27,19 @@ type UseCreationRequestRecoveryArgs = {
   /** 원 생성 요청이 진행 중인 동안 true — 복구 조회를 보류하고 원 응답을 기다린다. */
   suspended: boolean;
   /** 미정리 레코드로 복구를 시작할 때 해당 단계 로딩 화면을 복원한다. */
-  onRestorePending: (record: PendingCreationRequest) => void;
+  onRestorePending: (record: InFlightCreationRequest) => void;
   /** 스토리라인 생성이 완료돼 있던 경우 결과 화면을 복원한다. */
   onStorylinesCompleted: (
-    record: PendingCreationRequest,
+    record: InFlightCreationRequest,
     result: GenerateSimpleStorylinesResponse,
   ) => void;
   /** 스토리 완성이 완료돼 있던 경우 후속 흐름(채팅 생성)으로 잇는다. */
   onStoryCompleted: (
-    record: PendingCreationRequest,
+    record: InFlightCreationRequest,
     result: SimpleStoryCreateResponse,
   ) => void;
   /** 생성이 실패했거나(FAILED) 더 이상 되찾을 수 없는(404) 경우 기존 실패 처리로 합류한다. */
-  onFailed: (record: PendingCreationRequest) => void;
+  onFailed: (record: InFlightCreationRequest) => void;
 };
 
 /**
@@ -65,7 +65,10 @@ export function useCreationRequestRecovery({
     getServerPendingCreationRequestSnapshot,
   );
   const storedRecord = parsePendingCreationRequest(rawRecord);
-  const activeRecord = suspended ? null : storedRecord;
+  // draft 레코드는 서버에 조회할 것이 없으므로 복구 대상에서 제외한다.
+  const inFlightRecord =
+    storedRecord?.stage === 'STORY_DRAFT' ? null : storedRecord;
+  const activeRecord = suspended ? null : inFlightRecord;
 
   const callbacksRef = useRef(callbacks);
   const restoredRequestIdRef = useRef<string | null>(null);
@@ -92,7 +95,10 @@ export function useCreationRequestRecovery({
       getPendingCreationRequestSnapshot(),
     );
 
-    if (record?.requestId === activeRequestId) {
+    if (
+      record?.requestId === activeRequestId &&
+      record.stage !== 'STORY_DRAFT'
+    ) {
       callbacksRef.current.onRestorePending(record);
     }
   }, [activeRequestId]);
