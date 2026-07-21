@@ -33,7 +33,10 @@ export function ChatChoicesMenu({
             size="icon-sm"
             variant="ghost"
             aria-label="추천 입력 설정"
-            className={cn(enabled && 'text-primary hover:text-primary')}
+            className={cn(
+              enabled &&
+                'text-primary hover:text-primary aria-expanded:text-primary',
+            )}
           />
         }>
         <HugeiconsIcon icon={AiChat02Icon} aria-hidden="true" />
