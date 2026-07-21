@@ -851,6 +851,37 @@ test.describe('추천 입력 토글', () => {
     expect(choicesCalled).toBe(0);
   });
 
+  test('토글 off: 추천 입력이 있어도 빈 입력이면 전송 버튼이 화살표 아이콘으로 비활성화된다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await setChoicesDisabled(page);
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    const sendButton = page.getByRole('button', { name: '전송', exact: true });
+
+    await expect(sendButton).toBeDisabled();
+    await expect(
+      sendButton.locator(`path[d^="${PLAY_FILLED_PATH}"]`),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: '추천 입력 랜덤 전송' }),
+    ).toHaveCount(0);
+
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('직접 입력한다');
+    await expect(sendButton).toBeEnabled();
+  });
+
   test('선택지 생성 실패 시 에러 문구와 재시도 버튼을 보여주고, 재시도로 복구한다', async ({
     page,
   }) => {

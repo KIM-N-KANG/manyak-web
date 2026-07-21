@@ -48,7 +48,8 @@ export function ChatPlainInput({
   onChoicesEnabledChange,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
-  const canSend = !disabled && (hasInput || hasSuggestions);
+  const canSend = !disabled && (hasInput || (choicesEnabled && hasSuggestions));
+  const showsRandomSend = !hasInput && choicesEnabled;
 
   const handleSend = () => {
     if (hasInput) {
@@ -101,13 +102,13 @@ export function ChatPlainInput({
               type="submit"
               variant="default"
               size="icon-sm"
-              aria-label={hasInput ? '전송' : '추천 입력 랜덤 전송'}
+              aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
               disabled={!canSend}
               className="ml-auto">
-              {hasInput ? (
-                <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
-              ) : (
+              {showsRandomSend ? (
                 <PlayFilledIcon aria-hidden="true" />
+              ) : (
+                <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
               )}
             </Button>
           </InputGroupAddon>

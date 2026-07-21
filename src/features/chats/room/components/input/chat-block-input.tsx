@@ -56,7 +56,8 @@ export function ChatBlockInput({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const hasInput = blocks.some((block) => block.value.trim().length > 0);
-  const canSend = !disabled && (hasInput || hasSuggestions);
+  const canSend = !disabled && (hasInput || (choicesEnabled && hasSuggestions));
+  const showsRandomSend = !hasInput && choicesEnabled;
 
   const handleSend = () => {
     if (hasInput) {
@@ -165,14 +166,14 @@ export function ChatBlockInput({
         <Button
           type="button"
           size="icon-sm"
-          aria-label={hasInput ? '전송' : '추천 입력 랜덤 전송'}
+          aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
           disabled={!canSend}
           onClick={handleSend}
           className="ml-auto">
-          {hasInput ? (
-            <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
-          ) : (
+          {showsRandomSend ? (
             <PlayFilledIcon aria-hidden="true" />
+          ) : (
+            <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
           )}
         </Button>
       </div>
