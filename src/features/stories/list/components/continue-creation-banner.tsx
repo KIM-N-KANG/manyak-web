@@ -45,11 +45,9 @@ export function ContinueCreationBanner() {
   }
 
   const isDraftStage = record.stage === 'STORY_DRAFT';
-  const isCompletionStage = record.stage === 'STORY_COMPLETION';
 
-  const bannerMessage = isDraftStage
-    ? '만들다 만 스토리가 있어요'
-    : isCompletionStage
+  const bannerMessage =
+    record.stage === 'STORY_COMPLETION'
       ? '완성 중인 스토리가 있어요'
       : '만들고 있는 스토리가 있어요';
 
