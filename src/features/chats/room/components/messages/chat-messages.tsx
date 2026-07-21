@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
-import { Button } from '@/components/ui/button';
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -13,7 +12,6 @@ import {
   MessageScrollerViewport,
   useMessageScroller,
 } from '@/components/ui/message-scroller';
-import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 import type { ChoicesStatus } from '../../hooks/use-chat-choices';
@@ -164,19 +162,7 @@ export function ChatMessages({
           </MessageScrollerContent>
         </MessageScrollerViewport>
 
-        {streamingTurn ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon-sm"
-            disabled
-            aria-label="AI 응답 생성 중"
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 border-border bg-background text-foreground disabled:opacity-100">
-            <Spinner />
-          </Button>
-        ) : (
-          <MessageScrollerButton aria-label="맨 아래로 이동" />
-        )}
+        <MessageScrollerButton aria-label="맨 아래로 이동" />
       </MessageScroller>
     </MessageScrollerProvider>
   );
