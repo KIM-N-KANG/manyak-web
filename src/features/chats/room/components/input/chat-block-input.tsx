@@ -19,6 +19,7 @@ import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
+import { ChatChoicesToggleButton } from './chat-choices-toggle-button';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
 
 type ChatBlockInputProps = {
@@ -33,6 +34,8 @@ type ChatBlockInputProps = {
   disabled: boolean;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
+  choicesEnabled: boolean;
+  onChoicesToggle: () => void;
 };
 
 export function ChatBlockInput({
@@ -47,6 +50,8 @@ export function ChatBlockInput({
   disabled,
   mode,
   onModeChange,
+  choicesEnabled,
+  onChoicesToggle,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -153,6 +158,10 @@ export function ChatBlockInput({
           대사 추가
         </Button>
         <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
+        <ChatChoicesToggleButton
+          enabled={choicesEnabled}
+          onToggle={onChoicesToggle}
+        />
         <Button
           type="button"
           size="icon-sm"

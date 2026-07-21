@@ -16,6 +16,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
+import type { ChoicesStatus } from '../../hooks/use-chat-choices';
 import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled';
 import { useSpacerCollapse } from '../../hooks/use-spacer-collapse';
 import type { StreamingTurn } from '../../types';
@@ -47,9 +48,11 @@ type ChatMessagesProps = {
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
   regeneratingTurnId: number | null;
+  choicesStatus: ChoicesStatus | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
+  onRetryChoices: () => void;
 };
 
 export function ChatMessages({
@@ -58,9 +61,11 @@ export function ChatMessages({
   suggestedInputs,
   streamingTurn,
   regeneratingTurnId,
+  choicesStatus,
   onSendChoice,
   onFillChoice,
   onRegenerate,
+  onRetryChoices,
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
@@ -128,9 +133,11 @@ export function ChatMessages({
                     <ChatTurnItem
                       turn={turn}
                       isLast={isLast}
+                      choicesStatus={choicesStatus}
                       onSendChoice={onSendChoice}
                       onFillChoice={onFillChoice}
                       onRegenerate={onRegenerate}
+                      onRetryChoices={onRetryChoices}
                     />
                   )}
                 </MessageScrollerItem>

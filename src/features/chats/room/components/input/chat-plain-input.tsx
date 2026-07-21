@@ -15,6 +15,7 @@ import {
 
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
+import { ChatChoicesToggleButton } from './chat-choices-toggle-button';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
 
 type ChatPlainInputProps = {
@@ -28,6 +29,8 @@ type ChatPlainInputProps = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
+  choicesEnabled: boolean;
+  onChoicesToggle: () => void;
 };
 
 export function ChatPlainInput({
@@ -41,6 +44,8 @@ export function ChatPlainInput({
   textareaRef,
   mode,
   onModeChange,
+  choicesEnabled,
+  onChoicesToggle,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
   const canSend = !disabled && (hasInput || hasSuggestions);
@@ -88,6 +93,10 @@ export function ChatPlainInput({
               상황 추가
             </Button>
             <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
+            <ChatChoicesToggleButton
+              enabled={choicesEnabled}
+              onToggle={onChoicesToggle}
+            />
             <Button
               type="submit"
               variant="default"
