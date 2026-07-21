@@ -10,6 +10,7 @@ export * from './apiErrorDetail';
 export * from './apiErrorResponse';
 export * from './batchChatRequest';
 export * from './batchStoryRequest';
+export * from './chatChoicesResponse';
 export * from './chatDetailResponse';
 export * from './chatSummaryResponse';
 export * from './chatTurnResponse';

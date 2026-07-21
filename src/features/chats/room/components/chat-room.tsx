@@ -31,6 +31,7 @@ import type {
 } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
+import { useChatChoices } from '../hooks/use-chat-choices';
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
 import {
@@ -38,6 +39,8 @@ import {
   useChatInputMode,
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
+import { useChoicesToggle } from '../hooks/use-choices-toggle';
+import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
 import { ChatMessages } from './messages/chat-messages';
@@ -81,14 +84,35 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     isForbidden,
     refetch,
   } = useChatDetail(chatId);
+  const { enabled: choicesEnabled, setEnabled: setChoicesEnabled } =
+    useChoicesToggle();
+  const { choicesStatus, generate: generateChoicesForTurn } = useChatChoices(
+    chatId,
+    refetch,
+  );
   const handleStreamCompleted = async () => {
     if (sessionStatus !== 'authenticated') {
       incrementGuestUsage('chat');
     }
 
-    await refetch();
+    const result = await refetch();
+
     await queryClient.invalidateQueries({ queryKey: [CHATS_BATCH_QUERY_KEY] });
     await queryClient.invalidateQueries({ queryKey: getGetMyChatsQueryKey() });
+
+    const detail = result.data?.status === 200 ? result.data.data : undefined;
+    const lastTurn = (detail?.turns as ChatTurnResponse[] | undefined)?.at(-1);
+
+    if (
+      lastTurn?.id != null &&
+      shouldGenerateChoices({
+        enabled: choicesEnabled,
+        isStreaming: false,
+        lastTurn,
+      })
+    ) {
+      void generateChoicesForTurn(lastTurn.id);
+    }
   };
 
   const { streamingTurn, isStreaming, send, regenerate, regeneratingTurnId } =
@@ -127,7 +151,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   const { mode, changeMode } = useChatInputMode();
   const suggestions =
-    turns.length === 0 ? suggestedInputs : (turns.at(-1)?.choices ?? []);
+    turns.length === 0
+      ? suggestedInputs
+      : choicesEnabled
+        ? (turns.at(-1)?.choices ?? [])
+        : [];
 
   const composer = useChatComposer({
     chatId,
@@ -159,6 +187,36 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
 
     setPendingFill(null);
+  };
+
+  const handleChoicesEnabledChange = (next: boolean) => {
+    if (next === choicesEnabled) {
+      return;
+    }
+
+    track('client_chat_choicesToggle_clicked', {
+      chat_id: chatId,
+      enabled: next,
+    });
+    setChoicesEnabled(next);
+
+    const lastTurn = turns.at(-1);
+
+    if (
+      next &&
+      lastTurn?.id != null &&
+      shouldGenerateChoices({ enabled: next, isStreaming, lastTurn })
+    ) {
+      void generateChoicesForTurn(lastTurn.id);
+    }
+  };
+
+  const handleRetryChoices = () => {
+    const lastTurn = turns.at(-1);
+
+    if (lastTurn?.id != null) {
+      void generateChoicesForTurn(lastTurn.id);
+    }
   };
 
   const handleModeChange = (nextMode: ChatInputMode) => {
@@ -225,9 +283,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             suggestedInputs={suggestedInputs}
             streamingTurn={streamingTurn}
             regeneratingTurnId={regeneratingTurnId}
+            choicesEnabled={choicesEnabled}
+            choicesStatus={choicesStatus}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}
             onRegenerate={guardedRegenerate}
+            onRetryChoices={handleRetryChoices}
           />
         </div>
         <ChatInput
@@ -235,6 +296,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           onModeChange={handleModeChange}
           composer={composer}
           disabled={isStreaming}
+          choicesEnabled={choicesEnabled}
+          onChoicesEnabledChange={handleChoicesEnabledChange}
         />
         <ConfirmAlertDialog
           open={pendingFill !== null}

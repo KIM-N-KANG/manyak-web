@@ -19,6 +19,7 @@ import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
+import { ChatChoicesMenu } from './chat-choices-menu';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
 
 type ChatBlockInputProps = {
@@ -33,6 +34,8 @@ type ChatBlockInputProps = {
   disabled: boolean;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
+  choicesEnabled: boolean;
+  onChoicesEnabledChange: (enabled: boolean) => void;
 };
 
 export function ChatBlockInput({
@@ -47,11 +50,14 @@ export function ChatBlockInput({
   disabled,
   mode,
   onModeChange,
+  choicesEnabled,
+  onChoicesEnabledChange,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const hasInput = blocks.some((block) => block.value.trim().length > 0);
-  const canSend = !disabled && (hasInput || hasSuggestions);
+  const canSend = !disabled && (hasInput || (choicesEnabled && hasSuggestions));
+  const showsRandomSend = !hasInput && choicesEnabled;
 
   const handleSend = () => {
     if (hasInput) {
@@ -152,18 +158,22 @@ export function ChatBlockInput({
           onClick={() => onAddBlock('dialogue')}>
           대사 추가
         </Button>
+        <ChatChoicesMenu
+          enabled={choicesEnabled}
+          onEnabledChange={onChoicesEnabledChange}
+        />
         <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
         <Button
           type="button"
           size="icon-sm"
-          aria-label={hasInput ? '전송' : '추천 입력 랜덤 전송'}
+          aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
           disabled={!canSend}
           onClick={handleSend}
           className="ml-auto">
-          {hasInput ? (
-            <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
-          ) : (
+          {showsRandomSend ? (
             <PlayFilledIcon aria-hidden="true" />
+          ) : (
+            <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
           )}
         </Button>
       </div>

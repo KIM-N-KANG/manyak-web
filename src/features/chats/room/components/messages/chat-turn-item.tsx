@@ -1,27 +1,35 @@
 import type { ChatTurnResponse } from '@/api/generated/models';
 
+import type { ChoicesStatus } from '../../hooks/use-chat-choices';
 import { canRegenerate } from '../../utils/regenerate';
 import {
   AiMessageBubble,
   UserMessageBubble,
 } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
+import { ChatChoicesStatus } from './chat-choices-status';
 import { RegenerateButton } from './regenerate-button';
 
 type ChatTurnItemProps = {
   turn: ChatTurnResponse;
   isLast: boolean;
+  choicesEnabled: boolean;
+  choicesStatus: ChoicesStatus | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
+  onRetryChoices: () => void;
 };
 
 export function ChatTurnItem({
   turn,
   isLast,
+  choicesEnabled,
+  choicesStatus,
   onSendChoice,
   onFillChoice,
   onRegenerate,
+  onRetryChoices,
 }: ChatTurnItemProps) {
   return (
     <div>
@@ -34,11 +42,18 @@ export function ChatTurnItem({
       {isLast && canRegenerate(turn) ? (
         <RegenerateButton onClick={() => onRegenerate(turn)} />
       ) : null}
-      {isLast && turn.choices && turn.choices.length > 0 ? (
+      {isLast && choicesEnabled && turn.choices && turn.choices.length > 0 ? (
         <ChatChoices
           choices={turn.choices}
           onSend={onSendChoice}
           onFill={onFillChoice}
+        />
+      ) : isLast &&
+        choicesStatus !== null &&
+        choicesStatus.turnId === turn.id ? (
+        <ChatChoicesStatus
+          status={choicesStatus.status}
+          onRetry={onRetryChoices}
         />
       ) : null}
     </div>

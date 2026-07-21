@@ -109,6 +109,7 @@ export type AnalyticsEventProps = {
   // chat
   client_chat_viewed: { chat_id: string };
   client_chat_inputMode_selected: { chat_id: string; mode: 'block' | 'plain' };
+  client_chat_choicesToggle_clicked: { chat_id: string; enabled: boolean };
   client_chat_messageInput_submitted: {
     chat_id: string;
     turn_number: number;

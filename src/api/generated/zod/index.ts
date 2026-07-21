@@ -427,6 +427,17 @@ export const CreateChatBody = zod
 export const CreateChatResponse = zod.void();
 
 /**
+ * 마지막 턴의 다음 행동 선택지 3개를 생성해 저장합니다(스펙 §4-3-3, 선택지 분리). 이어쓰기와 달리 동기 JSON이며 선택지 생성은 무료입니다(크레딧·게스트 채팅 한도 미소모). 프론트엔드는 응답 본문이 아니라 채팅 상세 재조회의 turns[].choices로 렌더하며, turnId가 마지막 턴이 아니면 409, 이미 선택지가 있으면 AI 호출 없이 기존 값을 반환합니다.
+ * @summary 채팅 선택지 생성
+ */
+export const GenerateChoicesParams = zod.object({
+  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
+  turnId: zod.number().describe('턴 ID(마지막 턴의 ASSISTANT 메시지 ID)'),
+});
+
+export const GenerateChoicesResponse = zod.unknown();
+
+/**
  * 사용자 입력을 바탕으로 앞선 채팅 맥락에 이어지는 이야기를 생성하고 SSE로 스트리밍합니다. 사용자 입력은 캐릭터 프로필 설정, 다음 행동, 대사, 분위기, 감정, 연출 방향 등을 모두 포함할 수 있습니다. 스트리밍은 started, token, completed 순서로 전달되며 completed 이벤트에는 최종 저장된 aiOutput 전체가 포함됩니다. 실패 시 error 이벤트를 전달할 수 있습니다.
  * @summary 채팅 이어쓰기 스트리밍
  */
