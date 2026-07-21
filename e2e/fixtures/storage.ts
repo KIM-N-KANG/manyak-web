@@ -10,6 +10,10 @@ import {
   ONBOARDING_SEEN_VALUE,
 } from '@/features/onboarding/constants';
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
+import {
+  PENDING_CREATION_REQUEST_STORAGE_KEY,
+  type PendingCreationRequest,
+} from '@/features/stories/new/utils/creation-request-storage';
 
 /** 온보딩을 "이미 봄"으로 표시해 다이얼로그가 뜨지 않게 한다(US-8-3). */
 export async function skipOnboarding(page: Page): Promise<void> {
@@ -67,5 +71,21 @@ export async function seedChatIds(
       window.localStorage.setItem(key, value);
     },
     [CREATED_CHAT_IDS_STORAGE_KEY, JSON.stringify(chatIds)] as const,
+  );
+}
+
+/**
+ * 로컬스토리지에 백그라운드 복구 대상 생성 요청 레코드를 심는다.
+ * 스토리 생성 퍼널 재진입 시 복구 조회 폴링이 시작되는 상태를 재현할 때 쓴다.
+ */
+export async function seedPendingCreationRequest(
+  page: Page,
+  record: PendingCreationRequest,
+): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      window.localStorage.setItem(key, value);
+    },
+    [PENDING_CREATION_REQUEST_STORAGE_KEY, JSON.stringify(record)] as const,
   );
 }

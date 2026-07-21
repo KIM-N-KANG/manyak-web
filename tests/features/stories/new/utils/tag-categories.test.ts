@@ -6,6 +6,8 @@ import type {
 } from '@/api/generated/models';
 import { getSelectedTagsByCategory } from '@/features/stories/new/utils/tag-categories';
 
+const REQUEST_ID = '11111111-1111-4111-8111-111111111111';
+
 const TAGS: SimpleStoryTagListItemResponse[] = [
   { id: 1, name: '타임루프', category: 'GENRE' },
   { id: 2, name: '먼치킨', category: 'GENRE' },
@@ -20,6 +22,7 @@ describe('getSelectedTagsByCategory', () => {
 
   it('카테고리 순서(장르 → 주인공 → 주변 인물)대로 그룹을 만든다', () => {
     const request: GenerateSimpleStorylinesRequest = {
+      requestId: REQUEST_ID,
       selectedTagIds: [3, 1, 4],
     };
 
@@ -39,6 +42,7 @@ describe('getSelectedTagsByCategory', () => {
 
   it('선택값이 없는 카테고리는 제외한다', () => {
     const request: GenerateSimpleStorylinesRequest = {
+      requestId: REQUEST_ID,
       selectedTagIds: [1, 2],
     };
 
@@ -50,6 +54,7 @@ describe('getSelectedTagsByCategory', () => {
 
   it('직접 추가 키워드를 해당 카테고리에 사전 정의 키워드 뒤로 포함한다', () => {
     const request: GenerateSimpleStorylinesRequest = {
+      requestId: REQUEST_ID,
       selectedTagIds: [1],
       customTags: [{ name: '회귀물', category: 'GENRE' }],
     };

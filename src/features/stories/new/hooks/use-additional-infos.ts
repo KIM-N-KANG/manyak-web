@@ -88,6 +88,20 @@ export function useAdditionalInfos() {
     setAdditionalInfos(createInitialAdditionalInfos());
   };
 
+  // 백그라운드 복구 재진입 시 저장해 둔 제출값으로 인풋을 복원한다.
+  // 초기 개수보다 적으면 빈 인풋을 채워 평소 화면과 같은 형태를 유지한다.
+  const restoreAdditionalInfos = (values: string[]) => {
+    const restored = values
+      .slice(0, ADDITIONAL_INFO_MAX_COUNT)
+      .map((value) => ({ id: createClientId(), value }));
+
+    while (restored.length < ADDITIONAL_INFO_INITIAL_COUNT) {
+      restored.push(createEmptyAdditionalInfo());
+    }
+
+    setAdditionalInfos(restored);
+  };
+
   return {
     additionalInfos,
     canAddAdditionalInfo: additionalInfos.length < ADDITIONAL_INFO_MAX_COUNT,
@@ -97,5 +111,6 @@ export function useAdditionalInfos() {
     registerAdditionalInfoInput: registerInput,
     getSubmittedAdditionalInfos,
     resetAdditionalInfos,
+    restoreAdditionalInfos,
   };
 }

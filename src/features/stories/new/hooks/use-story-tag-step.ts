@@ -13,7 +13,9 @@ import { useTagSelection } from './use-tag-selection';
 
 type UseStoryTagStepArgs = {
   isGeneratingStorylines: boolean;
-  onGenerateStorylines: (request: GenerateSimpleStorylinesRequest) => void;
+  onGenerateStorylines: (
+    request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
+  ) => void;
 };
 
 /**
