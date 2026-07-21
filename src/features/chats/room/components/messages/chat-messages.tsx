@@ -46,6 +46,7 @@ type ChatMessagesProps = {
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
   regeneratingTurnId: number | null;
+  choicesEnabled: boolean;
   choicesStatus: ChoicesStatus | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
@@ -59,6 +60,7 @@ export function ChatMessages({
   suggestedInputs,
   streamingTurn,
   regeneratingTurnId,
+  choicesEnabled,
   choicesStatus,
   onSendChoice,
   onFillChoice,
@@ -131,6 +133,7 @@ export function ChatMessages({
                     <ChatTurnItem
                       turn={turn}
                       isLast={isLast}
+                      choicesEnabled={choicesEnabled}
                       choicesStatus={choicesStatus}
                       onSendChoice={onSendChoice}
                       onFillChoice={onFillChoice}

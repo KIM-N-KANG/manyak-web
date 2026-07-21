@@ -151,7 +151,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
   const { mode, changeMode } = useChatInputMode();
   const suggestions =
-    turns.length === 0 ? suggestedInputs : (turns.at(-1)?.choices ?? []);
+    turns.length === 0
+      ? suggestedInputs
+      : choicesEnabled
+        ? (turns.at(-1)?.choices ?? [])
+        : [];
 
   const composer = useChatComposer({
     chatId,
@@ -279,6 +283,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             suggestedInputs={suggestedInputs}
             streamingTurn={streamingTurn}
             regeneratingTurnId={regeneratingTurnId}
+            choicesEnabled={choicesEnabled}
             choicesStatus={choicesStatus}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}

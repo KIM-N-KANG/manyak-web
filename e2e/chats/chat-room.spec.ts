@@ -813,6 +813,44 @@ test.describe('추천 입력 토글', () => {
     expect(choicesCalled).toBe(1);
   });
 
+  test('선택지가 표시된 상태에서 끄면 표시된 선택지를 숨기고, 다시 켜면 재표시한다', async ({
+    page,
+  }) => {
+    let choicesCalled = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([{ ...baseTurn, choices: CHOICES }])),
+      });
+    });
+    await page.route(CHAT_CHOICES, async (route) => {
+      choicesCalled += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ choices: CHOICES }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const firstChoice = page.getByRole('button', { name: '안으로 들어간다' });
+
+    await expect(firstChoice).toBeVisible();
+
+    await page.getByRole('button', { name: '추천 입력 설정' }).click();
+    await page.getByRole('menuitemradio', { name: /추천 입력 끔/ }).click();
+    await expect(firstChoice).toBeHidden();
+
+    await page.getByRole('button', { name: '추천 입력 설정' }).click();
+    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
+    await expect(firstChoice).toBeVisible();
+
+    expect(choicesCalled).toBe(0);
+  });
+
   test('선택지 생성 실패 시 에러 문구와 재시도 버튼을 보여주고, 재시도로 복구한다', async ({
     page,
   }) => {
