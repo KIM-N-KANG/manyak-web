@@ -11,6 +11,8 @@ import type { SimpleStoryCustomTagRequest } from './simpleStoryCustomTagRequest'
  * 간편 제작 스토리라인 생성 요청
  */
 export interface GenerateSimpleStorylinesRequest {
+  /** 클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8). */
+  requestId: string;
   /**
    * 사용자가 선택한 사전 정의 태그 ID 목록
    * @minItems 0

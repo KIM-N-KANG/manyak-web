@@ -72,6 +72,11 @@ export const createSimpleStoryBodyAdditionalInfosMax = 13;
 
 export const CreateSimpleStoryBody = zod
   .object({
+    requestId: zod
+      .uuid()
+      .describe(
+        '클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8).',
+      ),
     simpleCreationId: zod
       .number()
       .min(1)
@@ -117,6 +122,11 @@ export const generateSimpleStorylinesBodyCustomTagsMax = 20;
 
 export const GenerateSimpleStorylinesBody = zod
   .object({
+    requestId: zod
+      .uuid()
+      .describe(
+        '클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8).',
+      ),
     selectedTagIds: zod
       .array(zod.number().describe('사전 정의 태그 ID'))
       .min(generateSimpleStorylinesBodySelectedTagIdsMin)
@@ -814,6 +824,20 @@ export const GetEditFormResponse = zod.unknown();
  * @summary 간편 제작 태그 목록 조회
  */
 export const GetSimpleStoryTagsResponse = zod.unknown();
+
+/**
+ * 모바일에서 앱 전환으로 응답을 못 받은 스토리라인 생성·스토리 완성 요청의 진행 상태·결과를 requestId로 되찾습니다(스펙 §4-3-8). 소유 주체(회원 또는 게스트 디바이스)만 조회할 수 있습니다.
+ * @summary 백그라운드 생성 요청 복구 조회
+ */
+export const GetCreationRequestParams = zod.object({
+  requestId: zod.uuid(),
+});
+
+export const GetCreationRequestHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
+export const GetCreationRequestResponse = zod.unknown();
 
 /**
  * 일반 제작에서 참조할 로어북(장르 공용 용어 사전) 목록을 조회합니다. genre로 필터할 수 있습니다.

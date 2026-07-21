@@ -10,6 +10,8 @@
  * 간편 제작 스토리 생성 요청
  */
 export interface CreateSimpleStoryRequest {
+  /** 클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8). */
+  requestId: string;
   /**
    * 간편 제작 진행 ID
    * @minimum 1
