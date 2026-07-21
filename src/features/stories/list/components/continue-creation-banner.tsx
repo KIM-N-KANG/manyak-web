@@ -17,6 +17,12 @@ import {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
+/**
+ * 임시 저장본 재개 진입임을 퍼널에 알리는 경로.
+ * 이 경로로 들어오면 퍼널이 재개 다이얼로그 없이 곧바로 복원한다.
+ */
+const RESUME_CREATOR_PATH = `${APP_PATH.CREATOR.STORY}?resume=1`;
+
 export function ContinueCreationBanner() {
   const router = useRouter();
   const rawRecord = useSyncExternalStore(
@@ -43,11 +49,18 @@ export function ContinueCreationBanner() {
     return null;
   }
 
+  const isDraftStage = record.stage === 'STORY_DRAFT';
   const isCompletionStage = record.stage === 'STORY_COMPLETION';
+
+  const bannerMessage = isDraftStage
+    ? '만들다 만 스토리가 있어요'
+    : isCompletionStage
+      ? '완성 중인 스토리가 있어요'
+      : '만들고 있는 스토리가 있어요';
 
   const handleContinue = () => {
     track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
-    router.push(APP_PATH.CREATOR.STORY);
+    router.push(isDraftStage ? RESUME_CREATOR_PATH : APP_PATH.CREATOR.STORY);
   };
 
   const handleDismiss = () => {
@@ -63,11 +76,7 @@ export function ContinueCreationBanner() {
       aria-label="이어서 만들기"
       className="m-4 flex items-center gap-2 rounded-lg bg-muted p-4">
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">
-          {isCompletionStage
-            ? '완성 중인 스토리가 있어요'
-            : '만들고 있는 스토리가 있어요'}
-        </p>
+        <p className="font-semibold">{bannerMessage}</p>
       </div>
       <div className="flex gap-1">
         <Button size="sm" onClick={handleContinue}>
