@@ -1,5 +1,8 @@
+'use client';
+
 import { Refresh04Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { m } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
 
@@ -9,7 +12,11 @@ type RegenerateButtonProps = {
 
 export function RegenerateButton({ onClick }: RegenerateButtonProps) {
   return (
-    <div className="mb-4 -ml-1 px-4">
+    <m.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="mb-4 -ml-1 px-4">
       <Button
         type="button"
         variant="ghost"
@@ -19,6 +26,6 @@ export function RegenerateButton({ onClick }: RegenerateButtonProps) {
         onClick={onClick}>
         <HugeiconsIcon icon={Refresh04Icon} aria-hidden="true" />
       </Button>
-    </div>
+    </m.div>
   );
 }
