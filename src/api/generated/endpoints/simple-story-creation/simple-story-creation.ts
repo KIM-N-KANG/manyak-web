@@ -30,6 +30,7 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStoryCreateResponse,
   SimpleStoryTagListItemResponse,
+  StoryCreationRequestStatusResponse,
   StorylineRatingRequest,
   StorylineRatingResponse,
 } from '../../models';
@@ -703,6 +704,202 @@ export function useGetSimpleStoryTags<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetSimpleStoryTagsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type getCreationRequestResponse200 = {
+  data: StoryCreationRequestStatusResponse;
+  status: 200;
+};
+
+export type getCreationRequestResponse404 = {
+  data: ApiErrorResponse;
+  status: 404;
+};
+
+export type getCreationRequestResponseSuccess =
+  getCreationRequestResponse200 & {
+    headers: Headers;
+  };
+export type getCreationRequestResponseError = getCreationRequestResponse404 & {
+  headers: Headers;
+};
+
+export type getCreationRequestResponse =
+  | getCreationRequestResponseSuccess
+  | getCreationRequestResponseError;
+
+export const getGetCreationRequestUrl = (requestId: string) => {
+  return `/api/v1/stories/simple/creation-requests/${requestId}`;
+};
+
+/**
+ * 모바일에서 앱 전환으로 응답을 못 받은 스토리라인 생성·스토리 완성 요청의 진행 상태·결과를 requestId로 되찾습니다(스펙 §4-3-8). 소유 주체(회원 또는 게스트 디바이스)만 조회할 수 있습니다.
+ * @summary 백그라운드 생성 요청 복구 조회
+ */
+export const getCreationRequest = async (
+  requestId: string,
+  options?: RequestInit,
+): Promise<getCreationRequestResponse> => {
+  return customInstance<getCreationRequestResponse>(
+    getGetCreationRequestUrl(requestId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getGetCreationRequestQueryKey = (requestId: string) => {
+  return [`/api/v1/stories/simple/creation-requests/${requestId}`] as const;
+};
+
+export const getGetCreationRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCreationRequest>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  requestId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreationRequest>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCreationRequestQueryKey(requestId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCreationRequest>>
+  > = ({ signal }) =>
+    getCreationRequest(requestId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: requestId !== null && requestId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCreationRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCreationRequestQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCreationRequest>>
+>;
+export type GetCreationRequestQueryError = ErrorType<ApiErrorResponse>;
+
+export function useGetCreationRequest<
+  TData = Awaited<ReturnType<typeof getCreationRequest>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  requestId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreationRequest>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCreationRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getCreationRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCreationRequest<
+  TData = Awaited<ReturnType<typeof getCreationRequest>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  requestId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreationRequest>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCreationRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getCreationRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCreationRequest<
+  TData = Awaited<ReturnType<typeof getCreationRequest>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  requestId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreationRequest>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 백그라운드 생성 요청 복구 조회
+ */
+
+export function useGetCreationRequest<
+  TData = Awaited<ReturnType<typeof getCreationRequest>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  requestId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreationRequest>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetCreationRequestQueryOptions(requestId, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

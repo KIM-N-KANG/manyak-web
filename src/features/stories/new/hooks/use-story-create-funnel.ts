@@ -21,6 +21,7 @@ import {
   getGetMyStoriesQueryKey,
 } from '@/api/generated/endpoints/users/users';
 import type {
+  CreateSimpleStoryRequest,
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
   SimpleStorylineResponse,
@@ -35,7 +36,15 @@ import {
   isGuestUsageLimitReached,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  loadPendingCreationRequest,
+  savePendingCreationRequest,
+  takePendingCreationRequest,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
+import { createClientId } from '@/lib/create-client-id';
+import { FetchError } from '@/lib/custom-fetch';
 import type {
   CreditShortageTrigger,
   GuestLimitTrigger,
@@ -44,9 +53,11 @@ import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateStep } from '../types';
+import { shouldKeepPendingRecordOnError } from '../utils/creation-request-recovery';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
+import { useCreationRequestRecovery } from './use-creation-request-recovery';
 import { usePreventPageLeave } from './use-prevent-page-leave';
 
 /**
@@ -95,6 +106,16 @@ export function useStoryCreateFunnel() {
     storyId: string;
     genres?: string[];
   } | null>(null);
+  // 복구 조회가 실패를 알린 경우의 스토리라인 오류 표시(뮤테이션 isError를 대신한다).
+  const [hasRecoveredGenerateError, setHasRecoveredGenerateError] =
+    useState(false);
+  // 마지막 완성 요청. 같은 페이로드의 재시도는 requestId를 재사용해 서버 멱등 계약으로
+  // 중복 생성·중복 과금을 막는다.
+  const lastCompletionRequestRef = useRef<CreateSimpleStoryRequest | null>(
+    null,
+  );
+  // 직전 완성 시도가 requestId를 재사용했는지 여부(409 응답을 복구 조회로 돌릴 판단 근거).
+  const reusedCompletionRequestIdRef = useRef<string | null>(null);
   const {
     additionalInfos,
     canAddAdditionalInfo,
@@ -104,6 +125,7 @@ export function useStoryCreateFunnel() {
     registerAdditionalInfoInput,
     getSubmittedAdditionalInfos,
     resetAdditionalInfos,
+    restoreAdditionalInfos,
   } = useAdditionalInfos();
 
   const simpleStoryTags = useGetSimpleStoryTags();
@@ -180,6 +202,11 @@ export function useStoryCreateFunnel() {
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
       onSuccess: (response, variables) => {
+        // 복구 조회가 결과를 선점 반영했으면 이중 적용(카운터·화면 전환)을 건너뛴다.
+        if (!takePendingCreationRequest(variables.data.requestId)) {
+          return;
+        }
+
         if (response.status !== 201) {
           return;
         }
@@ -197,7 +224,13 @@ export function useStoryCreateFunnel() {
         setSelectedStoryline(null);
         setStep('storyline-select');
       },
-      onError: (error) => {
+      onError: (error, variables) => {
+        // 서버가 응답한 실패는 복구할 것이 없으니 레코드를 지운다.
+        // 응답을 못 받은 네트워크 오류는 보존해 복귀 시 복구 조회로 되찾는다.
+        if (!shouldKeepPendingRecordOnError(error)) {
+          takePendingCreationRequest(variables.data.requestId);
+        }
+
         handlePaymentRequiredError(error, 'storyline_generate');
       },
     },
@@ -246,7 +279,12 @@ export function useStoryCreateFunnel() {
 
   const createStory = useCreateSimpleStory({
     mutation: {
-      onSuccess: (response) => {
+      onSuccess: (response, variables) => {
+        // 복구 조회가 결과를 선점 반영했으면 이중 적용(채팅 중복 생성 등)을 건너뛴다.
+        if (!takePendingCreationRequest(variables.data.requestId)) {
+          return;
+        }
+
         if (response.status !== 201) {
           failToAdditionalInfo('story');
 
@@ -274,10 +312,129 @@ export function useStoryCreateFunnel() {
 
         createChat.mutate({ data: { storyId: response.data.id } });
       },
-      onError: (error) => {
+      onError: (error, variables) => {
+        // 재사용한 requestId의 409는 실패가 아니라 "서버에 결과가 있거나 곧 생긴다"는
+        // 신호다(멱등 계약 — PENDING 재POST). 실패 처리 대신 복구 조회로 되찾는다.
+        if (
+          error instanceof FetchError &&
+          error.status === 409 &&
+          reusedCompletionRequestIdRef.current === variables.data.requestId &&
+          loadPendingCreationRequest()?.requestId === variables.data.requestId
+        ) {
+          // 레코드를 남겨 두면 뮤테이션 종료와 함께 복구 폴링이 자동 활성화된다.
+          return;
+        }
+
+        if (!shouldKeepPendingRecordOnError(error)) {
+          takePendingCreationRequest(variables.data.requestId);
+        }
+
         handlePaymentRequiredError(error, 'story_create');
         failToAdditionalInfo('story');
       },
+    },
+  });
+
+  // 완성 단계 복구 레코드의 퍼널 컨텍스트를 복원한다. 메모리 상태가 살아 있는
+  // 같은 마운트에서는 입력을 덮어쓰지 않도록 재진입(컨텍스트 소실)일 때만 통째로 복원한다.
+  const restoreCompletionContext = (
+    record: Extract<PendingCreationRequest, { stage: 'STORY_COMPLETION' }>,
+  ) => {
+    if (generationResult !== null) {
+      return;
+    }
+
+    setGenerationRequest(record.generationRequest);
+    setGenerationResult(record.generationResult);
+    setSelectedStoryline(record.selectedStoryline);
+    setSelectedRecommendations(new Set());
+    restoreAdditionalInfos(record.completionRequest.additionalInfos ?? []);
+    lastCompletionRequestRef.current = record.completionRequest;
+  };
+
+  const recovery = useCreationRequestRecovery({
+    // 원 생성 요청이 진행 중이면 원 응답을 우선하고, 끝난 뒤에도 레코드가 남아
+    // 있을 때(재진입·응답 유실)만 복구 조회를 시작한다.
+    suspended: generateStorylines.isPending || createStory.isPending,
+    onRestorePending: (record) => {
+      if (record.stage === 'STORYLINE_GENERATION') {
+        // 네트워크 오류로 남은 뮤테이션 오류 상태가 복구 로딩과 겹쳐 보이지 않게 지운다.
+        if (generateStorylines.isError) {
+          generateStorylines.reset();
+        }
+
+        setGenerationRequest(record.generationRequest);
+        setHasRecoveredGenerateError(false);
+        setStep('storyline-select');
+
+        return;
+      }
+
+      restoreCompletionContext(record);
+      setHasCompleteStoryError(false);
+      setStep('complete');
+    },
+    onStorylinesCompleted: (record, result) => {
+      if (generateStorylines.isError) {
+        generateStorylines.reset();
+      }
+
+      // 원 onSuccess가 실행되지 못했으므로 성공 부수효과(카운터·픽셀)를 여기서 수행한다.
+      if (sessionStatus !== 'authenticated') {
+        incrementGuestUsage('storylineCreate');
+      }
+
+      trackMetaPixelOnce('StorylinesGenerated');
+
+      setGenerationRequest(record.generationRequest);
+      setGenerationResult(result);
+      setActiveStorylineIndex(0);
+      setSelectedStoryline(null);
+      setHasRecoveredGenerateError(false);
+      setStep('storyline-select');
+    },
+    onStoryCompleted: (record, result) => {
+      if (record.stage !== 'STORY_COMPLETION') {
+        return;
+      }
+
+      restoreCompletionContext(record);
+
+      const storyId = result.id;
+
+      if (typeof storyId !== 'string') {
+        failToAdditionalInfo('story');
+
+        return;
+      }
+
+      // 원 createStory.onSuccess와 동일한 성공 부수효과를 수행하고 채팅 생성으로 잇는다.
+      if (sessionStatus === 'authenticated') {
+        void queryClient.invalidateQueries({
+          queryKey: getGetMyStoriesQueryKey(),
+        });
+      } else {
+        saveCreatedStoryId(storyId);
+        incrementGuestUsage('storyCreate');
+      }
+
+      setCreatedStoryId(storyId);
+      completedStoryRef.current = { storyId, genres: result.genres };
+      trackMetaPixelOnce('StoryCompiled');
+      setStep('complete');
+      createChat.mutate({ data: { storyId } });
+    },
+    onFailed: (record) => {
+      if (record.stage === 'STORYLINE_GENERATION') {
+        setGenerationRequest(record.generationRequest);
+        setHasRecoveredGenerateError(true);
+        setStep('storyline-select');
+
+        return;
+      }
+
+      restoreCompletionContext(record);
+      failToAdditionalInfo('story');
     },
   });
 
@@ -293,14 +450,33 @@ export function useStoryCreateFunnel() {
     typeof simpleCreationId === 'number' &&
     typeof selectedStoryline?.id === 'number';
 
+  // 스토리라인 생성 요청에 새 requestId를 부여하고 복구 레코드를 저장한 뒤 요청한다.
+  // 생성·재생성 각각이 새 시도이므로 매번 새 UUID를 쓴다.
+  const requestGenerateStorylines = (
+    input: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
+  ) => {
+    const request: GenerateSimpleStorylinesRequest = {
+      ...input,
+      requestId: createClientId(),
+    };
+
+    savePendingCreationRequest({
+      stage: 'STORYLINE_GENERATION',
+      requestId: request.requestId,
+      generationRequest: request,
+    });
+    setGenerationRequest(request);
+    setHasRecoveredGenerateError(false);
+    generateStorylines.mutate({ data: request });
+  };
+
   const handleGenerateStorylines = (
-    request: GenerateSimpleStorylinesRequest,
+    request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
   ) => {
     if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
       return;
     }
 
-    setGenerationRequest(request);
     setGenerationResult(null);
     setActiveStorylineIndex(0);
     setSelectedStoryline(null);
@@ -308,7 +484,7 @@ export function useStoryCreateFunnel() {
     resetAdditionalInfoStep();
     setStep('storyline-select');
     track('client_storyCreate_storyGeneration_requested');
-    generateStorylines.mutate({ data: request });
+    requestGenerateStorylines(request);
   };
 
   const handleRegenerateStorylines = () => {
@@ -327,7 +503,7 @@ export function useStoryCreateFunnel() {
     }
 
     setIsGuestLimitReached(false);
-    generateStorylines.mutate({ data: generationRequest });
+    requestGenerateStorylines(generationRequest);
   };
 
   const handleActiveStorylineIndexChange = (index: number) => {
@@ -420,16 +596,48 @@ export function useStoryCreateFunnel() {
       creation_id: String(simpleCreationId),
     });
     setStep('complete');
-    createStory.mutate({
-      data: {
-        simpleCreationId: simpleCreationId,
-        storylineId: selectedStoryline.id,
-        additionalInfos: [
-          ...selectedRecommendations,
-          ...getSubmittedAdditionalInfos(),
-        ],
-      },
-    });
+
+    const payload = {
+      simpleCreationId: simpleCreationId,
+      storylineId: selectedStoryline.id,
+      additionalInfos: [
+        ...selectedRecommendations,
+        ...getSubmittedAdditionalInfos(),
+      ],
+    };
+    // 같은 페이로드의 재시도는 requestId를 재사용한다. 서버가 이미 완성했다면(응답 유실)
+    // AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
+    const lastRequest = lastCompletionRequestRef.current;
+    const isSamePayload =
+      lastRequest !== null &&
+      lastRequest.simpleCreationId === payload.simpleCreationId &&
+      lastRequest.storylineId === payload.storylineId &&
+      JSON.stringify(lastRequest.additionalInfos ?? []) ===
+        JSON.stringify(payload.additionalInfos);
+    const request: CreateSimpleStoryRequest = {
+      ...payload,
+      requestId: isSamePayload ? lastRequest.requestId : createClientId(),
+    };
+
+    lastCompletionRequestRef.current = request;
+    reusedCompletionRequestIdRef.current = isSamePayload
+      ? request.requestId
+      : null;
+
+    // 재진입 복원에 필요한 퍼널 컨텍스트가 온전할 때만 복구 레코드를 저장한다.
+    // (완료 조건상 이 시점에 항상 존재하지만 타입 좁히기를 겸한다.)
+    if (generationRequest !== null && generationResult !== null) {
+      savePendingCreationRequest({
+        stage: 'STORY_COMPLETION',
+        requestId: request.requestId,
+        generationRequest,
+        generationResult,
+        selectedStoryline,
+        completionRequest: request,
+      });
+    }
+
+    createStory.mutate({ data: request });
   };
 
   const handleHeaderBack = () => {
@@ -462,9 +670,15 @@ export function useStoryCreateFunnel() {
     additionalInfos,
     canAddAdditionalInfo,
     canCompleteStory,
-    isGeneratingStorylines: generateStorylines.isPending,
-    hasGenerateStorylinesError: generateStorylines.isError,
-    isCompletingStory: createStory.isPending || createChat.isPending,
+    isGeneratingStorylines:
+      generateStorylines.isPending ||
+      recovery.recoveringStage === 'STORYLINE_GENERATION',
+    hasGenerateStorylinesError:
+      generateStorylines.isError || hasRecoveredGenerateError,
+    isCompletingStory:
+      createStory.isPending ||
+      createChat.isPending ||
+      recovery.recoveringStage === 'STORY_COMPLETION',
     hasCompleteStoryError,
     guestLimitTrigger:
       guestLimitTrigger ??

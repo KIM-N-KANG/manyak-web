@@ -15,6 +15,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
 
 import { useCreatedStories } from '../hooks/use-created-stories';
+import { ContinueCreationBanner } from './continue-creation-banner';
 import { CreateStoryFab } from './create-story-fab';
 import { StoryCard } from './story-card';
 import { StoryListSkeleton } from './story-list-skeleton';
@@ -85,10 +86,13 @@ export function StoryList() {
   }
 
   return (
-    <FadeStateSwitch
-      stateKey={stateKey}
-      className="flex min-h-0 flex-1 flex-col">
-      {content}
-    </FadeStateSwitch>
+    <>
+      <ContinueCreationBanner />
+      <FadeStateSwitch
+        stateKey={stateKey}
+        className="flex min-h-0 flex-1 flex-col">
+        {content}
+      </FadeStateSwitch>
+    </>
   );
 }
