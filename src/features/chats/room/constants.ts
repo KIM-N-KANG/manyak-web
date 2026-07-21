@@ -32,7 +32,7 @@ export const CHAT_CHOICES_TOGGLE_OPTIONS: {
   {
     value: 'on',
     label: '추천 입력 켬',
-    description: '응답이 끝나면 다음 행동을 추천해요',
+    description: 'AI가 다음 전개를 추천해줘요',
   },
   {
     value: 'off',
