@@ -36,6 +36,12 @@ import {
   isGuestUsageLimitReached,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  loadPendingCreationRequest,
+  savePendingCreationRequest,
+  takePendingCreationRequest,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
@@ -48,12 +54,6 @@ import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateStep } from '../types';
 import { shouldKeepPendingRecordOnError } from '../utils/creation-request-recovery';
-import type { PendingCreationRequest } from '../utils/creation-request-storage';
-import {
-  loadPendingCreationRequest,
-  savePendingCreationRequest,
-  takePendingCreationRequest,
-} from '../utils/creation-request-storage';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';

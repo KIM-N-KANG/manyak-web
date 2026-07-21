@@ -1,7 +1,7 @@
-import type { PendingCreationRequest } from '@/features/stories/new/utils/creation-request-storage';
+import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
-import { expect, test } from '../fixtures/test';
+import { expect, skipOnboarding, test } from '../fixtures/test';
 
 // 백그라운드 생성 복귀(KNK-637, 스펙 §3-5): 앱 전환으로 응답을 못 받은 생성 요청을
 // 퍼널 재진입 시 복구 조회(GET /creation-requests/{requestId})로 되찾는 흐름.
@@ -170,5 +170,63 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     await expect(
       page.getByRole('button', { name: '다시 만들기' }),
     ).toBeVisible();
+  });
+});
+
+test.describe('이어서 만들기 배너', () => {
+  test.beforeEach(async ({ page }) => {
+    await skipOnboarding(page);
+  });
+
+  test('홈에서 미정리 레코드가 있으면 배너를 표시하고 탭하면 복구로 진입한다', async ({
+    page,
+  }) => {
+    await page.route(CREATION_REQUEST, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          stage: 'STORYLINE_GENERATION',
+          status: 'PENDING',
+          result: null,
+        }),
+      });
+    });
+    await seedPendingCreationRequest(page, storylineRecord);
+
+    await page.goto('/');
+
+    await expect(page.getByText('만들던 스토리가 있어요')).toBeVisible();
+    await page
+      .getByRole('button', { name: '이어서 만들기', exact: true })
+      .click();
+
+    await expect(page).toHaveURL(/\/stories\/new$/);
+    await expect(page.getByText('스토리라인을 만들고 있어요')).toBeVisible();
+  });
+
+  test('배너를 닫으면 레코드를 폐기하고 배너가 사라진다', async ({ page }) => {
+    await seedPendingCreationRequest(page, storylineRecord);
+
+    await page.goto('/');
+
+    await expect(page.getByText('만들던 스토리가 있어요')).toBeVisible();
+    await page.getByRole('button', { name: '이어서 만들기 배너 닫기' }).click();
+
+    await expect(page.getByText('만들던 스토리가 있어요')).toBeHidden();
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          localStorage.getItem('manyak:pending-creation-request'),
+        ),
+      )
+      .toBeNull();
+  });
+
+  test('레코드가 없으면 배너를 표시하지 않는다', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
+    await expect(page.getByText('만들던 스토리가 있어요')).toBeHidden();
   });
 });

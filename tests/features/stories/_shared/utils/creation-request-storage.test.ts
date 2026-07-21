@@ -6,8 +6,8 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
-import type { PendingCreationRequest } from '@/features/stories/new/utils/creation-request-storage';
-import { parsePendingCreationRequest } from '@/features/stories/new/utils/creation-request-storage';
+import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import { parsePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 
 const generationRequest: GenerateSimpleStorylinesRequest = {
   requestId: '11111111-1111-4111-8111-111111111111',

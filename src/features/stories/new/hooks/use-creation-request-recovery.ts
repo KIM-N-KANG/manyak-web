@@ -7,10 +7,7 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStoryCreateResponse,
 } from '@/api/generated/models';
-import { FetchError } from '@/lib/custom-fetch';
-
-import { resolveCreationRecovery } from '../utils/creation-request-recovery';
-import type { PendingCreationRequest } from '../utils/creation-request-storage';
+import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   clearPendingCreationRequest,
   getPendingCreationRequestSnapshot,
@@ -18,7 +15,10 @@ import {
   parsePendingCreationRequest,
   subscribePendingCreationRequest,
   takePendingCreationRequest,
-} from '../utils/creation-request-storage';
+} from '@/features/stories/_shared/utils/creation-request-storage';
+import { FetchError } from '@/lib/custom-fetch';
+
+import { resolveCreationRecovery } from '../utils/creation-request-recovery';
 
 /** PENDING 복구 레코드의 진행 상태를 재조회하는 폴링 주기(ms) */
 const RECOVERY_POLL_INTERVAL_MS = 3000;

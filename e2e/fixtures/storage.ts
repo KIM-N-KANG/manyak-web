@@ -9,11 +9,11 @@ import {
   ONBOARDING_SEEN_STORAGE_KEY,
   ONBOARDING_SEEN_VALUE,
 } from '@/features/onboarding/constants';
-import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 import {
   PENDING_CREATION_REQUEST_STORAGE_KEY,
   type PendingCreationRequest,
-} from '@/features/stories/new/utils/creation-request-storage';
+} from '@/features/stories/_shared/utils/creation-request-storage';
+import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 
 /** 온보딩을 "이미 봄"으로 표시해 다이얼로그가 뜨지 않게 한다(US-8-3). */
 export async function skipOnboarding(page: Page): Promise<void> {

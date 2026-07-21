@@ -3,9 +3,8 @@ import type {
   SimpleStoryCreateResponse,
   StoryCreationRequestStatusResponse,
 } from '@/api/generated/models';
+import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { FetchError } from '@/lib/custom-fetch';
-
-import type { PendingCreationRequest } from './creation-request-storage';
 
 /**
  * 생성 요청 실패 시 복구 레코드를 보존할지 판정한다.

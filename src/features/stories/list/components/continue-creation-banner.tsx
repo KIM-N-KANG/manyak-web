@@ -1,0 +1,89 @@
+'use client';
+
+import { useSyncExternalStore } from 'react';
+
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { useRouter } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
+import { APP_PATH } from '@/constants/app-path';
+import {
+  clearPendingCreationRequest,
+  getPendingCreationRequestSnapshot,
+  getServerPendingCreationRequestSnapshot,
+  parsePendingCreationRequest,
+  subscribePendingCreationRequest,
+} from '@/features/stories/_shared/utils/creation-request-storage';
+import { SCREEN, track, useImpression } from '@/observability/analytics';
+
+export function ContinueCreationBanner() {
+  const router = useRouter();
+  const rawRecord = useSyncExternalStore(
+    subscribePendingCreationRequest,
+    getPendingCreationRequestSnapshot,
+    getServerPendingCreationRequestSnapshot,
+  );
+  const record = parsePendingCreationRequest(rawRecord);
+
+  const impressionRef = useImpression({
+    object: 'continueBanner',
+    itemId: record?.requestId ?? '',
+    screen: SCREEN.STORY_LIST,
+    onImpress: () => {
+      if (record) {
+        track('client_storyCreate_continueBanner_shown', {
+          stage: record.stage,
+        });
+      }
+    },
+  });
+
+  if (!record) {
+    return null;
+  }
+
+  const isCompletionStage = record.stage === 'STORY_COMPLETION';
+
+  const handleContinue = () => {
+    track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
+    router.push(APP_PATH.CREATOR.STORY);
+  };
+
+  const handleDismiss = () => {
+    track('client_storyCreate_continueBanner_dismissed', {
+      stage: record.stage,
+    });
+    clearPendingCreationRequest();
+  };
+
+  return (
+    <section
+      ref={impressionRef}
+      aria-label="이어서 만들기"
+      className="mx-4 mt-4 flex items-center gap-3 rounded-xl bg-secondary p-4">
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">
+          {isCompletionStage
+            ? '완성 중인 스토리가 있어요'
+            : '만들던 스토리가 있어요'}
+        </p>
+        <p className="text-sm text-foreground-secondary">
+          {isCompletionStage
+            ? '스토리를 완성하던 중이었어요'
+            : '스토리라인을 만들던 중이었어요'}
+        </p>
+      </div>
+      <Button size="sm" onClick={handleContinue}>
+        이어서 만들기
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="이어서 만들기 배너 닫기"
+        onClick={handleDismiss}>
+        <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
+      </Button>
+    </section>
+  );
+}
