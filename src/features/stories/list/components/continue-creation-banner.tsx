@@ -61,29 +61,26 @@ export function ContinueCreationBanner() {
     <section
       ref={impressionRef}
       aria-label="이어서 만들기"
-      className="mx-4 mt-4 flex items-center gap-3 rounded-xl bg-secondary p-4">
+      className="m-4 flex items-center gap-2 rounded-lg bg-muted p-4">
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
           {isCompletionStage
             ? '완성 중인 스토리가 있어요'
-            : '만들던 스토리가 있어요'}
-        </p>
-        <p className="text-sm text-foreground-secondary">
-          {isCompletionStage
-            ? '스토리를 완성하던 중이었어요'
-            : '스토리라인을 만들던 중이었어요'}
+            : '만들고 있는 스토리가 있어요'}
         </p>
       </div>
-      <Button size="sm" onClick={handleContinue}>
-        이어서 만들기
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label="이어서 만들기 배너 닫기"
-        onClick={handleDismiss}>
-        <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
-      </Button>
+      <div className="flex gap-1">
+        <Button size="sm" onClick={handleContinue}>
+          이어서 만들기
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="이어서 만들기 배너 닫기"
+          onClick={handleDismiss}>
+          <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
+        </Button>
+      </div>
     </section>
   );
 }

@@ -196,7 +196,7 @@ test.describe('이어서 만들기 배너', () => {
 
     await page.goto('/');
 
-    await expect(page.getByText('만들던 스토리가 있어요')).toBeVisible();
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page
       .getByRole('button', { name: '이어서 만들기', exact: true })
       .click();
@@ -210,10 +210,10 @@ test.describe('이어서 만들기 배너', () => {
 
     await page.goto('/');
 
-    await expect(page.getByText('만들던 스토리가 있어요')).toBeVisible();
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page.getByRole('button', { name: '이어서 만들기 배너 닫기' }).click();
 
-    await expect(page.getByText('만들던 스토리가 있어요')).toBeHidden();
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeHidden();
     await expect
       .poll(() =>
         page.evaluate(() =>
@@ -227,6 +227,6 @@ test.describe('이어서 만들기 배너', () => {
     await page.goto('/');
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
-    await expect(page.getByText('만들던 스토리가 있어요')).toBeHidden();
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeHidden();
   });
 });
