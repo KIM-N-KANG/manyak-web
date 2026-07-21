@@ -36,7 +36,7 @@ export function StoryCreateBackDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>
             {willSaveDraft
-              ? '만들던 내용은 임시 저장돼요. 홈에서 이어서 만들 수 있어요'
+              ? '만들던 내용은 임시 저장되고, 나중에 이어서 만들 수 있어요'
               : '지금 나가면 만들고 있는 내용이 사라져요'}
           </AlertDialogDescription>
         </AlertDialogHeader>

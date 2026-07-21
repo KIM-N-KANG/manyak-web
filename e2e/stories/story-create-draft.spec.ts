@@ -88,7 +88,7 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(page.getByText('스토리 만들기를 멈출까요?')).toBeVisible();
     await expect(
       page.getByText(
-        '만들던 내용은 임시 저장돼요. 홈에서 이어서 만들 수 있어요',
+        '만들던 내용은 임시 저장되고, 나중에 이어서 만들 수 있어요',
       ),
     ).toBeVisible();
     await page.getByRole('button', { name: '나가기' }).click();
