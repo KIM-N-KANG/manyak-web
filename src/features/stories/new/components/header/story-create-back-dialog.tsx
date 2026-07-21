@@ -13,12 +13,15 @@ import {
 
 type StoryCreateBackDialogProps = {
   open: boolean;
+  /** 나가면 내용이 보존(임시 저장·진행 중 복구)되는 상태인지 — 문구·버튼 분기 */
+  willSaveDraft: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 };
 
 export function StoryCreateBackDialog({
   open,
+  willSaveDraft,
   onOpenChange,
   onConfirm,
 }: StoryCreateBackDialogProps) {
@@ -26,18 +29,24 @@ export function StoryCreateBackDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>스토리를 그만 만들까요?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {willSaveDraft
+              ? '스토리 만들기를 멈출까요?'
+              : '스토리를 그만 만들까요?'}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            지금 나가면 만들고 있는 내용이 사라져요
+            {willSaveDraft
+              ? '만들던 내용은 임시 저장돼요. 홈에서 이어서 만들 수 있어요'
+              : '지금 나가면 만들고 있는 내용이 사라져요'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>계속 만들기</AlertDialogCancel>
           <AlertDialogAction
             type="button"
-            variant="destructive"
+            variant={willSaveDraft ? 'default' : 'destructive'}
             onClick={onConfirm}>
-            그만 만들기
+            {willSaveDraft ? '나가기' : '그만 만들기'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

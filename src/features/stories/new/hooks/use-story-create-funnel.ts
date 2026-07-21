@@ -53,6 +53,7 @@ import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateStep } from '../types';
+import { resolveBackExit } from '../utils/back-exit-draft';
 import { shouldKeepPendingRecordOnError } from '../utils/creation-request-recovery';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedTagsByCategory } from '../utils/tag-categories';
@@ -650,8 +651,36 @@ export function useStoryCreateFunnel() {
     router.back();
   };
 
+  // 이탈 다이얼로그 문구 분기: 진행 중 요청(원 요청·복구)이 있거나 생성 결과가
+  // 있으면 이탈해도 내용이 보존되므로 임시 저장 안내를 띄운다.
+  const willSaveDraftOnExit =
+    generateStorylines.isPending ||
+    recovery.recoveringStage !== null ||
+    generationResult !== null;
+
   const handleConfirmBack = () => {
     track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
+
+    // 진행 중 요청이 있으면 슬롯을 유지하고, 생성 결과가 있으면 draft로 저장한다.
+    const outcome = resolveBackExit({
+      slotRecord: loadPendingCreationRequest(),
+      step,
+      generationRequest,
+      generationResult,
+      activeStorylineIndex,
+      selectedStoryline,
+      additionalInfos: getSubmittedAdditionalInfos(),
+      selectedRecommendations: [...selectedRecommendations],
+      createdStoryId,
+      completionRequest: lastCompletionRequestRef.current,
+      draftRequestId: createClientId(),
+    });
+
+    if (outcome.type === 'save-draft') {
+      savePendingCreationRequest(outcome.record);
+      track('client_storyCreate_draftSaved', { step: outcome.record.step });
+    }
+
     setIsBackDialogOpen(false);
     confirmLeave();
   };
@@ -703,6 +732,7 @@ export function useStoryCreateFunnel() {
     handleCompleteStory,
     backDialogOpen: isBackDialogOpen,
     onBackDialogOpenChange: setIsBackDialogOpen,
+    willSaveDraftOnExit,
     handleHeaderBack,
     handleConfirmBack,
   };
