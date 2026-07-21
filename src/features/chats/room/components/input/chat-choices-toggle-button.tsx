@@ -4,7 +4,6 @@ import { AiChat02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 type ChatChoicesToggleButtonProps = {
   enabled: boolean;
@@ -18,14 +17,11 @@ export function ChatChoicesToggleButton({
   return (
     <Button
       type="button"
-      variant="secondary"
+      variant={enabled ? 'primaryOutline' : 'secondary'}
       size="icon-sm"
       aria-label="추천 입력 켜기/끄기"
       aria-pressed={enabled}
-      onClick={onToggle}
-      className={cn(
-        enabled && 'bg-primary/20 text-primary hover:bg-primary/20',
-      )}>
+      onClick={onToggle}>
       <HugeiconsIcon icon={AiChat02Icon} aria-hidden="true" />
     </Button>
   );
