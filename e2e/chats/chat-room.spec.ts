@@ -804,7 +804,8 @@ test.describe('추천 입력 토글', () => {
     await setChoicesDisabled(page);
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '추천 입력 켜기/끄기' }).click();
+    await page.getByRole('button', { name: '추천 입력 설정' }).click();
+    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
 
     await expect(
       page.getByRole('button', { name: '안으로 들어간다' }),

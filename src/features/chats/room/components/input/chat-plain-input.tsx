@@ -15,7 +15,7 @@ import {
 
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
-import { ChatChoicesToggleButton } from './chat-choices-toggle-button';
+import { ChatChoicesMenu } from './chat-choices-menu';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
 
 type ChatPlainInputProps = {
@@ -30,7 +30,7 @@ type ChatPlainInputProps = {
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
   choicesEnabled: boolean;
-  onChoicesToggle: () => void;
+  onChoicesEnabledChange: (enabled: boolean) => void;
 };
 
 export function ChatPlainInput({
@@ -45,7 +45,7 @@ export function ChatPlainInput({
   mode,
   onModeChange,
   choicesEnabled,
-  onChoicesToggle,
+  onChoicesEnabledChange,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
   const canSend = !disabled && (hasInput || hasSuggestions);
@@ -92,9 +92,9 @@ export function ChatPlainInput({
               onClick={onInsertEmphasis}>
               상황 추가
             </Button>
-            <ChatChoicesToggleButton
+            <ChatChoicesMenu
               enabled={choicesEnabled}
-              onToggle={onChoicesToggle}
+              onEnabledChange={onChoicesEnabledChange}
             />
             <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
             <Button

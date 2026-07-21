@@ -11,7 +11,7 @@ type ChatInputProps = {
   composer: ReturnType<typeof useChatComposer>;
   disabled: boolean;
   choicesEnabled: boolean;
-  onChoicesToggle: () => void;
+  onChoicesEnabledChange: (enabled: boolean) => void;
 };
 
 export function ChatInput({
@@ -20,7 +20,7 @@ export function ChatInput({
   composer,
   disabled,
   choicesEnabled,
-  onChoicesToggle,
+  onChoicesEnabledChange,
 }: ChatInputProps) {
   if (mode === 'block') {
     return (
@@ -37,7 +37,7 @@ export function ChatInput({
         mode={mode}
         onModeChange={onModeChange}
         choicesEnabled={choicesEnabled}
-        onChoicesToggle={onChoicesToggle}
+        onChoicesEnabledChange={onChoicesEnabledChange}
       />
     );
   }
@@ -55,7 +55,7 @@ export function ChatInput({
       mode={mode}
       onModeChange={onModeChange}
       choicesEnabled={choicesEnabled}
-      onChoicesToggle={onChoicesToggle}
+      onChoicesEnabledChange={onChoicesEnabledChange}
     />
   );
 }

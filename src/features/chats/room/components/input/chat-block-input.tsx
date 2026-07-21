@@ -19,7 +19,7 @@ import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
-import { ChatChoicesToggleButton } from './chat-choices-toggle-button';
+import { ChatChoicesMenu } from './chat-choices-menu';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
 
 type ChatBlockInputProps = {
@@ -35,7 +35,7 @@ type ChatBlockInputProps = {
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
   choicesEnabled: boolean;
-  onChoicesToggle: () => void;
+  onChoicesEnabledChange: (enabled: boolean) => void;
 };
 
 export function ChatBlockInput({
@@ -51,7 +51,7 @@ export function ChatBlockInput({
   mode,
   onModeChange,
   choicesEnabled,
-  onChoicesToggle,
+  onChoicesEnabledChange,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -157,9 +157,9 @@ export function ChatBlockInput({
           onClick={() => onAddBlock('dialogue')}>
           대사 추가
         </Button>
-        <ChatChoicesToggleButton
+        <ChatChoicesMenu
           enabled={choicesEnabled}
-          onToggle={onChoicesToggle}
+          onEnabledChange={onChoicesEnabledChange}
         />
         <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
         <Button

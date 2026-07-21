@@ -24,6 +24,23 @@ export const CHAT_INPUT_MODE_OPTIONS: {
   },
 ];
 
+export const CHAT_CHOICES_TOGGLE_OPTIONS: {
+  value: 'on' | 'off';
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'on',
+    label: '추천 입력 켬',
+    description: '응답이 끝나면 다음 행동을 추천해요',
+  },
+  {
+    value: 'off',
+    label: '추천 입력 끔',
+    description: '추천 없이 직접 입력해요',
+  },
+];
+
 export const INPUT_BLOCK_PLACEHOLDERS: Record<InputBlockType, string> = {
   situation: '어떤 상황을 묘사할까요?',
   dialogue: '어떤 대사를 건넬까요?',

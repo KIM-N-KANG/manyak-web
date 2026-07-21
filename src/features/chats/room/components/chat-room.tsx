@@ -185,8 +185,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     setPendingFill(null);
   };
 
-  const handleChoicesToggle = () => {
-    const next = !choicesEnabled;
+  const handleChoicesEnabledChange = (next: boolean) => {
+    if (next === choicesEnabled) {
+      return;
+    }
 
     track('client_chat_choicesToggle_clicked', {
       chat_id: chatId,
@@ -290,7 +292,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           composer={composer}
           disabled={isStreaming}
           choicesEnabled={choicesEnabled}
-          onChoicesToggle={handleChoicesToggle}
+          onChoicesEnabledChange={handleChoicesEnabledChange}
         />
         <ConfirmAlertDialog
           open={pendingFill !== null}
