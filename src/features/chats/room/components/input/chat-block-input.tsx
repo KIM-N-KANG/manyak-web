@@ -131,6 +131,7 @@ export function ChatBlockInput({
                 variant="ghost"
                 aria-label="입력 삭제"
                 disabled={disabled}
+                tabIndex={-1}
                 onClick={() => requestRemoveBlock(block)}
                 className="shrink-0 text-foreground-secondary">
                 <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
