@@ -6,6 +6,7 @@ import { Delete02Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import type { VariantProps } from 'class-variance-authority';
 
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +24,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Spinner } from '@/components/ui/spinner';
 
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
@@ -101,13 +101,17 @@ export function OptionsMenu({
             <AlertDialogAction
               type="button"
               variant="destructive"
+              className="relative"
               disabled={isDeleting}
               onClick={(event) => {
                 event.preventDefault();
                 void handleConfirmDelete();
               }}>
-              {isDeleting && <Spinner aria-hidden="true" />}
-              삭제하기
+              <LoadingButtonContent
+                isLoading={isDeleting}
+                loadingLabel="삭제 중">
+                삭제하기
+              </LoadingButtonContent>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

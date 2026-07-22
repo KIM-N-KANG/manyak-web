@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   AddTeamIcon,
@@ -18,9 +18,11 @@ import { resetAnalyticsUser, track } from '@/observability/analytics';
 import { CreditBalanceCard } from './credit-balance-card';
 import { MoreMenuItem } from './more-menu-item';
 import { ProfileHeader } from './profile-header';
+import { ThemeMenuItem } from './theme-menu-item';
 
 export function MoreScreen() {
   const { status } = useSession();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const isAuthenticated = status === 'authenticated';
 
@@ -29,10 +31,9 @@ export function MoreScreen() {
   }, []);
 
   const handleLogout = () => {
+    setIsLoggingOut(true);
     track('client_account_logoutButton_clicked');
     resetAnalyticsUser();
-    // 로그아웃하면 디바이스 ID 재발급으로 생성 복구 레코드를 서버에서 되찾을 수
-    // 없고, 공용 기기에서 다음 사용자에게 제작 내용이 노출되므로 슬롯을 비운다.
     clearPendingCreationRequest();
     void signOut({ redirectTo: APP_PATH.MAIN.MORE });
   };
@@ -53,6 +54,12 @@ export function MoreScreen() {
           />
         </section>
       )}
+      <section className="flex flex-col py-4">
+        <div className="mb-2 px-4">
+          <Label>화면</Label>
+        </div>
+        <ThemeMenuItem />
+      </section>
       <section className="flex flex-col py-4">
         <div className="mb-2 px-4">
           <Label>기타</Label>
@@ -78,6 +85,7 @@ export function MoreScreen() {
             label="로그아웃"
             destructive
             onClick={handleLogout}
+            loading={isLoggingOut}
           />
         </section>
       )}
