@@ -129,7 +129,7 @@ test.describe('스토리 목록', () => {
     await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
-    await expect(page.getByText('스토리를 삭제했어요')).toBeVisible();
+    await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
   });
 
   test('로그인 상태에서는 서버의 내 스토리 목록을 보여준다', async ({
@@ -179,7 +179,7 @@ test.describe('스토리 목록', () => {
       .getByRole('button', { name: '삭제하기' })
       .click();
 
-    await expect(page.getByText('스토리를 삭제했어요')).toBeVisible();
+    await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
     await expect(
       page.getByText('회원의 서재', { exact: true }),

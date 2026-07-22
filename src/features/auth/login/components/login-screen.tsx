@@ -46,7 +46,7 @@ export function LoginScreen() {
       return;
     }
 
-    toast(TOAST_MESSAGE.SESSION_EXPIRED);
+    toast.warning(TOAST_MESSAGE.SESSION_EXPIRED);
     router.replace(loginPathWithCallback);
   }, [isSessionExpired, loginPathWithCallback, router]);
 

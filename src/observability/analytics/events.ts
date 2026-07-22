@@ -80,6 +80,21 @@ export type AnalyticsEventProps = {
   client_storyCreate_additionalInfoRemoveButton_clicked: void;
   client_storyCreate_storyCompletion_requested: { creation_id: string };
   client_storyCreate_completeError_shown: { stage: 'story' | 'chat' };
+  client_storyCreate_draftSaved: {
+    step: 'storyline-select' | 'additional-info';
+  };
+  client_storyCreate_resumeDialog_shown: void;
+  client_storyCreate_resumeDialog_continued: void;
+  client_storyCreate_resumeDialog_discarded: void;
+  client_storyCreate_continueBanner_shown: {
+    stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' | 'STORY_DRAFT';
+  };
+  client_storyCreate_continueBanner_clicked: {
+    stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' | 'STORY_DRAFT';
+  };
+  client_storyCreate_continueBanner_dismissed: {
+    stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' | 'STORY_DRAFT';
+  };
   client_storyCreate_exitButton_clicked: {
     step_name: StepName;
     step_number: number;
@@ -100,6 +115,7 @@ export type AnalyticsEventProps = {
   // chat
   client_chat_viewed: { chat_id: string };
   client_chat_inputMode_selected: { chat_id: string; mode: 'block' | 'plain' };
+  client_chat_choicesToggle_clicked: { chat_id: string; enabled: boolean };
   client_chat_messageInput_submitted: {
     chat_id: string;
     turn_number: number;

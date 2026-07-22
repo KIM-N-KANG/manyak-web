@@ -103,7 +103,12 @@ export function useTagSelection() {
     }));
   };
 
-  const buildGenerateRequest = (): GenerateSimpleStorylinesRequest => {
+  // requestId는 요청(mutate) 시점마다 새로 부여해야 하므로(백그라운드 복구 멱등 키)
+  // 여기서는 붙이지 않고 퍼널 훅이 채운다.
+  const buildGenerateRequest = (): Omit<
+    GenerateSimpleStorylinesRequest,
+    'requestId'
+  > => {
     const selectedTagIds = TAG_CATEGORIES.flatMap(
       ({ value }) => selectedTagIdsByCategory[value],
     );

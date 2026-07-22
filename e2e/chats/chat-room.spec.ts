@@ -9,6 +9,7 @@ import { expect, seedChatIds, skipOnboarding, test } from '../fixtures/test';
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
 const CHAT_REGENERATE = '**/api/v1/chats/c1/turns/regenerate/stream';
+const CHAT_CHOICES = '**/api/v1/chats/c1/turns/1/choices';
 const PLAY_FILLED_PATH =
   'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
 
@@ -379,7 +380,7 @@ test.describe('채팅 삭제', () => {
     await expect(dialog.getByText('채팅을 삭제할까요?')).toBeVisible();
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
-    await expect(page.getByText('채팅을 삭제했어요')).toBeVisible();
+    await expect(page.getByText('채팅이 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(/\/chats$/);
   });
 
@@ -432,7 +433,7 @@ test.describe('채팅 삭제', () => {
 
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
-    await expect(page.getByText('채팅을 삭제했어요')).toBeVisible();
+    await expect(page.getByText('채팅이 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(/\/chats$/);
     await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
   });
@@ -669,5 +670,268 @@ test.describe('응답 재생성', () => {
     await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
     await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
     await expect(page.getByRole('button', { name: '다시 생성' })).toBeVisible();
+  });
+});
+
+test.describe('추천 입력 토글', () => {
+  const CHOICES = ['안으로 들어간다', '주변을 살핀다', '소리를 지른다'];
+  const baseTurn = {
+    id: 1,
+    userInput: '던전에 진입한다',
+    aiOutput: '문이 서서히 열린다.',
+    choices: [] as string[],
+    createdAt: '2026-06-01T00:00:00Z',
+  };
+
+  const setChoicesDisabled = async (page: Page) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem('manyak:chat-choices-enabled', 'false');
+    });
+  };
+
+  const routeStream = async (page: Page) => {
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"문이 서서히 열린다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"문이 서서히 열린다."}\n\n',
+        ]),
+      });
+    });
+  };
+
+  test('토글 기본 on: 턴 완료 후 선택지 생성을 호출하고 재조회로 렌더한다', async ({
+    page,
+  }) => {
+    let choicesCalled = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      const body =
+        choicesCalled > 0
+          ? chatDetail([{ ...baseTurn, choices: CHOICES }])
+          : chatDetail([baseTurn]);
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(body),
+      });
+    });
+    await routeStream(page);
+    await page.route(CHAT_CHOICES, async (route) => {
+      choicesCalled += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ choices: CHOICES }),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('진입한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(
+      page.getByRole('button', { name: '안으로 들어간다' }),
+    ).toBeVisible();
+    expect(choicesCalled).toBe(1);
+  });
+
+  test('토글 off: 턴이 끝나도 선택지 생성을 호출하지 않는다', async ({
+    page,
+  }) => {
+    let choicesCalled = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([baseTurn])),
+      });
+    });
+    await routeStream(page);
+    await page.route(CHAT_CHOICES, async (route) => {
+      choicesCalled += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ choices: CHOICES }),
+      });
+    });
+
+    await setChoicesDisabled(page);
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('진입한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    expect(choicesCalled).toBe(0);
+  });
+
+  test('off 상태로 턴이 끝난 뒤 토글을 켜면 즉시 마지막 턴 선택지를 생성한다', async ({
+    page,
+  }) => {
+    let choicesCalled = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      const body =
+        choicesCalled > 0
+          ? chatDetail([{ ...baseTurn, choices: CHOICES }])
+          : chatDetail([baseTurn]);
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(body),
+      });
+    });
+    await page.route(CHAT_CHOICES, async (route) => {
+      choicesCalled += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ choices: CHOICES }),
+      });
+    });
+
+    await setChoicesDisabled(page);
+    await page.goto('/chats/c1');
+
+    await page.getByRole('button', { name: '추천 입력 설정' }).click();
+    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
+
+    await expect(
+      page.getByRole('button', { name: '안으로 들어간다' }),
+    ).toBeVisible();
+    expect(choicesCalled).toBe(1);
+  });
+
+  test('선택지가 표시된 상태에서 끄면 표시된 선택지를 숨기고, 다시 켜면 재표시한다', async ({
+    page,
+  }) => {
+    let choicesCalled = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([{ ...baseTurn, choices: CHOICES }])),
+      });
+    });
+    await page.route(CHAT_CHOICES, async (route) => {
+      choicesCalled += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ choices: CHOICES }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const firstChoice = page.getByRole('button', { name: '안으로 들어간다' });
+
+    await expect(firstChoice).toBeVisible();
+
+    await page.getByRole('button', { name: '추천 입력 설정' }).click();
+    await page.getByRole('menuitemradio', { name: /추천 입력 끔/ }).click();
+    await expect(firstChoice).toBeHidden();
+
+    await page.getByRole('button', { name: '추천 입력 설정' }).click();
+    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
+    await expect(firstChoice).toBeVisible();
+
+    expect(choicesCalled).toBe(0);
+  });
+
+  test('토글 off: 추천 입력이 있어도 빈 입력이면 전송 버튼이 화살표 아이콘으로 비활성화된다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await setChoicesDisabled(page);
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    const sendButton = page.getByRole('button', { name: '전송', exact: true });
+
+    await expect(sendButton).toBeDisabled();
+    await expect(
+      sendButton.locator(`path[d^="${PLAY_FILLED_PATH}"]`),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: '추천 입력 랜덤 전송' }),
+    ).toHaveCount(0);
+
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('직접 입력한다');
+    await expect(sendButton).toBeEnabled();
+  });
+
+  test('선택지 생성 실패 시 에러 문구와 재시도 버튼을 보여주고, 재시도로 복구한다', async ({
+    page,
+  }) => {
+    let choicesCalled = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      const body =
+        choicesCalled > 1
+          ? chatDetail([{ ...baseTurn, choices: CHOICES }])
+          : chatDetail([baseTurn]);
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(body),
+      });
+    });
+    await routeStream(page);
+    await page.route(CHAT_CHOICES, async (route) => {
+      choicesCalled += 1;
+
+      if (choicesCalled === 1) {
+        await route.fulfill({
+          status: 502,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'AI 호출 실패' }),
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ choices: CHOICES }),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('진입한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText('선택지를 만들지 못했어요')).toBeVisible();
+    await page.getByRole('button', { name: '다시 시도' }).click();
+
+    await expect(
+      page.getByRole('button', { name: '안으로 들어간다' }),
+    ).toBeVisible();
+    expect(choicesCalled).toBe(2);
   });
 });

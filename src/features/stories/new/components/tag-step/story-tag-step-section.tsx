@@ -18,7 +18,9 @@ type StoryTagStepSectionProps = {
   isGeneratingStorylines: boolean;
   hasGenerateStorylinesError: boolean;
   isGuestLimitReached: boolean;
-  onGenerateStorylines: (request: GenerateSimpleStorylinesRequest) => void;
+  onGenerateStorylines: (
+    request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
+  ) => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 

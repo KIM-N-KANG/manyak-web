@@ -42,7 +42,10 @@ export function ChatInputModeMenu({
           value={mode}
           onValueChange={(value) => onModeChange(value as ChatInputMode)}>
           {CHAT_INPUT_MODE_OPTIONS.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
+            <DropdownMenuRadioItem
+              key={option.value}
+              value={option.value}
+              closeOnClick>
               <div className="flex flex-col gap-0.5">
                 <span>{option.label}</span>
                 <span className="text-xs break-keep text-foreground-secondary">

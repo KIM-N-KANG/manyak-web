@@ -26,6 +26,7 @@ import { customInstance } from '../../../mutator/custom-instance';
 import type {
   ApiErrorResponse,
   BatchChatRequest,
+  ChatChoicesResponse,
   ChatDetailResponse,
   ChatSummaryResponse,
   ContinueChatRequest,
@@ -153,6 +154,138 @@ export const useCreateChat = <
   TContext
 > => {
   return useMutation(getCreateChatMutationOptions(options), queryClient);
+};
+export type generateChoicesResponse200 = {
+  data: ChatChoicesResponse;
+  status: 200;
+};
+
+export type generateChoicesResponse403 = {
+  data: ApiErrorResponse;
+  status: 403;
+};
+
+export type generateChoicesResponse404 = {
+  data: ApiErrorResponse;
+  status: 404;
+};
+
+export type generateChoicesResponse409 = {
+  data: ApiErrorResponse;
+  status: 409;
+};
+
+export type generateChoicesResponse502 = {
+  data: ApiErrorResponse;
+  status: 502;
+};
+
+export type generateChoicesResponseSuccess = generateChoicesResponse200 & {
+  headers: Headers;
+};
+export type generateChoicesResponseError = (
+  | generateChoicesResponse403
+  | generateChoicesResponse404
+  | generateChoicesResponse409
+  | generateChoicesResponse502
+) & {
+  headers: Headers;
+};
+
+export type generateChoicesResponse =
+  | generateChoicesResponseSuccess
+  | generateChoicesResponseError;
+
+export const getGenerateChoicesUrl = (chatId: string, turnId: number) => {
+  return `/api/v1/chats/${chatId}/turns/${turnId}/choices`;
+};
+
+/**
+ * 마지막 턴의 다음 행동 선택지 3개를 생성해 저장합니다(스펙 §4-3-3, 선택지 분리). 이어쓰기와 달리 동기 JSON이며 선택지 생성은 무료입니다(크레딧·게스트 채팅 한도 미소모). 프론트엔드는 응답 본문이 아니라 채팅 상세 재조회의 turns[].choices로 렌더하며, turnId가 마지막 턴이 아니면 409, 이미 선택지가 있으면 AI 호출 없이 기존 값을 반환합니다.
+ * @summary 채팅 선택지 생성
+ */
+export const generateChoices = async (
+  chatId: string,
+  turnId: number,
+  options?: RequestInit,
+): Promise<generateChoicesResponse> => {
+  return customInstance<generateChoicesResponse>(
+    getGenerateChoicesUrl(chatId, turnId),
+    {
+      ...options,
+      method: 'POST',
+    },
+  );
+};
+
+export const getGenerateChoicesMutationOptions = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateChoices>>,
+    TError,
+    { chatId: string; turnId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateChoices>>,
+  TError,
+  { chatId: string; turnId: number },
+  TContext
+> => {
+  const mutationKey = ['generateChoices'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateChoices>>,
+    { chatId: string; turnId: number }
+  > = (props) => {
+    const { chatId, turnId } = props ?? {};
+
+    return generateChoices(chatId, turnId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateChoicesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateChoices>>
+>;
+
+export type GenerateChoicesMutationError = ErrorType<ApiErrorResponse>;
+
+/**
+ * @summary 채팅 선택지 생성
+ */
+export const useGenerateChoices = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof generateChoices>>,
+      TError,
+      { chatId: string; turnId: number },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof generateChoices>>,
+  TError,
+  { chatId: string; turnId: number },
+  TContext
+> => {
+  return useMutation(getGenerateChoicesMutationOptions(options), queryClient);
 };
 export type streamChatTurnResponse200 = {
   data: string;

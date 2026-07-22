@@ -3,6 +3,8 @@ import type { InputBlockType } from './utils/input-blocks';
 
 export const CHAT_INPUT_MODE_STORAGE_KEY = 'manyak:chat-input-mode';
 
+export const CHAT_CHOICES_ENABLED_STORAGE_KEY = 'manyak:chat-choices-enabled';
+
 export const DEFAULT_CHAT_INPUT_MODE: ChatInputMode = 'block';
 
 export const CHAT_INPUT_MODE_OPTIONS: {
@@ -19,6 +21,23 @@ export const CHAT_INPUT_MODE_OPTIONS: {
     value: 'plain',
     label: '일반 입력',
     description: '한 입력창에 자유롭게 입력해요',
+  },
+];
+
+export const CHAT_CHOICES_TOGGLE_OPTIONS: {
+  value: 'on' | 'off';
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'on',
+    label: '추천 입력 켬',
+    description: 'AI가 다음 전개를 추천해줘요',
+  },
+  {
+    value: 'off',
+    label: '추천 입력 끔',
+    description: '추천 없이 직접 입력해요',
   },
 ];
 

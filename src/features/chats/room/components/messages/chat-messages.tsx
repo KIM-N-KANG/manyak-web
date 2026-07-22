@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { ChatTurnResponse } from '@/api/generated/models';
-import { Button } from '@/components/ui/button';
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -13,9 +12,9 @@ import {
   MessageScrollerViewport,
   useMessageScroller,
 } from '@/components/ui/message-scroller';
-import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
+import type { ChoicesStatus } from '../../hooks/use-chat-choices';
 import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled';
 import { useSpacerCollapse } from '../../hooks/use-spacer-collapse';
 import type { StreamingTurn } from '../../types';
@@ -47,9 +46,12 @@ type ChatMessagesProps = {
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
   regeneratingTurnId: number | null;
+  choicesEnabled: boolean;
+  choicesStatus: ChoicesStatus | null;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
+  onRetryChoices: () => void;
 };
 
 export function ChatMessages({
@@ -58,9 +60,12 @@ export function ChatMessages({
   suggestedInputs,
   streamingTurn,
   regeneratingTurnId,
+  choicesEnabled,
+  choicesStatus,
   onSendChoice,
   onFillChoice,
   onRegenerate,
+  onRetryChoices,
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
@@ -128,9 +133,12 @@ export function ChatMessages({
                     <ChatTurnItem
                       turn={turn}
                       isLast={isLast}
+                      choicesEnabled={choicesEnabled}
+                      choicesStatus={choicesStatus}
                       onSendChoice={onSendChoice}
                       onFillChoice={onFillChoice}
                       onRegenerate={onRegenerate}
+                      onRetryChoices={onRetryChoices}
                     />
                   )}
                 </MessageScrollerItem>
@@ -157,19 +165,7 @@ export function ChatMessages({
           </MessageScrollerContent>
         </MessageScrollerViewport>
 
-        {streamingTurn ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon-sm"
-            disabled
-            aria-label="AI 응답 생성 중"
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 border-border bg-background text-foreground disabled:opacity-100">
-            <Spinner />
-          </Button>
-        ) : (
-          <MessageScrollerButton aria-label="맨 아래로 이동" />
-        )}
+        <MessageScrollerButton aria-label="맨 아래로 이동" />
       </MessageScroller>
     </MessageScrollerProvider>
   );

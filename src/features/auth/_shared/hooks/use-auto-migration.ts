@@ -12,6 +12,7 @@ import {
   getGetMyChatsQueryKey,
   getGetMyStoriesQueryKey,
 } from '@/api/generated/endpoints/users/users';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { clearGuestUsage } from '@/features/auth/_shared/utils/guest-usage-storage';
 import {
   isMigrationClosedFor,
@@ -105,9 +106,7 @@ export function useAutoMigration(): void {
                 markMigrationClosedFor(userId);
               }
 
-              toast(
-                '이미 옮긴 적이 있어 이 기기의 스토리와 채팅은 옮기지 못했어요',
-              );
+              toast.info(TOAST_MESSAGE.MIGRATION_ALREADY_DONE);
 
               return;
             }
@@ -144,7 +143,7 @@ export function useAutoMigration(): void {
 
             if (storyCount + chatCount > 0) {
               toast.success(
-                `스토리 ${storyCount}개, 채팅 ${chatCount}개를 계정으로 옮겼어요`,
+                TOAST_MESSAGE.MIGRATION_SUCCEEDED(storyCount, chatCount),
               );
             }
           },
