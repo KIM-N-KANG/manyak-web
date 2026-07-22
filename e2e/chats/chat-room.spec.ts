@@ -380,7 +380,7 @@ test.describe('채팅 삭제', () => {
     await expect(dialog.getByText('채팅을 삭제할까요?')).toBeVisible();
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
-    await expect(page.getByText('채팅을 삭제했어요')).toBeVisible();
+    await expect(page.getByText('채팅이 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(/\/chats$/);
   });
 
@@ -433,7 +433,7 @@ test.describe('채팅 삭제', () => {
 
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
-    await expect(page.getByText('채팅을 삭제했어요')).toBeVisible();
+    await expect(page.getByText('채팅이 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(/\/chats$/);
     await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
   });

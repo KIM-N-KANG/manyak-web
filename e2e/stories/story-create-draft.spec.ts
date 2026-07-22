@@ -82,14 +82,12 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
 
+    // 내용이 보존되는 이탈이므로 확인 다이얼로그 없이 바로 나가고 토스트로 알린다.
     await page
       .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
       .click();
-    await expect(page.getByText('나중에 이어서 만들까요?')).toBeVisible();
-    await expect(
-      page.getByText('지금까지 만든 내용은 임시 저장돼요'),
-    ).toBeVisible();
-    await page.getByRole('button', { name: '나중에 만들기' }).click();
+    await expect(page.getByText('스토리가 임시 저장되었어요')).toBeVisible();
+    await expect(page.getByText('스토리를 그만 만들까요?')).toBeHidden();
 
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
