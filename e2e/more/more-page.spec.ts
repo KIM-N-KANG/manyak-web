@@ -59,6 +59,28 @@ test.describe('더보기', () => {
     );
   });
 
+  test('테마 변경 버튼은 시스템 설정 → 라이트 모드 → 다크 모드 순으로 순환한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.goto('/more');
+
+    const themeButton = page.getByRole('button', { name: /테마/ });
+
+    await expect(themeButton).toContainText('시스템 설정');
+
+    await themeButton.click();
+    await expect(themeButton).toContainText('라이트 모드');
+    await expect(page.locator('html')).toHaveClass(/light/);
+
+    await themeButton.click();
+    await expect(themeButton).toContainText('다크 모드');
+    await expect(page.locator('html')).toHaveClass(/dark/);
+
+    await themeButton.click();
+    await expect(themeButton).toContainText('시스템 설정');
+  });
+
   test('하단 탭은 홈·채팅·더보기 3개다', async ({ page }) => {
     await skipOnboarding(page);
     await page.goto('/more');
