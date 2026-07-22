@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -57,7 +57,10 @@ import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateStep } from '../types';
 import { resolveBackExit } from '../utils/back-exit-draft';
-import { shouldKeepPendingRecordOnError } from '../utils/creation-request-recovery';
+import {
+  resolveErrorSettlement,
+  resolveSuccessSettlement,
+} from '../utils/creation-request-recovery';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
@@ -133,6 +136,18 @@ export function useStoryCreateFunnel() {
     restoreAdditionalInfos,
   } = useAdditionalInfos();
 
+  // 뮤테이션 콜백은 페이지 이탈(언마운트) 후에도 실행되므로, 응답 정착 판정에
+  // 쓸 마운트 여부를 ref로 추적한다. StrictMode 재마운트를 위해 effect에서 되살린다.
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const simpleStoryTags = useGetSimpleStoryTags();
 
   const shouldConfirmBack = step !== 'keyword';
@@ -207,6 +222,12 @@ export function useStoryCreateFunnel() {
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
       onSuccess: (response, variables) => {
+        // 이탈 후 도착한 응답은 레코드를 남겨 홈 배너를 유지하고,
+        // 재진입 시 복구 조회가 결과를 되찾게 한다(성공 부수효과도 그쪽에서 수행).
+        if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
+          return;
+        }
+
         // 복구 조회가 결과를 선점 반영했으면 이중 적용(카운터·화면 전환)을 건너뛴다.
         if (!takePendingCreationRequest(variables.data.requestId)) {
           return;
@@ -230,9 +251,16 @@ export function useStoryCreateFunnel() {
         setStep('storyline-select');
       },
       onError: (error, variables) => {
-        // 서버가 응답한 실패는 복구할 것이 없으니 레코드를 지운다.
-        // 응답을 못 받은 네트워크 오류는 보존해 복귀 시 복구 조회로 되찾는다.
-        if (!shouldKeepPendingRecordOnError(error)) {
+        // 이탈 후 도착한 오류는 화면에 알릴 수 없으니 레코드를 남겨
+        // 재진입 복구 조회가 실패·완료를 판정하게 한다. 마운트 상태에서는
+        // 서버가 응답한 실패는 레코드를 지우고, 네트워크 오류는 보존한다.
+        const settlement = resolveErrorSettlement(isMountedRef.current, error);
+
+        if (settlement === 'defer-to-recovery') {
+          return;
+        }
+
+        if (settlement === 'discard-record') {
           takePendingCreationRequest(variables.data.requestId);
         }
 
@@ -243,6 +271,11 @@ export function useStoryCreateFunnel() {
   const createChat = useCreateChat({
     mutation: {
       onSuccess: async (response) => {
+        // 이탈 후 도착한 응답에 홈에서 강제 이동·토스트가 실행되지 않게 한다.
+        if (!isMountedRef.current) {
+          return;
+        }
+
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
@@ -276,6 +309,10 @@ export function useStoryCreateFunnel() {
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
       onError: (error) => {
+        if (!isMountedRef.current) {
+          return;
+        }
+
         handlePaymentRequiredError(error, 'chat_start');
         failToAdditionalInfo('chat');
       },
@@ -285,6 +322,12 @@ export function useStoryCreateFunnel() {
   const createStory = useCreateSimpleStory({
     mutation: {
       onSuccess: (response, variables) => {
+        // 이탈 후 도착한 응답은 레코드를 남겨 재진입 복구 조회가 완성 결과와
+        // 채팅 생성까지 이어가게 한다(언마운트 상태의 강제 이동·토스트 방지).
+        if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
+          return;
+        }
+
         // 복구 조회가 결과를 선점 반영했으면 이중 적용(채팅 중복 생성 등)을 건너뛴다.
         if (!takePendingCreationRequest(variables.data.requestId)) {
           return;
@@ -318,6 +361,13 @@ export function useStoryCreateFunnel() {
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: (error, variables) => {
+        // 이탈 후 도착한 오류는 레코드를 남겨 재진입 복구 조회에 맡긴다.
+        const settlement = resolveErrorSettlement(isMountedRef.current, error);
+
+        if (settlement === 'defer-to-recovery') {
+          return;
+        }
+
         // 재사용한 requestId의 409는 실패가 아니라 "서버에 결과가 있거나 곧 생긴다"는
         // 신호다(멱등 계약 — PENDING 재POST). 실패 처리 대신 복구 조회로 되찾는다.
         if (
@@ -330,7 +380,7 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        if (!shouldKeepPendingRecordOnError(error)) {
+        if (settlement === 'discard-record') {
           takePendingCreationRequest(variables.data.requestId);
         }
 

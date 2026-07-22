@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { StoryCreationRequestStatusResponse } from '@/api/generated/models';
 import {
   resolveCreationRecovery,
+  resolveErrorSettlement,
+  resolveSuccessSettlement,
   shouldKeepPendingRecordOnError,
 } from '@/features/stories/new/utils/creation-request-recovery';
 import { FetchError } from '@/lib/custom-fetch';
@@ -27,6 +29,45 @@ describe('shouldKeepPendingRecordOnError', () => {
       ),
     ).toBe(true);
     expect(shouldKeepPendingRecordOnError(new Error('알 수 없음'))).toBe(true);
+  });
+});
+
+describe('resolveSuccessSettlement', () => {
+  it('퍼널이 마운트돼 있으면 결과를 반영하도록 apply를 반환한다', () => {
+    expect(resolveSuccessSettlement(true)).toBe('apply');
+  });
+
+  it('퍼널 언마운트 후 도착한 응답은 레코드를 남겨 재진입 복구에 맡기도록 defer-to-recovery를 반환한다', () => {
+    expect(resolveSuccessSettlement(false)).toBe('defer-to-recovery');
+  });
+});
+
+describe('resolveErrorSettlement', () => {
+  it('퍼널 언마운트 후 도착한 오류는 오류 종류와 무관하게 defer-to-recovery를 반환한다', () => {
+    expect(
+      resolveErrorSettlement(false, new FetchError('실패', 500, null)),
+    ).toBe('defer-to-recovery');
+    expect(
+      resolveErrorSettlement(false, new TypeError('Failed to fetch')),
+    ).toBe('defer-to-recovery');
+  });
+
+  it('마운트 상태에서 서버가 응답한 HTTP 오류는 레코드를 지우도록 discard-record를 반환한다', () => {
+    expect(
+      resolveErrorSettlement(true, new FetchError('실패', 500, null)),
+    ).toBe('discard-record');
+  });
+
+  it('마운트 상태의 네트워크 오류는 레코드를 보존하도록 keep-record를 반환한다', () => {
+    expect(resolveErrorSettlement(true, new TypeError('Failed to fetch'))).toBe(
+      'keep-record',
+    );
+    expect(
+      resolveErrorSettlement(
+        true,
+        new DOMException('요청 시간이 초과되었습니다.', 'TimeoutError'),
+      ),
+    ).toBe('keep-record');
   });
 });
 
