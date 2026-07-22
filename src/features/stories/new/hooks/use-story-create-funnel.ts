@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -36,7 +36,10 @@ import {
   isGuestUsageLimitReached,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type {
+  PendingCreationRequest,
+  StoryDraftRecord,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   loadPendingCreationRequest,
   savePendingCreationRequest,
@@ -53,12 +56,18 @@ import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateStep } from '../types';
-import { shouldKeepPendingRecordOnError } from '../utils/creation-request-recovery';
+import type { BackExitOutcome } from '../utils/back-exit-draft';
+import { resolveBackExit } from '../utils/back-exit-draft';
+import {
+  resolveErrorSettlement,
+  resolveSuccessSettlement,
+} from '../utils/creation-request-recovery';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedTagsByCategory } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { useCreationRequestRecovery } from './use-creation-request-recovery';
 import { usePreventPageLeave } from './use-prevent-page-leave';
+import { useStoryCreateDraft } from './use-story-create-draft';
 
 /**
  * 생성 응답에서 유효한 스토리라인만 걸러 배열로 반환한다.
@@ -128,13 +137,25 @@ export function useStoryCreateFunnel() {
     restoreAdditionalInfos,
   } = useAdditionalInfos();
 
+  // 뮤테이션 콜백은 페이지 이탈(언마운트) 후에도 실행되므로, 응답 정착 판정에
+  // 쓸 마운트 여부를 ref로 추적한다. StrictMode 재마운트를 위해 effect에서 되살린다.
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const simpleStoryTags = useGetSimpleStoryTags();
 
   const shouldConfirmBack = step !== 'keyword';
 
   const { confirmLeave, leaveAfterCleanup } = usePreventPageLeave({
     enabled: shouldConfirmBack,
-    onBackAttempt: () => setIsBackDialogOpen(true),
+    onBackAttempt: () => handleBackAttempt(),
   });
 
   // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
@@ -202,6 +223,12 @@ export function useStoryCreateFunnel() {
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
       onSuccess: (response, variables) => {
+        // 이탈 후 도착한 응답은 레코드를 남겨 홈 배너를 유지하고,
+        // 재진입 시 복구 조회가 결과를 되찾게 한다(성공 부수효과도 그쪽에서 수행).
+        if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
+          return;
+        }
+
         // 복구 조회가 결과를 선점 반영했으면 이중 적용(카운터·화면 전환)을 건너뛴다.
         if (!takePendingCreationRequest(variables.data.requestId)) {
           return;
@@ -225,9 +252,16 @@ export function useStoryCreateFunnel() {
         setStep('storyline-select');
       },
       onError: (error, variables) => {
-        // 서버가 응답한 실패는 복구할 것이 없으니 레코드를 지운다.
-        // 응답을 못 받은 네트워크 오류는 보존해 복귀 시 복구 조회로 되찾는다.
-        if (!shouldKeepPendingRecordOnError(error)) {
+        // 이탈 후 도착한 오류는 화면에 알릴 수 없으니 레코드를 남겨
+        // 재진입 복구 조회가 실패·완료를 판정하게 한다. 마운트 상태에서는
+        // 서버가 응답한 실패는 레코드를 지우고, 네트워크 오류는 보존한다.
+        const settlement = resolveErrorSettlement(isMountedRef.current, error);
+
+        if (settlement === 'defer-to-recovery') {
+          return;
+        }
+
+        if (settlement === 'discard-record') {
           takePendingCreationRequest(variables.data.requestId);
         }
 
@@ -238,6 +272,11 @@ export function useStoryCreateFunnel() {
   const createChat = useCreateChat({
     mutation: {
       onSuccess: async (response) => {
+        // 이탈 후 도착한 응답에 홈에서 강제 이동·토스트가 실행되지 않게 한다.
+        if (!isMountedRef.current) {
+          return;
+        }
+
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
@@ -271,6 +310,10 @@ export function useStoryCreateFunnel() {
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
       onError: (error) => {
+        if (!isMountedRef.current) {
+          return;
+        }
+
         handlePaymentRequiredError(error, 'chat_start');
         failToAdditionalInfo('chat');
       },
@@ -280,6 +323,12 @@ export function useStoryCreateFunnel() {
   const createStory = useCreateSimpleStory({
     mutation: {
       onSuccess: (response, variables) => {
+        // 이탈 후 도착한 응답은 레코드를 남겨 재진입 복구 조회가 완성 결과와
+        // 채팅 생성까지 이어가게 한다(언마운트 상태의 강제 이동·토스트 방지).
+        if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
+          return;
+        }
+
         // 복구 조회가 결과를 선점 반영했으면 이중 적용(채팅 중복 생성 등)을 건너뛴다.
         if (!takePendingCreationRequest(variables.data.requestId)) {
           return;
@@ -313,6 +362,13 @@ export function useStoryCreateFunnel() {
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: (error, variables) => {
+        // 이탈 후 도착한 오류는 레코드를 남겨 재진입 복구 조회에 맡긴다.
+        const settlement = resolveErrorSettlement(isMountedRef.current, error);
+
+        if (settlement === 'defer-to-recovery') {
+          return;
+        }
+
         // 재사용한 requestId의 409는 실패가 아니라 "서버에 결과가 있거나 곧 생긴다"는
         // 신호다(멱등 계약 — PENDING 재POST). 실패 처리 대신 복구 조회로 되찾는다.
         if (
@@ -325,7 +381,7 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        if (!shouldKeepPendingRecordOnError(error)) {
+        if (settlement === 'discard-record') {
           takePendingCreationRequest(variables.data.requestId);
         }
 
@@ -437,6 +493,30 @@ export function useStoryCreateFunnel() {
       failToAdditionalInfo('story');
     },
   });
+
+  // 임시 저장(draft) 복원: 레코드의 퍼널 컨텍스트를 통째로 되살리고 저장된
+  // 스텝으로 이동한다. createdStoryId·completionRequest는 완성 재시도 멱등
+  // 로직(requestId 재사용, 스토리 중복 생성 방지)에 합류시킨다.
+  const restoreDraft = (record: StoryDraftRecord) => {
+    setGenerationRequest(record.generationRequest);
+    setGenerationResult(record.generationResult);
+    setActiveStorylineIndex(record.activeStorylineIndex);
+    setSelectedStoryline(record.selectedStoryline);
+    setSelectedRecommendations(new Set(record.selectedRecommendations));
+    restoreAdditionalInfos(record.additionalInfos);
+    setCreatedStoryId(record.createdStoryId);
+
+    if (record.createdStoryId !== null) {
+      completedStoryRef.current = { storyId: record.createdStoryId };
+    }
+
+    lastCompletionRequestRef.current = record.completionRequest;
+    setHasCompleteStoryError(false);
+    setHasRecoveredGenerateError(false);
+    setStep(record.step);
+  };
+
+  const draft = useStoryCreateDraft({ onRestore: restoreDraft });
 
   const storylines = getGeneratedStorylines(generationResult);
   const selectedTagGroups = getSelectedTagsByCategory(
@@ -640,9 +720,55 @@ export function useStoryCreateFunnel() {
     createStory.mutate({ data: request });
   };
 
+  // 진행 중 요청이 있으면 슬롯을 유지하고, 생성 결과가 있으면 draft로 저장한다.
+  const resolveCurrentBackExit = () =>
+    resolveBackExit({
+      slotRecord: loadPendingCreationRequest(),
+      step,
+      generationRequest,
+      generationResult,
+      activeStorylineIndex,
+      selectedStoryline,
+      additionalInfos: getSubmittedAdditionalInfos(),
+      selectedRecommendations: [...selectedRecommendations],
+      createdStoryId,
+      completionRequest: lastCompletionRequestRef.current,
+      draftRequestId: createClientId(),
+    });
+
+  // 이탈 확정 공통 처리: 저장할 결과가 있으면 draft로 저장하고, 내용이
+  // 보존되는 이탈(임시 저장·진행 중 복구)이면 토스트로 알린 뒤 떠난다.
+  const exitWithOutcome = (outcome: BackExitOutcome) => {
+    if (outcome.type === 'save-draft') {
+      savePendingCreationRequest(outcome.record);
+      track('client_storyCreate_draftSaved', { step: outcome.record.step });
+    }
+
+    if (outcome.type !== 'discard') {
+      toast.success(TOAST_MESSAGE.STORY_DRAFT_SAVED);
+    }
+
+    confirmLeave();
+  };
+
+  // 뒤로가기 이탈 시도: 내용이 보존되면 묻지 않고 즉시 이탈하고,
+  // 보존할 수 없을 때만 소실 경고 다이얼로그를 띄운다.
+  const handleBackAttempt = () => {
+    const outcome = resolveCurrentBackExit();
+
+    if (outcome.type === 'discard') {
+      setIsBackDialogOpen(true);
+
+      return;
+    }
+
+    track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
+    exitWithOutcome(outcome);
+  };
+
   const handleHeaderBack = () => {
     if (shouldConfirmBack) {
-      setIsBackDialogOpen(true);
+      handleBackAttempt();
 
       return;
     }
@@ -650,10 +776,12 @@ export function useStoryCreateFunnel() {
     router.back();
   };
 
+  // 소실 경고 다이얼로그에서 이탈을 확정한 경우. 다이얼로그가 열린 사이 상태가
+  // 변할 수 있으므로 이탈 판정은 확정 시점에 다시 수행한다.
   const handleConfirmBack = () => {
     track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
     setIsBackDialogOpen(false);
-    confirmLeave();
+    exitWithOutcome(resolveCurrentBackExit());
   };
 
   return {
@@ -703,6 +831,10 @@ export function useStoryCreateFunnel() {
     handleCompleteStory,
     backDialogOpen: isBackDialogOpen,
     onBackDialogOpenChange: setIsBackDialogOpen,
+    resumeDialogOpen: draft.isResumeDialogOpen,
+    handleResumeContinue: draft.handleResumeContinue,
+    handleResumeDiscard: draft.handleResumeDiscard,
+    closeResumeDialog: draft.closeResumeDialog,
     handleHeaderBack,
     handleConfirmBack,
   };

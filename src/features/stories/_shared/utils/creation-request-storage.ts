@@ -66,9 +66,13 @@ export function getServerPendingCreationRequestSnapshot(): null {
   return null;
 }
 
+/** 임시 저장(draft) 레코드가 복원할 퍼널 스텝 */
+export type StoryDraftStep = 'storyline-select' | 'additional-info';
+
 /**
  * 백그라운드 복구 대상 생성 요청 레코드.
  * 완성 단계는 재진입 시 추가 정보 화면·재시도를 복원할 수 있도록 퍼널 컨텍스트를 함께 보관한다.
+ * STORY_DRAFT는 뒤로 가기 이탈 시 저장하는 임시 저장본으로, 서버 복구 조회 대상이 아니다.
  */
 export type PendingCreationRequest =
   | {
@@ -83,7 +87,32 @@ export type PendingCreationRequest =
       generationResult: GenerateSimpleStorylinesResponse;
       selectedStoryline: SimpleStorylineResponse;
       completionRequest: CreateSimpleStoryRequest;
+    }
+  | {
+      stage: 'STORY_DRAFT';
+      requestId: string;
+      step: StoryDraftStep;
+      generationRequest: GenerateSimpleStorylinesRequest;
+      generationResult: GenerateSimpleStorylinesResponse;
+      activeStorylineIndex: number;
+      selectedStoryline: SimpleStorylineResponse | null;
+      additionalInfos: string[];
+      selectedRecommendations: string[];
+      createdStoryId: string | null;
+      completionRequest: CreateSimpleStoryRequest | null;
     };
+
+/** 진행 중 요청 레코드(서버 복구 조회 대상) */
+export type InFlightCreationRequest = Exclude<
+  PendingCreationRequest,
+  { stage: 'STORY_DRAFT' }
+>;
+
+/** 임시 저장(draft) 레코드 */
+export type StoryDraftRecord = Extract<
+  PendingCreationRequest,
+  { stage: 'STORY_DRAFT' }
+>;
 
 /**
  * 값이 배열이 아닌 순수 객체인지 판별한다.
@@ -93,6 +122,18 @@ export type PendingCreationRequest =
  */
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * 값이 문자열로만 이루어진 배열인지 판별한다.
+ *
+ * @param value 검사할 값
+ * @returns 문자열 배열 여부
+ */
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === 'string')
+  );
 }
 
 /**
@@ -139,6 +180,32 @@ export function parsePendingCreationRequest(
     isPlainObject(parsed.completionRequest)
   ) {
     return parsed as unknown as PendingCreationRequest;
+  }
+
+  if (parsed.stage === 'STORY_DRAFT') {
+    const isValidStep =
+      parsed.step === 'storyline-select' || parsed.step === 'additional-info';
+    // additional-info 재개에는 선택된 스토리라인이 필수다.
+    const isValidSelectedStoryline =
+      parsed.step === 'additional-info'
+        ? isPlainObject(parsed.selectedStoryline)
+        : parsed.selectedStoryline === null ||
+          isPlainObject(parsed.selectedStoryline);
+
+    if (
+      isValidStep &&
+      isPlainObject(parsed.generationResult) &&
+      typeof parsed.activeStorylineIndex === 'number' &&
+      isValidSelectedStoryline &&
+      isStringArray(parsed.additionalInfos) &&
+      isStringArray(parsed.selectedRecommendations) &&
+      (parsed.createdStoryId === null ||
+        typeof parsed.createdStoryId === 'string') &&
+      (parsed.completionRequest === null ||
+        isPlainObject(parsed.completionRequest))
+    ) {
+      return parsed as unknown as PendingCreationRequest;
+    }
   }
 
   return null;

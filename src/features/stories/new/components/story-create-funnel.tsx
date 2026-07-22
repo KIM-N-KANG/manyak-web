@@ -11,6 +11,7 @@ import { mapStepToSpec } from '../utils/step-analytics';
 import { StoryAdditionalInfoStepSection } from './additional-info-step/story-additional-info-step-section';
 import { StoryCompletionLoading } from './complete-step/story-completion-loading';
 import { StoryCreateHeader } from './header/story-create-header';
+import { StoryCreateResumeDialog } from './shared/story-create-resume-dialog';
 import { StorylineSelectStepSection } from './storyline-step/storyline-select-step-section';
 import { StoryTagStepSection } from './tag-step/story-tag-step-section';
 
@@ -48,6 +49,10 @@ export function StoryCreateFunnel() {
     handleCompleteStory,
     backDialogOpen,
     onBackDialogOpenChange,
+    resumeDialogOpen,
+    handleResumeContinue,
+    handleResumeDiscard,
+    closeResumeDialog,
     handleHeaderBack,
     handleConfirmBack,
   } = useStoryCreateFunnel();
@@ -116,6 +121,16 @@ export function StoryCreateFunnel() {
 
       {step === 'complete' && <StoryCompletionLoading />}
 
+      <StoryCreateResumeDialog
+        open={resumeDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeResumeDialog();
+          }
+        }}
+        onContinue={handleResumeContinue}
+        onDiscard={handleResumeDiscard}
+      />
       <LoginRequiredDialog
         trigger={guestLimitTrigger}
         onOpenChange={(open) => {

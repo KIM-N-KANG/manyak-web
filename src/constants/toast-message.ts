@@ -1,7 +1,8 @@
 export const TOAST_MESSAGE = {
-  STORY_COMPLETED: '스토리를 완성했어요',
-  STORY_DELETED: '스토리를 삭제했어요',
-  CHAT_DELETED: '채팅을 삭제했어요',
+  STORY_COMPLETED: '스토리가 완성되었어요',
+  STORY_DRAFT_SAVED: '스토리가 임시 저장되었어요',
+  STORY_DELETED: '스토리가 삭제되었어요',
+  CHAT_DELETED: '채팅이 삭제되었어요',
   STORY_DELETE_FAILED: '스토리 삭제에 실패했어요',
   CHAT_DELETE_FAILED: '채팅 삭제에 실패했어요',
   CHAT_START_FAILED: '채팅을 시작하지 못했어요',
@@ -13,6 +14,10 @@ export const TOAST_MESSAGE = {
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요',
   LOGIN_FAILED: '로그인에 실패했어요',
   SESSION_EXPIRED: '세션이 만료되어 로그아웃되었어요',
+  MIGRATION_SUCCEEDED: (storyCount: number, chatCount: number) =>
+    `스토리 ${storyCount}개, 채팅 ${chatCount}개를 계정으로 옮겼어요`,
+  MIGRATION_ALREADY_DONE:
+    '이미 옮긴 적이 있어 이 기기의 스토리와 채팅은 옮기지 못했어요',
   ATTENDANCE_CLAIMED: (amount: number) =>
     `출석 체크 보상으로 ${amount} 크레딧을 받았어요`,
   ATTENDANCE_ALREADY: '오늘은 이미 출석 체크했어요',

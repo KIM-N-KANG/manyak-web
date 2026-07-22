@@ -118,3 +118,59 @@ describe('parsePendingCreationRequest', () => {
     ).toBeNull();
   });
 });
+
+const draftRecord: PendingCreationRequest = {
+  stage: 'STORY_DRAFT',
+  requestId: '33333333-3333-4333-8333-333333333333',
+  step: 'additional-info',
+  generationRequest,
+  generationResult,
+  activeStorylineIndex: 0,
+  selectedStoryline,
+  additionalInfos: ['직접 입력한 추가 정보'],
+  selectedRecommendations: ['추천 정보'],
+  createdStoryId: null,
+  completionRequest: null,
+};
+
+describe('parsePendingCreationRequest — STORY_DRAFT', () => {
+  it('유효한 draft 레코드를 파싱한다', () => {
+    expect(parsePendingCreationRequest(JSON.stringify(draftRecord))).toEqual(
+      draftRecord,
+    );
+  });
+
+  it('storyline-select 스텝은 selectedStoryline이 null이어도 유효하다', () => {
+    const record = {
+      ...draftRecord,
+      step: 'storyline-select',
+      selectedStoryline: null,
+    };
+
+    expect(parsePendingCreationRequest(JSON.stringify(record))).toEqual(record);
+  });
+
+  it('additional-info 스텝에 selectedStoryline이 없으면 null을 반환한다', () => {
+    const record = { ...draftRecord, selectedStoryline: null };
+
+    expect(parsePendingCreationRequest(JSON.stringify(record))).toBeNull();
+  });
+
+  it('step 값이 어긋나면 null을 반환한다', () => {
+    const record = { ...draftRecord, step: 'complete' };
+
+    expect(parsePendingCreationRequest(JSON.stringify(record))).toBeNull();
+  });
+
+  it('additionalInfos가 문자열 배열이 아니면 null을 반환한다', () => {
+    const record = { ...draftRecord, additionalInfos: [1, 2] };
+
+    expect(parsePendingCreationRequest(JSON.stringify(record))).toBeNull();
+  });
+
+  it('createdStoryId가 문자열도 null도 아니면 null을 반환한다', () => {
+    const record = { ...draftRecord, createdStoryId: 7 };
+
+    expect(parsePendingCreationRequest(JSON.stringify(record))).toBeNull();
+  });
+});

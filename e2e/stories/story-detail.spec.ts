@@ -234,7 +234,7 @@ test.describe('스토리 상세', () => {
     await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
-    await expect(page.getByText('스토리를 삭제했어요')).toBeVisible();
+    await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
   });
 

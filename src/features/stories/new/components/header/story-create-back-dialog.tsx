@@ -17,6 +17,10 @@ type StoryCreateBackDialogProps = {
   onConfirm: () => void;
 };
 
+/**
+ * 이탈 소실 경고 다이얼로그. 내용이 보존되는 이탈은 묻지 않고 즉시 나가므로,
+ * 저장할 수 없는 이탈(생성 실패 등)에서만 열린다.
+ */
 export function StoryCreateBackDialog({
   open,
   onOpenChange,
