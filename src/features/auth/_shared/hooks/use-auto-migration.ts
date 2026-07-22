@@ -106,7 +106,7 @@ export function useAutoMigration(): void {
                 markMigrationClosedFor(userId);
               }
 
-              toast(TOAST_MESSAGE.MIGRATION_ALREADY_DONE);
+              toast.info(TOAST_MESSAGE.MIGRATION_ALREADY_DONE);
 
               return;
             }

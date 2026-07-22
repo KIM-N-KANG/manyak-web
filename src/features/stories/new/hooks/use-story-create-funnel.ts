@@ -745,7 +745,7 @@ export function useStoryCreateFunnel() {
     }
 
     if (outcome.type !== 'discard') {
-      toast(TOAST_MESSAGE.STORY_DRAFT_SAVED);
+      toast.success(TOAST_MESSAGE.STORY_DRAFT_SAVED);
     }
 
     confirmLeave();
