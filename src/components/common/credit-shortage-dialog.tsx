@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import { useMe } from '@/api/generated/endpoints/auth/auth';
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,7 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { useClaimAttendance } from '@/features/more/_shared/hooks/use-claim-attendance';
 import { type CreditShortageTrigger, track } from '@/observability/analytics';
@@ -95,12 +95,11 @@ export function CreditShortageDialog({
             className="relative"
             disabled={!isMeReady || attendedToday || isClaiming}
             onClick={handleAttendance}>
-            <span className={isClaiming ? 'invisible' : undefined}>
+            <LoadingButtonContent
+              isLoading={isClaiming}
+              loadingLabel="출석 체크 중">
               {attendedToday ? '출석 완료' : '출석 체크하기'}
-            </span>
-            {isClaiming && (
-              <Spinner className="absolute" aria-label="출석 체크 중" />
-            )}
+            </LoadingButtonContent>
           </Button>
           <Button type="button" onClick={handleEarn}>
             친구 초대 하러 가기

@@ -59,6 +59,39 @@ test.describe('스토리 목록', () => {
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
   });
 
+  test('게스트는 헤더의 로그인 버튼으로 로그인 화면에 간다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+
+    await page.goto('/');
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: '로그인' })
+      .click();
+
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test('로그인 상태에서는 헤더에 로그인 버튼이 없다', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/stories**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '회원의 서재')]),
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: '로그인' }),
+    ).toBeHidden();
+  });
+
   test('카드를 누르면 스토리 상세로 이동한다 (US-2-2)', async ({ page }) => {
     await seedStoryIds(page, ['s1']);
     await page.route(STORIES_BATCH, async (route) => {
