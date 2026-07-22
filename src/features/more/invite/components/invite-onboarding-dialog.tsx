@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Spinner } from '@/components/ui/spinner';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { track } from '@/observability/analytics';
 
@@ -120,10 +120,14 @@ export function InviteOnboardingDialog() {
             <DialogFooter>
               <Button
                 type="button"
-                className="col-span-full"
+                className="relative col-span-full"
                 disabled={isCompleting}
                 onClick={() => void complete({ fromRedeem: true })}>
-                {isCompleting ? <Spinner /> : '닫기'}
+                <LoadingButtonContent
+                  isLoading={isCompleting}
+                  loadingLabel="닫는 중">
+                  닫기
+                </LoadingButtonContent>
               </Button>
             </DialogFooter>
           </div>
