@@ -56,6 +56,7 @@ import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateStep } from '../types';
+import type { BackExitOutcome } from '../utils/back-exit-draft';
 import { resolveBackExit } from '../utils/back-exit-draft';
 import {
   resolveErrorSettlement,
@@ -154,7 +155,7 @@ export function useStoryCreateFunnel() {
 
   const { confirmLeave, leaveAfterCleanup } = usePreventPageLeave({
     enabled: shouldConfirmBack,
-    onBackAttempt: () => setIsBackDialogOpen(true),
+    onBackAttempt: () => handleBackAttempt(),
   });
 
   // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
@@ -719,28 +720,9 @@ export function useStoryCreateFunnel() {
     createStory.mutate({ data: request });
   };
 
-  const handleHeaderBack = () => {
-    if (shouldConfirmBack) {
-      setIsBackDialogOpen(true);
-
-      return;
-    }
-
-    router.back();
-  };
-
-  // 이탈 다이얼로그 문구 분기: 진행 중 요청(원 요청·복구)이 있거나 생성 결과가
-  // 있으면 이탈해도 내용이 보존되므로 임시 저장 안내를 띄운다.
-  const willSaveDraftOnExit =
-    generateStorylines.isPending ||
-    recovery.recoveringStage !== null ||
-    generationResult !== null;
-
-  const handleConfirmBack = () => {
-    track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
-
-    // 진행 중 요청이 있으면 슬롯을 유지하고, 생성 결과가 있으면 draft로 저장한다.
-    const outcome = resolveBackExit({
+  // 진행 중 요청이 있으면 슬롯을 유지하고, 생성 결과가 있으면 draft로 저장한다.
+  const resolveCurrentBackExit = () =>
+    resolveBackExit({
       slotRecord: loadPendingCreationRequest(),
       step,
       generationRequest,
@@ -754,13 +736,52 @@ export function useStoryCreateFunnel() {
       draftRequestId: createClientId(),
     });
 
+  // 이탈 확정 공통 처리: 저장할 결과가 있으면 draft로 저장하고, 내용이
+  // 보존되는 이탈(임시 저장·진행 중 복구)이면 토스트로 알린 뒤 떠난다.
+  const exitWithOutcome = (outcome: BackExitOutcome) => {
     if (outcome.type === 'save-draft') {
       savePendingCreationRequest(outcome.record);
       track('client_storyCreate_draftSaved', { step: outcome.record.step });
     }
 
-    setIsBackDialogOpen(false);
+    if (outcome.type !== 'discard') {
+      toast(TOAST_MESSAGE.STORY_DRAFT_SAVED);
+    }
+
     confirmLeave();
+  };
+
+  // 뒤로가기 이탈 시도: 내용이 보존되면 묻지 않고 즉시 이탈하고,
+  // 보존할 수 없을 때만 소실 경고 다이얼로그를 띄운다.
+  const handleBackAttempt = () => {
+    const outcome = resolveCurrentBackExit();
+
+    if (outcome.type === 'discard') {
+      setIsBackDialogOpen(true);
+
+      return;
+    }
+
+    track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
+    exitWithOutcome(outcome);
+  };
+
+  const handleHeaderBack = () => {
+    if (shouldConfirmBack) {
+      handleBackAttempt();
+
+      return;
+    }
+
+    router.back();
+  };
+
+  // 소실 경고 다이얼로그에서 이탈을 확정한 경우. 다이얼로그가 열린 사이 상태가
+  // 변할 수 있으므로 이탈 판정은 확정 시점에 다시 수행한다.
+  const handleConfirmBack = () => {
+    track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
+    setIsBackDialogOpen(false);
+    exitWithOutcome(resolveCurrentBackExit());
   };
 
   return {
@@ -810,7 +831,6 @@ export function useStoryCreateFunnel() {
     handleCompleteStory,
     backDialogOpen: isBackDialogOpen,
     onBackDialogOpenChange: setIsBackDialogOpen,
-    willSaveDraftOnExit,
     resumeDialogOpen: draft.isResumeDialogOpen,
     handleResumeContinue: draft.handleResumeContinue,
     handleResumeDiscard: draft.handleResumeDiscard,

@@ -10,8 +10,6 @@ import { StoryCreateBackDialog } from './story-create-back-dialog';
 type StoryCreateHeaderProps = {
   step: StoryCreateStep;
   backDialogOpen: boolean;
-  /** 이탈 시 내용이 임시 저장되는 상태인지 — 이탈 다이얼로그 문구 분기 */
-  willSaveDraft: boolean;
   onBackClick: () => void;
   onBackDialogOpenChange: (open: boolean) => void;
   onConfirmBack: () => void;
@@ -20,7 +18,6 @@ type StoryCreateHeaderProps = {
 export function StoryCreateHeader({
   step,
   backDialogOpen,
-  willSaveDraft,
   onBackClick,
   onBackDialogOpenChange,
   onConfirmBack,
@@ -45,7 +42,6 @@ export function StoryCreateHeader({
       </header>
       <StoryCreateBackDialog
         open={backDialogOpen}
-        willSaveDraft={willSaveDraft}
         onOpenChange={onBackDialogOpenChange}
         onConfirm={onConfirmBack}
       />
