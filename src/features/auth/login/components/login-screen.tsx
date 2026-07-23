@@ -92,7 +92,8 @@ export function LoginScreen() {
             <Link href={APP_PATH.PRIVACY} className="underline">
               개인정보처리방침
             </Link>
-            에 동의하는 것으로 간주해요
+            에<br />
+            동의하는 것으로 간주해요
           </p>
         </div>
       </main>
