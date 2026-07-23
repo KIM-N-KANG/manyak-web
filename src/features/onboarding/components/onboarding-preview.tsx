@@ -1,10 +1,41 @@
+'use client';
+
+import { useReducedMotion } from 'motion/react';
+
+const PREVIEW_POSTER = '/onboarding/onboarding-preview.jpg';
+const PREVIEW_LABEL =
+  '키워드를 고르고 스토리라인을 선택해 스토리를 만드는 과정';
+
 export function OnboardingPreview() {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <div className="flex min-h-0 flex-1 p-4 pb-6">
       <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-muted">
-        <p className="text-sm text-foreground-tertiary">
-          스토리 만들기 미리보기
-        </p>
+        {prefersReducedMotion ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={PREVIEW_POSTER}
+            alt={PREVIEW_LABEL}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <video
+            className="h-full w-full object-cover"
+            poster={PREVIEW_POSTER}
+            aria-label={PREVIEW_LABEL}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata">
+            <source src="/onboarding/onboarding-preview.mp4" type="video/mp4" />
+            <source
+              src="/onboarding/onboarding-preview.webm"
+              type="video/webm"
+            />
+          </video>
+        )}
       </div>
     </div>
   );

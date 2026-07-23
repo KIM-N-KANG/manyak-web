@@ -4,7 +4,7 @@ import {
   skipOnboarding,
   test,
 } from '../fixtures/test';
-import { waitForFonts } from '../fixtures/visual';
+import { freezeVideos, waitForFonts } from '../fixtures/visual';
 
 /**
  * 온보딩 화면(게스트 온보딩 페이지·신규 가입 초대 코드 다이얼로그)의 정적 상태를
@@ -22,6 +22,7 @@ test.describe('온보딩 비주얼', () => {
         name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toBeVisible();
+    await freezeVideos(page);
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('onboarding-guest-page.png');
   });
