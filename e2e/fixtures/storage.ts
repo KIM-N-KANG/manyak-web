@@ -15,7 +15,7 @@ import {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 
-/** 온보딩을 "이미 봄"으로 표시해 다이얼로그가 뜨지 않게 한다(US-8-3). */
+/** 온보딩을 "이미 봄"으로 표시해 온보딩 페이지로 리다이렉트되지 않게 한다(US-8-3). */
 export async function skipOnboarding(page: Page): Promise<void> {
   await page.addInitScript(
     ([key, value]) => {
