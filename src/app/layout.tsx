@@ -1,6 +1,7 @@
 import './globals.css';
 
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
 import { InAppBrowserEscape } from '@/components/layout/in-app-browser-escape';
@@ -56,6 +57,15 @@ export default function RootLayout({
       lang="ko"
       className={`${pretendard.variable} ${maruburi.variable} antialiased`}
       suppressHydrationWarning>
+      <head>
+        {process.env.NODE_ENV === 'development' && (
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        )}
+      </head>
       {/* suppressHydrationWarning: 카카오톡 iOS 웹뷰가 body에 -webkit-text-size-adjust 스타일을 주입해 속성 불일치 경고가 발생 */}
       <body
         className="bg-border font-sans text-foreground"
