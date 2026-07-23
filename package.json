@@ -6,6 +6,7 @@
   "scripts": {
     "api:generate": "orval --config ./orval.config.ts && eslint --fix src/api/generated",
     "dev": "next dev",
+    "dev:grab": "REACT_GRAB=1 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
