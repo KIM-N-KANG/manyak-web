@@ -22,6 +22,17 @@ test.describe('온보딩 비주얼', () => {
         name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toBeVisible();
+    // 등장 애니메이션(마지막 요소는 버튼 영역)이 끝난 정적 상태에서 찍는다.
+    await expect
+      .poll(() =>
+        page
+          .getByRole('button', { name: '첫 장면 만들기' })
+          .evaluate(
+            (button) =>
+              getComputedStyle(button.parentElement as HTMLElement).opacity,
+          ),
+      )
+      .toBe('1');
     await freezeVideos(page);
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('onboarding-guest-page.png');

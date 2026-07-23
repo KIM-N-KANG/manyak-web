@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
+import { m, useReducedMotion, type Variants } from 'motion/react';
 import { useRouter } from 'next/navigation';
 
 import { ManyakLogo } from '@/components/layout/manyak-logo';
@@ -15,9 +16,19 @@ import { markOnboardingEntry } from '../utils/onboarding-entry-storage';
 import { markOnboardingSeen } from '../utils/onboarding-storage';
 import { OnboardingPreview } from './onboarding-preview';
 
+// 위에서 아래로 읽는 순서를 따라가는 등장 시점(초). 타이틀 두 줄은
+// 소설 도입부처럼 반 박자 간격을 두고, CTA가 마지막에 나타난다.
+const ENTRANCE_DELAY = {
+  titleSecondLine: 0.35,
+  description: 0.55,
+  preview: 0.7,
+  buttons: 0.85,
+} as const;
+
 export function OnboardingScreen() {
   const router = useRouter();
   const gate = useOnboardingGate();
+  const prefersReducedMotion = useReducedMotion();
   const hasChosenRef = useRef(false);
   const hasTrackedViewRef = useRef(false);
 
@@ -53,31 +64,69 @@ export function OnboardingScreen() {
     router.replace(APP_PATH.MAIN.STORIES);
   };
 
+  const rise: Variants = {
+    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 12 },
+    show: (delay: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay, duration: 0.3, ease: 'easeOut' },
+    }),
+  };
+
+  const previewRise: Variants = {
+    hidden: { opacity: 0, scale: prefersReducedMotion ? 1 : 0.97 },
+    show: (delay: number) => ({
+      opacity: 1,
+      scale: 1,
+      transition: { delay, duration: 0.35, ease: 'easeOut' },
+    }),
+  };
+
   if (gate !== 'eligible') {
     return null;
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <m.div
+      initial="hidden"
+      animate="show"
+      className="flex h-full min-h-0 flex-col">
       <header className="flex h-14 shrink-0 items-center bg-background px-4">
         <ManyakLogo className="h-6 w-auto text-primary" />
       </header>
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex shrink-0 flex-col items-start gap-1 p-4">
           <h1 className="text-xl font-semibold">
-            {ONBOARDING_TITLE_LINES.map((titleLine) => (
-              <span key={titleLine} className="block">
+            {ONBOARDING_TITLE_LINES.map((titleLine, index) => (
+              <m.span
+                key={titleLine}
+                variants={rise}
+                custom={index === 0 ? 0 : ENTRANCE_DELAY.titleSecondLine}
+                className="block">
                 {titleLine}
-              </span>
+              </m.span>
             ))}
           </h1>
-          <p className="text-foreground-secondary">{ONBOARDING_DESCRIPTION}</p>
+          <m.p
+            variants={rise}
+            custom={ENTRANCE_DELAY.description}
+            className="text-foreground-secondary">
+            {ONBOARDING_DESCRIPTION}
+          </m.p>
         </div>
 
-        <OnboardingPreview />
+        <m.div
+          variants={previewRise}
+          custom={ENTRANCE_DELAY.preview}
+          className="flex min-h-0 flex-1">
+          <OnboardingPreview />
+        </m.div>
       </main>
 
-      <nav className="flex w-full shrink-0 items-center gap-2 bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] [&>button]:flex-1">
+      <m.nav
+        variants={rise}
+        custom={ENTRANCE_DELAY.buttons}
+        className="flex w-full shrink-0 items-center gap-2 bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] [&>button]:flex-1">
         <Button
           type="button"
           size="lg"
@@ -88,7 +137,7 @@ export function OnboardingScreen() {
         <Button type="button" size="lg" onClick={handleStartCreate}>
           첫 장면 만들기
         </Button>
-      </nav>
-    </div>
+      </m.nav>
+    </m.div>
   );
 }

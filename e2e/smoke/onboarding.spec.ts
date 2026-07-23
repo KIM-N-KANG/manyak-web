@@ -25,6 +25,18 @@ test.describe('온보딩', () => {
     await expect(
       page.getByRole('button', { name: '첫 장면 만들기' }),
     ).toBeVisible();
+    // 등장 애니메이션의 이동(translate)이 일시적으로 오버플로를 만들 수
+    // 있으므로, 마지막 요소(버튼 영역)가 자리를 잡은 뒤에 검사한다.
+    await expect
+      .poll(() =>
+        page
+          .getByRole('button', { name: '첫 장면 만들기' })
+          .evaluate(
+            (button) =>
+              getComputedStyle(button.parentElement as HTMLElement).opacity,
+          ),
+      )
+      .toBe('1');
 
     const overflow = await page.evaluate(() =>
       [...document.querySelectorAll('*')].some(
