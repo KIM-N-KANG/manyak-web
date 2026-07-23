@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { track } from '@/observability/analytics';
@@ -58,8 +59,11 @@ export function OnboardingScreen() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <header className="flex h-14 shrink-0 items-center bg-background px-4">
+        <ManyakLogo className="h-6 w-auto text-primary" />
+      </header>
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="flex shrink-0 flex-col items-start gap-1 p-4 pt-8">
+        <div className="flex shrink-0 flex-col items-start gap-1 p-4">
           <h1 className="text-xl font-semibold">
             {ONBOARDING_TITLE_LINES.map((titleLine) => (
               <span key={titleLine} className="block">
