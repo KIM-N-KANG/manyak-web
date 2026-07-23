@@ -3,17 +3,20 @@
 import { useEffect, useRef } from 'react';
 
 import { m, useReducedMotion, type Variants } from 'motion/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
-import { APP_PATH } from '@/constants/app-path';
+import { APP_PATH, type MainAppPath } from '@/constants/app-path';
 import { track } from '@/observability/analytics';
 
 import { ONBOARDING_DESCRIPTION, ONBOARDING_TITLE_LINES } from '../constants';
 import { useOnboardingGate } from '../hooks/use-onboarding-gate';
 import { markOnboardingEntry } from '../utils/onboarding-entry-storage';
-import { markOnboardingSeen } from '../utils/onboarding-storage';
+import {
+  markOnboardingSeen,
+  setOnboardingSeenCookie,
+} from '../utils/onboarding-storage';
 import { OnboardingPreview } from './onboarding-preview';
 
 // 위에서 아래로 읽는 순서를 따라가는 등장 시점(초). 타이틀 두 줄은
@@ -25,10 +28,27 @@ const ENTRANCE_DELAY = {
   buttons: 0.85,
 } as const;
 
+const MAIN_PATHS = new Set<string>(Object.values(APP_PATH.MAIN));
+
+/**
+ * proxy가 넘긴 원래 목적지(`from`)를 되돌아갈 경로로 검증한다.
+ * 메인 탭 경로만 허용해 임의 값으로의 이동을 막는다.
+ *
+ * @param from `from` 쿼리 값(없으면 null)
+ * @returns 되돌아갈 메인 탭 경로(기본값 홈)
+ */
+function resolveReturnPath(from: string | null): MainAppPath {
+  return from !== null && MAIN_PATHS.has(from)
+    ? (from as MainAppPath)
+    : APP_PATH.MAIN.STORIES;
+}
+
 export function OnboardingScreen() {
   const router = useRouter();
   const gate = useOnboardingGate();
   const prefersReducedMotion = useReducedMotion();
+  const searchParams = useSearchParams();
+  const returnPath = resolveReturnPath(searchParams.get('from'));
   const hasChosenRef = useRef(false);
   const hasTrackedViewRef = useRef(false);
 
@@ -38,7 +58,8 @@ export function OnboardingScreen() {
     }
 
     if (gate === 'ineligible') {
-      router.replace(APP_PATH.MAIN.STORIES);
+      setOnboardingSeenCookie();
+      router.replace(returnPath);
 
       return;
     }
@@ -47,7 +68,7 @@ export function OnboardingScreen() {
       hasTrackedViewRef.current = true;
       track('client_onboarding_viewed');
     }
-  }, [gate, router]);
+  }, [gate, returnPath, router]);
 
   const handleStartCreate = () => {
     hasChosenRef.current = true;

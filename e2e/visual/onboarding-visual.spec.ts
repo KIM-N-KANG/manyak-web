@@ -16,7 +16,7 @@ test.describe('온보딩 비주얼', () => {
   test('게스트 온보딩 페이지 (ONBD-GUEST)', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
     await expect(
       page.getByRole('heading', {
         name: '눈을 떠보니 스토리 속 주인공이 되었다',

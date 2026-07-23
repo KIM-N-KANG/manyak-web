@@ -6,6 +6,7 @@ import {
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
+  ONBOARDING_SEEN_COOKIE,
   ONBOARDING_SEEN_STORAGE_KEY,
   ONBOARDING_SEEN_VALUE,
 } from '@/features/onboarding/constants';
@@ -15,8 +16,19 @@ import {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 
-/** 온보딩을 "이미 봄"으로 표시해 온보딩 페이지로 리다이렉트되지 않게 한다(US-8-3). */
+/**
+ * 온보딩을 "이미 봄"으로 표시해 온보딩 페이지로 리다이렉트되지 않게 한다(US-8-3).
+ * 서버(proxy) 판정용 쿠키와 클라이언트 가드용 로컬스토리지를 함께 심는다.
+ */
 export async function skipOnboarding(page: Page): Promise<void> {
+  await page.context().addCookies([
+    {
+      name: ONBOARDING_SEEN_COOKIE,
+      value: ONBOARDING_SEEN_VALUE,
+      domain: 'localhost',
+      path: '/',
+    },
+  ]);
   await page.addInitScript(
     ([key, value]) => {
       window.localStorage.setItem(key, value);

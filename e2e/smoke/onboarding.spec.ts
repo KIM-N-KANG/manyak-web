@@ -2,9 +2,13 @@ import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 test.describe('온보딩', () => {
   test('새 방문자는 첫 진입 시 온보딩 페이지로 이동한다', async ({ page }) => {
-    await page.goto('/');
+    const response = await page.goto('/');
 
-    await expect(page).toHaveURL(/\/onboarding$/);
+    // 홈이 그려진 뒤 클라이언트에서 이동하면 화면이 깜빡이므로,
+    // 서버(proxy) 리다이렉트로 도착했는지 응답 URL로 확인한다.
+    expect(new URL(response!.url()).pathname).toBe('/onboarding');
+
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
     await expect(
       page.getByRole('heading', {
         name: '눈을 떠보니 스토리 속 주인공이 되었다',
@@ -21,7 +25,7 @@ test.describe('온보딩', () => {
   test('온보딩 페이지는 스크롤 없이 한 화면에 들어온다', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
     await expect(
       page.getByRole('button', { name: '첫 장면 만들기' }),
     ).toBeVisible();
@@ -50,7 +54,7 @@ test.describe('온보딩', () => {
   test('미리보기 영상을 자동 재생한다', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
     const video = page.locator('video');
 
@@ -66,7 +70,7 @@ test.describe('온보딩', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
     await expect(page.locator('video')).toHaveCount(0);
     await expect(
       page.getByRole('img', {
@@ -78,7 +82,7 @@ test.describe('온보딩', () => {
   test('채팅 탭으로 진입해도 온보딩 페이지로 이동한다', async ({ page }) => {
     await page.goto('/chats');
 
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
   });
 
   test('온보딩을 본 사용자는 온보딩으로 이동하지 않는다', async ({ page }) => {
@@ -91,10 +95,17 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('만든 스토리가 있으면 온보딩으로 이동하지 않는다', async ({ page }) => {
+  test('만든 스토리만 있는 방문자(쿠키 없음)는 온보딩을 노출하지 않고 홈으로 되돌린다', async ({
+    page,
+  }) => {
     await seedStoryIds(page, ['s1']);
     await page.goto('/');
 
+    // 서버(proxy)는 쿠키가 없어 일단 온보딩으로 보내지만, 페이지 가드가
+    // 생성 이력을 보고 쿠키를 심은 뒤 홈으로 되돌린다.
+    await expect(page).toHaveURL(/\/$/);
+
+    await page.reload();
     await expect(page).toHaveURL(/\/$/);
   });
 
@@ -111,7 +122,7 @@ test.describe('온보딩', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
     await page.getByRole('button', { name: '첫 장면 만들기' }).click();
 
@@ -128,7 +139,7 @@ test.describe('온보딩', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
     await page.getByRole('button', { name: '나중에 하기' }).click();
 

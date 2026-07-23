@@ -1,6 +1,6 @@
 import type { Route } from '@playwright/test';
 
-import { expect, test } from '../fixtures/test';
+import { expect, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
 // 같은 URL을 DELETE 로 삭제하므로 메서드로 분기해 모킹한다.
@@ -215,6 +215,8 @@ test.describe('스토리 상세', () => {
   test('스토리를 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-4-3)', async ({
     page,
   }) => {
+    // 삭제 후 홈 복귀 검증이 목적이므로 온보딩은 열람 처리 상태를 전제한다.
+    await skipOnboarding(page);
     await page.route(STORY_DETAIL, async (route) => {
       if (route.request().method() === 'DELETE') {
         await route.fulfill({ status: 204, body: '' });
