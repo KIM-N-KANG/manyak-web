@@ -74,11 +74,15 @@ export function OnboardingScreen() {
       </main>
 
       <nav className="flex w-full shrink-0 items-center gap-2 bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] [&>button]:flex-1">
-        <Button type="button" variant="secondary" onClick={handleSkip}>
-          먼저 둘러보기
+        <Button
+          type="button"
+          size="lg"
+          variant="secondary"
+          onClick={handleSkip}>
+          나중에 하기
         </Button>
-        <Button type="button" onClick={handleStartCreate}>
-          첫 스토리 만들기
+        <Button type="button" size="lg" onClick={handleStartCreate}>
+          첫 장면 만들기
         </Button>
       </nav>
     </div>

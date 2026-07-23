@@ -7,14 +7,14 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/onboarding$/);
     await expect(
       page.getByRole('heading', {
-        name: '뭘 쓸지 고민 말고 키워드부터 골라보세요',
+        name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: '첫 스토리 만들기' }),
+      page.getByRole('button', { name: '첫 장면 만들기' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: '먼저 둘러보기' }),
+      page.getByRole('button', { name: '나중에 하기' }),
     ).toBeVisible();
   });
 
@@ -23,7 +23,7 @@ test.describe('온보딩', () => {
 
     await expect(page).toHaveURL(/\/onboarding$/);
     await expect(
-      page.getByRole('button', { name: '첫 스토리 만들기' }),
+      page.getByRole('button', { name: '첫 장면 만들기' }),
     ).toBeVisible();
 
     const overflow = await page.evaluate(() =>
@@ -67,13 +67,13 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('"첫 스토리 만들기"를 누르면 스토리 생성으로 이동하고 뒤로가기로 온보딩에 돌아오지 않는다', async ({
+  test('"첫 장면 만들기"를 누르면 스토리 생성으로 이동하고 뒤로가기로 온보딩에 돌아오지 않는다', async ({
     page,
   }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding$/);
 
-    await page.getByRole('button', { name: '첫 스토리 만들기' }).click();
+    await page.getByRole('button', { name: '첫 장면 만들기' }).click();
 
     await expect(page).toHaveURL(/\/stories\/new$/);
     // 퍼널이 마운트돼야 뒤로가기 가드가 걸리므로 첫 스텝 렌더를 기다린다.
@@ -84,13 +84,13 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('"먼저 둘러보기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
+  test('"나중에 하기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
     page,
   }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding$/);
 
-    await page.getByRole('button', { name: '먼저 둘러보기' }).click();
+    await page.getByRole('button', { name: '나중에 하기' }).click();
 
     await expect(page).toHaveURL(/\/$/);
 
