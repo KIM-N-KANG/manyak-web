@@ -35,6 +35,34 @@ test.describe('온보딩', () => {
     expect(overflow).toBe(false);
   });
 
+  test('미리보기 영상을 자동 재생한다', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page).toHaveURL(/\/onboarding$/);
+
+    const video = page.locator('video');
+
+    await expect(video).toHaveCount(1);
+    await expect
+      .poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime))
+      .toBeGreaterThan(0);
+  });
+
+  test('모션 감소 설정에서는 영상 대신 정지 이미지를 보여준다', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+
+    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page.locator('video')).toHaveCount(0);
+    await expect(
+      page.getByRole('img', {
+        name: '키워드를 고르고 스토리라인을 선택해 스토리를 만드는 과정',
+      }),
+    ).toBeVisible();
+  });
+
   test('채팅 탭으로 진입해도 온보딩 페이지로 이동한다', async ({ page }) => {
     await page.goto('/chats');
 

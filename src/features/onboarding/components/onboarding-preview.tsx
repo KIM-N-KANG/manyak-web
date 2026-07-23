@@ -1,6 +1,7 @@
 'use client';
 
 import { useReducedMotion } from 'motion/react';
+import Image from 'next/image';
 
 const PREVIEW_POSTER = '/onboarding/onboarding-preview.jpg';
 const PREVIEW_LABEL =
@@ -11,13 +12,14 @@ export function OnboardingPreview() {
 
   return (
     <div className="flex min-h-0 flex-1 p-4 pb-6">
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-muted">
+      <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-muted">
         {prefersReducedMotion ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={PREVIEW_POSTER}
             alt={PREVIEW_LABEL}
-            className="h-full w-full object-cover"
+            fill
+            sizes="(max-width: 448px) 100vw, 448px"
+            className="object-cover"
           />
         ) : (
           <video
