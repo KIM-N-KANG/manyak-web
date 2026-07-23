@@ -16,6 +16,23 @@ test.describe('온보딩', () => {
     ).toBeVisible();
   });
 
+  test('온보딩 페이지는 스크롤 없이 한 화면에 들어온다', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(
+      page.getByRole('button', { name: '첫 스토리 만들기' }),
+    ).toBeVisible();
+
+    const overflow = await page.evaluate(() =>
+      [...document.querySelectorAll('*')].some(
+        (element) => element.scrollHeight - element.clientHeight > 1,
+      ),
+    );
+
+    expect(overflow).toBe(false);
+  });
+
   test('채팅 탭으로 진입해도 온보딩 페이지로 이동한다', async ({ page }) => {
     await page.goto('/chats');
 

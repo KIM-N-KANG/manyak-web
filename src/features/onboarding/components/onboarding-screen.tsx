@@ -58,8 +58,8 @@ export function OnboardingScreen() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <main className="flex min-h-0 flex-1 scroll-fade-b flex-col gap-6 overflow-y-auto overscroll-contain pt-6 pb-4">
-        <div className="flex flex-col items-start gap-1 px-4">
+      <main className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden pt-6 pb-4">
+        <div className="flex shrink-0 flex-col items-start gap-1 px-4">
           <h1 className="text-xl font-semibold">
             {ONBOARDING_TITLE_LINES.map((titleLine) => (
               <span key={titleLine} className="block">
@@ -74,7 +74,7 @@ export function OnboardingScreen() {
       </main>
 
       <nav className="flex w-full shrink-0 items-center gap-2 bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] [&>button]:flex-1">
-        <Button type="button" variant="outline" onClick={handleSkip}>
+        <Button type="button" variant="secondary" onClick={handleSkip}>
           나중에 하기
         </Button>
         <Button type="button" onClick={handleStartCreate}>
