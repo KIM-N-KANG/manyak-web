@@ -6,13 +6,15 @@ test.describe('온보딩', () => {
 
     await expect(page).toHaveURL(/\/onboarding$/);
     await expect(
-      page.getByRole('heading', { name: '키워드 몇 개로, 나만의 스토리 완성' }),
+      page.getByRole('heading', {
+        name: '뭘 쓸지 고민 말고 키워드부터 골라보세요',
+      }),
     ).toBeVisible();
     await expect(
       page.getByRole('button', { name: '첫 스토리 만들기' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: '나중에 하기' }),
+      page.getByRole('button', { name: '먼저 둘러보기' }),
     ).toBeVisible();
   });
 
@@ -82,13 +84,13 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('"나중에 하기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
+  test('"먼저 둘러보기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
     page,
   }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding$/);
 
-    await page.getByRole('button', { name: '나중에 하기' }).click();
+    await page.getByRole('button', { name: '먼저 둘러보기' }).click();
 
     await expect(page).toHaveURL(/\/$/);
 

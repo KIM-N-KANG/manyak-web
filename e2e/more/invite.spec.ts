@@ -637,7 +637,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: '키워드 몇 개로, 나만의 스토리 완성',
+        name: '뭘 쓸지 고민 말고 키워드부터 골라보세요',
       }),
     ).toBeVisible();
 
@@ -657,7 +657,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     ).toBeVisible();
     await expect(
       page.getByRole('heading', {
-        name: '키워드 몇 개로, 나만의 스토리 완성',
+        name: '뭘 쓸지 고민 말고 키워드부터 골라보세요',
       }),
     ).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(1);
