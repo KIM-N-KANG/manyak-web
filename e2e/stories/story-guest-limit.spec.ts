@@ -68,7 +68,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     ).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
 
-    await dialog.getByRole('button', { name: '나중에 하기' }).click();
+    await page.keyboard.press('Escape');
 
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });

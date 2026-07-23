@@ -16,12 +16,10 @@ export function InviteOnboardingCodeForm({
   disabled = false,
   isSubmitPending = false,
   onSuccess,
-  onSkip,
 }: {
   disabled?: boolean;
   isSubmitPending?: boolean;
   onSuccess?: () => void;
-  onSkip?: () => void;
 }) {
   const inputId = useId();
   const errorId = `${inputId}-error`;
@@ -82,15 +80,6 @@ export function InviteOnboardingCodeForm({
             loadingLabel="등록 중">
             등록하기
           </LoadingButtonContent>
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-foreground-tertiary hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
-          disabled={isBusy}
-          onClick={onSkip}>
-          나중에 하기
         </Button>
       </DialogFooter>
     </form>

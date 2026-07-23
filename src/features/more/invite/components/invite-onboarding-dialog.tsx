@@ -151,7 +151,6 @@ export function InviteOnboardingDialog() {
             disabled={isCompleting}
             isSubmitPending={isCompleting && hasRedeemed}
             onSuccess={handleRedeemSuccess}
-            onSkip={handleSkip}
           />
         )}
       </DialogContent>
