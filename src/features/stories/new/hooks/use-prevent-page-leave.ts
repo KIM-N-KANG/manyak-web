@@ -1,27 +1,35 @@
 import { useEffect, useRef } from 'react';
 
 type UsePreventPageLeaveOptions = {
-  enabled: boolean;
+  /** 새로고침·탭 닫기·주소창 이동 시 브라우저 기본 확인창을 띄울지 */
+  warnOnUnload: boolean;
+  /** 브라우저·모바일 뒤로가기를 더미 히스토리 항목으로 흡수할지 */
+  interceptBack: boolean;
   onBackAttempt: () => void;
 };
 
 /**
  * 퍼널처럼 단일 URL에서 진행되는 화면의 이탈을 가로채는 훅.
  *
- * - 새로고침 / 탭 닫기 / 주소창 이동: `beforeunload`로 브라우저 기본 확인창을 띄운다.
+ * - `warnOnUnload`: `beforeunload`로 브라우저 기본 확인창을 띄운다.
  *   (브라우저 보안 정책상 커스텀 다이얼로그는 표시할 수 없다.)
- * - 브라우저/모바일 뒤로가기: 더미 히스토리 항목으로 뒤로가기를 흡수하고
- *   `onBackAttempt`를 호출해 커스텀 다이얼로그를 띄울 수 있게 한다.
+ * - `interceptBack`: 더미 히스토리 항목으로 뒤로가기를 흡수하고 `onBackAttempt`를
+ *   호출해 커스텀 처리(다이얼로그·대체 이동)를 할 수 있게 한다.
  *
- * `enabled`인 동안 더미 항목은 항상 1개만 유지된다(popstate마다 다시 쌓음).
+ * 두 가드는 따로 켠다. 지울 내용이 없어 경고가 불필요한 스텝에서도, 돌아갈 앱 내
+ * 히스토리가 없으면 뒤로가기만은 흡수해야 하기 때문이다.
+ *
+ * `interceptBack`인 동안 더미 항목은 항상 1개만 유지된다(popstate마다 다시 쌓음).
  * 따라서 실제 이탈 시 `confirmLeave`는 더미 + 현재 페이지를 건너뛰어야 한다.
  *
- * @param enabled 이탈 가드를 활성화할지 여부
+ * @param warnOnUnload 새로고침·탭 닫기 경고를 띄울지 여부
+ * @param interceptBack 뒤로가기를 흡수할지 여부
  * @param onBackAttempt 뒤로가기를 흡수했을 때 호출되는 콜백
  * @returns 이탈 확정(`confirmLeave`)과 정리 후 이동(`leaveAfterCleanup`) 함수
  */
 export function usePreventPageLeave({
-  enabled,
+  warnOnUnload,
+  interceptBack,
   onBackAttempt,
 }: UsePreventPageLeaveOptions) {
   const onBackAttemptRef = useRef(onBackAttempt);
@@ -32,7 +40,7 @@ export function usePreventPageLeave({
   }, [onBackAttempt]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!warnOnUnload) {
       return;
     }
 
@@ -40,6 +48,18 @@ export function usePreventPageLeave({
       // preventDefault만으로 브라우저 기본 확인창을 띄운다(모던 브라우저 기준).
       event.preventDefault();
     };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [warnOnUnload]);
+
+  useEffect(() => {
+    if (!interceptBack) {
+      return;
+    }
 
     const handlePopState = () => {
       // 뒤로가기로 더미 항목을 빠져나왔으므로 다시 쌓아 현재 위치를 유지한다.
@@ -49,11 +69,9 @@ export function usePreventPageLeave({
 
     // 브라우저/모바일 뒤로가기를 흡수할 더미 히스토리 항목
     window.history.pushState(null, '', window.location.href);
-    window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', handlePopState);
 
     const teardown = () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
     };
 
@@ -63,7 +81,7 @@ export function usePreventPageLeave({
       teardown();
       teardownRef.current = null;
     };
-  }, [enabled]);
+  }, [interceptBack]);
 
   /**
    * 사용자가 이탈을 확정했을 때. 가드를 해제하고 더미 항목과 현재 페이지를
