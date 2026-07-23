@@ -32,4 +32,31 @@ test.describe('온보딩', () => {
 
     await expect(page).toHaveURL(/\/stories\/new$/);
   });
+
+  test('"나중에 하기"를 누르면 닫히고 새로고침 후에도 다시 열리지 않는다', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    await page.getByRole('button', { name: '나중에 하기' }).click();
+
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
+  test('Escape와 배경 클릭으로는 온보딩을 닫지 않는다', async ({ page }) => {
+    await page.goto('/');
+
+    const dialog = page.getByRole('alertdialog');
+
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeVisible();
+    await page
+      .locator('[data-slot="alert-dialog-overlay"]')
+      .click({ position: { x: 4, y: 4 } });
+    await expect(dialog).toBeVisible();
+  });
 });

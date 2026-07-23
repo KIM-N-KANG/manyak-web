@@ -75,20 +75,22 @@ export function InviteOnboardingCodeForm({
         </Field>
       </FieldGroup>
 
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={isBusy}
-          onClick={onSkip}>
-          나중에 하기
-        </Button>
+      <DialogFooter className="grid-cols-1">
         <Button className="relative" type="submit" disabled={isBusy}>
           <LoadingButtonContent
             isLoading={isRedeeming || isSubmitPending}
             loadingLabel="등록 중">
             등록하기
           </LoadingButtonContent>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-foreground-tertiary hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+          disabled={isBusy}
+          onClick={onSkip}>
+          나중에 하기
         </Button>
       </DialogFooter>
     </form>

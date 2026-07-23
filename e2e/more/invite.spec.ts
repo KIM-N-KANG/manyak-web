@@ -804,7 +804,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     ).toBeVisible();
   });
 
-  test('Escape와 배경 클릭으로는 pending 다이얼로그를 닫지 않는다', async ({
+  test('배경 클릭은 나중에 하기와 동일하게 세션 플래그를 소비한다', async ({
     page,
   }) => {
     await preparePendingMember(page);
@@ -813,12 +813,40 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     const dialog = page.getByRole('dialog');
 
     await expect(dialog).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeVisible();
+
+    const updateResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') &&
+        response.request().method() === 'POST',
+    );
+
     await page
       .locator('[data-slot="dialog-overlay"]')
       .click({ position: { x: 4, y: 4 } });
+
+    const response = await updateResponse;
+
+    expect(response.request().postDataJSON()).toMatchObject({
+      data: {
+        inviteOnboardingPending: false,
+        expectedUserId: 'user-1',
+      },
+    });
+    await expect(dialog).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
+  test('Escape로도 pending 다이얼로그를 닫는다', async ({ page }) => {
+    await preparePendingMember(page);
+    await page.goto('/');
+
+    const dialog = page.getByRole('dialog');
+
     await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
   });
 
   test('잘못된 입력은 다이얼로그를 유지하고 접근 가능한 오류를 표시한다', async ({

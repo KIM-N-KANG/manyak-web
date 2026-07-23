@@ -81,6 +81,14 @@ export function LoginRequiredDialog({
             </Link>
             에 동의하는 것으로 간주해요
           </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-foreground-tertiary hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+            onClick={() => handleOpenChange(false)}>
+            나중에 하기
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

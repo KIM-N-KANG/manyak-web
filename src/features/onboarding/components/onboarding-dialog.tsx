@@ -13,7 +13,7 @@ import {
 import { useOnboardingDialog } from '../hooks/use-onboarding-dialog';
 
 export function OnboardingDialog() {
-  const { isOpen, handleStartCreate } = useOnboardingDialog();
+  const { isOpen, handleStartCreate, handleSkip } = useOnboardingDialog();
 
   return (
     <AlertDialog open={isOpen}>
@@ -30,11 +30,17 @@ export function OnboardingDialog() {
             이어가보세요
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction
-            className="col-span-full"
-            onClick={handleStartCreate}>
+        <AlertDialogFooter className="grid-cols-1">
+          <AlertDialogAction onClick={handleStartCreate}>
             첫 스토리 만들기
+          </AlertDialogAction>
+          <AlertDialogAction
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-foreground-tertiary hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+            onClick={handleSkip}>
+            나중에 하기
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -19,7 +19,7 @@ import {
  * 생성한 스토리와 채팅이 모두 없는 신규 방문자에게 온보딩 다이얼로그를 띄우는 훅.
  * 한 번 본 뒤에는 로컬스토리지에 기록해 다시 띄우지 않는다.
  *
- * @returns 다이얼로그 노출 여부와 생성 시작 핸들러
+ * @returns 다이얼로그 노출 여부와 생성 시작·건너뛰기 핸들러
  */
 export function useOnboardingDialog() {
   const router = useRouter();
@@ -51,8 +51,15 @@ export function useOnboardingDialog() {
     router.push(APP_PATH.CREATOR.STORY);
   };
 
+  const handleSkip = () => {
+    markOnboardingSeen();
+    track('client_onboarding_skipButton_clicked');
+    setIsOpen(false);
+  };
+
   return {
     isOpen: status === 'unauthenticated' && isOpen,
     handleStartCreate,
+    handleSkip,
   };
 }

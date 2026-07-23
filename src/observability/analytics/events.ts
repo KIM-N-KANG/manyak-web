@@ -42,6 +42,7 @@ export type AnalyticsEventProps = {
   // onboarding
   client_onboarding_viewed: void;
   client_onboarding_createButton_clicked: void;
+  client_onboarding_skipButton_clicked: void;
   // storyList
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;
