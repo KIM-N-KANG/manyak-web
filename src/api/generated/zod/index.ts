@@ -588,10 +588,78 @@ export const LoginWithGoogleBody = zod
       .describe(
         'Google에서 발급받은 ID 토큰(JWT). 서버가 Google 공개키로 검증한다.',
       ),
+    handoffCode: zod
+      .string()
+      .nullish()
+      .describe(
+        '인앱 브라우저에서 만든 로그인 핸드오프 코드(스펙 §4-3-5). 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가 X-Manyak-Device-Id 헤더보다 우선)와 게스트 데이터 이관을 함께 수행한다. 무효·만료면 헤더 디바이스 ID로 폴백하고 로그인은 정상 진행한다.',
+      ),
   })
   .describe('Google 로그인 요청');
 
 export const LoginWithGoogleResponse = zod.unknown();
+
+/**
+ * 외부 브라우저 랜딩이 코드를 검증하고 옮길 건수와 복귀 경로를 받습니다. PENDING 상태면 LANDED로 전이합니다. 스토리 제목·채팅 본문 같은 콘텐츠는 노출하지 않습니다.
+ * @summary 로그인 핸드오프 확인
+ */
+export const ConfirmHeader = zod.object({
+  'X-Manyak-Handoff-Code': zod.string(),
+});
+
+export const ConfirmResponse = zod.unknown();
+
+/**
+ * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
+ * @summary 로그인 핸드오프 생성
+ */
+export const CreateHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
+export const createBodyStoryIdsMin = 0;
+export const createBodyStoryIdsMax = 100;
+
+export const createBodyChatIdsMin = 0;
+export const createBodyChatIdsMax = 100;
+
+export const createBodyCallbackPathMin = 0;
+export const createBodyCallbackPathMax = 512;
+
+export const createBodyCallbackPathRegExp = new RegExp(
+  '^/(?![/\\\\])[^\\x00-\\x1F]*$',
+);
+
+export const CreateBody = zod
+  .object({
+    storyIds: zod
+      .array(zod.string())
+      .min(createBodyStoryIdsMin)
+      .max(createBodyStoryIdsMax)
+      .optional()
+      .describe(
+        '이관 대상 스토리 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용',
+      ),
+    chatIds: zod
+      .array(zod.string())
+      .min(createBodyChatIdsMin)
+      .max(createBodyChatIdsMax)
+      .optional()
+      .describe('이관 대상 채팅 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용'),
+    callbackPath: zod
+      .string()
+      .min(createBodyCallbackPathMin)
+      .max(createBodyCallbackPathMax)
+      .regex(createBodyCallbackPathRegExp)
+      .describe('로그인 후 복귀할 앱 내 상대 경로'),
+    sourceApp: zod
+      .enum(['kakaotalk', 'instagram', 'threads'])
+      .optional()
+      .describe('핸드오프를 만든 인앱 브라우저'),
+  })
+  .describe('로그인 핸드오프 생성 요청');
+
+export const CreateResponse = zod.void();
 
 /**
  * 목록에서 선택한 스토리의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
@@ -888,3 +956,13 @@ export const DeleteChatResponse = zod.void();
  * @summary 현재 로그인 사용자 조회
  */
 export const MeResponse = zod.unknown();
+
+/**
+ * 외부 로그인을 마치고 인앱 브라우저로 돌아왔을 때, 실제로 이관된 ID만 로컬에서 정리하기 위해 상태와 이관된 공개 ID 목록을 조회합니다. 이관되지 않은 ID는 여전히 게스트 소유이므로 지우면 안 됩니다.
+ * @summary 로그인 핸드오프 상태 조회
+ */
+export const StatusHeader = zod.object({
+  'X-Manyak-Handoff-Code': zod.string(),
+});
+
+export const StatusResponse = zod.unknown();
