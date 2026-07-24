@@ -2,8 +2,10 @@
 
 import { useEffect } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { ListStatus } from '@/components/common/list-status';
-import { BackHeader } from '@/components/layout/back-header';
+import { HomeOutlineIcon } from '@/components/icons/home-outline-icon';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { openExternalBrowser } from '@/features/auth/_shared/utils/external-browser-escape';
@@ -49,6 +51,7 @@ function scheduleKakaoBannerShown(): ReturnType<typeof setTimeout> {
 }
 
 export function InAppEscapeGuide({ app }: InAppEscapeGuideProps) {
+  const router = useRouter();
   const isKakao = app === 'kakaotalk';
 
   useEffect(() => {
@@ -75,7 +78,16 @@ export function InAppEscapeGuide({ app }: InAppEscapeGuideProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <BackHeader title="로그인" backHref={APP_PATH.MAIN.STORIES} />
+      <header className="flex h-14 shrink-0 items-center px-2">
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          aria-label="홈 화면으로 이동 버튼"
+          onClick={() => router.push(APP_PATH.MAIN.STORIES)}>
+          <HomeOutlineIcon aria-hidden="true" />
+        </Button>
+      </header>
       <ListStatus
         title={
           isKakao
