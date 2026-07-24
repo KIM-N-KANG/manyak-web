@@ -1,6 +1,11 @@
 import { expect, test as base } from '@playwright/test';
 
-import { mockApi } from './api-mock';
+import {
+  mockApi,
+  mockHandoffCreate,
+  mockHandoffSession,
+  mockHandoffStatus,
+} from './api-mock';
 
 // 모든 테스트에 API 안전망을 자동 적용한다.
 export const test = base.extend({
@@ -14,7 +19,9 @@ export { expect };
 export {
   seedChatIds,
   seedGuestUsage,
+  seedPendingHandoff,
   seedStoryIds,
   skipOnboarding,
 } from './storage';
 export { mockMemberSession } from './auth';
+export { mockHandoffCreate, mockHandoffSession, mockHandoffStatus };
