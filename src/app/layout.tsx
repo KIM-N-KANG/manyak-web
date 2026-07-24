@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
-import { InAppBrowserEscape } from '@/components/layout/in-app-browser-escape';
+import { InAppBrowserObserver } from '@/components/layout/in-app-browser-observer';
 import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
@@ -85,7 +85,7 @@ export default function RootLayout({
                       id={APP_FRAME_ID}
                       className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                       {children}
-                      <InAppBrowserEscape />
+                      <InAppBrowserObserver />
                     </div>
                     <Toaster />
                     <AnalyticsUserSync />
