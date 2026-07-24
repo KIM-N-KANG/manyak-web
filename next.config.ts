@@ -2,7 +2,12 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['192.168.0.28'],
+  // 실기기 dev 테스트용 교차 출처 허용 목록. 개발자별 터널 도메인·LAN IP는
+  // 로컬 값이므로 코드에 하드코딩하지 않고 .env.local의 ALLOWED_DEV_ORIGINS
+  // (콤마 구분)로 주입한다.
+  allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   output: 'standalone',
   reactCompiler: true,
   compiler: {
