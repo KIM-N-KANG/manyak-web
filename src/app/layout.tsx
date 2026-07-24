@@ -17,6 +17,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_FRAME_ID } from '@/constants/app-frame';
 import { AutoMigration } from '@/features/auth/_shared/components/auto-migration';
+import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
 import { InviteOnboardingDialog } from '@/features/more/invite/components/invite-onboarding-dialog';
 
 export const metadata: Metadata = {
@@ -90,6 +91,7 @@ export default function RootLayout({
                     <AnalyticsUserSync />
                     <SessionExpiryWatcher />
                     <AutoMigration />
+                    <HandoffCleanup />
                     <InviteOnboardingDialog />
                   </MotionProvider>
                 </ThemeProvider>
