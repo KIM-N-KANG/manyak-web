@@ -15,8 +15,13 @@ const identityServerMock = vi.hoisted(() => ({
   readAmplitudeDeviceIdOnServer: vi.fn(),
 }));
 
+const handoffCookieMock = vi.hoisted(() => ({
+  readHandoffCodeOnServer: vi.fn(),
+}));
+
 vi.mock('@/lib/auth/token-cookies', () => tokenCookiesMock);
 vi.mock('@/observability/analytics/identity-server', () => identityServerMock);
+vi.mock('@/lib/auth/handoff-cookie', () => handoffCookieMock);
 // 함수만 목킹하고 BackendAuthError 클래스는 실제 구현을 유지한다
 // (ensureFreshAccessToken의 원인 분류가 instanceof로 판별하기 때문).
 vi.mock('@/lib/auth/backend-client', async (importActual) => {
@@ -41,6 +46,7 @@ beforeEach(() => {
   tokenCookiesMock.hasNextAuthSessionCookie.mockResolvedValue(false);
   tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
   identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(undefined);
+  handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue(undefined);
 });
 
 describe('ensureFreshAccessToken', () => {
@@ -246,7 +252,11 @@ describe('establishBackendSession', () => {
     });
 
     expect(callOrder).toEqual(['login', 'me', 'write']);
-    expect(loginWithGoogleOnServer).toHaveBeenCalledWith('id-token', undefined);
+    expect(loginWithGoogleOnServer).toHaveBeenCalledWith(
+      'id-token',
+      undefined,
+      undefined,
+    );
     expect(fetchMeOnServer).toHaveBeenCalledWith('access-1');
   });
 
@@ -275,6 +285,36 @@ describe('establishBackendSession', () => {
     expect(loginWithGoogleOnServer).toHaveBeenCalledWith(
       'id-token',
       'amp-device-raw',
+      undefined,
+    );
+  });
+
+  it('핸드오프 쿠키가 있으면 코드를 로그인 호출에 함께 전달한다', async () => {
+    const { loginWithGoogleOnServer, fetchMeOnServer } =
+      await import('@/lib/auth/backend-client');
+
+    // 외부 랜딩이 심은 핸드오프 코드를 로그인 호출에 실어야 시드·이관이 함께 수행된다(스펙 §4-3-5).
+    identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(
+      'amp-device-raw',
+    );
+    handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue('handoff-code');
+    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      expiresIn: 1800,
+    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue({
+      id: 'user-1',
+      nickname: '만냐',
+      profileImageUrl: null,
+    });
+
+    await establishBackendSession('id-token');
+
+    expect(loginWithGoogleOnServer).toHaveBeenCalledWith(
+      'id-token',
+      'amp-device-raw',
+      'handoff-code',
     );
   });
 

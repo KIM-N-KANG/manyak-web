@@ -100,6 +100,33 @@ describe('loginWithGoogleOnServer', () => {
     expect(headers.get(DEVICE_ID_HEADER)).toBeNull();
   });
 
+  it('handoffCode를 주면 요청 body에 함께 담아 전송한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await loginWithGoogleOnServer('id-token', 'raw-device-id', 'handoff-code');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(JSON.parse(init.body as string)).toEqual({
+      idToken: 'id-token',
+      handoffCode: 'handoff-code',
+    });
+  });
+
+  it('handoffCode가 없으면 body에 handoffCode 필드를 생략한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await loginWithGoogleOnServer('id-token', 'raw-device-id');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
+  });
+
   it('실패 응답은 status와 응답 body를 담은 BackendAuthError를 던진다', async () => {
     fetchMock.mockResolvedValue(
       new Response('유효하지 않은 Google ID 토큰입니다.', { status: 401 }),

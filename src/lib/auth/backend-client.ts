@@ -99,17 +99,24 @@ const postJson = <T>(
  * 해시하면 이중 해시가 되어 게스트 사용량 키와 일치하지 않는다. 헤더가 없으면 백엔드가
  * 한도 소진 상태로 시드하는 우회 차단 폴백을 타므로, 값이 있으면 반드시 실어야 한다.
  *
+ * handoffCode가 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가
+ * deviceId 헤더보다 우선)와 게스트 데이터 이관을 함께 원자적으로 수행한다(스펙 §4-3-5).
+ * 시드는 로그인 호출에 실려야 하며, 미루면 백엔드가 소진 시드를 비가역으로 확정한다.
+ * 무효·만료 코드는 백엔드가 헤더 deviceId로 폴백하고 로그인은 정상 진행한다.
+ *
  * @param idToken Google에서 발급한 ID 토큰
  * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
+ * @param handoffCode 인앱 핸드오프 코드 원문(없으면 body에서 생략)
  * @returns 발급된 백엔드 토큰 응답
  */
 export const loginWithGoogleOnServer = (
   idToken: string,
   deviceId?: string,
+  handoffCode?: string,
 ): Promise<TokenResponse> =>
   postJson<TokenResponse>(
     getLoginWithGoogleUrl(),
-    { idToken },
+    { idToken, ...(handoffCode ? { handoffCode } : {}) },
     deviceId ? { [DEVICE_ID_HEADER]: deviceId } : undefined,
   );
 
