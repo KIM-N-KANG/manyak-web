@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { ListStatus } from '@/components/common/list-status';
 import { Button } from '@/components/ui/button';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
+import { track } from '@/observability/analytics';
 
 /**
  * 카카오톡 인앱 브라우저에서 현재 URL을 외부 브라우저로 여는 스킴을 호출한다.
@@ -41,6 +42,26 @@ function openExternalViaGenericScheme() {
 }
 
 /**
+ * 카카오톡 탈출 스킴 호출 직전에 escapeAttempted를 계측한다(스펙 §6-4-2-12).
+ * 자동 탈출 타이머와 수동 버튼이 공유한다.
+ */
+function attemptKakaoEscape() {
+  track('client_inappBrowser_escapeAttempted', { app: 'kakaotalk' });
+  openExternalViaKakaoScheme();
+}
+
+/**
+ * 카카오톡 탈출·닫기 시도 후에도 컴포넌트가 살아 있으면 배너가 남은 것이므로
+ * 탈출 실패로 보고 bannerShown을 계측한다(성공 시 Android는 창이 닫혀 언마운트됨).
+ * escapeAttempted 대비 이 이벤트 비율이 실패율 대리 지표다(스펙 §6-4-2-12).
+ * iOS는 성공해도 창이 남아 과다 집계될 수 있으나, 스킴 성공은 콜백이 없어 직접
+ * 계측할 수 없는 한계다.
+ */
+function trackKakaoBannerShown() {
+  track('client_inappBrowser_bannerShown', { app: 'kakaotalk' });
+}
+
+/**
  * 아무 것도 구독하지 않는 useSyncExternalStore용 빈 구독 함수를 만든다.
  *
  * @returns 구독 해제용 no-op 함수
@@ -55,16 +76,30 @@ export function InAppBrowserEscape() {
   );
 
   useEffect(() => {
+    if (!inAppBrowser) {
+      return;
+    }
+
+    track('client_inappBrowser_detected', { app: inAppBrowser });
+
+    if (inAppBrowser !== 'kakaotalk') {
+      track('client_inappBrowser_bannerShown', { app: inAppBrowser });
+    }
+  }, [inAppBrowser]);
+
+  useEffect(() => {
     if (inAppBrowser !== 'kakaotalk') {
       return;
     }
 
-    const openTimer = setTimeout(openExternalViaKakaoScheme, 300);
+    const openTimer = setTimeout(attemptKakaoEscape, 300);
     const closeTimer = setTimeout(closeKakaoInAppBrowser, 1300);
+    const bannerTimer = setTimeout(trackKakaoBannerShown, 1600);
 
     return () => {
       clearTimeout(openTimer);
       clearTimeout(closeTimer);
+      clearTimeout(bannerTimer);
     };
   }, [inAppBrowser]);
 
@@ -91,9 +126,7 @@ export function InAppBrowserEscape() {
           <Button
             size="lg"
             onClick={
-              isKakao
-                ? openExternalViaKakaoScheme
-                : openExternalViaGenericScheme
+              isKakao ? attemptKakaoEscape : openExternalViaGenericScheme
             }>
             외부 브라우저에서 열기
           </Button>

@@ -3,6 +3,7 @@ import {
   type InviteCodeErrorType,
   type InviteCodeSource,
 } from '@/features/more/invite/utils/invite-code';
+import { type InAppBrowser } from '@/lib/in-app-browser';
 
 /** 스토리 생성 플로우의 단계 이름. */
 export type StepName =
@@ -26,6 +27,10 @@ export type AnalyticsEventProps = {
   // login
   client_login_viewed: void;
   client_login_googleButton_clicked: void;
+  // in-app browser (감지·탈출 — 스펙 §6-4-2-12)
+  client_inappBrowser_detected: { app: InAppBrowser };
+  client_inappBrowser_escapeAttempted: { app: 'kakaotalk' };
+  client_inappBrowser_bannerShown: { app: InAppBrowser };
   // guest limit (게스트 체험 한도 초과 → 로그인 유도)
   client_guestLimitDialog_shown: { trigger: GuestLimitTrigger };
   client_guestLimitDialog_loginButton_clicked: { trigger: GuestLimitTrigger };
