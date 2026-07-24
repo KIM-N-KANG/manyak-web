@@ -5,17 +5,9 @@ import { createPortal } from 'react-dom';
 
 import { ListStatus } from '@/components/common/list-status';
 import { Button } from '@/components/ui/button';
+import { openExternalBrowser } from '@/features/auth/_shared/utils/external-browser-escape';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 import { track } from '@/observability/analytics';
-
-/**
- * 카카오톡 인앱 브라우저에서 현재 URL을 외부 브라우저로 여는 스킴을 호출한다.
- */
-function openExternalViaKakaoScheme() {
-  window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(
-    window.location.href,
-  )}`;
-}
 
 /**
  * 카카오톡 인앱 브라우저 창을 닫는 스킴을 호출한다.
@@ -25,29 +17,12 @@ function closeKakaoInAppBrowser() {
 }
 
 /**
- * 일반 인앱 브라우저에서 플랫폼별 스킴으로 현재 URL을 외부 브라우저로 연다.
- */
-function openExternalViaGenericScheme() {
-  const { href, host, pathname, search, hash, protocol } = window.location;
-
-  if (/android/i.test(navigator.userAgent)) {
-    window.location.href =
-      `intent://${host}${pathname}${search}${hash}` +
-      `#Intent;scheme=${protocol.slice(0, -1)};end`;
-
-    return;
-  }
-
-  window.location.href = `x-safari-${href}`;
-}
-
-/**
  * 카카오톡 탈출 스킴 호출 직전에 escapeAttempted를 계측한다(스펙 §6-4-2-12).
  * 자동 탈출 타이머와 수동 버튼이 공유한다.
  */
 function attemptKakaoEscape() {
   track('client_inappBrowser_escapeAttempted', { app: 'kakaotalk' });
-  openExternalViaKakaoScheme();
+  openExternalBrowser(window.location.href, 'kakaotalk');
 }
 
 /**
@@ -126,7 +101,9 @@ export function InAppBrowserEscape() {
           <Button
             size="lg"
             onClick={
-              isKakao ? attemptKakaoEscape : openExternalViaGenericScheme
+              isKakao
+                ? attemptKakaoEscape
+                : () => openExternalBrowser(window.location.href, inAppBrowser)
             }>
             외부 브라우저에서 열기
           </Button>
