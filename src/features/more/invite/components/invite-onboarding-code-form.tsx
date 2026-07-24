@@ -16,12 +16,10 @@ export function InviteOnboardingCodeForm({
   disabled = false,
   isSubmitPending = false,
   onSuccess,
-  onSkip,
 }: {
   disabled?: boolean;
   isSubmitPending?: boolean;
   onSuccess?: () => void;
-  onSkip?: () => void;
 }) {
   const inputId = useId();
   const errorId = `${inputId}-error`;
@@ -75,14 +73,7 @@ export function InviteOnboardingCodeForm({
         </Field>
       </FieldGroup>
 
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={isBusy}
-          onClick={onSkip}>
-          나중에 하기
-        </Button>
+      <DialogFooter className="grid-cols-1">
         <Button className="relative" type="submit" disabled={isBusy}>
           <LoadingButtonContent
             isLoading={isRedeeming || isSubmitPending}

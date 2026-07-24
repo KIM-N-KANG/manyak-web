@@ -112,13 +112,15 @@ test.describe('친구 초대 페이지 (/more/invite)', () => {
     await mockMyInvite(page);
     await page.goto('/more/invite');
 
+    await expect(page.getByRole('dialog')).toBeVisible();
+
     const updateResponse = page.waitForResponse(
       (response) =>
         response.url().includes('/api/auth/session') &&
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 하기' }).click();
+    await page.keyboard.press('Escape');
     await updateResponse;
     await page.waitForTimeout(200);
 
@@ -517,23 +519,18 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
       '친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
     );
     await expect(dialog.getByLabel('초대 코드', { exact: true })).toBeFocused();
-    await expect(
-      dialog.getByRole('button', { name: '나중에 하기' }),
-    ).toBeVisible();
 
     await page.waitForTimeout(400);
-    await expect(
-      page.getByRole('heading', {
-        name: '키워드 몇 개로, 나만의 스토리 완성',
-      }),
-    ).toHaveCount(0);
+    await expect(page).toHaveURL(/\/$/);
   });
 
-  test('나중에 하기를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
+  test('Escape로 닫으면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
     page,
   }) => {
     await preparePendingMember(page);
     await page.goto('/');
+
+    await expect(page.getByRole('dialog')).toBeVisible();
 
     const updateResponse = page.waitForResponse(
       (response) =>
@@ -541,7 +538,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 하기' }).click();
+    await page.keyboard.press('Escape');
 
     const response = await updateResponse;
 
@@ -567,13 +564,15 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     });
     await page.goto('/');
 
+    await expect(page.getByRole('dialog')).toBeVisible();
+
     const updateResponse = page.waitForResponse(
       (response) =>
         response.url().includes('/api/auth/session') &&
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 하기' }).click();
+    await page.keyboard.press('Escape');
     await updateResponse;
 
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -638,7 +637,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: '키워드 몇 개로, 나만의 스토리 완성',
+        name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toBeVisible();
 
@@ -658,7 +657,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     ).toBeVisible();
     await expect(
       page.getByRole('heading', {
-        name: '키워드 몇 개로, 나만의 스토리 완성',
+        name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(1);
@@ -788,9 +787,6 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
           (button) => (button as HTMLElement).offsetWidth,
         ),
       ).toBe(initialWidth);
-      await expect(
-        page.getByRole('button', { name: '나중에 하기' }),
-      ).toBeDisabled();
       await expect(page.getByRole('dialog').locator('form')).toHaveAttribute(
         'aria-busy',
         'true',
@@ -804,7 +800,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     ).toBeVisible();
   });
 
-  test('Escape와 배경 클릭으로는 pending 다이얼로그를 닫지 않는다', async ({
+  test('배경 클릭도 Escape와 동일하게 세션 플래그를 소비한다', async ({
     page,
   }) => {
     await preparePendingMember(page);
@@ -813,12 +809,29 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     const dialog = page.getByRole('dialog');
 
     await expect(dialog).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeVisible();
+
+    const updateResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') &&
+        response.request().method() === 'POST',
+    );
+
     await page
       .locator('[data-slot="dialog-overlay"]')
       .click({ position: { x: 4, y: 4 } });
-    await expect(dialog).toBeVisible();
+
+    const response = await updateResponse;
+
+    expect(response.request().postDataJSON()).toMatchObject({
+      data: {
+        inviteOnboardingPending: false,
+        expectedUserId: 'user-1',
+      },
+    });
+    await expect(dialog).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('잘못된 입력은 다이얼로그를 유지하고 접근 가능한 오류를 표시한다', async ({

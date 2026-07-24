@@ -5,6 +5,7 @@ export const APP_PATH = {
     MORE: '/more',
   },
   LOGIN: '/login',
+  ONBOARDING: '/onboarding',
   TERMS: '/terms',
   PRIVACY: '/privacy',
   MORE_ABOUT: '/more/about',

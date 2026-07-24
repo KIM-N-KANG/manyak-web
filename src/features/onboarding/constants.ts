@@ -2,6 +2,25 @@ export const ONBOARDING_SEEN_STORAGE_KEY = 'manyak:onboarding-seen';
 export const ONBOARDING_SEEN_VALUE = '1';
 
 /**
+ * 온보딩 리다이렉트 게이트가 닫혔음을 서버(proxy)에 알리는 쿠키.
+ * 노출 판정의 정본은 로컬스토리지이지만 서버는 읽을 수 없으므로,
+ * proxy는 이 쿠키의 부재만으로 낙관적으로 리다이렉트한다.
+ */
+export const ONBOARDING_SEEN_COOKIE = 'manyak_onboarding_seen';
+export const ONBOARDING_SEEN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+
+export const ONBOARDING_ENTRY_STORAGE_KEY = 'manyak:onboarding-entry';
+export const ONBOARDING_ENTRY_VALUE = '1';
+
+export const ONBOARDING_TITLE_LINES = [
+  '눈을 떠보니',
+  '스토리 속 주인공이 되었다',
+] as const;
+
+export const ONBOARDING_DESCRIPTION =
+  'AI와 함께 나만의 다음 장면을 만들어보세요';
+
+/**
  * 게스트(비로그인) 체험 한도. 안내 문구 표시용이며 실제 강제는 백엔드가 한다.
  * 정책 변경 시 이 값과 백엔드를 함께 맞춰야 한다.
  */

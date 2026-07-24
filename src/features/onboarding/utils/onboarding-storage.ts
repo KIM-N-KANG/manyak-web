@@ -1,4 +1,6 @@
 import {
+  ONBOARDING_SEEN_COOKIE,
+  ONBOARDING_SEEN_COOKIE_MAX_AGE_SECONDS,
   ONBOARDING_SEEN_STORAGE_KEY,
   ONBOARDING_SEEN_VALUE,
 } from '../constants';
@@ -33,11 +35,26 @@ export function isOnboardingSeen(): boolean {
   }
 }
 
-/** 온보딩을 봤다는 사실을 로컬스토리지에 기록한다. */
+/**
+ * 서버(proxy)가 온보딩 리다이렉트를 건너뛰도록 게이트 닫힘 쿠키를 심는다.
+ * 노출 조건 미충족으로 온보딩에서 되돌려 보낼 때도 호출해, proxy 리다이렉트와
+ * 페이지 가드의 홈 복귀가 서로를 되부르는 루프를 막는다.
+ */
+export function setOnboardingSeenCookie(): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  document.cookie = `${ONBOARDING_SEEN_COOKIE}=${ONBOARDING_SEEN_VALUE}; path=/; max-age=${ONBOARDING_SEEN_COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
+}
+
+/** 온보딩을 봤다는 사실을 로컬스토리지와 쿠키에 기록한다. */
 export function markOnboardingSeen(): void {
   if (typeof window === 'undefined') {
     return;
   }
+
+  setOnboardingSeenCookie();
 
   try {
     window.localStorage.setItem(

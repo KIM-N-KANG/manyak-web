@@ -91,6 +91,20 @@ export function InviteOnboardingDialog() {
     void complete();
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (open || isCompleting) {
+      return;
+    }
+
+    if (hasCloseFailed) {
+      void complete({ fromRedeem: true });
+
+      return;
+    }
+
+    handleSkip();
+  };
+
   const handleRedeemSuccess = () => {
     if (!userId) {
       return;
@@ -101,7 +115,7 @@ export function InviteOnboardingDialog() {
   };
 
   return (
-    <Dialog open={isOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
         className="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain">
@@ -117,10 +131,10 @@ export function InviteOnboardingDialog() {
             <p className="rounded-lg bg-muted p-4 text-sm">
               500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요
             </p>
-            <DialogFooter>
+            <DialogFooter className="grid-cols-1">
               <Button
                 type="button"
-                className="relative col-span-full"
+                className="relative"
                 disabled={isCompleting}
                 onClick={() => void complete({ fromRedeem: true })}>
                 <LoadingButtonContent
@@ -137,7 +151,6 @@ export function InviteOnboardingDialog() {
             disabled={isCompleting}
             isSubmitPending={isCompleting && hasRedeemed}
             onSuccess={handleRedeemSuccess}
-            onSkip={handleSkip}
           />
         )}
       </DialogContent>

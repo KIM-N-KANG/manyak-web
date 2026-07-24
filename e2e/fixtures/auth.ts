@@ -11,6 +11,7 @@ type MemberSessionOptions = {
 /**
  * NextAuth 세션 조회(/api/auth/session)를 회원 응답으로 목킹한다.
  * 실제 Google OAuth는 외부 의존이라 E2E에서 수행하지 않는다(설계 문서 테스트 절).
+ * 서버(proxy)가 회원으로 판별하도록 세션 쿠키도 더미 값으로 심는다.
  */
 export async function mockMemberSession(
   page: Page,
@@ -23,6 +24,15 @@ export async function mockMemberSession(
   }: MemberSessionOptions = {},
 ): Promise<void> {
   let pending = inviteOnboardingPending;
+
+  await page.context().addCookies([
+    {
+      name: 'authjs.session-token',
+      value: 'e2e-mock-session',
+      domain: 'localhost',
+      path: '/',
+    },
+  ]);
 
   await page.route('**/api/auth/session', async (route) => {
     if (route.request().method() === 'POST') {

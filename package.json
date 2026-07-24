@@ -6,6 +6,7 @@
   "scripts": {
     "api:generate": "orval --config ./orval.config.ts && eslint --fix src/api/generated",
     "dev": "next dev",
+    "dev:grab": "REACT_GRAB=1 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -62,6 +63,7 @@
     "orval": "^8.17.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
+    "react-grab": "^0.1.49",
     "shadcn": "^4.13.0",
     "tailwindcss": "^4",
     "typescript": "^5",

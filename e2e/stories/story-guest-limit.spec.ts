@@ -67,6 +67,10 @@ test.describe('스토리 게스트 한도 게이팅', () => {
       dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
+
+    await page.keyboard.press('Escape');
+
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('채팅 한도(5)에 도달한 게스트가 상세에서 채팅을 시작하면 요청 없이 로그인 유도 다이얼로그를 띄운다 (US-10-5)', async ({
