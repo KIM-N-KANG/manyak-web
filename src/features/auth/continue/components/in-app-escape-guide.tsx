@@ -3,7 +3,9 @@
 import { useEffect } from 'react';
 
 import { ListStatus } from '@/components/common/list-status';
+import { BackHeader } from '@/components/layout/back-header';
 import { Button } from '@/components/ui/button';
+import { APP_PATH } from '@/constants/app-path';
 import { openExternalBrowser } from '@/features/auth/_shared/utils/external-browser-escape';
 import { type InAppBrowser } from '@/lib/in-app-browser';
 import { track } from '@/observability/analytics';
@@ -72,30 +74,38 @@ export function InAppEscapeGuide({ app }: InAppEscapeGuideProps) {
   }, [isKakao]);
 
   return (
-    <ListStatus
-      title="외부 브라우저에서 로그인해주세요"
-      description={
-        isKakao
-          ? '자동으로 이동하지 않으면 아래 버튼을 눌러주세요'
-          : '원활한 로그인을 위해 외부 브라우저에서 열어주세요'
-      }>
-      <div className="flex flex-col items-center gap-3">
-        <Button
-          type="button"
-          size="lg"
-          onClick={
-            isKakao
-              ? attemptKakaoEscape
-              : () => openExternalBrowser(window.location.href, app)
-          }>
-          외부 브라우저에서 열기
-        </Button>
-        <p className="max-w-xs text-center text-xs leading-relaxed text-foreground-secondary">
-          버튼이 동작하지 않으면 {isKakao ? '하단' : '상단'} 메뉴(⋮)에서
-          <br />
-          &lsquo;외부 브라우저에서 열기&rsquo;를 선택해 열어주세요
-        </p>
-      </div>
-    </ListStatus>
+    <div className="flex h-full min-h-0 flex-col">
+      <BackHeader title="로그인" backHref={APP_PATH.MAIN.STORIES} />
+      <ListStatus
+        title={
+          isKakao
+            ? '외부 브라우저로 이동 중이에요'
+            : '외부 브라우저에서 로그인해주세요'
+        }
+        description={
+          isKakao
+            ? '자동으로 이동하지 않으면 아래 버튼을 눌러주세요'
+            : '원활한 로그인을 위해 외부 브라우저에서 열어주세요'
+        }>
+        <div className="flex flex-col items-center gap-3">
+          <Button
+            type="button"
+            size="lg"
+            onClick={
+              isKakao
+                ? attemptKakaoEscape
+                : () => openExternalBrowser(window.location.href, app)
+            }>
+            외부 브라우저에서 열기
+          </Button>
+          <p className="max-w-xs text-center text-xs leading-relaxed text-foreground-secondary">
+            버튼이 동작하지 않으면 {isKakao ? '하단' : '상단'} 메뉴(⋮)에서
+            <br />
+            &lsquo;{isKakao ? '다른' : '외부'} 브라우저에서 열기&rsquo;를 선택해
+            열어주세요
+          </p>
+        </div>
+      </ListStatus>
+    </div>
   );
 }
