@@ -107,7 +107,7 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
 });
 
 test.describe('외부 브라우저 핸드오프 랜딩', () => {
-  test('코드를 쿠키로 옮기고 쿼리를 제거한 뒤 이관 건수와 로그인 CTA를 보여준다', async ({
+  test('코드를 쿠키로 옮기고 쿼리를 제거한 뒤 이관 안내와 로그인 CTA를 보여준다', async ({
     page,
   }) => {
     await mockHandoffSession(page, {
@@ -117,9 +117,13 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     await page.goto('/login/continue?handoff=handoff-code-1');
 
     await expect(page).toHaveURL('/login/continue');
-    await expect(page.getByText(/스토리 1개, 채팅 1개/)).toBeVisible();
+    await expect(page.getByText(/계정당 한 번만 진행돼요/)).toBeVisible();
     await expect(
       page.getByRole('button', { name: /Google로 시작하기/ }),
+    ).toBeVisible();
+    // 로그인 페이지와 동일하게 약관 동의 고지를 상시 표시한다.
+    await expect(
+      page.getByRole('link', { name: '서비스이용약관' }),
     ).toBeVisible();
   });
 

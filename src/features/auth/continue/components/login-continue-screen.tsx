@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import type { LoginHandoffSummaryResponse } from '@/api/generated/models';
 import { ListStatus } from '@/components/common/list-status';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
+import { BackHeader } from '@/components/layout/back-header';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
@@ -128,9 +130,7 @@ function ExternalHandoffLanding() {
   if (phase === 'expired') {
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <ListStatus
-          title="링크가 만료됐어요"
-          description="앱에서 다시 로그인해주세요">
+        <ListStatus title="링크가 만료됐어요" description="다시 로그인해주세요">
           <Button
             type="button"
             size="lg"
@@ -143,9 +143,6 @@ function ExternalHandoffLanding() {
     );
   }
 
-  const storyCount = summary?.storyCount ?? 0;
-  const chatCount = summary?.chatCount ?? 0;
-
   const handleGoogleLogin = () => {
     track('client_loginContinue_loginButton_clicked');
     void startGoogleLogin({
@@ -155,20 +152,20 @@ function ExternalHandoffLanding() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <BackHeader title="로그인" fallbackHref={APP_PATH.MAIN.STORIES} />
       <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4">
         <div className="flex flex-col items-center gap-4">
           <ManyakLogo className="h-6 w-auto text-primary" />
           <p className="text-center text-lg font-semibold">
-            로그인하고
+            로그인하고 나만의 스토리를
             <br />
             이어서 즐겨보세요
           </p>
         </div>
         <div className="flex w-full flex-col items-center gap-4">
           <p className="text-center text-sm leading-relaxed text-foreground-secondary">
-            인앱에서 만든 스토리 {storyCount}개, 채팅 {chatCount}개를
-            <br />
-            계정으로 옮겨요
+            만든 스토리와 채팅은 로그인하면 계정으로 옮겨져요
+            <br />이 과정은 계정당 한 번만 진행돼요
           </p>
           <Button
             type="button"
@@ -179,6 +176,18 @@ function ExternalHandoffLanding() {
             <GoogleLogo />
             Google로 시작하기
           </Button>
+          <p className="text-center text-xs leading-relaxed text-foreground-secondary">
+            로그인 시{' '}
+            <Link href={APP_PATH.TERMS} className="underline">
+              서비스이용약관
+            </Link>{' '}
+            및{' '}
+            <Link href={APP_PATH.PRIVACY} className="underline">
+              개인정보처리방침
+            </Link>
+            에<br />
+            동의하는 것으로 간주해요
+          </p>
         </div>
       </main>
     </div>
