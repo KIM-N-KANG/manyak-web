@@ -6,6 +6,7 @@ import {
 } from '@/api/generated/endpoints/auth/auth';
 import type { MeResponse, TokenResponse } from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
+import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
 /**
  * BFF(서버)에서 백엔드 인증 API를 직접 호출하는 클라이언트.
@@ -76,25 +77,41 @@ const requestBackend = async <T>(
  *
  * @param path 백엔드 API 경로
  * @param body JSON으로 직렬화할 요청 본문
+ * @param headers Content-Type 외에 추가로 실을 요청 헤더
  * @returns 파싱된 응답 본문
  */
-const postJson = <T>(path: string, body: unknown): Promise<T> =>
+const postJson = <T>(
+  path: string,
+  body: unknown,
+  headers?: Record<string, string>,
+): Promise<T> =>
   requestBackend<T>(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(body),
   });
 
 /**
  * Google ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
  *
+ * deviceId는 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데 쓰인다(스펙 §4-3-7).
+ * 서버가 pepper를 붙여 내부에서 해시하므로 반드시 원문 그대로 전달한다 — 클라이언트에서
+ * 해시하면 이중 해시가 되어 게스트 사용량 키와 일치하지 않는다. 헤더가 없으면 백엔드가
+ * 한도 소진 상태로 시드하는 우회 차단 폴백을 타므로, 값이 있으면 반드시 실어야 한다.
+ *
  * @param idToken Google에서 발급한 ID 토큰
+ * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
  * @returns 발급된 백엔드 토큰 응답
  */
 export const loginWithGoogleOnServer = (
   idToken: string,
+  deviceId?: string,
 ): Promise<TokenResponse> =>
-  postJson<TokenResponse>(getLoginWithGoogleUrl(), { idToken });
+  postJson<TokenResponse>(
+    getLoginWithGoogleUrl(),
+    { idToken },
+    deviceId ? { [DEVICE_ID_HEADER]: deviceId } : undefined,
+  );
 
 /**
  * refresh 토큰을 회전해 새 토큰 쌍을 발급받는다. 실패(401)는 family 폐기를 뜻할 수 있다.

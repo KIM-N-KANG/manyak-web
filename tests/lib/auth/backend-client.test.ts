@@ -5,6 +5,7 @@ import {
   loginWithGoogleOnServer,
   logoutOnServer,
 } from '@/lib/auth/backend-client';
+import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
 const fetchMock = vi.fn();
 
@@ -69,6 +70,34 @@ describe('loginWithGoogleOnServer', () => {
     expect(url).toBe('https://backend.example.com/api/v1/auth/login/google');
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
+  });
+
+  it('deviceId를 주면 X-Manyak-Device-Id 헤더에 원문 그대로 담아 전송한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    // 서버가 pepper를 붙여 내부에서 해시하므로 클라이언트 측 가공(해시) 없이 원문이어야 한다.
+    await loginWithGoogleOnServer('id-token', 'raw-device-id-1234');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+
+    expect(headers.get(DEVICE_ID_HEADER)).toBe('raw-device-id-1234');
+    expect(headers.get('Content-Type')).toBe('application/json');
+  });
+
+  it('deviceId가 없으면 X-Manyak-Device-Id 헤더를 보내지 않는다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await loginWithGoogleOnServer('id-token');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+
+    expect(headers.get(DEVICE_ID_HEADER)).toBeNull();
   });
 
   it('실패 응답은 status와 응답 body를 담은 BackendAuthError를 던진다', async () => {

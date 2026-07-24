@@ -1,3 +1,5 @@
+import { readAmplitudeDeviceIdOnServer } from '@/observability/analytics/identity-server';
+
 import {
   BackendAuthError,
   fetchMeOnServer,
@@ -130,7 +132,13 @@ export async function establishBackendSession(idToken: string): Promise<{
   profileImageUrl: string | null;
   isNewUser: boolean;
 }> {
-  const tokens = await loginWithGoogleOnServer(idToken);
+  // OAuth 콜백은 내비게이션 요청이라 분석 헤더가 없으므로 쿠키에서 device_id를 읽어
+  // 로그인 요청에 싣는다. 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데
+  // 쓰이며(스펙 §4-3-7), 빠뜨리면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의
+  // 무료 체험이 0이 된다(1회성 시드라 비가역).
+  const deviceId = await readAmplitudeDeviceIdOnServer();
+
+  const tokens = await loginWithGoogleOnServer(idToken, deviceId);
 
   if (!tokens.accessToken) {
     throw new Error('토큰 응답에 accessToken이 없습니다.');

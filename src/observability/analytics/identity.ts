@@ -1,18 +1,12 @@
 import * as amplitude from '@amplitude/unified';
 
-/** Amplitude device_id를 백엔드로 전달하는 요청 헤더 이름. */
-export const DEVICE_ID_HEADER = 'X-Manyak-Device-Id';
-/** Amplitude session_id를 백엔드로 전달하는 요청 헤더 이름. */
-export const SESSION_ID_HEADER = 'X-Manyak-Session-Id';
-
-/** 식별자 쿠키만 고르고 마케팅용 AMP_MKTG_ 쿠키는 제외하기 위한 접두사. */
-const AMP_COOKIE_PREFIX = 'AMP_';
-const AMP_MKTG_COOKIE_PREFIX = 'AMP_MKTG_';
-
-interface AmplitudeCookieState {
-  deviceId?: string;
-  sessionId?: number;
-}
+import {
+  type AmplitudeCookieState,
+  DEVICE_ID_HEADER,
+  isAmplitudeIdentityCookieName,
+  parseAmplitudeCookieValue,
+  SESSION_ID_HEADER,
+} from './amplitude-identity';
 
 /**
  * SDK가 저장한 쿠키에서 식별자를 읽는다. 값 형식(base64 → URL 디코드 → JSON)은
@@ -21,32 +15,17 @@ interface AmplitudeCookieState {
  * @returns 쿠키에서 읽은 device_id·session_id(파싱 실패 시 빈 객체)
  */
 function readAmplitudeCookieState(): AmplitudeCookieState {
-  const entry = document.cookie
-    .split('; ')
-    .find(
-      (cookie) =>
-        cookie.startsWith(AMP_COOKIE_PREFIX) &&
-        !cookie.startsWith(AMP_MKTG_COOKIE_PREFIX),
-    );
+  const entry = document.cookie.split('; ').find((cookie) => {
+    const separatorIndex = cookie.indexOf('=');
+    const name =
+      separatorIndex === -1 ? cookie : cookie.slice(0, separatorIndex);
+
+    return isAmplitudeIdentityCookieName(name);
+  });
 
   if (!entry) return {};
 
-  const rawValue = entry.slice(entry.indexOf('=') + 1);
-
-  try {
-    const parsed: unknown = JSON.parse(decodeURIComponent(atob(rawValue)));
-
-    if (typeof parsed !== 'object' || parsed === null) return {};
-
-    const { deviceId, sessionId } = parsed as Record<string, unknown>;
-
-    return {
-      deviceId: typeof deviceId === 'string' ? deviceId : undefined,
-      sessionId: typeof sessionId === 'number' ? sessionId : undefined,
-    };
-  } catch {
-    return {};
-  }
+  return parseAmplitudeCookieValue(entry.slice(entry.indexOf('=') + 1));
 }
 
 /** dev 폴백 device_id를 재사용하기 위한 localStorage 키. */
