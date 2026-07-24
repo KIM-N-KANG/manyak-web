@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   BackendAuthError,
+  confirmHandoffOnServer,
   loginWithGoogleOnServer,
   logoutOnServer,
 } from '@/lib/auth/backend-client';
+import { HANDOFF_CODE_HEADER } from '@/lib/auth/handoff-header';
 import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
 const fetchMock = vi.fn();
@@ -147,5 +149,38 @@ describe('logoutOnServer', () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
 
     await expect(logoutOnServer('refresh')).resolves.toBeUndefined();
+  });
+});
+
+describe('confirmHandoffOnServer', () => {
+  it('핸드오프 코드를 X-Manyak-Handoff-Code 헤더로 실어 확인 API를 GET한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ storyCount: 2, chatCount: 1, callbackPath: '/' }),
+        { status: 200 },
+      ),
+    );
+
+    // 코드는 URI가 아니라 헤더로 전달하는 게 계약이다(스펙 §4-3-5).
+    await expect(confirmHandoffOnServer('code-abc')).resolves.toEqual({
+      storyCount: 2,
+      chatCount: 1,
+      callbackPath: '/',
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+
+    expect(url).toBe('https://backend.example.com/api/v1/auth/handoffs');
+    expect(init.method ?? 'GET').toBe('GET');
+    expect(headers.get(HANDOFF_CODE_HEADER)).toBe('code-abc');
+  });
+
+  it('만료·무효(404)면 BackendAuthError를 던진다', async () => {
+    fetchMock.mockResolvedValue(new Response('', { status: 404 }));
+
+    await expect(confirmHandoffOnServer('gone')).rejects.toMatchObject({
+      status: 404,
+    });
   });
 });

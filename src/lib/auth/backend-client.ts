@@ -1,12 +1,19 @@
 import {
+  getConfirmUrl,
   getLoginWithGoogleUrl,
   getLogoutUrl,
   getMeUrl,
   getRefreshUrl,
 } from '@/api/generated/endpoints/auth/auth';
-import type { MeResponse, TokenResponse } from '@/api/generated/models';
+import type {
+  LoginHandoffSummaryResponse,
+  MeResponse,
+  TokenResponse,
+} from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
+
+import { HANDOFF_CODE_HEADER } from './handoff-header';
 
 /**
  * BFF(서버)에서 백엔드 인증 API를 직접 호출하는 클라이언트.
@@ -146,4 +153,20 @@ export const logoutOnServer = (refreshToken: string): Promise<void> =>
 export const fetchMeOnServer = (accessToken: string): Promise<MeResponse> =>
   requestBackend<MeResponse>(getMeUrl(), {
     headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+/**
+ * 핸드오프 코드로 확인 API를 호출해 외부 랜딩 안내용 요약을 조회한다.
+ * 외부 랜딩의 BFF 라우트가 코드를 HttpOnly 쿠키로 옮기기 전에 코드를 검증하는 데 쓴다.
+ * 코드는 URI가 아니라 X-Manyak-Handoff-Code 헤더로 전달한다(스펙 §4-3-5).
+ *
+ * @param handoffCode 확인할 핸드오프 코드 원문
+ * @returns 옮길 스토리·채팅 건수와 복귀 경로 요약
+ * @throws 만료·무효(404) 등 실패 시 BackendAuthError
+ */
+export const confirmHandoffOnServer = (
+  handoffCode: string,
+): Promise<LoginHandoffSummaryResponse> =>
+  requestBackend<LoginHandoffSummaryResponse>(getConfirmUrl(), {
+    headers: { [HANDOFF_CODE_HEADER]: handoffCode },
   });
