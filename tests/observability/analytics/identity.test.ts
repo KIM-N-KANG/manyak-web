@@ -135,6 +135,24 @@ describe('getAnalyticsIdentityHeaders', () => {
       expect(storage.store.get('manyak-dev-device-id')).toBe(deviceId);
     });
 
+    it('secure context가 아니어서 crypto.randomUUID가 없어도 device_id를 생성한다', () => {
+      // http://<LAN IP>:3000 실기기 접속은 insecure origin이라 crypto.randomUUID가 없다.
+      // 폴백이 조용히 생략되면 게스트 API가 400을 반환하므로 대체 생성이 필요하다.
+      const storage = createStorage();
+
+      stubDevBrowser(storage);
+      vi.stubGlobal('crypto', {});
+      getDeviceIdMock.mockReturnValue(undefined);
+      getSessionIdMock.mockReturnValue(undefined);
+
+      const headers = getAnalyticsIdentityHeaders();
+
+      const deviceId = headers[DEVICE_ID_HEADER];
+
+      expect(deviceId).toBeTruthy();
+      expect(storage.store.get('manyak-dev-device-id')).toBe(deviceId);
+    });
+
     it('development에서 저장된 dev device_id가 있으면 재사용한다', () => {
       const storage = createStorage({ 'manyak-dev-device-id': 'dev-device' });
 
