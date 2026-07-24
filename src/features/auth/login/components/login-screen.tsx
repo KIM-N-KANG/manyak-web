@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { BackHeader } from '@/components/layout/back-header';
@@ -17,6 +16,7 @@ import {
   buildLoginUrl,
   resolveLoginCallbackUrl,
 } from '@/features/auth/_shared/utils/login-callback-url';
+import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import { track } from '@/observability/analytics';
 
@@ -52,7 +52,7 @@ export function LoginScreen() {
 
   const handleGoogleLogin = () => {
     track('client_login_googleButton_clicked');
-    void signIn('google', {
+    void startGoogleLogin({
       redirectTo: resolveLoginCallbackUrl(searchParams.get('callbackUrl')),
     });
   };
