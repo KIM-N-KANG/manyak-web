@@ -15,6 +15,7 @@ import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-cal
 import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
+import { track } from '@/observability/analytics';
 
 import { InAppEscapeGuide } from './in-app-escape-guide';
 
@@ -111,6 +112,7 @@ function ExternalHandoffLanding() {
 
       setSummary(result);
       setPhase('ready');
+      track('client_loginContinue_viewed');
       router.replace(APP_PATH.LOGIN_CONTINUE);
     });
   }, [router, searchParams]);
@@ -145,6 +147,7 @@ function ExternalHandoffLanding() {
   const chatCount = summary?.chatCount ?? 0;
 
   const handleGoogleLogin = () => {
+    track('client_loginContinue_loginButton_clicked');
     void startGoogleLogin({
       redirectTo: resolveLoginCallbackUrl(summary?.callbackPath ?? null),
     });

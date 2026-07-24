@@ -15,6 +15,7 @@ import {
   parseCreatedStoryIds,
 } from '@/features/stories/_shared/utils/story-id-storage';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
+import { track } from '@/observability/analytics';
 
 import { savePendingHandoff } from './pending-handoff-storage';
 
@@ -70,6 +71,11 @@ export async function startGoogleLogin({
     }
 
     savePendingHandoff({ code: handoffCode, handoffId, storyIds, chatIds });
+
+    track('client_inappBrowser_loginHandoffCreated', {
+      app: inAppBrowser,
+      handoff_id: handoffId,
+    });
 
     // 자동 전환이 실패해도 ⋯ 메뉴의 '외부 브라우저에서 열기'가 현재 주소를 그대로
     // 전달하도록, 전환 시도 전에 주소부터 핸드오프 URL로 바꾼다(스펙 §3-10 흐름 4).
