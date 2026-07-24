@@ -153,13 +153,13 @@ function ExternalHandoffLanding() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <BackHeader title="로그인" fallbackHref={APP_PATH.MAIN.STORIES} />
-      <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4">
+      <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4 pt-0">
         <div className="flex flex-col items-center gap-4">
           <ManyakLogo className="h-6 w-auto text-primary" />
           <p className="text-center text-lg font-semibold">
             로그인하고 나만의 스토리를
             <br />
-            이어서 즐겨보세요
+            어디서든 이어서 즐겨보세요
           </p>
         </div>
         <div className="flex w-full flex-col items-center gap-4">

@@ -18,7 +18,7 @@ export const TOAST_MESSAGE = {
   MIGRATION_SUCCEEDED: (storyCount: number, chatCount: number) =>
     `스토리 ${storyCount}개, 채팅 ${chatCount}개를 계정으로 옮겼어요`,
   MIGRATION_ALREADY_DONE:
-    '이미 옮긴 적이 있어 이 기기의 스토리와 채팅은 옮기지 못했어요',
+    '이미 스토리와 채팅을 옮긴 이력이 있어 옮기지 못했어요',
   ATTENDANCE_CLAIMED: (amount: number) =>
     `출석 체크 보상으로 ${amount} 크레딧을 받았어요`,
   ATTENDANCE_ALREADY: '오늘은 이미 출석 체크했어요',

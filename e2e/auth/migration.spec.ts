@@ -183,7 +183,7 @@ test.describe('로그인 직후 게스트 데이터 이관', () => {
     await page.goto('/chats/c1');
 
     const closedToast = page.getByText(
-      '이미 옮긴 적이 있어 이 기기의 스토리와 채팅은 옮기지 못했어요',
+      '이미 스토리와 채팅을 옮긴 이력이 있어 옮기지 못했어요',
     );
 
     await expect(closedToast).toBeVisible();
