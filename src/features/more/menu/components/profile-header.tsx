@@ -10,6 +10,7 @@ import { useMe } from '@/api/generated/endpoints/auth/auth';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
+import { startInAppLoginShortcut } from '@/features/auth/_shared/utils/in-app-login-shortcut';
 import { track } from '@/observability/analytics';
 
 export function ProfileHeader() {
@@ -59,7 +60,10 @@ export function ProfileHeader() {
         <Link
           href={APP_PATH.LOGIN}
           className={buttonVariants()}
-          onClick={() => track('client_account_loginButton_clicked')}>
+          onClick={(event) => {
+            track('client_account_loginButton_clicked');
+            startInAppLoginShortcut(event);
+          }}>
           로그인
         </Link>
       )}

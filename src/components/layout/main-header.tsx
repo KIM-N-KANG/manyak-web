@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { buttonVariants } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { getMainNavigationLabel } from '@/constants/main-navigation';
+import { startInAppLoginShortcut } from '@/features/auth/_shared/utils/in-app-login-shortcut';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
@@ -31,7 +32,10 @@ export function MainHeader() {
             'ml-auto',
             buttonVariants({ variant: 'secondary', size: 'sm' }),
           )}
-          onClick={() => track('client_storyList_loginButton_clicked')}>
+          onClick={(event) => {
+            track('client_storyList_loginButton_clicked');
+            startInAppLoginShortcut(event);
+          }}>
           로그인
         </Link>
       )}

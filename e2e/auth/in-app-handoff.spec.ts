@@ -54,6 +54,27 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
     ).toBeHidden();
   });
 
+  test('홈 헤더의 로그인 버튼은 /login을 거치지 않고 바로 전환 안내로 이동한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockHandoffCreate(page, {
+      handoffCode: 'handoff-code-1',
+      handoffId: 'handoff-id-1',
+    });
+
+    await page.goto('/');
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: '로그인' })
+      .click();
+
+    await expect(page).toHaveURL(/\/login\/continue\?handoff=handoff-code-1/);
+    await expect(
+      page.getByText('외부 브라우저에서 로그인해주세요'),
+    ).toBeVisible();
+  });
+
   test('로그인하면 핸드오프를 만들고 전환 안내로 이동한다', async ({
     page,
   }) => {
