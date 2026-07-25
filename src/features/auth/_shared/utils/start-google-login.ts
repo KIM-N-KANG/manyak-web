@@ -14,6 +14,7 @@ import {
   getCreatedStoryIdsSnapshot,
   parseCreatedStoryIds,
 } from '@/features/stories/_shared/utils/story-id-storage';
+import { HANDOFF_QUERY_PARAM } from '@/lib/auth/handoff-query';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 import { track } from '@/observability/analytics';
 
@@ -79,7 +80,7 @@ export async function startGoogleLogin({
 
     // 자동 전환이 실패해도 ⋯ 메뉴의 '외부 브라우저에서 열기'가 현재 주소를 그대로
     // 전달하도록, 전환 시도 전에 주소부터 핸드오프 URL로 바꾼다(스펙 §3-10 흐름 4).
-    const continueUrl = `${APP_PATH.LOGIN_CONTINUE}?handoff=${encodeURIComponent(
+    const continueUrl = `${APP_PATH.LOGIN_CONTINUE}?${HANDOFF_QUERY_PARAM}=${encodeURIComponent(
       handoffCode,
     )}`;
 
