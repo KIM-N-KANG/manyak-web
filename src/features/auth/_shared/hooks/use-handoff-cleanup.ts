@@ -21,6 +21,7 @@ import {
   parseCreatedStoryIds,
   writeCreatedStoryIds,
 } from '@/features/stories/_shared/utils/story-id-storage';
+import { FetchError } from '@/lib/api-error';
 import { HANDOFF_CODE_HEADER } from '@/lib/auth/handoff-header';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
@@ -59,6 +60,11 @@ function applyMigratedCleanup(
 }
 
 /**
+ * 핸드오프를 더 추적할 수 없는 종료 상태 응답. 만료·소멸이라 재조회할 대상이 없다.
+ */
+const TERMINAL_STATUSES = new Set([404, 410]);
+
+/**
  * 진행 중인 핸드오프의 상태를 1회 조회해 인앱 로컬 데이터를 정리한다.
  * 코드는 pending에서 읽어 X-Manyak-Handoff-Code 헤더로 싣는다(스펙 §4-3-5).
  *
@@ -71,16 +77,18 @@ async function runHandoffCleanup(code: string): Promise<void> {
     response = await fetchHandoffStatus({
       headers: { [HANDOFF_CODE_HEADER]: code },
     });
-  } catch {
-    // 404(만료·소멸) 등 실패: 다시 확인할 대상이 없으므로 pending만 제거한다.
-    clearPendingHandoff();
+  } catch (error) {
+    // customInstance는 5xx·타임아웃에서도 throw한다. 일시적 실패에 코드를 버리면 이후
+    // 어떤 재방문으로도 이관 결과를 회수할 수 없으므로, 종료 상태에서만 pending을 지운다.
+    if (error instanceof FetchError && TERMINAL_STATUSES.has(error.status)) {
+      clearPendingHandoff();
+    }
 
     return;
   }
 
   if (response.status !== 200) {
-    clearPendingHandoff();
-
+    // 2xx이지만 본문 형태를 확정할 수 없는 응답이다. 다음 확인 기회에 다시 조회한다.
     return;
   }
 
@@ -110,29 +118,59 @@ async function runHandoffCleanup(code: string): Promise<void> {
 
 /**
  * 외부 로그인을 마치고 인앱 브라우저로 돌아왔을 때 이관된 게스트 ID를 정리하는 훅.
- * 인앱 UA + 진행 중 핸드오프(readPendingHandoff)가 있을 때만 상태 조회를 1회 실행한다.
+ * 인앱 UA + 진행 중 핸드오프(readPendingHandoff)가 있을 때만 상태를 조회한다.
  * 외부 브라우저·일반 브라우저는 pending이 없으므로 조회하지 않는다(스펙 §3-10 흐름 8).
+ *
+ * 카카오·인스타 인앱은 외부 브라우저를 띄워도 원래 문서를 살려두는 경우가 많아, 복귀가
+ * 리마운트가 아니라 visibility 변화로만 나타난다. 마운트 시 조회는 대개 로그인 이전이라
+ * PENDING·LANDED만 보므로, 문서가 다시 보일 때마다 재확인해야 이관 결과를 받아낸다.
  */
 export function useHandoffCleanup(): void {
-  const startedRef = useRef(false);
+  const runningRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) {
-      return;
-    }
-
     if (!detectInAppBrowser(navigator.userAgent)) {
       return;
     }
 
-    const pending = readPendingHandoff();
+    const checkHandoff = () => {
+      if (runningRef.current) {
+        return;
+      }
 
-    if (!pending) {
-      return;
-    }
+      const pending = readPendingHandoff();
 
-    startedRef.current = true;
+      if (!pending) {
+        return;
+      }
 
-    void runHandoffCleanup(pending.code);
+      runningRef.current = true;
+
+      void runHandoffCleanup(pending.code).finally(() => {
+        runningRef.current = false;
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkHandoff();
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        checkHandoff();
+      }
+    };
+
+    checkHandoff();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   }, []);
 }

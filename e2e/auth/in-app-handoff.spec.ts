@@ -125,6 +125,85 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
       readLocalStorage(page, 'manyak:pending-login-handoff'),
     ).resolves.toBeNull();
   });
+
+  test('외부 로그인을 마치고 인앱 문서로 돌아오면 다시 확인해 정리한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await seedStoryIds(page, ['s1']);
+    await seedChatIds(page, ['c1']);
+    await seedPendingHandoff(page, {
+      code: 'handoff-code-1',
+      handoffId: 'handoff-id-1',
+      storyIds: ['s1'],
+      chatIds: ['c1'],
+    });
+    // 첫 조회는 외부 로그인 이전이라 아직 이관 전 상태만 보인다.
+    await mockHandoffStatus(page, { status: 'PENDING' });
+
+    const firstStatus = page.waitForResponse((response) =>
+      response.url().includes('/auth/handoffs/status'),
+    );
+
+    await page.goto('/');
+    await firstStatus;
+
+    await expect(
+      readLocalStorage(page, 'manyak:pending-login-handoff'),
+    ).resolves.not.toBeNull();
+
+    // 외부 브라우저에서 로그인·이관이 끝난 뒤 인앱 문서가 다시 보이는 상황.
+    await mockHandoffStatus(page, {
+      status: 'MIGRATED',
+      migratedStoryIds: ['s1'],
+      migratedChatIds: ['c1'],
+    });
+    await page.evaluate(() =>
+      document.dispatchEvent(new Event('visibilitychange')),
+    );
+
+    await expect(
+      page.getByText('스토리 1개, 채팅 1개를 계정으로 옮겼어요'),
+    ).toBeVisible();
+    await expect
+      .poll(() => readLocalStorage(page, 'manyak:pending-login-handoff'))
+      .toBeNull();
+  });
+
+  test('일시적인 상태 조회 실패에는 진행 중 핸드오프를 남긴다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await seedStoryIds(page, ['s1']);
+    await seedPendingHandoff(page, {
+      code: 'handoff-code-1',
+      handoffId: 'handoff-id-1',
+      storyIds: ['s1'],
+      chatIds: [],
+    });
+    await page.route('**/api/v1/auth/handoffs/status', async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'unavailable' }),
+      });
+    });
+
+    const statusResponse = page.waitForResponse((response) =>
+      response.url().includes('/auth/handoffs/status'),
+    );
+
+    await page.goto('/');
+    await statusResponse;
+
+    // 코드를 버리면 이후 어떤 재방문으로도 이관 결과를 회수할 수 없다.
+    await expect(
+      readLocalStorage(page, 'manyak:pending-login-handoff'),
+    ).resolves.not.toBeNull();
+    await expect(
+      readLocalStorage(page, 'manyak:created-story-ids'),
+    ).resolves.toBe(JSON.stringify(['s1']));
+  });
 });
 
 test.describe('외부 브라우저 핸드오프 랜딩', () => {
