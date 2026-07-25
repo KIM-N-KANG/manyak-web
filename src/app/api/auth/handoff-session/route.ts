@@ -44,7 +44,52 @@ async function createHandoffSession(code: string): Promise<Response> {
   return response;
 }
 
+/**
+ * 같은 출처에서 온 JSON 제출인지 확인한다.
+ *
+ * 이 엔드포인트는 인증 없이 로그인용 쿠키를 심으므로, 공격자 페이지가 자기 핸드오프
+ * 코드를 피해자 브라우저에 심어 다음 로그인에 소비시키는 CSRF가 성립한다. JSON
+ * Content-Type을 강제하면 프리플라이트 없이 보낼 수 있는 폼 전송(text/plain 등)이
+ * 막히고, Sec-Fetch-Site로 한 번 더 거른다(미지원 브라우저는 Origin·Host로 대체한다).
+ *
+ * @param request 검사할 요청
+ * @returns 같은 출처의 JSON 요청이면 true
+ */
+function isSameOriginJsonRequest(request: Request): boolean {
+  if (!request.headers.get('Content-Type')?.includes('application/json')) {
+    return false;
+  }
+
+  const site = request.headers.get('Sec-Fetch-Site');
+
+  if (site) {
+    return site === 'same-origin';
+  }
+
+  const origin = request.headers.get('Origin');
+
+  if (!origin) {
+    return false;
+  }
+
+  const host =
+    request.headers.get('X-Forwarded-Host') ?? request.headers.get('Host');
+
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
+  if (!isSameOriginJsonRequest(request)) {
+    return Response.json(
+      { error: '허용되지 않은 요청이에요.' },
+      { status: 403, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   const body = (await request.json().catch(() => ({}))) as { code?: string };
 
   if (!body.code) {
