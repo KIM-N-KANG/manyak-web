@@ -2,7 +2,7 @@ import type { SimpleStoryTagListItemResponseCategory } from '@/api/generated/mod
 import {
   type InviteCodeErrorType,
   type InviteCodeSource,
-} from '@/features/more/invite/utils/invite-code';
+} from '@/features/my/invite/utils/invite-code';
 import { type InAppBrowser } from '@/lib/in-app-browser';
 
 /** 스토리 생성 플로우의 단계 이름. */

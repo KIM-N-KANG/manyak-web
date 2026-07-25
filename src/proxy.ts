@@ -40,7 +40,7 @@ function hasMemberSessionCookie(request: NextRequest): boolean {
  *
  * 원래 목적지는 `from` 쿼리로 넘겨, 노출 대상이 아니면 가드가 그리로 되돌린다.
  *
- * @param request 매처(`/`·`/chats`·`/more`)에 걸린 요청
+ * @param request 매처(`/`·`/chats`·`/my`)에 걸린 요청
  * @returns 온보딩 리다이렉트 또는 통과 응답
  */
 export function proxy(request: NextRequest) {
@@ -59,5 +59,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/chats', '/more'],
+  matcher: ['/', '/chats', '/my'],
 };

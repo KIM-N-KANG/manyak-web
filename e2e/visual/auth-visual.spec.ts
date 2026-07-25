@@ -3,7 +3,7 @@ import { waitForFonts } from '../fixtures/visual';
 
 /**
  * 로그인 화면의 정적 상태를 비교하는 비주얼 회귀 스펙.
- * 뒤로가기·이동 동작 검증은 `more/login-page.spec.ts`가 담당한다.
+ * 뒤로가기·이동 동작 검증은 `my/login-page.spec.ts`가 담당한다.
  */
 
 test.describe('계정 비주얼', () => {
