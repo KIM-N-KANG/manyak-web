@@ -16,6 +16,7 @@ import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
 import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
+import { HANDOFF_QUERY_PARAM } from '@/lib/auth/handoff-query';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 import { track } from '@/observability/analytics';
 
@@ -31,26 +32,50 @@ const HANDOFF_SESSION_ENDPOINT = '/api/auth/handoff-session';
 const emptySubscribe = () => () => {};
 
 /**
+ * 핸드오프 수령 결과. 만료(재시도 무의미)와 일시적 실패(재시도 가능)를 구분한다.
+ */
+type HandoffReceipt =
+  | { kind: 'received'; summary: LoginHandoffSummaryResponse }
+  | { kind: 'expired' }
+  | { kind: 'failed' };
+
+/**
  * 핸드오프 코드를 BFF(/api/auth/handoff-session)에 제출해 HttpOnly 쿠키로 옮긴다.
- * 코드는 body로만 보내고 응답은 안내용 요약만 받는다. 만료·무효(non-2xx)면 null을 반환한다.
+ * 코드는 body로만 보내고 응답은 안내용 요약만 받는다.
+ * 만료·무효는 404로만 판정하고, 5xx·네트워크 실패는 재시도 가능한 실패로 돌린다.
  *
  * @param code URL 쿼리에서 읽은 핸드오프 코드
- * @returns 옮길 건수·복귀 경로 요약(실패 시 null)
+ * @returns 요약을 담은 수령 결과, 또는 만료·실패 결과
  */
-async function submitHandoffSession(
-  code: string,
-): Promise<LoginHandoffSummaryResponse | null> {
-  const response = await fetch(HANDOFF_SESSION_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code }),
-  });
+async function submitHandoffSession(code: string): Promise<HandoffReceipt> {
+  let response: Response;
 
-  if (!response.ok) {
-    return null;
+  try {
+    response = await fetch(HANDOFF_SESSION_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+  } catch {
+    return { kind: 'failed' };
   }
 
-  return (await response.json()) as LoginHandoffSummaryResponse;
+  if (response.status === 404) {
+    return { kind: 'expired' };
+  }
+
+  if (!response.ok) {
+    return { kind: 'failed' };
+  }
+
+  try {
+    return {
+      kind: 'received',
+      summary: (await response.json()) as LoginHandoffSummaryResponse,
+    };
+  } catch {
+    return { kind: 'failed' };
+  }
 }
 
 /**
@@ -59,20 +84,16 @@ async function submitHandoffSession(
  * 후 재방문에서 온보딩이 다시 뜨지 않게 한다(스펙 §3-10 흐름 5의 곁가지 경로 보정).
  *
  * @param code URL 쿼리에서 읽은 핸드오프 코드
- * @returns 안내용 요약(만료·무효면 null)
+ * @returns 수령 결과(만료·실패 포함)
  */
-async function receiveHandoff(
-  code: string,
-): Promise<LoginHandoffSummaryResponse | null> {
-  const summary = await submitHandoffSession(code);
+async function receiveHandoff(code: string): Promise<HandoffReceipt> {
+  const receipt = await submitHandoffSession(code);
 
-  if (!summary) {
-    return null;
+  if (receipt.kind === 'received') {
+    markOnboardingSeen();
   }
 
-  markOnboardingSeen();
-
-  return summary;
+  return receipt;
 }
 
 /**
@@ -86,12 +107,45 @@ function stripHandoffQuery() {
   window.history.replaceState(null, '', APP_PATH.LOGIN_CONTINUE);
 }
 
+/** 외부 랜딩이 그릴 수 있는 화면 단계. */
+type LandingPhase = 'loading' | 'ready' | 'expired' | 'failed';
+
+/**
+ * 수령 결과를 화면 단계로 반영한다.
+ * 성공한 경우에만 조회 이벤트를 남기고 URL에서 코드를 지운다 — 실패 화면은 재시도가
+ * 같은 코드를 다시 써야 하므로 쿼리를 남겨둔다.
+ *
+ * @param receipt 수령 결과
+ * @param setPhase 화면 단계 setter
+ * @param setSummary 안내 요약 setter
+ */
+function applyReceipt(
+  receipt: HandoffReceipt,
+  setPhase: (phase: LandingPhase) => void,
+  setSummary: (summary: LoginHandoffSummaryResponse) => void,
+): void {
+  if (receipt.kind === 'expired') {
+    setPhase('expired');
+
+    return;
+  }
+
+  if (receipt.kind === 'failed') {
+    setPhase('failed');
+
+    return;
+  }
+
+  setSummary(receipt.summary);
+  setPhase('ready');
+  track('client_loginContinue_viewed');
+  stripHandoffQuery();
+}
+
 function ExternalHandoffLanding() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [phase, setPhase] = useState<'loading' | 'ready' | 'expired'>(
-    'loading',
-  );
+  const [phase, setPhase] = useState<LandingPhase>('loading');
   const [summary, setSummary] = useState<LoginHandoffSummaryResponse | null>(
     null,
   );
@@ -108,7 +162,7 @@ function ExternalHandoffLanding() {
       return;
     }
 
-    const code = searchParams.get('handoff');
+    const code = searchParams.get(HANDOFF_QUERY_PARAM);
 
     if (!code) {
       router.replace(APP_PATH.LOGIN);
@@ -116,18 +170,9 @@ function ExternalHandoffLanding() {
       return;
     }
 
-    void receiveHandoff(code).then((result) => {
-      if (!result) {
-        setPhase('expired');
-
-        return;
-      }
-
-      setSummary(result);
-      setPhase('ready');
-      track('client_loginContinue_viewed');
-      stripHandoffQuery();
-    });
+    void receiveHandoff(code).then((receipt) =>
+      applyReceipt(receipt, setPhase, setSummary),
+    );
   }, [router, searchParams]);
 
   if (phase === 'loading') {
@@ -148,6 +193,39 @@ function ExternalHandoffLanding() {
             variant="outline"
             onClick={() => router.push(APP_PATH.LOGIN)}>
             로그인하러 가기
+          </Button>
+        </ListStatus>
+      </div>
+    );
+  }
+
+  if (phase === 'failed') {
+    const handleRetry = () => {
+      const code = searchParams.get(HANDOFF_QUERY_PARAM);
+
+      if (!code) {
+        router.replace(APP_PATH.LOGIN);
+
+        return;
+      }
+
+      setPhase('loading');
+      void receiveHandoff(code).then((receipt) =>
+        applyReceipt(receipt, setPhase, setSummary),
+      );
+    };
+
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <ListStatus
+          title="잠시 문제가 생겼어요"
+          description="잠시 후 다시 시도해주세요">
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            onClick={handleRetry}>
+            다시 시도
           </Button>
         </ListStatus>
       </div>

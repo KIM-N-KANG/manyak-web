@@ -238,6 +238,30 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     ).toBeVisible();
   });
 
+  test('일시적인 수령 실패는 재시도 안내를 보여주고, 다시 시도하면 진행한다', async ({
+    page,
+  }) => {
+    await mockHandoffSession(page, { status: 502 });
+
+    await page.goto('/login/continue?handoff=handoff-code-1');
+
+    await expect(
+      page.getByRole('heading', { name: '잠시 문제가 생겼어요' }),
+    ).toBeVisible();
+    // 재시도가 같은 코드를 다시 써야 하므로 쿼리는 남긴다.
+    await expect(page).toHaveURL('/login/continue?handoff=handoff-code-1');
+
+    await mockHandoffSession(page, {
+      body: { storyCount: 1, chatCount: 1, callbackPath: '/' },
+    });
+    await page.getByRole('button', { name: '다시 시도' }).click();
+
+    await expect(page).toHaveURL('/login/continue');
+    await expect(
+      page.getByRole('button', { name: /Google로 시작하기/ }),
+    ).toBeVisible();
+  });
+
   test('핸드오프 수령 후에는 로그인 없이 홈에 진입해도 온보딩으로 튕기지 않는다', async ({
     page,
   }) => {
