@@ -34,7 +34,7 @@ export function ChatRoundFilledIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function MoreFilledIcon(props: SVGProps<SVGSVGElement>) {
+export function UserFilledIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       width="24"
@@ -43,16 +43,9 @@ export function MoreFilledIcon(props: SVGProps<SVGSVGElement>) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       {...props}>
+      <circle cx="12" cy="6" r="4" fill="currentColor" />
       <path
-        d="M7 12C7 13.1046 6.10457 14 5 14C3.89543 14 3 13.1046 3 12C3 10.8954 3.89543 10 5 10C6.10457 10 7 10.8954 7 12Z"
-        fill="currentColor"
-      />
-      <path
-        d="M14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10C13.1046 10 14 10.8954 14 12Z"
-        fill="currentColor"
-      />
-      <path
-        d="M21 12C21 13.1046 20.1046 14 19 14C17.8954 14 17 13.1046 17 12C17 10.8954 17.8954 10 19 10C20.1046 10 21 10.8954 21 12Z"
+        d="M20 17.5C20 19.9853 20 22 12 22C4 22 4 19.9853 4 17.5C4 15.0147 7.58172 13 12 13C16.4183 13 20 15.0147 20 17.5Z"
         fill="currentColor"
       />
     </svg>

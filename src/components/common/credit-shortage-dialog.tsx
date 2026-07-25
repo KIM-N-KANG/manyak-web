@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { APP_PATH } from '@/constants/app-path';
-import { useClaimAttendance } from '@/features/more/_shared/hooks/use-claim-attendance';
+import { useClaimAttendance } from '@/features/my/_shared/hooks/use-claim-attendance';
 import { type CreditShortageTrigger, track } from '@/observability/analytics';
 
 type CreditShortageDialogProps = {
@@ -68,7 +68,7 @@ export function CreditShortageDialog({
       track('client_creditShortageDialog_earnButton_clicked', { trigger });
     }
 
-    router.push(APP_PATH.MORE_INVITE);
+    router.push(APP_PATH.MY_INVITE);
   };
 
   const handleOpenChange = (open: boolean) => {
