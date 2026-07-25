@@ -1,11 +1,19 @@
 import {
+  getConfirmUrl,
   getLoginWithGoogleUrl,
   getLogoutUrl,
   getMeUrl,
   getRefreshUrl,
 } from '@/api/generated/endpoints/auth/auth';
-import type { MeResponse, TokenResponse } from '@/api/generated/models';
+import type {
+  LoginHandoffSummaryResponse,
+  MeResponse,
+  TokenResponse,
+} from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
+import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
+
+import { HANDOFF_CODE_HEADER } from './handoff-header';
 
 /**
  * BFF(서버)에서 백엔드 인증 API를 직접 호출하는 클라이언트.
@@ -76,25 +84,48 @@ const requestBackend = async <T>(
  *
  * @param path 백엔드 API 경로
  * @param body JSON으로 직렬화할 요청 본문
+ * @param headers Content-Type 외에 추가로 실을 요청 헤더
  * @returns 파싱된 응답 본문
  */
-const postJson = <T>(path: string, body: unknown): Promise<T> =>
+const postJson = <T>(
+  path: string,
+  body: unknown,
+  headers?: Record<string, string>,
+): Promise<T> =>
   requestBackend<T>(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(body),
   });
 
 /**
  * Google ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
  *
+ * deviceId는 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데 쓰인다(스펙 §4-3-7).
+ * 서버가 pepper를 붙여 내부에서 해시하므로 반드시 원문 그대로 전달한다 — 클라이언트에서
+ * 해시하면 이중 해시가 되어 게스트 사용량 키와 일치하지 않는다. 헤더가 없으면 백엔드가
+ * 한도 소진 상태로 시드하는 우회 차단 폴백을 타므로, 값이 있으면 반드시 실어야 한다.
+ *
+ * handoffCode가 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가
+ * deviceId 헤더보다 우선)와 게스트 데이터 이관을 함께 원자적으로 수행한다(스펙 §4-3-5).
+ * 시드는 로그인 호출에 실려야 하며, 미루면 백엔드가 소진 시드를 비가역으로 확정한다.
+ * 무효·만료 코드는 백엔드가 헤더 deviceId로 폴백하고 로그인은 정상 진행한다.
+ *
  * @param idToken Google에서 발급한 ID 토큰
+ * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
+ * @param handoffCode 인앱 핸드오프 코드 원문(없으면 body에서 생략)
  * @returns 발급된 백엔드 토큰 응답
  */
 export const loginWithGoogleOnServer = (
   idToken: string,
+  deviceId?: string,
+  handoffCode?: string,
 ): Promise<TokenResponse> =>
-  postJson<TokenResponse>(getLoginWithGoogleUrl(), { idToken });
+  postJson<TokenResponse>(
+    getLoginWithGoogleUrl(),
+    { idToken, ...(handoffCode ? { handoffCode } : {}) },
+    deviceId ? { [DEVICE_ID_HEADER]: deviceId } : undefined,
+  );
 
 /**
  * refresh 토큰을 회전해 새 토큰 쌍을 발급받는다. 실패(401)는 family 폐기를 뜻할 수 있다.
@@ -122,4 +153,20 @@ export const logoutOnServer = (refreshToken: string): Promise<void> =>
 export const fetchMeOnServer = (accessToken: string): Promise<MeResponse> =>
   requestBackend<MeResponse>(getMeUrl(), {
     headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+/**
+ * 핸드오프 코드로 확인 API를 호출해 외부 랜딩 안내용 요약을 조회한다.
+ * 외부 랜딩의 BFF 라우트가 코드를 HttpOnly 쿠키로 옮기기 전에 코드를 검증하는 데 쓴다.
+ * 코드는 URI가 아니라 X-Manyak-Handoff-Code 헤더로 전달한다(스펙 §4-3-5).
+ *
+ * @param handoffCode 확인할 핸드오프 코드 원문
+ * @returns 옮길 스토리·채팅 건수와 복귀 경로 요약
+ * @throws 만료·무효(404) 등 실패 시 BackendAuthError
+ */
+export const confirmHandoffOnServer = (
+  handoffCode: string,
+): Promise<LoginHandoffSummaryResponse> =>
+  requestBackend<LoginHandoffSummaryResponse>(getConfirmUrl(), {
+    headers: { [HANDOFF_CODE_HEADER]: handoffCode },
   });

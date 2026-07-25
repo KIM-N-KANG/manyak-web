@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { BackHeader } from '@/components/layout/back-header';
@@ -17,6 +16,7 @@ import {
   buildLoginUrl,
   resolveLoginCallbackUrl,
 } from '@/features/auth/_shared/utils/login-callback-url';
+import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import { track } from '@/observability/analytics';
 
@@ -52,7 +52,7 @@ export function LoginScreen() {
 
   const handleGoogleLogin = () => {
     track('client_login_googleButton_clicked');
-    void signIn('google', {
+    void startGoogleLogin({
       redirectTo: resolveLoginCallbackUrl(searchParams.get('callbackUrl')),
     });
   };
@@ -60,7 +60,7 @@ export function LoginScreen() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <BackHeader title="로그인" fallbackHref={APP_PATH.MAIN.STORIES} />
-      <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4">
+      <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4 pt-0">
         <div className="flex flex-col items-center gap-4">
           <ManyakLogo className="h-6 w-auto text-primary" />
           <p className="text-center text-lg font-semibold">
@@ -92,7 +92,8 @@ export function LoginScreen() {
             <Link href={APP_PATH.PRIVACY} className="underline">
               개인정보처리방침
             </Link>
-            에 동의하는 것으로 간주해요
+            에<br />
+            동의하는 것으로 간주해요
           </p>
         </div>
       </main>

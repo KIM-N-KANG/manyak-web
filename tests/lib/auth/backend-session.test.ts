@@ -11,7 +11,17 @@ const tokenCookiesMock = vi.hoisted(() => ({
   hasNextAuthSessionCookie: vi.fn(),
 }));
 
+const identityServerMock = vi.hoisted(() => ({
+  readAmplitudeDeviceIdOnServer: vi.fn(),
+}));
+
+const handoffCookieMock = vi.hoisted(() => ({
+  readHandoffCodeOnServer: vi.fn(),
+}));
+
 vi.mock('@/lib/auth/token-cookies', () => tokenCookiesMock);
+vi.mock('@/observability/analytics/identity-server', () => identityServerMock);
+vi.mock('@/lib/auth/handoff-cookie', () => handoffCookieMock);
 // 함수만 목킹하고 BackendAuthError 클래스는 실제 구현을 유지한다
 // (ensureFreshAccessToken의 원인 분류가 instanceof로 판별하기 때문).
 vi.mock('@/lib/auth/backend-client', async (importActual) => {
@@ -35,6 +45,8 @@ beforeEach(() => {
   // 기본값: NextAuth 세션 쿠키와 refresh 쿠키 없음. 개별 케이스에서만 override.
   tokenCookiesMock.hasNextAuthSessionCookie.mockResolvedValue(false);
   tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
+  identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(undefined);
+  handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue(undefined);
 });
 
 describe('ensureFreshAccessToken', () => {
@@ -240,8 +252,70 @@ describe('establishBackendSession', () => {
     });
 
     expect(callOrder).toEqual(['login', 'me', 'write']);
-    expect(loginWithGoogleOnServer).toHaveBeenCalledWith('id-token');
+    expect(loginWithGoogleOnServer).toHaveBeenCalledWith(
+      'id-token',
+      undefined,
+      undefined,
+    );
     expect(fetchMeOnServer).toHaveBeenCalledWith('access-1');
+  });
+
+  it('요청 쿠키의 Amplitude device_id를 읽어 로그인 호출에 원문 그대로 전달한다', async () => {
+    const { loginWithGoogleOnServer, fetchMeOnServer } =
+      await import('@/lib/auth/backend-client');
+
+    // 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데 쓰인다(스펙 §4-3-7).
+    // 전달하지 않으면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의 무료 체험이 0이 된다.
+    identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(
+      'amp-device-raw',
+    );
+    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      expiresIn: 1800,
+    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue({
+      id: 'user-1',
+      nickname: '만냐',
+      profileImageUrl: null,
+    });
+
+    await establishBackendSession('id-token');
+
+    expect(loginWithGoogleOnServer).toHaveBeenCalledWith(
+      'id-token',
+      'amp-device-raw',
+      undefined,
+    );
+  });
+
+  it('핸드오프 쿠키가 있으면 코드를 로그인 호출에 함께 전달한다', async () => {
+    const { loginWithGoogleOnServer, fetchMeOnServer } =
+      await import('@/lib/auth/backend-client');
+
+    // 외부 랜딩이 심은 핸드오프 코드를 로그인 호출에 실어야 시드·이관이 함께 수행된다(스펙 §4-3-5).
+    identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(
+      'amp-device-raw',
+    );
+    handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue('handoff-code');
+    vi.mocked(loginWithGoogleOnServer).mockResolvedValue({
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      expiresIn: 1800,
+    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue({
+      id: 'user-1',
+      nickname: '만냐',
+      profileImageUrl: null,
+    });
+
+    await establishBackendSession('id-token');
+
+    expect(loginWithGoogleOnServer).toHaveBeenCalledWith(
+      'id-token',
+      'amp-device-raw',
+      'handoff-code',
+    );
   });
 
   it('로그인 응답에 isNewUser가 없으면 기존 회원으로 반환한다', async () => {

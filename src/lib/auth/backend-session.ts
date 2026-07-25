@@ -1,8 +1,11 @@
+import { readAmplitudeDeviceIdOnServer } from '@/observability/analytics/identity-server';
+
 import {
   BackendAuthError,
   fetchMeOnServer,
   loginWithGoogleOnServer,
 } from './backend-client';
+import { readHandoffCodeOnServer } from './handoff-cookie';
 import { refreshWithDedup } from './refresh-dedup';
 import { shouldRefreshAccessToken } from './token-cookie-policy';
 import {
@@ -130,7 +133,17 @@ export async function establishBackendSession(idToken: string): Promise<{
   profileImageUrl: string | null;
   isNewUser: boolean;
 }> {
-  const tokens = await loginWithGoogleOnServer(idToken);
+  // OAuth 콜백은 내비게이션 요청이라 분석 헤더가 없으므로 쿠키에서 device_id를 읽어
+  // 로그인 요청에 싣는다. 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데
+  // 쓰이며(스펙 §4-3-7), 빠뜨리면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의
+  // 무료 체험이 0이 된다(1회성 시드라 비가역).
+  const deviceId = await readAmplitudeDeviceIdOnServer();
+  // 외부 랜딩이 심은 핸드오프 쿠키를 로그인 호출 전에 읽는다. 유효하면 이 호출이
+  // 회원 체험 시드(핸드오프의 원본 디바이스 ID 우선)와 게스트 데이터 이관을 함께
+  // 수행한다(스펙 §4-3-5). 코드는 비밀값이라 로그·분석에 남기지 않는다.
+  const handoffCode = await readHandoffCodeOnServer();
+
+  const tokens = await loginWithGoogleOnServer(idToken, deviceId, handoffCode);
 
   if (!tokens.accessToken) {
     throw new Error('토큰 응답에 accessToken이 없습니다.');

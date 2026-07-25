@@ -13,11 +13,12 @@ export const TOAST_MESSAGE = {
   FEEDBACK_SUBMITTED: '소중한 피드백을 보내주셔서 감사해요',
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요',
   LOGIN_FAILED: '로그인에 실패했어요',
+  HANDOFF_CREATE_FAILED: '로그인 준비에 실패했어요. 잠시 후 다시 시도해주세요',
   SESSION_EXPIRED: '세션이 만료되어 로그아웃되었어요',
   MIGRATION_SUCCEEDED: (storyCount: number, chatCount: number) =>
     `스토리 ${storyCount}개, 채팅 ${chatCount}개를 계정으로 옮겼어요`,
   MIGRATION_ALREADY_DONE:
-    '이미 옮긴 적이 있어 이 기기의 스토리와 채팅은 옮기지 못했어요',
+    '이미 스토리와 채팅을 옮긴 이력이 있어 옮기지 못했어요',
   ATTENDANCE_CLAIMED: (amount: number) =>
     `출석 체크 보상으로 ${amount} 크레딧을 받았어요`,
   ATTENDANCE_ALREADY: '오늘은 이미 출석 체크했어요',

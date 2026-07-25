@@ -10,9 +10,9 @@ vi.mock('@amplitude/unified', () => ({
 
 import {
   DEVICE_ID_HEADER,
-  getAnalyticsIdentityHeaders,
   SESSION_ID_HEADER,
-} from '@/observability/analytics/identity';
+} from '@/observability/analytics/amplitude-identity';
+import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
 // Amplitude가 저장하는 쿠키와 같은 형식(base64 → URL 인코드 → JSON)으로 만든다.
 const ampCookie = (state: { deviceId?: string; sessionId?: number }) =>
@@ -124,6 +124,24 @@ describe('getAnalyticsIdentityHeaders', () => {
       const storage = createStorage();
 
       stubDevBrowser(storage);
+      getDeviceIdMock.mockReturnValue(undefined);
+      getSessionIdMock.mockReturnValue(undefined);
+
+      const headers = getAnalyticsIdentityHeaders();
+
+      const deviceId = headers[DEVICE_ID_HEADER];
+
+      expect(deviceId).toBeTruthy();
+      expect(storage.store.get('manyak-dev-device-id')).toBe(deviceId);
+    });
+
+    it('secure context가 아니어서 crypto.randomUUID가 없어도 device_id를 생성한다', () => {
+      // http://<LAN IP>:3000 실기기 접속은 insecure origin이라 crypto.randomUUID가 없다.
+      // 폴백이 조용히 생략되면 게스트 API가 400을 반환하므로 대체 생성이 필요하다.
+      const storage = createStorage();
+
+      stubDevBrowser(storage);
+      vi.stubGlobal('crypto', {});
       getDeviceIdMock.mockReturnValue(undefined);
       getSessionIdMock.mockReturnValue(undefined);
 

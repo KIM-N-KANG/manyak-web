@@ -9,6 +9,7 @@ import {
   APP_VERSION,
   IS_ANALYTICS_ENABLED,
 } from '@/observability/analytics/config';
+import { handoffRedactionPlugin } from '@/observability/analytics/handoff-redaction';
 import { identifyUser } from '@/observability/monitoring/sentry';
 
 let initialized = false;
@@ -20,6 +21,8 @@ export function AmplitudeProvider({ children }: PropsWithChildren) {
     initialized = true;
 
     void (async () => {
+      amplitude.add(handoffRedactionPlugin);
+
       await amplitude.initAll(ANALYTICS_API_KEY, {
         analytics: {
           appVersion: APP_VERSION,

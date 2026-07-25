@@ -2,12 +2,12 @@ import { expect, skipOnboarding, test } from '../fixtures/test';
 
 const HOME_FILLED_PATH =
   'M12.907 1.36366C12.3115 1.21521 11.6886 1.21521 11.093 1.36366';
-const MORE_FILLED_PATH =
-  'M7 12C7 13.1046 6.10457 14 5 14C3.89543 14 3 13.1046 3 12';
+const USER_FILLED_PATH =
+  'M20 17.5C20 19.9853 20 22 12 22C4 22 4 19.9853 4 17.5';
 
-// 하단 탭으로 홈↔채팅↔더보기를 오간다(US-8-1).
+// 하단 탭으로 홈↔채팅↔마이를 오간다(US-8-1).
 // 온보딩 다이얼로그가 탭을 가리므로 스킵 상태에서 검증한다.
-test('하단 탭으로 홈·채팅·더보기를 오간다', async ({ page }) => {
+test('하단 탭으로 홈·채팅·마이를 오간다', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/');
 
@@ -38,17 +38,17 @@ test('하단 탭으로 홈·채팅·더보기를 오간다', async ({ page }) =>
     'page',
   );
 
-  // 더보기로 이동
-  const moreLink = bottomNav.getByRole('link', { name: '더보기' });
+  // 마이로 이동
+  const myLink = bottomNav.getByRole('link', { name: '마이' });
 
-  await moreLink.click();
-  await expect(page).toHaveURL(/\/more$/);
+  await myLink.click();
+  await expect(page).toHaveURL(/\/my$/);
   await expect(
-    page.getByRole('heading', { level: 1, name: '더보기' }),
+    page.getByRole('heading', { level: 1, name: '마이' }),
   ).toBeVisible();
-  await expect(moreLink.locator('path').first()).toHaveAttribute(
+  await expect(myLink.locator('path')).toHaveAttribute(
     'd',
-    new RegExp(`^${MORE_FILLED_PATH}`),
+    new RegExp(`^${USER_FILLED_PATH}`),
   );
 
   // 홈으로 복귀

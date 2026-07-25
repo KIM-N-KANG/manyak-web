@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +17,7 @@ import {
 import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
+import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredDialogProps = {
@@ -42,9 +42,7 @@ export function LoginRequiredDialog({
       track('client_guestLimitDialog_loginButton_clicked', { trigger });
     }
 
-    void signIn('google', {
-      redirectTo: resolveLoginCallbackUrl(pathname),
-    });
+    void startGoogleLogin({ redirectTo: resolveLoginCallbackUrl(pathname) });
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -79,7 +77,8 @@ export function LoginRequiredDialog({
             <Link href={APP_PATH.PRIVACY} className="underline">
               개인정보처리방침
             </Link>
-            에 동의하는 것으로 간주해요
+            에<br />
+            동의하는 것으로 간주해요
           </p>
         </DialogFooter>
       </DialogContent>

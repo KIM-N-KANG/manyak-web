@@ -1,18 +1,14 @@
 import * as amplitude from '@amplitude/unified';
 
-/** Amplitude device_id를 백엔드로 전달하는 요청 헤더 이름. */
-export const DEVICE_ID_HEADER = 'X-Manyak-Device-Id';
-/** Amplitude session_id를 백엔드로 전달하는 요청 헤더 이름. */
-export const SESSION_ID_HEADER = 'X-Manyak-Session-Id';
+import { createClientId } from '@/lib/create-client-id';
 
-/** 식별자 쿠키만 고르고 마케팅용 AMP_MKTG_ 쿠키는 제외하기 위한 접두사. */
-const AMP_COOKIE_PREFIX = 'AMP_';
-const AMP_MKTG_COOKIE_PREFIX = 'AMP_MKTG_';
-
-interface AmplitudeCookieState {
-  deviceId?: string;
-  sessionId?: number;
-}
+import {
+  type AmplitudeCookieState,
+  DEVICE_ID_HEADER,
+  isAmplitudeIdentityCookieName,
+  parseAmplitudeCookieValue,
+  SESSION_ID_HEADER,
+} from './amplitude-identity';
 
 /**
  * SDK가 저장한 쿠키에서 식별자를 읽는다. 값 형식(base64 → URL 디코드 → JSON)은
@@ -21,32 +17,17 @@ interface AmplitudeCookieState {
  * @returns 쿠키에서 읽은 device_id·session_id(파싱 실패 시 빈 객체)
  */
 function readAmplitudeCookieState(): AmplitudeCookieState {
-  const entry = document.cookie
-    .split('; ')
-    .find(
-      (cookie) =>
-        cookie.startsWith(AMP_COOKIE_PREFIX) &&
-        !cookie.startsWith(AMP_MKTG_COOKIE_PREFIX),
-    );
+  const entry = document.cookie.split('; ').find((cookie) => {
+    const separatorIndex = cookie.indexOf('=');
+    const name =
+      separatorIndex === -1 ? cookie : cookie.slice(0, separatorIndex);
+
+    return isAmplitudeIdentityCookieName(name);
+  });
 
   if (!entry) return {};
 
-  const rawValue = entry.slice(entry.indexOf('=') + 1);
-
-  try {
-    const parsed: unknown = JSON.parse(decodeURIComponent(atob(rawValue)));
-
-    if (typeof parsed !== 'object' || parsed === null) return {};
-
-    const { deviceId, sessionId } = parsed as Record<string, unknown>;
-
-    return {
-      deviceId: typeof deviceId === 'string' ? deviceId : undefined,
-      sessionId: typeof sessionId === 'number' ? sessionId : undefined,
-    };
-  } catch {
-    return {};
-  }
+  return parseAmplitudeCookieValue(entry.slice(entry.indexOf('=') + 1));
 }
 
 /** dev 폴백 device_id를 재사용하기 위한 localStorage 키. */
@@ -56,6 +37,10 @@ const DEV_DEVICE_ID_STORAGE_KEY = 'manyak-dev-device-id';
  * 로컬 개발에서는 Amplitude가 초기화되지 않아(production 전용) device_id가 없고,
  * 게스트 체험 한도 API가 400을 반환한다. development에 한해 임시 device_id를
  * 생성·영속화해 헤더를 채운다. localStorage가 막힌 환경에서는 조용히 생략한다.
+ *
+ * 생성은 createClientId를 쓴다 — http://<LAN IP>:3000 실기기 접속 같은 insecure
+ * origin에는 crypto.randomUUID가 없어, 직접 호출하면 폴백 전체가 조용히 생략되고
+ * 게스트 API가 400을 반환하기 때문이다.
  *
  * @returns dev 폴백 device_id(development가 아니거나 저장 실패 시 undefined)
  */
@@ -67,7 +52,7 @@ function getDevFallbackDeviceId(): string | undefined {
 
     if (stored) return stored;
 
-    const generated = crypto.randomUUID();
+    const generated = createClientId();
 
     window.localStorage.setItem(DEV_DEVICE_ID_STORAGE_KEY, generated);
 

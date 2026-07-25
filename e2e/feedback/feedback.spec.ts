@@ -21,7 +21,7 @@ test.describe('피드백 제출', () => {
     });
 
     await skipOnboarding(page);
-    await page.goto('/more/feedback');
+    await page.goto('/my/feedback');
 
     await page
       .getByRole('textbox', { name: '피드백 내용' })
@@ -59,7 +59,7 @@ test.describe('피드백 제출', () => {
     });
 
     await skipOnboarding(page);
-    await page.goto('/more/feedback');
+    await page.goto('/my/feedback');
 
     await page
       .getByRole('textbox', { name: '피드백 내용' })
@@ -76,7 +76,7 @@ test.describe('피드백 제출', () => {
     page,
   }) => {
     await skipOnboarding(page);
-    await page.goto('/more/feedback');
+    await page.goto('/my/feedback');
 
     const submit = page.getByRole('button', { name: '피드백 보내기' });
     const footer = submit.locator('..');
@@ -106,7 +106,7 @@ test.describe('피드백 제출', () => {
     });
 
     await skipOnboarding(page);
-    await page.goto('/more/feedback');
+    await page.goto('/my/feedback');
     await page
       .getByRole('textbox', { name: '피드백 내용' })
       .fill('로딩 상태 확인');
@@ -138,7 +138,7 @@ test.describe('피드백 제출', () => {
     });
 
     await skipOnboarding(page);
-    await page.goto('/more/feedback');
+    await page.goto('/my/feedback');
 
     await page
       .getByRole('textbox', { name: '피드백 내용' })

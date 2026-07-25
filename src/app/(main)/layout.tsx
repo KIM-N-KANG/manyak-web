@@ -5,7 +5,6 @@ import { type UIEvent, useState } from 'react';
 import { BottomNavigationBar } from '@/components/layout/bottom-navigation-bar';
 import { MainHeader } from '@/components/layout/main-header';
 import { MainScrollProvider } from '@/components/layout/main-scroll-context';
-import { OnboardingDialog } from '@/features/onboarding/components/onboarding-dialog';
 
 export default function MainLayout({
   children,
@@ -33,7 +32,6 @@ export default function MainLayout({
         </div>
       </div>
       <BottomNavigationBar />
-      <OnboardingDialog />
     </div>
   );
 }
