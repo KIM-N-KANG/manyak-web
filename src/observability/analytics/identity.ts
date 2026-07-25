@@ -1,5 +1,7 @@
 import * as amplitude from '@amplitude/unified';
 
+import { createClientId } from '@/lib/create-client-id';
+
 import {
   type AmplitudeCookieState,
   DEVICE_ID_HEADER,
@@ -36,6 +38,10 @@ const DEV_DEVICE_ID_STORAGE_KEY = 'manyak-dev-device-id';
  * 게스트 체험 한도 API가 400을 반환한다. development에 한해 임시 device_id를
  * 생성·영속화해 헤더를 채운다. localStorage가 막힌 환경에서는 조용히 생략한다.
  *
+ * 생성은 createClientId를 쓴다 — http://<LAN IP>:3000 실기기 접속 같은 insecure
+ * origin에는 crypto.randomUUID가 없어, 직접 호출하면 폴백 전체가 조용히 생략되고
+ * 게스트 API가 400을 반환하기 때문이다.
+ *
  * @returns dev 폴백 device_id(development가 아니거나 저장 실패 시 undefined)
  */
 function getDevFallbackDeviceId(): string | undefined {
@@ -46,7 +52,7 @@ function getDevFallbackDeviceId(): string | undefined {
 
     if (stored) return stored;
 
-    const generated = crypto.randomUUID();
+    const generated = createClientId();
 
     window.localStorage.setItem(DEV_DEVICE_ID_STORAGE_KEY, generated);
 

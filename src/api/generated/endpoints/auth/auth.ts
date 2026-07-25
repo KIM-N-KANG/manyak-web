@@ -25,6 +25,10 @@ import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
   GoogleLoginRequest,
+  LoginHandoffCreateRequest,
+  LoginHandoffCreateResponse,
+  LoginHandoffStatusResponse,
+  LoginHandoffSummaryResponse,
   LogoutRequest,
   MeResponse,
   MigrationRequest,
@@ -478,6 +482,266 @@ export const useLoginWithGoogle = <
 > => {
   return useMutation(getLoginWithGoogleMutationOptions(options), queryClient);
 };
+export type confirmResponse200 = {
+  data: LoginHandoffSummaryResponse;
+  status: 200;
+};
+
+export type confirmResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type confirmResponseSuccess = confirmResponse200 & {
+  headers: Headers;
+};
+export type confirmResponseError = confirmResponse404 & {
+  headers: Headers;
+};
+
+export type confirmResponse = confirmResponseSuccess | confirmResponseError;
+
+export const getConfirmUrl = () => {
+  return `/api/v1/auth/handoffs`;
+};
+
+/**
+ * 외부 브라우저 랜딩이 코드를 검증하고 옮길 건수와 복귀 경로를 받습니다. PENDING 상태면 LANDED로 전이합니다. 스토리 제목·채팅 본문 같은 콘텐츠는 노출하지 않습니다.
+ * @summary 로그인 핸드오프 확인
+ */
+export const confirm = async (
+  options?: RequestInit,
+): Promise<confirmResponse> => {
+  return customInstance<confirmResponse>(getConfirmUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getConfirmQueryKey = () => {
+  return [`/api/v1/auth/handoffs`] as const;
+};
+
+export const getConfirmQueryOptions = <
+  TData = Awaited<ReturnType<typeof confirm>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof confirm>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getConfirmQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof confirm>>> = ({
+    signal,
+  }) => confirm({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof confirm>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ConfirmQueryResult = NonNullable<
+  Awaited<ReturnType<typeof confirm>>
+>;
+export type ConfirmQueryError = ErrorType<void>;
+
+export function useConfirm<
+  TData = Awaited<ReturnType<typeof confirm>>,
+  TError = ErrorType<void>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof confirm>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof confirm>>,
+          TError,
+          Awaited<ReturnType<typeof confirm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useConfirm<
+  TData = Awaited<ReturnType<typeof confirm>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof confirm>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof confirm>>,
+          TError,
+          Awaited<ReturnType<typeof confirm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useConfirm<
+  TData = Awaited<ReturnType<typeof confirm>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof confirm>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 로그인 핸드오프 확인
+ */
+
+export function useConfirm<
+  TData = Awaited<ReturnType<typeof confirm>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof confirm>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getConfirmQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type createResponse201 = {
+  data: LoginHandoffCreateResponse;
+  status: 201;
+};
+
+export type createResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type createResponseSuccess = createResponse201 & {
+  headers: Headers;
+};
+export type createResponseError = createResponse400 & {
+  headers: Headers;
+};
+
+export type createResponse = createResponseSuccess | createResponseError;
+
+export const getCreateUrl = () => {
+  return `/api/v1/auth/handoffs`;
+};
+
+/**
+ * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
+ * @summary 로그인 핸드오프 생성
+ */
+export const create = async (
+  loginHandoffCreateRequest: LoginHandoffCreateRequest,
+  options?: RequestInit,
+): Promise<createResponse> => {
+  return customInstance<createResponse>(getCreateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(loginHandoffCreateRequest),
+  });
+};
+
+export const getCreateMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof create>>,
+    TError,
+    { data: BodyType<LoginHandoffCreateRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof create>>,
+  TError,
+  { data: BodyType<LoginHandoffCreateRequest> },
+  TContext
+> => {
+  const mutationKey = ['create'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof create>>,
+    { data: BodyType<LoginHandoffCreateRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return create(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof create>>
+>;
+export type CreateMutationBody = BodyType<LoginHandoffCreateRequest>;
+export type CreateMutationError = ErrorType<void>;
+
+/**
+ * @summary 로그인 핸드오프 생성
+ */
+export const useCreate = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof create>>,
+      TError,
+      { data: BodyType<LoginHandoffCreateRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof create>>,
+  TError,
+  { data: BodyType<LoginHandoffCreateRequest> },
+  TContext
+> => {
+  return useMutation(getCreateMutationOptions(options), queryClient);
+};
 export type meResponse200 = {
   data: MeResponse;
   status: 200;
@@ -619,6 +883,159 @@ export function useMe<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getMeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type statusResponse200 = {
+  data: LoginHandoffStatusResponse;
+  status: 200;
+};
+
+export type statusResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type statusResponseSuccess = statusResponse200 & {
+  headers: Headers;
+};
+export type statusResponseError = statusResponse404 & {
+  headers: Headers;
+};
+
+export type statusResponse = statusResponseSuccess | statusResponseError;
+
+export const getStatusUrl = () => {
+  return `/api/v1/auth/handoffs/status`;
+};
+
+/**
+ * 외부 로그인을 마치고 인앱 브라우저로 돌아왔을 때, 실제로 이관된 ID만 로컬에서 정리하기 위해 상태와 이관된 공개 ID 목록을 조회합니다. 이관되지 않은 ID는 여전히 게스트 소유이므로 지우면 안 됩니다.
+ * @summary 로그인 핸드오프 상태 조회
+ */
+export const status = async (
+  options?: RequestInit,
+): Promise<statusResponse> => {
+  return customInstance<statusResponse>(getStatusUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getStatusQueryKey = () => {
+  return [`/api/v1/auth/handoffs/status`] as const;
+};
+
+export const getStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof status>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getStatusQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof status>>> = ({
+    signal,
+  }) => status({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof status>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type StatusQueryResult = NonNullable<Awaited<ReturnType<typeof status>>>;
+export type StatusQueryError = ErrorType<void>;
+
+export function useStatus<
+  TData = Awaited<ReturnType<typeof status>>,
+  TError = ErrorType<void>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof status>>,
+          TError,
+          Awaited<ReturnType<typeof status>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStatus<
+  TData = Awaited<ReturnType<typeof status>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof status>>,
+          TError,
+          Awaited<ReturnType<typeof status>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStatus<
+  TData = Awaited<ReturnType<typeof status>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 로그인 핸드오프 상태 조회
+ */
+
+export function useStatus<
+  TData = Awaited<ReturnType<typeof status>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getStatusQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

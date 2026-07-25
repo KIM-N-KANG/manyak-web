@@ -250,7 +250,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     content = (
       <ListStatus
         title="지금 계정에서는 볼 수 없어요"
-        description="로그인 전에 만든 채팅은 로그아웃하면 다시 볼 수 있어요">
+        description="스토리와 채팅을 이미 한 번 옮긴 계정이라 옮기지 못했어요">
         <Button
           nativeButton={false}
           variant="outline"

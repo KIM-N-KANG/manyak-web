@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
-import { InAppBrowserEscape } from '@/components/layout/in-app-browser-escape';
+import { InAppBrowserObserver } from '@/components/layout/in-app-browser-observer';
 import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
@@ -17,6 +17,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_FRAME_ID } from '@/constants/app-frame';
 import { AutoMigration } from '@/features/auth/_shared/components/auto-migration';
+import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
 import { InviteOnboardingDialog } from '@/features/more/invite/components/invite-onboarding-dialog';
 
 export const metadata: Metadata = {
@@ -84,12 +85,13 @@ export default function RootLayout({
                       id={APP_FRAME_ID}
                       className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                       {children}
-                      <InAppBrowserEscape />
+                      <InAppBrowserObserver />
                     </div>
                     <Toaster />
                     <AnalyticsUserSync />
                     <SessionExpiryWatcher />
                     <AutoMigration />
+                    <HandoffCleanup />
                     <InviteOnboardingDialog />
                   </MotionProvider>
                 </ThemeProvider>

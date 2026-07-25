@@ -1,8 +1,29 @@
 import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
+import { APP_PATH } from './src/constants/app-path';
+
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['192.168.0.28'],
+  // 핸드오프 랜딩은 URL에 일회용 코드를 달고 열린다. 코드가 주소에 남아 있는 동안
+  // 이 문서에서 나가는 모든 요청이 Referer로 코드를 흘리지 않도록 no-referrer를 걸고,
+  // 응답이 중간 캐시에 남지 않도록 no-store를 함께 지정한다(정적 프리렌더는 유지된다).
+  async headers() {
+    return [
+      {
+        source: APP_PATH.LOGIN_CONTINUE,
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+    ];
+  },
+  // 실기기 dev 테스트용 교차 출처 허용 목록. 개발자별 터널 도메인·LAN IP는
+  // 로컬 값이므로 코드에 하드코딩하지 않고 .env.local의 ALLOWED_DEV_ORIGINS
+  // (콤마 구분)로 주입한다.
+  allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   output: 'standalone',
   reactCompiler: true,
   compiler: {
