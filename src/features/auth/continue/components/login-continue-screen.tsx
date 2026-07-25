@@ -75,6 +75,17 @@ async function receiveHandoff(
   return summary;
 }
 
+/**
+ * URL에 남은 핸드오프 코드를 지운다.
+ * 코드는 이미 HttpOnly 쿠키로 옮겨졌으므로 히스토리·Referer에 원문을 남기지 않는다.
+ * 이 라우트는 프로덕션에서 정적 프리렌더되어 `router.replace`로 같은 경로에 쿼리만
+ * 바꾸면 라우터가 동일 엔트리로 보고 히스토리를 갱신하지 않는다(dev에서는 항상 동적이라
+ * 통과해 CI에서만 드러났다). 이동이 아닌 히스토리 치환이 필요한 자리다.
+ */
+function stripHandoffQuery() {
+  window.history.replaceState(null, '', APP_PATH.LOGIN_CONTINUE);
+}
+
 function ExternalHandoffLanding() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,7 +126,7 @@ function ExternalHandoffLanding() {
       setSummary(result);
       setPhase('ready');
       track('client_loginContinue_viewed');
-      router.replace(APP_PATH.LOGIN_CONTINUE);
+      stripHandoffQuery();
     });
   }, [router, searchParams]);
 
