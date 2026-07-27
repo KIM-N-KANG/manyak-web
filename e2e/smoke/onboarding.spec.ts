@@ -66,6 +66,37 @@ test.describe('온보딩', () => {
       .toBeGreaterThan(0);
   });
 
+  test('채팅 미리보기 자산은 해당 슬라이드를 열기 전까지 내려받지 않는다', async ({
+    page,
+  }) => {
+    // 포스터는 preload를 무시하고 즉시 받으므로 영상과 함께 지연 여부를 확인한다.
+    const chatAssetRequests: string[] = [];
+
+    page.on('request', (request) => {
+      if (/onboarding-chat-preview\.(webm|mp4|webp)/.test(request.url())) {
+        chatAssetRequests.push(request.url());
+      }
+    });
+
+    await page.goto('/');
+
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+    await expect
+      .poll(() =>
+        page
+          .locator('video')
+          .first()
+          .evaluate((el: HTMLVideoElement) => el.currentTime),
+      )
+      .toBeGreaterThan(0);
+
+    expect(chatAssetRequests).toHaveLength(0);
+
+    await page.getByRole('button', { name: '2번째 미리보기 보기' }).click();
+
+    await expect.poll(() => chatAssetRequests.length).toBeGreaterThan(0);
+  });
+
   test('인디케이터로 채팅 미리보기 슬라이드로 이동할 수 있다', async ({
     page,
   }) => {
