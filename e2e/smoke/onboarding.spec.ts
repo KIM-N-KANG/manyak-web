@@ -69,12 +69,18 @@ test.describe('온보딩', () => {
   test('채팅 미리보기 자산은 해당 슬라이드를 열기 전까지 내려받지 않는다', async ({
     page,
   }) => {
-    // 포스터는 preload를 무시하고 즉시 받으므로 영상과 함께 지연 여부를 확인한다.
-    const chatAssetRequests: string[] = [];
+    // 요청 발생이 아니라 본문이 실제로 내려왔는지로 판정한다. WebKit은 preload="none"
+    // 이어도 연결을 열었다가 즉시 취소해(status 0, 0바이트) 요청 수만 보면 오탐한다.
+    // 포스터도 함께 본다. poster는 preload를 무시하므로 속성 자체를 지연시켜야 한다.
+    const chatAssetResponses: string[] = [];
 
-    page.on('request', (request) => {
-      if (/onboarding-chat-preview\.(webm|mp4|webp)/.test(request.url())) {
-        chatAssetRequests.push(request.url());
+    page.on('response', (response) => {
+      const isChatAsset = /onboarding-chat-preview\.(webm|mp4|webp)/.test(
+        response.url(),
+      );
+
+      if (isChatAsset && response.status() >= 200 && response.status() < 300) {
+        chatAssetResponses.push(response.url());
       }
     });
 
@@ -90,11 +96,11 @@ test.describe('온보딩', () => {
       )
       .toBeGreaterThan(0);
 
-    expect(chatAssetRequests).toHaveLength(0);
+    expect(chatAssetResponses).toHaveLength(0);
 
     await page.getByRole('button', { name: '2번째 미리보기 보기' }).click();
 
-    await expect.poll(() => chatAssetRequests.length).toBeGreaterThan(0);
+    await expect.poll(() => chatAssetResponses.length).toBeGreaterThan(0);
   });
 
   test('인디케이터로 채팅 미리보기 슬라이드로 이동할 수 있다', async ({
