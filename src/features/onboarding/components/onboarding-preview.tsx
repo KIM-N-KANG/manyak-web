@@ -37,8 +37,9 @@ export function OnboardingPreview() {
           loop
           playsInline
           preload="metadata">
-          <source src="/onboarding/onboarding-preview.mp4" type="video/mp4" />
+          {/* VP9(webm)가 mp4보다 작아 지원 브라우저에 먼저 물린다. 사파리 등 미지원 환경은 mp4로 폴백한다. */}
           <source src="/onboarding/onboarding-preview.webm" type="video/webm" />
+          <source src="/onboarding/onboarding-preview.mp4" type="video/mp4" />
         </video>
       )}
     </div>
