@@ -1,3 +1,5 @@
+import type { Request } from '@playwright/test';
+
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 test.describe('온보딩', () => {
@@ -69,20 +71,26 @@ test.describe('온보딩', () => {
   test('채팅 미리보기 자산은 해당 슬라이드를 열기 전까지 내려받지 않는다', async ({
     page,
   }) => {
-    // 요청 발생이 아니라 본문이 실제로 내려왔는지로 판정한다. WebKit은 preload="none"
-    // 이어도 연결을 열었다가 즉시 취소해(status 0, 0바이트) 요청 수만 보면 오탐한다.
+    // 요청 발생이 아니라 실제로 내려온 본문 바이트로 판정한다. WebKit은 preload="none"
+    // 이어도 연결을 열었다가 취소해 0바이트로 끝나므로 요청 수로 보면 오탐한다.
+    // `response`는 헤더 시점에 발생해 본문 수신을 보장하지 못하므로, 본문까지 받은
+    // 요청만 오는 `requestfinished`를 쓴다(취소·실패는 `requestfailed`로 빠진다).
     // 포스터도 함께 본다. poster는 preload를 무시하므로 속성 자체를 지연시켜야 한다.
-    const chatAssetResponses: string[] = [];
+    const chatAssetRequests: Request[] = [];
 
-    page.on('response', (response) => {
-      const isChatAsset = /onboarding-chat-preview\.(webm|mp4|webp)/.test(
-        response.url(),
-      );
-
-      if (isChatAsset && response.status() >= 200 && response.status() < 300) {
-        chatAssetResponses.push(response.url());
+    page.on('requestfinished', (request) => {
+      if (/onboarding-chat-preview\.(webm|mp4|webp)/.test(request.url())) {
+        chatAssetRequests.push(request);
       }
     });
+
+    const transferredChatBytes = async () => {
+      const sizes = await Promise.all(
+        chatAssetRequests.map((request) => request.sizes()),
+      );
+
+      return sizes.reduce((total, size) => total + size.responseBodySize, 0);
+    };
 
     await page.goto('/');
 
@@ -96,11 +104,11 @@ test.describe('온보딩', () => {
       )
       .toBeGreaterThan(0);
 
-    expect(chatAssetResponses).toHaveLength(0);
+    expect(await transferredChatBytes()).toBe(0);
 
     await page.getByRole('button', { name: '2번째 미리보기 보기' }).click();
 
-    await expect.poll(() => chatAssetResponses.length).toBeGreaterThan(0);
+    await expect.poll(transferredChatBytes).toBeGreaterThan(0);
   });
 
   test('인디케이터로 채팅 미리보기 슬라이드로 이동할 수 있다', async ({
