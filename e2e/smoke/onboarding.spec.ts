@@ -58,10 +58,28 @@ test.describe('온보딩', () => {
 
     const video = page.locator('video');
 
-    await expect(video).toHaveCount(1);
+    await expect(video).toHaveCount(2);
     await expect
-      .poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime))
+      .poll(() =>
+        video.first().evaluate((el: HTMLVideoElement) => el.currentTime),
+      )
       .toBeGreaterThan(0);
+  });
+
+  test('인디케이터로 채팅 미리보기 슬라이드로 이동할 수 있다', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+
+    const chatVideo = page.locator('video').nth(1);
+
+    await expect(chatVideo).not.toBeInViewport();
+
+    await page.getByRole('button', { name: '2번째 미리보기 보기' }).click();
+
+    await expect(chatVideo).toBeInViewport();
   });
 
   test('모션 감소 설정에서는 영상 대신 정지 이미지를 보여준다', async ({
