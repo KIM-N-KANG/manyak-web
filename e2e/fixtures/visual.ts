@@ -25,6 +25,14 @@ export async function freezeVideos(page: Page, time = 0): Promise<void> {
 
     await Promise.all(
       videos.map(async (video) => {
+        // preload="none"으로 받지 않기로 한 영상은 포스터만 그려져 이미 정적이다.
+        // 탐색을 걸어도 seeked가 오지 않아 대기 시간만 늘어나므로 건너뛴다.
+        // 받는 중이라 아직 프레임이 없는 영상(느린 CI의 preload="auto")은
+        // 여기서 빠지면 이후 재생이 시작돼 임의 프레임이 찍히므로 제외하지 않는다.
+        if (video.preload === 'none' && video.readyState === 0) {
+          return;
+        }
+
         video.pause();
         video.currentTime = seekTo;
 
