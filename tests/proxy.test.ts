@@ -9,9 +9,14 @@ import { proxy } from '@/proxy';
  *
  * @param url 요청 URL
  * @param cookies 요청에 실을 쿠키
+ * @param userAgent 요청의 User-Agent 헤더 값
  * @returns 프록시에 넘길 요청
  */
-function request(url: string, cookies: Record<string, string> = {}) {
+function request(
+  url: string,
+  cookies: Record<string, string> = {},
+  userAgent?: string,
+) {
   const headers = new Headers();
   const cookieHeader = Object.entries(cookies)
     .map(([name, value]) => `${name}=${value}`)
@@ -19,6 +24,10 @@ function request(url: string, cookies: Record<string, string> = {}) {
 
   if (cookieHeader) {
     headers.set('cookie', cookieHeader);
+  }
+
+  if (userAgent) {
+    headers.set('user-agent', userAgent);
   }
 
   return new NextRequest(new Request(url, { headers }));
@@ -108,5 +117,30 @@ describe('proxy', () => {
     );
 
     expect(response.headers.get('location')).toBeNull();
+  });
+
+  it('passes through a search crawler without cookies on every gated tab', () => {
+    const googlebot =
+      'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+
+    for (const path of ['/', '/chats', '/my']) {
+      const response = proxy(
+        request(`http://localhost:3000${path}`, {}, googlebot),
+      );
+
+      expect(response.headers.get('location')).toBeNull();
+    }
+  });
+
+  it('still redirects a human in-app browser without cookies', () => {
+    const kakaoTalkInApp =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 KAKAOTALK 10.8.0';
+
+    const response = proxy(
+      request('http://localhost:3000/', {}, kakaoTalkInApp),
+    );
+
+    expect(response.status).toBe(307);
+    expect(redirectTarget(response).pathname).toBe('/onboarding');
   });
 });
