@@ -1,7 +1,12 @@
 import { type Page } from '@playwright/test';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedGuestUsage, test } from '../fixtures/test';
+import { expect, seedGuestUsage, skipChatTour, test } from '../fixtures/test';
+
+// 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
+test.beforeEach(async ({ page }) => {
+  await skipChatTour(page);
+});
 
 /**
  * 채팅 턴의 게스트 체험 한도(전 채팅방 합산 5회)·크레딧 게이팅 스펙.

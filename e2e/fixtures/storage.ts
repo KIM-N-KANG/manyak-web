@@ -7,6 +7,10 @@ import {
 import { PENDING_HANDOFF_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-handoff-storage';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
+  CHAT_TOUR_SEEN_STORAGE_KEY,
+  CHAT_TOUR_SEEN_VALUE,
+} from '@/features/chats/room/constants';
+import {
   ONBOARDING_SEEN_COOKIE,
   ONBOARDING_SEEN_STORAGE_KEY,
   ONBOARDING_SEEN_VALUE,
@@ -84,6 +88,19 @@ export async function seedChatIds(
       window.localStorage.setItem(key, value);
     },
     [CREATED_CHAT_IDS_STORAGE_KEY, JSON.stringify(chatIds)] as const,
+  );
+}
+
+/**
+ * 채팅 화면 안내 투어를 "이미 봄"으로 표시해 자동 노출을 막는다(KNK-694).
+ * 턴 0개 채팅에 진입하는 스펙은 투어 오버레이가 클릭을 가로채지 않도록 이 헬퍼를 쓴다.
+ */
+export async function skipChatTour(page: Page): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      window.localStorage.setItem(key, value);
+    },
+    [CHAT_TOUR_SEEN_STORAGE_KEY, CHAT_TOUR_SEEN_VALUE] as const,
   );
 }
 

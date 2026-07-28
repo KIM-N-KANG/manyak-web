@@ -1,7 +1,13 @@
 import { type Page } from '@playwright/test';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedChatIds, skipOnboarding, test } from '../fixtures/test';
+import {
+  expect,
+  seedChatIds,
+  skipChatTour,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 
 // 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
@@ -33,6 +39,11 @@ const chatDetail = (
 });
 
 const sse = (events: string[]) => events.join('');
+
+// 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
+test.beforeEach(async ({ page }) => {
+  await skipChatTour(page);
+});
 
 test.describe('채팅 스트리밍', () => {
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {

@@ -1,7 +1,12 @@
 import { type Page } from '@playwright/test';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedChatIds, test } from '../fixtures/test';
+import { expect, seedChatIds, skipChatTour, test } from '../fixtures/test';
+
+// 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
+test.beforeEach(async ({ page }) => {
+  await skipChatTour(page);
+});
 
 /**
  * 로그인 직후 게스트 데이터 자동 이관 스펙(QA AUTH-MIGRATE-03·08).

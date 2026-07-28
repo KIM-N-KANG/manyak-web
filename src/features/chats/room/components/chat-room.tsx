@@ -39,11 +39,13 @@ import {
   useChatInputMode,
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
+import { useChatTour } from '../hooks/use-chat-tour';
 import { useChoicesToggle } from '../hooks/use-choices-toggle';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
 import { ChatMessages } from './messages/chat-messages';
+import { ChatTour } from './tour/chat-tour';
 
 type ChatRoomProps = {
   chatId: string;
@@ -123,6 +125,13 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       handlePaymentRequired,
       refetch,
     );
+
+  const tour = useChatTour({
+    chatId,
+    isReady: !isLoading && !isError && !isForbidden,
+    turnCount: turns.length,
+    isStreaming,
+  });
 
   const guardedSend = (userInput: string): Promise<void> => {
     if (isGuestOverLimit(sessionStatus, 'chat')) {
@@ -328,6 +337,13 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             }
           }}
         />
+        {tour.isOpen && (
+          <ChatTour
+            onStepView={tour.handleStepView}
+            onComplete={tour.handleComplete}
+            onSkip={tour.handleSkip}
+          />
+        )}
       </>
     );
   }
