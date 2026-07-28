@@ -2,10 +2,6 @@
 
 import { type SubmitEvent } from 'react';
 
-import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-
-import { PlayFilledIcon } from '@/components/icons/play-filled-icon';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -17,6 +13,7 @@ import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatChoicesMenu } from './chat-choices-menu';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
+import { SendButtonIcon } from './send-button-icon';
 
 type ChatPlainInputProps = {
   value: string;
@@ -25,7 +22,7 @@ type ChatPlainInputProps = {
   hasSuggestions: boolean;
   onSendRandomSuggestion: () => void;
   onInsertEmphasis: () => void;
-  disabled: boolean;
+  isStreaming: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
@@ -40,7 +37,7 @@ export function ChatPlainInput({
   hasSuggestions,
   onSendRandomSuggestion,
   onInsertEmphasis,
-  disabled,
+  isStreaming,
   textareaRef,
   mode,
   onModeChange,
@@ -48,7 +45,8 @@ export function ChatPlainInput({
   onChoicesEnabledChange,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
-  const canSend = !disabled && (hasInput || (choicesEnabled && hasSuggestions));
+  const canSend =
+    !isStreaming && (hasInput || (choicesEnabled && hasSuggestions));
   const showsRandomSend = !hasInput && choicesEnabled;
 
   const handleSend = () => {
@@ -78,7 +76,7 @@ export function ChatPlainInput({
             value={value}
             rows={1}
             placeholder="이야기를 어떻게 이어갈까요?"
-            disabled={disabled}
+            disabled={isStreaming}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={(event) => submitOnShortcut(event, canSend, handleSend)}
             className="max-h-[20dvh] pb-0"
@@ -89,7 +87,8 @@ export function ChatPlainInput({
               variant="secondary"
               size="sm"
               aria-label="상황 묘사 추가"
-              disabled={disabled}
+              data-tour="add-situation"
+              disabled={isStreaming}
               onClick={onInsertEmphasis}>
               상황 추가
             </Button>
@@ -103,13 +102,13 @@ export function ChatPlainInput({
               variant="default"
               size="icon-sm"
               aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
+              data-tour="send"
               disabled={!canSend}
               className="ml-auto">
-              {showsRandomSend ? (
-                <PlayFilledIcon aria-hidden="true" />
-              ) : (
-                <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
-              )}
+              <SendButtonIcon
+                isStreaming={isStreaming}
+                showsRandomSend={showsRandomSend}
+              />
             </Button>
           </InputGroupAddon>
         </InputGroup>
