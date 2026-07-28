@@ -51,7 +51,7 @@ export function useChatTour({
     const timer = setTimeout(() => {
       setHasAutoOpened(true);
       markChatTourSeen();
-      track('client_chat_tour_started', { chat_id: chatId });
+      track('client_chat_tour_shown', { chat_id: chatId });
       setIsOpen(true);
     }, AUTO_OPEN_DELAY_MS);
 
@@ -59,7 +59,7 @@ export function useChatTour({
   }, [chatId, hasAutoOpened, isOpen, isReady, turnCount, isStreaming]);
 
   const handleStepView = (stepNumber: number, stepId: ChatTourStepId) => {
-    track('client_chat_tour_step_viewed', {
+    track('client_chat_tourStep_viewed', {
       chat_id: chatId,
       step_number: stepNumber,
       step_id: stepId,
@@ -72,7 +72,7 @@ export function useChatTour({
   };
 
   const handleSkip = (stepNumber: number) => {
-    track('client_chat_tour_skipped', {
+    track('client_chat_tourSkipButton_clicked', {
       chat_id: chatId,
       step_number: stepNumber,
     });

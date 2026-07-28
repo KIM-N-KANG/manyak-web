@@ -163,14 +163,14 @@ export type AnalyticsEventProps = {
   client_chat_streamError_shown: { chat_id: string; turn_number: number };
   client_chat_loadError_shown: { chat_id: string };
   client_chat_retryButton_clicked: { chat_id: string };
-  client_chat_tour_started: { chat_id: string };
-  client_chat_tour_step_viewed: {
+  client_chat_tour_shown: { chat_id: string };
+  client_chat_tourStep_viewed: {
     chat_id: string;
     step_number: number;
     step_id: string;
   };
   client_chat_tour_completed: { chat_id: string };
-  client_chat_tour_skipped: { chat_id: string; step_number: number };
+  client_chat_tourSkipButton_clicked: { chat_id: string; step_number: number };
   // account (마이 페이지)
   client_account_viewed: void;
   client_account_loginButton_clicked: void;
