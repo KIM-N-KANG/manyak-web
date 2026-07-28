@@ -48,6 +48,8 @@ type ChatMessagesProps = {
   regeneratingTurnId: number | null;
   choicesEnabled: boolean;
   choicesStatus: ChoicesStatus | null;
+  /** 첫 추천 입력 목록에 1회성 사용법 힌트를 보여줄지 여부. */
+  showsChoicesHint: boolean;
   onSendChoice: (text: string, position: number) => void;
   onFillChoice: (text: string, position: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
@@ -62,6 +64,7 @@ export function ChatMessages({
   regeneratingTurnId,
   choicesEnabled,
   choicesStatus,
+  showsChoicesHint,
   onSendChoice,
   onFillChoice,
   onRegenerate,
@@ -151,6 +154,7 @@ export function ChatMessages({
                   choices={suggestedInputs}
                   onSend={onSendChoice}
                   onFill={onFillChoice}
+                  showsHint={showsChoicesHint}
                 />
               </MessageScrollerItem>
             ) : null}

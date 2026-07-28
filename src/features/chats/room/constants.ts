@@ -50,3 +50,12 @@ export const INPUT_BLOCK_LABELS: Record<InputBlockType, string> = {
   situation: '상황',
   dialogue: '대사',
 };
+
+export const CHAT_TOUR_SEEN_STORAGE_KEY = 'manyak:chat-tour-seen';
+
+export const CHAT_TOUR_SEEN_VALUE = 'true';
+
+export const CHAT_CHOICES_HINT_SEEN_STORAGE_KEY =
+  'manyak:chat-choices-hint-seen';
+
+export const CHAT_CHOICES_HINT_SEEN_VALUE = 'true';

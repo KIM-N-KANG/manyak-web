@@ -1,7 +1,13 @@
 import { type Page } from '@playwright/test';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedChatIds, skipOnboarding, test } from '../fixtures/test';
+import {
+  expect,
+  seedChatIds,
+  skipChatTour,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 
 // 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
@@ -33,6 +39,11 @@ const chatDetail = (
 });
 
 const sse = (events: string[]) => events.join('');
+
+// 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
+test.beforeEach(async ({ page }) => {
+  await skipChatTour(page);
+});
 
 test.describe('채팅 스트리밍', () => {
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {
@@ -131,6 +142,63 @@ test.describe('채팅 스트리밍', () => {
       .getByPlaceholder('이야기를 어떻게 이어갈까요?')
       .fill('직접 입력한다');
     await expect(page.getByRole('button', { name: '전송' })).toBeEnabled();
+  });
+
+  test('응답을 받는 동안 전송 버튼에 스피너가 보인다', async ({ page }) => {
+    const completedTurn = {
+      id: 1,
+      userInput: '앞으로 나아간다',
+      aiOutput: '문이 열린다.',
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1 ? chatDetail() : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    // 스트림 응답을 늦춰 "받는 중" 상태를 관찰할 시간을 만든다.
+    await page.route(CHAT_STREAM, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: completed\ndata: {"aiOutput":"문이 열린다."}\n\n',
+        ]),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('앞으로 나아간다');
+
+    // 전송 후에는 입력이 비워져 버튼 라벨이 바뀌므로 속성으로 스코프한다.
+    const sendButton = page.locator('[data-tour="send"]');
+
+    await page.getByRole('button', { name: '전송', exact: true }).click();
+
+    await expect(
+      sendButton.getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeVisible();
+    await expect(sendButton).toBeDisabled();
+
+    await expect(page.getByText('문이 열린다.')).toBeVisible();
+    await expect(
+      sendButton.getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeHidden();
   });
 
   test('메시지를 전송하면 응답이 스트리밍되어 누적된다 (US-6-2·6-3)', async ({
@@ -295,6 +363,10 @@ test.describe('채팅 스트리밍', () => {
     await page.getByRole('button', { name: '전송' }).click();
 
     await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
+    // 실패로 스트리밍이 끝나도 전송 버튼이 스피너에 머물지 않아야 한다.
+    await expect(
+      page.locator('[data-tour="send"]').getByRole('status'),
+    ).toBeHidden();
 
     // 스트림 실패 시 Meta StartTrial은 발화되지 않아야 한다.
     expect(pixelLogs.filter((log) => log.includes('StartTrial'))).toHaveLength(

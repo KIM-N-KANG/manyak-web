@@ -1,4 +1,9 @@
-import { expect, test } from '../fixtures/test';
+import { expect, skipChatTour, test } from '../fixtures/test';
+
+// 스토리 완성 후 도착하는 채팅 화면에서 안내 투어가 뜨지 않게 한다.
+test.beforeEach(async ({ page }) => {
+  await skipChatTour(page);
+});
 
 // 스토리 생성 4단계 funnel(/stories/new, (story) 레이아웃이라 온보딩 게이팅 없음).
 // API 순서: GET /stories/simple/tags → POST /stories/simple/storylines

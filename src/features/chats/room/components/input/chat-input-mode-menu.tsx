@@ -33,6 +33,7 @@ export function ChatInputModeMenu({
             size="icon-sm"
             variant="ghost"
             aria-label="입력 모드 변경"
+            data-tour="input-mode-menu"
           />
         }>
         <HugeiconsIcon icon={Settings01Icon} aria-hidden="true" />

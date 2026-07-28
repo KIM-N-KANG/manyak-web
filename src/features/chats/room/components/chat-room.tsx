@@ -32,6 +32,7 @@ import type {
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatChoices } from '../hooks/use-chat-choices';
+import { useChatChoicesHint } from '../hooks/use-chat-choices-hint';
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
 import {
@@ -39,11 +40,13 @@ import {
   useChatInputMode,
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
+import { useChatTour } from '../hooks/use-chat-tour';
 import { useChoicesToggle } from '../hooks/use-choices-toggle';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
 import { ChatMessages } from './messages/chat-messages';
+import { ChatTour } from './tour/chat-tour';
 
 type ChatRoomProps = {
   chatId: string;
@@ -123,6 +126,18 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       handlePaymentRequired,
       refetch,
     );
+
+  const tour = useChatTour({
+    chatId,
+    isReady: !isLoading && !isError && !isForbidden,
+    turnCount: turns.length,
+    isStreaming,
+  });
+
+  const showsChoicesHint = useChatChoicesHint({
+    isReady: !isLoading && !isError && !isForbidden,
+    turnCount: turns.length,
+  });
 
   const guardedSend = (userInput: string): Promise<void> => {
     if (isGuestOverLimit(sessionStatus, 'chat')) {
@@ -285,6 +300,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             regeneratingTurnId={regeneratingTurnId}
             choicesEnabled={choicesEnabled}
             choicesStatus={choicesStatus}
+            showsChoicesHint={showsChoicesHint}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}
             onRegenerate={guardedRegenerate}
@@ -295,7 +311,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           mode={mode}
           onModeChange={handleModeChange}
           composer={composer}
-          disabled={isStreaming}
+          isStreaming={isStreaming}
           choicesEnabled={choicesEnabled}
           onChoicesEnabledChange={handleChoicesEnabledChange}
         />
@@ -328,6 +344,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             }
           }}
         />
+        {tour.isOpen && (
+          <ChatTour
+            inputMode={mode}
+            onStepView={tour.handleStepView}
+            onComplete={tour.handleComplete}
+            onSkip={tour.handleSkip}
+          />
+        )}
       </>
     );
   }

@@ -1,6 +1,11 @@
 import { type Page } from '@playwright/test';
 
-import { expect, test } from '../fixtures/test';
+import { expect, skipChatTour, test } from '../fixtures/test';
+
+// 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
+test.beforeEach(async ({ page }) => {
+  await skipChatTour(page);
+});
 
 // 채팅 스크롤 앵커 UX 회귀 스펙.
 // 전송 시 사용자 메시지를 상단에 고정하기 위해 하단 스페이서가 생기는데,

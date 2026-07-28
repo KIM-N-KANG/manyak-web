@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 
-import { ArrowUp02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
-import { PlayFilledIcon } from '@/components/icons/play-filled-icon';
 import { Button } from '@/components/ui/button';
 import {
   InputGroup,
@@ -21,6 +20,7 @@ import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatChoicesMenu } from './chat-choices-menu';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
+import { SendButtonIcon } from './send-button-icon';
 
 type ChatBlockInputProps = {
   blocks: InputBlock[];
@@ -31,7 +31,7 @@ type ChatBlockInputProps = {
   onSend: () => void;
   hasSuggestions: boolean;
   onSendRandomSuggestion: () => void;
-  disabled: boolean;
+  isStreaming: boolean;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
   choicesEnabled: boolean;
@@ -47,7 +47,7 @@ export function ChatBlockInput({
   onSend,
   hasSuggestions,
   onSendRandomSuggestion,
-  disabled,
+  isStreaming,
   mode,
   onModeChange,
   choicesEnabled,
@@ -56,7 +56,8 @@ export function ChatBlockInput({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const hasInput = blocks.some((block) => block.value.trim().length > 0);
-  const canSend = !disabled && (hasInput || (choicesEnabled && hasSuggestions));
+  const canSend =
+    !isStreaming && (hasInput || (choicesEnabled && hasSuggestions));
   const showsRandomSend = !hasInput && choicesEnabled;
 
   const handleSend = () => {
@@ -110,7 +111,7 @@ export function ChatBlockInput({
                   value={block.value}
                   rows={1}
                   placeholder={INPUT_BLOCK_PLACEHOLDERS[block.type]}
-                  disabled={disabled}
+                  disabled={isStreaming}
                   onChange={(event) =>
                     onUpdateBlock(block.id, event.target.value)
                   }
@@ -130,7 +131,7 @@ export function ChatBlockInput({
                 size="icon-sm"
                 variant="ghost"
                 aria-label="입력 삭제"
-                disabled={disabled}
+                disabled={isStreaming}
                 tabIndex={-1}
                 onClick={() => requestRemoveBlock(block)}
                 className="shrink-0 text-foreground-secondary">
@@ -144,18 +145,20 @@ export function ChatBlockInput({
         <Button
           type="button"
           aria-label="상황 묘사 추가"
+          data-tour="add-situation"
           size="sm"
           variant="secondary"
-          disabled={disabled}
+          disabled={isStreaming}
           onClick={() => onAddBlock('situation')}>
           상황 추가
         </Button>
         <Button
           type="button"
           aria-label="대사 추가"
+          data-tour="add-dialogue"
           size="sm"
           variant="secondary"
-          disabled={disabled}
+          disabled={isStreaming}
           onClick={() => onAddBlock('dialogue')}>
           대사 추가
         </Button>
@@ -168,14 +171,14 @@ export function ChatBlockInput({
           type="button"
           size="icon-sm"
           aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
+          data-tour="send"
           disabled={!canSend}
           onClick={handleSend}
           className="ml-auto">
-          {showsRandomSend ? (
-            <PlayFilledIcon aria-hidden="true" />
-          ) : (
-            <HugeiconsIcon icon={ArrowUp02Icon} aria-hidden="true" />
-          )}
+          <SendButtonIcon
+            isStreaming={isStreaming}
+            showsRandomSend={showsRandomSend}
+          />
         </Button>
       </div>
 
