@@ -31,7 +31,7 @@ test.describe('채팅 화면 안내 투어', () => {
     const tour = page.getByRole('dialog', { name: '채팅 화면 안내' });
 
     await expect(tour).toBeVisible();
-    await expect(tour.getByText('상황·대사 입력')).toBeVisible();
+    await expect(tour.getByText('상황·대사 추가')).toBeVisible();
 
     await tour.getByRole('button', { name: '다음' }).click();
     await expect(tour.getByText('입력 설정')).toBeVisible();

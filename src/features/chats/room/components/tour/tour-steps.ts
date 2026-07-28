@@ -1,4 +1,4 @@
-export type ChatTourStepId = 'composer' | 'settings' | 'random-send';
+export type ChatTourStepId = 'add-blocks' | 'settings' | 'random-send';
 
 export type ChatTourStep = {
   id: ChatTourStepId;
@@ -14,15 +14,11 @@ export type ChatTourStep = {
  */
 export const CHAT_TOUR_STEPS: ChatTourStep[] = [
   {
-    id: 'composer',
-    title: '상황·대사 입력',
+    id: 'add-blocks',
+    title: '상황·대사 추가',
     description:
-      '상황 묘사와 대사를 블럭으로 나눠 입력해요. 아래 버튼으로 블럭을 추가할 수 있어요.',
-    selectors: [
-      '[data-tour="input-blocks"]',
-      '[data-tour="add-situation"]',
-      '[data-tour="add-dialogue"]',
-    ],
+      '누르면 입력창이 하나 늘어나요. 상황 묘사와 대사를 나눠 담아 이야기를 이어가 보세요.',
+    selectors: ['[data-tour="add-situation"]', '[data-tour="add-dialogue"]'],
   },
   {
     id: 'settings',

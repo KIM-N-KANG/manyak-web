@@ -72,7 +72,7 @@ export function ChatPlainInput({
   return (
     <section className="px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
       <form onSubmit={handleSubmit}>
-        <InputGroup data-tour="input-blocks" className="rounded-lg">
+        <InputGroup className="rounded-lg">
           <InputGroupTextarea
             ref={textareaRef}
             value={value}
