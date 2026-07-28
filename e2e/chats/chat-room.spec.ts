@@ -363,6 +363,10 @@ test.describe('채팅 스트리밍', () => {
     await page.getByRole('button', { name: '전송' }).click();
 
     await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
+    // 실패로 스트리밍이 끝나도 전송 버튼이 스피너에 머물지 않아야 한다.
+    await expect(
+      page.locator('[data-tour="send"]').getByRole('status'),
+    ).toBeHidden();
 
     // 스트림 실패 시 Meta StartTrial은 발화되지 않아야 한다.
     expect(pixelLogs.filter((log) => log.includes('StartTrial'))).toHaveLength(
