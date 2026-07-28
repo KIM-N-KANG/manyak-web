@@ -55,7 +55,7 @@ export function ChatOptionsMenu({
       additionalItems={
         <DropdownMenuItem onClick={onReplayTour}>
           <HugeiconsIcon icon={HelpCircleIcon} aria-hidden="true" />
-          화면 안내 다시 보기
+          화면 안내 보기
         </DropdownMenuItem>
       }
       onDelete={handleDelete}

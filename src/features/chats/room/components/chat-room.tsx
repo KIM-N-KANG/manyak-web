@@ -343,6 +343,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
         />
         {tour.isOpen && (
           <ChatTour
+            inputMode={mode}
             onStepView={tour.handleStepView}
             onComplete={tour.handleComplete}
             onSkip={tour.handleSkip}

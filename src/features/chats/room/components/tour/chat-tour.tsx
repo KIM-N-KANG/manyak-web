@@ -8,6 +8,7 @@ import { m } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+import { type ChatInputMode } from '../../utils/chat-input-config';
 import {
   clampTourCardLeft,
   isTourRectInViewport,
@@ -16,7 +17,11 @@ import {
   type TourRect,
   unionTourRects,
 } from '../../utils/tour-geometry';
-import { CHAT_TOUR_STEPS, type ChatTourStepId } from './tour-steps';
+import {
+  type ChatTourStep,
+  type ChatTourStepId,
+  getChatTourSteps,
+} from './tour-steps';
 
 const HIGHLIGHT_PADDING = 6;
 const CARD_GAP = 12;
@@ -25,6 +30,7 @@ const CARD_WIDTH = 288;
 const CARD_HEIGHT_ESTIMATE = 160;
 
 type ChatTourProps = {
+  inputMode: ChatInputMode;
   onStepView: (stepNumber: number, stepId: ChatTourStepId) => void;
   onComplete: () => void;
   onSkip: (stepNumber: number) => void;
@@ -59,40 +65,47 @@ function measureStep(selectors: string[]): TourRect | null {
 
 /**
  * 지정 인덱스 이후에 렌더된 대상이 남아 있는지 확인한다.
- * 다음 스텝 유무 판정 전용이라 스크롤은 건드리지 않는다.
  *
+ * @param steps 전체 스텝 목록
  * @param from 탐색을 시작할 스텝 인덱스
  * @returns 대상이 있는 스텝이 남아 있으면 true
  */
-function hasStepFrom(from: number): boolean {
-  return CHAT_TOUR_STEPS.slice(from).some(
-    (step) => measureStep(step.selectors) !== null,
-  );
+function hasStepFrom(steps: ChatTourStep[], from: number): boolean {
+  return steps.slice(from).some((step) => measureStep(step.selectors) !== null);
 }
 
 /**
  * 지정 인덱스부터 실제로 보여줄 수 있는 스텝의 상태를 계산한다.
  * 대상이 없거나 화면 밖인 스텝은 건너뛴다.
  *
+ * @param steps 전체 스텝 목록
  * @param from 탐색을 시작할 스텝 인덱스
  * @returns 표시할 스텝 상태. 남은 스텝이 없으면 null
  */
-function resolveStepState(from: number): TourStepState | null {
-  for (let index = from; index < CHAT_TOUR_STEPS.length; index += 1) {
-    const { selectors } = CHAT_TOUR_STEPS[index];
-    const rect = measureStep(selectors);
+function resolveStepState(
+  steps: ChatTourStep[],
+  from: number,
+): TourStepState | null {
+  for (let index = from; index < steps.length; index += 1) {
+    const rect = measureStep(steps[index].selectors);
 
     if (rect !== null && isTourRectInViewport(rect, window.innerHeight)) {
-      return { index, rect, hasNext: hasStepFrom(index + 1) };
+      return { index, rect, hasNext: hasStepFrom(steps, index + 1) };
     }
   }
 
   return null;
 }
 
-export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {
+export function ChatTour({
+  inputMode,
+  onStepView,
+  onComplete,
+  onSkip,
+}: ChatTourProps) {
   const [step, setStep] = useState<TourStepState | null>(null);
   const hasStartedRef = useRef(false);
+  const steps = getChatTourSteps(inputMode);
 
   useEffect(() => {
     if (hasStartedRef.current) {
@@ -102,7 +115,7 @@ export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {
     const frame = requestAnimationFrame(() => {
       hasStartedRef.current = true;
 
-      const next = resolveStepState(0);
+      const next = resolveStepState(steps, 0);
 
       if (next === null) {
         onComplete();
@@ -111,30 +124,27 @@ export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {
       }
 
       setStep(next);
-      onStepView(next.index, CHAT_TOUR_STEPS[next.index].id);
+      onStepView(next.index, steps[next.index].id);
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [onComplete, onStepView]);
+  }, [onComplete, onStepView, steps]);
 
   useEffect(() => {
     const remeasure = () =>
       setStep((prev) =>
         prev === null
           ? prev
-          : {
-              ...prev,
-              rect: measureStep(CHAT_TOUR_STEPS[prev.index].selectors),
-            },
+          : { ...prev, rect: measureStep(steps[prev.index].selectors) },
       );
 
     window.addEventListener('resize', remeasure);
 
     return () => window.removeEventListener('resize', remeasure);
-  }, []);
+  }, [steps]);
 
   const goToStep = (from: number) => {
-    const next = resolveStepState(from);
+    const next = resolveStepState(steps, from);
 
     if (next === null) {
       onComplete();
@@ -143,14 +153,14 @@ export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {
     }
 
     setStep(next);
-    onStepView(next.index, CHAT_TOUR_STEPS[next.index].id);
+    onStepView(next.index, steps[next.index].id);
   };
 
   if (step === null || step.rect === null) {
     return null;
   }
 
-  const current = CHAT_TOUR_STEPS[step.index];
+  const current = steps[step.index];
   const padded = padTourRect(step.rect, HIGHLIGHT_PADDING);
   const side = resolveTourCardSide(
     padded,
@@ -172,7 +182,7 @@ export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {
       aria-label="채팅 화면 안내"
       className="fixed inset-0 z-60">
       <m.div
-        className="absolute rounded-xl shadow-[0_0_0_200vmax_rgba(0,0,0,0.5)]"
+        className="absolute rounded-md shadow-[0_0_0_200vmax_rgba(0,0,0,0.5)]"
         initial={false}
         animate={{
           top: padded.top,
@@ -187,7 +197,7 @@ export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="absolute flex w-72 flex-col gap-1.5 rounded-xl bg-background p-4 shadow-lg"
+        className="absolute flex w-72 flex-col gap-1 rounded-md bg-background p-4 shadow-lg"
         style={
           side === 'bottom'
             ? { top: padded.top + padded.height + CARD_GAP, left: cardLeft }
@@ -196,17 +206,17 @@ export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {
                 left: cardLeft,
               }
         }>
-        <p className="text-sm font-semibold">{current.title}</p>
+        <p className="font-semibold">{current.title}</p>
         <p className="text-sm break-keep text-foreground-secondary">
           {current.description}
         </p>
-        <div className="mt-2 flex items-center gap-1">
-          {CHAT_TOUR_STEPS.map((tourStep, index) => (
+        <div className="mt-3 flex items-center gap-1">
+          {steps.map((tourStep, index) => (
             <span
               key={tourStep.id}
               className={cn(
                 'size-1.5 rounded-full',
-                index === step.index ? 'bg-primary' : 'bg-border',
+                index === step.index ? 'bg-foreground-secondary' : 'bg-border',
               )}
             />
           ))}

@@ -1,4 +1,10 @@
-export type ChatTourStepId = 'add-blocks' | 'settings' | 'random-send';
+import { type ChatInputMode } from '../../utils/chat-input-config';
+
+export type ChatTourStepId =
+  | 'add-blocks'
+  | 'add-emphasis'
+  | 'settings'
+  | 'random-send';
 
 export type ChatTourStep = {
   id: ChatTourStepId;
@@ -8,18 +14,25 @@ export type ChatTourStep = {
   selectors: string[];
 };
 
-/**
- * 채팅 화면 안내 투어의 스텝 정의.
- * 대상 요소가 하나도 없는 스텝은 진행 시 건너뛴다(예: 일반 입력 모드의 대사 추가).
- */
-export const CHAT_TOUR_STEPS: ChatTourStep[] = [
-  {
-    id: 'add-blocks',
-    title: '상황·대사 추가',
-    description:
-      '누르면 입력창이 하나 늘어나요. 상황 묘사와 대사를 나눠 담아 이야기를 이어가 보세요.',
-    selectors: ['[data-tour="add-situation"]', '[data-tour="add-dialogue"]'],
-  },
+/** 블럭 입력 모드의 첫 스텝. 상황·대사 추가 버튼이 각각 입력 블럭을 늘린다. */
+const ADD_BLOCKS_STEP: ChatTourStep = {
+  id: 'add-blocks',
+  title: '상황·대사 추가',
+  description:
+    '누르면 입력창이 하나 늘어나요. 상황 묘사와 대사를 나눠 담아 이야기를 이어가 보세요.',
+  selectors: ['[data-tour="add-situation"]', '[data-tour="add-dialogue"]'],
+};
+
+/** 일반 입력 모드의 첫 스텝. 대사 추가가 없고, 상황 추가는 강조 마커를 넣는다. */
+const ADD_EMPHASIS_STEP: ChatTourStep = {
+  id: 'add-emphasis',
+  title: '상황 추가',
+  description:
+    '선택한 문장을 상황 묘사로 표시해요. 대사와 구분해서 쓰고 싶을 때 눌러 보세요.',
+  selectors: ['[data-tour="add-situation"]'],
+};
+
+const COMMON_STEPS: ChatTourStep[] = [
   {
     id: 'settings',
     title: '입력 설정',
@@ -35,3 +48,17 @@ export const CHAT_TOUR_STEPS: ChatTourStep[] = [
     selectors: ['[data-tour="send"]'],
   },
 ];
+
+/**
+ * 입력 모드에 맞는 채팅 화면 안내 투어의 스텝 목록을 만든다.
+ * 첫 스텝은 모드마다 버튼 구성과 동작이 달라 문구와 대상이 갈린다.
+ *
+ * @param mode 현재 입력 모드
+ * @returns 순서대로 안내할 스텝 목록
+ */
+export function getChatTourSteps(mode: ChatInputMode): ChatTourStep[] {
+  return [
+    mode === 'block' ? ADD_BLOCKS_STEP : ADD_EMPHASIS_STEP,
+    ...COMMON_STEPS,
+  ];
+}

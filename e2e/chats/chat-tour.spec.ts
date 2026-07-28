@@ -1,7 +1,16 @@
+import { type Page } from '@playwright/test';
+
 import { expect, skipChatTour, test } from '../fixtures/test';
 
 // 채팅 화면 안내 투어(KNK-694): 턴 0개 첫 진입 시 자동 노출, 헤더 메뉴로 재열람.
 const CHAT_DETAIL = '**/api/v1/chats/c1';
+
+// 기본 모드가 블럭 입력이므로, 일반 모드 검증은 저장된 모드를 미리 심는다.
+const setPlainInputMode = async (page: Page) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('manyak:chat-input-mode', 'plain');
+  });
+};
 
 const chatDetail = () => ({
   id: 'c1',
@@ -43,6 +52,22 @@ test.describe('채팅 화면 안내 투어', () => {
     await expect(tour).toBeHidden();
   });
 
+  test('일반 입력 모드에서는 첫 스텝을 상황 추가로만 안내한다', async ({
+    page,
+  }) => {
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    const tour = page.getByRole('dialog', { name: '채팅 화면 안내' });
+
+    await expect(tour).toBeVisible();
+    await expect(tour.getByText('상황 추가', { exact: true })).toBeVisible();
+    await expect(tour.getByText('상황·대사 추가')).toBeHidden();
+
+    await tour.getByRole('button', { name: '다음' }).click();
+    await expect(tour.getByText('입력 설정')).toBeVisible();
+  });
+
   test('건너뛰면 닫히고 재진입 시 다시 뜨지 않는다', async ({ page }) => {
     await page.goto('/chats/c1');
 
@@ -68,7 +93,7 @@ test.describe('채팅 화면 안내 투어', () => {
     ).toBeVisible();
 
     await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '화면 안내 다시 보기' }).click();
+    await page.getByRole('menuitem', { name: '화면 안내 보기' }).click();
 
     await expect(
       page.getByRole('dialog', { name: '채팅 화면 안내' }),
