@@ -68,6 +68,30 @@ test.describe('채팅 화면 안내 투어', () => {
     await expect(tour.getByText('입력 설정')).toBeVisible();
   });
 
+  test('넓은 화면에서도 안내 카드가 앱 프레임을 벗어나지 않는다', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/chats/c1');
+
+    const tour = page.getByRole('dialog', { name: '채팅 화면 안내' });
+
+    await expect(tour).toBeVisible();
+
+    const card = tour.getByText('상황·대사 추가');
+    const cardBox = await card.locator('..').boundingBox();
+    const frameBox = await page.locator('#app-frame').boundingBox();
+
+    expect(cardBox).not.toBeNull();
+    expect(frameBox).not.toBeNull();
+    expect(cardBox!.x).toBeGreaterThanOrEqual(frameBox!.x);
+    expect(cardBox!.x + cardBox!.width).toBeLessThanOrEqual(
+      frameBox!.x + frameBox!.width,
+    );
+    expect(cardBox!.y).toBeGreaterThanOrEqual(0);
+    expect(cardBox!.y + cardBox!.height).toBeLessThanOrEqual(800);
+  });
+
   test('건너뛰면 닫히고 재진입 시 다시 뜨지 않는다', async ({ page }) => {
     await page.goto('/chats/c1');
 

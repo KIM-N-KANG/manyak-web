@@ -76,23 +76,32 @@ export function isTourRectInViewport(
   return rect.top < viewportHeight && rect.top + rect.height > 0;
 }
 
+/** 카드를 가둘 가로 경계. 앱 프레임(`max-w-md`)의 좌우 좌표를 쓴다. */
+export type TourBounds = {
+  left: number;
+  right: number;
+};
+
 /**
- * 카드가 뷰포트를 벗어나지 않도록 왼쪽 좌표를 클램프한다.
+ * 카드가 경계를 벗어나지 않도록 왼쪽 좌표를 클램프한다.
+ * 뷰포트가 아니라 앱 프레임을 기준으로 삼아, 넓은 화면에서 카드가
+ * 프레임 바깥 여백으로 튀어나가지 않게 한다.
  *
  * @param rectCenterX 하이라이트 영역의 가로 중심 좌표
  * @param cardWidth 카드 너비
- * @param viewportWidth 뷰포트 너비
- * @param margin 뷰포트 좌우 최소 여백
+ * @param bounds 카드를 가둘 가로 경계
+ * @param margin 경계 좌우 최소 여백
  * @returns 클램프된 카드의 왼쪽 좌표
  */
 export function clampTourCardLeft(
   rectCenterX: number,
   cardWidth: number,
-  viewportWidth: number,
+  bounds: TourBounds,
   margin: number,
 ): number {
   const ideal = rectCenterX - cardWidth / 2;
-  const max = Math.max(viewportWidth - cardWidth - margin, margin);
+  const min = bounds.left + margin;
+  const max = Math.max(bounds.right - cardWidth - margin, min);
 
-  return Math.min(Math.max(ideal, margin), max);
+  return Math.min(Math.max(ideal, min), max);
 }

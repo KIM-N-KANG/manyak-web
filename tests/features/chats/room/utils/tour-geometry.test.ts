@@ -76,12 +76,26 @@ describe('isTourRectInViewport', () => {
 });
 
 describe('clampTourCardLeft', () => {
+  const fullWidth = { left: 0, right: 800 };
+
   it('공간이 충분하면 하이라이트 중앙에 정렬한다', () => {
-    expect(clampTourCardLeft(400, 288, 800, 16)).toBe(256);
+    expect(clampTourCardLeft(400, 288, fullWidth, 16)).toBe(256);
   });
 
-  it('뷰포트 좌우 경계 안으로 클램프한다', () => {
-    expect(clampTourCardLeft(0, 288, 800, 16)).toBe(16);
-    expect(clampTourCardLeft(800, 288, 800, 16)).toBe(800 - 288 - 16);
+  it('경계 안으로 클램프한다', () => {
+    expect(clampTourCardLeft(0, 288, fullWidth, 16)).toBe(16);
+    expect(clampTourCardLeft(800, 288, fullWidth, 16)).toBe(800 - 288 - 16);
+  });
+
+  it('넓은 화면에서는 뷰포트가 아니라 앱 프레임 안으로 클램프한다', () => {
+    // 1200px 뷰포트 가운데 놓인 448px(max-w-md) 앱 프레임
+    const frame = { left: 376, right: 824 };
+
+    expect(clampTourCardLeft(400, 288, frame, 16)).toBe(392);
+    expect(clampTourCardLeft(824, 288, frame, 16)).toBe(824 - 288 - 16);
+  });
+
+  it('프레임이 카드보다 좁으면 왼쪽 여백에 맞춘다', () => {
+    expect(clampTourCardLeft(150, 288, { left: 0, right: 300 }, 16)).toBe(16);
   });
 });

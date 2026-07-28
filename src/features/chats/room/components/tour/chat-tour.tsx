@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { m } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
+import { APP_FRAME_ID } from '@/constants/app-frame';
 import { cn } from '@/lib/utils';
 
 import { type ChatInputMode } from '../../utils/chat-input-config';
@@ -14,6 +15,7 @@ import {
   isTourRectInViewport,
   padTourRect,
   resolveTourCardSide,
+  type TourBounds,
   type TourRect,
   unionTourRects,
 } from '../../utils/tour-geometry';
@@ -41,6 +43,43 @@ type TourStepState = {
   rect: TourRect | null;
   hasNext: boolean;
 };
+
+/**
+ * 카드를 가둘 가로 경계를 구한다.
+ * 앱은 `max-w-md` 프레임 안에서만 그려지므로 넓은 화면에서는 뷰포트가 아니라
+ * 프레임 좌우가 기준이다. 프레임을 찾지 못하면 뷰포트로 폴백한다.
+ *
+ * @returns 카드를 가둘 가로 경계
+ */
+function resolveFrameBounds(): TourBounds {
+  const frame = document.getElementById(APP_FRAME_ID);
+
+  if (frame === null) {
+    return { left: 0, right: window.innerWidth };
+  }
+
+  const { left, right } = frame.getBoundingClientRect();
+
+  return { left, right };
+}
+
+/**
+ * 카드가 놓일 쪽에 남은 세로 공간을 구한다.
+ * 문구 길이에 따라 카드가 얼마나 높아지든 화면 밖으로 밀려나지 않게 하는 상한이다.
+ *
+ * @param rect 여백을 더한 하이라이트 영역
+ * @param side 카드가 놓일 쪽
+ * @returns 카드의 최대 높이(px)
+ */
+function resolveCardMaxHeight(rect: TourRect, side: 'top' | 'bottom'): number {
+  if (side === 'bottom') {
+    return (
+      window.innerHeight - (rect.top + rect.height + CARD_GAP) - CARD_MARGIN
+    );
+  }
+
+  return rect.top - CARD_GAP - CARD_MARGIN;
+}
 
 /**
  * 스텝 대상 요소들의 화면 좌표 합집합을 구한다.
@@ -171,9 +210,10 @@ export function ChatTour({
   const cardLeft = clampTourCardLeft(
     padded.left + padded.width / 2,
     CARD_WIDTH,
-    window.innerWidth,
+    resolveFrameBounds(),
     CARD_MARGIN,
   );
+  const cardMaxHeight = resolveCardMaxHeight(padded, side);
 
   return createPortal(
     <div
@@ -197,13 +237,18 @@ export function ChatTour({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="absolute flex w-72 flex-col gap-1 rounded-md bg-background p-4 shadow-lg"
+        className="absolute flex w-72 flex-col gap-1 overflow-y-auto overscroll-contain rounded-md bg-background p-4 shadow-lg"
         style={
           side === 'bottom'
-            ? { top: padded.top + padded.height + CARD_GAP, left: cardLeft }
+            ? {
+                top: padded.top + padded.height + CARD_GAP,
+                left: cardLeft,
+                maxHeight: cardMaxHeight,
+              }
             : {
                 bottom: window.innerHeight - padded.top + CARD_GAP,
                 left: cardLeft,
+                maxHeight: cardMaxHeight,
               }
         }>
         <p className="font-semibold">{current.title}</p>
