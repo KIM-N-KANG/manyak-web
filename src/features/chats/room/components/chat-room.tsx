@@ -284,7 +284,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     stateKey = 'content';
     content = (
       <>
-        <ChatRoomHeader chatId={chatId} storyTitle={storyTitle} />
+        <ChatRoomHeader
+          chatId={chatId}
+          storyTitle={storyTitle}
+          onReplayTour={tour.openTour}
+        />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages
             prologue={prologue}

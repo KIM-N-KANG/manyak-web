@@ -1,5 +1,7 @@
 'use client';
 
+import { HelpCircleIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -7,6 +9,7 @@ import { useSession } from 'next-auth/react';
 import { useDeleteChat } from '@/api/generated/endpoints/chats/chats';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { OptionsMenu } from '@/components/common/options-menu';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
@@ -19,9 +22,13 @@ import { useOptimisticCreatedResourceDelete } from '@/hooks/use-optimistic-creat
 
 type ChatOptionsMenuProps = {
   chatId: string;
+  onReplayTour: () => void;
 };
 
-export function ChatOptionsMenu({ chatId }: ChatOptionsMenuProps) {
+export function ChatOptionsMenu({
+  chatId,
+  onReplayTour,
+}: ChatOptionsMenuProps) {
   const router = useRouter();
   const { status } = useSession();
   const queryClient = useQueryClient();
@@ -45,6 +52,12 @@ export function ChatOptionsMenu({ chatId }: ChatOptionsMenuProps) {
 
   return (
     <OptionsMenu
+      additionalItems={
+        <DropdownMenuItem onClick={onReplayTour}>
+          <HugeiconsIcon icon={HelpCircleIcon} aria-hidden="true" />
+          화면 안내 다시 보기
+        </DropdownMenuItem>
+      }
       onDelete={handleDelete}
       isDeleting={isPending}
       triggerAriaLabel="채팅 옵션 더보기"
