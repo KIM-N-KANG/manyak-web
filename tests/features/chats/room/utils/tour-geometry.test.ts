@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  clampTourCardLeft,
   isTourRectInViewport,
   padTourRect,
+  resolveTourCardLeft,
   resolveTourCardSide,
   unionTourRects,
 } from '@/features/chats/room/utils/tour-geometry';
@@ -75,27 +75,68 @@ describe('isTourRectInViewport', () => {
   });
 });
 
-describe('clampTourCardLeft', () => {
-  const fullWidth = { left: 0, right: 800 };
+describe('resolveTourCardLeft', () => {
+  const mobileFrame = { left: 0, right: 393 };
 
   it('공간이 충분하면 하이라이트 중앙에 정렬한다', () => {
-    expect(clampTourCardLeft(400, 288, fullWidth, 16)).toBe(256);
+    expect(
+      resolveTourCardLeft(
+        { top: 0, left: 100, width: 200, height: 40 },
+        288,
+        { left: 0, right: 800 },
+        16,
+      ),
+    ).toBe(56);
   });
 
-  it('경계 안으로 클램프한다', () => {
-    expect(clampTourCardLeft(0, 288, fullWidth, 16)).toBe(16);
-    expect(clampTourCardLeft(800, 288, fullWidth, 16)).toBe(800 - 288 - 16);
+  it('왼쪽 공간이 부족하면 하이라이트 왼쪽 변에 맞춘다', () => {
+    // 툴바 버튼 하이라이트(x=10)는 프레임 여백(16)보다 바깥이라, 여백에 맞추면
+    // 카드가 하이라이트보다 안쪽으로 들어가 오른쪽으로 치우쳐 보인다.
+    expect(
+      resolveTourCardLeft(
+        { top: 673, left: 10, width: 157, height: 44 },
+        288,
+        mobileFrame,
+        16,
+      ),
+    ).toBe(10);
   });
 
-  it('넓은 화면에서는 뷰포트가 아니라 앱 프레임 안으로 클램프한다', () => {
+  it('오른쪽 공간이 부족하면 하이라이트 오른쪽 변에 맞춘다', () => {
+    expect(
+      resolveTourCardLeft(
+        { top: 673, left: 341, width: 42, height: 44 },
+        288,
+        mobileFrame,
+        16,
+      ),
+    ).toBe(383 - 288);
+  });
+
+  it('넓은 화면에서는 뷰포트가 아니라 앱 프레임 안에 둔다', () => {
     // 1200px 뷰포트 가운데 놓인 448px(max-w-md) 앱 프레임
     const frame = { left: 376, right: 824 };
+    const left = resolveTourCardLeft(
+      { top: 0, left: 386, width: 157, height: 44 },
+      288,
+      frame,
+      16,
+    );
 
-    expect(clampTourCardLeft(400, 288, frame, 16)).toBe(392);
-    expect(clampTourCardLeft(824, 288, frame, 16)).toBe(824 - 288 - 16);
+    expect(left).toBe(386);
+    expect(left + 288).toBeLessThanOrEqual(frame.right);
   });
 
-  it('프레임이 카드보다 좁으면 왼쪽 여백에 맞춘다', () => {
-    expect(clampTourCardLeft(150, 288, { left: 0, right: 300 }, 16)).toBe(16);
+  it('프레임이 카드보다 좁아도 프레임 밖으로 나가지 않는다', () => {
+    const narrow = { left: 0, right: 300 };
+    const left = resolveTourCardLeft(
+      { top: 0, left: 10, width: 100, height: 40 },
+      288,
+      narrow,
+      16,
+    );
+
+    expect(left).toBeGreaterThanOrEqual(narrow.left);
+    expect(left + 288).toBeLessThanOrEqual(narrow.right);
   });
 });

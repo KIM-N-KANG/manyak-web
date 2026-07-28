@@ -11,9 +11,9 @@ import { cn } from '@/lib/utils';
 
 import { type ChatInputMode } from '../../utils/chat-input-config';
 import {
-  clampTourCardLeft,
   isTourRectInViewport,
   padTourRect,
+  resolveTourCardLeft,
   resolveTourCardSide,
   type TourBounds,
   type TourRect,
@@ -207,8 +207,8 @@ export function ChatTour({
     CARD_HEIGHT_ESTIMATE,
     CARD_GAP,
   );
-  const cardLeft = clampTourCardLeft(
-    padded.left + padded.width / 2,
+  const cardLeft = resolveTourCardLeft(
+    padded,
     CARD_WIDTH,
     resolveFrameBounds(),
     CARD_MARGIN,

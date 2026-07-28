@@ -83,25 +83,37 @@ export type TourBounds = {
 };
 
 /**
- * 카드가 경계를 벗어나지 않도록 왼쪽 좌표를 클램프한다.
- * 뷰포트가 아니라 앱 프레임을 기준으로 삼아, 넓은 화면에서 카드가
- * 프레임 바깥 여백으로 튀어나가지 않게 한다.
+ * 카드의 왼쪽 좌표를 정한다.
+ * 기본은 하이라이트 중앙 정렬이고, 한쪽으로 치우쳐 중앙에 둘 수 없으면
+ * 그쪽 하이라이트 변에 카드 변을 맞춘다. 여백에만 맞추면 카드가 하이라이트보다
+ * 안쪽으로 들어가 어긋나 보이기 때문이다. 어느 경우든 앱 프레임은 넘지 않는다.
  *
- * @param rectCenterX 하이라이트 영역의 가로 중심 좌표
+ * @param rect 여백을 더한 하이라이트 영역
  * @param cardWidth 카드 너비
  * @param bounds 카드를 가둘 가로 경계
  * @param margin 경계 좌우 최소 여백
- * @returns 클램프된 카드의 왼쪽 좌표
+ * @returns 카드의 왼쪽 좌표
  */
-export function clampTourCardLeft(
-  rectCenterX: number,
+export function resolveTourCardLeft(
+  rect: TourRect,
   cardWidth: number,
   bounds: TourBounds,
   margin: number,
 ): number {
-  const ideal = rectCenterX - cardWidth / 2;
+  const centered = rect.left + rect.width / 2 - cardWidth / 2;
   const min = bounds.left + margin;
   const max = Math.max(bounds.right - cardWidth - margin, min);
 
-  return Math.min(Math.max(ideal, min), max);
+  if (centered < min) {
+    return Math.max(bounds.left, Math.min(rect.left, min));
+  }
+
+  if (centered > max) {
+    return Math.min(
+      bounds.right - cardWidth,
+      Math.max(rect.left + rect.width - cardWidth, max),
+    );
+  }
+
+  return centered;
 }
