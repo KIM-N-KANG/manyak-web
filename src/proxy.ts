@@ -40,6 +40,11 @@ function hasMemberSessionCookie(request: NextRequest): boolean {
  *
  * 원래 목적지는 `from` 쿼리로 넘겨, 노출 대상이 아니면 가드가 그리로 되돌린다.
  *
+ * 원본 쿼리스트링은 전부 이어서 넘긴다. 서버 리다이렉트라 브라우저가 원본 URL을
+ * 한 번도 렌더하지 않으므로, 여기서 버리면 UTM 같은 유입 파라미터를 분석 SDK가
+ * 수집할 기회 자체가 사라진다. 특정 키 화이트리스트가 아니라 전체를 넘겨
+ * 앞으로 추가될 파라미터(초대코드·레퍼럴 등)도 함께 보존되게 한다.
+ *
  * @param request 매처(`/`·`/chats`·`/my`)에 걸린 요청
  * @returns 온보딩 리다이렉트 또는 통과 응답
  */
@@ -51,7 +56,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const url = new URL(APP_PATH.ONBOARDING, request.url);
+  const url = new URL(
+    `${APP_PATH.ONBOARDING}${request.nextUrl.search}`,
+    request.url,
+  );
 
   url.searchParams.set('from', request.nextUrl.pathname);
 

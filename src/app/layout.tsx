@@ -40,6 +40,13 @@ export const metadata: Metadata = {
     description:
       '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
   },
+  verification: {
+    // 네이버 서치어드바이저 사이트 소유확인 토큰이다. 공개 노출을 전제로 발급되므로
+    // 비밀값이 아니며, 소유확인 유지를 위해 계속 응답에 남아 있어야 한다.
+    other: {
+      'naver-site-verification': '6a972f6907a63c4074162127be9e0d87ba095789',
+    },
+  },
 };
 
 export const viewport: Viewport = {
