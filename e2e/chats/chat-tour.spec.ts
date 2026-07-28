@@ -40,7 +40,7 @@ test.describe('채팅 화면 안내 투어', () => {
     const tour = page.getByRole('dialog', { name: '채팅 화면 안내' });
 
     await expect(tour).toBeVisible();
-    await expect(tour.getByText('상황·대사 추가')).toBeVisible();
+    await expect(tour.getByText('상황 · 대사 추가')).toBeVisible();
 
     await tour.getByRole('button', { name: '다음' }).click();
     await expect(tour.getByText('입력 설정')).toBeVisible();
@@ -62,7 +62,7 @@ test.describe('채팅 화면 안내 투어', () => {
 
     await expect(tour).toBeVisible();
     await expect(tour.getByText('상황 추가', { exact: true })).toBeVisible();
-    await expect(tour.getByText('상황·대사 추가')).toBeHidden();
+    await expect(tour.getByText('상황 · 대사 추가')).toBeHidden();
 
     await tour.getByRole('button', { name: '다음' }).click();
     await expect(tour.getByText('입력 설정')).toBeVisible();
@@ -78,7 +78,7 @@ test.describe('채팅 화면 안내 투어', () => {
 
     await expect(tour).toBeVisible();
 
-    const card = tour.getByText('상황·대사 추가');
+    const card = tour.getByText('상황 · 대사 추가');
     const cardBox = await card.locator('..').boundingBox();
     const frameBox = await page.locator('#app-frame').boundingBox();
 

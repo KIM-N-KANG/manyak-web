@@ -17,7 +17,7 @@ export type ChatTourStep = {
 /** 블럭 입력 모드의 첫 스텝. 상황·대사 추가 버튼이 각각 입력 블럭을 늘린다. */
 const ADD_BLOCKS_STEP: ChatTourStep = {
   id: 'add-blocks',
-  title: '상황·대사 추가',
+  title: '상황 · 대사 추가',
   description:
     '누르면 입력창이 하나 늘어나요. 상황 묘사와 대사를 나눠 담아 이야기를 이어가 보세요.',
   selectors: ['[data-tour="add-situation"]', '[data-tour="add-dialogue"]'],
@@ -37,14 +37,14 @@ const COMMON_STEPS: ChatTourStep[] = [
     id: 'settings',
     title: '입력 설정',
     description:
-      '추천 입력을 켜고 끄거나, 블럭·일반 입력 모드로 바꿀 수 있어요.',
+      '추천 입력을 켜고 끄거나, 블럭 · 일반 입력 모드로 바꿀 수 있어요.',
     selectors: ['[data-tour="choices-menu"]', '[data-tour="input-mode-menu"]'],
   },
   {
     id: 'random-send',
     title: '랜덤 전송',
     description:
-      '입력이 비어 있을 때 누르면 추천 입력 중 하나를 골라 바로 전송해요.',
+      '추천 입력이 켜져있고, 입력이 비어 있을 때 누르면 추천 입력 중 하나를 바로 전송해요.',
     selectors: ['[data-tour="send"]'],
   },
 ];

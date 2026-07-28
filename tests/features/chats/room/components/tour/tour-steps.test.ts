@@ -7,7 +7,7 @@ describe('getChatTourSteps', () => {
     const [first] = getChatTourSteps('block');
 
     expect(first.id).toBe('add-blocks');
-    expect(first.title).toBe('상황·대사 추가');
+    expect(first.title).toBe('상황 · 대사 추가');
     expect(first.selectors).toEqual([
       '[data-tour="add-situation"]',
       '[data-tour="add-dialogue"]',
