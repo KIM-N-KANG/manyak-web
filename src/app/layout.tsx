@@ -16,6 +16,7 @@ import { SessionExpiryWatcher } from '@/components/providers/session-expiry-watc
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_FRAME_ID } from '@/constants/app-frame';
+import { SITE_URL } from '@/constants/site';
 import { AutoMigration } from '@/features/auth/_shared/components/auto-migration';
 import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
 import { InviteOnboardingDialog } from '@/features/my/invite/components/invite-onboarding-dialog';
@@ -24,14 +25,14 @@ export const metadata: Metadata = {
   title: '마냑',
   description: '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
   applicationName: '마냑',
-  metadataBase: new URL('https://manyak.app'),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     type: 'website',
     siteName: '마냑',
     title: '마냑',
     description:
       '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
-    url: 'https://manyak.app',
+    url: SITE_URL,
     locale: 'ko_KR',
   },
   twitter: {
