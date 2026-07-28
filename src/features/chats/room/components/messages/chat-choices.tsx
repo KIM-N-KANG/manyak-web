@@ -44,17 +44,20 @@ export function ChatChoices({
       animate="show"
       className="flex flex-col gap-2 p-4 pb-6">
       {showsHint && (
-        <m.p
+        <m.div
           variants={itemVariants}
-          className="text-right text-xs break-keep text-foreground-secondary">
-          AI가 추천하는 입력이에요. 탭하면 바로 전송되고,{' '}
-          <HugeiconsIcon
-            icon={BubbleChatEditIcon}
-            aria-hidden="true"
-            className="inline size-3.5 align-[-2.5px]"
-          />{' '}
-          버튼으로 고쳐서 보낼 수 있어요
-        </m.p>
+          className="flex flex-col gap-0.5 text-right text-xs break-keep text-foreground-secondary">
+          <p>AI가 추천하는 입력이에요</p>
+          <p>
+            탭하면 바로 전송되고,{' '}
+            <HugeiconsIcon
+              icon={BubbleChatEditIcon}
+              aria-hidden="true"
+              className="inline size-3.5 align-[-2.5px]"
+            />{' '}
+            버튼으로 고쳐서 보낼 수 있어요
+          </p>
+        </m.div>
       )}
       {choices.map((choice, index) => (
         <m.div
