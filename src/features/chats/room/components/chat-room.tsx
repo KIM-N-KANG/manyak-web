@@ -311,7 +311,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           mode={mode}
           onModeChange={handleModeChange}
           composer={composer}
-          disabled={isStreaming}
+          isStreaming={isStreaming}
           choicesEnabled={choicesEnabled}
           onChoicesEnabledChange={handleChoicesEnabledChange}
         />

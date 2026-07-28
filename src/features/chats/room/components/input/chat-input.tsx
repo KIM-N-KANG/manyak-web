@@ -9,7 +9,7 @@ type ChatInputProps = {
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
   composer: ReturnType<typeof useChatComposer>;
-  disabled: boolean;
+  isStreaming: boolean;
   choicesEnabled: boolean;
   onChoicesEnabledChange: (enabled: boolean) => void;
 };
@@ -18,7 +18,7 @@ export function ChatInput({
   mode,
   onModeChange,
   composer,
-  disabled,
+  isStreaming,
   choicesEnabled,
   onChoicesEnabledChange,
 }: ChatInputProps) {
@@ -33,7 +33,7 @@ export function ChatInput({
         onSend={composer.sendBlocks}
         hasSuggestions={composer.hasSuggestions}
         onSendRandomSuggestion={composer.sendRandomSuggestion}
-        disabled={disabled}
+        isStreaming={isStreaming}
         mode={mode}
         onModeChange={onModeChange}
         choicesEnabled={choicesEnabled}
@@ -50,7 +50,7 @@ export function ChatInput({
       hasSuggestions={composer.hasSuggestions}
       onSendRandomSuggestion={composer.sendRandomSuggestion}
       onInsertEmphasis={composer.insertEmphasis}
-      disabled={disabled}
+      isStreaming={isStreaming}
       textareaRef={composer.textareaRef}
       mode={mode}
       onModeChange={onModeChange}

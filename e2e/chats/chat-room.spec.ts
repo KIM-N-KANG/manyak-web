@@ -144,6 +144,63 @@ test.describe('채팅 스트리밍', () => {
     await expect(page.getByRole('button', { name: '전송' })).toBeEnabled();
   });
 
+  test('응답을 받는 동안 전송 버튼에 스피너가 보인다', async ({ page }) => {
+    const completedTurn = {
+      id: 1,
+      userInput: '앞으로 나아간다',
+      aiOutput: '문이 열린다.',
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1 ? chatDetail() : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    // 스트림 응답을 늦춰 "받는 중" 상태를 관찰할 시간을 만든다.
+    await page.route(CHAT_STREAM, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: completed\ndata: {"aiOutput":"문이 열린다."}\n\n',
+        ]),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('앞으로 나아간다');
+
+    // 전송 후에는 입력이 비워져 버튼 라벨이 바뀌므로 속성으로 스코프한다.
+    const sendButton = page.locator('[data-tour="send"]');
+
+    await page.getByRole('button', { name: '전송', exact: true }).click();
+
+    await expect(
+      sendButton.getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeVisible();
+    await expect(sendButton).toBeDisabled();
+
+    await expect(page.getByText('문이 열린다.')).toBeVisible();
+    await expect(
+      sendButton.getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeHidden();
+  });
+
   test('메시지를 전송하면 응답이 스트리밍되어 누적된다 (US-6-2·6-3)', async ({
     page,
   }) => {
