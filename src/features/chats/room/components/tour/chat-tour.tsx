@@ -37,52 +37,24 @@ type TourStepState = {
 };
 
 /**
- * 스텝 대상 중 레이아웃을 가진 요소를 모은다.
- *
- * @param selectors 대상 요소의 data-tour 셀렉터 목록
- * @returns 렌더된 대상 요소 목록
- */
-function findStepElements(selectors: string[]): HTMLElement[] {
-  return selectors
-    .flatMap((selector) =>
-      Array.from(document.querySelectorAll<HTMLElement>(selector)),
-    )
-    .filter((element) => element.getClientRects().length > 0);
-}
-
-/**
  * 스텝 대상 요소들의 화면 좌표 합집합을 구한다.
  *
  * @param selectors 대상 요소의 data-tour 셀렉터 목록
  * @returns 합집합 영역. 렌더된 대상이 없으면 null
  */
 function measureStep(selectors: string[]): TourRect | null {
-  const rects = findStepElements(selectors).map((element) => {
-    const { top, left, width, height } = element.getBoundingClientRect();
+  const rects = selectors
+    .flatMap((selector) =>
+      Array.from(document.querySelectorAll<HTMLElement>(selector)),
+    )
+    .filter((element) => element.getClientRects().length > 0)
+    .map((element) => {
+      const { top, left, width, height } = element.getBoundingClientRect();
 
-    return { top, left, width, height };
-  });
+      return { top, left, width, height };
+    });
 
   return unionTourRects(rects);
-}
-
-/**
- * 스텝 대상이 화면 밖으로 밀려나 있으면 스크롤해서 보이게 한다.
- * 채팅 메시지 영역은 스크롤 컨테이너라 프롤로그가 길면 추천 입력이 화면 밖에 있다.
- *
- * @param selectors 대상 요소의 data-tour 셀렉터 목록
- */
-function scrollStepIntoView(selectors: string[]): void {
-  const rect = measureStep(selectors);
-
-  if (rect === null || isTourRectInViewport(rect, window.innerHeight)) {
-    return;
-  }
-
-  findStepElements(selectors)[0]?.scrollIntoView({
-    block: 'center',
-    behavior: 'instant',
-  });
 }
 
 /**
@@ -100,7 +72,7 @@ function hasStepFrom(from: number): boolean {
 
 /**
  * 지정 인덱스부터 실제로 보여줄 수 있는 스텝의 상태를 계산한다.
- * 대상을 화면 안으로 스크롤한 뒤에도 보이지 않는 스텝은 건너뛴다.
+ * 대상이 없거나 화면 밖인 스텝은 건너뛴다.
  *
  * @param from 탐색을 시작할 스텝 인덱스
  * @returns 표시할 스텝 상태. 남은 스텝이 없으면 null
@@ -108,9 +80,6 @@ function hasStepFrom(from: number): boolean {
 function resolveStepState(from: number): TourStepState | null {
   for (let index = from; index < CHAT_TOUR_STEPS.length; index += 1) {
     const { selectors } = CHAT_TOUR_STEPS[index];
-
-    scrollStepIntoView(selectors);
-
     const rect = measureStep(selectors);
 
     if (rect !== null && isTourRectInViewport(rect, window.innerHeight)) {

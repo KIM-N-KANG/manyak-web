@@ -1,8 +1,4 @@
-export type ChatTourStepId =
-  | 'choices'
-  | 'composer'
-  | 'settings'
-  | 'random-send';
+export type ChatTourStepId = 'composer' | 'settings' | 'random-send';
 
 export type ChatTourStep = {
   id: ChatTourStepId;
@@ -17,13 +13,6 @@ export type ChatTourStep = {
  * 대상 요소가 하나도 없는 스텝은 진행 시 건너뛴다(예: 일반 입력 모드의 대사 추가).
  */
 export const CHAT_TOUR_STEPS: ChatTourStep[] = [
-  {
-    id: 'choices',
-    title: '추천 입력',
-    description:
-      'AI가 추천하는 다음 전개예요. 탭하면 바로 전송되고, 왼쪽 버튼을 누르면 입력창에 넣어 수정할 수 있어요.',
-    selectors: ['[data-tour="chat-choices"]'],
-  },
   {
     id: 'composer',
     title: '상황·대사 입력',
