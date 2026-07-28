@@ -35,6 +35,7 @@ export function ChatChoices({ choices, onSend, onFill }: ChatChoicesProps) {
       variants={listVariants}
       initial="hidden"
       animate="show"
+      data-tour="chat-choices"
       className="flex flex-col gap-2 p-4 pb-6">
       {choices.map((choice, index) => (
         <m.div

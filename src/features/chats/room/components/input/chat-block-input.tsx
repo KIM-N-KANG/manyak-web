@@ -90,7 +90,9 @@ export function ChatBlockInput({
   return (
     <section className="flex flex-col bg-background pb-[env(safe-area-inset-bottom)]">
       {blocks.length > 0 && (
-        <div className="flex max-h-[30dvh] flex-col gap-2 overflow-y-auto overscroll-contain px-4 py-2">
+        <div
+          data-tour="input-blocks"
+          className="flex max-h-[30dvh] flex-col gap-2 overflow-y-auto overscroll-contain px-4 py-2">
           {blocks.map((block) => (
             <div key={block.id} className="flex items-center gap-1">
               <InputGroup>
@@ -144,6 +146,7 @@ export function ChatBlockInput({
         <Button
           type="button"
           aria-label="상황 묘사 추가"
+          data-tour="add-situation"
           size="sm"
           variant="secondary"
           disabled={disabled}
@@ -153,6 +156,7 @@ export function ChatBlockInput({
         <Button
           type="button"
           aria-label="대사 추가"
+          data-tour="add-dialogue"
           size="sm"
           variant="secondary"
           disabled={disabled}
@@ -168,6 +172,7 @@ export function ChatBlockInput({
           type="button"
           size="icon-sm"
           aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
+          data-tour="send"
           disabled={!canSend}
           onClick={handleSend}
           className="ml-auto">

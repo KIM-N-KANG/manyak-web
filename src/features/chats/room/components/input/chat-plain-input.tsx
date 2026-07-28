@@ -72,7 +72,7 @@ export function ChatPlainInput({
   return (
     <section className="px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
       <form onSubmit={handleSubmit}>
-        <InputGroup className="rounded-lg">
+        <InputGroup data-tour="input-blocks" className="rounded-lg">
           <InputGroupTextarea
             ref={textareaRef}
             value={value}
@@ -89,6 +89,7 @@ export function ChatPlainInput({
               variant="secondary"
               size="sm"
               aria-label="상황 묘사 추가"
+              data-tour="add-situation"
               disabled={disabled}
               onClick={onInsertEmphasis}>
               상황 추가
@@ -103,6 +104,7 @@ export function ChatPlainInput({
               variant="default"
               size="icon-sm"
               aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
+              data-tour="send"
               disabled={!canSend}
               className="ml-auto">
               {showsRandomSend ? (

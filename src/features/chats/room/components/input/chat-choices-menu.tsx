@@ -33,6 +33,7 @@ export function ChatChoicesMenu({
             size="icon-sm"
             variant="ghost"
             aria-label="추천 입력 설정"
+            data-tour="choices-menu"
             className={cn(
               enabled &&
                 'text-primary hover:text-primary aria-expanded:text-primary',
