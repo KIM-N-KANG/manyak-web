@@ -13,14 +13,9 @@ import { ChatOptionsMenu } from './chat-options-menu';
 type ChatRoomHeaderProps = {
   chatId: string;
   storyTitle: string;
-  onReplayTour: () => void;
 };
 
-export function ChatRoomHeader({
-  chatId,
-  storyTitle,
-  onReplayTour,
-}: ChatRoomHeaderProps) {
+export function ChatRoomHeader({ chatId, storyTitle }: ChatRoomHeaderProps) {
   const router = useRouter();
 
   const goBack = () => router.push(APP_PATH.MAIN.CHATS);
@@ -45,7 +40,7 @@ export function ChatRoomHeader({
           onClick={() => router.push(APP_PATH.MAIN.STORIES)}>
           <HomeOutlineIcon aria-hidden="true" />
         </Button>
-        <ChatOptionsMenu chatId={chatId} onReplayTour={onReplayTour} />
+        <ChatOptionsMenu chatId={chatId} />
       </div>
     </header>
   );

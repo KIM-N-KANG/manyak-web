@@ -163,7 +163,7 @@ export type AnalyticsEventProps = {
   client_chat_streamError_shown: { chat_id: string; turn_number: number };
   client_chat_loadError_shown: { chat_id: string };
   client_chat_retryButton_clicked: { chat_id: string };
-  client_chat_tour_started: { chat_id: string; source: 'auto' | 'manual' };
+  client_chat_tour_started: { chat_id: string };
   client_chat_tour_step_viewed: {
     chat_id: string;
     step_number: number;

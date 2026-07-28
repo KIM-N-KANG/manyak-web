@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 
-import { expect, skipChatTour, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 // 채팅 화면 안내 투어(KNK-694): 턴 0개 첫 진입 시 자동 노출, 헤더 메뉴로 재열람.
 const CHAT_DETAIL = '**/api/v1/chats/c1';
@@ -82,21 +82,5 @@ test.describe('채팅 화면 안내 투어', () => {
       page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.'),
     ).toBeVisible();
     await expect(tour).toBeHidden();
-  });
-
-  test('헤더 옵션 메뉴에서 투어를 다시 볼 수 있다', async ({ page }) => {
-    await skipChatTour(page);
-    await page.goto('/chats/c1');
-
-    await expect(
-      page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.'),
-    ).toBeVisible();
-
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '화면 안내 보기' }).click();
-
-    await expect(
-      page.getByRole('dialog', { name: '채팅 화면 안내' }),
-    ).toBeVisible();
   });
 });

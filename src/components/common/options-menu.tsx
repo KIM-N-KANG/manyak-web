@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 
 import { Delete02Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -35,8 +35,6 @@ type OptionsMenuProps = {
   deleteLabel?: string;
   size?: ButtonSize;
   triggerClassName?: string;
-  /** 삭제 항목 위에 렌더되는 추가 메뉴 항목. */
-  additionalItems?: ReactNode;
 };
 
 export function OptionsMenu({
@@ -47,7 +45,6 @@ export function OptionsMenu({
   deleteLabel = '삭제하기',
   size = 'icon-xs',
   triggerClassName,
-  additionalItems,
 }: OptionsMenuProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
@@ -72,7 +69,6 @@ export function OptionsMenu({
           <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {additionalItems}
           <DropdownMenuItem
             variant="destructive"
             onClick={() => setIsConfirmOpen(true)}>

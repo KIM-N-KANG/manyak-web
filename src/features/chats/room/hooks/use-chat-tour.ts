@@ -18,10 +18,10 @@ type UseChatTourParams = {
 
 /**
  * 채팅 화면 안내 투어의 노출 상태를 관리하는 훅.
- * 조건 충족 시 1회 자동 노출하고, 헤더 메뉴의 수동 재열람을 지원한다.
+ * 조건을 충족한 첫 진입에 한 번만 자동 노출한다.
  *
  * @param params 채팅 ID와 자동 노출 판정에 쓰는 화면 상태
- * @returns 노출 여부와 투어 열기·스텝·완료·건너뛰기 핸들러
+ * @returns 노출 여부와 스텝·완료·건너뛰기 핸들러
  */
 export function useChatTour({
   chatId,
@@ -51,17 +51,12 @@ export function useChatTour({
     const timer = setTimeout(() => {
       setHasAutoOpened(true);
       markChatTourSeen();
-      track('client_chat_tour_started', { chat_id: chatId, source: 'auto' });
+      track('client_chat_tour_started', { chat_id: chatId });
       setIsOpen(true);
     }, AUTO_OPEN_DELAY_MS);
 
     return () => clearTimeout(timer);
   }, [chatId, hasAutoOpened, isOpen, isReady, turnCount, isStreaming]);
-
-  const openTour = () => {
-    track('client_chat_tour_started', { chat_id: chatId, source: 'manual' });
-    setIsOpen(true);
-  };
 
   const handleStepView = (stepNumber: number, stepId: ChatTourStepId) => {
     track('client_chat_tour_step_viewed', {
@@ -84,5 +79,5 @@ export function useChatTour({
     setIsOpen(false);
   };
 
-  return { isOpen, openTour, handleStepView, handleComplete, handleSkip };
+  return { isOpen, handleStepView, handleComplete, handleSkip };
 }
