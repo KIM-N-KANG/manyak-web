@@ -32,6 +32,7 @@ import type {
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatChoices } from '../hooks/use-chat-choices';
+import { useChatChoicesHint } from '../hooks/use-chat-choices-hint';
 import { useChatComposer } from '../hooks/use-chat-composer';
 import { useChatDetail } from '../hooks/use-chat-detail';
 import {
@@ -131,6 +132,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     isReady: !isLoading && !isError && !isForbidden,
     turnCount: turns.length,
     isStreaming,
+  });
+
+  const showsChoicesHint = useChatChoicesHint({
+    isReady: !isLoading && !isError && !isForbidden,
+    turnCount: turns.length,
   });
 
   const guardedSend = (userInput: string): Promise<void> => {
@@ -294,6 +300,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             regeneratingTurnId={regeneratingTurnId}
             choicesEnabled={choicesEnabled}
             choicesStatus={choicesStatus}
+            showsChoicesHint={showsChoicesHint}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}
             onRegenerate={guardedRegenerate}

@@ -3,6 +3,7 @@ import {
   expect,
   seedChatIds,
   seedGuestUsage,
+  skipChatChoicesHint,
   skipChatTour,
   skipOnboarding,
   test,
@@ -23,9 +24,10 @@ import {
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHATS_BATCH = '**/api/v1/chats/batch';
 
-// 첫 진입 안내 투어 오버레이가 스냅샷에 끼어들지 않게 한다.
+// 첫 진입 안내 투어 오버레이·추천 입력 힌트가 스냅샷에 끼어들지 않게 한다.
 test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
+  await skipChatChoicesHint(page);
 });
 
 const chat = (id: string, storyTitle: string, lastStoryPreview: string) => ({

@@ -21,6 +21,7 @@ export {
   seedGuestUsage,
   seedPendingHandoff,
   seedStoryIds,
+  skipChatChoicesHint,
   skipChatTour,
   skipOnboarding,
 } from './storage';

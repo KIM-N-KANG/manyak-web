@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 
-import { expect, test } from '../fixtures/test';
+import { expect, skipChatTour, test } from '../fixtures/test';
 
 // 채팅 화면 안내 투어(KNK-694): 턴 0개 첫 진입 시 자동 노출, 헤더 메뉴로 재열람.
 const CHAT_DETAIL = '**/api/v1/chats/c1';
@@ -82,5 +82,37 @@ test.describe('채팅 화면 안내 투어', () => {
       page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.'),
     ).toBeVisible();
     await expect(tour).toBeHidden();
+  });
+});
+
+test.describe('추천 입력 힌트', () => {
+  test.beforeEach(async ({ page }) => {
+    await skipChatTour(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+  });
+
+  test('첫 진입 시 추천 입력 위에 힌트가 보이고 재진입 시 사라진다', async ({
+    page,
+  }) => {
+    await page.goto('/chats/c1');
+
+    const hint = page.getByText('AI가 추천하는 입력이에요');
+
+    await expect(hint).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '던전에 진입한다' }),
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(
+      page.getByRole('button', { name: '던전에 진입한다' }),
+    ).toBeVisible();
+    await expect(hint).toBeHidden();
   });
 });
