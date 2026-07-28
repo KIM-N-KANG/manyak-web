@@ -69,7 +69,8 @@ describe('법적 문서 콘텐츠', () => {
       '4. 개인정보의 보유 및 이용 기간',
       '7. 개인정보의 국외 이전',
       '12. 행태정보의 수집 및 맞춤형 광고',
-      '13. 개인정보 보호책임자 및 문의처',
+      '13. AI 품질 관리 및 학습 데이터 활용',
+      '14. 개인정보 보호책임자 및 문의처',
     ]) {
       expect(headings).toContain(required);
     }
@@ -84,9 +85,25 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('서비스 화면과 목록에서 제외');
     expect(text).toContain('페이지 조회, 세션 정보, 유입 경로');
     expect(text).toContain(
-      '채팅 메시지·피드백 원문은 분석 도구에 수집하지 않습니다',
+      '채팅 메시지·피드백 원문은 행태 분석 도구(Amplitude)에 수집하지 않습니다',
     );
     expect(text).not.toContain('탈퇴 시 지체 없이 파기합니다');
+  });
+
+  it('개인정보처리방침은 AI 품질 관리·학습 데이터 활용을 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    // 수탁·국외 이전 상대방과 저장 위치가 명시돼야 한다.
+    expect(text).toContain('Langfuse GmbH');
+    expect(text).toContain('데이터 저장: 일본');
+    // 저장 항목과 이용 방법(학습 활용)이 고지돼야 한다.
+    expect(text).toContain('스토리 설정·채팅 메시지');
+    expect(text).toContain('AI 모델의 학습·개선');
+    // 보유 기간은 확정값이어야 하고 무기한 표현이 남으면 안 된다.
+    expect(text).toContain('수집일로부터 1년');
+    expect(text).not.toContain('무기한');
+    // 이용자 통제 수단(학습 제외·삭제 요청)이 고지돼야 한다.
+    expect(text).toContain('학습 활용에서 제외하거나 삭제');
   });
 
   it('개인정보처리방침은 Meta 픽셀 행태정보 수집을 고지한다', () => {
