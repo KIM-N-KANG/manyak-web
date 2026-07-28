@@ -62,6 +62,21 @@ export function resolveTourCardSide(
 }
 
 /**
+ * 하이라이트 영역이 화면 안에 조금이라도 보이는지 판정한다.
+ * 스크롤 밖으로 밀려난 요소를 하이라이트하지 않기 위해 쓴다.
+ *
+ * @param rect 하이라이트 영역
+ * @param viewportHeight 뷰포트 높이
+ * @returns 화면과 겹치는 부분이 있으면 true
+ */
+export function isTourRectInViewport(
+  rect: TourRect,
+  viewportHeight: number,
+): boolean {
+  return rect.top < viewportHeight && rect.top + rect.height > 0;
+}
+
+/**
  * 카드가 뷰포트를 벗어나지 않도록 왼쪽 좌표를 클램프한다.
  *
  * @param rectCenterX 하이라이트 영역의 가로 중심 좌표

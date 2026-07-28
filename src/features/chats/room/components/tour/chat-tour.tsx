@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 import {
   clampTourCardLeft,
+  isTourRectInViewport,
   padTourRect,
   resolveTourCardSide,
   type TourRect,
@@ -36,60 +37,88 @@ type TourStepState = {
 };
 
 /**
- * 스텝 대상 요소들의 화면 좌표 합집합을 구한다.
+ * 스텝 대상 중 레이아웃을 가진 요소를 모은다.
  *
  * @param selectors 대상 요소의 data-tour 셀렉터 목록
- * @returns 합집합 영역. 화면에 보이는 대상이 없으면 null
+ * @returns 렌더된 대상 요소 목록
  */
-function measureStep(selectors: string[]): TourRect | null {
-  const rects = selectors
+function findStepElements(selectors: string[]): HTMLElement[] {
+  return selectors
     .flatMap((selector) =>
       Array.from(document.querySelectorAll<HTMLElement>(selector)),
     )
-    .filter((element) => element.getClientRects().length > 0)
-    .map((element) => {
-      const { top, left, width, height } = element.getBoundingClientRect();
+    .filter((element) => element.getClientRects().length > 0);
+}
 
-      return { top, left, width, height };
-    });
+/**
+ * 스텝 대상 요소들의 화면 좌표 합집합을 구한다.
+ *
+ * @param selectors 대상 요소의 data-tour 셀렉터 목록
+ * @returns 합집합 영역. 렌더된 대상이 없으면 null
+ */
+function measureStep(selectors: string[]): TourRect | null {
+  const rects = findStepElements(selectors).map((element) => {
+    const { top, left, width, height } = element.getBoundingClientRect();
+
+    return { top, left, width, height };
+  });
 
   return unionTourRects(rects);
 }
 
 /**
- * 대상이 존재하는 첫 스텝을 찾는다.
+ * 스텝 대상이 화면 밖으로 밀려나 있으면 스크롤해서 보이게 한다.
+ * 채팅 메시지 영역은 스크롤 컨테이너라 프롤로그가 길면 추천 입력이 화면 밖에 있다.
  *
- * @param from 탐색을 시작할 스텝 인덱스
- * @returns 대상이 있는 스텝 인덱스. 없으면 -1
+ * @param selectors 대상 요소의 data-tour 셀렉터 목록
  */
-function findAvailableStep(from: number): number {
-  for (let i = from; i < CHAT_TOUR_STEPS.length; i += 1) {
-    if (measureStep(CHAT_TOUR_STEPS[i].selectors) !== null) {
-      return i;
-    }
+function scrollStepIntoView(selectors: string[]): void {
+  const rect = measureStep(selectors);
+
+  if (rect === null || isTourRectInViewport(rect, window.innerHeight)) {
+    return;
   }
 
-  return -1;
+  findStepElements(selectors)[0]?.scrollIntoView({
+    block: 'center',
+    behavior: 'instant',
+  });
 }
 
 /**
- * 지정 인덱스부터 표시 가능한 스텝의 상태를 계산한다.
+ * 지정 인덱스 이후에 렌더된 대상이 남아 있는지 확인한다.
+ * 다음 스텝 유무 판정 전용이라 스크롤은 건드리지 않는다.
+ *
+ * @param from 탐색을 시작할 스텝 인덱스
+ * @returns 대상이 있는 스텝이 남아 있으면 true
+ */
+function hasStepFrom(from: number): boolean {
+  return CHAT_TOUR_STEPS.slice(from).some(
+    (step) => measureStep(step.selectors) !== null,
+  );
+}
+
+/**
+ * 지정 인덱스부터 실제로 보여줄 수 있는 스텝의 상태를 계산한다.
+ * 대상을 화면 안으로 스크롤한 뒤에도 보이지 않는 스텝은 건너뛴다.
  *
  * @param from 탐색을 시작할 스텝 인덱스
  * @returns 표시할 스텝 상태. 남은 스텝이 없으면 null
  */
 function resolveStepState(from: number): TourStepState | null {
-  const index = findAvailableStep(from);
+  for (let index = from; index < CHAT_TOUR_STEPS.length; index += 1) {
+    const { selectors } = CHAT_TOUR_STEPS[index];
 
-  if (index === -1) {
-    return null;
+    scrollStepIntoView(selectors);
+
+    const rect = measureStep(selectors);
+
+    if (rect !== null && isTourRectInViewport(rect, window.innerHeight)) {
+      return { index, rect, hasNext: hasStepFrom(index + 1) };
+    }
   }
 
-  return {
-    index,
-    rect: measureStep(CHAT_TOUR_STEPS[index].selectors),
-    hasNext: findAvailableStep(index + 1) !== -1,
-  };
+  return null;
 }
 
 export function ChatTour({ onStepView, onComplete, onSkip }: ChatTourProps) {

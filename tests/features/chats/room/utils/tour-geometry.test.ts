@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   clampTourCardLeft,
+  isTourRectInViewport,
   padTourRect,
   resolveTourCardSide,
   unionTourRects,
@@ -51,6 +52,26 @@ describe('resolveTourCardSide', () => {
         12,
       ),
     ).toBe('top');
+  });
+});
+
+describe('isTourRectInViewport', () => {
+  it('화면 안에 걸쳐 있으면 true를 반환한다', () => {
+    expect(
+      isTourRectInViewport({ top: 100, left: 0, width: 100, height: 50 }, 800),
+    ).toBe(true);
+    expect(
+      isTourRectInViewport({ top: -20, left: 0, width: 100, height: 50 }, 800),
+    ).toBe(true);
+  });
+
+  it('스크롤 밖으로 완전히 벗어나면 false를 반환한다', () => {
+    expect(
+      isTourRectInViewport({ top: 900, left: 0, width: 100, height: 50 }, 800),
+    ).toBe(false);
+    expect(
+      isTourRectInViewport({ top: -80, left: 0, width: 100, height: 50 }, 800),
+    ).toBe(false);
   });
 });
 
