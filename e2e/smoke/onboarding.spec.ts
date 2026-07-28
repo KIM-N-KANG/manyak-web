@@ -24,6 +24,23 @@ test.describe('온보딩', () => {
     ).toBeVisible();
   });
 
+  test('온보딩 리다이렉트는 원본 쿼리를 유지한다', async ({ page }) => {
+    const response = await page.goto(
+      '/?utm_source=th&utm_medium=social&utm_campaign=organic&utm_content=bio',
+    );
+
+    // 서버 리다이렉트라 브라우저가 원본 URL을 렌더하지 않으므로, 여기서
+    // 쿼리를 잃으면 분석 SDK가 유입 출처를 수집할 기회 자체가 사라진다.
+    const url = new URL(response!.url());
+
+    expect(url.pathname).toBe('/onboarding');
+    expect(url.searchParams.get('utm_source')).toBe('th');
+    expect(url.searchParams.get('utm_medium')).toBe('social');
+    expect(url.searchParams.get('utm_campaign')).toBe('organic');
+    expect(url.searchParams.get('utm_content')).toBe('bio');
+    expect(url.searchParams.get('from')).toBe('/');
+  });
+
   test('온보딩 페이지는 스크롤 없이 한 화면에 들어온다', async ({ page }) => {
     await page.goto('/');
 
