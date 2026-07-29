@@ -28,7 +28,7 @@ test.describe('공유된 채팅 열람', () => {
       page.getByRole('banner').getByText('별빛 도서관'),
     ).toBeVisible();
     await expect(
-      page.getByText('누군가의 이야기를 구경하는 중이에요'),
+      page.getByText('누군가의 스토리를 구경하는 중이에요'),
     ).toBeVisible();
     await expect(page.getByText('오래된 도서관의 문이 열렸다')).toBeVisible();
     await expect(page.getByText('책장을 살펴본다')).toBeVisible();
@@ -66,26 +66,24 @@ test.describe('공유된 채팅 열람', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('홈 버튼이 홈으로 연결된다', async ({ page }) => {
+  test('로고가 홈으로 연결된다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');
 
     await expect(
-      page
-        .getByRole('banner')
-        .getByRole('button', { name: '홈 화면으로 이동 버튼' }),
+      page.getByRole('banner').getByRole('link', { name: '홈 화면으로 이동' }),
     ).toHaveAttribute('href', '/');
   });
 
-  test('신규 방문자가 홈 버튼으로 나가면 온보딩을 거친다', async ({ page }) => {
+  test('신규 방문자가 로고로 나가면 온보딩을 거친다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');
 
-    // CTA와 달리 홈 버튼은 온보딩 게이트를 닫지 않는다. 만들기 의사를 밝히지
+    // CTA와 달리 로고 링크는 온보딩 게이트를 닫지 않는다. 만들기 의사를 밝히지
     // 않은 신규 방문자는 홈 진입 시 온보딩을 거치는 것이 의도된 동작이다.
     await page
       .getByRole('banner')
-      .getByRole('button', { name: '홈 화면으로 이동 버튼' })
+      .getByRole('link', { name: '홈 화면으로 이동' })
       .click();
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);

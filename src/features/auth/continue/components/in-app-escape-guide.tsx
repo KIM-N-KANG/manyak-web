@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { ListStatus } from '@/components/common/list-status';
-import { HomeOutlineIcon } from '@/components/icons/home-outline-icon';
+import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { openExternalBrowser } from '@/features/auth/_shared/utils/external-browser-escape';
@@ -51,7 +51,6 @@ function scheduleKakaoBannerShown(): ReturnType<typeof setTimeout> {
 }
 
 export function InAppEscapeGuide({ app }: InAppEscapeGuideProps) {
-  const router = useRouter();
   const isKakao = app === 'kakaotalk';
 
   useEffect(() => {
@@ -78,15 +77,13 @@ export function InAppEscapeGuide({ app }: InAppEscapeGuideProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-14 shrink-0 items-center px-2">
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          aria-label="홈 화면으로 이동 버튼"
-          onClick={() => router.push(APP_PATH.MAIN.STORIES)}>
-          <HomeOutlineIcon aria-hidden="true" />
-        </Button>
+      <header className="flex h-14 shrink-0 items-center px-4">
+        <Link
+          href={APP_PATH.MAIN.STORIES}
+          aria-label="홈 화면으로 이동"
+          className="shrink-0">
+          <ManyakLogo className="h-6 w-auto text-primary" />
+        </Link>
       </header>
       <ListStatus
         title={

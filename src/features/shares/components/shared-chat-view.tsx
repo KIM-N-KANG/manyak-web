@@ -3,7 +3,6 @@
 import Link from 'next/link';
 
 import type { ChatShareTurnResponse } from '@/api/generated/models';
-import { HomeOutlineIcon } from '@/components/icons/home-outline-icon';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
@@ -43,21 +42,18 @@ export function SharedChatView({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-4">
-        <ManyakLogo className="mr-2 h-6 w-auto shrink-0 text-primary" />
+        <Link
+          href={APP_PATH.MAIN.STORIES}
+          aria-label="홈 화면으로 이동"
+          className="mr-2 shrink-0">
+          <ManyakLogo className="h-6 w-auto text-primary" />
+        </Link>
         <h1 className="min-w-0 flex-1 truncate font-semibold">{storyTitle}</h1>
-        <Button
-          nativeButton={false}
-          size="icon"
-          variant="ghost"
-          aria-label="홈 화면으로 이동 버튼"
-          render={<Link href={APP_PATH.MAIN.STORIES} />}>
-          <HomeOutlineIcon aria-hidden="true" />
-        </Button>
       </header>
 
       <div className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain pb-2">
         <p className="p-4 text-center text-sm text-foreground-secondary">
-          누군가의 이야기를 구경하는 중이에요
+          누군가의 스토리를 구경하는 중이에요
         </p>
         {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
         {turns.map((turn, index) => (
