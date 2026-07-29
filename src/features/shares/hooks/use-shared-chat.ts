@@ -30,6 +30,7 @@ export function useSharedChat(shareId: string) {
     query.error instanceof FetchError && query.error.status === 404;
 
   return {
+    storyId: share?.storyId ?? '',
     storyTitle: share?.storyTitle ?? '',
     prologue: share?.prologue ?? '',
     turns: (share?.turns ?? []) as ChatShareTurnResponse[],

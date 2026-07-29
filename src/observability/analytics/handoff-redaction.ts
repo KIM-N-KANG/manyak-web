@@ -1,6 +1,7 @@
 import type * as amplitude from '@amplitude/unified';
 
 import { redactHandoffCode } from '@/lib/auth/handoff-query';
+import { redactShareId } from '@/lib/shares/share-url-redaction';
 
 /** amplitude.add가 받는 플러그인 타입. SDK 내부 타입에 직접 의존하지 않도록 시그니처에서 뽑는다. */
 type AnalyticsPlugin = Parameters<typeof amplitude.add>[0];
@@ -9,15 +10,18 @@ type AnalyticsPlugin = Parameters<typeof amplitude.add>[0];
 const MAX_REDACTION_DEPTH = 3;
 
 /**
- * 값에 담긴 핸드오프 코드를 재귀적으로 가린다. 문자열·배열·평범한 객체만 훑는다.
+ * 값에 담긴 비밀 문자열을 재귀적으로 가린다. 문자열·배열·평범한 객체만 훑는다.
+ *
+ * 핸드오프 코드와 공유 열람 토큰을 함께 처리한다. 둘 다 값 자체가 접근 수단이라
+ * 관측 저장소에 남으면 안 된다는 점에서 같은 규칙을 따른다.
  *
  * @param value 검사할 프로퍼티 값
  * @param depth 현재 탐색 깊이
- * @returns 코드를 가린 값. 대상이 아니면 원래 값 그대로다
+ * @returns 비밀을 가린 값. 대상이 아니면 원래 값 그대로다
  */
 function redactValue(value: unknown, depth = 0): unknown {
   if (typeof value === 'string') {
-    return redactHandoffCode(value);
+    return redactShareId(redactHandoffCode(value));
   }
 
   if (depth >= MAX_REDACTION_DEPTH) {

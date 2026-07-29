@@ -18,7 +18,7 @@ const SHARE_BODY = {
 test.describe('공유 열람 화면 비주얼', () => {
   test('헤더와 CTA가 보이는 초기 상태', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
-    await page.goto('/shares/share-1');
+    await page.goto('/share/share-1');
 
     await expect(page.getByRole('banner')).toHaveCSS('opacity', '1');
     await expect(

@@ -27,14 +27,14 @@ import { isTap } from '../utils/tap-gesture';
  * 한다. opacity만으로는 여전히 탭 순서에 남는다.
  */
 type SharedChatViewProps = {
-  shareId: string;
+  storyId: string;
   storyTitle: string;
   prologue: string;
   turns: ChatShareTurnResponse[];
 };
 
 export function SharedChatView({
-  shareId,
+  storyId,
   storyTitle,
   prologue,
   turns,
@@ -44,7 +44,7 @@ export function SharedChatView({
     null,
   );
 
-  useTrackOnView('client_share_viewed', { share_id: shareId });
+  useTrackOnView('client_chatShare_viewed', { story_id: storyId });
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     pointerStart.current = {
@@ -96,9 +96,17 @@ export function SharedChatView({
       </div>
 
       <header
-        className={cn(chromeClassName, 'top-0 py-4')}
+        className={cn(chromeClassName, 'top-0 flex items-center gap-2 py-4')}
         inert={!isChromeVisible}>
-        <h1 className="truncate text-center font-semibold">{storyTitle}</h1>
+        <Link
+          href={APP_PATH.MAIN.STORIES}
+          aria-label="마냑 홈으로 이동"
+          className="shrink-0 font-bold text-primary">
+          마냑
+        </Link>
+        <h1 className="min-w-0 flex-1 truncate text-center font-semibold">
+          {storyTitle}
+        </h1>
       </header>
 
       <div
@@ -110,7 +118,7 @@ export function SharedChatView({
           className="w-full"
           render={<Link href={APP_PATH.MAIN.STORIES} />}
           onClick={() =>
-            track('client_share_ctaButton_clicked', { share_id: shareId })
+            track('client_chatShare_ctaButton_clicked', { story_id: storyId })
           }>
           마냑에서 내 스토리 만들기
         </Button>

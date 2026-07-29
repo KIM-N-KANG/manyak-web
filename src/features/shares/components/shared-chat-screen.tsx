@@ -17,6 +17,7 @@ type SharedChatScreenProps = {
 
 export function SharedChatScreen({ shareId }: SharedChatScreenProps) {
   const {
+    storyId,
     storyTitle,
     prologue,
     turns,
@@ -33,7 +34,7 @@ export function SharedChatScreen({ shareId }: SharedChatScreenProps) {
   if (isNotFound) {
     return (
       <ListStatus
-        title="링크를 찾을 수 없어요"
+        title="공유된 채팅을 찾을 수 없어요"
         description="삭제되었거나 잘못된 링크예요">
         <Button
           nativeButton={false}
@@ -57,7 +58,7 @@ export function SharedChatScreen({ shareId }: SharedChatScreenProps) {
 
   return (
     <SharedChatView
-      shareId={shareId}
+      storyId={storyId}
       storyTitle={storyTitle}
       prologue={prologue}
       turns={turns}

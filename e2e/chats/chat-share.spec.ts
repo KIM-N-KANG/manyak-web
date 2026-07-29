@@ -64,6 +64,6 @@ test.describe('채팅 공유 발급', () => {
           () => (window as unknown as { __sharedUrl?: string }).__sharedUrl,
         ),
       )
-      .toContain('/shares/share-1');
+      .toContain('/share/share-1');
   });
 });

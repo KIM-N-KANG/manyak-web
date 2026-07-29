@@ -1,6 +1,6 @@
 import { expect, mockChatShareView, test } from '../fixtures/test';
 
-// 공유 열람(/shares/[shareId])은 온보딩 게이트 매처(/, /chats, /my) 밖이라 게이팅이 없다.
+// 공유 열람(/share/[shareId])은 온보딩 게이트 매처(/, /chats, /my) 밖이라 게이팅이 없다.
 // 열람: GET /api/v1/shares/{shareId} (무인증).
 const SHARE_BODY = {
   id: 'share-1',
@@ -22,7 +22,7 @@ const CTA_NAME = '마냑에서 내 스토리 만들기';
 test.describe('공유된 채팅 열람', () => {
   test('스토리 제목과 대화가 순서대로 보인다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
-    await page.goto('/shares/share-1');
+    await page.goto('/share/share-1');
 
     await expect(
       page.getByRole('banner').getByText('별빛 도서관'),
@@ -36,7 +36,7 @@ test.describe('공유된 채팅 열람', () => {
 
   test('CTA가 홈으로 연결된다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
-    await page.goto('/shares/share-1');
+    await page.goto('/share/share-1');
 
     // Button nativeButton={false} + render={<Link/>}는 앵커를 그리되 Base UI가
     // role="button"을 붙인다. 이동은 href로 이뤄지므로 링크 대상을 함께 확인한다.
@@ -50,7 +50,7 @@ test.describe('공유된 채팅 열람', () => {
     page,
   }) => {
     await mockChatShareView(page, SHARE_BODY);
-    await page.goto('/shares/share-1');
+    await page.goto('/share/share-1');
 
     // 오버레이는 opacity로 사라지는데 Playwright는 opacity:0도 visible로 보므로,
     // 실제 상태인 계산된 opacity와 inert 속성으로 검증한다.
@@ -75,9 +75,9 @@ test.describe('공유된 채팅 열람', () => {
 
   test('없는 링크는 안내 화면을 보여준다', async ({ page }) => {
     await mockChatShareView(page, { message: 'not found' }, 404);
-    await page.goto('/shares/missing');
+    await page.goto('/share/missing');
 
-    await expect(page.getByText('링크를 찾을 수 없어요')).toBeVisible();
+    await expect(page.getByText('공유된 채팅을 찾을 수 없어요')).toBeVisible();
     await expect(
       page.getByRole('button', { name: '마냑 둘러보기' }),
     ).toBeVisible();
