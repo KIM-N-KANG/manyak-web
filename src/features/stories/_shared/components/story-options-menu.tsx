@@ -1,5 +1,6 @@
 'use client';
 
+import { Delete02Icon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { VariantProps } from 'class-variance-authority';
 import { useSession } from 'next-auth/react';
@@ -54,12 +55,18 @@ export function StoryOptionsMenu({
 
   return (
     <OptionsMenu
-      onDelete={handleDelete}
-      isDeleting={isPending}
       triggerAriaLabel="스토리 옵션 더보기"
-      confirmTitle="스토리를 삭제할까요?"
       size={size}
       triggerClassName={triggerClassName}
+      items={[
+        {
+          icon: Delete02Icon,
+          label: '삭제하기',
+          variant: 'destructive',
+          onSelect: handleDelete,
+          confirm: { title: '스토리를 삭제할까요?', isPending },
+        },
+      ]}
     />
   );
 }

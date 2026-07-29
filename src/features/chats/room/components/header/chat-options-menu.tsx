@@ -1,5 +1,6 @@
 'use client';
 
+import { Delete02Icon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -45,12 +46,17 @@ export function ChatOptionsMenu({ chatId }: ChatOptionsMenuProps) {
 
   return (
     <OptionsMenu
-      onDelete={handleDelete}
-      isDeleting={isPending}
       triggerAriaLabel="채팅 옵션 더보기"
-      confirmTitle="채팅을 삭제할까요?"
-      deleteLabel="채팅 삭제하기"
       size="icon"
+      items={[
+        {
+          icon: Delete02Icon,
+          label: '채팅 삭제하기',
+          variant: 'destructive',
+          onSelect: handleDelete,
+          confirm: { title: '채팅을 삭제할까요?', isPending },
+        },
+      ]}
     />
   );
 }
