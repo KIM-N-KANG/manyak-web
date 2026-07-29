@@ -4,6 +4,9 @@ import type { NextConfig } from 'next';
 import { APP_PATH } from './src/constants/app-path';
 
 const nextConfig: NextConfig = {
+  // 로컬 E2E 전용 dev 서버(playwright.config.ts)가 개발 중인 dev 서버와
+  // .next(단일 인스턴스 잠금 포함)를 공유하지 않도록 산출물 폴더를 분리한다.
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   // 핸드오프 랜딩은 URL에 일회용 코드를 달고 열린다. 코드가 주소에 남아 있는 동안
   // 이 문서에서 나가는 모든 요청이 Referer로 코드를 흘리지 않도록 no-referrer를 걸고,
   // 응답이 중간 캐시에 남지 않도록 no-store를 함께 지정한다(정적 프리렌더는 유지된다).

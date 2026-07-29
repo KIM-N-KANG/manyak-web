@@ -2,6 +2,12 @@ import { defineConfig, devices } from '@playwright/test';
 
 const isCI = !!process.env.CI;
 
+// 로컬은 개발 중인 3000 dev 서버와 겹치지 않게 전용 포트에 항상 새 서버를 띄운다.
+// 3000을 재사용하면 오래 떠 있던 dev 서버 상태(react-grab 등)가 결과를 오염시킨다.
+// CI는 러너에 다른 서버가 없으므로 기본 포트를 그대로 쓴다.
+const port = isCI ? 3000 : 3100;
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -25,7 +31,7 @@ export default defineConfig({
     },
   },
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -48,9 +54,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: isCI ? 'pnpm build && pnpm start' : 'pnpm dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !isCI,
+    command: isCI ? 'pnpm build && pnpm start' : `pnpm dev --port ${port}`,
+    url: baseURL,
+    reuseExistingServer: false,
     timeout: 120_000,
+    // dev 서버와 .next를 공유하면 Next의 단일 인스턴스 잠금에 걸리고 산출물도
+    // 서로 오염되므로, 로컬 E2E 서버는 전용 산출물 폴더를 쓴다(next.config.ts).
+    env: isCI ? {} : { NEXT_DIST_DIR: '.next-e2e' },
   },
 });
