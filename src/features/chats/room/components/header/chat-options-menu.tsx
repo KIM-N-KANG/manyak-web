@@ -1,6 +1,6 @@
 'use client';
 
-import { Delete02Icon, Share08Icon } from '@hugeicons/core-free-icons';
+import { Copy01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -54,8 +54,8 @@ export function ChatOptionsMenu({ chatId, turnCount }: ChatOptionsMenuProps) {
       size="icon"
       items={[
         {
-          icon: Share08Icon,
-          label: '공유하기',
+          icon: Copy01Icon,
+          label: '공유 링크 복사',
           onSelect: share,
           disabled: isSharing,
         },
@@ -63,6 +63,7 @@ export function ChatOptionsMenu({ chatId, turnCount }: ChatOptionsMenuProps) {
           icon: Delete02Icon,
           label: '채팅 삭제하기',
           variant: 'destructive',
+          separatorBefore: true,
           onSelect: handleDelete,
           confirm: { title: '채팅을 삭제할까요?', isPending },
         },

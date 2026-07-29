@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import { MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -41,6 +42,8 @@ export type OptionsMenuItem = {
   onSelect: () => void | Promise<void>;
   variant?: 'default' | 'destructive';
   disabled?: boolean;
+  /** true면 이 항목 앞에 구분선을 렌더한다. */
+  separatorBefore?: boolean;
   confirm?: { title: string; description?: string; isPending?: boolean };
 };
 
@@ -87,22 +90,24 @@ export function OptionsMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {items.map((item, index) => (
-            <DropdownMenuItem
-              key={item.label}
-              variant={item.variant}
-              disabled={item.disabled}
-              onClick={() => {
-                if (item.confirm) {
-                  setConfirmingIndex(index);
+            <Fragment key={item.label}>
+              {item.separatorBefore ? <DropdownMenuSeparator /> : null}
+              <DropdownMenuItem
+                variant={item.variant}
+                disabled={item.disabled}
+                onClick={() => {
+                  if (item.confirm) {
+                    setConfirmingIndex(index);
 
-                  return;
-                }
+                    return;
+                  }
 
-                void item.onSelect();
-              }}>
-              <HugeiconsIcon icon={item.icon} aria-hidden="true" />
-              {item.label}
-            </DropdownMenuItem>
+                  void item.onSelect();
+                }}>
+                <HugeiconsIcon icon={item.icon} aria-hidden="true" />
+                {item.label}
+              </DropdownMenuItem>
+            </Fragment>
           ))}
         </DropdownMenuContent>
       </DropdownMenu>

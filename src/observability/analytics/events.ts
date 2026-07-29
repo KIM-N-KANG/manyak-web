@@ -172,14 +172,6 @@ export type AnalyticsEventProps = {
   client_chat_tour_completed: { chat_id: string };
   client_chat_tourSkipButton_clicked: { chat_id: string; step_number: number };
   client_chat_shareButton_clicked: { chat_id: string; turn_number: number };
-  client_chat_share_succeeded: {
-    chat_id: string;
-    method: 'share_sheet' | 'clipboard';
-  };
-  client_chat_share_failed: {
-    chat_id: string;
-    reason: 'issue_failed' | 'no_channel';
-  };
   // share (공유 열람 페이지)
   // shareId는 곧 열람 토큰이라 이벤트에 싣지 않는다(6-analytics.md §6-4-2-14).
   client_chatShare_viewed: { story_id: string };
