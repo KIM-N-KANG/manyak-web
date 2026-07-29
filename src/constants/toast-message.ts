@@ -6,6 +6,8 @@ export const TOAST_MESSAGE = {
   STORY_DELETE_FAILED: '스토리 삭제에 실패했어요',
   CHAT_DELETE_FAILED: '채팅 삭제에 실패했어요',
   CHAT_START_FAILED: '채팅을 시작하지 못했어요',
+  CHAT_SHARE_LINK_COPIED: '공유 링크를 복사했어요',
+  CHAT_SHARE_FAILED: '공유 링크를 만들지 못했어요',
   STORYLINE_LIKED: '좋아요를 남겼어요',
   STORYLINE_DISLIKED: '싫어요를 남겼어요',
   STORYLINE_EVALUATE_FAILED: '평가 저장에 실패했어요',

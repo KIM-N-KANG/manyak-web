@@ -171,6 +171,18 @@ export type AnalyticsEventProps = {
   };
   client_chat_tour_completed: { chat_id: string };
   client_chat_tourSkipButton_clicked: { chat_id: string; step_number: number };
+  client_chat_shareButton_clicked: { chat_id: string; turn_number: number };
+  client_chat_share_succeeded: {
+    chat_id: string;
+    method: 'share_sheet' | 'clipboard';
+  };
+  client_chat_share_failed: {
+    chat_id: string;
+    reason: 'issue_failed' | 'no_channel';
+  };
+  // share (공유 열람 페이지)
+  client_share_viewed: { share_id: string };
+  client_share_ctaButton_clicked: { share_id: string };
   // account (마이 페이지)
   client_account_viewed: void;
   client_account_loginButton_clicked: void;
