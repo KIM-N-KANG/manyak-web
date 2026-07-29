@@ -22,7 +22,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 공유 발급', () => {
-  test('더보기에서 공유 링크 복사를 누르면 발급 후 링크가 클립보드에 복사된다', async ({
+  test('더보기에서 채팅 공유하기를 누르면 발급 후 링크가 클립보드에 복사된다', async ({
     page,
   }) => {
     // 헤드리스 환경의 클립보드 권한 문제를 피하려고 writeText를 스텁해 복사된 값을 검사한다.
@@ -56,7 +56,7 @@ test.describe('채팅 공유 발급', () => {
 
     await page.goto('/chats/c1');
     await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '공유 링크 복사' }).click();
+    await page.getByRole('menuitem', { name: '채팅 공유하기' }).click();
 
     await createRequest;
     await expect
