@@ -1,6 +1,6 @@
 'use client';
 
-import { Delete02Icon } from '@hugeicons/core-free-icons';
+import { Delete02Icon, Share08Icon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -18,11 +18,14 @@ import {
 } from '@/features/chats/_shared/utils/chat-id-storage';
 import { useOptimisticCreatedResourceDelete } from '@/hooks/use-optimistic-created-resource-delete';
 
+import { useChatShare } from '../../hooks/use-chat-share';
+
 type ChatOptionsMenuProps = {
   chatId: string;
+  turnCount: number;
 };
 
-export function ChatOptionsMenu({ chatId }: ChatOptionsMenuProps) {
+export function ChatOptionsMenu({ chatId, turnCount }: ChatOptionsMenuProps) {
   const router = useRouter();
   const { status } = useSession();
   const queryClient = useQueryClient();
@@ -43,12 +46,19 @@ export function ChatOptionsMenu({ chatId }: ChatOptionsMenuProps) {
     failureMessage: TOAST_MESSAGE.CHAT_DELETE_FAILED,
     onDeleteSuccess: () => router.replace(APP_PATH.MAIN.CHATS),
   });
+  const { share, isSharing } = useChatShare(chatId, turnCount);
 
   return (
     <OptionsMenu
       triggerAriaLabel="채팅 옵션 더보기"
       size="icon"
       items={[
+        {
+          icon: Share08Icon,
+          label: '공유하기',
+          onSelect: share,
+          disabled: isSharing,
+        },
         {
           icon: Delete02Icon,
           label: '채팅 삭제하기',

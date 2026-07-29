@@ -13,9 +13,14 @@ import { ChatOptionsMenu } from './chat-options-menu';
 type ChatRoomHeaderProps = {
   chatId: string;
   storyTitle: string;
+  turnCount: number;
 };
 
-export function ChatRoomHeader({ chatId, storyTitle }: ChatRoomHeaderProps) {
+export function ChatRoomHeader({
+  chatId,
+  storyTitle,
+  turnCount,
+}: ChatRoomHeaderProps) {
   const router = useRouter();
 
   const goBack = () => router.push(APP_PATH.MAIN.CHATS);
@@ -40,7 +45,7 @@ export function ChatRoomHeader({ chatId, storyTitle }: ChatRoomHeaderProps) {
           onClick={() => router.push(APP_PATH.MAIN.STORIES)}>
           <HomeOutlineIcon aria-hidden="true" />
         </Button>
-        <ChatOptionsMenu chatId={chatId} />
+        <ChatOptionsMenu chatId={chatId} turnCount={turnCount} />
       </div>
     </header>
   );

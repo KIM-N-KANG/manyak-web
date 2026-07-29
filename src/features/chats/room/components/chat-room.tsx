@@ -290,7 +290,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     stateKey = 'content';
     content = (
       <>
-        <ChatRoomHeader chatId={chatId} storyTitle={storyTitle} />
+        <ChatRoomHeader
+          chatId={chatId}
+          storyTitle={storyTitle}
+          turnCount={turns.length}
+        />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages
             prologue={prologue}
