@@ -55,7 +55,7 @@ export function SharedChatView({
         </Button>
       </header>
 
-      <div className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain">
+      <div className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain pb-2">
         {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
         {turns.map((turn, index) => (
           <div key={turn.createdAt ?? index}>
