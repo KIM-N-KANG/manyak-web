@@ -23,6 +23,10 @@ import { track, useTrackOnView } from '@/observability/analytics';
  * CTA는 스토리 생성 퍼널로 바로 보내면서 온보딩을 본 것으로 기록한다. 공유 링크로
  * 들어온 사람은 이 화면에서 이미 서비스가 무엇인지 보았으므로, 만들기를 누른 뒤
  * 홈으로 돌아왔을 때 온보딩을 다시 마주치지 않게 한다.
+ *
+ * 진입 시 화면 전체를 채팅방과 같은 150ms로 페이드인한다. 공유본은 클라이언트에서
+ * 조회하므로 로딩 스피너가 이 화면으로 통째로 교체되는데, 그 전환을 그대로 두면
+ * 화면이 툭 튀어나온다.
  */
 type SharedChatViewProps = {
   storyId: string;
@@ -40,7 +44,7 @@ export function SharedChatView({
   useTrackOnView('client_chatShare_viewed', { story_id: storyId });
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 animate-in flex-col duration-150 fade-in-0">
       <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-4">
         <Link
           href={APP_PATH.MAIN.STORIES}
