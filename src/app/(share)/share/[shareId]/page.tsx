@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { SITE_NAME } from '@/constants/site';
 import { SharedChatScreen } from '@/features/shares/components/shared-chat-screen';
 import { truncateForDescription } from '@/features/shares/utils/share-description';
 import { fetchSharedChatForMetadata } from '@/lib/shares/backend-share-client';
@@ -33,14 +34,15 @@ export async function generateMetadata({
     return { robots: SHARE_ROBOTS };
   }
 
-  const title = share.storyTitle ?? '';
+  const storyTitle = share.storyTitle ?? '';
   const description = truncateForDescription(share.prologue);
 
   return {
-    title,
+    // 제목이 비면 템플릿 접미사만 남으므로 그때는 서비스명만 절대값으로 둔다.
+    title: storyTitle || { absolute: SITE_NAME },
     description,
     robots: SHARE_ROBOTS,
-    openGraph: { title, description },
+    openGraph: { title: storyTitle || SITE_NAME, description },
   };
 }
 

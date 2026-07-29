@@ -25,6 +25,7 @@ import {
   isGuestOverLimit,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import type {
   CreditShortageTrigger,
   GuestLimitTrigger,
@@ -87,6 +88,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     isForbidden,
     refetch,
   } = useChatDetail(chatId);
+
+  useDocumentTitle(storyTitle);
+
   const { enabled: choicesEnabled, setEnabled: setChoicesEnabled } =
     useChoicesToggle();
   const { choicesStatus, generate: generateChoicesForTurn } = useChatChoices(
