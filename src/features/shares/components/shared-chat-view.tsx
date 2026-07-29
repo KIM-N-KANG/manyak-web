@@ -1,30 +1,24 @@
 'use client';
 
-import { type PointerEvent, useRef, useState } from 'react';
-
 import Link from 'next/link';
 
 import type { ChatShareTurnResponse } from '@/api/generated/models';
+import { HomeOutlineIcon } from '@/components/icons/home-outline-icon';
+import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import {
   AiMessageBubble,
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
-import { cn } from '@/lib/utils';
 import { track, useTrackOnView } from '@/observability/analytics';
-
-import { isTap } from '../utils/tap-gesture';
 
 /**
  * 공유 열람 화면의 입력.
  *
- * 헤더와 CTA는 스크롤 영역 위에 absolute 오버레이로 얹는다. 앱 프레임 안에서는
- * fixed를 쓸 수 없고(조상에 transform이 생기면 기준이 조용히 깨진다), in-flow로 두면
- * 본문에 헤더 높이만큼 패딩 매직 넘버를 넣어야 하기 때문이다.
- *
- * 숨김 상태에는 inert를 함께 걸어 화면에서 사라진 CTA가 키보드 포커스를 먹지 않게
- * 한다. opacity만으로는 여전히 탭 순서에 남는다.
+ * 채팅방과 같은 셸 구성이다. 헤더 / 스크롤 영역 / 하단 CTA를 모두 flex 컬럼의 in-flow
+ * 형제로 두고 헤더와 CTA는 항상 고정한다. 오버레이로 얹으면 스크롤 컨테이너가 프레임
+ * 끝까지 늘어나 스크롤바 트랙이 헤더·CTA 뒤로 깔린다.
  */
 type SharedChatViewProps = {
   storyId: string;
@@ -39,49 +33,24 @@ export function SharedChatView({
   prologue,
   turns,
 }: SharedChatViewProps) {
-  const [isChromeVisible, setIsChromeVisible] = useState(true);
-  const pointerStart = useRef<{ x: number; y: number; at: number } | null>(
-    null,
-  );
-
   useTrackOnView('client_chatShare_viewed', { story_id: storyId });
 
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    pointerStart.current = {
-      x: event.clientX,
-      y: event.clientY,
-      at: event.timeStamp,
-    };
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    const start = pointerStart.current;
-
-    pointerStart.current = null;
-
-    if (
-      start &&
-      isTap({
-        dx: event.clientX - start.x,
-        dy: event.clientY - start.y,
-        elapsedMs: event.timeStamp - start.at,
-      })
-    ) {
-      setIsChromeVisible((visible) => !visible);
-    }
-  };
-
-  const chromeClassName = cn(
-    'absolute inset-x-0 z-10 bg-background/95 px-4 transition-opacity duration-200',
-    !isChromeVisible && 'pointer-events-none opacity-0',
-  );
-
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
-      <div
-        className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain pt-14 pb-20"
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}>
+    <div className="flex h-full min-h-0 flex-col">
+      <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-4">
+        <ManyakLogo className="mr-2 h-6 w-auto shrink-0 text-primary" />
+        <h1 className="min-w-0 flex-1 truncate font-semibold">{storyTitle}</h1>
+        <Button
+          nativeButton={false}
+          size="icon"
+          variant="ghost"
+          aria-label="홈 화면으로 이동 버튼"
+          render={<Link href={APP_PATH.MAIN.STORIES} />}>
+          <HomeOutlineIcon aria-hidden="true" />
+        </Button>
+      </header>
+
+      <div className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain">
         {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
         {turns.map((turn, index) => (
           <div key={turn.createdAt ?? index}>
@@ -95,23 +64,7 @@ export function SharedChatView({
         ))}
       </div>
 
-      <header
-        className={cn(chromeClassName, 'top-0 flex h-14 items-center gap-2')}
-        inert={!isChromeVisible}>
-        <Link
-          href={APP_PATH.MAIN.STORIES}
-          aria-label="마냑 홈으로 이동"
-          className="shrink-0 font-bold text-primary">
-          마냑
-        </Link>
-        <h1 className="min-w-0 flex-1 truncate text-center font-semibold">
-          {storyTitle}
-        </h1>
-      </header>
-
-      <div
-        className={cn(chromeClassName, 'bottom-0 py-4')}
-        inert={!isChromeVisible}>
+      <footer className="flex shrink-0 flex-col bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <Button
           nativeButton={false}
           size="lg"
@@ -122,7 +75,7 @@ export function SharedChatView({
           }>
           마냑에서 내 스토리 만들기
         </Button>
-      </div>
+      </footer>
     </div>
   );
 }

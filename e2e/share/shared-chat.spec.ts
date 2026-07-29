@@ -46,31 +46,32 @@ test.describe('공유된 채팅 열람', () => {
     );
   });
 
-  test('본문을 탭하면 헤더와 CTA가 사라지고 다시 탭하면 돌아온다', async ({
-    page,
-  }) => {
+  test('홈 버튼이 홈으로 연결된다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');
 
-    // 오버레이는 opacity로 사라지는데 Playwright는 opacity:0도 visible로 보므로,
-    // 실제 상태인 계산된 opacity와 inert 속성으로 검증한다.
+    await expect(
+      page
+        .getByRole('banner')
+        .getByRole('button', { name: '홈 화면으로 이동 버튼' }),
+    ).toHaveAttribute('href', '/');
+  });
+
+  test('본문을 탭해도 헤더와 CTA는 고정된 채 남는다', async ({ page }) => {
+    await mockChatShareView(page, SHARE_BODY);
+    await page.goto('/share/share-1');
+
     const header = page.getByRole('banner');
-    const ctaBar = page.getByRole('button', { name: CTA_NAME }).locator('..');
-    const body = page.getByText('오래된 도서관의 문이 열렸다');
+    const cta = page.getByRole('button', { name: CTA_NAME });
 
-    await expect(header).toHaveCSS('opacity', '1');
-    await expect(ctaBar).toHaveCSS('opacity', '1');
+    await expect(header).toBeVisible();
+    await expect(cta).toBeVisible();
 
-    await body.click();
+    await page.getByText('오래된 도서관의 문이 열렸다').click();
 
-    await expect(header).toHaveCSS('opacity', '0');
-    await expect(ctaBar).toHaveCSS('opacity', '0');
-    await expect(ctaBar).toHaveAttribute('inert', '');
-
-    await body.click();
-
-    await expect(header).toHaveCSS('opacity', '1');
-    await expect(ctaBar).toHaveCSS('opacity', '1');
+    // 채팅방과 같은 셸이라 헤더·CTA는 본문 탭에 반응하지 않는다(토글 없음).
+    await expect(header).toBeVisible();
+    await expect(cta).toBeVisible();
   });
 
   test('없는 링크는 안내 화면을 보여준다', async ({ page }) => {

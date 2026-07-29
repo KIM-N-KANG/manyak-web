@@ -20,7 +20,7 @@ test.describe('공유 열람 화면 비주얼', () => {
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');
 
-    await expect(page.getByRole('banner')).toHaveCSS('opacity', '1');
+    await expect(page.getByRole('banner')).toBeVisible();
     await expect(
       page.getByText('먼지 쌓인 책 한 권이 눈에 들어왔다'),
     ).toBeVisible();
