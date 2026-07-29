@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 
 import { FetchError } from '@/lib/api-error';
+import { redactShareId } from '@/lib/shares/share-url-redaction';
 
 /** 이 미만(4xx)은 사용자가 복구할 수 있는 검증 오류로 보고 Sentry로 보내지 않는다(스펙 §AN-2-8). */
 const SERVER_ERROR_STATUS = 500;
@@ -68,7 +69,12 @@ export function captureApiError(
 
 /**
  * Sentry beforeSend 훅. 자동 캡처·unhandledrejection 등 captureApiError를 거치지 않은
- * 경로로 유입되는 복구 가능한 4xx 응답을 최종적으로 걸러낸다.
+ * 경로로 유입되는 복구 가능한 4xx 응답을 최종적으로 걸러내고, 남는 이벤트에서 공유
+ * 열람 토큰을 가린다.
+ *
+ * 공유 열람 화면(`/share/{shareId}`)에서 오류가 나면 Sentry가 request URL·breadcrumb에
+ * 주소를 그대로 싣는데, shareId는 곧 열람 수단이라 그대로 두면 관측 저장소에서 비공개
+ * 대화로 들어갈 수 있다(6-analytics.md §6-4-2-14).
  *
  * @param event Sentry로 전송될 오류 이벤트
  * @param hint 원본 예외 등을 담은 이벤트 힌트
@@ -79,6 +85,28 @@ export function dropRecoverableApiError(
   hint: Sentry.EventHint,
 ): Sentry.ErrorEvent | null {
   if (isRecoverableClientError(hint.originalException)) return null;
+
+  if (event.request?.url) {
+    event.request.url = redactShareId(event.request.url);
+  }
+
+  if (typeof event.tags?.api_url === 'string') {
+    event.tags.api_url = redactShareId(event.tags.api_url);
+  }
+
+  if (event.breadcrumbs) {
+    event.breadcrumbs = event.breadcrumbs.map((breadcrumb) =>
+      breadcrumb.data?.url && typeof breadcrumb.data.url === 'string'
+        ? {
+            ...breadcrumb,
+            data: {
+              ...breadcrumb.data,
+              url: redactShareId(breadcrumb.data.url),
+            },
+          }
+        : breadcrumb,
+    );
+  }
 
   return event;
 }

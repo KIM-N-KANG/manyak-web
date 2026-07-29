@@ -12,6 +12,7 @@ import {
   MessageScrollerViewport,
   useMessageScroller,
 } from '@/components/ui/message-scroller';
+import { AiMessageBubble } from '@/features/chats/_shared/components/chat-message-bubble';
 import { cn } from '@/lib/utils';
 
 import type { ChoicesStatus } from '../../hooks/use-chat-choices';
@@ -19,7 +20,6 @@ import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled'
 import { useSpacerCollapse } from '../../hooks/use-spacer-collapse';
 import type { StreamingTurn } from '../../types';
 import { isStreamingTurnSuperseded } from '../../utils/streaming-turn';
-import { AiMessageBubble } from '../message-content/chat-message-bubble';
 import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';

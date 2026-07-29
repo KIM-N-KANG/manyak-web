@@ -5,8 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { m, type Variants } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
-
-import { ChatTextSegments } from '../message-content/chat-text-segments';
+import { ChatTextSegments } from '@/features/chats/_shared/components/chat-text-segments';
 
 type ChatChoicesProps = {
   choices: string[];
@@ -42,7 +41,7 @@ export function ChatChoices({
       variants={listVariants}
       initial="hidden"
       animate="show"
-      className="flex flex-col gap-2 p-4 pb-6">
+      className="flex flex-col gap-2 px-4 pt-2 pb-6">
       {showsHint && (
         <m.div
           variants={itemVariants}

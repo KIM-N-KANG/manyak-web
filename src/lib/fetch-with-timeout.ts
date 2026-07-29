@@ -1,4 +1,13 @@
-export const API_TIMEOUT_MS = 180 * 1000;
+/** 백엔드의 최장 동기 요청 예산(스토리 컴파일 180초 — 4-backend.md의 AI 호출 타임아웃 표). */
+const BACKEND_BUDGET_MS = 180 * 1000;
+
+/**
+ * 백엔드보다 늦게 끊기 위해 두는 여유다. 네트워크 왕복과 BFF 토큰 리프레시 시간을 흡수해,
+ * 백엔드가 자기 타임아웃으로 만든 에러 응답이 클라이언트의 TimeoutError에 가려지지 않게 한다.
+ */
+const TIMEOUT_HEADROOM_MS = 20 * 1000;
+
+export const API_TIMEOUT_MS = BACKEND_BUDGET_MS + TIMEOUT_HEADROOM_MS;
 
 /**
  * 외부 취소 신호를 유지하면서 지정 시간이 지나면 TimeoutError로 요청을 중단한다.

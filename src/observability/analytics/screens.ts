@@ -6,6 +6,7 @@ export const SCREEN = {
   CHAT_LIST: 'chatList',
   CHAT: 'chat',
   FEEDBACK: 'feedback',
+  SHARE: 'share',
 } as const;
 
 /** SCREEN 상수의 값 타입. */

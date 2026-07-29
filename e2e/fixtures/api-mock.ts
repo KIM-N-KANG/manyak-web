@@ -110,3 +110,52 @@ export async function mockHandoffStatus(
     });
   });
 }
+
+/** 공유 열람(GET /api/v1/shares/{shareId}) 라우트 글롭. */
+const CHAT_SHARE_VIEW_ROUTE = '**/api/v1/shares/*';
+/** 공유 발급(POST /api/v1/chats/{chatId}/shares) 라우트 글롭. */
+const CHAT_SHARE_CREATE_ROUTE = '**/api/v1/chats/*/shares';
+
+/**
+ * 공유 열람 API를 목킹한다. status를 404로 주면 없는 링크 화면을 검증할 수 있다.
+ *
+ * @param page 대상 페이지
+ * @param body 반환할 공유본
+ * @param status 응답 상태(기본 200)
+ */
+export async function mockChatShareView(
+  page: Page,
+  body: unknown,
+  status = 200,
+): Promise<void> {
+  await page.route(CHAT_SHARE_VIEW_ROUTE, async (route) => {
+    await route.fulfill({
+      status,
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    });
+  });
+}
+
+/**
+ * 공유 발급 API를 201로 목킹한다.
+ *
+ * @param page 대상 페이지
+ * @param shareId 반환할 공유 열람 토큰
+ */
+export async function mockChatShareCreate(
+  page: Page,
+  shareId: string,
+): Promise<void> {
+  await page.route(CHAT_SHARE_CREATE_ROUTE, async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        shareId,
+        turnCount: 1,
+        createdAt: '2026-07-29T00:00:00Z',
+      }),
+    });
+  });
+}

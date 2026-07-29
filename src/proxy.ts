@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { APP_PATH } from '@/constants/app-path';
 import { ONBOARDING_SEEN_COOKIE } from '@/features/onboarding/constants';
+import { isSearchCrawler } from '@/lib/search-crawler';
 
 /**
  * NextAuth(JWT 전략) 세션 쿠키 이름. JWT가 약 4KB를 넘으면 Auth.js가
@@ -45,10 +46,19 @@ function hasMemberSessionCookie(request: NextRequest): boolean {
  * 수집할 기회 자체가 사라진다. 특정 키 화이트리스트가 아니라 전체를 넘겨
  * 앞으로 추가될 파라미터(초대코드·레퍼럴 등)도 함께 보존되게 한다.
  *
+ * 검색 크롤러·링크 스크래퍼(User-Agent 판별)는 게이트를 적용하지 않고 통과시킨다.
+ *
  * @param request 매처(`/`·`/chats`·`/my`)에 걸린 요청
  * @returns 온보딩 리다이렉트 또는 통과 응답
  */
 export function proxy(request: NextRequest) {
+  // 검색 크롤러는 쿠키가 없어 항상 신규 방문자로 판정되고, 대표 URL이 307로만
+  // 응답해 색인되지 않는다. 크롤러는 게이트를 우회시킨다 — 봇이 받는 홈은
+  // 열람 쿠키를 가진 사용자가 받는 응답과 동일하므로 클로킹이 아니다.
+  if (isSearchCrawler(request.headers.get('user-agent'))) {
+    return NextResponse.next();
+  }
+
   if (
     request.cookies.has(ONBOARDING_SEEN_COOKIE) ||
     hasMemberSessionCookie(request)
