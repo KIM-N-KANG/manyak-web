@@ -492,6 +492,16 @@ export const RegenerateChatTurnBody = zod
 export const RegenerateChatTurnResponse = zod.unknown();
 
 /**
+ * 발급 시점까지의 채팅을 읽기 전용으로 여는 공유 링크를 발급합니다(스펙 §4-3-11). 요청 본문은 없습니다. 접근 규칙은 채팅 상세 조회와 동일하며(소유 채팅은 소유자만, 소유자 없는 게스트 채팅은 게스트만), 같은 커트라인으로 다시 호출하면 새로 만들지 않고 기존 공유를 그대로 반환합니다(멱등). 턴이 진행된 뒤 발급하면 새 커트라인의 공유가 새로 생기며, 기존 공유도 계속 유효합니다.
+ * @summary 채팅 공유 발급
+ */
+export const CreateChatShareParams = zod.object({
+  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
+});
+
+export const CreateChatShareResponse = zod.void();
+
+/**
  * 클라이언트가 로컬스토리지에 보관 중인 chatId 목록으로 이전 채팅 목록을 조회합니다.
  * @summary 채팅 ID 목록으로 이전 채팅 목록 조회
  */
@@ -930,6 +940,16 @@ export const GetLorebooksQueryParams = zod.object({
 });
 
 export const GetLorebooksResponse = zod.unknown();
+
+/**
+ * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목·프롤로그는 조회 시점의 라이브 값입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.
+ * @summary 공유된 채팅 열람
+ */
+export const GetChatShareParams = zod.object({
+  shareId: zod.string().describe('공유 열람 토큰(공개 식별자)'),
+});
+
+export const GetChatShareResponse = zod.unknown();
 
 /**
  * 프롤로그와 지금까지의 사용자 입력, AI 이어쓰기 결과를 조회합니다.
