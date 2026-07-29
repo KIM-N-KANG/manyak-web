@@ -14,6 +14,7 @@ export const APP_PATH = {
   MY_INVITE: '/my/invite',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
+  SHARE_VIEW: (shareId: string) => `/shares/${shareId}`,
   CREATOR: {
     STORY: '/stories/new',
   },
