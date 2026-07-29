@@ -14,8 +14,6 @@
 
 # next.js
 /.next/
-# 로컬 E2E 전용 dev 서버 산출물 (playwright.config.ts)
-/.next-e2e/
 /out/
 
 # production
