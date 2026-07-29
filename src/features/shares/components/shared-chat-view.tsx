@@ -79,7 +79,7 @@ export function SharedChatView({
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <div
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-18 pb-28"
+        className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain pt-14 pb-20"
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}>
         {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
@@ -96,7 +96,7 @@ export function SharedChatView({
       </div>
 
       <header
-        className={cn(chromeClassName, 'top-0 flex items-center gap-2 py-4')}
+        className={cn(chromeClassName, 'top-0 flex h-14 items-center gap-2')}
         inert={!isChromeVisible}>
         <Link
           href={APP_PATH.MAIN.STORIES}
