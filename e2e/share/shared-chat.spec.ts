@@ -17,7 +17,7 @@ const SHARE_BODY = {
   ],
 };
 
-const CTA_NAME = '마냑에서 내 스토리 만들기';
+const CTA_NAME = '나만의 스토리 만들고 채팅하기';
 
 test.describe('공유된 채팅 열람', () => {
   test('스토리 제목과 대화가 순서대로 보인다', async ({ page }) => {
@@ -26,6 +26,9 @@ test.describe('공유된 채팅 열람', () => {
 
     await expect(
       page.getByRole('banner').getByText('별빛 도서관'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('누군가의 이야기를 구경하는 중이에요'),
     ).toBeVisible();
     await expect(page.getByText('오래된 도서관의 문이 열렸다')).toBeVisible();
     await expect(page.getByText('책장을 살펴본다')).toBeVisible();

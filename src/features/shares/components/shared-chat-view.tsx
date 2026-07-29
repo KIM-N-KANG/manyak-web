@@ -56,6 +56,9 @@ export function SharedChatView({
       </header>
 
       <div className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain pb-2">
+        <p className="p-4 text-center text-sm text-foreground-secondary">
+          누군가의 이야기를 구경하는 중이에요
+        </p>
         {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
         {turns.map((turn, index) => (
           <div key={turn.createdAt ?? index}>
@@ -79,7 +82,7 @@ export function SharedChatView({
             track('client_chatShare_ctaButton_clicked', { story_id: storyId });
             markOnboardingSeen();
           }}>
-          마냑에서 내 스토리 만들기
+          나만의 스토리 만들고 채팅하기
         </Button>
       </footer>
     </div>
