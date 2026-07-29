@@ -28,10 +28,12 @@ import type {
   BatchChatRequest,
   ChatChoicesResponse,
   ChatDetailResponse,
+  ChatShareResponse,
   ChatSummaryResponse,
   ContinueChatRequest,
   CreateChatRequest,
   CreateChatResponse,
+  CreateChatShareResponse,
   RegenerateChatRequest,
 } from '../../models';
 
@@ -562,6 +564,125 @@ export const useRegenerateChatTurn = <
     queryClient,
   );
 };
+export type createChatShareResponse201 = {
+  data: CreateChatShareResponse;
+  status: 201;
+};
+
+export type createChatShareResponse403 = {
+  data: ApiErrorResponse;
+  status: 403;
+};
+
+export type createChatShareResponse404 = {
+  data: ApiErrorResponse;
+  status: 404;
+};
+
+export type createChatShareResponseSuccess = createChatShareResponse201 & {
+  headers: Headers;
+};
+export type createChatShareResponseError = (
+  | createChatShareResponse403
+  | createChatShareResponse404
+) & {
+  headers: Headers;
+};
+
+export type createChatShareResponse =
+  | createChatShareResponseSuccess
+  | createChatShareResponseError;
+
+export const getCreateChatShareUrl = (chatId: string) => {
+  return `/api/v1/chats/${chatId}/shares`;
+};
+
+/**
+ * 발급 시점까지의 채팅을 읽기 전용으로 여는 공유 링크를 발급합니다(스펙 §4-3-11). 요청 본문은 없습니다. 접근 규칙은 채팅 상세 조회와 동일하며(소유 채팅은 소유자만, 소유자 없는 게스트 채팅은 게스트만), 같은 커트라인으로 다시 호출하면 새로 만들지 않고 기존 공유를 그대로 반환합니다(멱등). 턴이 진행된 뒤 발급하면 새 커트라인의 공유가 새로 생기며, 기존 공유도 계속 유효합니다.
+ * @summary 채팅 공유 발급
+ */
+export const createChatShare = async (
+  chatId: string,
+  options?: RequestInit,
+): Promise<createChatShareResponse> => {
+  return customInstance<createChatShareResponse>(
+    getCreateChatShareUrl(chatId),
+    {
+      ...options,
+      method: 'POST',
+    },
+  );
+};
+
+export const getCreateChatShareMutationOptions = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createChatShare>>,
+    TError,
+    { chatId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createChatShare>>,
+  TError,
+  { chatId: string },
+  TContext
+> => {
+  const mutationKey = ['createChatShare'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createChatShare>>,
+    { chatId: string }
+  > = (props) => {
+    const { chatId } = props ?? {};
+
+    return createChatShare(chatId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateChatShareMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createChatShare>>
+>;
+
+export type CreateChatShareMutationError = ErrorType<ApiErrorResponse>;
+
+/**
+ * @summary 채팅 공유 발급
+ */
+export const useCreateChatShare = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createChatShare>>,
+      TError,
+      { chatId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createChatShare>>,
+  TError,
+  { chatId: string },
+  TContext
+> => {
+  return useMutation(getCreateChatShareMutationOptions(options), queryClient);
+};
 export type getChatsByIdsResponse200 = {
   data: ChatSummaryResponse[];
   status: 200;
@@ -672,6 +793,176 @@ export const useGetChatsByIds = <
 > => {
   return useMutation(getGetChatsByIdsMutationOptions(options), queryClient);
 };
+export type getChatShareResponse200 = {
+  data: ChatShareResponse;
+  status: 200;
+};
+
+export type getChatShareResponse404 = {
+  data: ApiErrorResponse;
+  status: 404;
+};
+
+export type getChatShareResponseSuccess = getChatShareResponse200 & {
+  headers: Headers;
+};
+export type getChatShareResponseError = getChatShareResponse404 & {
+  headers: Headers;
+};
+
+export type getChatShareResponse =
+  | getChatShareResponseSuccess
+  | getChatShareResponseError;
+
+export const getGetChatShareUrl = (shareId: string) => {
+  return `/api/v1/shares/${shareId}`;
+};
+
+/**
+ * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목·프롤로그는 조회 시점의 라이브 값입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.
+ * @summary 공유된 채팅 열람
+ */
+export const getChatShare = async (
+  shareId: string,
+  options?: RequestInit,
+): Promise<getChatShareResponse> => {
+  return customInstance<getChatShareResponse>(getGetChatShareUrl(shareId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetChatShareQueryKey = (shareId: string) => {
+  return [`/api/v1/shares/${shareId}`] as const;
+};
+
+export const getGetChatShareQueryOptions = <
+  TData = Awaited<ReturnType<typeof getChatShare>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  shareId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getChatShare>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetChatShareQueryKey(shareId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatShare>>> = ({
+    signal,
+  }) => getChatShare(shareId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: shareId !== null && shareId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getChatShare>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetChatShareQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getChatShare>>
+>;
+export type GetChatShareQueryError = ErrorType<ApiErrorResponse>;
+
+export function useGetChatShare<
+  TData = Awaited<ReturnType<typeof getChatShare>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  shareId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getChatShare>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChatShare>>,
+          TError,
+          Awaited<ReturnType<typeof getChatShare>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetChatShare<
+  TData = Awaited<ReturnType<typeof getChatShare>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  shareId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getChatShare>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChatShare>>,
+          TError,
+          Awaited<ReturnType<typeof getChatShare>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetChatShare<
+  TData = Awaited<ReturnType<typeof getChatShare>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  shareId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getChatShare>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 공유된 채팅 열람
+ */
+
+export function useGetChatShare<
+  TData = Awaited<ReturnType<typeof getChatShare>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  shareId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getChatShare>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetChatShareQueryOptions(shareId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export type getChatDetailResponse200 = {
   data: ChatDetailResponse;
   status: 200;

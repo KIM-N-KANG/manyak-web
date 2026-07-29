@@ -1,10 +1,11 @@
 import { AnimatePresence, m } from 'motion/react';
 
-import type { StreamingTurn } from '../../types';
 import {
   AiMessageBubble,
   UserMessageBubble,
-} from '../message-content/chat-message-bubble';
+} from '@/features/chats/_shared/components/chat-message-bubble';
+
+import type { StreamingTurn } from '../../types';
 import { ChatStreamLoading } from './chat-stream-loading';
 
 type ChatStreamingTurnProps = {

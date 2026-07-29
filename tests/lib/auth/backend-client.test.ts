@@ -7,6 +7,7 @@ import {
   logoutOnServer,
 } from '@/lib/auth/backend-client';
 import { HANDOFF_CODE_HEADER } from '@/lib/auth/handoff-header';
+import { API_TIMEOUT_MS } from '@/lib/fetch-with-timeout';
 import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
 const fetchMock = vi.fn();
@@ -25,7 +26,7 @@ afterEach(() => {
 });
 
 describe('loginWithGoogleOnServer', () => {
-  it('백엔드 요청의 기본 타임아웃은 180초다', async () => {
+  it('백엔드 요청에 기본 타임아웃을 적용한다', async () => {
     vi.useFakeTimers();
     fetchMock.mockImplementation(
       (_url: string, options: RequestInit) =>
@@ -44,7 +45,7 @@ describe('loginWithGoogleOnServer', () => {
         name: 'TimeoutError',
       });
 
-      await vi.advanceTimersByTimeAsync(180 * 1000 - 1);
+      await vi.advanceTimersByTimeAsync(API_TIMEOUT_MS - 1);
 
       const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 

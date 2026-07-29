@@ -16,20 +16,21 @@ import { SessionExpiryWatcher } from '@/components/providers/session-expiry-watc
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_FRAME_ID } from '@/constants/app-frame';
-import { SITE_URL } from '@/constants/site';
+import { SITE_NAME, SITE_URL, TITLE_TEMPLATE } from '@/constants/site';
 import { AutoMigration } from '@/features/auth/_shared/components/auto-migration';
 import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
 import { InviteOnboardingDialog } from '@/features/my/invite/components/invite-onboarding-dialog';
 
 export const metadata: Metadata = {
-  title: '마냑',
+  // 하위 화면이 제목을 선언하면 `제목 • 마냑`으로 붙고, 없으면 서비스명만 남는다.
+  title: { default: SITE_NAME, template: TITLE_TEMPLATE },
   description: '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
-  applicationName: '마냑',
+  applicationName: SITE_NAME,
   metadataBase: new URL(SITE_URL),
   openGraph: {
     type: 'website',
-    siteName: '마냑',
-    title: '마냑',
+    siteName: SITE_NAME,
+    title: SITE_NAME,
     description:
       '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
     url: SITE_URL,
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: '마냑',
+    title: SITE_NAME,
     description:
       '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
   },

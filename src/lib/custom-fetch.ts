@@ -36,7 +36,7 @@ type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** customFetch 요청에 사용하는 설정. RequestInit에 타임아웃 옵션을 더한 형태다. */
 export interface RequestConfig extends Omit<RequestInit, 'method' | 'body'> {
-  /** 요청 타임아웃(ms). 기본값은 180초 */
+  /** 요청 타임아웃(ms). 기본값은 API_TIMEOUT_MS */
   timeout?: number;
 }
 
