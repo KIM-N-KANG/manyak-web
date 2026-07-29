@@ -53,7 +53,7 @@ export function SharedChatView({
 
       <div className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain pb-2">
         <p className="p-4 text-center text-sm text-foreground-secondary">
-          누군가의 스토리를 구경하는 중이에요
+          친구가 공유한 채팅을 보고 있어요
         </p>
         {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
         {turns.map((turn, index) => (

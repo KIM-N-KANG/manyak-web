@@ -28,7 +28,7 @@ test.describe('공유된 채팅 열람', () => {
       page.getByRole('banner').getByText('별빛 도서관'),
     ).toBeVisible();
     await expect(
-      page.getByText('누군가의 스토리를 구경하는 중이에요'),
+      page.getByText('친구가 공유한 채팅을 보고 있어요'),
     ).toBeVisible();
     await expect(page.getByText('오래된 도서관의 문이 열렸다')).toBeVisible();
     await expect(page.getByText('책장을 살펴본다')).toBeVisible();
