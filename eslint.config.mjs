@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     '.next/**',
+    // 로컬 E2E 전용 빌드 산출물.
+    '.next-e2e/**',
     'out/**',
     'build/**',
     'next-env.d.ts',
