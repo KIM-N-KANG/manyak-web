@@ -5,8 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { m, type Variants } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
-
-import { ChatTextSegments } from '../message-content/chat-text-segments';
+import { ChatTextSegments } from '@/features/chats/_shared/components/chat-text-segments';
 
 type ChatChoicesProps = {
   choices: string[];

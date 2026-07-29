@@ -1,11 +1,11 @@
 import type { ChatTurnResponse } from '@/api/generated/models';
-
-import type { ChoicesStatus } from '../../hooks/use-chat-choices';
-import { canRegenerate } from '../../utils/regenerate';
 import {
   AiMessageBubble,
   UserMessageBubble,
-} from '../message-content/chat-message-bubble';
+} from '@/features/chats/_shared/components/chat-message-bubble';
+
+import type { ChoicesStatus } from '../../hooks/use-chat-choices';
+import { canRegenerate } from '../../utils/regenerate';
 import { ChatChoices } from './chat-choices';
 import { ChatChoicesStatus } from './chat-choices-status';
 import { RegenerateButton } from './regenerate-button';
