@@ -34,7 +34,7 @@ test.describe('공유된 채팅 열람', () => {
     ).toBeVisible();
   });
 
-  test('CTA가 홈으로 연결된다', async ({ page }) => {
+  test('CTA가 스토리 생성 퍼널로 연결된다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');
 
@@ -42,8 +42,25 @@ test.describe('공유된 채팅 열람', () => {
     // role="button"을 붙인다. 이동은 href로 이뤄지므로 링크 대상을 함께 확인한다.
     await expect(page.getByRole('button', { name: CTA_NAME })).toHaveAttribute(
       'href',
-      '/',
+      '/stories/new',
     );
+  });
+
+  test('CTA로 스토리 생성에 들어가면 이후 홈에서 온보딩이 뜨지 않는다', async ({
+    page,
+  }) => {
+    await mockChatShareView(page, SHARE_BODY);
+    await page.goto('/share/share-1');
+
+    await page.getByRole('button', { name: CTA_NAME }).click();
+    await expect(page).toHaveURL(/\/stories\/new$/);
+
+    // 온보딩 게이트는 서버(proxy)가 쿠키로 판정하므로, 홈에 직접 진입해
+    // 리다이렉트 없이 도착했는지를 응답 URL로 확인한다(smoke/onboarding과 동일 방식).
+    const response = await page.goto('/');
+
+    expect(new URL(response!.url()).pathname).toBe('/');
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test('홈 버튼이 홈으로 연결된다', async ({ page }) => {

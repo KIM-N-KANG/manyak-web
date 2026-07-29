@@ -11,6 +11,7 @@ import {
   AiMessageBubble,
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
+import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 /**
@@ -19,6 +20,10 @@ import { track, useTrackOnView } from '@/observability/analytics';
  * 채팅방과 같은 셸 구성이다. 헤더 / 스크롤 영역 / 하단 CTA를 모두 flex 컬럼의 in-flow
  * 형제로 두고 헤더와 CTA는 항상 고정한다. 오버레이로 얹으면 스크롤 컨테이너가 프레임
  * 끝까지 늘어나 스크롤바 트랙이 헤더·CTA 뒤로 깔린다.
+ *
+ * CTA는 스토리 생성 퍼널로 바로 보내면서 온보딩을 본 것으로 기록한다. 공유 링크로
+ * 들어온 사람은 이 화면에서 이미 서비스가 무엇인지 보았으므로, 만들기를 누른 뒤
+ * 홈으로 돌아왔을 때 온보딩을 다시 마주치지 않게 한다.
  */
 type SharedChatViewProps = {
   storyId: string;
@@ -69,10 +74,11 @@ export function SharedChatView({
           nativeButton={false}
           size="lg"
           className="w-full"
-          render={<Link href={APP_PATH.MAIN.STORIES} />}
-          onClick={() =>
-            track('client_chatShare_ctaButton_clicked', { story_id: storyId })
-          }>
+          render={<Link href={APP_PATH.CREATOR.STORY} />}
+          onClick={() => {
+            track('client_chatShare_ctaButton_clicked', { story_id: storyId });
+            markOnboardingSeen();
+          }}>
           마냑에서 내 스토리 만들기
         </Button>
       </footer>
