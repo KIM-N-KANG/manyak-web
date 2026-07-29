@@ -74,6 +74,20 @@ test.describe('공유된 채팅 열람', () => {
     ).toHaveAttribute('href', '/');
   });
 
+  test('신규 방문자가 홈 버튼으로 나가면 온보딩을 거친다', async ({ page }) => {
+    await mockChatShareView(page, SHARE_BODY);
+    await page.goto('/share/share-1');
+
+    // CTA와 달리 홈 버튼은 온보딩 게이트를 닫지 않는다. 만들기 의사를 밝히지
+    // 않은 신규 방문자는 홈 진입 시 온보딩을 거치는 것이 의도된 동작이다.
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: '홈 화면으로 이동 버튼' })
+      .click();
+
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+  });
+
   test('본문을 탭해도 헤더와 CTA는 고정된 채 남는다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');
