@@ -2,6 +2,8 @@ import { expect, test as base } from '@playwright/test';
 
 import {
   mockApi,
+  mockChatShareCreate,
+  mockChatShareView,
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
@@ -26,4 +28,10 @@ export {
   skipOnboarding,
 } from './storage';
 export { mockMemberSession } from './auth';
-export { mockHandoffCreate, mockHandoffSession, mockHandoffStatus };
+export {
+  mockChatShareCreate,
+  mockChatShareView,
+  mockHandoffCreate,
+  mockHandoffSession,
+  mockHandoffStatus,
+};
