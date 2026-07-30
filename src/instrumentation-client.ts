@@ -7,8 +7,12 @@ import {
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Vercel 배포에서만 이벤트를 전송한다. NODE_ENV만 보면 로컬 프로덕션 빌드
+// (pnpm build && pnpm start)의 이벤트까지 production으로 유입되기 때문이다.
+// 로컬에서 연동을 확인하려면 NEXT_PUBLIC_SENTRY_FORCE_ENABLE=true로 강제 활성화.
 const enabled =
-  isProduction || process.env.NEXT_PUBLIC_SENTRY_FORCE_ENABLE === 'true';
+  (isProduction && process.env.NEXT_PUBLIC_VERCEL_ENV !== undefined) ||
+  process.env.NEXT_PUBLIC_SENTRY_FORCE_ENABLE === 'true';
 
 Sentry.init({
   enabled,

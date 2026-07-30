@@ -15,10 +15,12 @@ import { sanitizeInviteCodeInput } from '../utils/invite-code';
 export function InviteOnboardingCodeForm({
   disabled = false,
   isSubmitPending = false,
+  onSkip,
   onSuccess,
 }: {
   disabled?: boolean;
   isSubmitPending?: boolean;
+  onSkip?: () => void;
   onSuccess?: () => void;
 }) {
   const inputId = useId();
@@ -59,7 +61,6 @@ export function InviteOnboardingCodeForm({
             disabled={isBusy}
             aria-invalid={Boolean(errorMessage)}
             aria-describedby={errorMessage ? errorId : undefined}
-            autoFocus
             autoCapitalize="characters"
             autoComplete="off"
             spellCheck={false}
@@ -73,7 +74,14 @@ export function InviteOnboardingCodeForm({
         </Field>
       </FieldGroup>
 
-      <DialogFooter className="grid-cols-1">
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={isBusy}
+          onClick={onSkip}>
+          나중에 하기
+        </Button>
         <Button className="relative" type="submit" disabled={isBusy}>
           <LoadingButtonContent
             isLoading={isRedeeming || isSubmitPending}

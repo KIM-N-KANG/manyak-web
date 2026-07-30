@@ -1,5 +1,9 @@
 import { getGetChatShareUrl } from '@/api/generated/endpoints/chats/chats';
-import type { ChatShareResponse } from '@/api/generated/models';
+import { getGetStoryDetailUrl } from '@/api/generated/endpoints/stories/stories';
+import type {
+  ChatShareResponse,
+  StoryDetailResponse,
+} from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 
 /**
@@ -42,6 +46,44 @@ export async function fetchSharedChatForMetadata(
     }
 
     return (await response.json()) as ChatShareResponse;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * generateMetadata에서 링크 미리보기 이미지에 쓸 스토리 썸네일을 읽는다.
+ *
+ * 공유 열람 응답에는 썸네일이 없어 스토리 상세를 한 번 더 조회한다. 스토리 상세는
+ * 공개 식별자만으로 접근할 수 있어(백엔드 §4-3, 인증 선택) 서버 직접 호출이 가능하다.
+ * 어떤 실패에도 throw하지 않고 null을 돌려줘 미리보기 이미지만 기본값으로 남긴다.
+ *
+ * @param storyId 공유본이 가리키는 스토리 ID
+ * @returns 썸네일 절대 URL. 없거나 읽지 못하면 null
+ */
+export async function fetchStoryThumbnailForMetadata(
+  storyId: string,
+): Promise<string | null> {
+  const baseUrl = process.env.API_BASE_URL?.replace(/\/+$/, '');
+
+  if (!baseUrl) {
+    return null;
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      `${baseUrl}${getGetStoryDetailUrl(storyId)}`,
+      { cache: 'no-store' },
+      METADATA_TIMEOUT_MS,
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const story = (await response.json()) as StoryDetailResponse;
+
+    return story.thumbnailUrl ?? null;
   } catch {
     return null;
   }

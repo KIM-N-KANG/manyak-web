@@ -15,6 +15,7 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useInView } from '@/hooks/use-in-view';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
 import { queryFnWithoutAbortSignal } from '@/lib/query-client';
@@ -44,6 +45,9 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
 
   const showSkeleton = useDelayedLoading(isPending);
   const story = data?.status === 200 ? data.data : undefined;
+
+  useDocumentTitle(story?.title ?? '');
+
   const thumbnailUrl = story?.thumbnailUrl ?? undefined;
 
   const [selectedStartSetting, setSelectedStartSetting] = useState<

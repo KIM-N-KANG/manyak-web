@@ -4,6 +4,12 @@ import type { NextConfig } from 'next';
 import { APP_PATH } from './src/constants/app-path';
 
 const nextConfig: NextConfig = {
+  // Vercel 배포 여부를 클라이언트 번들에서도 읽을 수 있게 빌드 시점에 인라인한다.
+  // Sentry 게이팅이 로컬 프로덕션 빌드(pnpm build && pnpm start)를 배포와 구분하는 데 쓴다.
+  // 대시보드의 시스템 환경 변수 노출 설정에 의존하지 않도록 직접 주입한다.
+  env: {
+    NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV,
+  },
   // 핸드오프 랜딩은 URL에 일회용 코드를 달고 열린다. 코드가 주소에 남아 있는 동안
   // 이 문서에서 나가는 모든 요청이 Referer로 코드를 흘리지 않도록 no-referrer를 걸고,
   // 응답이 중간 캐시에 남지 않도록 no-store를 함께 지정한다(정적 프리렌더는 유지된다).

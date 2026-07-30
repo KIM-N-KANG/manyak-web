@@ -1,5 +1,7 @@
 import { type Page } from '@playwright/test';
 
+import { DEFAULT_TITLE } from '@/constants/site';
+
 import { mockMemberSession } from '../fixtures/auth';
 import {
   expect,
@@ -65,7 +67,7 @@ test.describe('채팅 스트리밍', () => {
     ).toBeVisible();
   });
 
-  test('브라우저 탭 제목이 스토리 제목 • 마냑이 된다', async ({ page }) => {
+  test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -76,14 +78,14 @@ test.describe('채팅 스트리밍', () => {
 
     await page.goto('/chats/c1');
 
-    await expect(page).toHaveTitle('용의 계곡 • 마냑');
+    await expect(page).toHaveTitle('용의 계곡 - 마냑');
 
     // 탭 제목을 클라이언트에서 덮어쓰므로, 화면을 벗어나면 원래대로 돌아오는지도 본다.
     await page
       .getByRole('button', { name: '채팅 목록으로 돌아가기 버튼' })
       .click();
 
-    await expect(page).toHaveTitle('마냑');
+    await expect(page).toHaveTitle(DEFAULT_TITLE);
   });
 
   test('빈 입력의 Play 버튼이 추천 입력을 랜덤 전송한다', async ({ page }) => {
@@ -442,7 +444,7 @@ test.describe('채팅 삭제', () => {
   // 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
   const openDeleteDialog = async (page: Page) => {
     await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '채팅 삭제하기' }).click();
+    await page.getByRole('menuitem', { name: '삭제하기' }).click();
 
     return page.getByRole('alertdialog');
   };

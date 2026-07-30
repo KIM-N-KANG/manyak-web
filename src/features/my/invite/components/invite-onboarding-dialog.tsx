@@ -29,6 +29,7 @@ export function InviteOnboardingDialog() {
     null,
   );
   const shownUserIdRef = useRef<string | null>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
   const userId = session?.user.id ?? null;
   const isCompleting = userId !== null && completingUserId === userId;
   const hasRedeemed = userId !== null && redeemedUserId === userId;
@@ -117,6 +118,8 @@ export function InviteOnboardingDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
+        ref={popupRef}
+        initialFocus={popupRef}
         showCloseButton={false}
         className="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain">
         <DialogHeader>
@@ -150,6 +153,7 @@ export function InviteOnboardingDialog() {
             key={userId}
             disabled={isCompleting}
             isSubmitPending={isCompleting && hasRedeemed}
+            onSkip={handleSkip}
             onSuccess={handleRedeemSuccess}
           />
         )}
