@@ -37,6 +37,15 @@ test.describe('공유된 채팅 열람', () => {
     ).toBeVisible();
   });
 
+  test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
+    await mockChatShareView(page, SHARE_BODY);
+    await page.goto('/share/share-1');
+
+    // 서버 generateMetadata가 백엔드 조회에 실패해도 클라이언트 데이터 도착 시
+    // 채팅 화면과 동일한 `제목 - 마냑` 형식으로 맞춰진다.
+    await expect(page).toHaveTitle('별빛 도서관 - 마냑');
+  });
+
   test('CTA가 스토리 생성 퍼널로 연결된다', async ({ page }) => {
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');

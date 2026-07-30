@@ -62,6 +62,14 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('2026-06-24')).toBeVisible();
   });
 
+  test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    await page.goto('/stories/s1');
+
+    await expect(page).toHaveTitle('용의 계곡 - 마냑');
+  });
+
   test('썸네일이 있으면 상단 이미지와 턴 수 뱃지를 보여준다 (US-4-1)', async ({
     page,
   }) => {
