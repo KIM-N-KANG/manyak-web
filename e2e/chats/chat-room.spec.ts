@@ -444,7 +444,7 @@ test.describe('채팅 삭제', () => {
   // 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
   const openDeleteDialog = async (page: Page) => {
     await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '채팅 삭제하기' }).click();
+    await page.getByRole('menuitem', { name: '삭제하기' }).click();
 
     return page.getByRole('alertdialog');
   };
