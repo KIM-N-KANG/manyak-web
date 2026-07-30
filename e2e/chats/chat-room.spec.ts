@@ -65,7 +65,7 @@ test.describe('채팅 스트리밍', () => {
     ).toBeVisible();
   });
 
-  test('브라우저 탭 제목이 스토리 제목 • 마냑이 된다', async ({ page }) => {
+  test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -76,14 +76,16 @@ test.describe('채팅 스트리밍', () => {
 
     await page.goto('/chats/c1');
 
-    await expect(page).toHaveTitle('용의 계곡 • 마냑');
+    await expect(page).toHaveTitle('용의 계곡 - 마냑');
 
     // 탭 제목을 클라이언트에서 덮어쓰므로, 화면을 벗어나면 원래대로 돌아오는지도 본다.
     await page
       .getByRole('button', { name: '채팅 목록으로 돌아가기 버튼' })
       .click();
 
-    await expect(page).toHaveTitle('마냑');
+    await expect(page).toHaveTitle(
+      '마냑 - 나만의 스토리로 이어가는 AI 인터랙티브 채팅',
+    );
   });
 
   test('빈 입력의 Play 버튼이 추천 입력을 랜덤 전송한다', async ({ page }) => {

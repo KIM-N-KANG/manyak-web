@@ -7,6 +7,7 @@ import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 import { useSharedChat } from '../hooks/use-shared-chat';
 import { SharedChatView } from './shared-chat-view';
@@ -26,6 +27,8 @@ export function SharedChatScreen({ shareId }: SharedChatScreenProps) {
     isNotFound,
     refetch,
   } = useSharedChat(shareId);
+
+  useDocumentTitle(storyTitle);
 
   if (isLoading) {
     return <PageLoadingSpinner aria-label="공유된 채팅을 불러오는 중" />;

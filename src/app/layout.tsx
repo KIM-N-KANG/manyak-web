@@ -16,31 +16,36 @@ import { SessionExpiryWatcher } from '@/components/providers/session-expiry-watc
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_FRAME_ID } from '@/constants/app-frame';
-import { SITE_NAME, SITE_URL, TITLE_TEMPLATE } from '@/constants/site';
+import {
+  DEFAULT_TITLE,
+  serializeStructuredData,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+  TITLE_TEMPLATE,
+} from '@/constants/site';
 import { AutoMigration } from '@/features/auth/_shared/components/auto-migration';
 import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
 import { InviteOnboardingDialog } from '@/features/my/invite/components/invite-onboarding-dialog';
 
 export const metadata: Metadata = {
-  // 하위 화면이 제목을 선언하면 `제목 • 마냑`으로 붙고, 없으면 서비스명만 남는다.
-  title: { default: SITE_NAME, template: TITLE_TEMPLATE },
-  description: '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+  // 하위 화면이 제목을 선언하면 `제목 - 마냑`으로 붙고, 없으면 기본 문서 제목이 남는다.
+  title: { default: DEFAULT_TITLE, template: TITLE_TEMPLATE },
+  description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   metadataBase: new URL(SITE_URL),
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
     title: SITE_NAME,
-    description:
-      '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+    description: SITE_DESCRIPTION,
     url: SITE_URL,
     locale: 'ko_KR',
   },
   twitter: {
     card: 'summary_large_image',
     title: SITE_NAME,
-    description:
-      '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅',
+    description: SITE_DESCRIPTION,
   },
   verification: {
     // 네이버 서치어드바이저 사이트 소유확인 토큰이다. 공개 노출을 전제로 발급되므로
@@ -78,6 +83,12 @@ export default function RootLayout({
               strategy="beforeInteractive"
             />
           )}
+        {/* 브랜드 엔티티(WebSite·Organization) 구조화 데이터. '마냑'이 오타가 아닌
+            서비스명임을 검색엔진에 알린다. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeStructuredData() }}
+        />
       </head>
       {/* suppressHydrationWarning: 카카오톡 iOS 웹뷰가 body에 -webkit-text-size-adjust 스타일을 주입해 속성 불일치 경고가 발생 */}
       <body
