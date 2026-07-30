@@ -1,5 +1,7 @@
 import { type Page } from '@playwright/test';
 
+import { DEFAULT_TITLE } from '@/constants/site';
+
 import { mockMemberSession } from '../fixtures/auth';
 import {
   expect,
@@ -83,9 +85,7 @@ test.describe('채팅 스트리밍', () => {
       .getByRole('button', { name: '채팅 목록으로 돌아가기 버튼' })
       .click();
 
-    await expect(page).toHaveTitle(
-      '마냑 - 나만의 스토리로 이어가는 AI 인터랙티브 채팅',
-    );
+    await expect(page).toHaveTitle(DEFAULT_TITLE);
   });
 
   test('빈 입력의 Play 버튼이 추천 입력을 랜덤 전송한다', async ({ page }) => {

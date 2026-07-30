@@ -12,13 +12,13 @@ export const SITE_NAME = '마냑';
  * 서비스 한 줄 소개. 메타데이터 description과 OG·트위터 카드가 공유한다.
  */
 export const SITE_DESCRIPTION =
-  '나만의 스토리를 만들고 채팅으로 이어나가는 AI 인터랙티브 채팅';
+  '나만의 스토리를 만들고 채팅으로 이어나가는 AI 스토리챗 서비스';
 
 /**
  * 기본 문서 제목. 고유 제목이 없는 화면(홈 포함)이 공유한다.
  * 브랜드명 단독으로는 검색엔진이 서비스 성격을 알 수 없어 카테고리 문구를 붙인다.
  */
-export const DEFAULT_TITLE = `${SITE_NAME} - 나만의 스토리로 이어가는 AI 인터랙티브 채팅`;
+export const DEFAULT_TITLE = `${SITE_NAME} - 나만의 스토리를 만들고 채팅으로 이어나가는 AI 스토리챗 서비스`;
 
 /**
  * 문서 제목(브라우저 탭) 형식. 고유 제목이 있는 화면(스토리 상세·채팅·공유 열람)은
