@@ -21,6 +21,10 @@ export const SENTRY_IGNORE_ERRORS: (string | RegExp)[] = [
   'The user aborted a request',
   'ResizeObserver loop limit exceeded',
   'ResizeObserver loop completed with undelivered notifications',
+  // SNS 인앱 브라우저(인스타그램·쓰레드·카카오톡 등)가 웹뷰에 주입하는 네이티브 브릿지
+  // 스크립트(sendDataToNative)가 페이지 이탈 시점에 던지는 오류다. 앱 코드와 무관하다.
+  "undefined is not an object (evaluating 'window.webkit.messageHandlers')",
+  'Error invoking postMessage: Java object is gone',
 ];
 
 /**
