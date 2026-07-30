@@ -50,6 +50,8 @@ export const SITE_STRUCTURED_DATA = {
       name: SITE_NAME,
       url: SITE_URL,
       logo: `${SITE_URL}/logo/manyak-logo.svg`,
+      // 공식 SNS 프로필. 같은 이름의 외부 채널을 연결해 브랜드 엔티티 신호를 보강한다.
+      sameAs: ['https://www.instagram.com/manyak.story/'],
     },
     {
       '@type': 'WebSite',

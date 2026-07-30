@@ -36,6 +36,16 @@ describe('SITE_STRUCTURED_DATA', () => {
 
     expect(organization?.logo).toBe(`${SITE_URL}/logo/manyak-logo.svg`);
   });
+
+  it('Organization의 sameAs가 공식 SNS 프로필을 가리킨다', () => {
+    const organization = SITE_STRUCTURED_DATA['@graph'].find(
+      (node) => node['@type'] === 'Organization',
+    );
+
+    expect(organization?.sameAs).toContain(
+      'https://www.instagram.com/manyak.story/',
+    );
+  });
 });
 
 describe('serializeStructuredData', () => {
