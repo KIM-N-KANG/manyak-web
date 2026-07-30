@@ -12,11 +12,8 @@ type SharedChatPageProps = {
   params: Promise<{ shareId: string }>;
 };
 
-/**
- * 공유 링크는 개인의 플레이 기록이라 검색 색인은 막는다. 링크 미리보기 스크래퍼는
- * 이 값과 무관하게 오픈그래프 태그를 읽으므로 미리보기 카드에는 영향이 없다.
- */
-const SHARE_ROBOTS = { index: false, follow: false };
+/** 조회할 수 없는 공유 URL이 검색 결과에 남지 않도록 색인을 막는다. */
+const UNAVAILABLE_SHARE_ROBOTS = { index: false, follow: false };
 
 /**
  * 공유본을 읽어 링크 미리보기용 메타데이터를 만든다.
@@ -34,7 +31,7 @@ export async function generateMetadata({
   const share = await fetchSharedChatForMetadata(shareId);
 
   if (!share) {
-    return { robots: SHARE_ROBOTS };
+    return { robots: UNAVAILABLE_SHARE_ROBOTS };
   }
 
   const storyTitle = share.storyTitle ?? '';
@@ -49,7 +46,6 @@ export async function generateMetadata({
     // 제목이 비면 템플릿 접미사만 남으므로 그때는 기본 문서 제목을 절대값으로 둔다.
     title: storyTitle || { absolute: DEFAULT_TITLE },
     description,
-    robots: SHARE_ROBOTS,
     openGraph: {
       title: storyTitle || SITE_NAME,
       description,
