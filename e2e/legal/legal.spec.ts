@@ -1,6 +1,18 @@
+import { formatDocumentTitle } from '@/constants/site';
+import { privacyContent } from '@/features/legal/content/privacy-content';
+import { termsContent } from '@/features/legal/content/terms-content';
+
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
 test.describe('약관·개인정보처리방침', () => {
+  test('브라우저 탭 제목이 문서 제목 - 마냑이 된다', async ({ page }) => {
+    await page.goto('/terms');
+    await expect(page).toHaveTitle(formatDocumentTitle(termsContent.title));
+
+    await page.goto('/privacy');
+    await expect(page).toHaveTitle(formatDocumentTitle(privacyContent.title));
+  });
+
   test('로그인 화면에 이관 1회 안내와 동의 고지 링크가 보인다', async ({
     page,
   }) => {

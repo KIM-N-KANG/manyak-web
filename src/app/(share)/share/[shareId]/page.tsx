@@ -3,7 +3,10 @@ import type { Metadata } from 'next';
 import { DEFAULT_TITLE, SITE_NAME } from '@/constants/site';
 import { SharedChatScreen } from '@/features/shares/components/shared-chat-screen';
 import { truncateForDescription } from '@/features/shares/utils/share-description';
-import { fetchSharedChatForMetadata } from '@/lib/shares/backend-share-client';
+import {
+  fetchSharedChatForMetadata,
+  fetchStoryThumbnailForMetadata,
+} from '@/lib/shares/backend-share-client';
 
 type SharedChatPageProps = {
   params: Promise<{ shareId: string }>;
@@ -36,13 +39,22 @@ export async function generateMetadata({
 
   const storyTitle = share.storyTitle ?? '';
   const description = truncateForDescription(share.prologue);
+  // 공유 응답에는 썸네일이 없어 스토리 상세에서 가져온다. 없으면 루트의 브랜드
+  // 오픈그래프 이미지가 그대로 쓰인다.
+  const thumbnailUrl = share.storyId
+    ? await fetchStoryThumbnailForMetadata(share.storyId)
+    : null;
 
   return {
     // 제목이 비면 템플릿 접미사만 남으므로 그때는 기본 문서 제목을 절대값으로 둔다.
     title: storyTitle || { absolute: DEFAULT_TITLE },
     description,
     robots: SHARE_ROBOTS,
-    openGraph: { title: storyTitle || SITE_NAME, description },
+    openGraph: {
+      title: storyTitle || SITE_NAME,
+      description,
+      ...(thumbnailUrl ? { images: [thumbnailUrl] } : {}),
+    },
   };
 }
 
