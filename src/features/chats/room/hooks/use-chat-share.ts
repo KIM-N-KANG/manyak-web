@@ -19,14 +19,14 @@ import { buildShareUrl } from '../utils/share-link';
  *
  * @param chatId 공유할 채팅 ID
  * @param turnCount 분석 이벤트에 실을 현재 진행 턴 수
- * @returns 공유 실행 함수와 진행 여부
+ * @returns 공유 실행 함수(성공 여부 반환)와 진행 여부
  */
 export function useChatShare(chatId: string, turnCount: number) {
   const { mutateAsync, isPending } = useCreateChatShare();
 
   const share = async () => {
     if (isPending) {
-      return;
+      return false;
     }
 
     track('client_chat_shareButton_clicked', {
@@ -50,10 +50,12 @@ export function useChatShare(chatId: string, turnCount: number) {
     } catch {
       toast.error(TOAST_MESSAGE.CHAT_SHARE_FAILED);
 
-      return;
+      return false;
     }
 
     toast.success(TOAST_MESSAGE.CHAT_SHARE_LINK_COPIED);
+
+    return true;
   };
 
   return { share, isSharing: isPending };
