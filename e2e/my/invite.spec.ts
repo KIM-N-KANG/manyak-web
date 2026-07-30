@@ -503,7 +503,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
   }
 
-  test('신규 회원에게만 초대 코드 다이얼로그를 표시하고 입력에 초점을 둔다', async ({
+  test('신규 회원에게만 초대 코드 다이얼로그를 표시하고 초점은 팝업에 둔다', async ({
     page,
   }) => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
@@ -518,10 +518,49 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(dialog).toContainText(
       '친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
     );
-    await expect(dialog.getByLabel('초대 코드', { exact: true })).toBeFocused();
+    await expect(dialog).toBeFocused();
+    await expect(
+      dialog.getByLabel('초대 코드', { exact: true }),
+    ).not.toBeFocused();
+    await expect(
+      dialog.getByRole('button', { name: '나중에 하기' }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: '등록하기' }),
+    ).toBeVisible();
 
     await page.waitForTimeout(400);
     await expect(page).toHaveURL(/\/$/);
+  });
+
+  test('"나중에 하기"를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
+    page,
+  }) => {
+    await preparePendingMember(page);
+    await page.goto('/');
+
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    const updateResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/session') &&
+        response.request().method() === 'POST',
+    );
+
+    await page.getByRole('button', { name: '나중에 하기' }).click();
+
+    const response = await updateResponse;
+
+    expect(response.request().postDataJSON()).toMatchObject({
+      data: {
+        inviteOnboardingPending: false,
+        expectedUserId: 'user-1',
+      },
+    });
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('Escape로 닫으면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
