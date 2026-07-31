@@ -54,6 +54,8 @@ export function useChatStream(
 
     abortRef.current = controller;
 
+    let terminalReceived = false;
+
     try {
       const stream = await streamChatTurnRaw(
         chatId,
@@ -67,6 +69,8 @@ export function useChatStream(
             prev ? { ...prev, aiOutput: prev.aiOutput + event.content } : prev,
           );
         } else if (event.type === 'completed') {
+          terminalReceived = true;
+
           // 첫 턴의 AI 답변 정상 수신 = Meta 광고 전환 신호(StartTrial, 브라우저당 1회).
           // 스트림이 error 없이 완료된 시점에만 발화한다(캠페인 문서 "26/07" 결정).
           if (turnCount === 0) {
@@ -76,10 +80,27 @@ export function useChatStream(
           await onCompleted();
           setStreamingTurn(null);
         } else if (event.type === 'error') {
+          terminalReceived = true;
+
           throw new Error(
             event.message ?? TOAST_MESSAGE.RESPONSE_STREAM_FAILED,
           );
         }
+      }
+
+      // completed·error 없이 스트림이 끝나면(백엔드 SSE 전체 상한 초과·네트워크 절단) 서버 저장 여부가
+      // 불명이다. 처리하지 않으면 스트리밍 상태가 풀리지 않아 화면이 멈춘다(스펙 §3-13 G5). 실패로 확정해
+      // 상태를 풀고, 저장됐을 수도 있으므로 임의 복원 대신 refetch로 확정 상태를 가져온다(재생성과 동일).
+      // 사용자 취소(방 이탈·언마운트)는 조용히 끝내야 하므로 abort된 스트림은 제외한다.
+      if (!terminalReceived && !controller.signal.aborted) {
+        setStreamingTurn(null);
+        track('client_chat_streamError_shown', {
+          chat_id: chatId,
+          turn_number: turnCount + 1,
+        });
+        toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
+
+        await onIndeterminate?.();
       }
     } catch (error) {
       if (controller.signal.aborted) {
