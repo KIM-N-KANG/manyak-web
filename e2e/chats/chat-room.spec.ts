@@ -396,6 +396,57 @@ test.describe('채팅 스트리밍', () => {
       0,
     );
   });
+
+  test('completed·error 없이 스트림이 끝나면 실패로 처리하고 저장된 턴을 반영한다', async ({
+    page,
+  }) => {
+    // 백엔드 SSE 전체 상한(120초) 초과는 error 이벤트 없이 스트림을 닫는다. 그때 서버는 턴을
+    // 저장했을 수 있으므로, 프론트는 상태를 풀고 상세를 다시 조회해 확정본을 보여줘야 한다.
+    const persistedTurn = {
+      id: 1,
+      userInput: '계속한다',
+      aiOutput: '문이 서서히 열린다.',
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1
+            ? chatDetail([], [])
+            : chatDetail([persistedTurn]),
+        ),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"문이 서서히 "}\n\n',
+        ]),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
+    // 스트리밍 상태가 풀려야 한다 — 이 처리가 없으면 스피너가 영구히 남는다(G5).
+    await expect(
+      page.locator('[data-tour="send"]').getByRole('status'),
+    ).toBeHidden();
+    // 재조회로 서버가 저장한 턴이 화면에 나타나야 한다.
+    await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+  });
 });
 
 test.describe('채팅 헤더', () => {
