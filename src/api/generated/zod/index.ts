@@ -583,6 +583,33 @@ export const LogoutBody = zod
 export const LogoutResponse = zod.void();
 
 /**
+ * Kakao OIDC ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 요청·응답 계약은 Google 로그인과 동일합니다(검증 파라미터만 다름). Kakao 계정과 Google 계정은 합쳐지지 않고 별개 계정입니다(계정 통합 미도입 — 스펙 §4-5). 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
+ * @summary Kakao 로그인
+ */
+export const LoginWithKakaoHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
+export const LoginWithKakaoBody = zod
+  .object({
+    idToken: zod
+      .string()
+      .min(1)
+      .describe(
+        '소셜 provider에서 발급받은 OIDC ID 토큰(JWT). 서버가 provider 공개키로 검증한다.',
+      ),
+    handoffCode: zod
+      .string()
+      .nullish()
+      .describe(
+        '인앱 브라우저에서 만든 로그인 핸드오프 코드(스펙 §4-3-5). 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가 X-Manyak-Device-Id 헤더보다 우선)와 게스트 데이터 이관을 함께 수행한다. 무효·만료면 헤더 디바이스 ID로 폴백하고 로그인은 정상 진행한다.',
+      ),
+  })
+  .describe('소셜 로그인 요청(Google·Kakao 공통)');
+
+export const LoginWithKakaoResponse = zod.unknown();
+
+/**
  * Google ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 응답의 isNewUser로 신규 가입 여부를 알 수 있습니다(신규 가입 온보딩 판정 신호 — KNK-567). 초대 보상 적립은 이 API가 아니라 POST /users/me/invite/redeem에서 합니다. 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
  * @summary Google 로그인
  */
@@ -596,7 +623,7 @@ export const LoginWithGoogleBody = zod
       .string()
       .min(1)
       .describe(
-        'Google에서 발급받은 ID 토큰(JWT). 서버가 Google 공개키로 검증한다.',
+        '소셜 provider에서 발급받은 OIDC ID 토큰(JWT). 서버가 provider 공개키로 검증한다.',
       ),
     handoffCode: zod
       .string()
@@ -605,9 +632,64 @@ export const LoginWithGoogleBody = zod
         '인앱 브라우저에서 만든 로그인 핸드오프 코드(스펙 §4-3-5). 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가 X-Manyak-Device-Id 헤더보다 우선)와 게스트 데이터 이관을 함께 수행한다. 무효·만료면 헤더 디바이스 ID로 폴백하고 로그인은 정상 진행한다.',
       ),
   })
-  .describe('Google 로그인 요청');
+  .describe('소셜 로그인 요청(Google·Kakao 공통)');
 
 export const LoginWithGoogleResponse = zod.unknown();
+
+/**
+ * 로그인된 계정에 다른 소셜 provider를 추가로 연동합니다. 연동하면 그 provider로 로그인해도 같은 계정(같은 크레딧·서재)으로 들어옵니다. 재인증으로 받은 링크 코드를 `X-Manyak-Link-Code` 헤더에 실어야 합니다 (코드는 URL에 싣지 않습니다 — 요청 URI가 구조화 로그·Sentry에 남습니다).
+ *
+ * 이 API는 새 계정도, 새 세션도 만들지 않습니다(가입 보상·토큰 발급 없음). 기존 access·refresh 토큰은 그대로 유효하며, 연동 후 상태는 `GET /auth/me`의 `linkedProviders`로 확인합니다.
+ *
+ * 링크 코드는 **성공했을 때만** 소비됩니다. 403·409로 실패하면 코드가 남아 만료 전까지 재인증 없이 다시 시도할 수 있습니다. 이미 연동된 소셜 계정을 다시 보내면(내 계정이든 남의 계정이든) 409입니다. 연동 해제는 제공하지 않습니다.
+ * @summary 계정 연동 추가
+ */
+export const LinkParams = zod.object({
+  provider: zod.string().describe('연동할 provider(소문자)'),
+});
+
+export const LinkHeader = zod.object({
+  'X-Manyak-Link-Code': zod
+    .string()
+    .describe('재인증으로 받은 일회용 링크 코드'),
+});
+
+export const LinkBody = zod
+  .object({
+    idToken: zod
+      .string()
+      .min(1)
+      .describe('연동할 provider가 발급한 OIDC ID 토큰(JWT).'),
+  })
+  .describe(
+    '계정 연동 요청(연동할 provider는 경로에, 링크 코드는 헤더에 싣는다)',
+  );
+
+export const LinkResponse = zod.void();
+
+/**
+ * 연동을 시작하기 전에 **이미 연동된 provider**로 소유를 재확인하고 일회용 링크 코드를 발급합니다. 연동은 계정에 로그인 수단을 영구히 추가하는 작업이라 세션만으로는 부족합니다(공용 기기에 남은 세션 악용 차단). 재인증 토큰은 방금 발급받은 것이어야 하며, 오래된 토큰은 거부합니다.
+ *
+ * 발급된 코드는 짧게 만료되며(기본 5분), 연동 요청의 `X-Manyak-Link-Code` 헤더에 실어 보냅니다. 실패 사유는 구분하지 않습니다(어떤 소셜 계정이 이 회원에게 연동돼 있는지 노출하지 않기 위해서입니다).
+ * @summary 계정 연동 재인증
+ */
+
+export const ReauthenticateBody = zod
+  .object({
+    provider: zod
+      .enum(['GOOGLE', 'KAKAO', 'APPLE', 'NAVER'])
+      .optional()
+      .describe('재인증에 쓸 provider. 요청자에게 이미 연동돼 있어야 한다.'),
+    idToken: zod
+      .string()
+      .min(1)
+      .describe(
+        '재인증용 ID 토큰. 방금 발급받은 토큰이어야 한다(오래된 토큰은 거부 — 공용 기기 보호).',
+      ),
+  })
+  .describe('계정 연동 재인증 요청(이미 연동된 provider로 소유를 재확인한다)');
+
+export const ReauthenticateResponse = zod.void();
 
 /**
  * 외부 브라우저 랜딩이 코드를 검증하고 옮길 건수와 복귀 경로를 받습니다. PENDING 상태면 LANDED로 전이합니다. 스토리 제목·채팅 본문 같은 콘텐츠는 노출하지 않습니다.

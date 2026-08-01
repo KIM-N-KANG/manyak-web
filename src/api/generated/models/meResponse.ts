@@ -31,4 +31,6 @@ export interface MeResponse {
   creditBalance?: number;
   /** KST 자정 기준 당일 출석체크 적립 완료 여부 */
   attendedToday?: boolean;
+  /** 연동된 소셜 provider 목록(KNK-739). 값은 소문자 고정(google·kakao)이고 정렬은 google → kakao로 고정한다. 연동 상태 전용 엔드포인트를 따로 두지 않고 이 필드로만 노출한다(마이 페이지가 이미 이 호출을 한다). */
+  linkedProviders?: string[];
 }

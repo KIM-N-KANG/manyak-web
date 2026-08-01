@@ -3,10 +3,11 @@ import { readAmplitudeDeviceIdOnServer } from '@/observability/analytics/identit
 import {
   BackendAuthError,
   fetchMeOnServer,
-  loginWithGoogleOnServer,
+  loginWithSocialOnServer,
 } from './backend-client';
 import { readHandoffCodeOnServer } from './handoff-cookie';
 import { refreshWithDedup } from './refresh-dedup';
+import type { SocialLoginProvider } from './social-provider';
 import { shouldRefreshAccessToken } from './token-cookie-policy';
 import {
   clearBackendSession,
@@ -113,7 +114,7 @@ export async function ensureFreshAccessToken(
 }
 
 /**
- * Google id_token으로 백엔드 세션을 수립하고 세션에 담을 프로필을 반환한다.
+ * 소셜 provider의 id_token으로 백엔드 세션을 수립하고 세션에 담을 프로필을 반환한다.
  * NextAuth jwt 콜백(최초 로그인)에서 호출한다. 실패 시 던져서 로그인 자체를 실패시킨다.
  *
  * 검증 후 쓰기: BFF 세션 쿠키(writeBackendSessionTokens)는 토큰·사용자 정보 검증을
@@ -123,11 +124,15 @@ export async function ensureFreshAccessToken(
  * 지속)이 발생할 수 있다. 공유 기기에서는 다음 게스트의 활동이 실패한 계정에
  * 귀속되는 문제로 이어진다.
  *
- * @param idToken Google에서 발급한 ID 토큰
+ * @param provider 로그인에 사용한 소셜 provider
+ * @param idToken provider에서 발급한 OIDC ID 토큰
  * @returns 세션에 담을 사용자 프로필(userId, nickname, profileImageUrl, isNewUser)
  * @throws 토큰 응답에 accessToken이 없거나 사용자 정보에 id가 없으면 에러
  */
-export async function establishBackendSession(idToken: string): Promise<{
+export async function establishBackendSession(
+  provider: SocialLoginProvider,
+  idToken: string,
+): Promise<{
   userId: string;
   nickname: string;
   profileImageUrl: string | null;
@@ -143,7 +148,12 @@ export async function establishBackendSession(idToken: string): Promise<{
   // 수행한다(스펙 §4-3-5). 코드는 비밀값이라 로그·분석에 남기지 않는다.
   const handoffCode = await readHandoffCodeOnServer();
 
-  const tokens = await loginWithGoogleOnServer(idToken, deviceId, handoffCode);
+  const tokens = await loginWithSocialOnServer(
+    provider,
+    idToken,
+    deviceId,
+    handoffCode,
+  );
 
   if (!tokens.accessToken) {
     throw new Error('토큰 응답에 accessToken이 없습니다.');

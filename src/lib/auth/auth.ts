@@ -1,13 +1,33 @@
 import NextAuth from 'next-auth';
+import type { OIDCConfig } from 'next-auth/providers';
 import Google from 'next-auth/providers/google';
 
 import { logoutOnServer } from './backend-client';
 import { establishBackendSession } from './backend-session';
+import { isSocialLoginProvider } from './social-provider';
 import { SESSION_COOKIE_MAX_AGE_SECONDS } from './token-cookie-policy';
 import { clearBackendSession, readRefreshTokenCookie } from './token-cookies';
 
+/**
+ * 카카오 로그인 프로바이더. 기본 제공 프로바이더 대신 issuer를 지정한 OIDC로 직접
+ * 선언한다 — 기본 프로바이더는 jwks_uri를 몰라 id_token 서명 검증에 실패한다(스펙 §3-8).
+ * - scope는 `openid` 단독 고정: 콘솔에 동의항목이 없어 다른 scope는 인가가 거절된다.
+ * - 토큰 교환은 `client_secret_post` 명시: 카카오가 지원하는 유일한 방식인데 Auth.js
+ *   기본값은 `client_secret_basic`이라 미지정 시 invalid_client로 실패한다.
+ */
+const Kakao: OIDCConfig<{ sub: string }> = {
+  id: 'kakao',
+  name: 'Kakao',
+  type: 'oidc',
+  issuer: 'https://kauth.kakao.com',
+  clientId: process.env.AUTH_KAKAO_ID,
+  clientSecret: process.env.AUTH_KAKAO_SECRET,
+  authorization: { params: { scope: 'openid' } },
+  client: { token_endpoint_auth_method: 'client_secret_post' },
+};
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google],
+  providers: [Google, Kakao],
   // BFF 토큰 쿠키 수명(14일)과 정렬 — 불일치 창 제거. 기본 30일이면 14~30일
   // 사이 재방문 사용자가 회원 UI를 보면서 API 호출은 전부 익명 처리된다.
   session: { strategy: 'jwt', maxAge: SESSION_COOKIE_MAX_AGE_SECONDS },
@@ -31,13 +51,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
+      if (!isSocialLoginProvider(account.provider)) {
+        throw new Error(
+          `지원하지 않는 로그인 provider입니다: ${account.provider}`,
+        );
+      }
+
       if (!account.id_token) {
-        throw new Error('Google 응답에 id_token이 없습니다.');
+        throw new Error(`${account.provider} 응답에 id_token이 없습니다.`);
       }
 
       // 백엔드 로그인 실패는 여기서 던져 NextAuth 로그인 자체를 실패시킨다.
       // "NextAuth 세션만 있고 백엔드 세션은 없는" 반쪽 상태를 만들지 않는다.
-      const profile = await establishBackendSession(account.id_token);
+      const profile = await establishBackendSession(
+        account.provider,
+        account.id_token,
+      );
 
       token.userId = profile.userId;
       token.nickname = profile.nickname;
