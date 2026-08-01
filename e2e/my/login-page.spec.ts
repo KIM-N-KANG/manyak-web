@@ -1,13 +1,23 @@
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
 test.describe('로그인 화면', () => {
-  test('Google 로그인 버튼 단일 CTA를 보여준다', async ({ page }) => {
+  test('카카오·Google 로그인 버튼을 세로로 보여준다', async ({ page }) => {
     await skipOnboarding(page);
     await page.goto('/login');
 
-    await expect(
-      page.getByRole('button', { name: /Google로 시작하기/ }),
-    ).toBeVisible();
+    const kakaoButton = page.getByRole('button', { name: /카카오로 시작하기/ });
+    const googleButton = page.getByRole('button', {
+      name: /Google로 시작하기/,
+    });
+
+    await expect(kakaoButton).toBeVisible();
+    await expect(googleButton).toBeVisible();
+
+    // 카카오 버튼이 Google 버튼 위에 배치된다(스펙 §3-8).
+    const kakaoBox = await kakaoButton.boundingBox();
+    const googleBox = await googleButton.boundingBox();
+
+    expect(kakaoBox && googleBox && kakaoBox.y < googleBox.y).toBe(true);
     await expect(
       page.getByRole('button', { name: '이전 페이지로 돌아가기 버튼' }),
     ).toBeVisible();

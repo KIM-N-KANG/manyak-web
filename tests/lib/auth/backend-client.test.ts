@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BackendAuthError,
   confirmHandoffOnServer,
-  loginWithGoogleOnServer,
+  loginWithSocialOnServer,
   logoutOnServer,
 } from '@/lib/auth/backend-client';
 import { HANDOFF_CODE_HEADER } from '@/lib/auth/handoff-header';
@@ -25,7 +25,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('loginWithGoogleOnServer', () => {
+describe('loginWithSocialOnServer', () => {
   it('백엔드 요청에 기본 타임아웃을 적용한다', async () => {
     vi.useFakeTimers();
     fetchMock.mockImplementation(
@@ -40,7 +40,7 @@ describe('loginWithGoogleOnServer', () => {
     );
 
     try {
-      const promise = loginWithGoogleOnServer('id-token');
+      const promise = loginWithSocialOnServer('google', 'id-token');
       const assertion = expect(promise).rejects.toMatchObject({
         name: 'TimeoutError',
       });
@@ -64,7 +64,9 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await expect(loginWithGoogleOnServer('id-token')).resolves.toEqual({
+    await expect(
+      loginWithSocialOnServer('google', 'id-token'),
+    ).resolves.toEqual({
       accessToken: 'a',
     });
 
@@ -75,13 +77,29 @@ describe('loginWithGoogleOnServer', () => {
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
   });
 
+  it('kakao provider는 /api/v1/auth/login/kakao로 POST한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await expect(loginWithSocialOnServer('kakao', 'id-token')).resolves.toEqual(
+      { accessToken: 'a' },
+    );
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(url).toBe('https://backend.example.com/api/v1/auth/login/kakao');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
+  });
+
   it('deviceId를 주면 X-Manyak-Device-Id 헤더에 원문 그대로 담아 전송한다', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
     // 서버가 pepper를 붙여 내부에서 해시하므로 클라이언트 측 가공(해시) 없이 원문이어야 한다.
-    await loginWithGoogleOnServer('id-token', 'raw-device-id-1234');
+    await loginWithSocialOnServer('google', 'id-token', 'raw-device-id-1234');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
@@ -95,7 +113,7 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithGoogleOnServer('id-token');
+    await loginWithSocialOnServer('google', 'id-token');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
@@ -108,7 +126,12 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithGoogleOnServer('id-token', 'raw-device-id', 'handoff-code');
+    await loginWithSocialOnServer(
+      'google',
+      'id-token',
+      'raw-device-id',
+      'handoff-code',
+    );
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
@@ -123,7 +146,7 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithGoogleOnServer('id-token', 'raw-device-id');
+    await loginWithSocialOnServer('google', 'id-token', 'raw-device-id');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
@@ -135,13 +158,15 @@ describe('loginWithGoogleOnServer', () => {
       new Response('유효하지 않은 Google ID 토큰입니다.', { status: 401 }),
     );
 
-    await expect(loginWithGoogleOnServer('bad')).rejects.toMatchObject({
+    await expect(
+      loginWithSocialOnServer('google', 'bad'),
+    ).rejects.toMatchObject({
       status: 401,
       body: '유효하지 않은 Google ID 토큰입니다.',
     });
-    await expect(loginWithGoogleOnServer('bad')).rejects.toBeInstanceOf(
-      BackendAuthError,
-    );
+    await expect(
+      loginWithSocialOnServer('google', 'bad'),
+    ).rejects.toBeInstanceOf(BackendAuthError);
   });
 });
 

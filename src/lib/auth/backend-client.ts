@@ -1,6 +1,7 @@
 import {
   getConfirmUrl,
   getLoginWithGoogleUrl,
+  getLoginWithKakaoUrl,
   getLogoutUrl,
   getMeUrl,
   getRefreshUrl,
@@ -14,6 +15,7 @@ import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
 import { HANDOFF_CODE_HEADER } from './handoff-header';
+import type { SocialLoginProvider } from './social-provider';
 
 /**
  * BFF(서버)에서 백엔드 인증 API를 직접 호출하는 클라이언트.
@@ -98,8 +100,15 @@ const postJson = <T>(
     body: JSON.stringify(body),
   });
 
+/** provider별 백엔드 로그인 경로 빌더. 생성된 URL 빌더를 재사용해 드리프트를 막는다. */
+const SOCIAL_LOGIN_URL_BUILDERS: Record<SocialLoginProvider, () => string> = {
+  google: getLoginWithGoogleUrl,
+  kakao: getLoginWithKakaoUrl,
+};
+
 /**
- * Google ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
+ * 소셜 provider의 OIDC ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
+ * 요청·응답 계약은 provider와 무관하게 동일하다(스펙 §4-5 — 경로만 다름).
  *
  * deviceId는 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데 쓰인다(스펙 §4-3-7).
  * 서버가 pepper를 붙여 내부에서 해시하므로 반드시 원문 그대로 전달한다 — 클라이언트에서
@@ -111,18 +120,20 @@ const postJson = <T>(
  * 시드는 로그인 호출에 실려야 하며, 미루면 백엔드가 소진 시드를 비가역으로 확정한다.
  * 무효·만료 코드는 백엔드가 헤더 deviceId로 폴백하고 로그인은 정상 진행한다.
  *
- * @param idToken Google에서 발급한 ID 토큰
+ * @param provider 로그인에 사용한 소셜 provider
+ * @param idToken provider에서 발급한 OIDC ID 토큰
  * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
  * @param handoffCode 인앱 핸드오프 코드 원문(없으면 body에서 생략)
  * @returns 발급된 백엔드 토큰 응답
  */
-export const loginWithGoogleOnServer = (
+export const loginWithSocialOnServer = (
+  provider: SocialLoginProvider,
   idToken: string,
   deviceId?: string,
   handoffCode?: string,
 ): Promise<TokenResponse> =>
   postJson<TokenResponse>(
-    getLoginWithGoogleUrl(),
+    SOCIAL_LOGIN_URL_BUILDERS[provider](),
     { idToken, ...(handoffCode ? { handoffCode } : {}) },
     deviceId ? { [DEVICE_ID_HEADER]: deviceId } : undefined,
   );

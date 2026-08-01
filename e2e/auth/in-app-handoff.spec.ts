@@ -219,6 +219,9 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     await expect(page).toHaveURL('/login/continue');
     await expect(page.getByText(/계정당 한 번만 진행돼요/)).toBeVisible();
     await expect(
+      page.getByRole('button', { name: /카카오로 시작하기/ }),
+    ).toBeVisible();
+    await expect(
       page.getByRole('button', { name: /Google로 시작하기/ }),
     ).toBeVisible();
     // 로그인 페이지와 동일하게 약관 동의 고지를 상시 표시한다.

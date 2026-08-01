@@ -16,8 +16,10 @@ import {
 } from '@/components/ui/dialog';
 import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
+import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
 import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
-import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
+import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
+import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredDialogProps = {
@@ -37,12 +39,18 @@ export function LoginRequiredDialog({
     }
   }, [trigger]);
 
-  const handleGoogleLogin = () => {
+  const handleSocialLogin = (provider: SocialLoginProvider) => {
     if (trigger) {
-      track('client_guestLimitDialog_loginButton_clicked', { trigger });
+      track('client_guestLimitDialog_loginButton_clicked', {
+        trigger,
+        provider,
+      });
     }
 
-    void startGoogleLogin({ redirectTo: resolveLoginCallbackUrl(pathname) });
+    void startSocialLogin({
+      provider,
+      redirectTo: resolveLoginCallbackUrl(pathname),
+    });
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -64,7 +72,17 @@ export function LoginRequiredDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="grid-cols-1 gap-3">
-          <Button type="button" variant="outline" onClick={handleGoogleLogin}>
+          <Button
+            type="button"
+            className="bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+            onClick={() => handleSocialLogin('kakao')}>
+            <KakaoLogo className="size-4" />
+            카카오로 시작하기
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleSocialLogin('google')}>
             <GoogleLogo className="size-4" />
             Google로 시작하기
           </Button>
