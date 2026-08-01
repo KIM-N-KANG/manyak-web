@@ -12,6 +12,7 @@ const authMocks = vi.hoisted(() => ({
   readRefreshTokenCookie: vi.fn(),
   clearBackendSession: vi.fn(),
   processLinkCallback: vi.fn(),
+  restoreSessionClaims: vi.fn(),
 }));
 
 vi.mock('next-auth', () => ({ default: authMocks.nextAuth }));
@@ -33,6 +34,9 @@ vi.mock('@/lib/auth/token-cookies', () => ({
 }));
 vi.mock('@/lib/auth/link-callback', () => ({
   processLinkCallback: authMocks.processLinkCallback,
+}));
+vi.mock('@/lib/auth/session-token', () => ({
+  restoreSessionClaims: authMocks.restoreSessionClaims,
 }));
 
 import '@/lib/auth/auth';
@@ -84,13 +88,21 @@ const getAuthConfig = (): CapturedAuthConfig => {
 beforeEach(() => {
   authMocks.establishBackendSession.mockReset();
   authMocks.processLinkCallback.mockReset();
+  authMocks.restoreSessionClaims.mockReset();
 });
 
 describe('NextAuth 계정 연동 콜백', () => {
-  it('연동 프로바이더 콜백은 백엔드 로그인을 타지 않고 연동 처리로 넘긴다', async () => {
+  it('연동 콜백은 새 토큰 대신 세션 쿠키에서 복원한 기존 클레임을 반환한다', async () => {
+    // Auth.js는 OAuth 콜백에서 프로바이더 프로필로 새로 만든 토큰만 넘기므로,
+    // 연동 분기는 세션 쿠키를 직접 복호화해 기존 세션을 이어가야 한다.
+    authMocks.restoreSessionClaims.mockResolvedValue({
+      userId: 'user-1',
+      nickname: '만냐',
+    });
+
     const { jwt } = getAuthConfig().callbacks;
     const token = await jwt({
-      token: { userId: 'user-1', nickname: '만냐' },
+      token: { nickname: '카카오프로필' },
       account: { provider: 'link-kakao', id_token: 'kakao-id-token' },
       trigger: 'signIn',
     });
@@ -99,12 +111,15 @@ describe('NextAuth 계정 연동 콜백', () => {
       'kakao',
       'kakao-id-token',
     );
-    // 연동은 새 세션을 만들지 않는다(스펙 §4-5) — 로그인 경로도 클레임도 건드리지 않는다.
+    // 연동은 새 세션을 만들지 않는다(스펙 §4-5) — 로그인 경로를 타지 않고
+    // 복원한 기존 클레임을 그대로 유지한다.
     expect(authMocks.establishBackendSession).not.toHaveBeenCalled();
     expect(token).toEqual({ userId: 'user-1', nickname: '만냐' });
   });
 
-  it('로그인 세션 없이 도착한 연동 콜백은 로그인 자체를 실패시킨다', async () => {
+  it('복원된 세션이 없으면 연동 콜백은 로그인 자체를 실패시킨다', async () => {
+    authMocks.restoreSessionClaims.mockResolvedValue(null);
+
     const { jwt } = getAuthConfig().callbacks;
 
     await expect(
@@ -118,11 +133,13 @@ describe('NextAuth 계정 연동 콜백', () => {
   });
 
   it('연동 콜백에 id_token이 없으면 실패시킨다', async () => {
+    authMocks.restoreSessionClaims.mockResolvedValue({ userId: 'user-1' });
+
     const { jwt } = getAuthConfig().callbacks;
 
     await expect(
       jwt({
-        token: { userId: 'user-1' },
+        token: {},
         account: { provider: 'link-google', id_token: null },
         trigger: 'signIn',
       }),

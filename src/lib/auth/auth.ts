@@ -6,6 +6,7 @@ import { logoutOnServer } from './backend-client';
 import { establishBackendSession } from './backend-session';
 import { parseLinkProviderId } from './link-account';
 import { processLinkCallback } from './link-callback';
+import { restoreSessionClaims } from './session-token';
 import { isSocialLoginProvider } from './social-provider';
 import { SESSION_COOKIE_MAX_AGE_SECONDS } from './token-cookie-policy';
 import { clearBackendSession, readRefreshTokenCookie } from './token-cookies';
@@ -71,9 +72,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const linkProvider = parseLinkProviderId(account.provider);
 
       if (linkProvider) {
-        // 계정 연동 콜백이다 — 로그인 경로(백엔드 세션 교체)를 타지 않고 세션 클레임도
-        // 그대로 둔다. 결과는 쿠키로 마이 페이지에 전달한다.
-        if (!token.userId) {
+        // 계정 연동 콜백이다 — 로그인 경로(백엔드 세션 교체)를 타지 않는다. 이때
+        // 인자 token은 기존 세션이 아니라 Auth.js가 프로바이더 프로필로 새로 만든
+        // 토큰이므로, 기존 세션 클레임은 세션 쿠키를 직접 복호화해 복원한다.
+        // 결과는 쿠키로 마이 페이지에 전달한다.
+        const restored = await restoreSessionClaims();
+
+        if (!restored?.userId) {
           // 로그인된 세션 없이 연동 콜백에 도달했다. throw로 signIn을 실패시켜
           // 사용자 귀속이 없는 세션이 발급되는 것을 막는다.
           throw new Error('연동은 로그인된 세션에서만 진행할 수 있습니다.');
@@ -85,7 +90,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await processLinkCallback(linkProvider, account.id_token);
 
-        return token;
+        // 새로 만들어진 token을 버리고 복원한 클레임을 반환해 세션을 그대로 잇는다.
+        return restored;
       }
 
       if (!isSocialLoginProvider(account.provider)) {
