@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 
+import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
+
 import {
   expect,
   mockMemberSession,
@@ -59,6 +61,25 @@ test.describe('마이 비주얼', () => {
     await expect(page.getByRole('button', { name: /로그아웃/ })).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('my-member.png');
+  });
+
+  test('계정 연동 확인 다이얼로그 (MY-MENU)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/my');
+    await page
+      .getByRole('button', { name: LINK_ACCOUNT_COPY.linkButton('kakao') })
+      .click();
+
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByText(LINK_ACCOUNT_COPY.confirmTitle('kakao')),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-link-confirm-dialog.png');
   });
 
   test('피드백 폼 기본 상태 (MY-FEEDBACK)', async ({ page }) => {

@@ -13,9 +13,12 @@ export const LINK_ACCOUNT_COPY = {
     `${PROVIDER_LABEL[provider]} 연동하기`,
   confirmTitle: (provider: SocialLoginProvider) =>
     `${PROVIDER_LABEL[provider]} 계정을 연동할까요?`,
-  confirmDescription: (current: SocialLoginProvider) =>
-    `어느 계정으로 로그인해도 같은 크레딧과 서재를 쓸 수 있어요. 보안을 위해 지금 로그인한 ${PROVIDER_LABEL[current]} 계정으로 먼저 다시 로그인한 뒤 연동이 진행돼요. 연동한 뒤에는 해제할 수 없어요.`,
-  confirmCancel: '취소',
+  confirmDescription: (current: SocialLoginProvider) => [
+    '어느 계정으로 로그인해도 같은 스토리와 채팅을 보고, 크레딧을 쓸 수 있어요',
+    `보안을 위해 지금 로그인한 ${PROVIDER_LABEL[current]} 계정으로 먼저 다시 로그인한 뒤 연동이 진행돼요`,
+    '연동한 뒤에는 해제할 수 없어요',
+  ],
+  confirmCancel: '나중에 하기',
   confirmAction: '연동하기',
   confirmPending: '연동 준비 중',
   linkedToOtherTitle: '이미 다른 계정에 연결되어 있어요',

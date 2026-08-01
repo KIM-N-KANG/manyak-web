@@ -152,9 +152,11 @@ test.describe('마이', () => {
     await expect(
       dialog.getByText(LINK_ACCOUNT_COPY.confirmTitle('kakao')),
     ).toBeVisible();
-    await expect(
-      dialog.getByText(LINK_ACCOUNT_COPY.confirmDescription('google')),
-    ).toBeVisible();
+
+    for (const line of LINK_ACCOUNT_COPY.confirmDescription('google')) {
+      await expect(dialog.getByText(line)).toBeVisible();
+    }
+
     await expect(
       dialog.getByRole('button', { name: LINK_ACCOUNT_COPY.confirmAction }),
     ).toBeVisible();
