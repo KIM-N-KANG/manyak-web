@@ -1,9 +1,40 @@
+import type { Page } from '@playwright/test';
+
+import {
+  LINK_ACCOUNT_COPY,
+  PROVIDER_LABEL,
+} from '@/features/my/menu/constants/link-account-copy';
+
 import {
   expect,
   mockMemberSession,
   skipOnboarding,
   test,
 } from '../fixtures/test';
+
+/**
+ * 연동 상태를 담은 회원 프로필(GET /auth/me)을 목킹한다. linkedProviders가 연동
+ * 상태의 정본이라 마이 페이지 연동 UI는 이 값만으로 결정된다(스펙 §4-5).
+ */
+async function mockMeWithLinkedProviders(
+  page: Page,
+  linkedProviders: string[],
+): Promise<void> {
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill({
+      json: {
+        id: 'user-1',
+        nickname: '배고픈 송아지',
+        profileImageUrl: null,
+        profileThumbnailBase64: null,
+        status: 'ACTIVE',
+        creditBalance: 0,
+        attendedToday: false,
+        linkedProviders,
+      },
+    }),
+  );
+}
 
 test.describe('마이', () => {
   test('게스트는 게스트 표시와 로그인 버튼을 본다', async ({ page }) => {
@@ -79,6 +110,73 @@ test.describe('마이', () => {
 
     await themeButton.click();
     await expect(themeButton).toContainText('시스템 설정');
+  });
+
+  test('연동된 provider는 Chip으로, 미연동 provider는 연동 버튼으로 표시한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockMeWithLinkedProviders(page, ['google']);
+    await page.goto('/my');
+
+    const linkedAccounts = page.getByLabel(LINK_ACCOUNT_COPY.sectionLabel);
+
+    await expect(
+      linkedAccounts.getByText(PROVIDER_LABEL.google, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: LINK_ACCOUNT_COPY.linkButton('kakao') }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {
+        name: LINK_ACCOUNT_COPY.linkButton('google'),
+      }),
+    ).toBeHidden();
+  });
+
+  test('연동 버튼을 누르면 재인증 순서와 해제 불가를 알리는 확인 다이얼로그가 열린다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockMeWithLinkedProviders(page, ['google']);
+    await page.goto('/my');
+
+    await page
+      .getByRole('button', { name: LINK_ACCOUNT_COPY.linkButton('kakao') })
+      .click();
+
+    const dialog = page.getByRole('dialog');
+
+    await expect(
+      dialog.getByText(LINK_ACCOUNT_COPY.confirmTitle('kakao')),
+    ).toBeVisible();
+    await expect(
+      dialog.getByText(LINK_ACCOUNT_COPY.confirmDescription('google')),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: LINK_ACCOUNT_COPY.confirmAction }),
+    ).toBeVisible();
+  });
+
+  test('둘 다 연동했으면 Chip만 두 개 보이고 연동 버튼은 사라진다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockMeWithLinkedProviders(page, ['google', 'kakao']);
+    await page.goto('/my');
+
+    const linkedAccounts = page.getByLabel(LINK_ACCOUNT_COPY.sectionLabel);
+
+    await expect(
+      linkedAccounts.getByText(PROVIDER_LABEL.google, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      linkedAccounts.getByText(PROVIDER_LABEL.kakao, { exact: true }),
+    ).toBeVisible();
+    await expect(linkedAccounts.getByRole('button')).toHaveCount(0);
   });
 
   test('하단 탭은 홈·채팅·마이 3개다', async ({ page }) => {

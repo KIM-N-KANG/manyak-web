@@ -14,7 +14,8 @@ import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
  */
 
 /**
- * 회원 프로필·크레딧 조회(/auth/me)를 목킹한다.
+ * 회원 프로필·크레딧 조회(/auth/me)를 목킹한다. 회원은 로그인 수단이 최소 하나라
+ * linkedProviders도 함께 담아야 실제 화면(연동 Chip·연동 버튼)과 같아진다.
  *
  * @param page 대상 페이지
  */
@@ -29,6 +30,7 @@ const mockAuthMe = async (page: Page) => {
         status: 'ACTIVE',
         creditBalance: 1250,
         attendedToday: false,
+        linkedProviders: ['google'],
       },
     }),
   );
