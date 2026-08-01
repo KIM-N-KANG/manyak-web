@@ -12,12 +12,10 @@ export interface JsonNode {
   empty?: boolean;
   null?: boolean;
   float?: boolean;
-  missingNode?: boolean;
   floatingPointNumber?: boolean;
   integralNumber?: boolean;
-  valueNode?: boolean;
-  container?: boolean;
-  object?: boolean;
+  nodeType?: JsonNodeNodeType;
+  string?: boolean;
   pojo?: boolean;
   short?: boolean;
   int?: boolean;
@@ -29,8 +27,10 @@ export interface JsonNode {
   textual?: boolean;
   boolean?: boolean;
   binary?: boolean;
-  nodeType?: JsonNodeNodeType;
-  string?: boolean;
+  missingNode?: boolean;
+  valueNode?: boolean;
+  container?: boolean;
+  object?: boolean;
   number?: boolean;
   embeddedValue?: boolean;
 }
