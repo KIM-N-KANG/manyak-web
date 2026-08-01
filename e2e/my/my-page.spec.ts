@@ -135,6 +135,55 @@ test.describe('마이', () => {
     ).toBeHidden();
   });
 
+  test('연동 상태 응답 전에는 칩 자리에 스켈레톤을 표시한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+
+    let releaseMe = () => {};
+    const meGate = new Promise<void>((resolve) => {
+      releaseMe = resolve;
+    });
+
+    await page.route('**/api/v1/auth/me', async (route) => {
+      await meGate;
+      await route.fulfill({
+        json: {
+          id: 'user-1',
+          nickname: '배고픈 송아지',
+          profileImageUrl: null,
+          profileThumbnailBase64: null,
+          status: 'ACTIVE',
+          creditBalance: 0,
+          attendedToday: false,
+          linkedProviders: ['google'],
+        },
+      });
+    });
+    await page.goto('/my');
+
+    // 세션 판별이 끝나 닉네임이 뜬 뒤에도 me 응답 전이면 칩 자리는 스켈레톤이다.
+    await expect(page.getByText('배고픈 송아지')).toBeVisible();
+
+    const chipSkeleton = page.getByLabel(LINK_ACCOUNT_COPY.sectionLoadingLabel);
+
+    await expect(chipSkeleton).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: LINK_ACCOUNT_COPY.linkButton('kakao') }),
+    ).toBeHidden();
+
+    releaseMe();
+
+    // 응답이 오면 스켈레톤이 실제 칩·버튼으로 교체된다.
+    await expect(
+      page
+        .getByLabel(LINK_ACCOUNT_COPY.sectionLabel)
+        .getByText(PROVIDER_LABEL.google, { exact: true }),
+    ).toBeVisible();
+    await expect(chipSkeleton).toBeHidden();
+  });
+
   test('연동 버튼을 누르면 재인증 순서와 해제 불가를 알리는 확인 다이얼로그가 열린다', async ({
     page,
   }) => {

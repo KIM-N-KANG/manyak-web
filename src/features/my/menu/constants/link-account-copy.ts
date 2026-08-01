@@ -9,6 +9,7 @@ export const PROVIDER_LABEL: Record<SocialLoginProvider, string> = {
 /** 마이 페이지 계정 연동 UI 카피 정본. E2E 단언도 이 상수를 쓴다. */
 export const LINK_ACCOUNT_COPY = {
   sectionLabel: '연동된 계정',
+  sectionLoadingLabel: '연동된 계정 불러오는 중',
   linkButton: (provider: SocialLoginProvider) =>
     `${PROVIDER_LABEL[provider]} 연동하기`,
   confirmTitle: (provider: SocialLoginProvider) =>

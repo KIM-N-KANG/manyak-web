@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
@@ -44,7 +45,9 @@ const PROVIDER_LOGOS: Record<SocialLoginProvider, typeof GoogleLogo> = {
 };
 
 export function LinkedAccountSection() {
-  const { data: meData } = useMe({ query: { refetchOnMount: 'always' } });
+  const { data: meData, isPending } = useMe({
+    query: { refetchOnMount: 'always' },
+  });
   const { isLinkedToOtherUserOpen, dismissLinkedToOtherUser } =
     useLinkResultNotice();
   const [confirmTarget, setConfirmTarget] =
@@ -59,6 +62,18 @@ export function LinkedAccountSection() {
   const unlinkedProviders = ALL_PROVIDERS.filter(
     (provider) => !linkedProviders.includes(provider),
   );
+
+  if (isPending) {
+    return (
+      <div
+        role="status"
+        aria-label={LINK_ACCOUNT_COPY.sectionLoadingLabel}
+        className="flex flex-wrap items-center gap-1.5">
+        <Skeleton className="h-6 w-16" />
+        <Skeleton className="h-6 w-28" />
+      </div>
+    );
+  }
 
   if (!currentProvider) {
     return null;
