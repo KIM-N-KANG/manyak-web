@@ -195,6 +195,9 @@ export type AnalyticsEventProps = {
   client_account_loginButton_clicked: void;
   client_account_attendanceButton_clicked: void;
   client_account_logoutButton_clicked: void;
+  // 연동 성공·실패는 서버 이벤트(server_link_socialLink_processed_*)가 잡으므로
+  // 클라이언트는 시도 시점만 남긴다(스펙 §6-4).
+  client_account_linkAccountButton_clicked: { provider: SocialLoginProvider };
   // feedback
   client_feedback_viewed: void;
   client_feedback_form_submitted: void;

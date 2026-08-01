@@ -30,4 +30,9 @@ export const TOAST_MESSAGE = {
   INVITE_REDEEMED: '친구 초대 보상으로 500 크레딧을 받았어요',
   INVITE_ONBOARDING_SAVE_FAILED: '창을 닫지 못했어요',
   INVITE_SHARE_FAILED: '카카오톡 공유를 열지 못했어요',
+  LINK_SUCCEEDED: (providerLabel: string) =>
+    `${providerLabel} 계정을 연동했어요`,
+  LINK_ALREADY_LINKED: '이미 연동된 계정이에요',
+  LINK_FAILED: '연동에 실패했어요. 다시 시도해주세요',
+  LINK_BLOCKED_IN_APP: '계정 연동은 외부 브라우저에서만 할 수 있어요',
 } as const;
