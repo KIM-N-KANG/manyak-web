@@ -62,14 +62,17 @@ export function parseLinkProviderId(id: string): SocialLoginProvider | null {
 }
 
 /**
- * 연동 결과 페이로드를 쿠키 값 문자열로 직렬화한다. 쿠키 구분자가 값에 남지 않도록
- * URI 인코딩한다.
+ * 연동 결과 페이로드를 `cookies().set`에 넘길 값 문자열로 직렬화한다.
+ *
+ * 여기서 URI 인코딩하지 않는다 — Next의 `cookies().set`이 직렬화 시 값을
+ * `encodeURIComponent`로 인코딩하므로, 미리 인코딩하면 이중 인코딩이 돼
+ * 클라이언트의 1회 복호화(`parseLinkResult`)가 조용히 실패한다.
  *
  * @param payload 직렬화할 연동 결과 페이로드
- * @returns 쿠키 값으로 쓸 인코딩된 문자열
+ * @returns `cookies().set`에 그대로 넘길 JSON 문자열
  */
 export function serializeLinkResult(payload: LinkResultPayload): string {
-  return encodeURIComponent(JSON.stringify(payload));
+  return JSON.stringify(payload);
 }
 
 /**

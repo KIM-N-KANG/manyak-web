@@ -1,9 +1,14 @@
 import type { Page } from '@playwright/test';
 
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
   LINK_ACCOUNT_COPY,
   PROVIDER_LABEL,
 } from '@/features/my/menu/constants/link-account-copy';
+import {
+  LINK_RESULT_COOKIE,
+  serializeLinkResult,
+} from '@/lib/auth/link-account';
 
 import {
   expect,
@@ -212,6 +217,29 @@ test.describe('마이', () => {
     await expect(
       dialog.getByRole('button', { name: LINK_ACCOUNT_COPY.confirmAction }),
     ).toBeVisible();
+  });
+
+  test('재인증 실패 결과를 갖고 중계 화면에 복귀하면 마이로 이동해 실패 토스트를 띄운다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockMeWithLinkedProviders(page, ['google']);
+    // 브라우저에 저장되는 값은 cookies().set이 serialize 결과를 URI 인코딩한 형태다.
+    await page.context().addCookies([
+      {
+        name: LINK_RESULT_COOKIE,
+        value: encodeURIComponent(
+          serializeLinkResult({ result: 'reauth_failed', provider: 'google' }),
+        ),
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
+    await page.goto('/my/link/continue?target=kakao');
+
+    await expect(page).toHaveURL(/\/my$/);
+    await expect(page.getByText(TOAST_MESSAGE.LINK_FAILED)).toBeVisible();
   });
 
   test('둘 다 연동했으면 Chip만 두 개 보이고 연동 버튼은 사라진다', async ({
