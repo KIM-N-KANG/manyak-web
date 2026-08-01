@@ -85,7 +85,7 @@ export function LoginScreen() {
             처음 로그인하면 이 기기의 스토리와 채팅이 계정에 저장돼요
             <br />이 과정은 계정당 한 번만 진행돼요
           </p>
-          <div className="flex w-full flex-col gap-3">
+          <div className="flex w-full flex-col gap-2">
             <Button
               type="button"
               size="lg"
@@ -107,7 +107,7 @@ export function LoginScreen() {
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             이전에 가입한 적이 있다면
             <br />
-            그때 사용한 방법으로 로그인해 주세요
+            그때 사용한 방법으로 로그인해주세요
           </p>
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             로그인 시{' '}
