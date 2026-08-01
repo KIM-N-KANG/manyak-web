@@ -107,7 +107,7 @@ export function LoginScreen() {
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             이전에 로그인했던 계정으로 시작해주세요
             <br />
-            따로 로그인한 계정은 연동할 수 없어요
+            카카오와 Google로 각각 로그인하면 나중에 연동할 수 없어요
           </p>
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             로그인 시{' '}

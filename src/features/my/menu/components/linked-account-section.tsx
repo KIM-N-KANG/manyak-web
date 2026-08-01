@@ -169,11 +169,13 @@ export function LinkedAccountSection() {
               dismissLinkedToOtherUser();
             }
           }}>
-          <DialogContent>
+          <DialogContent showCloseButton={false}>
             <DialogHeader>
               <DialogTitle>{LINK_ACCOUNT_COPY.linkedToOtherTitle}</DialogTitle>
-              <DialogDescription className="leading-relaxed">
-                {LINK_ACCOUNT_COPY.linkedToOtherDescription}
+              <DialogDescription className="flex flex-col gap-2 leading-relaxed">
+                {LINK_ACCOUNT_COPY.linkedToOtherDescription.map((line) => (
+                  <span key={line}>{line}</span>
+                ))}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="grid-cols-1">

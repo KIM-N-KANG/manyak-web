@@ -22,7 +22,9 @@ export const LINK_ACCOUNT_COPY = {
   confirmAction: '연동하기',
   confirmPending: '연동 준비 중',
   linkedToOtherTitle: '이미 다른 계정에 연결되어 있어요',
-  linkedToOtherDescription:
-    '이 소셜 계정은 이미 다른 마냑 계정에 연결되어 있어요. 그 계정을 쓰려면 로그아웃한 뒤 해당 계정으로 로그인해주세요.',
+  linkedToOtherDescription: [
+    '이 소셜 계정은 이미 다른 마냑 계정에 연결되어 있어요',
+    '그 계정을 쓰려면 로그아웃한 뒤 해당 계정으로 로그인해주세요',
+  ],
   linkedToOtherAction: '확인',
 } as const;

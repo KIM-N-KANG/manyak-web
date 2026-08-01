@@ -1,6 +1,10 @@
 import type { Page } from '@playwright/test';
 
 import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
+import {
+  LINK_RESULT_COOKIE,
+  serializeLinkResult,
+} from '@/lib/auth/link-account';
 
 import {
   expect,
@@ -80,6 +84,34 @@ test.describe('마이 비주얼', () => {
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('my-link-confirm-dialog.png');
+  });
+
+  test('계정 연동 실패: 다른 계정에 연결됨 다이얼로그 (MY-MENU)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    // 연동 결과는 서버가 쿠키로 남기고 마이 페이지가 1회 소비한다(스펙 FE-SCREEN-008).
+    await page.context().addCookies([
+      {
+        name: LINK_RESULT_COOKIE,
+        value: serializeLinkResult({
+          result: 'linked_to_other_user',
+          provider: 'kakao',
+        }),
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
+
+    await page.goto('/my');
+
+    await expect(
+      page.getByRole('dialog').getByText(LINK_ACCOUNT_COPY.linkedToOtherTitle),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-link-conflict-dialog.png');
   });
 
   test('피드백 폼 기본 상태 (MY-FEEDBACK)', async ({ page }) => {
