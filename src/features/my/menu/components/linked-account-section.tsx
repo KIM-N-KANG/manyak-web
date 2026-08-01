@@ -68,7 +68,7 @@ export function LinkedAccountSection() {
       <div
         role="status"
         aria-label={LINK_ACCOUNT_COPY.sectionLoadingLabel}
-        className="flex flex-wrap items-center gap-1.5">
+        className="flex flex-wrap items-center gap-1">
         <Skeleton className="h-6 w-16" />
         <Skeleton className="h-6 w-28" />
       </div>
@@ -98,7 +98,7 @@ export function LinkedAccountSection() {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5"
+      className="flex flex-wrap items-center gap-1"
       aria-label={LINK_ACCOUNT_COPY.sectionLabel}>
       {linkedProviders.map((provider) => {
         const Logo = PROVIDER_LOGOS[provider];

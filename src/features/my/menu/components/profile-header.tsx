@@ -54,7 +54,7 @@ export function ProfileHeader() {
           <Skeleton className="h-7 w-24" />
         </div>
       ) : (
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-lg font-semibold">
             {isAuthenticated ? nickname : '게스트'}
           </span>
