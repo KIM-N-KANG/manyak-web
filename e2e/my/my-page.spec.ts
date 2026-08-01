@@ -153,7 +153,10 @@ test.describe('마이', () => {
       dialog.getByText(LINK_ACCOUNT_COPY.confirmTitle('kakao')),
     ).toBeVisible();
 
-    for (const line of LINK_ACCOUNT_COPY.confirmDescription('google')) {
+    for (const line of LINK_ACCOUNT_COPY.confirmDescription(
+      'google',
+      'kakao',
+    )) {
       await expect(dialog.getByText(line)).toBeVisible();
     }
 

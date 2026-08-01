@@ -13,10 +13,13 @@ export const LINK_ACCOUNT_COPY = {
     `${PROVIDER_LABEL[provider]} 연동하기`,
   confirmTitle: (provider: SocialLoginProvider) =>
     `${PROVIDER_LABEL[provider]} 계정을 연동할까요?`,
-  confirmDescription: (current: SocialLoginProvider) => [
-    '어느 계정으로 로그인해도 같은 스토리와 채팅을 보고, 크레딧을 쓸 수 있어요',
-    `보안을 위해 지금 로그인한 ${PROVIDER_LABEL[current]} 계정으로 먼저 다시 로그인한 뒤 연동이 진행돼요`,
-    '연동한 뒤에는 해제할 수 없어요',
+  confirmDescription: (
+    current: SocialLoginProvider,
+    target: SocialLoginProvider,
+  ) => [
+    `${PROVIDER_LABEL.kakao}와 ${PROVIDER_LABEL.google} 중 어느 쪽으로 로그인해도 같은 마냑 계정을 이용할 수 있어요`,
+    `보안을 위해 ${PROVIDER_LABEL[current]} 계정을 다시 인증한 뒤 ${PROVIDER_LABEL[target]} 계정을 연동해요`,
+    '한 번 연동하면 해제할 수 없어요',
   ],
   confirmCancel: '나중에 하기',
   confirmAction: '연동하기',

@@ -131,11 +131,12 @@ export function LinkedAccountSection() {
                 {LINK_ACCOUNT_COPY.confirmTitle(confirmTarget)}
               </DialogTitle>
               <DialogDescription className="flex flex-col gap-2 leading-relaxed">
-                {LINK_ACCOUNT_COPY.confirmDescription(currentProvider).map(
-                  (line) => (
-                    <span key={line}>{line}</span>
-                  ),
-                )}
+                {LINK_ACCOUNT_COPY.confirmDescription(
+                  currentProvider,
+                  confirmTarget,
+                ).map((line) => (
+                  <span key={line}>{line}</span>
+                ))}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
