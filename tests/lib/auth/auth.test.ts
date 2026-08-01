@@ -11,6 +11,7 @@ const authMocks = vi.hoisted(() => ({
   logoutOnServer: vi.fn(),
   readRefreshTokenCookie: vi.fn(),
   clearBackendSession: vi.fn(),
+  processLinkCallback: vi.fn(),
 }));
 
 vi.mock('next-auth', () => ({ default: authMocks.nextAuth }));
@@ -29,6 +30,9 @@ vi.mock('@/lib/auth/token-cookie-policy', () => ({
 vi.mock('@/lib/auth/token-cookies', () => ({
   readRefreshTokenCookie: authMocks.readRefreshTokenCookie,
   clearBackendSession: authMocks.clearBackendSession,
+}));
+vi.mock('@/lib/auth/link-callback', () => ({
+  processLinkCallback: authMocks.processLinkCallback,
 }));
 
 import '@/lib/auth/auth';
@@ -79,6 +83,52 @@ const getAuthConfig = (): CapturedAuthConfig => {
 
 beforeEach(() => {
   authMocks.establishBackendSession.mockReset();
+  authMocks.processLinkCallback.mockReset();
+});
+
+describe('NextAuth 계정 연동 콜백', () => {
+  it('연동 프로바이더 콜백은 백엔드 로그인을 타지 않고 연동 처리로 넘긴다', async () => {
+    const { jwt } = getAuthConfig().callbacks;
+    const token = await jwt({
+      token: { userId: 'user-1', nickname: '만냐' },
+      account: { provider: 'link-kakao', id_token: 'kakao-id-token' },
+      trigger: 'signIn',
+    });
+
+    expect(authMocks.processLinkCallback).toHaveBeenCalledWith(
+      'kakao',
+      'kakao-id-token',
+    );
+    // 연동은 새 세션을 만들지 않는다(스펙 §4-5) — 로그인 경로도 클레임도 건드리지 않는다.
+    expect(authMocks.establishBackendSession).not.toHaveBeenCalled();
+    expect(token).toEqual({ userId: 'user-1', nickname: '만냐' });
+  });
+
+  it('로그인 세션 없이 도착한 연동 콜백은 로그인 자체를 실패시킨다', async () => {
+    const { jwt } = getAuthConfig().callbacks;
+
+    await expect(
+      jwt({
+        token: {},
+        account: { provider: 'link-google', id_token: 'google-id-token' },
+        trigger: 'signIn',
+      }),
+    ).rejects.toThrow('연동은 로그인된 세션에서만 진행할 수 있습니다.');
+    expect(authMocks.processLinkCallback).not.toHaveBeenCalled();
+  });
+
+  it('연동 콜백에 id_token이 없으면 실패시킨다', async () => {
+    const { jwt } = getAuthConfig().callbacks;
+
+    await expect(
+      jwt({
+        token: { userId: 'user-1' },
+        account: { provider: 'link-google', id_token: null },
+        trigger: 'signIn',
+      }),
+    ).rejects.toThrow('link-google 응답에 id_token이 없습니다.');
+    expect(authMocks.processLinkCallback).not.toHaveBeenCalled();
+  });
 });
 
 describe('NextAuth 초대 온보딩 세션', () => {

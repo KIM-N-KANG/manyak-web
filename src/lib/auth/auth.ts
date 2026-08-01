@@ -4,6 +4,8 @@ import Google from 'next-auth/providers/google';
 
 import { logoutOnServer } from './backend-client';
 import { establishBackendSession } from './backend-session';
+import { parseLinkProviderId } from './link-account';
+import { processLinkCallback } from './link-callback';
 import { isSocialLoginProvider } from './social-provider';
 import { SESSION_COOKIE_MAX_AGE_SECONDS } from './token-cookie-policy';
 import { clearBackendSession, readRefreshTokenCookie } from './token-cookies';
@@ -26,8 +28,23 @@ const Kakao: OIDCConfig<{ sub: string }> = {
   client: { token_endpoint_auth_method: 'client_secret_post' },
 };
 
+/**
+ * 계정 연동 전용 프로바이더 변형. 로그인 프로바이더와 같은 소셜 앱 자격을 쓰되 id가
+ * 달라 콜백 URL이 갈라지고(`/api/auth/callback/link-*`), jwt 콜백이 이 id로 연동
+ * 플로우를 식별해 백엔드 로그인·세션 교체 없이 연동만 수행한다. Auth.js는 프로바이더
+ * id로 환경 변수를 추론하므로(`AUTH_LINK_GOOGLE_ID` 같은 값은 없다) 자격을 명시한다.
+ * 두 콜백 URL은 Google·Kakao 콘솔에 리디렉션 URI로 등록돼 있어야 한다.
+ */
+const LinkGoogle = Google({
+  id: 'link-google',
+  clientId: process.env.AUTH_GOOGLE_ID,
+  clientSecret: process.env.AUTH_GOOGLE_SECRET,
+});
+
+const LinkKakao: OIDCConfig<{ sub: string }> = { ...Kakao, id: 'link-kakao' };
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google, Kakao],
+  providers: [Google, Kakao, LinkGoogle, LinkKakao],
   // BFF 토큰 쿠키 수명(14일)과 정렬 — 불일치 창 제거. 기본 30일이면 14~30일
   // 사이 재방문 사용자가 회원 UI를 보면서 API 호출은 전부 익명 처리된다.
   session: { strategy: 'jwt', maxAge: SESSION_COOKIE_MAX_AGE_SECONDS },
@@ -48,6 +65,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       // account는 최초 로그인(OAuth 콜백)에서만 존재한다. 이후 세션 조회는 그대로 통과.
       if (!account) {
+        return token;
+      }
+
+      const linkProvider = parseLinkProviderId(account.provider);
+
+      if (linkProvider) {
+        // 계정 연동 콜백이다 — 로그인 경로(백엔드 세션 교체)를 타지 않고 세션 클레임도
+        // 그대로 둔다. 결과는 쿠키로 마이 페이지에 전달한다.
+        if (!token.userId) {
+          // 로그인된 세션 없이 연동 콜백에 도달했다. throw로 signIn을 실패시켜
+          // 사용자 귀속이 없는 세션이 발급되는 것을 막는다.
+          throw new Error('연동은 로그인된 세션에서만 진행할 수 있습니다.');
+        }
+
+        if (!account.id_token) {
+          throw new Error(`${account.provider} 응답에 id_token이 없습니다.`);
+        }
+
+        await processLinkCallback(linkProvider, account.id_token);
+
         return token;
       }
 
