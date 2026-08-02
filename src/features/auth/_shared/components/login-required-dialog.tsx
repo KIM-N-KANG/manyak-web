@@ -67,11 +67,11 @@ export function LoginRequiredDialog({
         <DialogHeader>
           <DialogTitle>게스트 체험 횟수를 모두 사용했어요</DialogTitle>
           <DialogDescription>
-            로그인하면 횟수 제한 없이 이용할 수 있고, 지금까지 만든 스토리와
-            채팅도 1회 한정으로 옮겨드려요
+            로그인하면 횟수 제한 없이 이용할 수 있고, 만든 스토리와 채팅도
+            계정당 한 번 옮겨드려요
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="grid-cols-1 gap-3">
+        <div className="flex w-full flex-col gap-2">
           <Button
             type="button"
             className="bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
@@ -86,6 +86,8 @@ export function LoginRequiredDialog({
             <GoogleLogo className="size-4" />
             Google로 시작하기
           </Button>
+        </div>
+        <DialogFooter className="grid-cols-1">
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             로그인 시{' '}
             <Link href={APP_PATH.TERMS} className="underline">

@@ -1,5 +1,11 @@
 import type { Page } from '@playwright/test';
 
+import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
+import {
+  LINK_RESULT_COOKIE,
+  serializeLinkResult,
+} from '@/lib/auth/link-account';
+
 import {
   expect,
   mockMemberSession,
@@ -14,7 +20,8 @@ import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
  */
 
 /**
- * 회원 프로필·크레딧 조회(/auth/me)를 목킹한다.
+ * 회원 프로필·크레딧 조회(/auth/me)를 목킹한다. 회원은 로그인 수단이 최소 하나라
+ * linkedProviders도 함께 담아야 실제 화면(연동 Chip·연동 버튼)과 같아진다.
  *
  * @param page 대상 페이지
  */
@@ -29,6 +36,7 @@ const mockAuthMe = async (page: Page) => {
         status: 'ACTIVE',
         creditBalance: 1250,
         attendedToday: false,
+        linkedProviders: ['google'],
       },
     }),
   );
@@ -57,6 +65,53 @@ test.describe('마이 비주얼', () => {
     await expect(page.getByRole('button', { name: /로그아웃/ })).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('my-member.png');
+  });
+
+  test('계정 연동 확인 다이얼로그 (MY-MENU)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/my');
+    await page
+      .getByRole('button', { name: LINK_ACCOUNT_COPY.linkButton('kakao') })
+      .click();
+
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByText(LINK_ACCOUNT_COPY.confirmTitle('kakao')),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-link-confirm-dialog.png');
+  });
+
+  test('계정 연동 실패: 다른 계정에 연결됨 다이얼로그 (MY-MENU)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    // 연동 결과는 서버가 쿠키로 남기고 마이 페이지가 1회 소비한다(스펙 FE-SCREEN-008).
+    await page.context().addCookies([
+      {
+        name: LINK_RESULT_COOKIE,
+        value: serializeLinkResult({
+          result: 'linked_to_other_user',
+          provider: 'kakao',
+        }),
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
+
+    await page.goto('/my');
+
+    await expect(
+      page.getByRole('dialog').getByText(LINK_ACCOUNT_COPY.linkedToOtherTitle),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-link-conflict-dialog.png');
   });
 
   test('피드백 폼 기본 상태 (MY-FEEDBACK)', async ({ page }) => {
