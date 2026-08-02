@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { ContinueChatRequestUserSource } from './continueChatRequestUserSource';
 
 /**
  * 채팅 이어쓰기 요청
@@ -16,4 +17,10 @@ export interface ContinueChatRequest {
    * @maxLength 3000
    */
   userInput: string;
+  /**
+   * 사용자 입력의 출처. 추천/선택지를 그대로 쓰면 choice, 고쳐 쓰면 edited_choice, 직접 입력하면 typed. 서버는 판단하지 않고 AI 호출에 그대로 전달하며, 생략하면 전달하지 않습니다.
+   * @nullable
+   * @pattern choice|edited_choice|typed
+   */
+  userSource?: ContinueChatRequestUserSource;
 }

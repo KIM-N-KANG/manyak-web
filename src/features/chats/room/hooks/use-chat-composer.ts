@@ -1,3 +1,4 @@
+import type { ContinueChatRequestUserSource } from '@/api/generated/models';
 import { track } from '@/observability/analytics';
 
 import {
@@ -18,7 +19,7 @@ type UseChatComposerParams = {
   isStreaming: boolean;
   inputMode: ChatInputMode;
   suggestions: string[];
-  onSend: (text: string) => void;
+  onSend: (text: string, userSource: ContinueChatRequestUserSource) => void;
 };
 
 /**
@@ -30,7 +31,7 @@ type UseChatComposerParams = {
  * @param isStreaming 응답 스트리밍 진행 여부
  * @param inputMode 현재 입력 모드(일반/블럭)
  * @param suggestions 추천 입력 문구 목록
- * @param onSend 완성된 텍스트를 전송하는 콜백
+ * @param onSend 완성된 텍스트와 그 출처를 전송하는 콜백
  * @returns 입력 값·블럭 상태와 전송·채우기·모드 전환 등의 동작
  */
 export function useChatComposer({
@@ -41,13 +42,14 @@ export function useChatComposer({
   suggestions,
   onSend,
 }: UseChatComposerParams) {
-  const { submitText, submitChoice, trackChoiceFill } = useChatSubmitActions({
-    chatId,
-    turnCount,
-    isStreaming,
-    inputMode,
-    onSend,
-  });
+  const { submitText, submitChoice, trackChoiceFill, rememberFilledChoice } =
+    useChatSubmitActions({
+      chatId,
+      turnCount,
+      isStreaming,
+      inputMode,
+      onSend,
+    });
   const plainComposer = useChatPlainComposer({ submitText });
   const blockComposer = useChatBlockComposer({ submitText });
 
@@ -100,6 +102,7 @@ export function useChatComposer({
 
   const fillChoice = (text: string, position: number) => {
     trackChoiceFill(position);
+    rememberFilledChoice(text);
 
     if (inputMode === 'block') {
       blockComposer.replace(parseInputBlocks(text));

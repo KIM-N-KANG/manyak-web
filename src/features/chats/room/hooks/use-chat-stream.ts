@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import { toast } from 'sonner';
 
-import type { ChatTurnResponse } from '@/api/generated/models';
+import type {
+  ChatTurnResponse,
+  ContinueChatRequestUserSource,
+} from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/_shared/utils/guest-limit-error';
 import { track } from '@/observability/analytics';
@@ -47,7 +50,10 @@ export function useChatStream(
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const send = async (userInput: string) => {
+  const send = async (
+    userInput: string,
+    userSource?: ContinueChatRequestUserSource,
+  ) => {
     setStreamingTurn({ userInput, aiOutput: '', baseTurnCount: turnCount });
 
     const controller = new AbortController();
@@ -59,7 +65,7 @@ export function useChatStream(
     try {
       const stream = await streamChatTurnRaw(
         chatId,
-        { userInput },
+        { userInput, userSource },
         controller.signal,
       );
 

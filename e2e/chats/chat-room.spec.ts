@@ -673,6 +673,7 @@ test.describe('블럭 입력 모드 (기본)', () => {
     await expect(page.getByText('그녀가 고개를 끄덕였다.')).toBeVisible();
     expect(JSON.parse(streamRequestBody)).toEqual({
       userInput: '*비가 온다*\n\n우산 챙겼어?',
+      userSource: 'typed',
     });
   });
 
@@ -718,6 +719,115 @@ test.describe('블럭 입력 모드 (기본)', () => {
     await expect(page.getByPlaceholder('어떤 대사를 건넬까요?')).toHaveValue(
       '누구세요?',
     );
+  });
+});
+
+// 서버는 문자열만으로 "추천 선택지와 같은 문장을 직접 입력한 경우"를 구분할 수 없어
+// 입력 방식을 아는 프론트가 userSource를 명시한다(스펙 §3-8).
+test.describe('입력 출처(userSource) 전달', () => {
+  const SUGGESTION = '던전에 진입한다';
+  const PLAIN_INPUT = '이야기를 어떻게 이어갈까요?';
+
+  /** 추천 입력 1개를 가진 빈 채팅과 스트림 응답을 목킹한다. */
+  const routeChatWithSuggestion = async (page: Page) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([], [SUGGESTION])),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"어둠이 깔린다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"어둠이 깔린다."}\n\n',
+        ]),
+      });
+    });
+  };
+
+  /** 전송을 일으키고 실제로 나간 턴 요청 본문을 돌려준다. */
+  const captureStreamBody = async (page: Page, send: () => Promise<void>) => {
+    const [request] = await Promise.all([
+      page.waitForRequest((target) =>
+        target.url().includes('/api/v1/chats/c1/turns/stream'),
+      ),
+      send(),
+    ]);
+
+    return request.postDataJSON();
+  };
+
+  test('추천 입력을 탭해 바로 보내면 choice로 보낸다', async ({ page }) => {
+    await routeChatWithSuggestion(page);
+    await page.goto('/chats/c1');
+
+    const body = await captureStreamBody(page, () =>
+      page.getByRole('button', { name: SUGGESTION }).click(),
+    );
+
+    expect(body).toEqual({ userInput: SUGGESTION, userSource: 'choice' });
+  });
+
+  test('추천 입력을 채운 뒤 그대로 보내면 choice로 보낸다', async ({
+    page,
+  }) => {
+    await routeChatWithSuggestion(page);
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    await page.getByRole('button', { name: '입력창에 넣어 수정' }).click();
+    await expect(page.getByPlaceholder(PLAIN_INPUT)).toHaveValue(SUGGESTION);
+
+    const body = await captureStreamBody(page, () =>
+      page.getByRole('button', { name: '전송' }).click(),
+    );
+
+    expect(body).toEqual({ userInput: SUGGESTION, userSource: 'choice' });
+  });
+
+  test('추천 입력을 채운 뒤 고쳐 보내면 edited_choice로 보낸다', async ({
+    page,
+  }) => {
+    const edited = `${SUGGESTION} 그리고 횃불을 켠다`;
+
+    await routeChatWithSuggestion(page);
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    await page.getByRole('button', { name: '입력창에 넣어 수정' }).click();
+
+    const input = page.getByPlaceholder(PLAIN_INPUT);
+
+    await expect(input).toHaveValue(SUGGESTION);
+    await input.fill(edited);
+
+    const body = await captureStreamBody(page, () =>
+      page.getByRole('button', { name: '전송' }).click(),
+    );
+
+    expect(body).toEqual({ userInput: edited, userSource: 'edited_choice' });
+  });
+
+  test('채우기 없이 직접 입력해 보내면 typed로 보낸다', async ({ page }) => {
+    await routeChatWithSuggestion(page);
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    await page.getByPlaceholder(PLAIN_INPUT).fill('횃불을 켜고 안쪽을 살핀다');
+
+    const body = await captureStreamBody(page, () =>
+      page.getByRole('button', { name: '전송' }).click(),
+    );
+
+    expect(body).toEqual({
+      userInput: '횃불을 켜고 안쪽을 살핀다',
+      userSource: 'typed',
+    });
   });
 });
 
