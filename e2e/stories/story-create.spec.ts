@@ -282,4 +282,59 @@ test.describe('스토리 생성', () => {
     ).toBeVisible();
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
   });
+
+  // 재생성은 전용 API가 없어 서버가 원본과의 관계를 알 수 없다. 프론트가 직전 시도의
+  // requestId를 parentCreationId로 실어 Langfuse 여정을 잇는다(스펙 §3-8, 체인 방식).
+  test('스토리라인 재생성이 직전 생성의 requestId를 부모로 실어 보낸다', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tags),
+      });
+    });
+
+    const bodies: { requestId: string; parentCreationId: string | null }[] = [];
+
+    await page.route(STORYLINES, async (route) => {
+      bodies.push(route.request().postDataJSON());
+
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(storylinesResponse),
+      });
+    });
+
+    await page.goto('/stories/new');
+
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '스토리라인 만들기' }).click();
+    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+
+    const regenerateButton = page.getByRole('button', { name: '다시 만들기' });
+
+    await regenerateButton.click();
+    await expect.poll(() => bodies.length).toBe(2);
+    await regenerateButton.click();
+    await expect.poll(() => bodies.length).toBe(3);
+
+    const [first, second, third] = bodies;
+
+    // 최초 생성은 부모가 없다.
+    expect(first.parentCreationId).toBeNull();
+
+    // 재생성마다 새 requestId를 받고, 부모는 바로 직전 시도를 가리킨다.
+    expect(second.requestId).not.toBe(first.requestId);
+    expect(second.parentCreationId).toBe(first.requestId);
+
+    // 체인이라 세 번째의 부모는 두 번째다 — 최초 루트를 계속 가리키지 않는다.
+    expect(third.parentCreationId).toBe(second.requestId);
+    expect(third.parentCreationId).not.toBe(first.requestId);
+  });
 });

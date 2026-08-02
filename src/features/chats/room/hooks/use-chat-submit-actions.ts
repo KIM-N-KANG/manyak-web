@@ -1,6 +1,10 @@
+import { useRef } from 'react';
+
+import type { ContinueChatRequestUserSource } from '@/api/generated/models';
 import { track } from '@/observability/analytics';
 
 import { parseInputBlocks, serializeInputBlocks } from '../utils/input-blocks';
+import { resolveUserSource } from '../utils/resolve-user-source';
 import { type ChatInputMode } from './use-chat-input-mode';
 
 type UseChatSubmitActionsParams = {
@@ -8,7 +12,7 @@ type UseChatSubmitActionsParams = {
   turnCount: number;
   isStreaming: boolean;
   inputMode: ChatInputMode;
-  onSend: (text: string) => void;
+  onSend: (text: string, userSource: ContinueChatRequestUserSource) => void;
 };
 
 /**
@@ -19,7 +23,7 @@ type UseChatSubmitActionsParams = {
  * @param turnCount 현재까지의 턴 개수
  * @param isStreaming 응답 스트리밍 진행 여부
  * @param inputMode 현재 입력 모드(일반/블럭)
- * @param onSend 완성된 텍스트를 전송하는 콜백
+ * @param onSend 완성된 텍스트와 그 출처를 전송하는 콜백
  * @returns 텍스트·선택지 전송과 채우기 트래킹 동작
  */
 export function useChatSubmitActions({
@@ -29,6 +33,11 @@ export function useChatSubmitActions({
   inputMode,
   onSend,
 }: UseChatSubmitActionsParams) {
+  // 채우기로 입력창에 넣어둔 추천 선택지 원문. 전송 시점에 지금 텍스트와 대조해
+  // 그대로 보냈는지(choice) 고쳐 보냈는지(edited_choice)를 가른다. 화면에 그리는
+  // 값이 아니라 다음 전송까지 들고만 있으면 되므로 ref로 둔다.
+  const filledChoiceRef = useRef<string | null>(null);
+
   const createEventProps = () => ({
     chat_id: chatId,
     turn_number: turnCount + 1,
@@ -44,11 +53,23 @@ export function useChatSubmitActions({
       return false;
     }
 
+    // 선택지를 눌러 바로 보낸 경로는 대조할 것도 없이 choice다.
+    const userSource =
+      source === 'choice'
+        ? 'choice'
+        : resolveUserSource({
+            filledChoiceText: filledChoiceRef.current,
+            submittedText: trimmed,
+          });
+
     track('client_chat_messageInput_submitted', {
       ...createEventProps(),
       input_mode: source,
     });
-    onSend(trimmed);
+    onSend(trimmed, userSource);
+
+    // 다음 입력이 앞 턴에서 채운 선택지와 대조되지 않도록 전송에 성공하면 비운다.
+    filledChoiceRef.current = null;
 
     return true;
   };
@@ -78,5 +99,10 @@ export function useChatSubmitActions({
     });
   };
 
-  return { submitText, submitChoice, trackChoiceFill };
+  /** 채우기로 입력창에 넣은 추천 선택지 원문을 전송 시점 대조용으로 기억한다. */
+  const rememberFilledChoice = (text: string) => {
+    filledChoiceRef.current = text;
+  };
+
+  return { submitText, submitChoice, trackChoiceFill, rememberFilledChoice };
 }
