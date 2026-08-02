@@ -18,6 +18,7 @@ export * from './chatShareTurnResponse';
 export * from './chatSummaryResponse';
 export * from './chatTurnResponse';
 export * from './continueChatRequest';
+export * from './continueChatRequestUserSource';
 export * from './createChatRequest';
 export * from './createChatResponse';
 export * from './createChatShareResponse';

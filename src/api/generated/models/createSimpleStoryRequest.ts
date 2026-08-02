@@ -29,4 +29,5 @@ export interface CreateSimpleStoryRequest {
    * @items.maxLength 100
    */
   additionalInfos?: string[];
+  regenerated?: boolean;
 }

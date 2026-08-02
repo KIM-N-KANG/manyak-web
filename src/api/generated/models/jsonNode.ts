@@ -13,7 +13,15 @@ export interface JsonNode {
   null?: boolean;
   float?: boolean;
   floatingPointNumber?: boolean;
+  missingNode?: boolean;
   integralNumber?: boolean;
+  object?: boolean;
+  valueNode?: boolean;
+  container?: boolean;
+  /** @deprecated */
+  textual?: boolean;
+  boolean?: boolean;
+  binary?: boolean;
   nodeType?: JsonNodeNodeType;
   string?: boolean;
   pojo?: boolean;
@@ -23,14 +31,6 @@ export interface JsonNode {
   double?: boolean;
   bigDecimal?: boolean;
   bigInteger?: boolean;
-  /** @deprecated */
-  textual?: boolean;
-  boolean?: boolean;
-  binary?: boolean;
-  missingNode?: boolean;
-  valueNode?: boolean;
-  container?: boolean;
-  object?: boolean;
   number?: boolean;
   embeddedValue?: boolean;
 }

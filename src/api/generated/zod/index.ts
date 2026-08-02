@@ -98,6 +98,7 @@ export const CreateSimpleStoryBody = zod
       .max(createSimpleStoryBodyAdditionalInfosMax)
       .optional()
       .describe('선택한 스토리라인을 보완하는 자유 추가 정보 목록'),
+    regenerated: zod.boolean().optional(),
   })
   .describe('간편 제작 스토리 생성 요청');
 
@@ -153,6 +154,13 @@ export const GenerateSimpleStorylinesBody = zod
       .max(generateSimpleStorylinesBodyCustomTagsMax)
       .optional()
       .describe('사용자가 직접 추가한 태그 목록'),
+    parentCreationId: zod
+      .uuid()
+      .nullish()
+      .describe(
+        '재생성이면 직전 생성의 creation_id(=그 요청의 requestId). 서버는 생성하지 않고 전달만 합니다.',
+      ),
+    regenerated: zod.boolean().optional(),
   })
   .describe('간편 제작 스토리라인 생성 요청');
 
@@ -460,6 +468,12 @@ export const StreamChatTurnBody = zod
       .max(streamChatTurnBodyUserInputMax)
       .describe(
         '사용자 입력. 첫 입력에서는 이름, 성향, 능력치, 배경 등 캐릭터 프로필을 설정할 수 있고, 이후에는 다음 사건, 행동, 대사, 분위기, 감정, 연출 방향 등을 입력합니다. 응답 완료 시 사용자 입력과 AI 출력이 하나의 채팅 턴으로 저장됩니다.',
+      ),
+    userSource: zod
+      .enum(['choice', 'edited_choice', 'typed'])
+      .nullish()
+      .describe(
+        '사용자 입력의 출처. 추천\/선택지를 그대로 쓰면 choice, 고쳐 쓰면 edited_choice, 직접 입력하면 typed. 서버는 판단하지 않고 AI 호출에 그대로 전달하며, 생략하면 전달하지 않습니다.',
       ),
   })
   .describe('채팅 이어쓰기 요청');

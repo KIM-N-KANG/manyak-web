@@ -25,4 +25,10 @@ export interface GenerateSimpleStorylinesRequest {
    * @maxItems 20
    */
   customTags?: SimpleStoryCustomTagRequest[];
+  /**
+   * 재생성이면 직전 생성의 creation_id(=그 요청의 requestId). 서버는 생성하지 않고 전달만 합니다.
+   * @nullable
+   */
+  parentCreationId?: string | null;
+  regenerated?: boolean;
 }
