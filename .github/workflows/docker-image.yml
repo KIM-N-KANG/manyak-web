@@ -24,9 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -72,7 +69,11 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          # 이 이미지는 배포가 아니라 manyak-infra Compose의 로컬·통합 테스트에만 쓴다.
+          # arm64는 amd64 러너에서 QEMU 에뮬레이션으로 빌드해야 하는데, Next 빌드 워커가
+          # SIGILL로 죽는 일이 있고(binfmt가 latest라 버전이 고정되지 않는다) 빌드 시간의
+          # 대부분을 차지한다. 맥에서는 amd64 이미지를 Rosetta로 실행한다(KNK-758).
+          platforms: linux/amd64
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
