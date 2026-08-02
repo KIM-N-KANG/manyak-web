@@ -158,7 +158,7 @@ export const GenerateSimpleStorylinesBody = zod
       .uuid()
       .nullish()
       .describe(
-        '재생성이면 직전 생성의 creation_id(=그 요청의 requestId). 서버는 생성하지 않고 전달만 합니다.',
+        '재생성이면 직전 생성의 creation_id(=그 요청의 requestId). 서버가 이 값을 검증해 \*\*통과한 경우에만\*\* AI 호출 헤더로 전달합니다(자기참조 아님·해당 요청 존재·소유 연속성). 검증에 실패해도 이 요청은 정상 처리되며(400이 아닙니다) 체인 헤더만 생략됩니다. 실패 사유는 서버에 기록되므로, 재생성 체인이 이어지지 않았다면 이 값이 유효했는지 확인하세요.',
       ),
     regenerated: zod.boolean().optional(),
   })
