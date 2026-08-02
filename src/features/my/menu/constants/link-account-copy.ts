@@ -25,10 +25,10 @@ export const LINK_ACCOUNT_COPY = {
   confirmCancel: '나중에 하기',
   confirmAction: '연동하기',
   confirmPending: '연동 준비 중',
-  linkedToOtherTitle: '이미 다른 계정에 연결되어 있어요',
+  linkedToOtherTitle: '이미 다른 마냑 계정에 연동된 계정이에요',
   linkedToOtherDescription: [
-    '이 소셜 계정은 이미 다른 마냑 계정에 연결되어 있어요',
-    '그 계정을 쓰려면 로그아웃한 뒤 해당 계정으로 로그인해주세요',
+    '방금 인증한 소셜 계정은 이미 다른 마냑 계정에 연동되어 있어 지금 계정에는 연동할 수 없어요',
+    '그 마냑 계정을 쓰려면 로그아웃한 뒤 해당 소셜 계정으로 다시 로그인해주세요',
   ],
   linkedToOtherAction: '확인',
 } as const;
