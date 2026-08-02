@@ -3,6 +3,7 @@ import {
   type InviteCodeErrorType,
   type InviteCodeSource,
 } from '@/features/my/invite/utils/invite-code';
+import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type InAppBrowser } from '@/lib/in-app-browser';
 
 /** 스토리 생성 플로우의 단계 이름. */
@@ -27,6 +28,14 @@ export type AnalyticsEventProps = {
   // login
   client_login_viewed: void;
   client_login_googleButton_clicked: void;
+  client_login_kakaoButton_clicked: void;
+  // OAuth 콜백 단계 실패는 백엔드에 도달하지 않아 서버 이벤트가 못 잡는 사각지대라
+  // NextAuth가 error 쿼리와 함께 /login으로 복귀시키는 시점에 발화한다(스펙 §6-4-3).
+  // NextAuth error 쿼리에는 시작 provider 정보가 없어 provider는 null로 보낸다.
+  client_login_oauthError_shown: {
+    error_code: string;
+    provider: string | null;
+  };
   // in-app browser (감지·탈출 — 스펙 §6-4-2-12)
   client_inappBrowser_detected: { app: InAppBrowser };
   client_inappBrowser_escapeAttempted: { app: 'kakaotalk' };
@@ -39,10 +48,13 @@ export type AnalyticsEventProps = {
     handoff_id: string;
   };
   client_loginContinue_viewed: void;
-  client_loginContinue_loginButton_clicked: void;
+  client_loginContinue_loginButton_clicked: { provider: SocialLoginProvider };
   // guest limit (게스트 체험 한도 초과 → 로그인 유도)
   client_guestLimitDialog_shown: { trigger: GuestLimitTrigger };
-  client_guestLimitDialog_loginButton_clicked: { trigger: GuestLimitTrigger };
+  client_guestLimitDialog_loginButton_clicked: {
+    trigger: GuestLimitTrigger;
+    provider: SocialLoginProvider;
+  };
   client_guestLimitDialog_dismissed: { trigger: GuestLimitTrigger };
   // credit shortage (회원 크레딧 부족 → 크레딧 획득 유도)
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
@@ -183,6 +195,9 @@ export type AnalyticsEventProps = {
   client_account_loginButton_clicked: void;
   client_account_attendanceButton_clicked: void;
   client_account_logoutButton_clicked: void;
+  // 연동 성공·실패는 서버 이벤트(server_link_socialLink_processed_*)가 잡으므로
+  // 클라이언트는 시도 시점만 남긴다(스펙 §6-4).
+  client_account_linkAccountButton_clicked: { provider: SocialLoginProvider };
   // feedback
   client_feedback_viewed: void;
   client_feedback_form_submitted: void;

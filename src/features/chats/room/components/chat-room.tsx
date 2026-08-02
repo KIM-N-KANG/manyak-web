@@ -8,7 +8,10 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
-import type { ChatTurnResponse } from '@/api/generated/models';
+import type {
+  ChatTurnResponse,
+  ContinueChatRequestUserSource,
+} from '@/api/generated/models';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
@@ -143,14 +146,17 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnCount: turns.length,
   });
 
-  const guardedSend = (userInput: string): Promise<void> => {
+  const guardedSend = (
+    userInput: string,
+    userSource: ContinueChatRequestUserSource,
+  ): Promise<void> => {
     if (isGuestOverLimit(sessionStatus, 'chat')) {
       setGuestLimitTrigger('chat_turn');
 
       return Promise.resolve();
     }
 
-    return send(userInput);
+    return send(userInput, userSource);
   };
 
   const guardedRegenerate = (turn: ChatTurnResponse): Promise<void> => {

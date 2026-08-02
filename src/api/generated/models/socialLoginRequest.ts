@@ -7,11 +7,11 @@
  */
 
 /**
- * Google 로그인 요청
+ * 소셜 로그인 요청(Google·Kakao 공통)
  */
-export interface GoogleLoginRequest {
+export interface SocialLoginRequest {
   /**
-   * Google에서 발급받은 ID 토큰(JWT). 서버가 Google 공개키로 검증한다.
+   * 소셜 provider에서 발급받은 OIDC ID 토큰(JWT). 서버가 provider 공개키로 검증한다.
    * @minLength 1
    */
   idToken: string;

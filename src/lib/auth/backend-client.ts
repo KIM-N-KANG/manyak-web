@@ -1,19 +1,26 @@
 import {
   getConfirmUrl,
+  getLinkUrl,
   getLoginWithGoogleUrl,
+  getLoginWithKakaoUrl,
   getLogoutUrl,
   getMeUrl,
+  getReauthenticateUrl,
   getRefreshUrl,
 } from '@/api/generated/endpoints/auth/auth';
 import type {
+  LinkCodeResponse,
   LoginHandoffSummaryResponse,
   MeResponse,
   TokenResponse,
 } from '@/api/generated/models';
+import { SocialReauthRequestProvider } from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
 import { HANDOFF_CODE_HEADER } from './handoff-header';
+import { LINK_CODE_HEADER } from './link-header';
+import type { SocialLoginProvider } from './social-provider';
 
 /**
  * BFF(서버)에서 백엔드 인증 API를 직접 호출하는 클라이언트.
@@ -72,11 +79,15 @@ const requestBackend = async <T>(
     throw new BackendAuthError(response.status, body);
   }
 
-  if (response.status === 204) {
+  // 204뿐 아니라 연동 성공(201, 본문 없음 — 스펙 §4-5)처럼 본문이 비어 있는 응답도
+  // 파싱할 JSON이 없다. status로 특별 취급하지 않고 본문 유무로 판정한다.
+  const text = await response.text();
+
+  if (!text) {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  return JSON.parse(text) as T;
 };
 
 /**
@@ -98,8 +109,15 @@ const postJson = <T>(
     body: JSON.stringify(body),
   });
 
+/** provider별 백엔드 로그인 경로 빌더. 생성된 URL 빌더를 재사용해 드리프트를 막는다. */
+const SOCIAL_LOGIN_URL_BUILDERS: Record<SocialLoginProvider, () => string> = {
+  google: getLoginWithGoogleUrl,
+  kakao: getLoginWithKakaoUrl,
+};
+
 /**
- * Google ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
+ * 소셜 provider의 OIDC ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
+ * 요청·응답 계약은 provider와 무관하게 동일하다(스펙 §4-5 — 경로만 다름).
  *
  * deviceId는 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데 쓰인다(스펙 §4-3-7).
  * 서버가 pepper를 붙여 내부에서 해시하므로 반드시 원문 그대로 전달한다 — 클라이언트에서
@@ -111,18 +129,20 @@ const postJson = <T>(
  * 시드는 로그인 호출에 실려야 하며, 미루면 백엔드가 소진 시드를 비가역으로 확정한다.
  * 무효·만료 코드는 백엔드가 헤더 deviceId로 폴백하고 로그인은 정상 진행한다.
  *
- * @param idToken Google에서 발급한 ID 토큰
+ * @param provider 로그인에 사용한 소셜 provider
+ * @param idToken provider에서 발급한 OIDC ID 토큰
  * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
  * @param handoffCode 인앱 핸드오프 코드 원문(없으면 body에서 생략)
  * @returns 발급된 백엔드 토큰 응답
  */
-export const loginWithGoogleOnServer = (
+export const loginWithSocialOnServer = (
+  provider: SocialLoginProvider,
   idToken: string,
   deviceId?: string,
   handoffCode?: string,
 ): Promise<TokenResponse> =>
   postJson<TokenResponse>(
-    getLoginWithGoogleUrl(),
+    SOCIAL_LOGIN_URL_BUILDERS[provider](),
     { idToken, ...(handoffCode ? { handoffCode } : {}) },
     deviceId ? { [DEVICE_ID_HEADER]: deviceId } : undefined,
   );
@@ -170,3 +190,79 @@ export const confirmHandoffOnServer = (
   requestBackend<LoginHandoffSummaryResponse>(getConfirmUrl(), {
     headers: { [HANDOFF_CODE_HEADER]: handoffCode },
   });
+
+/** provider별 재인증 요청 body의 백엔드 enum 값. 경로 세그먼트와 달리 대문자다. */
+const REAUTH_PROVIDER_VALUES: Record<
+  SocialLoginProvider,
+  SocialReauthRequestProvider
+> = {
+  google: SocialReauthRequestProvider.GOOGLE,
+  kakao: SocialReauthRequestProvider.KAKAO,
+};
+
+/**
+ * 이미 연동된 provider의 신선한 ID 토큰으로 계정 소유를 재확인하고 일회용 링크 코드를
+ * 발급받는다(스펙 §4-5 계정 연동 — 재인증 선행). 실패는 사유 구분 없이 403이다.
+ *
+ * @param accessToken 인증에 사용할 access 토큰
+ * @param provider 재인증에 쓸 provider(요청자에게 이미 연동돼 있어야 한다)
+ * @param idToken 방금 발급받은 OIDC ID 토큰(발급 10분 이내)
+ * @returns 링크 코드 응답(TTL 5분)
+ */
+export const reauthenticateOnServer = (
+  accessToken: string,
+  provider: SocialLoginProvider,
+  idToken: string,
+): Promise<LinkCodeResponse> =>
+  postJson<LinkCodeResponse>(
+    getReauthenticateUrl(),
+    { provider: REAUTH_PROVIDER_VALUES[provider], idToken },
+    { Authorization: `Bearer ${accessToken}` },
+  );
+
+/**
+ * 링크 코드와 대상 provider의 ID 토큰으로 계정 연동을 요청한다(201, 본문 없음).
+ * 코드는 성공했을 때만 소비되므로 403·409 실패 후에는 만료 전 재시도할 수 있다.
+ *
+ * @param accessToken 인증에 사용할 access 토큰
+ * @param provider 연동할 대상 provider(경로 세그먼트라 소문자)
+ * @param idToken 대상 provider가 발급한 OIDC ID 토큰
+ * @param linkCode 재인증으로 발급받은 일회용 링크 코드
+ */
+export const linkAccountOnServer = (
+  accessToken: string,
+  provider: SocialLoginProvider,
+  idToken: string,
+  linkCode: string,
+): Promise<void> =>
+  postJson<void>(
+    getLinkUrl(provider),
+    { idToken },
+    { Authorization: `Bearer ${accessToken}`, [LINK_CODE_HEADER]: linkCode },
+  );
+
+/**
+ * BackendAuthError의 응답 본문에서 에러 code를 추출한다. 아니면 null이다.
+ *
+ * @param error 판별할 에러 값
+ * @returns 응답 본문의 code 문자열, 없으면 null
+ */
+export const parseBackendErrorCode = (error: unknown): string | null => {
+  if (!(error instanceof BackendAuthError) || !error.body) {
+    return null;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(error.body);
+
+    if (typeof parsed !== 'object' || parsed === null) {
+      return null;
+    }
+
+    const { code } = parsed as { code?: unknown };
+
+    return typeof code === 'string' ? code : null;
+  } catch {
+    return null;
+  }
+};

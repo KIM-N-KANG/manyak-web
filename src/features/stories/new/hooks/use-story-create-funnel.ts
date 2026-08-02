@@ -550,12 +550,19 @@ export function useStoryCreateFunnel() {
 
   // 스토리라인 생성 요청에 새 requestId를 부여하고 복구 레코드를 저장한 뒤 요청한다.
   // 생성·재생성 각각이 새 시도이므로 매번 새 UUID를 쓴다.
+  //
+  // 재생성이면 직전 시도의 requestId를 parentCreationId로 실어 Langfuse 여정을 잇는다(스펙 §3-8).
+  // 체인 방식이라 항상 "바로 직전" 값만 가리키며, 최초 생성은 부모가 없어 null이다. 재생성은
+  // 직전 요청 전체(input)를 그대로 다시 보내는 구조라, 값을 명시하지 않으면 직전 요청의
+  // parentCreationId가 스프레드로 딸려와 조부모를 가리키게 되므로 매번 덮어쓴다.
   const requestGenerateStorylines = (
     input: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
+    parentCreationId: string | null = null,
   ) => {
     const request: GenerateSimpleStorylinesRequest = {
       ...input,
       requestId: createClientId(),
+      parentCreationId,
     };
 
     savePendingCreationRequest({
@@ -601,7 +608,7 @@ export function useStoryCreateFunnel() {
     }
 
     setIsGuestLimitReached(false);
-    requestGenerateStorylines(generationRequest);
+    requestGenerateStorylines(generationRequest, generationRequest.requestId);
   };
 
   const handleActiveStorylineIndexChange = (index: number) => {

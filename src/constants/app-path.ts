@@ -12,6 +12,7 @@ export const APP_PATH = {
   MY_ABOUT: '/my/about',
   MY_FEEDBACK: '/my/feedback',
   MY_INVITE: '/my/invite',
+  MY_LINK_CONTINUE: '/my/link/continue',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   SHARE_VIEW: (shareId: string) => `/share/${shareId}`,

@@ -16,8 +16,10 @@ import {
 } from '@/components/ui/dialog';
 import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
+import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
 import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
-import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
+import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
+import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredDialogProps = {
@@ -37,12 +39,18 @@ export function LoginRequiredDialog({
     }
   }, [trigger]);
 
-  const handleGoogleLogin = () => {
+  const handleSocialLogin = (provider: SocialLoginProvider) => {
     if (trigger) {
-      track('client_guestLimitDialog_loginButton_clicked', { trigger });
+      track('client_guestLimitDialog_loginButton_clicked', {
+        trigger,
+        provider,
+      });
     }
 
-    void startGoogleLogin({ redirectTo: resolveLoginCallbackUrl(pathname) });
+    void startSocialLogin({
+      provider,
+      redirectTo: resolveLoginCallbackUrl(pathname),
+    });
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -59,15 +67,27 @@ export function LoginRequiredDialog({
         <DialogHeader>
           <DialogTitle>게스트 체험 횟수를 모두 사용했어요</DialogTitle>
           <DialogDescription>
-            로그인하면 횟수 제한 없이 이용할 수 있고, 지금까지 만든 스토리와
-            채팅도 1회 한정으로 옮겨드려요
+            로그인하면 횟수 제한 없이 이용할 수 있고, 만든 스토리와 채팅도
+            계정당 한 번 옮겨드려요
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="grid-cols-1 gap-3">
-          <Button type="button" variant="outline" onClick={handleGoogleLogin}>
+        <div className="flex w-full flex-col gap-2">
+          <Button
+            type="button"
+            className="bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+            onClick={() => handleSocialLogin('kakao')}>
+            <KakaoLogo className="size-4" />
+            카카오로 시작하기
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleSocialLogin('google')}>
             <GoogleLogo className="size-4" />
             Google로 시작하기
           </Button>
+        </div>
+        <DialogFooter className="grid-cols-1">
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             로그인 시{' '}
             <Link href={APP_PATH.TERMS} className="underline">

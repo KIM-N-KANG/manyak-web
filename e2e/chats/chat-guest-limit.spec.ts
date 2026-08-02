@@ -89,6 +89,9 @@ test.describe('채팅 게스트 한도·크레딧 게이팅', () => {
       dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
     await expect(
+      dialog.getByRole('button', { name: '카카오로 시작하기' }),
+    ).toBeVisible();
+    await expect(
       dialog.getByRole('button', { name: 'Google로 시작하기' }),
     ).toBeVisible();
     expect(streamRequestCount).toBe(0);

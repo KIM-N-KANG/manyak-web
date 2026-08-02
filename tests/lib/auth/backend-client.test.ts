@@ -3,10 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BackendAuthError,
   confirmHandoffOnServer,
-  loginWithGoogleOnServer,
+  linkAccountOnServer,
+  loginWithSocialOnServer,
   logoutOnServer,
+  parseBackendErrorCode,
+  reauthenticateOnServer,
 } from '@/lib/auth/backend-client';
 import { HANDOFF_CODE_HEADER } from '@/lib/auth/handoff-header';
+import { LINK_CODE_HEADER } from '@/lib/auth/link-header';
 import { API_TIMEOUT_MS } from '@/lib/fetch-with-timeout';
 import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
@@ -25,7 +29,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('loginWithGoogleOnServer', () => {
+describe('loginWithSocialOnServer', () => {
   it('백엔드 요청에 기본 타임아웃을 적용한다', async () => {
     vi.useFakeTimers();
     fetchMock.mockImplementation(
@@ -40,7 +44,7 @@ describe('loginWithGoogleOnServer', () => {
     );
 
     try {
-      const promise = loginWithGoogleOnServer('id-token');
+      const promise = loginWithSocialOnServer('google', 'id-token');
       const assertion = expect(promise).rejects.toMatchObject({
         name: 'TimeoutError',
       });
@@ -64,7 +68,9 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await expect(loginWithGoogleOnServer('id-token')).resolves.toEqual({
+    await expect(
+      loginWithSocialOnServer('google', 'id-token'),
+    ).resolves.toEqual({
       accessToken: 'a',
     });
 
@@ -75,13 +81,29 @@ describe('loginWithGoogleOnServer', () => {
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
   });
 
+  it('kakao provider는 /api/v1/auth/login/kakao로 POST한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await expect(loginWithSocialOnServer('kakao', 'id-token')).resolves.toEqual(
+      { accessToken: 'a' },
+    );
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(url).toBe('https://backend.example.com/api/v1/auth/login/kakao');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
+  });
+
   it('deviceId를 주면 X-Manyak-Device-Id 헤더에 원문 그대로 담아 전송한다', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
     // 서버가 pepper를 붙여 내부에서 해시하므로 클라이언트 측 가공(해시) 없이 원문이어야 한다.
-    await loginWithGoogleOnServer('id-token', 'raw-device-id-1234');
+    await loginWithSocialOnServer('google', 'id-token', 'raw-device-id-1234');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
@@ -95,7 +117,7 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithGoogleOnServer('id-token');
+    await loginWithSocialOnServer('google', 'id-token');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
@@ -108,7 +130,12 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithGoogleOnServer('id-token', 'raw-device-id', 'handoff-code');
+    await loginWithSocialOnServer(
+      'google',
+      'id-token',
+      'raw-device-id',
+      'handoff-code',
+    );
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
@@ -123,7 +150,7 @@ describe('loginWithGoogleOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithGoogleOnServer('id-token', 'raw-device-id');
+    await loginWithSocialOnServer('google', 'id-token', 'raw-device-id');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
@@ -135,13 +162,15 @@ describe('loginWithGoogleOnServer', () => {
       new Response('유효하지 않은 Google ID 토큰입니다.', { status: 401 }),
     );
 
-    await expect(loginWithGoogleOnServer('bad')).rejects.toMatchObject({
+    await expect(
+      loginWithSocialOnServer('google', 'bad'),
+    ).rejects.toMatchObject({
       status: 401,
       body: '유효하지 않은 Google ID 토큰입니다.',
     });
-    await expect(loginWithGoogleOnServer('bad')).rejects.toBeInstanceOf(
-      BackendAuthError,
-    );
+    await expect(
+      loginWithSocialOnServer('google', 'bad'),
+    ).rejects.toBeInstanceOf(BackendAuthError);
   });
 });
 
@@ -183,5 +212,112 @@ describe('confirmHandoffOnServer', () => {
     await expect(confirmHandoffOnServer('gone')).rejects.toMatchObject({
       status: 404,
     });
+  });
+});
+
+describe('reauthenticateOnServer', () => {
+  it('대문자 provider enum과 Bearer 헤더로 재인증을 요청하고 링크 코드를 반환한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ linkCode: 'code', expiresAt: '2026-08-01T10:00:00Z' }),
+        { status: 201 },
+      ),
+    );
+
+    // 요청 body의 provider는 백엔드 enum(대문자)이고, 경로 세그먼트만 소문자다.
+    await expect(
+      reauthenticateOnServer('access-token', 'google', 'id-token'),
+    ).resolves.toMatchObject({ linkCode: 'code' });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+
+    expect(url).toBe('https://backend.example.com/api/v1/auth/links/reauth');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({
+      provider: 'GOOGLE',
+      idToken: 'id-token',
+    });
+    expect(headers.get('Authorization')).toBe('Bearer access-token');
+  });
+
+  it('kakao는 KAKAO enum으로 변환해 보낸다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ linkCode: 'code' }), { status: 201 }),
+    );
+
+    await reauthenticateOnServer('access-token', 'kakao', 'id-token');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      provider: 'KAKAO',
+    });
+  });
+
+  it('재인증 실패(403)는 BackendAuthError를 던진다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ code: 'REAUTH_FAILED' }), { status: 403 }),
+    );
+
+    await expect(
+      reauthenticateOnServer('access-token', 'google', 'stale'),
+    ).rejects.toMatchObject({ status: 403 });
+  });
+});
+
+describe('linkAccountOnServer', () => {
+  it('소문자 provider 경로와 X-Manyak-Link-Code 헤더로 연동을 요청한다', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+
+    await expect(
+      linkAccountOnServer('access-token', 'kakao', 'id-token', 'link-code'),
+    ).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+
+    expect(url).toBe('https://backend.example.com/api/v1/auth/links/kakao');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
+    expect(headers.get('Authorization')).toBe('Bearer access-token');
+    // 링크 코드는 URL이 아니라 헤더로만 전달한다(스펙 §4-5).
+    expect(headers.get(LINK_CODE_HEADER)).toBe('link-code');
+    expect(url).not.toContain('link-code');
+  });
+
+  it('이미 연동된 계정(409)은 BackendAuthError로 status와 body를 전달한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ code: 'PROVIDER_ALREADY_LINKED' }), {
+        status: 409,
+      }),
+    );
+
+    await expect(
+      linkAccountOnServer('access-token', 'kakao', 'id-token', 'link-code'),
+    ).rejects.toMatchObject({
+      status: 409,
+      body: JSON.stringify({ code: 'PROVIDER_ALREADY_LINKED' }),
+    });
+  });
+});
+
+describe('parseBackendErrorCode', () => {
+  it('BackendAuthError body의 code를 추출한다', () => {
+    const error = new BackendAuthError(
+      409,
+      JSON.stringify({ code: 'PROVIDER_ALREADY_LINKED' }),
+    );
+
+    expect(parseBackendErrorCode(error)).toBe('PROVIDER_ALREADY_LINKED');
+  });
+
+  it('BackendAuthError가 아니거나 body가 JSON이 아니면 null이다', () => {
+    expect(parseBackendErrorCode(new Error('x'))).toBeNull();
+    expect(parseBackendErrorCode(new BackendAuthError(500, 'html'))).toBeNull();
+    expect(parseBackendErrorCode(new BackendAuthError(500))).toBeNull();
+    expect(
+      parseBackendErrorCode(new BackendAuthError(409, JSON.stringify({}))),
+    ).toBeNull();
   });
 });

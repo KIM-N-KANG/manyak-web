@@ -12,18 +12,20 @@ import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
+import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
 import {
   buildLoginUrl,
   resolveLoginCallbackUrl,
 } from '@/features/auth/_shared/utils/login-callback-url';
-import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
+import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
+import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { track } from '@/observability/analytics';
 
 export function LoginScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const hasError = searchParams.has('error');
+  const errorCode = searchParams.get('error');
   const isSessionExpired = searchParams.has(SESSION_EXPIRED_PARAM);
   const callbackUrl = searchParams.get('callbackUrl');
   const loginPathWithCallback = buildLoginUrl(callbackUrl);
@@ -33,13 +35,17 @@ export function LoginScreen() {
   }, []);
 
   useEffect(() => {
-    if (!hasError) {
+    if (errorCode === null) {
       return;
     }
 
+    track('client_login_oauthError_shown', {
+      error_code: errorCode,
+      provider: null,
+    });
     toast.error(TOAST_MESSAGE.LOGIN_FAILED);
     router.replace(loginPathWithCallback);
-  }, [hasError, loginPathWithCallback, router]);
+  }, [errorCode, loginPathWithCallback, router]);
 
   useEffect(() => {
     if (!isSessionExpired) {
@@ -50,9 +56,14 @@ export function LoginScreen() {
     router.replace(loginPathWithCallback);
   }, [isSessionExpired, loginPathWithCallback, router]);
 
-  const handleGoogleLogin = () => {
-    track('client_login_googleButton_clicked');
-    void startGoogleLogin({
+  const handleSocialLogin = (provider: SocialLoginProvider) => {
+    track(
+      provider === 'kakao'
+        ? 'client_login_kakaoButton_clicked'
+        : 'client_login_googleButton_clicked',
+    );
+    void startSocialLogin({
+      provider,
       redirectTo: resolveLoginCallbackUrl(searchParams.get('callbackUrl')),
     });
   };
@@ -74,15 +85,30 @@ export function LoginScreen() {
             처음 로그인하면 이 기기의 스토리와 채팅이 계정에 저장돼요
             <br />이 과정은 계정당 한 번만 진행돼요
           </p>
-          <Button
-            type="button"
-            size="lg"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleLogin}>
-            <GoogleLogo />
-            Google로 시작하기
-          </Button>
+          <div className="flex w-full flex-col gap-2">
+            <Button
+              type="button"
+              size="lg"
+              className="w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+              onClick={() => handleSocialLogin('kakao')}>
+              <KakaoLogo />
+              카카오로 시작하기
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSocialLogin('google')}>
+              <GoogleLogo />
+              Google로 시작하기
+            </Button>
+          </div>
+          <p className="text-center text-xs leading-relaxed text-foreground-secondary">
+            이전에 로그인했던 계정으로 시작해주세요
+            <br />
+            카카오와 Google로 각각 로그인하면 나중에 연동할 수 없어요
+          </p>
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             로그인 시{' '}
             <Link href={APP_PATH.TERMS} className="underline">

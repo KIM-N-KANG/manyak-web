@@ -13,10 +13,12 @@ import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
+import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
 import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
-import { startGoogleLogin } from '@/features/auth/_shared/utils/start-google-login';
+import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { HANDOFF_QUERY_PARAM } from '@/lib/auth/handoff-query';
+import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 import { track } from '@/observability/analytics';
 
@@ -232,9 +234,10 @@ function ExternalHandoffLanding() {
     );
   }
 
-  const handleGoogleLogin = () => {
-    track('client_loginContinue_loginButton_clicked');
-    void startGoogleLogin({
+  const handleSocialLogin = (provider: SocialLoginProvider) => {
+    track('client_loginContinue_loginButton_clicked', { provider });
+    void startSocialLogin({
+      provider,
       redirectTo: resolveLoginCallbackUrl(summary?.callbackPath ?? null),
     });
   };
@@ -256,15 +259,25 @@ function ExternalHandoffLanding() {
             만든 스토리와 채팅은 로그인하면 계정으로 옮겨져요
             <br />이 과정은 계정당 한 번만 진행돼요
           </p>
-          <Button
-            type="button"
-            size="lg"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleLogin}>
-            <GoogleLogo />
-            Google로 시작하기
-          </Button>
+          <div className="flex w-full flex-col gap-3">
+            <Button
+              type="button"
+              size="lg"
+              className="w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+              onClick={() => handleSocialLogin('kakao')}>
+              <KakaoLogo />
+              카카오로 시작하기
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSocialLogin('google')}>
+              <GoogleLogo />
+              Google로 시작하기
+            </Button>
+          </div>
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
             로그인 시{' '}
             <Link href={APP_PATH.TERMS} className="underline">

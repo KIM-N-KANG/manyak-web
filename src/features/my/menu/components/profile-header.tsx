@@ -13,6 +13,8 @@ import { APP_PATH } from '@/constants/app-path';
 import { startInAppLoginShortcut } from '@/features/auth/_shared/utils/in-app-login-shortcut';
 import { track } from '@/observability/analytics';
 
+import { LinkedAccountSection } from './linked-account-section';
+
 export function ProfileHeader() {
   const { data: session, status } = useSession();
   const [imageError, setImageError] = useState(false);
@@ -52,9 +54,12 @@ export function ProfileHeader() {
           <Skeleton className="h-7 w-24" />
         </div>
       ) : (
-        <span className="min-w-0 flex-1 truncate text-lg font-semibold">
-          {isAuthenticated ? nickname : '게스트'}
-        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="truncate text-lg font-semibold">
+            {isAuthenticated ? nickname : '게스트'}
+          </span>
+          {isAuthenticated && <LinkedAccountSection />}
+        </div>
       )}
       {status === 'unauthenticated' && (
         <Link

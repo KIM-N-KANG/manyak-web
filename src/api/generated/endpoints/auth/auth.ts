@@ -24,7 +24,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
-  GoogleLoginRequest,
+  AccountLinkRequest,
+  LinkCodeResponse,
   LoginHandoffCreateRequest,
   LoginHandoffCreateResponse,
   LoginHandoffStatusResponse,
@@ -34,6 +35,8 @@ import type {
   MigrationRequest,
   MigrationResponse,
   RefreshTokenRequest,
+  SocialLoginRequest,
+  SocialReauthRequest,
   TokenResponse,
 } from '../../models';
 
@@ -364,6 +367,121 @@ export const useLogout = <TError = ErrorType<void>, TContext = unknown>(
 > => {
   return useMutation(getLogoutMutationOptions(options), queryClient);
 };
+export type loginWithKakaoResponse200 = {
+  data: TokenResponse;
+  status: 200;
+};
+
+export type loginWithKakaoResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type loginWithKakaoResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type loginWithKakaoResponseSuccess = loginWithKakaoResponse200 & {
+  headers: Headers;
+};
+export type loginWithKakaoResponseError = (
+  | loginWithKakaoResponse400
+  | loginWithKakaoResponse401
+) & {
+  headers: Headers;
+};
+
+export type loginWithKakaoResponse =
+  | loginWithKakaoResponseSuccess
+  | loginWithKakaoResponseError;
+
+export const getLoginWithKakaoUrl = () => {
+  return `/api/v1/auth/login/kakao`;
+};
+
+/**
+ * Kakao OIDC ID 토큰을 검증해 사용자를 find-or-create하고 access+refresh 토큰을 발급합니다. 요청·응답 계약은 Google 로그인과 동일합니다(검증 파라미터만 다름). Kakao 계정과 Google 계정은 합쳐지지 않고 별개 계정입니다(계정 통합 미도입 — 스펙 §4-5). 토큰이 유효하지 않으면(서명·만료·issuer·audience 불일치) 401, 본문이 올바르지 않으면 400으로 응답합니다.
+ * @summary Kakao 로그인
+ */
+export const loginWithKakao = async (
+  socialLoginRequest: SocialLoginRequest,
+  options?: RequestInit,
+): Promise<loginWithKakaoResponse> => {
+  return customInstance<loginWithKakaoResponse>(getLoginWithKakaoUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(socialLoginRequest),
+  });
+};
+
+export const getLoginWithKakaoMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof loginWithKakao>>,
+    TError,
+    { data: BodyType<SocialLoginRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof loginWithKakao>>,
+  TError,
+  { data: BodyType<SocialLoginRequest> },
+  TContext
+> => {
+  const mutationKey = ['loginWithKakao'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof loginWithKakao>>,
+    { data: BodyType<SocialLoginRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return loginWithKakao(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LoginWithKakaoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof loginWithKakao>>
+>;
+export type LoginWithKakaoMutationBody = BodyType<SocialLoginRequest>;
+export type LoginWithKakaoMutationError = ErrorType<void>;
+
+/**
+ * @summary Kakao 로그인
+ */
+export const useLoginWithKakao = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof loginWithKakao>>,
+      TError,
+      { data: BodyType<SocialLoginRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof loginWithKakao>>,
+  TError,
+  { data: BodyType<SocialLoginRequest> },
+  TContext
+> => {
+  return useMutation(getLoginWithKakaoMutationOptions(options), queryClient);
+};
 export type loginWithGoogleResponse200 = {
   data: TokenResponse;
   status: 200;
@@ -402,14 +520,14 @@ export const getLoginWithGoogleUrl = () => {
  * @summary Google 로그인
  */
 export const loginWithGoogle = async (
-  googleLoginRequest: GoogleLoginRequest,
+  socialLoginRequest: SocialLoginRequest,
   options?: RequestInit,
 ): Promise<loginWithGoogleResponse> => {
   return customInstance<loginWithGoogleResponse>(getLoginWithGoogleUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(googleLoginRequest),
+    body: JSON.stringify(socialLoginRequest),
   });
 };
 
@@ -420,14 +538,14 @@ export const getLoginWithGoogleMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof loginWithGoogle>>,
     TError,
-    { data: BodyType<GoogleLoginRequest> },
+    { data: BodyType<SocialLoginRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof loginWithGoogle>>,
   TError,
-  { data: BodyType<GoogleLoginRequest> },
+  { data: BodyType<SocialLoginRequest> },
   TContext
 > => {
   const mutationKey = ['loginWithGoogle'];
@@ -441,7 +559,7 @@ export const getLoginWithGoogleMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof loginWithGoogle>>,
-    { data: BodyType<GoogleLoginRequest> }
+    { data: BodyType<SocialLoginRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
@@ -454,7 +572,7 @@ export const getLoginWithGoogleMutationOptions = <
 export type LoginWithGoogleMutationResult = NonNullable<
   Awaited<ReturnType<typeof loginWithGoogle>>
 >;
-export type LoginWithGoogleMutationBody = BodyType<GoogleLoginRequest>;
+export type LoginWithGoogleMutationBody = BodyType<SocialLoginRequest>;
 export type LoginWithGoogleMutationError = ErrorType<void>;
 
 /**
@@ -468,7 +586,7 @@ export const useLoginWithGoogle = <
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof loginWithGoogle>>,
       TError,
-      { data: BodyType<GoogleLoginRequest> },
+      { data: BodyType<SocialLoginRequest> },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
@@ -477,10 +595,261 @@ export const useLoginWithGoogle = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof loginWithGoogle>>,
   TError,
-  { data: BodyType<GoogleLoginRequest> },
+  { data: BodyType<SocialLoginRequest> },
   TContext
 > => {
   return useMutation(getLoginWithGoogleMutationOptions(options), queryClient);
+};
+export type linkResponse201 = {
+  data: void;
+  status: 201;
+};
+
+export type linkResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type linkResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type linkResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type linkResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type linkResponseSuccess = linkResponse201 & {
+  headers: Headers;
+};
+export type linkResponseError = (
+  | linkResponse400
+  | linkResponse401
+  | linkResponse403
+  | linkResponse409
+) & {
+  headers: Headers;
+};
+
+export type linkResponse = linkResponseSuccess | linkResponseError;
+
+export const getLinkUrl = (provider: string) => {
+  return `/api/v1/auth/links/${provider}`;
+};
+
+/**
+ * 로그인된 계정에 다른 소셜 provider를 추가로 연동합니다. 연동하면 그 provider로 로그인해도 같은 계정(같은 크레딧·서재)으로 들어옵니다. 재인증으로 받은 링크 코드를 `X-Manyak-Link-Code` 헤더에 실어야 합니다 (코드는 URL에 싣지 않습니다 — 요청 URI가 구조화 로그·Sentry에 남습니다).
+ *
+ * 이 API는 새 계정도, 새 세션도 만들지 않습니다(가입 보상·토큰 발급 없음). 기존 access·refresh 토큰은 그대로 유효하며, 연동 후 상태는 `GET /auth/me`의 `linkedProviders`로 확인합니다.
+ *
+ * 링크 코드는 **성공했을 때만** 소비됩니다. 403·409로 실패하면 코드가 남아 만료 전까지 재인증 없이 다시 시도할 수 있습니다. 이미 연동된 소셜 계정을 다시 보내면(내 계정이든 남의 계정이든) 409입니다. 연동 해제는 제공하지 않습니다.
+ * @summary 계정 연동 추가
+ */
+export const link = async (
+  provider: string,
+  accountLinkRequest: AccountLinkRequest,
+  options?: RequestInit,
+): Promise<linkResponse> => {
+  return customInstance<linkResponse>(getLinkUrl(provider), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(accountLinkRequest),
+  });
+};
+
+export const getLinkMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof link>>,
+    TError,
+    { provider: string; data: BodyType<AccountLinkRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof link>>,
+  TError,
+  { provider: string; data: BodyType<AccountLinkRequest> },
+  TContext
+> => {
+  const mutationKey = ['link'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof link>>,
+    { provider: string; data: BodyType<AccountLinkRequest> }
+  > = (props) => {
+    const { provider, data } = props ?? {};
+
+    return link(provider, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LinkMutationResult = NonNullable<Awaited<ReturnType<typeof link>>>;
+export type LinkMutationBody = BodyType<AccountLinkRequest>;
+export type LinkMutationError = ErrorType<void>;
+
+/**
+ * @summary 계정 연동 추가
+ */
+export const useLink = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof link>>,
+      TError,
+      { provider: string; data: BodyType<AccountLinkRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof link>>,
+  TError,
+  { provider: string; data: BodyType<AccountLinkRequest> },
+  TContext
+> => {
+  return useMutation(getLinkMutationOptions(options), queryClient);
+};
+export type reauthenticateResponse201 = {
+  data: LinkCodeResponse;
+  status: 201;
+};
+
+export type reauthenticateResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type reauthenticateResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type reauthenticateResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type reauthenticateResponseSuccess = reauthenticateResponse201 & {
+  headers: Headers;
+};
+export type reauthenticateResponseError = (
+  | reauthenticateResponse400
+  | reauthenticateResponse401
+  | reauthenticateResponse403
+) & {
+  headers: Headers;
+};
+
+export type reauthenticateResponse =
+  | reauthenticateResponseSuccess
+  | reauthenticateResponseError;
+
+export const getReauthenticateUrl = () => {
+  return `/api/v1/auth/links/reauth`;
+};
+
+/**
+ * 연동을 시작하기 전에 **이미 연동된 provider**로 소유를 재확인하고 일회용 링크 코드를 발급합니다. 연동은 계정에 로그인 수단을 영구히 추가하는 작업이라 세션만으로는 부족합니다(공용 기기에 남은 세션 악용 차단). 재인증 토큰은 방금 발급받은 것이어야 하며, 오래된 토큰은 거부합니다.
+ *
+ * 발급된 코드는 짧게 만료되며(기본 5분), 연동 요청의 `X-Manyak-Link-Code` 헤더에 실어 보냅니다. 실패 사유는 구분하지 않습니다(어떤 소셜 계정이 이 회원에게 연동돼 있는지 노출하지 않기 위해서입니다).
+ * @summary 계정 연동 재인증
+ */
+export const reauthenticate = async (
+  socialReauthRequest: SocialReauthRequest,
+  options?: RequestInit,
+): Promise<reauthenticateResponse> => {
+  return customInstance<reauthenticateResponse>(getReauthenticateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(socialReauthRequest),
+  });
+};
+
+export const getReauthenticateMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reauthenticate>>,
+    TError,
+    { data: BodyType<SocialReauthRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reauthenticate>>,
+  TError,
+  { data: BodyType<SocialReauthRequest> },
+  TContext
+> => {
+  const mutationKey = ['reauthenticate'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reauthenticate>>,
+    { data: BodyType<SocialReauthRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return reauthenticate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReauthenticateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reauthenticate>>
+>;
+export type ReauthenticateMutationBody = BodyType<SocialReauthRequest>;
+export type ReauthenticateMutationError = ErrorType<void>;
+
+/**
+ * @summary 계정 연동 재인증
+ */
+export const useReauthenticate = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof reauthenticate>>,
+      TError,
+      { data: BodyType<SocialReauthRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof reauthenticate>>,
+  TError,
+  { data: BodyType<SocialReauthRequest> },
+  TContext
+> => {
+  return useMutation(getReauthenticateMutationOptions(options), queryClient);
 };
 export type confirmResponse200 = {
   data: LoginHandoffSummaryResponse;
