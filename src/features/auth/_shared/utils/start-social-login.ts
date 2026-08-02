@@ -29,6 +29,12 @@ type StartSocialLoginOptions = {
 };
 
 /**
+ * 소셜 로그인 시작 결과. 페이지 이탈이 시작됐으면 `redirected`, 현재 화면에 남아
+ * 재시도가 필요하면 `failed`다. 호출부는 이 값으로 버튼 로딩 상태를 해제할지 판단한다.
+ */
+export type SocialLoginOutcome = 'redirected' | 'failed';
+
+/**
  * 모든 소셜 로그인 CTA의 공통 진입점이다(스펙 §3-8·§3-10).
  * 일반 브라우저는 곧바로 next-auth signIn을 태우고, SNS 인앱 브라우저는 게스트
  * 데이터를 서버 핸드오프에 맡긴 뒤 외부 브라우저 전환을 준비한다. 단, 카카오톡 인앱의
@@ -37,20 +43,29 @@ type StartSocialLoginOptions = {
  *
  * @param options.provider 로그인에 사용할 소셜 provider
  * @param options.redirectTo 로그인 완료 후 복귀할 앱 내 상대 경로
+ * @returns 페이지 이탈 시작 여부를 담은 결과
  */
 export async function startSocialLogin({
   provider,
   redirectTo,
-}: StartSocialLoginOptions): Promise<void> {
+}: StartSocialLoginOptions): Promise<SocialLoginOutcome> {
   const inAppBrowser = detectInAppBrowser(navigator.userAgent);
 
   if (!inAppBrowser || (provider === 'kakao' && inAppBrowser === 'kakaotalk')) {
-    await signIn(provider, { redirectTo });
+    try {
+      await signIn(provider, { redirectTo });
+    } catch {
+      // signIn은 인가 URL 조회(fetch)가 실패하면 이탈 없이 throw하므로,
+      // 사용자에게 알리고 화면에 남는 실패로 처리한다.
+      toast.error(TOAST_MESSAGE.LOGIN_FAILED);
 
-    return;
+      return 'failed';
+    }
+
+    return 'redirected';
   }
 
-  await startInAppHandoffLogin({ redirectTo, inAppBrowser });
+  return startInAppHandoffLogin({ redirectTo, inAppBrowser });
 }
 
 type StartInAppHandoffLoginOptions = {
@@ -68,11 +83,12 @@ type StartInAppHandoffLoginOptions = {
  *
  * @param options.redirectTo 로그인 완료 후 복귀할 앱 내 상대 경로
  * @param options.inAppBrowser 감지된 인앱 브라우저 종류
+ * @returns 페이지 이탈 시작 여부를 담은 결과
  */
 export async function startInAppHandoffLogin({
   redirectTo,
   inAppBrowser,
-}: StartInAppHandoffLoginOptions): Promise<void> {
+}: StartInAppHandoffLoginOptions): Promise<SocialLoginOutcome> {
   const storyIds = parseCreatedStoryIds(getCreatedStoryIdsSnapshot());
   const chatIds = parseCreatedChatIds(getCreatedChatIdsSnapshot());
 
@@ -89,7 +105,7 @@ export async function startInAppHandoffLogin({
     if (response.status !== 201) {
       toast.error(TOAST_MESSAGE.HANDOFF_CREATE_FAILED);
 
-      return;
+      return 'failed';
     }
 
     const { handoffCode, handoffId } = response.data;
@@ -97,7 +113,7 @@ export async function startInAppHandoffLogin({
     if (!handoffCode || !handoffId) {
       toast.error(TOAST_MESSAGE.HANDOFF_CREATE_FAILED);
 
-      return;
+      return 'failed';
     }
 
     savePendingHandoff({ code: handoffCode, handoffId, storyIds, chatIds });
@@ -114,7 +130,11 @@ export async function startInAppHandoffLogin({
     )}`;
 
     window.location.replace(continueUrl);
+
+    return 'redirected';
   } catch {
     toast.error(TOAST_MESSAGE.HANDOFF_CREATE_FAILED);
+
+    return 'failed';
   }
 }

@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,8 +18,11 @@ import {
 import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
+import {
+  SOCIAL_LOGIN_PENDING_LABEL,
+  useSocialLogin,
+} from '@/features/auth/_shared/hooks/use-social-login';
 import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
-import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
@@ -32,6 +36,7 @@ export function LoginRequiredDialog({
   onOpenChange,
 }: LoginRequiredDialogProps) {
   const pathname = usePathname();
+  const { pendingProvider, startLogin } = useSocialLogin();
 
   useEffect(() => {
     if (trigger) {
@@ -47,13 +52,17 @@ export function LoginRequiredDialog({
       });
     }
 
-    void startSocialLogin({
+    void startLogin({
       provider,
       redirectTo: resolveLoginCallbackUrl(pathname),
     });
   };
 
   const handleOpenChange = (open: boolean) => {
+    if (!open && pendingProvider !== null) {
+      return;
+    }
+
     if (!open && trigger) {
       track('client_guestLimitDialog_dismissed', { trigger });
     }
@@ -74,17 +83,28 @@ export function LoginRequiredDialog({
         <div className="flex w-full flex-col gap-2">
           <Button
             type="button"
-            className="bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+            className="relative bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+            disabled={pendingProvider !== null}
             onClick={() => handleSocialLogin('kakao')}>
-            <KakaoLogo className="size-4" />
-            카카오로 시작하기
+            <LoadingButtonContent
+              isLoading={pendingProvider === 'kakao'}
+              loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+              <KakaoLogo className="size-4" />
+              카카오로 시작하기
+            </LoadingButtonContent>
           </Button>
           <Button
             type="button"
             variant="outline"
+            className="relative"
+            disabled={pendingProvider !== null}
             onClick={() => handleSocialLogin('google')}>
-            <GoogleLogo className="size-4" />
-            Google로 시작하기
+            <LoadingButtonContent
+              isLoading={pendingProvider === 'google'}
+              loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+              <GoogleLogo className="size-4" />
+              Google로 시작하기
+            </LoadingButtonContent>
           </Button>
         </div>
         <DialogFooter className="grid-cols-1">

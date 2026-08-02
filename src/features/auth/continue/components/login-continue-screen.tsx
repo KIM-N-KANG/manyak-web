@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import type { LoginHandoffSummaryResponse } from '@/api/generated/models';
 import { ListStatus } from '@/components/common/list-status';
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { BackHeader } from '@/components/layout/back-header';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
@@ -14,8 +15,11 @@ import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
+import {
+  SOCIAL_LOGIN_PENDING_LABEL,
+  useSocialLogin,
+} from '@/features/auth/_shared/hooks/use-social-login';
 import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
-import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { HANDOFF_QUERY_PARAM } from '@/lib/auth/handoff-query';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
@@ -151,6 +155,7 @@ function ExternalHandoffLanding() {
   const [summary, setSummary] = useState<LoginHandoffSummaryResponse | null>(
     null,
   );
+  const { pendingProvider, startLogin } = useSocialLogin();
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -236,7 +241,7 @@ function ExternalHandoffLanding() {
 
   const handleSocialLogin = (provider: SocialLoginProvider) => {
     track('client_loginContinue_loginButton_clicked', { provider });
-    void startSocialLogin({
+    void startLogin({
       provider,
       redirectTo: resolveLoginCallbackUrl(summary?.callbackPath ?? null),
     });
@@ -263,19 +268,29 @@ function ExternalHandoffLanding() {
             <Button
               type="button"
               size="lg"
-              className="w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+              className="relative w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+              disabled={pendingProvider !== null}
               onClick={() => handleSocialLogin('kakao')}>
-              <KakaoLogo />
-              카카오로 시작하기
+              <LoadingButtonContent
+                isLoading={pendingProvider === 'kakao'}
+                loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+                <KakaoLogo />
+                카카오로 시작하기
+              </LoadingButtonContent>
             </Button>
             <Button
               type="button"
               size="lg"
               variant="outline"
-              className="w-full"
+              className="relative w-full"
+              disabled={pendingProvider !== null}
               onClick={() => handleSocialLogin('google')}>
-              <GoogleLogo />
-              Google로 시작하기
+              <LoadingButtonContent
+                isLoading={pendingProvider === 'google'}
+                loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+                <GoogleLogo />
+                Google로 시작하기
+              </LoadingButtonContent>
             </Button>
           </div>
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
