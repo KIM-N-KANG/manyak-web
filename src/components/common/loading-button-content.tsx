@@ -1,9 +1,12 @@
+import type { ReactNode } from 'react';
+
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
 type LoadingButtonContentProps = {
   isLoading: boolean;
   loadingLabel: string;
-  children: string;
+  children: ReactNode;
 };
 
 export function LoadingButtonContent({
@@ -15,7 +18,10 @@ export function LoadingButtonContent({
     <>
       <span
         aria-hidden={isLoading}
-        className={isLoading ? 'invisible' : undefined}>
+        className={cn(
+          'inline-flex items-center justify-center gap-[inherit]',
+          isLoading && 'invisible',
+        )}>
         {children}
       </span>
       {isLoading && <Spinner className="absolute" aria-label={loadingLabel} />}

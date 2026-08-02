@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { BackHeader } from '@/components/layout/back-header';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
@@ -14,10 +15,13 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
 import {
+  SOCIAL_LOGIN_PENDING_LABEL,
+  useSocialLogin,
+} from '@/features/auth/_shared/hooks/use-social-login';
+import {
   buildLoginUrl,
   resolveLoginCallbackUrl,
 } from '@/features/auth/_shared/utils/login-callback-url';
-import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { track } from '@/observability/analytics';
@@ -25,6 +29,7 @@ import { track } from '@/observability/analytics';
 export function LoginScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { pendingProvider, startLogin } = useSocialLogin();
   const errorCode = searchParams.get('error');
   const isSessionExpired = searchParams.has(SESSION_EXPIRED_PARAM);
   const callbackUrl = searchParams.get('callbackUrl');
@@ -62,7 +67,7 @@ export function LoginScreen() {
         ? 'client_login_kakaoButton_clicked'
         : 'client_login_googleButton_clicked',
     );
-    void startSocialLogin({
+    void startLogin({
       provider,
       redirectTo: resolveLoginCallbackUrl(searchParams.get('callbackUrl')),
     });
@@ -89,19 +94,29 @@ export function LoginScreen() {
             <Button
               type="button"
               size="lg"
-              className="w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+              className="relative w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+              disabled={pendingProvider !== null}
               onClick={() => handleSocialLogin('kakao')}>
-              <KakaoLogo />
-              카카오로 시작하기
+              <LoadingButtonContent
+                isLoading={pendingProvider === 'kakao'}
+                loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+                <KakaoLogo />
+                카카오로 시작하기
+              </LoadingButtonContent>
             </Button>
             <Button
               type="button"
               size="lg"
               variant="outline"
-              className="w-full"
+              className="relative w-full"
+              disabled={pendingProvider !== null}
               onClick={() => handleSocialLogin('google')}>
-              <GoogleLogo />
-              Google로 시작하기
+              <LoadingButtonContent
+                isLoading={pendingProvider === 'google'}
+                loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+                <GoogleLogo />
+                Google로 시작하기
+              </LoadingButtonContent>
             </Button>
           </div>
           <p className="text-center text-xs leading-relaxed text-foreground-secondary">
