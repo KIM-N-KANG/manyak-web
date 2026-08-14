@@ -19,7 +19,7 @@
 
 - **Node.js 20+**
 - **pnpm 10.28.2** (`corepack enable`로 활성화 권장)
-- **백엔드 API 서버** — 로컬 개발 시 `http://localhost:8080`에서 실행 중이어야 합니다. API 코드 생성(`pnpm api:generate`)도 이 서버의 OpenAPI 스펙(`/v3/api-docs`)을 참조합니다.
+- **백엔드 API 서버** — `API_BASE_URL`로 지정한 서버가 실행 중이어야 합니다. 로컬 서버(`http://localhost:8080`)나 공용 개발 서버를 사용할 수 있으며, API 코드 생성(`pnpm api:generate`)도 같은 서버의 OpenAPI 스펙(`/v3/api-docs`)을 참조합니다.
 
 ### 설치 및 실행
 
@@ -38,11 +38,11 @@ pnpm dev
 
 ## 환경 변수
 
-| 변수           | 설명                                                     |
-| -------------- | -------------------------------------------------------- |
-| `API_BASE_URL` | 백엔드 API 서버의 base URL (예: `http://localhost:8080`) |
+| 변수           | 설명                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------- |
+| `API_BASE_URL` | 백엔드 API 서버의 base URL (예: `http://localhost:8080`, `https://dev-api.manyak.app`) |
 
-브라우저는 백엔드를 직접 호출하지 않고, Next.js의 프록시 라우트(`src/app/api/[...path]/route.ts`)를 거칩니다. 클라이언트가 `/api/*`로 요청하면 서버가 `API_BASE_URL`로 그대로 전달합니다. 따라서 `API_BASE_URL`은 서버 사이드에서만 사용되며 클라이언트 번들에 노출되지 않습니다.
+브라우저는 백엔드를 직접 호출하지 않고, Next.js의 프록시 라우트(`src/app/api/[...path]/route.ts`)를 거칩니다. 클라이언트가 `/api/*`로 요청하면 서버가 `API_BASE_URL`로 그대로 전달합니다. `pnpm api:generate`도 Next.js와 같은 환경 변수 로더로 이 값을 읽어 `${API_BASE_URL}/v3/api-docs`를 사용합니다. 따라서 `API_BASE_URL`은 서버 사이드와 개발 도구에서만 사용되며 클라이언트 번들에 노출되지 않습니다.
 
 ## API 코드 생성 (Orval)
 
@@ -52,7 +52,7 @@ pnpm dev
 pnpm api:generate
 ```
 
-위 명령은 `http://localhost:8080/v3/api-docs`를 읽어 다음을 생성합니다.
+위 명령은 `.env.local`의 `API_BASE_URL`을 읽고 `${API_BASE_URL}/v3/api-docs`에서 다음을 생성합니다. URL 끝의 `/`는 자동으로 제거하며, 값이 없으면 생성 전에 오류로 중단합니다.
 
 - `src/api/generated/endpoints` — TanStack Query 훅
 - `src/api/generated/models` — 타입 정의
@@ -60,7 +60,7 @@ pnpm api:generate
 
 생성된 코드는 모든 요청을 공용 인스턴스(`src/api/mutator/custom-instance.ts`)를 통해 보냅니다.
 
-> 백엔드 API 스펙이 변경되면 백엔드 서버를 실행한 상태에서 `pnpm api:generate`를 다시 실행해 생성 코드를 갱신하세요. `src/api/generated` 아래 파일은 직접 수정하지 않습니다.
+> 백엔드 API 스펙이 변경되면 `API_BASE_URL`의 서버가 실행되고 OpenAPI 문서를 공개한 상태에서 `pnpm api:generate`를 다시 실행해 생성 코드를 갱신하세요. `src/api/generated` 아래 파일은 직접 수정하지 않습니다.
 
 ## 프로젝트 구조
 

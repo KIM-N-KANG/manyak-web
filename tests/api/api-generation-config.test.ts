@@ -36,7 +36,11 @@ test('orval config reads backend OpenAPI and generates API plus Zod outputs', ()
   const source = read('orval.config.ts');
 
   assert.match(source, /defineConfig/);
-  assert.match(source, /http:\/\/localhost:8080\/v3\/api-docs/);
+  assert.match(source, /loadEnvConfig\(process\.cwd\(\)\)/);
+  assert.match(source, /process\.env\.API_BASE_URL/);
+  assert.match(source, /API_BASE_URL is not configured/);
+  assert.match(source, /\/v3\/api-docs/);
+  assert.doesNotMatch(source, /http:\/\/localhost:8080/);
   assert.match(source, /api:/);
   assert.match(source, /client:\s*'react-query'/);
   assert.match(source, /mode:\s*'tags-split'/);
