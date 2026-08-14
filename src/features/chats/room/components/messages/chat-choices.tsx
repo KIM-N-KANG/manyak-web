@@ -9,8 +9,9 @@ import { ChatTextSegments } from '@/features/chats/_shared/components/chat-text-
 
 type ChatChoicesProps = {
   choices: string[];
-  onSend: (text: string, position: number) => void;
-  onFill: (text: string, position: number) => void;
+  sourceTurnId?: number;
+  onSend: (text: string, position: number, sourceTurnId?: number) => void;
+  onFill: (text: string, position: number, sourceTurnId?: number) => void;
   /** 추천 입력 사용법을 처음 한 번 소개하는 인라인 힌트 노출 여부. */
   showsHint?: boolean;
 };
@@ -28,6 +29,7 @@ const itemVariants: Variants = {
 
 export function ChatChoices({
   choices,
+  sourceTurnId,
   onSend,
   onFill,
   showsHint = false,
@@ -68,14 +70,14 @@ export function ChatChoices({
             variant="ghost"
             size="icon-sm"
             aria-label="입력창에 넣어 수정"
-            onClick={() => onFill(choice, index)}
+            onClick={() => onFill(choice, index, sourceTurnId)}
             className="text-foreground-secondary">
             <HugeiconsIcon icon={BubbleChatEditIcon} aria-hidden="true" />
           </Button>
           <Button
             type="button"
             variant="secondary"
-            onClick={() => onSend(choice, index)}
+            onClick={() => onSend(choice, index, sourceTurnId)}
             className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi font-normal whitespace-normal">
             <span>
               <ChatTextSegments>{choice}</ChatTextSegments>

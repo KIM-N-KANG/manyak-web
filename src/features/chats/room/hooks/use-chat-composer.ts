@@ -1,6 +1,7 @@
 import type { ContinueChatRequestUserSource } from '@/api/generated/models';
 import { track } from '@/observability/analytics';
 
+import type { ChatChoiceSelection } from '../types';
 import {
   createDefaultInputBlocks,
   type InputBlockType,
@@ -19,7 +20,12 @@ type UseChatComposerParams = {
   isStreaming: boolean;
   inputMode: ChatInputMode;
   suggestions: string[];
-  onSend: (text: string, userSource: ContinueChatRequestUserSource) => void;
+  suggestionSourceTurnId?: number;
+  onSend: (
+    text: string,
+    userSource: ContinueChatRequestUserSource,
+    selection?: ChatChoiceSelection,
+  ) => void;
 };
 
 /**
@@ -31,6 +37,7 @@ type UseChatComposerParams = {
  * @param isStreaming 응답 스트리밍 진행 여부
  * @param inputMode 현재 입력 모드(일반/블럭)
  * @param suggestions 추천 입력 문구 목록
+ * @param suggestionSourceTurnId 추천 문구가 달린 원본 턴 ID
  * @param onSend 완성된 텍스트와 그 출처를 전송하는 콜백
  * @returns 입력 값·블럭 상태와 전송·채우기·모드 전환 등의 동작
  */
@@ -40,6 +47,7 @@ export function useChatComposer({
   isStreaming,
   inputMode,
   suggestions,
+  suggestionSourceTurnId,
   onSend,
 }: UseChatComposerParams) {
   const { submitText, submitChoice, trackChoiceFill, rememberFilledChoice } =
@@ -85,8 +93,12 @@ export function useChatComposer({
     plainComposer.insertEmphasis();
   };
 
-  const sendChoice = (text: string, position: number) => {
-    if (submitChoice(text, position)) {
+  const sendChoice = (
+    text: string,
+    position: number,
+    sourceTurnId?: number,
+  ) => {
+    if (submitChoice(text, position, sourceTurnId)) {
       plainComposer.clear();
       blockComposer.reset();
     }
@@ -96,13 +108,17 @@ export function useChatComposer({
     const suggestion = getRandomSuggestion(suggestions);
 
     if (suggestion) {
-      sendChoice(suggestion.text, suggestion.position);
+      sendChoice(suggestion.text, suggestion.position, suggestionSourceTurnId);
     }
   };
 
-  const fillChoice = (text: string, position: number) => {
+  const fillChoice = (
+    text: string,
+    position: number,
+    sourceTurnId?: number,
+  ) => {
     trackChoiceFill(position);
-    rememberFilledChoice(text);
+    rememberFilledChoice(text, position, sourceTurnId);
 
     if (inputMode === 'block') {
       blockComposer.replace(parseInputBlocks(text));

@@ -46,6 +46,7 @@ import {
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
 import { useChoicesToggle } from '../hooks/use-choices-toggle';
+import type { ChatChoiceSelection } from '../types';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
@@ -149,6 +150,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const guardedSend = (
     userInput: string,
     userSource: ContinueChatRequestUserSource,
+    selection?: ChatChoiceSelection,
   ): Promise<void> => {
     if (isGuestOverLimit(sessionStatus, 'chat')) {
       setGuestLimitTrigger('chat_turn');
@@ -156,7 +158,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       return Promise.resolve();
     }
 
-    return send(userInput, userSource);
+    return send(userInput, userSource, selection);
   };
 
   const guardedRegenerate = (turn: ChatTurnResponse): Promise<void> => {
@@ -181,6 +183,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       : choicesEnabled
         ? (turns.at(-1)?.choices ?? [])
         : [];
+  const suggestionSourceTurnId =
+    turns.length === 0 ? undefined : (turns.at(-1)?.id ?? undefined);
 
   const composer = useChatComposer({
     chatId,
@@ -188,27 +192,37 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     isStreaming,
     inputMode: mode,
     suggestions,
+    suggestionSourceTurnId,
     onSend: guardedSend,
   });
 
   const [pendingFill, setPendingFill] = useState<{
     text: string;
     position: number;
+    sourceTurnId?: number;
   } | null>(null);
 
-  const handleFillChoice = (text: string, position: number) => {
+  const handleFillChoice = (
+    text: string,
+    position: number,
+    sourceTurnId?: number,
+  ) => {
     if (composer.hasDraft) {
-      setPendingFill({ text, position });
+      setPendingFill({ text, position, sourceTurnId });
 
       return;
     }
 
-    composer.fillChoice(text, position);
+    composer.fillChoice(text, position, sourceTurnId);
   };
 
   const confirmFillChoice = () => {
     if (pendingFill) {
-      composer.fillChoice(pendingFill.text, pendingFill.position);
+      composer.fillChoice(
+        pendingFill.text,
+        pendingFill.position,
+        pendingFill.sourceTurnId,
+      );
     }
 
     setPendingFill(null);
