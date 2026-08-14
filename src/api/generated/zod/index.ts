@@ -475,6 +475,18 @@ export const StreamChatTurnBody = zod
       .describe(
         '사용자 입력의 출처. 추천\/선택지를 그대로 쓰면 choice, 고쳐 쓰면 edited_choice, 직접 입력하면 typed. 서버는 판단하지 않고 AI 호출에 그대로 전달하며, 생략하면 전달하지 않습니다.',
       ),
+    sourceTurnId: zod
+      .number()
+      .nullish()
+      .describe(
+        '고른 선택지가 달린 직전 턴의 ID(채팅 상세 turns[].id). choiceOrder와 함께 보내면 서버가 선택 결과를 기록하며, 값이 낡았거나 다른 채팅의 턴이면 거절하지 않고 기록만 생략합니다.',
+      ),
+    choiceOrder: zod
+      .number()
+      .nullish()
+      .describe(
+        '고른 선택지의 순번. DB와 같은 1부터 시작하는 값이며, 채팅 상세 turns[].choices 배열의 인덱스 + 1입니다. 범위 밖 값은 400이 아니라 기록 생략으로 처리합니다.',
+      ),
   })
   .describe('채팅 이어쓰기 요청');
 
