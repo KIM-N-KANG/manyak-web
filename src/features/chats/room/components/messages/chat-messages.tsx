@@ -50,8 +50,8 @@ type ChatMessagesProps = {
   choicesStatus: ChoicesStatus | null;
   /** 첫 추천 입력 목록에 1회성 사용법 힌트를 보여줄지 여부. */
   showsChoicesHint: boolean;
-  onSendChoice: (text: string, position: number) => void;
-  onFillChoice: (text: string, position: number) => void;
+  onSendChoice: (text: string, position: number, sourceTurnId?: number) => void;
+  onFillChoice: (text: string, position: number, sourceTurnId?: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
   onRetryChoices: () => void;
 };

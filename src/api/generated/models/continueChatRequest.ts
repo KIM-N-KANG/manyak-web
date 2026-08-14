@@ -23,4 +23,14 @@ export interface ContinueChatRequest {
    * @pattern choice|edited_choice|typed
    */
   userSource?: ContinueChatRequestUserSource;
+  /**
+   * 고른 선택지가 달린 직전 턴의 ID(채팅 상세 turns[].id). choiceOrder와 함께 보내면 서버가 선택 결과를 기록하며, 값이 낡았거나 다른 채팅의 턴이면 거절하지 않고 기록만 생략합니다.
+   * @nullable
+   */
+  sourceTurnId?: number | null;
+  /**
+   * 고른 선택지의 순번. DB와 같은 1부터 시작하는 값이며, 채팅 상세 turns[].choices 배열의 인덱스 + 1입니다. 범위 밖 값은 400이 아니라 기록 생략으로 처리합니다.
+   * @nullable
+   */
+  choiceOrder?: number | null;
 }

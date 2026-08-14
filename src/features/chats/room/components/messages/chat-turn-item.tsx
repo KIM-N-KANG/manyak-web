@@ -15,8 +15,8 @@ type ChatTurnItemProps = {
   isLast: boolean;
   choicesEnabled: boolean;
   choicesStatus: ChoicesStatus | null;
-  onSendChoice: (text: string, position: number) => void;
-  onFillChoice: (text: string, position: number) => void;
+  onSendChoice: (text: string, position: number, sourceTurnId?: number) => void;
+  onFillChoice: (text: string, position: number, sourceTurnId?: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
   onRetryChoices: () => void;
 };
@@ -45,6 +45,7 @@ export function ChatTurnItem({
       {isLast && choicesEnabled && turn.choices && turn.choices.length > 0 ? (
         <ChatChoices
           choices={turn.choices}
+          sourceTurnId={turn.id ?? undefined}
           onSend={onSendChoice}
           onFill={onFillChoice}
         />

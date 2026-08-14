@@ -13,7 +13,7 @@ import { isPaymentRequiredError } from '@/features/auth/_shared/utils/guest-limi
 import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
-import type { StreamingTurn } from '../types';
+import type { ChatChoiceSelection, StreamingTurn } from '../types';
 import { parseSseStream } from '../utils/parse-sse-stream';
 import { isStaleTurnError } from '../utils/regenerate';
 import {
@@ -53,6 +53,7 @@ export function useChatStream(
   const send = async (
     userInput: string,
     userSource?: ContinueChatRequestUserSource,
+    selection?: ChatChoiceSelection,
   ) => {
     setStreamingTurn({ userInput, aiOutput: '', baseTurnCount: turnCount });
 
@@ -65,7 +66,7 @@ export function useChatStream(
     try {
       const stream = await streamChatTurnRaw(
         chatId,
-        { userInput, userSource },
+        { userInput, userSource, ...selection },
         controller.signal,
       );
 

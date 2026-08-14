@@ -1,3 +1,9 @@
+import type { ContinueChatRequest } from '@/api/generated/models';
+
+export type ChatChoiceSelection = Required<
+  Pick<ContinueChatRequest, 'sourceTurnId' | 'choiceOrder'>
+>;
+
 export type StreamingTurn = {
   userInput: string;
   aiOutput: string;
