@@ -1,6 +1,15 @@
+import { loadEnvConfig } from '@next/env';
 import { defineConfig } from 'orval';
 
-const OPENAPI_URL = 'http://localhost:8080/v3/api-docs';
+loadEnvConfig(process.cwd());
+
+const apiBaseUrl = process.env.API_BASE_URL?.replace(/\/+$/, '');
+
+if (!apiBaseUrl) {
+  throw new Error('API_BASE_URL is not configured.');
+}
+
+const OPENAPI_URL = `${apiBaseUrl}/v3/api-docs`;
 
 export default defineConfig({
   api: {

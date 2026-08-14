@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@auth/core": "0.41.2",
+    "@next/env": "16.2.6",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
