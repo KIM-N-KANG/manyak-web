@@ -22,7 +22,7 @@ const tags = [
 
 const storylinesResponse = {
   simpleCreationId: 1001,
-  selectedTags: [],
+  selectedTags: { genreTags: [], supportingCharacters: [] },
   storylines: [
     {
       id: 101,
@@ -102,6 +102,66 @@ test.describe('스토리 생성', () => {
     await expect(nextButton).toBeEnabled();
     await nextButton.click();
     await expect(validationError).toBeVisible();
+  });
+
+  test('주인공과 주변 인물의 이름이 겹치면 생성 요청을 막는다 (스펙 §4-3-2)', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tags),
+      });
+    });
+
+    let storylineRequestCount = 0;
+
+    await page.route(STORYLINES, async (route) => {
+      storylineRequestCount += 1;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(storylinesResponse),
+      });
+    });
+
+    await page.goto('/stories/new');
+
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('마냑');
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+
+    // 공백·대소문자를 지운 정규화 키로 판정하므로 "마 냑"도 같은 이름이다.
+    const supportingName = page.getByRole('textbox', {
+      name: '주변 인물 1 이름',
+    });
+
+    await supportingName.fill('마 냑');
+    await expect(page.getByText('이미 사용한 이름이에요')).toBeVisible();
+
+    const createStorylineButton = page.getByRole('button', {
+      name: '스토리라인 만들기',
+    });
+
+    await createStorylineButton.click();
+    await expect(
+      page.getByText('인물 이름이 겹치지 않게 해주세요'),
+    ).toBeVisible();
+    expect(storylineRequestCount).toBe(0);
+
+    // 이름을 고치면 오류가 사라지고 요청이 나간다.
+    await supportingName.fill('도라지');
+    await expect(page.getByText('이미 사용한 이름이에요')).toBeHidden();
+    await expect(
+      page.getByText('인물 이름이 겹치지 않게 해주세요'),
+    ).toBeHidden();
+
+    await createStorylineButton.click();
+    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+    expect(storylineRequestCount).toBe(1);
   });
 
   test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅 화면으로 이동한다 (US-3)', async ({

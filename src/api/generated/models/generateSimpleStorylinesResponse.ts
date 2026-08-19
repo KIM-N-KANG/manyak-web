@@ -6,7 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { SimpleStorylineResponse } from './simpleStorylineResponse';
-import type { SimpleStoryTagResponse } from './simpleStoryTagResponse';
+import type { SimpleStorySelectedTagsResponse } from './simpleStorySelectedTagsResponse';
 
 /**
  * 간편 제작 스토리라인 생성 응답
@@ -14,8 +14,8 @@ import type { SimpleStoryTagResponse } from './simpleStoryTagResponse';
 export interface GenerateSimpleStorylinesResponse {
   /** 간편 제작 진행 ID */
   simpleCreationId?: number;
-  /** 저장된 선택 태그 */
-  selectedTags?: SimpleStoryTagResponse[];
+  /** 장르와 인물별로 정리한 저장 입력 */
+  selectedTags?: SimpleStorySelectedTagsResponse;
   /**
    * AI가 생성한 예시 스토리라인 3개. 각 스토리라인은 추가 입력을 돕는 추천 추가 정보 3개를 포함합니다.
    * @minItems 3

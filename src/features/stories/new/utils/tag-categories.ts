@@ -1,58 +1,11 @@
 import type {
   GenerateSimpleStorylinesRequest,
+  SimpleStoryCharacterRequest,
   SimpleStoryTagListItemResponse,
 } from '@/api/generated/models';
 
-import { TAG_CATEGORIES } from '../constants';
-import type {
-  CustomTagsByCategory,
-  SelectedCustomTagIdsByCategory,
-  SelectedTagGroup,
-  SelectedTagIdsByCategory,
-  TagCategory,
-  TagsByCategory,
-} from '../types';
-
-/**
- * 모든 태그 카테고리를 키로 갖고 각 값을 초기화한 레코드를 생성한다.
- *
- * @param createValue 각 카테고리의 초기값을 만드는 팩토리 함수
- * @returns 카테고리별 초기값 레코드
- */
-const createEmptyTagCategoryRecord = <Value>(
-  createValue: () => Value,
-): Record<TagCategory, Value> =>
-  TAG_CATEGORIES.reduce(
-    (acc, { value: category }) => ({
-      ...acc,
-      [category]: createValue(),
-    }),
-    {} as Record<TagCategory, Value>,
-  );
-
-/**
- * 카테고리별 선택된 사전 정의 태그 ID 목록의 초기값을 생성한다.
- *
- * @returns 카테고리별 빈 태그 ID 목록 레코드
- */
-export const createEmptySelectedTagIdsByCategory =
-  (): SelectedTagIdsByCategory => createEmptyTagCategoryRecord(() => []);
-
-/**
- * 카테고리별 선택된 커스텀 태그 ID 목록의 초기값을 생성한다.
- *
- * @returns 카테고리별 빈 커스텀 태그 ID 목록 레코드
- */
-export const createEmptySelectedCustomTagIdsByCategory =
-  (): SelectedCustomTagIdsByCategory => createEmptyTagCategoryRecord(() => []);
-
-/**
- * 카테고리별 커스텀 태그 목록의 초기값을 생성한다.
- *
- * @returns 카테고리별 빈 커스텀 태그 목록 레코드
- */
-export const createEmptyCustomTagsByCategory = (): CustomTagsByCategory =>
-  createEmptyTagCategoryRecord(() => []);
+import { CHARACTER_GENDER_OPTIONS, TAG_CATEGORIES } from '../constants';
+import type { SelectedTagGroup, TagCategory, TagsByCategory } from '../types';
 
 /**
  * 카테고리별 태그 목록의 초기값을 생성한다.
@@ -60,10 +13,14 @@ export const createEmptyCustomTagsByCategory = (): CustomTagsByCategory =>
  * @returns 카테고리별 빈 태그 목록 레코드
  */
 export const createEmptyTagsByCategory = (): TagsByCategory =>
-  createEmptyTagCategoryRecord(() => []);
+  TAG_CATEGORIES.reduce(
+    (acc, { value: category }) => ({ ...acc, [category]: [] }),
+    {} as TagsByCategory,
+  );
 
 /**
  * 카테고리의 최대 선택 가능 개수를 반환한다.
+ * 장르는 키워드 개수, 인물 카테고리는 인물 한 명의 특징 개수 상한이다.
  *
  * @param category 대상 태그 카테고리
  * @returns 해당 카테고리의 최대 선택 개수(없으면 0)
@@ -88,15 +45,55 @@ export const getTagsByCategory = (
   }, createEmptyTagsByCategory());
 
 /**
- * 스토리라인 생성 요청에 담긴 선택 키워드를 카테고리별 그룹으로 변환한다.
- * 사전 정의 태그는 전체 태그 목록에서 id로 이름을 찾고, 직접 추가 태그는 이름을 그대로 사용한다.
- * 선택값이 없는 카테고리는 결과에서 제외한다.
+ * 성별 코드를 화면에 노출하는 라벨로 바꾼다.
  *
- * @param request 선택 키워드가 담긴 스토리라인 생성 요청(없을 수 있음)
- * @param tags id로 이름을 조회할 전체 태그 목록
- * @returns 카테고리별 선택 태그 그룹 목록
+ * @param gender 인물 성별 코드(비어 있을 수 있음)
+ * @returns 성별 라벨. 값이 없으면 null
  */
-export const getSelectedTagsByCategory = (
+const getGenderLabel = (gender: SimpleStoryCharacterRequest['gender']) =>
+  CHARACTER_GENDER_OPTIONS.find((option) => option.value === gender)?.label ??
+  null;
+
+/**
+ * 인물 입력을 이름 · 성별 · 특징 순의 표시용 문자열 목록으로 편다.
+ * 비워 둔 항목은 AI가 정하므로 목록에서 제외한다.
+ *
+ * @param character 인물 입력(없을 수 있음)
+ * @param tagNameById 사전 정의 태그 id로 이름을 찾는 맵
+ * @returns 표시용 문자열 목록
+ */
+const getCharacterTags = (
+  character: SimpleStoryCharacterRequest | undefined,
+  tagNameById: Map<number, string>,
+): string[] => {
+  if (!character) {
+    return [];
+  }
+
+  const name = character.name?.trim();
+  const genderLabel = getGenderLabel(character.gender);
+  const featureNames = (character.featureTagIds ?? [])
+    .map((tagId) => tagNameById.get(tagId))
+    .filter((tagName): tagName is string => Boolean(tagName));
+
+  return [
+    ...(name ? [name] : []),
+    ...(genderLabel ? [genderLabel] : []),
+    ...featureNames,
+    ...(character.customTags ?? []),
+  ];
+};
+
+/**
+ * 스토리라인 생성 요청에 담긴 선택 입력을 표시용 그룹 목록으로 변환한다.
+ * 장르는 한 그룹, 주인공과 주변 인물은 인물마다 한 그룹으로 나눈다.
+ * 값이 하나도 없는 그룹은 결과에서 제외한다.
+ *
+ * @param request 선택 입력이 담긴 스토리라인 생성 요청(없을 수 있음)
+ * @param tags id로 이름을 조회할 전체 태그 목록
+ * @returns 표시용 선택 입력 그룹 목록
+ */
+export const getSelectedKeywordGroups = (
   request: GenerateSimpleStorylinesRequest | null,
   tags: SimpleStoryTagListItemResponse[],
 ): SelectedTagGroup[] => {
@@ -104,36 +101,37 @@ export const getSelectedTagsByCategory = (
     return [];
   }
 
-  const tagById = new Map(
+  const tagNameById = new Map(
     tags
       .filter((tag) => tag.id != null && Boolean(tag.name))
-      .map((tag) => [tag.id, tag] as const),
+      .map((tag) => [tag.id as number, tag.name as string] as const),
   );
 
-  return TAG_CATEGORIES.reduce<SelectedTagGroup[]>(
-    (groups, { value: category, label }) => {
-      const predefinedTagNames = (request.selectedTagIds ?? [])
-        .map((tagId) => tagById.get(tagId))
-        .filter(
-          (tag): tag is SimpleStoryTagListItemResponse =>
-            Boolean(tag) && tag?.category === category,
-        )
-        .map((tag) => tag.name)
-        .filter((name): name is string => Boolean(name));
+  const genreTags = [
+    ...(request.genreTagIds ?? [])
+      .map((tagId) => tagNameById.get(tagId))
+      .filter((tagName): tagName is string => Boolean(tagName)),
+    ...(request.customGenreTags ?? []),
+  ];
 
-      const customTagNames = (request.customTags ?? [])
-        .filter((tag) => tag.category === category)
-        .map((tag) => tag.name)
-        .filter((name): name is string => Boolean(name));
+  const supportingCharacters = request.supportingCharacters ?? [];
 
-      const tags = [...predefinedTagNames, ...customTagNames];
-
-      if (tags.length > 0) {
-        groups.push({ category, label, tags });
-      }
-
-      return groups;
+  const groups: SelectedTagGroup[] = [
+    { id: 'GENRE', label: '장르', tags: genreTags },
+    {
+      id: 'PROTAGONIST',
+      label: '주인공',
+      tags: getCharacterTags(request.protagonist, tagNameById),
     },
-    [],
-  );
+    ...supportingCharacters.map((character, index) => ({
+      id: `SUPPORTING_CHARACTER-${index}`,
+      label:
+        supportingCharacters.length > 1
+          ? `주변 인물 ${index + 1}`
+          : '주변 인물',
+      tags: getCharacterTags(character, tagNameById),
+    })),
+  ];
+
+  return groups.filter((group) => group.tags.length > 0);
 };

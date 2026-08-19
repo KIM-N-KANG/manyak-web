@@ -19,13 +19,19 @@ const tags = [
 
 const generationRequest = {
   requestId: STORYLINE_REQUEST_ID,
-  selectedTagIds: [1, 2],
-  customTags: [],
+  genreTagIds: [1],
+  protagonist: {
+    name: null,
+    gender: null,
+    featureTagIds: [2],
+    customTags: [],
+  },
+  supportingCharacters: [],
 };
 
 const storylinesResult = {
   simpleCreationId: 1001,
-  selectedTags: [],
+  selectedTags: { genreTags: [], supportingCharacters: [] },
   storylines: [
     {
       id: 101,

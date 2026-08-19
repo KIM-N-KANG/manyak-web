@@ -11,8 +11,14 @@ import { resolveBackExit } from '@/features/stories/new/utils/back-exit-draft';
 
 const generationRequest: GenerateSimpleStorylinesRequest = {
   requestId: '11111111-1111-4111-8111-111111111111',
-  selectedTagIds: [1, 2],
-  customTags: [],
+  genreTagIds: [1, 2],
+  protagonist: {
+    name: null,
+    gender: null,
+    featureTagIds: [3],
+    customTags: [],
+  },
+  supportingCharacters: [],
 };
 
 const selectedStoryline: SimpleStorylineResponse = {

@@ -59,7 +59,7 @@ export function SelectedTagsDrawer({
         </DrawerHeader>
         <div className="flex flex-col gap-8 overflow-y-auto overscroll-contain p-4 pb-8">
           {groups.map((group) => (
-            <SelectedTagGroup key={group.category} group={group} />
+            <SelectedTagGroup key={group.id} group={group} />
           ))}
         </div>
       </DrawerContent>

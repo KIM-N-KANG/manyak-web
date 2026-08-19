@@ -17,7 +17,7 @@ const tags = [
 
 const storylinesResponse = {
   simpleCreationId: 1001,
-  selectedTags: [],
+  selectedTags: { genreTags: [], supportingCharacters: [] },
   storylines: [
     {
       id: 101,
@@ -35,8 +35,14 @@ const draftRecord: PendingCreationRequest = {
   step: 'storyline-select',
   generationRequest: {
     requestId: '11111111-1111-4111-8111-111111111111',
-    selectedTagIds: [1, 2],
-    customTags: [],
+    genreTagIds: [1],
+    protagonist: {
+      name: null,
+      gender: null,
+      featureTagIds: [2],
+      customTags: [],
+    },
+    supportingCharacters: [],
   },
   generationResult: storylinesResponse,
   activeStorylineIndex: 0,

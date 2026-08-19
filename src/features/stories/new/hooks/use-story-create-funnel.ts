@@ -67,7 +67,7 @@ import {
   resolveSuccessSettlement,
 } from '../utils/creation-request-recovery';
 import { mapStepToSpec } from '../utils/step-analytics';
-import { getSelectedTagsByCategory } from '../utils/tag-categories';
+import { getSelectedKeywordGroups } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { useCreationRequestRecovery } from './use-creation-request-recovery';
 import { usePreventPageLeave } from './use-prevent-page-leave';
@@ -537,7 +537,7 @@ export function useStoryCreateFunnel() {
   const draft = useStoryCreateDraft({ onRestore: restoreDraft });
 
   const storylines = getGeneratedStorylines(generationResult);
-  const selectedTagGroups = getSelectedTagsByCategory(
+  const selectedTagGroups = getSelectedKeywordGroups(
     generationRequest,
     simpleStoryTags.data?.data ?? [],
   );
