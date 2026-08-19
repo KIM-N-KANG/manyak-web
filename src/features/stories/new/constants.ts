@@ -25,6 +25,15 @@ export const SUPPORTING_CHARACTER_MAX_COUNT = 5;
 /** 퍼널 진입 시 미리 놓아 두는 주변 인물 수. 삭제하면 0명까지 줄일 수 있다. */
 export const SUPPORTING_CHARACTER_INITIAL_COUNT = 1;
 
+/** 주변 인물 이름 플레이스홀더. 인원 상한만큼 두어 카드마다 다른 예시를 보여 준다. */
+export const SUPPORTING_CHARACTER_NAME_PLACEHOLDERS = [
+  '예: 한도윤',
+  '예: 이서연',
+  '예: 박시우',
+  '예: 정하린',
+  '예: 최은우',
+] as const;
+
 export const CHARACTER_BASIC_INFO_LABEL = '기본 정보';
 
 export const CHARACTER_BASIC_INFO_DESCRIPTION = '비워두면 랜덤으로 설정해요';
@@ -88,7 +97,7 @@ export const PROTAGONIST_CATEGORY = {
   label: '주인공 특징',
   description: '스토리 속 나를 설정해요',
   placeholder: '예: 사랑에 서툰, 타인을 믿지 못하는',
-  namePlaceholder: '예: 마냑',
+  namePlaceholder: '예: 서지우',
   required: true,
   maxSelectionCount: CHARACTER_FEATURE_MAX_COUNT,
 } satisfies TagCategoryConfig;
@@ -98,7 +107,6 @@ export const SUPPORTING_CHARACTER_CATEGORY = {
   label: '주변 인물 특징',
   description: `주변 인물들을 설정해요 (최대 ${SUPPORTING_CHARACTER_MAX_COUNT}명)`,
   placeholder: '예: 상냥해서 더 위험한, 어딘가 망가진',
-  namePlaceholder: '예: 도라지',
   required: false,
   maxSelectionCount: CHARACTER_FEATURE_MAX_COUNT,
 } satisfies TagCategoryConfig;

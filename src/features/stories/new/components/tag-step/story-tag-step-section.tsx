@@ -223,7 +223,6 @@ export function StoryTagStepSection({
           <SupportingCharacterList
             categoryLabel={SUPPORTING_CHARACTER_CATEGORY.label}
             characters={supportingCharacters}
-            namePlaceholder={SUPPORTING_CHARACTER_CATEGORY.namePlaceholder}
             tagPlaceholder={SUPPORTING_CHARACTER_CATEGORY.placeholder}
             predefinedTags={tagsByCategory.SUPPORTING_CHARACTER}
             canAddCharacter={canAddSupportingCharacter}

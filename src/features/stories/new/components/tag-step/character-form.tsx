@@ -10,7 +10,12 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '@/components/ui/input-group';
 import {
   Select,
   SelectContent,
@@ -106,19 +111,25 @@ export function CharacterForm({
           )}
         </div>
         <div className="flex items-start gap-2">
-          <Input
-            id={`${fieldId}-name`}
-            ref={(element) => onRegisterNameInput?.(character.id, element)}
-            className="flex-1"
-            aria-label={`${fieldLabelPrefix} 이름`}
-            aria-invalid={nameErrorMessage ? true : undefined}
-            aria-describedby={nameErrorMessage ? nameErrorId : undefined}
-            maxLength={CHARACTER_NAME_MAX_LENGTH}
-            placeholder={namePlaceholder}
-            value={character.name}
-            disabled={disabled}
-            onChange={(event) => onChangeName(event.target.value)}
-          />
+          <InputGroup className="flex-1">
+            <InputGroupInput
+              id={`${fieldId}-name`}
+              ref={(element) => onRegisterNameInput?.(character.id, element)}
+              aria-label={`${fieldLabelPrefix} 이름`}
+              aria-invalid={nameErrorMessage ? true : undefined}
+              aria-describedby={nameErrorMessage ? nameErrorId : undefined}
+              maxLength={CHARACTER_NAME_MAX_LENGTH}
+              placeholder={namePlaceholder}
+              value={character.name}
+              disabled={disabled}
+              onChange={(event) => onChangeName(event.target.value)}
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupText>
+                {character.name.length} / {CHARACTER_NAME_MAX_LENGTH}
+              </InputGroupText>
+            </InputGroupAddon>
+          </InputGroup>
           {/* 성별을 고르지 않은 상태는 "랜덤 성별"로 보여 주고 요청에는 null로 나간다.
               아직 고르지 않았다는 뜻이 드러나도록 인풋 플레이스홀더와 같은 색을 쓴다. */}
           <Select

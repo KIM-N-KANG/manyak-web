@@ -6,14 +6,16 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 
-import { CHARACTER_NAME_DUPLICATE_ERROR } from '../../constants';
+import {
+  CHARACTER_NAME_DUPLICATE_ERROR,
+  SUPPORTING_CHARACTER_NAME_PLACEHOLDERS,
+} from '../../constants';
 import type { CharacterGender, CharacterInput } from '../../types';
 import { CharacterForm } from './character-form';
 
 type SupportingCharacterListProps = {
   categoryLabel: string;
   characters: CharacterInput[];
-  namePlaceholder: string;
   tagPlaceholder: string;
   predefinedTags: SimpleStoryTagListItemResponse[];
   canAddCharacter: boolean;
@@ -43,7 +45,6 @@ type SupportingCharacterListProps = {
 export function SupportingCharacterList({
   categoryLabel,
   characters,
-  namePlaceholder,
   tagPlaceholder,
   predefinedTags,
   canAddCharacter,
@@ -65,6 +66,10 @@ export function SupportingCharacterList({
     <div className="flex flex-col gap-4">
       {characters.map((character, index) => {
         const fieldLabelPrefix = `주변 인물 ${index + 1}`;
+        const namePlaceholder =
+          SUPPORTING_CHARACTER_NAME_PLACEHOLDERS[
+            index % SUPPORTING_CHARACTER_NAME_PLACEHOLDERS.length
+          ];
 
         return (
           <div
