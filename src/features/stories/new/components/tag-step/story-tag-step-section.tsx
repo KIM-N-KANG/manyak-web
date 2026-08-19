@@ -7,6 +7,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
 import {
+  CHARACTER_NAME_DUPLICATE_FOOTER_ERROR,
   GENRE_CATEGORY,
   GENRE_SECTION_LABEL,
   PROTAGONIST_CATEGORY,
@@ -53,6 +54,8 @@ export function StoryTagStepSection({
     showTagsSkeleton,
     tagsByCategory,
     hasCategoryValidationError,
+    hasDuplicateNameError,
+    isDuplicateName,
     isCategoryUnlocked,
     isFirstCategory,
     isLastCategory,
@@ -86,6 +89,10 @@ export function StoryTagStepSection({
         hasCategoryValidationError ? (
           <StoryCreateErrorMessage>
             키워드를 하나 이상 선택해주세요
+          </StoryCreateErrorMessage>
+        ) : hasDuplicateNameError ? (
+          <StoryCreateErrorMessage>
+            {CHARACTER_NAME_DUPLICATE_FOOTER_ERROR}
           </StoryCreateErrorMessage>
         ) : null
       }
@@ -226,6 +233,7 @@ export function StoryTagStepSection({
             isFeatureMaxReached={(characterId) =>
               isFeatureMaxReached('SUPPORTING_CHARACTER', characterId)
             }
+            isDuplicateName={isDuplicateName}
             onRegisterNameInput={registerCharacterNameInput}
             onChangeName={(characterId, name) =>
               changeCharacterName('SUPPORTING_CHARACTER', characterId, name)

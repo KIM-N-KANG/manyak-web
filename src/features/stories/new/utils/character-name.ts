@@ -1,0 +1,45 @@
+import type { CharacterInput } from '../types';
+
+/**
+ * 인물 이름의 동일성 판정 키를 만든다.
+ * 서버가 400으로 막을 때 쓰는 정규화 키(trim → 내부 공백 제거 → lowercase)와 같은 결과이며,
+ * 자모 조합 차이로 같은 글자가 다르게 보이지 않도록 NFC 정규화를 먼저 적용한다.
+ *
+ * @param name 판정할 인물 이름
+ * @returns 비교용 정규화 키. 이름이 비어 있으면 빈 문자열
+ */
+export const getCharacterNameKey = (name: string): string =>
+  name.normalize('NFC').replace(/\s+/g, '').toLowerCase();
+
+/**
+ * 앞선 인물과 이름이 겹치는 인물의 id를 모은다.
+ * 주인공을 먼저 보고 주변 인물을 입력 순서로 보므로, 먼저 쓴 이름이 남고 뒤에 같은
+ * 이름을 쓴 인물만 걸린다. 비워 둔 이름은 AI가 각각 지어 주므로 판정 대상이 아니다.
+ *
+ * @param characters 주인공을 앞에 둔 인물 입력 목록
+ * @returns 이름이 중복된 인물의 id 집합
+ */
+export const getDuplicateNameCharacterIds = (
+  characters: CharacterInput[],
+): Set<string> => {
+  const seenKeys = new Set<string>();
+  const duplicateIds = new Set<string>();
+
+  characters.forEach((character) => {
+    const key = getCharacterNameKey(character.name);
+
+    if (!key) {
+      return;
+    }
+
+    if (seenKeys.has(key)) {
+      duplicateIds.add(character.id);
+
+      return;
+    }
+
+    seenKeys.add(key);
+  });
+
+  return duplicateIds;
+};

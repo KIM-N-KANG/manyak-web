@@ -31,6 +31,11 @@ export const CHARACTER_BASIC_INFO_DESCRIPTION = '비워두면 랜덤으로 설�
 
 export const CHARACTER_FEATURE_LABEL = `특징 (최대 ${CHARACTER_FEATURE_MAX_COUNT}개)`;
 
+export const CHARACTER_NAME_DUPLICATE_ERROR = '이미 사용한 이름이에요';
+
+export const CHARACTER_NAME_DUPLICATE_FOOTER_ERROR =
+  '인물 이름이 겹치지 않게 해주세요';
+
 export const CHARACTER_GENDER_OPTIONS = [
   { value: 'MALE', label: '남성' },
   { value: 'FEMALE', label: '여성' },

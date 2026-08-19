@@ -6,6 +6,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 
+import { CHARACTER_NAME_DUPLICATE_ERROR } from '../../constants';
 import type { CharacterGender, CharacterInput } from '../../types';
 import { CharacterForm } from './character-form';
 
@@ -20,6 +21,7 @@ type SupportingCharacterListProps = {
   hasTagsError: boolean;
   disabled: boolean;
   isFeatureMaxReached: (characterId: string) => boolean;
+  isDuplicateName: (characterId: string) => boolean;
   onRegisterNameInput: (id: string, element: HTMLInputElement | null) => void;
   onChangeName: (characterId: string, name: string) => void;
   onChangeGender: (characterId: string, gender: CharacterGender | null) => void;
@@ -49,6 +51,7 @@ export function SupportingCharacterList({
   hasTagsError,
   disabled,
   isFeatureMaxReached,
+  isDuplicateName,
   onRegisterNameInput,
   onChangeName,
   onChangeGender,
@@ -80,6 +83,11 @@ export function SupportingCharacterList({
               isLoadingTags={isLoadingTags}
               hasTagsError={hasTagsError}
               disabled={disabled}
+              nameErrorMessage={
+                isDuplicateName(character.id)
+                  ? CHARACTER_NAME_DUPLICATE_ERROR
+                  : undefined
+              }
               headerAction={
                 <Button
                   type="button"

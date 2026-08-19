@@ -6,6 +6,7 @@ import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -50,6 +51,8 @@ type CharacterFormProps = {
   isLoadingTags: boolean;
   hasTagsError: boolean;
   disabled: boolean;
+  /** 이름 인풋 아래에 띄울 오류. 없으면 오류를 표시하지 않는다. */
+  nameErrorMessage?: string;
   /** 기본 정보 라벨과 같은 줄 오른쪽 끝에 놓을 조작 버튼(주변 인물 삭제 등) */
   headerAction?: ReactNode;
   onRegisterNameInput?: (id: string, element: HTMLInputElement | null) => void;
@@ -73,6 +76,7 @@ export function CharacterForm({
   isLoadingTags,
   hasTagsError,
   disabled,
+  nameErrorMessage,
   headerAction,
   onRegisterNameInput,
   onChangeName,
@@ -82,6 +86,7 @@ export function CharacterForm({
   onAddCustomTag,
 }: CharacterFormProps) {
   const fieldId = `${category}-${character.id}`;
+  const nameErrorId = `${fieldId}-name-error`;
   const basicInfoLabelId = `${fieldId}-basic-info-label`;
   const featureLabelId = `${fieldId}-feature-label`;
 
@@ -106,6 +111,8 @@ export function CharacterForm({
             ref={(element) => onRegisterNameInput?.(character.id, element)}
             className="flex-1"
             aria-label={`${fieldLabelPrefix} 이름`}
+            aria-invalid={nameErrorMessage ? true : undefined}
+            aria-describedby={nameErrorMessage ? nameErrorId : undefined}
             maxLength={CHARACTER_NAME_MAX_LENGTH}
             placeholder={namePlaceholder}
             value={character.name}
@@ -145,6 +152,7 @@ export function CharacterForm({
             </SelectContent>
           </Select>
         </div>
+        <FieldError id={nameErrorId}>{nameErrorMessage}</FieldError>
         <FieldDescription className="text-foreground-secondary">
           {CHARACTER_BASIC_INFO_DESCRIPTION}
         </FieldDescription>
