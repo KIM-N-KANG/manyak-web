@@ -141,9 +141,14 @@ export function StoryTagStepSection({
         <StickyTabsList
           bottomSlot={
             activeCategoryConfig && (
-              <p className="pt-2 text-sm text-foreground-secondary">
-                {activeCategoryConfig.description}
-              </p>
+              <div className="flex items-baseline justify-between gap-2 pt-2 text-sm text-foreground-secondary">
+                <p>{activeCategoryConfig.description}</p>
+                {activeCategory === 'SUPPORTING_CHARACTER' && (
+                  <p className="shrink-0">
+                    현재 {supportingCharacters.length}명
+                  </p>
+                )}
+              </div>
             )
           }>
           {TAG_CATEGORIES.map(({ value, label, required }) => (
