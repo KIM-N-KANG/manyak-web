@@ -5,10 +5,10 @@ import { type ChangeEvent, type SubmitEvent, useState } from 'react';
 import { track } from '@/observability/analytics';
 
 import { ADD_TAG_MAX_LENGTH } from '../constants';
-import type { CharacterTagCategory } from '../types';
+import type { TagCategory } from '../types';
 
 type UseAddTagDialogArgs = {
-  category: CharacterTagCategory;
+  category: TagCategory;
   onAddTag: (tag: string) => void;
 };
 

@@ -20,6 +20,7 @@ import { getGenerateStorylinesErrorMessage } from '../../utils/generate-storylin
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
+import { AddTagDialog } from './add-tag-dialog';
 import { CharacterForm } from './character-form';
 import { SupportingCharacterList } from './supporting-character-list';
 import { TagChipGrid } from './tag-chip-grid';
@@ -45,6 +46,8 @@ export function StoryTagStepSection({
     activeCategory,
     changeCategory,
     selectedGenreTagIds,
+    selectedCustomGenreTagIds,
+    customGenreTags,
     isGenreMaxReached,
     protagonist,
     supportingCharacters,
@@ -62,6 +65,8 @@ export function StoryTagStepSection({
     goToNextCategory,
     goToPreviousCategory,
     toggleGenreTag,
+    toggleCustomGenreTag,
+    addCustomGenreTag,
     toggleFeatureTag,
     toggleCustomFeatureTag,
     addCustomFeatureTag,
@@ -165,15 +170,25 @@ export function StoryTagStepSection({
               <TagChipGrid
                 keyPrefix="GENRE"
                 predefinedTags={tagsByCategory.GENRE}
-                customTags={[]}
+                customTags={customGenreTags}
                 selectedTagIds={selectedGenreTagIds}
-                selectedCustomTagIds={[]}
+                selectedCustomTagIds={selectedCustomGenreTagIds}
                 isMaxSelectionReached={isGenreMaxReached}
                 isLoadingTags={showTagsSkeleton}
                 hasTagsError={simpleStoryTags.isError}
                 disabled={isGeneratingStorylines}
+                addTagTrigger={
+                  <AddTagDialog
+                    category="GENRE"
+                    categoryLabel={GENRE_CATEGORY.label}
+                    fieldId="GENRE"
+                    placeholder={GENRE_CATEGORY.placeholder}
+                    disabled={isGeneratingStorylines || isGenreMaxReached}
+                    onAddTag={addCustomGenreTag}
+                  />
+                }
                 onTogglePredefinedTag={toggleGenreTag}
-                onToggleCustomTag={() => {}}
+                onToggleCustomTag={toggleCustomGenreTag}
               />
             </Field>
           </FieldGroup>

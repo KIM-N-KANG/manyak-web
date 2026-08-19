@@ -107,9 +107,12 @@ export const getSelectedKeywordGroups = (
       .map((tag) => [tag.id as number, tag.name as string] as const),
   );
 
-  const genreTags = (request.genreTagIds ?? [])
-    .map((tagId) => tagNameById.get(tagId))
-    .filter((tagName): tagName is string => Boolean(tagName));
+  const genreTags = [
+    ...(request.genreTagIds ?? [])
+      .map((tagId) => tagNameById.get(tagId))
+      .filter((tagName): tagName is string => Boolean(tagName)),
+    ...(request.customGenreTags ?? []),
+  ];
 
   const supportingCharacters = request.supportingCharacters ?? [];
 

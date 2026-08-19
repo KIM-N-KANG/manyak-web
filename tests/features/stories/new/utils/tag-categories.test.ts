@@ -63,6 +63,20 @@ describe('getSelectedKeywordGroups', () => {
     expect(groups[0].tags).toEqual(['타임루프', '먼치킨']);
   });
 
+  it('장르 그룹은 제공 키워드 뒤에 직접 추가 키워드를 붙인다', () => {
+    const request: GenerateSimpleStorylinesRequest = {
+      requestId: REQUEST_ID,
+      genreTagIds: [1],
+      customGenreTags: ['회귀물'],
+      protagonist: EMPTY_CHARACTER,
+      supportingCharacters: [],
+    };
+
+    const groups = getSelectedKeywordGroups(request, TAGS);
+
+    expect(groups[0].tags).toEqual(['타임루프', '회귀물']);
+  });
+
   it('인물 그룹은 이름 · 성별 · 특징 순으로 펼치고 직접 추가 특징을 뒤에 붙인다', () => {
     const request: GenerateSimpleStorylinesRequest = {
       requestId: REQUEST_ID,

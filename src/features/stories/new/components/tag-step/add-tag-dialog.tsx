@@ -25,10 +25,10 @@ import { Label } from '@/components/ui/label';
 
 import { ADD_TAG_MAX_LENGTH } from '../../constants';
 import { useAddTagDialog } from '../../hooks/use-add-tag-dialog';
-import type { CharacterTagCategory } from '../../types';
+import type { TagCategory } from '../../types';
 
 type AddTagDialogProps = {
-  category: CharacterTagCategory;
+  category: TagCategory;
   categoryLabel: string;
   /** 인물마다 다이얼로그가 하나씩 있어 화면 안에서 유일해야 하는 필드 id */
   fieldId: string;

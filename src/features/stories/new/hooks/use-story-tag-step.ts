@@ -81,6 +81,16 @@ export function useStoryTagStep({
     genreSelection.toggleGenreTag(tagId, pressed);
   };
 
+  const toggleCustomGenreTag = (tagId: string, pressed: boolean) => {
+    clearValidationErrorOnSelection('GENRE', pressed);
+    genreSelection.toggleCustomGenreTag(tagId, pressed);
+  };
+
+  const addCustomGenreTag = (name: string) => {
+    clearValidationErrorOnSelection('GENRE');
+    genreSelection.addCustomGenreTag(name);
+  };
+
   const toggleFeatureTag = (
     category: CharacterTagCategory,
     characterId: string,
@@ -138,6 +148,7 @@ export function useStoryTagStep({
     'requestId'
   > => ({
     genreTagIds: genreSelection.selectedGenreTagIds,
+    customGenreTags: genreSelection.getSubmittedCustomGenreTags(),
     protagonist: toCharacterRequest(characterInputs.protagonist),
     // 비워 둔 인물도 한 명으로 세어 AI가 그 자리를 채우므로 걸러내지 않는다.
     supportingCharacters:
@@ -160,6 +171,8 @@ export function useStoryTagStep({
     activeCategory: navigation.activeCategory,
     changeCategory: navigation.changeCategory,
     selectedGenreTagIds: genreSelection.selectedGenreTagIds,
+    selectedCustomGenreTagIds: genreSelection.selectedCustomGenreTagIds,
+    customGenreTags: genreSelection.customGenreTags,
     isGenreMaxReached: genreSelection.isGenreMaxReached,
     protagonist: characterInputs.protagonist,
     supportingCharacters: characterInputs.supportingCharacters,
@@ -180,6 +193,8 @@ export function useStoryTagStep({
     goToNextCategory,
     goToPreviousCategory: navigation.goToPreviousCategory,
     toggleGenreTag,
+    toggleCustomGenreTag,
+    addCustomGenreTag,
     toggleFeatureTag,
     toggleCustomFeatureTag,
     addCustomFeatureTag,
