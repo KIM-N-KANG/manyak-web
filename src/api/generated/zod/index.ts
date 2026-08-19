@@ -115,6 +115,11 @@ export const GenerateSimpleStorylinesHeader = zod.object({
 export const generateSimpleStorylinesBodyGenreTagIdsMin = 0;
 export const generateSimpleStorylinesBodyGenreTagIdsMax = 20;
 
+export const generateSimpleStorylinesBodyCustomGenreTagsItemMax = 30;
+
+export const generateSimpleStorylinesBodyCustomGenreTagsMin = 0;
+export const generateSimpleStorylinesBodyCustomGenreTagsMax = 20;
+
 export const generateSimpleStorylinesBodyProtagonistNameMin = 0;
 export const generateSimpleStorylinesBodyProtagonistNameMax = 30;
 
@@ -137,6 +142,17 @@ export const GenerateSimpleStorylinesBody = zod
       .max(generateSimpleStorylinesBodyGenreTagIdsMax)
       .optional()
       .describe('사용자가 선택한 사전 정의 장르 태그 ID 목록'),
+    customGenreTags: zod
+      .array(
+        zod
+          .string()
+          .max(generateSimpleStorylinesBodyCustomGenreTagsItemMax)
+          .describe('직접 입력한 장르 이름'),
+      )
+      .min(generateSimpleStorylinesBodyCustomGenreTagsMin)
+      .max(generateSimpleStorylinesBodyCustomGenreTagsMax)
+      .optional()
+      .describe('사용자가 직접 입력한 장르 이름 목록'),
     protagonist: zod
       .object({
         name: zod

@@ -19,6 +19,13 @@ export interface GenerateSimpleStorylinesRequest {
    * @maxItems 20
    */
   genreTagIds?: number[];
+  /**
+   * 사용자가 직접 입력한 장르 이름 목록
+   * @minItems 0
+   * @maxItems 20
+   * @items.maxLength 30
+   */
+  customGenreTags?: string[];
   /** 주인공 입력 */
   protagonist: SimpleStoryCharacterRequest;
   /**
