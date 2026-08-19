@@ -7,6 +7,7 @@ import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 
 import {
+  CHARACTER_FEATURE_RANDOM_DESCRIPTION,
   CHARACTER_NAME_DUPLICATE_ERROR,
   SUPPORTING_CHARACTER_NAME_PLACEHOLDERS,
 } from '../../constants';
@@ -85,6 +86,7 @@ export function SupportingCharacterList({
               predefinedTags={predefinedTags}
               isMaxSelectionReached={isFeatureMaxReached(character.id)}
               isFeatureRequired={false}
+              featureDescription={CHARACTER_FEATURE_RANDOM_DESCRIPTION}
               isLoadingTags={isLoadingTags}
               hasTagsError={hasTagsError}
               disabled={disabled}

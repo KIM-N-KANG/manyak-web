@@ -53,6 +53,8 @@ type CharacterFormProps = {
   isMaxSelectionReached: boolean;
   /** 특징을 반드시 골라야 하는 인물(주인공)이면 라벨에 필수 표시를 붙인다. */
   isFeatureRequired: boolean;
+  /** 특징 칩 아래에 띄울 설명. 특징이 선택 항목인 인물에만 넘긴다. */
+  featureDescription?: string;
   isLoadingTags: boolean;
   hasTagsError: boolean;
   disabled: boolean;
@@ -78,6 +80,7 @@ export function CharacterForm({
   predefinedTags,
   isMaxSelectionReached,
   isFeatureRequired,
+  featureDescription,
   isLoadingTags,
   hasTagsError,
   disabled,
@@ -197,6 +200,11 @@ export function CharacterForm({
           onTogglePredefinedTag={onTogglePredefinedTag}
           onToggleCustomTag={onToggleCustomTag}
         />
+        {featureDescription && (
+          <FieldDescription className="text-foreground-secondary">
+            {featureDescription}
+          </FieldDescription>
+        )}
       </Field>
     </FieldGroup>
   );

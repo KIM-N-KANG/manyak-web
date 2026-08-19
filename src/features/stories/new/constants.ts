@@ -40,6 +40,10 @@ export const CHARACTER_BASIC_INFO_DESCRIPTION = '비워두면 랜덤으로 설�
 
 export const CHARACTER_FEATURE_LABEL = `특징 (최대 ${CHARACTER_FEATURE_MAX_COUNT}개)`;
 
+/** 특징이 선택 항목인 인물(주변 인물)에만 붙이는 설명 */
+export const CHARACTER_FEATURE_RANDOM_DESCRIPTION =
+  '선택하지 않으면 랜덤으로 설정해요';
+
 export const CHARACTER_NAME_DUPLICATE_ERROR = '이미 사용한 이름이에요';
 
 export const CHARACTER_NAME_DUPLICATE_FOOTER_ERROR =
