@@ -2,13 +2,13 @@
 
 import { type ChangeEvent, type SubmitEvent, useState } from 'react';
 
-import type { SimpleStoryCustomTagRequestCategory } from '@/api/generated/models';
 import { track } from '@/observability/analytics';
 
 import { ADD_TAG_MAX_LENGTH } from '../constants';
+import type { CharacterTagCategory } from '../types';
 
 type UseAddTagDialogArgs = {
-  category: SimpleStoryCustomTagRequestCategory;
+  category: CharacterTagCategory;
   onAddTag: (tag: string) => void;
 };
 

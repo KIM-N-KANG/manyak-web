@@ -3,7 +3,6 @@
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
-import type { SimpleStoryCustomTagRequestCategory } from '@/api/generated/models';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,10 +25,13 @@ import { Label } from '@/components/ui/label';
 
 import { ADD_TAG_MAX_LENGTH } from '../../constants';
 import { useAddTagDialog } from '../../hooks/use-add-tag-dialog';
+import type { CharacterTagCategory } from '../../types';
 
 type AddTagDialogProps = {
-  category: SimpleStoryCustomTagRequestCategory;
+  category: CharacterTagCategory;
   categoryLabel: string;
+  /** 인물마다 다이얼로그가 하나씩 있어 화면 안에서 유일해야 하는 필드 id */
+  fieldId: string;
   placeholder: string;
   disabled?: boolean;
   onAddTag: (tag: string) => void;
@@ -38,6 +40,7 @@ type AddTagDialogProps = {
 export function AddTagDialog({
   category,
   categoryLabel,
+  fieldId,
   placeholder,
   disabled,
   onAddTag,
@@ -50,7 +53,7 @@ export function AddTagDialog({
     handleTagChange,
     handleSubmit,
   } = useAddTagDialog({ category, onAddTag });
-  const errorId = `${category}-tag-error`;
+  const errorId = `${fieldId}-tag-error`;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -72,11 +75,11 @@ export function AddTagDialog({
             <Field
               className="gap-2"
               data-invalid={validationError ? true : undefined}
-              aria-labelledby={`${category}-tag`}>
-              <Label htmlFor={`${category}-tag`}>키워드</Label>
+              aria-labelledby={`${fieldId}-tag`}>
+              <Label htmlFor={`${fieldId}-tag`}>키워드</Label>
               <InputGroup>
                 <InputGroupTextarea
-                  id={`${category}-tag`}
+                  id={`${fieldId}-tag`}
                   name="tag"
                   placeholder={placeholder}
                   maxLength={ADD_TAG_MAX_LENGTH}

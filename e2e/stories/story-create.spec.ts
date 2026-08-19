@@ -22,7 +22,7 @@ const tags = [
 
 const storylinesResponse = {
   simpleCreationId: 1001,
-  selectedTags: [],
+  selectedTags: { genreTags: [], supportingCharacters: [] },
   storylines: [
     {
       id: 101,
@@ -47,6 +47,10 @@ test.describe('스토리 생성', () => {
     });
 
     await page.goto('/stories/new');
+
+    // 장르는 제공 키워드만 고를 수 있어 직접 추가는 인물 탭에만 있다.
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     const dialog = page.getByRole('dialog');

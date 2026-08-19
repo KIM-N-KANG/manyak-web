@@ -11,8 +11,14 @@ import { parsePendingCreationRequest } from '@/features/stories/_shared/utils/cr
 
 const generationRequest: GenerateSimpleStorylinesRequest = {
   requestId: '11111111-1111-4111-8111-111111111111',
-  selectedTagIds: [1, 2],
-  customTags: [{ name: '커스텀', category: 'GENRE' }],
+  genreTagIds: [1, 2],
+  protagonist: {
+    name: '마냑',
+    gender: 'FEMALE',
+    featureTagIds: [3],
+    customTags: ['커스텀'],
+  },
+  supportingCharacters: [],
 };
 
 const storylineRecord: PendingCreationRequest = {

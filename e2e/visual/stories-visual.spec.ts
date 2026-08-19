@@ -151,7 +151,7 @@ test.describe('스토리 비주얼', () => {
 /** 스토리라인 생성 응답. 선택 태그 드로어는 요청에 담긴 선택 태그로 구성된다. */
 const storylinesResponse = {
   simpleCreationId: 1001,
-  selectedTags: [],
+  selectedTags: { genreTags: [], supportingCharacters: [] },
   storylines: [
     { id: 101, storyline: '첫 번째 이야기 흐름입니다.', recommendedInfos: [] },
     { id: 102, storyline: '두 번째 이야기 흐름입니다.', recommendedInfos: [] },
@@ -177,6 +177,10 @@ test.describe('스토리 오버레이 비주얼', () => {
 
   test('키워드 추가 다이얼로그 (STORY-KEYWORD)', async ({ page }) => {
     await page.goto('/stories/new');
+
+    // 장르는 제공 키워드만 고를 수 있어 직접 추가는 인물 탭에만 있다.
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     await expect(
