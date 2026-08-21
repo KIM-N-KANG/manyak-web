@@ -5,7 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { SimpleStoryCustomTagRequest } from './simpleStoryCustomTagRequest';
+import type { SimpleStoryCharacterRequest } from './simpleStoryCharacterRequest';
 
 /**
  * 간편 제작 스토리라인 생성 요청
@@ -14,17 +14,26 @@ export interface GenerateSimpleStorylinesRequest {
   /** 클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8). */
   requestId: string;
   /**
-   * 사용자가 선택한 사전 정의 태그 ID 목록
+   * 사용자가 선택한 사전 정의 장르 태그 ID 목록
    * @minItems 0
    * @maxItems 20
    */
-  selectedTagIds?: number[];
+  genreTagIds?: number[];
   /**
-   * 사용자가 직접 추가한 태그 목록
+   * 사용자가 직접 입력한 장르 이름 목록
    * @minItems 0
    * @maxItems 20
+   * @items.maxLength 30
    */
-  customTags?: SimpleStoryCustomTagRequest[];
+  customGenreTags?: string[];
+  /** 주인공 입력 */
+  protagonist: SimpleStoryCharacterRequest;
+  /**
+   * 주변 인물 입력 목록(최대 5명)
+   * @minItems 0
+   * @maxItems 5
+   */
+  supportingCharacters?: SimpleStoryCharacterRequest[];
   /**
    * 재생성이면 직전 생성의 creation_id(=그 요청의 requestId). 서버가 이 값을 검증해 **통과한 경우에만** AI 호출 헤더로 전달합니다(자기참조 아님·해당 요청 존재·소유 연속성). 검증에 실패해도 이 요청은 정상 처리되며(400이 아닙니다) 체인 헤더만 생략됩니다. 실패 사유는 서버에 기록되므로, 재생성 체인이 이어지지 않았다면 이 값이 유효했는지 확인하세요.
    * @nullable

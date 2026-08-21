@@ -21,7 +21,7 @@ const tags = [
 
 const storylinesResponse = {
   simpleCreationId: 1001,
-  selectedTags: [],
+  selectedTags: { genreTags: [], supportingCharacters: [] },
   storylines: [
     {
       id: 101,

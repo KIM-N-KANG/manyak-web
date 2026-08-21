@@ -112,14 +112,22 @@ export const GenerateSimpleStorylinesHeader = zod.object({
   'X-Manyak-Device-Id': zod.string().optional(),
 });
 
-export const generateSimpleStorylinesBodySelectedTagIdsMin = 0;
-export const generateSimpleStorylinesBodySelectedTagIdsMax = 20;
+export const generateSimpleStorylinesBodyGenreTagIdsMin = 0;
+export const generateSimpleStorylinesBodyGenreTagIdsMax = 20;
 
-export const generateSimpleStorylinesBodyCustomTagsItemNameMin = 0;
-export const generateSimpleStorylinesBodyCustomTagsItemNameMax = 30;
+export const generateSimpleStorylinesBodyCustomGenreTagsItemMax = 30;
 
-export const generateSimpleStorylinesBodyCustomTagsMin = 0;
-export const generateSimpleStorylinesBodyCustomTagsMax = 20;
+export const generateSimpleStorylinesBodyCustomGenreTagsMin = 0;
+export const generateSimpleStorylinesBodyCustomGenreTagsMax = 20;
+
+export const generateSimpleStorylinesBodyProtagonistNameMin = 0;
+export const generateSimpleStorylinesBodyProtagonistNameMax = 30;
+
+export const generateSimpleStorylinesBodySupportingCharactersItemNameMin = 0;
+export const generateSimpleStorylinesBodySupportingCharactersItemNameMax = 30;
+
+export const generateSimpleStorylinesBodySupportingCharactersMin = 0;
+export const generateSimpleStorylinesBodySupportingCharactersMax = 5;
 
 export const GenerateSimpleStorylinesBody = zod
   .object({
@@ -128,32 +136,74 @@ export const GenerateSimpleStorylinesBody = zod
       .describe(
         '클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8).',
       ),
-    selectedTagIds: zod
-      .array(zod.number().describe('사전 정의 태그 ID'))
-      .min(generateSimpleStorylinesBodySelectedTagIdsMin)
-      .max(generateSimpleStorylinesBodySelectedTagIdsMax)
+    genreTagIds: zod
+      .array(zod.number().describe('사전 정의 장르 태그 ID'))
+      .min(generateSimpleStorylinesBodyGenreTagIdsMin)
+      .max(generateSimpleStorylinesBodyGenreTagIdsMax)
       .optional()
-      .describe('사용자가 선택한 사전 정의 태그 ID 목록'),
-    customTags: zod
+      .describe('사용자가 선택한 사전 정의 장르 태그 ID 목록'),
+    customGenreTags: zod
+      .array(
+        zod
+          .string()
+          .max(generateSimpleStorylinesBodyCustomGenreTagsItemMax)
+          .describe('직접 입력한 장르 이름'),
+      )
+      .min(generateSimpleStorylinesBodyCustomGenreTagsMin)
+      .max(generateSimpleStorylinesBodyCustomGenreTagsMax)
+      .optional()
+      .describe('사용자가 직접 입력한 장르 이름 목록'),
+    protagonist: zod
+      .object({
+        name: zod
+          .string()
+          .min(generateSimpleStorylinesBodyProtagonistNameMin)
+          .max(generateSimpleStorylinesBodyProtagonistNameMax)
+          .nullish()
+          .describe('인물 이름. 비우면 AI가 생성합니다.'),
+        gender: zod
+          .enum(['MALE', 'FEMALE'])
+          .nullish()
+          .describe('인물 성별. 비우면 AI가 생성합니다.'),
+        featureTagIds: zod
+          .array(zod.number())
+          .optional()
+          .describe('선택한 사전 정의 특징 태그 ID 목록'),
+        customTags: zod
+          .array(zod.string())
+          .optional()
+          .describe('직접 추가한 특징 태그 이름 목록'),
+      })
+      .describe('주인공 입력'),
+    supportingCharacters: zod
       .array(
         zod
           .object({
             name: zod
               .string()
-              .min(generateSimpleStorylinesBodyCustomTagsItemNameMin)
-              .max(generateSimpleStorylinesBodyCustomTagsItemNameMax)
-              .describe('사용자가 직접 입력한 태그 이름'),
-            category: zod
-              .enum(['GENRE', 'PROTAGONIST', 'SUPPORTING_CHARACTER'])
+              .min(generateSimpleStorylinesBodySupportingCharactersItemNameMin)
+              .max(generateSimpleStorylinesBodySupportingCharactersItemNameMax)
+              .nullish()
+              .describe('인물 이름. 비우면 AI가 생성합니다.'),
+            gender: zod
+              .enum(['MALE', 'FEMALE'])
+              .nullish()
+              .describe('인물 성별. 비우면 AI가 생성합니다.'),
+            featureTagIds: zod
+              .array(zod.number())
               .optional()
-              .describe('직접 추가 태그 분류'),
+              .describe('선택한 사전 정의 특징 태그 ID 목록'),
+            customTags: zod
+              .array(zod.string())
+              .optional()
+              .describe('직접 추가한 특징 태그 이름 목록'),
           })
-          .describe('간편 제작 직접 추가 태그'),
+          .describe('간편 제작 인물 입력'),
       )
-      .min(generateSimpleStorylinesBodyCustomTagsMin)
-      .max(generateSimpleStorylinesBodyCustomTagsMax)
+      .min(generateSimpleStorylinesBodySupportingCharactersMin)
+      .max(generateSimpleStorylinesBodySupportingCharactersMax)
       .optional()
-      .describe('사용자가 직접 추가한 태그 목록'),
+      .describe('주변 인물 입력 목록(최대 5명)'),
     parentCreationId: zod
       .uuid()
       .nullish()

@@ -151,7 +151,7 @@ test.describe('스토리 비주얼', () => {
 /** 스토리라인 생성 응답. 선택 태그 드로어는 요청에 담긴 선택 태그로 구성된다. */
 const storylinesResponse = {
   simpleCreationId: 1001,
-  selectedTags: [],
+  selectedTags: { genreTags: [], supportingCharacters: [] },
   storylines: [
     { id: 101, storyline: '첫 번째 이야기 흐름입니다.', recommendedInfos: [] },
     { id: 102, storyline: '두 번째 이야기 흐름입니다.', recommendedInfos: [] },
