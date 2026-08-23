@@ -108,9 +108,20 @@ async function receiveHandoff(code: string): Promise<HandoffReceipt> {
  * 이 라우트는 프로덕션에서 정적 프리렌더되어 `router.replace`로 같은 경로에 쿼리만
  * 바꾸면 라우터가 동일 엔트리로 보고 히스토리를 갱신하지 않는다(dev에서는 항상 동적이라
  * 통과해 CI에서만 드러났다). 이동이 아닌 히스토리 치환이 필요한 자리다.
+ *
+ * 비밀값인 코드만 지우고 나머지 쿼리는 남긴다. 캠페인 파라미터까지 함께 지우면 분석
+ * SDK 초기화가 이 시점보다 늦은 경우 유입 출처를 읽을 기회가 사라진다.
  */
 function stripHandoffQuery() {
-  window.history.replaceState(null, '', APP_PATH.LOGIN_CONTINUE);
+  const url = new URL(window.location.href);
+
+  url.searchParams.delete(HANDOFF_QUERY_PARAM);
+
+  window.history.replaceState(
+    null,
+    '',
+    `${url.pathname}${url.search}${url.hash}`,
+  );
 }
 
 /** 외부 랜딩이 그릴 수 있는 화면 단계. */
