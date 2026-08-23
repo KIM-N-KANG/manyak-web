@@ -22,6 +22,7 @@ import {
   type PendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
+import { AMP_MKTG_COOKIE_PREFIX } from '@/observability/analytics/amplitude-identity';
 
 /**
  * 온보딩을 "이미 봄"으로 표시해 온보딩 페이지로 리다이렉트되지 않게 한다(US-8-3).
@@ -135,6 +136,25 @@ export async function seedPendingHandoff(
     },
     [PENDING_HANDOFF_STORAGE_KEY, JSON.stringify(pending)] as const,
   );
+}
+
+/**
+ * Amplitude가 캠페인 정보를 저장하는 형식(base64 → URL 인코드 → JSON)으로 마케팅 쿠키를
+ * 심는다. 로컬·E2E는 분석이 비활성화돼 SDK가 이 쿠키를 만들지 않으므로, 유입 출처가
+ * 남아 있는 상태를 재현하려면 직접 심어야 한다.
+ */
+export async function seedCampaignCookie(
+  page: Page,
+  campaign: Record<string, string>,
+): Promise<void> {
+  await page.context().addCookies([
+    {
+      name: `${AMP_MKTG_COOKIE_PREFIX}test123456`,
+      value: btoa(encodeURIComponent(JSON.stringify(campaign))),
+      domain: 'localhost',
+      path: '/',
+    },
+  ]);
 }
 
 /**

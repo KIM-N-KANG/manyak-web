@@ -18,6 +18,10 @@ import { HANDOFF_QUERY_PARAM } from '@/lib/auth/handoff-query';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { detectInAppBrowser, type InAppBrowser } from '@/lib/in-app-browser';
 import { track } from '@/observability/analytics';
+import {
+  appendCampaignParams,
+  readCampaignParams,
+} from '@/observability/analytics/campaign-params';
 
 import { savePendingHandoff } from './pending-handoff-storage';
 
@@ -125,9 +129,14 @@ export async function startInAppHandoffLogin({
 
     // 자동 전환이 실패해도 ⋯ 메뉴의 '외부 브라우저에서 열기'가 현재 주소를 그대로
     // 전달하도록, 전환 시도 전에 주소부터 핸드오프 URL로 바꾼다(스펙 §3-10 흐름 4).
-    const continueUrl = `${APP_PATH.LOGIN_CONTINUE}?${HANDOFF_QUERY_PARAM}=${encodeURIComponent(
-      handoffCode,
-    )}`;
+    // 캠페인 파라미터를 함께 실어 외부 브라우저의 유입 출처를 잇는다 — 외부 브라우저는
+    // 저장소가 격리된 데다 스킴으로 실행돼 referrer도 없어, URL이 유일한 전달 수단이다.
+    const continueUrl = appendCampaignParams(
+      `${APP_PATH.LOGIN_CONTINUE}?${HANDOFF_QUERY_PARAM}=${encodeURIComponent(
+        handoffCode,
+      )}`,
+      readCampaignParams(),
+    );
 
     window.location.replace(continueUrl);
 

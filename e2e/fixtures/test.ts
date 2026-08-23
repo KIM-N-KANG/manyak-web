@@ -19,6 +19,7 @@ export const test = base.extend({
 
 export { expect };
 export {
+  seedCampaignCookie,
   seedChatIds,
   seedGuestUsage,
   seedPendingHandoff,
