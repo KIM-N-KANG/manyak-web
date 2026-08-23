@@ -5,6 +5,7 @@ import {
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
+  seedCampaignCookie,
   seedChatIds,
   seedPendingHandoff,
   seedStoryIds,
@@ -91,6 +92,57 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
     await expect(
       page.getByText('외부 브라우저에서 로그인해주세요'),
     ).toBeVisible();
+  });
+
+  test('전환 URL에 유입 출처(UTM)를 함께 실어 보낸다', async ({ page }) => {
+    await skipOnboarding(page);
+    await seedCampaignCookie(page, {
+      utm_source: 'ig',
+      utm_medium: 'paid',
+      utm_campaign: 'KR_META_WEB_ACTIVATION_COLD_202608',
+      utm_id: '120210',
+      referrer: 'https://instagram.com/',
+      fbclid: 'should-not-travel',
+    });
+    await mockHandoffCreate(page, {
+      handoffCode: 'handoff-code-1',
+      handoffId: 'handoff-id-1',
+    });
+
+    await page.goto('/login');
+    await page.getByRole('button', { name: /Google로 시작하기/ }).click();
+
+    await expect(page).toHaveURL(/\/login\/continue\?handoff=handoff-code-1/);
+
+    // 외부 브라우저는 저장소가 격리되고 스킴 실행이라 referrer도 없어, URL이 유입
+    // 출처를 잇는 유일한 수단이다(KNK-964).
+    const params = new URL(page.url()).searchParams;
+
+    expect(params.get('utm_source')).toBe('ig');
+    expect(params.get('utm_medium')).toBe('paid');
+    expect(params.get('utm_campaign')).toBe(
+      'KR_META_WEB_ACTIVATION_COLD_202608',
+    );
+    expect(params.get('utm_id')).toBe('120210');
+    // UTM 계열만 싣는다.
+    expect(params.get('referrer')).toBeNull();
+    expect(params.get('fbclid')).toBeNull();
+  });
+
+  test('유입 출처가 없으면 전환 URL을 그대로 둔다', async ({ page }) => {
+    await skipOnboarding(page);
+    await seedCampaignCookie(page, { utm_source: '', utm_campaign: '' });
+    await mockHandoffCreate(page, {
+      handoffCode: 'handoff-code-1',
+      handoffId: 'handoff-id-1',
+    });
+
+    await page.goto('/login');
+    await page.getByRole('button', { name: /Google로 시작하기/ }).click();
+
+    // Amplitude는 캠페인 없는 진입에 빈 문자열을 써 넣으므로, 그대로 실으면 외부
+    // 브라우저의 기존 귀속을 빈 값으로 덮어쓴다.
+    await expect(page).toHaveURL('/login/continue?handoff=handoff-code-1');
   });
 
   test('인앱 복귀 시 이관된 ID만 로컬에서 제거한다', async ({ page }) => {
@@ -228,6 +280,25 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     await expect(
       page.getByRole('link', { name: '서비스이용약관' }),
     ).toBeVisible();
+  });
+
+  test('쿼리 제거는 핸드오프 코드에만 적용하고 유입 출처는 남긴다', async ({
+    page,
+  }) => {
+    await mockHandoffSession(page, {
+      body: { storyCount: 1, chatCount: 1, callbackPath: '/' },
+    });
+
+    await page.goto(
+      '/login/continue?handoff=handoff-code-1&utm_source=ig&utm_campaign=summer',
+    );
+
+    // 캠페인 파라미터까지 지우면 분석 SDK 초기화가 이보다 늦을 때 유입 출처를 읽을
+    // 기회가 사라진다(KNK-964).
+    await expect(page).toHaveURL(
+      '/login/continue?utm_source=ig&utm_campaign=summer',
+    );
+    await expect(page.getByText(/계정당 한 번만 진행돼요/)).toBeVisible();
   });
 
   test('만료된 코드는 만료 안내를 보여준다', async ({ page }) => {

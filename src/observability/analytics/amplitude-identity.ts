@@ -3,9 +3,15 @@ export const DEVICE_ID_HEADER = 'X-Manyak-Device-Id';
 /** Amplitude session_id를 백엔드로 전달하는 요청 헤더 이름. */
 export const SESSION_ID_HEADER = 'X-Manyak-Session-Id';
 
-/** 식별자 쿠키만 고르고 마케팅용 AMP_MKTG_ 쿠키는 제외하기 위한 접두사. */
+/** 식별자 쿠키를 고르기 위한 접두사. */
 const AMP_COOKIE_PREFIX = 'AMP_';
-const AMP_MKTG_COOKIE_PREFIX = 'AMP_MKTG_';
+
+/**
+ * Amplitude SDK가 캠페인 정보를 저장하는 쿠키의 접두사.
+ * 식별자 쿠키에서 이 쿠키를 걸러내는 데 쓰고, campaign-params가 반대로 이 쿠키만
+ * 고르는 데 함께 쓴다.
+ */
+export const AMP_MKTG_COOKIE_PREFIX = 'AMP_MKTG_';
 
 /** Amplitude SDK가 쿠키에 저장하는 익명 식별자 상태. */
 export interface AmplitudeCookieState {
