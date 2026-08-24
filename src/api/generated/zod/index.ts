@@ -65,6 +65,7 @@ export const CreateSimpleStoryHeader = zod.object({
   'X-Manyak-Device-Id': zod.string().optional(),
 });
 
+export const createSimpleStoryBodyAdditionalInfosItemMin = 0;
 export const createSimpleStoryBodyAdditionalInfosItemMax = 100;
 
 export const createSimpleStoryBodyAdditionalInfosMin = 0;
@@ -91,6 +92,7 @@ export const CreateSimpleStoryBody = zod
       .array(
         zod
           .string()
+          .min(createSimpleStoryBodyAdditionalInfosItemMin)
           .max(createSimpleStoryBodyAdditionalInfosItemMax)
           .describe('추가 정보'),
       )
@@ -115,6 +117,7 @@ export const GenerateSimpleStorylinesHeader = zod.object({
 export const generateSimpleStorylinesBodyGenreTagIdsMin = 0;
 export const generateSimpleStorylinesBodyGenreTagIdsMax = 20;
 
+export const generateSimpleStorylinesBodyCustomGenreTagsItemMin = 0;
 export const generateSimpleStorylinesBodyCustomGenreTagsItemMax = 30;
 
 export const generateSimpleStorylinesBodyCustomGenreTagsMin = 0;
@@ -123,8 +126,14 @@ export const generateSimpleStorylinesBodyCustomGenreTagsMax = 20;
 export const generateSimpleStorylinesBodyProtagonistNameMin = 0;
 export const generateSimpleStorylinesBodyProtagonistNameMax = 30;
 
+export const generateSimpleStorylinesBodyProtagonistCustomTagsItemMin = 0;
+export const generateSimpleStorylinesBodyProtagonistCustomTagsItemMax = 30;
+
 export const generateSimpleStorylinesBodySupportingCharactersItemNameMin = 0;
 export const generateSimpleStorylinesBodySupportingCharactersItemNameMax = 30;
+
+export const generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMin = 0;
+export const generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMax = 30;
 
 export const generateSimpleStorylinesBodySupportingCharactersMin = 0;
 export const generateSimpleStorylinesBodySupportingCharactersMax = 5;
@@ -137,7 +146,7 @@ export const GenerateSimpleStorylinesBody = zod
         '클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8).',
       ),
     genreTagIds: zod
-      .array(zod.number().describe('사전 정의 장르 태그 ID'))
+      .array(zod.number().min(1).describe('사전 정의 장르 태그 ID'))
       .min(generateSimpleStorylinesBodyGenreTagIdsMin)
       .max(generateSimpleStorylinesBodyGenreTagIdsMax)
       .optional()
@@ -146,6 +155,7 @@ export const GenerateSimpleStorylinesBody = zod
       .array(
         zod
           .string()
+          .min(generateSimpleStorylinesBodyCustomGenreTagsItemMin)
           .max(generateSimpleStorylinesBodyCustomGenreTagsItemMax)
           .describe('직접 입력한 장르 이름'),
       )
@@ -166,11 +176,16 @@ export const GenerateSimpleStorylinesBody = zod
           .nullish()
           .describe('인물 성별. 비우면 AI가 생성합니다.'),
         featureTagIds: zod
-          .array(zod.number())
+          .array(zod.number().min(1))
           .optional()
           .describe('선택한 사전 정의 특징 태그 ID 목록'),
         customTags: zod
-          .array(zod.string())
+          .array(
+            zod
+              .string()
+              .min(generateSimpleStorylinesBodyProtagonistCustomTagsItemMin)
+              .max(generateSimpleStorylinesBodyProtagonistCustomTagsItemMax),
+          )
           .optional()
           .describe('직접 추가한 특징 태그 이름 목록'),
       })
@@ -190,11 +205,20 @@ export const GenerateSimpleStorylinesBody = zod
               .nullish()
               .describe('인물 성별. 비우면 AI가 생성합니다.'),
             featureTagIds: zod
-              .array(zod.number())
+              .array(zod.number().min(1))
               .optional()
               .describe('선택한 사전 정의 특징 태그 ID 목록'),
             customTags: zod
-              .array(zod.string())
+              .array(
+                zod
+                  .string()
+                  .min(
+                    generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMin,
+                  )
+                  .max(
+                    generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMax,
+                  ),
+              )
               .optional()
               .describe('직접 추가한 특징 태그 이름 목록'),
           })
@@ -225,6 +249,9 @@ export const createGeneralStoryBodyTitleMax = 100;
 
 export const createGeneralStoryBodyOneLineIntroMin = 0;
 export const createGeneralStoryBodyOneLineIntroMax = 255;
+
+export const createGeneralStoryBodyGenresItemMin = 0;
+export const createGeneralStoryBodyGenresItemMax = 30;
 
 export const createGeneralStoryBodyGenresMax = 8;
 
@@ -266,7 +293,12 @@ export const CreateGeneralStoryBody = zod
       .describe('한 줄 소개'),
     description: zod.string().nullish().describe('주요 내용(선택).'),
     genres: zod
-      .array(zod.string())
+      .array(
+        zod
+          .string()
+          .min(createGeneralStoryBodyGenresItemMin)
+          .max(createGeneralStoryBodyGenresItemMax),
+      )
       .min(1)
       .max(createGeneralStoryBodyGenresMax)
       .optional()
@@ -300,7 +332,7 @@ export const CreateGeneralStoryBody = zod
             prologue: zod.string().min(1).describe('도입부 내레이션(프롤로그)'),
             startSituation: zod.string().min(1).describe('시작 상황'),
             suggestedInputs: zod
-              .array(zod.string())
+              .array(zod.string().min(1))
               .min(createGeneralStoryBodyStartSettingsItemSuggestedInputsMin)
               .max(createGeneralStoryBodyStartSettingsItemSuggestedInputsMax)
               .optional()
@@ -863,6 +895,9 @@ export const updateStoryBodyTitleMax = 100;
 export const updateStoryBodyOneLineIntroMin = 0;
 export const updateStoryBodyOneLineIntroMax = 255;
 
+export const updateStoryBodyGenresItemMin = 0;
+export const updateStoryBodyGenresItemMax = 30;
+
 export const updateStoryBodyGenresMax = 8;
 
 export const updateStoryBodyStartSettingsItemNameMin = 0;
@@ -901,7 +936,12 @@ export const UpdateStoryBody = zod
       .nullish(),
     description: zod.string().nullish(),
     genres: zod
-      .array(zod.string())
+      .array(
+        zod
+          .string()
+          .min(updateStoryBodyGenresItemMin)
+          .max(updateStoryBodyGenresItemMax),
+      )
       .min(1)
       .max(updateStoryBodyGenresMax)
       .nullish(),
@@ -939,7 +979,7 @@ export const UpdateStoryBody = zod
             prologue: zod.string().min(1).describe('도입부 내레이션(프롤로그)'),
             startSituation: zod.string().min(1).describe('시작 상황'),
             suggestedInputs: zod
-              .array(zod.string())
+              .array(zod.string().min(1))
               .min(updateStoryBodyStartSettingsItemSuggestedInputsMin)
               .max(updateStoryBodyStartSettingsItemSuggestedInputsMax)
               .optional()
@@ -1085,6 +1125,12 @@ export const GetCreationRequestHeader = zod.object({
 });
 
 export const GetCreationRequestResponse = zod.unknown();
+
+/**
+ * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 피드·검색이 나오기 전까지 홈의 오리지널 섹션이 사용하며, 인증은 필요 없습니다. 공식 계정 미설정 환경은 빈 목록입니다.
+ * @summary 오리지널 스토리 목록 조회
+ */
+export const GetOriginalStoriesResponse = zod.unknown();
 
 /**
  * 일반 제작에서 참조할 로어북(장르 공용 용어 사전) 목록을 조회합니다. genre로 필터할 수 있습니다.

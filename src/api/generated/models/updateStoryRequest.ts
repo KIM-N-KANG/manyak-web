@@ -31,6 +31,8 @@ export interface UpdateStoryRequest {
    * @minItems 1
    * @maxItems 8
    * @nullable
+   * @items.minLength 0
+   * @items.maxLength 30
    */
   genres?: string[] | null;
   storySettings?: GeneralStorySettingsInput | null;
