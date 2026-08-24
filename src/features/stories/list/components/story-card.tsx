@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
+import type { StoryCardSection } from '@/observability/analytics';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
 import type { StoryListItem } from '../types';
@@ -16,9 +17,11 @@ import { StoryGenreBadges } from './story-genre-badges';
 type StoryCardProps = {
   story: StoryListItem;
   position?: number;
+  /** 카드가 속한 섹션. 분석에서 오리지널과 내 서재의 성과를 분리한다. */
+  section: StoryCardSection;
 };
 
-export function StoryCard({ story, position }: StoryCardProps) {
+export function StoryCard({ story, position, section }: StoryCardProps) {
   const storyId = story.id;
   const impressionRef = useImpression({
     object: 'storyCard',
@@ -29,6 +32,7 @@ export function StoryCard({ story, position }: StoryCardProps) {
         track('client_storyList_storyCard_impressed', {
           story_id: storyId,
           position,
+          section,
         });
       }
     },
@@ -47,6 +51,7 @@ export function StoryCard({ story, position }: StoryCardProps) {
             track('client_storyList_storyCard_clicked', {
               story_id: storyId,
               position,
+              section,
             })
           }
         />

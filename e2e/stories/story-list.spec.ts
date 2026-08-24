@@ -1,11 +1,15 @@
 import type { Page } from '@playwright/test';
 
+import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
+
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 목록은 localStorage의 ID로 POST /api/v1/stories/batch 를 호출해 카드를 그린다.
 // customInstance가 응답 body를 { data, status }로 감싸므로, 모킹 body는 StorySummaryResponse 배열이다.
 const STORIES_BATCH = '**/api/v1/stories/batch';
+// 오리지널 목록은 인증 없이 조회한다. 목킹하지 않으면 mockApi의 catch-all이 빈 배열을 준다.
+const STORIES_ORIGINALS = '**/api/v1/stories/originals';
 
 const story = (id: string, title: string) => ({
   id,
@@ -39,6 +43,16 @@ const mockStoryDetailWithDelete = async (
   });
 };
 
+const mockOriginalStories = async (page: Page, stories: unknown[]) => {
+  await page.route(STORIES_ORIGINALS, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(stories),
+    });
+  });
+};
+
 test.describe('스토리 목록', () => {
   test('보관한 ID로 스토리 카드 목록을 보여준다 (US-2-1)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
@@ -57,6 +71,66 @@ test.describe('스토리 목록', () => {
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
+  });
+
+  test('오리지널 스토리를 내 서재 위 섹션으로 보여준다 (KNK-983)', async ({
+    page,
+  }) => {
+    await seedStoryIds(page, ['s1']);
+    await mockOriginalStories(page, [story('o1', '마냑의 첫 이야기')]);
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page.getByText('마냑의 첫 이야기', { exact: true }),
+    ).toBeVisible();
+    // 섹션 제목의 DOM 순서가 곧 화면 배치 순서다(오리지널이 위).
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText([
+      STORY_SECTION_TITLE.ORIGINAL,
+      STORY_SECTION_TITLE.CREATED,
+    ]);
+  });
+
+  test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockOriginalStories(page, [story('o1', '마냑의 첫 이야기')]);
+
+    await page.goto('/');
+
+    await expect(
+      page.getByRole('link', { name: '마냑의 첫 이야기 상세 보기' }),
+    ).toBeVisible();
+    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
+  });
+
+  test('오리지널 스토리가 없으면 섹션을 표시하지 않는다 (KNK-983)', async ({
+    page,
+  }) => {
+    // 공식 계정 미설정 환경(빈 배열)을 mockApi의 catch-all이 그대로 재현한다.
+    await seedStoryIds(page, ['s1']);
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: STORY_SECTION_TITLE.ORIGINAL }),
+    ).toBeHidden();
   });
 
   test('게스트는 헤더의 로그인 버튼으로 로그인 화면에 간다', async ({
