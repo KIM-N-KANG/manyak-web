@@ -105,7 +105,12 @@ test.describe('스토리 비주얼', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([story('o1', '마냑의 첫 이야기')]),
+        body: JSON.stringify([
+          {
+            ...story('o1', '마냑의 첫 이야기'),
+            author: { id: 1, nickname: '마냑', profileImageUrl: null },
+          },
+        ]),
       });
     });
     await page.route(STORIES_BATCH, async (route) => {

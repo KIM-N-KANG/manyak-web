@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
+import { cn } from '@/lib/utils';
 import type { StoryCardSection } from '@/observability/analytics';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
@@ -39,6 +40,8 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
   });
 
   const thumbnailUrl = story.thumbnailUrlSm ?? null;
+  // 오리지널은 제목·제작자를, 내 서재는 제목·한 줄 소개·장르를 보여준다(같은 카드 골격에 메타만 다르다).
+  const isOriginal = section === 'original';
 
   return (
     <article ref={impressionRef} className="relative flex flex-col gap-2">
@@ -82,15 +85,30 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
         </div>
       </AspectRatio>
-      <div className="flex h-24 min-w-0 flex-col gap-0.5">
+      <div
+        className={cn(
+          'flex min-w-0 flex-col gap-0.5',
+          // 카드 텍스트 영역은 고정 높이로 그리드 행을 맞춘다(줄 수가 다르므로 변형마다 다르다).
+          isOriginal ? 'h-18' : 'h-24',
+        )}>
         <p className="line-clamp-2 leading-6 font-semibold">{story.title}</p>
-        <p className="line-clamp-1 text-sm text-foreground-secondary">
-          {story.oneLineIntro}
-        </p>
-        {story.genres.length > 0 && (
-          <div className="mt-1.5">
-            <StoryGenreBadges genres={story.genres} />
-          </div>
+        {isOriginal ? (
+          story.author?.nickname != null && (
+            <p className="line-clamp-1 text-sm text-foreground-secondary">
+              {story.author.nickname}
+            </p>
+          )
+        ) : (
+          <>
+            <p className="line-clamp-1 text-sm text-foreground-secondary">
+              {story.oneLineIntro}
+            </p>
+            {story.genres.length > 0 && (
+              <div className="mt-1.5">
+                <StoryGenreBadges genres={story.genres} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </article>
