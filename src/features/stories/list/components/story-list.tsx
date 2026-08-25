@@ -19,6 +19,7 @@ import { useCreatedStories } from '../hooks/use-created-stories';
 import { useOriginalStories } from '../hooks/use-original-stories';
 import { ContinueCreationBanner } from './continue-creation-banner';
 import { CreateStoryFab } from './create-story-fab';
+import { StoryCardGrid } from './story-card-grid';
 import { StoryListSkeleton } from './story-list-skeleton';
 import { StorySection } from './story-section';
 
@@ -76,11 +77,7 @@ export function StoryList() {
     stateKey = 'list';
     content = (
       <>
-        <StorySection
-          title={STORY_SECTION_TITLE.CREATED}
-          stories={stories}
-          section="created"
-        />
+        <StoryCardGrid stories={stories} section="created" />
         <CreateStoryFab />
       </>
     );
@@ -89,19 +86,23 @@ export function StoryList() {
   return (
     <>
       <ContinueCreationBanner />
-      {/* 오리지널은 보조 콘텐츠다. 로딩·실패·빈 배열(공식 계정 미설정)에서는 자리를 만들지 않고 접는다. */}
-      {originalStories.length > 0 && (
-        <StorySection
-          title={STORY_SECTION_TITLE.ORIGINAL}
-          stories={originalStories}
-          section="original"
-        />
-      )}
-      <FadeStateSwitch
-        stateKey={stateKey}
-        className="flex min-h-0 flex-1 flex-col">
-        {content}
-      </FadeStateSwitch>
+      {/* 섹션 사이 간격은 여기서만 준다 — 섹션이 각자 세로 여백을 가지면 이중으로 벌어진다. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-8 pt-4 pb-8">
+        {/* 오리지널은 보조 콘텐츠다. 로딩·실패·빈 배열(공식 계정 미설정)에서는 자리를 만들지 않고 접는다. */}
+        {originalStories.length > 0 && (
+          <StorySection title={STORY_SECTION_TITLE.ORIGINAL}>
+            <StoryCardGrid stories={originalStories} section="original" />
+          </StorySection>
+        )}
+        {/* 내가 만든 스토리는 제목을 항상 두고 내용만 상태에 따라 바꾼다. */}
+        <StorySection title={STORY_SECTION_TITLE.CREATED}>
+          <FadeStateSwitch
+            stateKey={stateKey}
+            className="flex min-h-0 flex-1 flex-col">
+            {content}
+          </FadeStateSwitch>
+        </StorySection>
+      </div>
     </>
   );
 }

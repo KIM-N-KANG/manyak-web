@@ -1,26 +1,19 @@
-import type { StoryCardSection } from '@/observability/analytics';
-
-import type { StoryListItem } from '../types';
-import { StoryCard } from './story-card';
+import type { ReactNode } from 'react';
 
 type StorySectionProps = {
   title: string;
-  stories: StoryListItem[];
-  section: StoryCardSection;
+  children: ReactNode;
 };
 
-/** 제목이 붙은 스토리 카드 그리드. 오리지널과 내 서재를 같은 카드 체계로 구분해 보여준다. */
-export function StorySection({ title, stories, section }: StorySectionProps) {
+/**
+ * 제목이 붙은 홈 목록 섹션.
+ * 제목은 내용 상태(목록·빈 상태·로딩·에러)와 무관하게 유지해 화면 구조가 상태마다 바뀌지 않게 한다.
+ */
+export function StorySection({ title, children }: StorySectionProps) {
   return (
-    <section className="flex flex-col gap-3 p-4 pb-8">
+    <section className="flex flex-col gap-3 px-4">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-8">
-        {stories.map((story, index) => (
-          <li key={story.id}>
-            <StoryCard story={story} position={index} section={section} />
-          </li>
-        ))}
-      </ul>
+      {children}
     </section>
   );
 }

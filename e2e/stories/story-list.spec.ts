@@ -79,7 +79,7 @@ test.describe('스토리 목록', () => {
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
   });
 
-  test('오리지널 스토리를 내 서재 위 섹션으로 보여준다 (KNK-983)', async ({
+  test('오리지널 스토리를 내가 만든 스토리 위 섹션으로 보여준다 (KNK-983)', async ({
     page,
   }) => {
     await seedStoryIds(page, ['s1']);
@@ -102,7 +102,7 @@ test.describe('스토리 목록', () => {
       STORY_SECTION_TITLE.ORIGINAL,
       STORY_SECTION_TITLE.CREATED,
     ]);
-    // ORIGINAL 태그는 오리지널 카드에만 붙는다(내 서재 카드에는 없다).
+    // ORIGINAL 태그는 오리지널 카드에만 붙는다(내가 만든 스토리 카드에는 없다).
     await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
   });
 
@@ -120,6 +120,27 @@ test.describe('스토리 목록', () => {
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
   });
 
+  test('만든 스토리가 없어도 섹션 제목은 유지된다 (KNK-983)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+
+    await page.goto('/');
+
+    await expect(
+      page.getByRole('heading', { name: STORY_SECTION_TITLE.CREATED }),
+    ).toBeVisible();
+    // 빈 상태 안내와 CTA는 섹션 제목 아래에 내용으로 들어간다.
+    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '스토리 만들기' }),
+    ).toBeVisible();
+    // FAB(링크)은 목록 상태 전용이라 빈 상태에는 없다.
+    await expect(page.getByRole('link', { name: '스토리 만들기' })).toHaveCount(
+      0,
+    );
+  });
+
   test('오리지널 카드는 ORIGINAL 태그와 제작자를 보여준다 (KNK-983)', async ({
     page,
   }) => {
@@ -130,7 +151,7 @@ test.describe('스토리 목록', () => {
 
     await expect(page.getByText('마냑', { exact: true })).toBeVisible();
     await expect(page.getByRole('img', { name: '오리지널' })).toBeVisible();
-    // 내 서재 카드와 달리 한 줄 소개·장르는 노출하지 않는다.
+    // 내가 만든 스토리 카드와 달리 한 줄 소개·장르는 노출하지 않는다.
     await expect(page.getByText('한 줄 소개입니다')).toBeHidden();
   });
 
@@ -232,9 +253,20 @@ test.describe('스토리 목록', () => {
     await page.goto('/');
 
     await expect(page.getByText('스토리를 불러오지 못했어요')).toBeVisible();
+    // 에러 상태에서도 섹션 제목은 남는다. FAB은 목록 상태에서만 렌더된다(KNK-983).
+    await expect(
+      page.getByRole('heading', { name: STORY_SECTION_TITLE.CREATED }),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: '스토리 만들기' })).toHaveCount(
+      0,
+    );
+
     await page.getByRole('button', { name: '다시 시도하기' }).click();
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: '스토리 만들기' })).toHaveCount(
+      1,
+    );
   });
 
   test('스토리를 삭제하면 완료 안내가 뜬다 (US-2-4)', async ({ page }) => {
