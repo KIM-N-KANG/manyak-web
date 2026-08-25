@@ -2,32 +2,47 @@ import type { ComponentType, SVGProps } from 'react';
 
 import {
   ChatRoundFilledIcon,
+  ChatRoundOutlineIcon,
   HomeFilledIcon,
+  HomeOutlineIcon,
+  PlusCircleFilledIcon,
+  PlusCircleOutlineIcon,
   UserFilledIcon,
+  UserOutlineIcon,
 } from '@/components/icons/bottom-navigation-icons';
 import { APP_PATH, type MainAppPath } from '@/constants/app-path';
 
 export interface MainNavigationItem {
   href: MainAppPath;
   label: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  activeIcon: ComponentType<SVGProps<SVGSVGElement>>;
+  inactiveIcon: ComponentType<SVGProps<SVGSVGElement>>;
 }
 
 export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
   {
     href: APP_PATH.MAIN.STORIES,
     label: '홈',
-    icon: HomeFilledIcon,
+    activeIcon: HomeFilledIcon,
+    inactiveIcon: HomeOutlineIcon,
   },
   {
     href: APP_PATH.MAIN.CHATS,
     label: '채팅',
-    icon: ChatRoundFilledIcon,
+    activeIcon: ChatRoundFilledIcon,
+    inactiveIcon: ChatRoundOutlineIcon,
+  },
+  {
+    href: APP_PATH.MAIN.CREATE,
+    label: '제작',
+    activeIcon: PlusCircleFilledIcon,
+    inactiveIcon: PlusCircleOutlineIcon,
   },
   {
     href: APP_PATH.MAIN.MY,
     label: '마이',
-    icon: UserFilledIcon,
+    activeIcon: UserFilledIcon,
+    inactiveIcon: UserOutlineIcon,
   },
 ];
 

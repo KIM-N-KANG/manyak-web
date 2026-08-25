@@ -15,6 +15,8 @@ import { isGuestOverLimit } from '@/features/auth/_shared/utils/guest-usage-stor
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
+import { CREATE_STORY_FAB_COPY } from '../constants';
+
 export function CreateStoryFab() {
   const { hasScrolled } = useMainScroll();
   const { status } = useSession();
@@ -37,7 +39,7 @@ export function CreateStoryFab() {
       <Link
         href={APP_PATH.CREATOR.STORY}
         onClick={handleClick}
-        aria-label="스토리 만들기"
+        aria-label={CREATE_STORY_FAB_COPY.accessibleLabel}
         className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md shadow-primary/20 transition-[filter] outline-none hover:bg-primary/80 focus-visible:ring-2 focus-visible:ring-ring/50">
         <HugeiconsIcon
           icon={PlusSignIcon}
@@ -53,7 +55,7 @@ export function CreateStoryFab() {
           transition={{ type: 'spring', stiffness: 400, damping: 34 }}
           className="inline-flex overflow-hidden">
           <span className="mr-1 text-base font-medium whitespace-nowrap">
-            만들기
+            {CREATE_STORY_FAB_COPY.label}
           </span>
         </m.span>
       </Link>

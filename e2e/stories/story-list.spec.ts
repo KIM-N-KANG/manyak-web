@@ -1,5 +1,10 @@
 import type { Page } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATED_STORY_SECTION_TITLE,
+} from '@/features/create/menu/constants';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -59,7 +64,7 @@ const mockOriginalStories = async (page: Page, stories: unknown[]) => {
   });
 };
 
-test.describe('스토리 목록', () => {
+test.describe('홈·제작 스토리 목록', () => {
   test('보관한 ID로 스토리 카드 목록을 보여준다 (US-2-1)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
     await page.route(STORIES_BATCH, async (route) => {
@@ -73,13 +78,13 @@ test.describe('스토리 목록', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
   });
 
-  test('오리지널 스토리를 내가 만든 스토리 위 섹션으로 보여준다 (KNK-983)', async ({
+  test('오리지널과 내가 만든 스토리를 홈·제작 화면에 나눠 보여준다 (KNK-988)', async ({
     page,
   }) => {
     await seedStoryIds(page, ['s1']);
@@ -97,13 +102,44 @@ test.describe('스토리 목록', () => {
     await expect(
       page.getByText('마냑의 첫 이야기', { exact: true }),
     ).toBeVisible();
-    // 섹션 제목의 DOM 순서가 곧 화면 배치 순서다(오리지널이 위).
-    await expect(page.getByRole('heading', { level: 2 })).toHaveText([
-      STORY_SECTION_TITLE.ORIGINAL,
-      STORY_SECTION_TITLE.CREATED,
-    ]);
-    // ORIGINAL 태그는 오리지널 카드에만 붙는다(내가 만든 스토리 카드에는 없다).
+    await expect(page.getByText('용의 계곡', { exact: true })).toBeHidden();
+
+    const originalHeading = page.getByRole('heading', {
+      name: STORY_SECTION_TITLE.ORIGINAL,
+    });
+
+    await expect(originalHeading).toBeVisible();
+    await expect(originalHeading).toHaveCSS('font-weight', '700');
+    await expect(originalHeading.locator('xpath=../..')).toHaveCSS(
+      'padding-top',
+      '0px',
+    );
     await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
+
+    await page
+      .getByRole('navigation', { name: '하단 네비게이션' })
+      .getByRole('link', { name: '제작' })
+      .click();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
+    await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('마냑의 첫 이야기', { exact: true }),
+    ).toBeHidden();
+
+    const createdHeading = page.getByRole('heading', {
+      name: CREATED_STORY_SECTION_TITLE,
+    });
+
+    await expect(createdHeading).toBeVisible();
+    await expect(createdHeading).toHaveCSS('font-weight', '700');
+    await expect(createdHeading.locator('xpath=../..')).toHaveCSS(
+      'padding-top',
+      '0px',
+    );
+    await expect(
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
+    ).toBeVisible();
   });
 
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
@@ -115,30 +151,36 @@ test.describe('스토리 목록', () => {
     await page.goto('/');
 
     await expect(
+      page.getByRole('banner').getByRole('link', { name: '로그인' }),
+    ).toBeVisible();
+    await expect(
       page.getByRole('link', { name: '마냑의 첫 이야기 상세 보기' }),
     ).toBeVisible();
+    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeHidden();
+
+    await page.goto(APP_PATH.MAIN.CREATE);
+
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
   });
 
-  test('만든 스토리가 없어도 섹션 제목은 유지된다 (KNK-983)', async ({
+  test('만든 스토리가 없는 제작 화면은 제목과 기존 빈 상태만 표시한다 (KNK-988)', async ({
     page,
   }) => {
     await skipOnboarding(page);
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(
-      page.getByRole('heading', { name: STORY_SECTION_TITLE.CREATED }),
+      page.getByRole('heading', { name: CREATED_STORY_SECTION_TITLE }),
     ).toBeVisible();
-    // 빈 상태 안내와 CTA는 섹션 제목 아래에 내용으로 들어간다.
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
     await expect(
       page.getByRole('button', { name: '스토리 만들기' }),
     ).toBeVisible();
-    // FAB(링크)은 목록 상태 전용이라 빈 상태에는 없다.
-    await expect(page.getByRole('link', { name: '스토리 만들기' })).toHaveCount(
-      0,
-    );
+    // FAB는 목록 상태 전용이라 빈 상태에는 없다.
+    await expect(
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
+    ).toHaveCount(0);
   });
 
   test('오리지널 카드는 ORIGINAL 태그와 제작자를 보여준다 (KNK-983)', async ({
@@ -158,22 +200,46 @@ test.describe('스토리 목록', () => {
   test('오리지널 스토리가 없으면 섹션을 표시하지 않는다 (KNK-983)', async ({
     page,
   }) => {
-    // 공식 계정 미설정 환경(빈 배열)을 mockApi의 catch-all이 그대로 재현한다.
-    await seedStoryIds(page, ['s1']);
-    await page.route(STORIES_BATCH, async (route) => {
+    await skipOnboarding(page);
+
+    await page.goto('/');
+
+    await expect(
+      page.getByRole('heading', { name: STORY_SECTION_TITLE.ORIGINAL }),
+    ).toBeHidden();
+  });
+
+  test('오리지널 로딩 중에는 제목과 카드 구조에 맞는 스켈레톤을 보여준다 (KNK-988)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+
+    let releaseResponse!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+
+    await page.route(STORIES_ORIGINALS, async (route) => {
+      await responseGate;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([story('s1', '용의 계곡')]),
+        body: '[]',
       });
     });
 
     await page.goto('/');
 
-    await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: STORY_SECTION_TITLE.ORIGINAL }),
-    ).toBeHidden();
+    const loading = page.getByRole('status', {
+      name: '오리지널 스토리 불러오는 중',
+    });
+
+    await expect(loading).toBeVisible();
+    // 제목 1개 + 카드 6개의 썸네일·제목·제작자 3개씩이다.
+    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(19);
+
+    releaseResponse();
+    await expect(loading).toBeHidden();
   });
 
   test('게스트는 헤더의 로그인 버튼으로 로그인 화면에 간다', async ({
@@ -193,17 +259,9 @@ test.describe('스토리 목록', () => {
   test('로그인 상태에서는 헤더에 로그인 버튼이 없다', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page);
-    await page.route('**/api/v1/users/me/stories**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([story('s1', '회원의 서재')]),
-      });
-    });
 
     await page.goto('/');
 
-    await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
     await expect(
       page.getByRole('banner').getByRole('link', { name: '로그인' }),
     ).toBeHidden();
@@ -219,7 +277,7 @@ test.describe('스토리 목록', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
     await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
 
     await expect(page).toHaveURL(/\/stories\/s1$/);
@@ -250,23 +308,22 @@ test.describe('스토리 목록', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('스토리를 불러오지 못했어요')).toBeVisible();
-    // 에러 상태에서도 섹션 제목은 남는다. FAB은 목록 상태에서만 렌더된다(KNK-983).
     await expect(
-      page.getByRole('heading', { name: STORY_SECTION_TITLE.CREATED }),
+      page.getByRole('heading', { name: CREATED_STORY_SECTION_TITLE }),
     ).toBeVisible();
-    await expect(page.getByRole('link', { name: '스토리 만들기' })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
+    ).toHaveCount(0);
 
     await page.getByRole('button', { name: '다시 시도하기' }).click();
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: '스토리 만들기' })).toHaveCount(
-      1,
-    );
+    await expect(
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
+    ).toBeVisible();
   });
 
   test('스토리를 삭제하면 완료 안내가 뜬다 (US-2-4)', async ({ page }) => {
@@ -280,7 +337,7 @@ test.describe('스토리 목록', () => {
     });
     await mockStoryDetailWithDelete(page, 's1', '용의 계곡');
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
     await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
@@ -307,9 +364,13 @@ test.describe('스토리 목록', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
   });
 
   test('로그인 상태에서 스토리를 삭제하면 목록에서 사라진다', async ({
@@ -331,7 +392,7 @@ test.describe('스토리 목록', () => {
       deleted = true;
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
     await page.getByRole('link', { name: '회원의 서재 상세 보기' }).click();
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
@@ -341,7 +402,7 @@ test.describe('스토리 목록', () => {
       .click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
     await expect(
       page.getByText('회원의 서재', { exact: true }),
     ).not.toBeVisible();

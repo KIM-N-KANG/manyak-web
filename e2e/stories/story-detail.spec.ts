@@ -1,5 +1,7 @@
 import type { Route } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
+
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
@@ -223,7 +225,7 @@ test.describe('스토리 상세', () => {
   test('스토리를 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-4-3)', async ({
     page,
   }) => {
-    // 삭제 후 홈 복귀 검증이 목적이므로 온보딩은 열람 처리 상태를 전제한다.
+    // 삭제 후 제작 탭 복귀 검증이 목적이므로 온보딩은 열람 처리 상태를 전제한다.
     await skipOnboarding(page);
     await page.route(STORY_DETAIL, async (route) => {
       if (route.request().method() === 'DELETE') {
@@ -245,7 +247,7 @@ test.describe('스토리 상세', () => {
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
   });
 
   test('로드에 실패하면 다시 시도로 복구한다 (US-4-4)', async ({ page }) => {

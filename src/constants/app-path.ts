@@ -2,6 +2,7 @@ export const APP_PATH = {
   MAIN: {
     STORIES: '/',
     CHATS: '/chats',
+    CREATE: '/create',
     MY: '/my',
   },
   LOGIN: '/login',
@@ -17,7 +18,7 @@ export const APP_PATH = {
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   SHARE_VIEW: (shareId: string) => `/share/${shareId}`,
   CREATOR: {
-    STORY: '/stories/new',
+    STORY: '/create/story',
   },
 } as const;
 

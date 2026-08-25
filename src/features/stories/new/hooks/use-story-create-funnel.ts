@@ -36,10 +36,6 @@ import {
   isGuestUsageLimitReached,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
-import {
-  clearOnboardingEntry,
-  isOnboardingEntry,
-} from '@/features/onboarding/utils/onboarding-entry-storage';
 import type {
   PendingCreationRequest,
   StoryDraftRecord,
@@ -155,26 +151,17 @@ export function useStoryCreateFunnel() {
 
   const simpleStoryTags = useGetSimpleStoryTags();
 
-  // 온보딩에서 replace로 진입했는지. 마운트 시 한 번만 읽고(lazy 초기화),
-  // 이 진입에만 적용되도록 곧바로 기록을 지운다.
-  const [cameFromOnboarding] = useState(() => isOnboardingEntry());
-
-  useEffect(() => {
-    clearOnboardingEntry();
-  }, []);
-
   const shouldConfirmBack = step !== 'keyword';
 
-  const { confirmLeave, leaveAfterCleanup } = usePreventPageLeave({
+  const { leaveAfterCleanup } = usePreventPageLeave({
     warnOnUnload: shouldConfirmBack,
-    interceptBack: shouldConfirmBack || cameFromOnboarding,
+    interceptBack: true,
     onBackAttempt: () => handleBackAttempt(),
   });
 
-  // 온보딩에서 replace로 진입하면 앱 내에 돌아갈 히스토리가 없으므로
-  // 더미 항목만 정리하고 홈으로 대체 이동한다.
-  const exitToHome = () =>
-    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STORIES));
+  // 진입 이력과 관계없이 퍼널 이탈은 제작 탭으로 정착시킨다.
+  const exitToCreate = () =>
+    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.CREATE));
 
   // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
   // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. localStorage는 마운트
@@ -241,7 +228,7 @@ export function useStoryCreateFunnel() {
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
       onSuccess: (response, variables) => {
-        // 이탈 후 도착한 응답은 레코드를 남겨 홈 배너를 유지하고,
+        // 이탈 후 도착한 응답은 레코드를 남겨 제작 탭 배너를 유지하고,
         // 재진입 시 복구 조회가 결과를 되찾게 한다(성공 부수효과도 그쪽에서 수행).
         if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
           return;
@@ -773,22 +760,15 @@ export function useStoryCreateFunnel() {
       toast.success(TOAST_MESSAGE.STORY_DRAFT_SAVED);
     }
 
-    if (cameFromOnboarding) {
-      exitToHome();
-
-      return;
-    }
-
-    confirmLeave();
+    exitToCreate();
   };
 
   // 뒤로가기 이탈 시도: 내용이 보존되면 묻지 않고 즉시 이탈하고,
   // 보존할 수 없을 때만 소실 경고 다이얼로그를 띄운다.
   const handleBackAttempt = () => {
-    // 키워드 스텝은 지울 내용이 없다. 온보딩에서 진입해 뒤로가기를 흡수한
-    // 경우이므로 확인 없이 홈으로 나간다.
+    // 키워드 스텝은 지울 내용이 없으므로 확인 없이 제작 탭으로 나간다.
     if (!shouldConfirmBack) {
-      exitToHome();
+      exitToCreate();
 
       return;
     }
@@ -812,13 +792,7 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (cameFromOnboarding) {
-      exitToHome();
-
-      return;
-    }
-
-    router.back();
+    exitToCreate();
   };
 
   // 소실 경고 다이얼로그에서 이탈을 확정한 경우. 다이얼로그가 열린 사이 상태가

@@ -8,11 +8,11 @@ import Link from 'next/link';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
+import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
+import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 import type { StoryCardSection } from '@/observability/analytics';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
-import { ORIGINAL_TAG_SRC } from '../constants';
-import type { StoryListItem } from '../types';
 import { StoryGenreBadges } from './story-genre-badges';
 
 type StoryCardProps = {
@@ -40,7 +40,6 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
   });
 
   const thumbnailUrl = story.thumbnailUrlSm ?? null;
-  // 오리지널은 제목·제작자를, 내가 만든 스토리는 제목·한 줄 소개·장르를 보여준다(같은 카드 골격에 메타만 다르다).
   const isOriginal = section === 'original';
 
   return (
@@ -87,10 +86,7 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
             alt="오리지널"
             width={72}
             height={26}
-            // 벡터라 최적화할 것이 없고, next/image의 SVG 최적화는 기본적으로 막혀 있다.
             unoptimized
-            // 태그 배경은 SVG의 fill-opacity가, 블러는 여기서 담당한다(SVG에는 backdrop-filter가 없다).
-            // 블러가 도형 밖 직사각형 모서리로 새지 않도록 태그 도안의 라운드(원본 92/46 → 72px 폭 기준 11/6px)로 클리핑한다.
             className="absolute top-0 left-0 w-18 rounded-tl-[11px] rounded-br-[6px] backdrop-blur-md"
           />
         )}

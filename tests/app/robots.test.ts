@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import robots from '@/app/robots';
+import { APP_PATH } from '@/constants/app-path';
 
 describe('robots', () => {
   const result = robots();
@@ -9,7 +10,14 @@ describe('robots', () => {
     expect(result.rules).toEqual({
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/chats', '/my', '/login', '/stories/'],
+      disallow: [
+        '/api/',
+        APP_PATH.MAIN.CHATS,
+        APP_PATH.MAIN.CREATE,
+        APP_PATH.MAIN.MY,
+        APP_PATH.LOGIN,
+        '/stories/',
+      ],
     });
   });
 

@@ -1,5 +1,7 @@
 import type { Request } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
+
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 test.describe('온보딩', () => {
@@ -159,8 +161,15 @@ test.describe('온보딩', () => {
     ).toBeVisible();
   });
 
-  test('채팅 탭으로 진입해도 온보딩 페이지로 이동한다', async ({ page }) => {
-    await page.goto('/chats');
+  test('채팅·제작 탭으로 진입해도 온보딩 페이지로 이동한다', async ({
+    page,
+  }) => {
+    await page.goto(APP_PATH.MAIN.CHATS);
+
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+
+    await page.context().clearCookies();
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
   });
@@ -206,13 +215,13 @@ test.describe('온보딩', () => {
 
     await page.getByRole('button', { name: '첫 장면 만들기' }).click();
 
-    await expect(page).toHaveURL(/\/stories\/new$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
     // 퍼널이 마운트돼야 뒤로가기 가드가 걸리므로 첫 스텝 렌더를 기다린다.
     await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
 
     await page.goBack();
 
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
   });
 
   test('"나중에 하기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({

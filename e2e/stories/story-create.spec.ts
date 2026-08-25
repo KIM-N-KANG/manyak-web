@@ -1,3 +1,5 @@
+import { APP_PATH } from '@/constants/app-path';
+
 import { expect, skipChatTour, test } from '../fixtures/test';
 
 // 스토리 완성 후 도착하는 채팅 화면에서 안내 투어가 뜨지 않게 한다.
@@ -5,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
 });
 
-// 스토리 생성 4단계 funnel(/stories/new, (story) 레이아웃이라 온보딩 게이팅 없음).
+// 스토리 생성 4단계 funnel(/create/story, (story) 레이아웃이라 온보딩 게이팅 없음).
 // API 순서: GET /stories/simple/tags → POST /stories/simple/storylines
 //           → POST /stories/simple → POST /chats → /chats/{id} 이동
 // 각 URL이 명확히 달라 글롭 패턴이 겹치지 않는다(/simple 은 /simple/tags·/simple/storylines 와 별개).
@@ -13,6 +15,7 @@ const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 const CREATE_STORY = '**/api/v1/stories/simple';
 const CREATE_CHAT = '**/api/v1/chats';
+const LEGACY_STORY_CREATE_PATH = '/stories/new';
 
 const tags = [
   { id: 1, name: '판타지', category: 'GENRE' },
@@ -35,6 +38,12 @@ const storylinesResponse = {
 };
 
 test.describe('스토리 생성', () => {
+  test('기존 생성 URL은 새 제작 URL로 이동한다 (KNK-988)', async ({ page }) => {
+    await page.goto(LEGACY_STORY_CREATE_PATH);
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
+  });
+
   test('직접 키워드가 비어 있으면 인풋 아래 오류를 표시하고 입력하면 해제한다', async ({
     page,
   }) => {
@@ -46,7 +55,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     const dialog = page.getByRole('dialog');
@@ -76,7 +85,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     const nextButton = page.getByRole('button', { name: '다음' });
     const validationError = page.getByText('키워드를 하나 이상 선택해주세요');
@@ -126,7 +135,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -200,7 +209,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     // Step 1: 키워드 선택 (장르 → 주인공 → 주변 인물)
     await page.getByRole('button', { name: '판타지' }).click();
@@ -254,7 +263,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -317,7 +326,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -368,7 +377,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();

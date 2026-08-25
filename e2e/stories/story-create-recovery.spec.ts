@@ -1,3 +1,4 @@
+import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
@@ -105,7 +106,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     });
     await seedPendingCreationRequest(page, storylineRecord);
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     // PENDING 동안 스토리라인 생성 로딩 화면을 복원한다.
     await expect(page.getByText('스토리라인을 만들고 있어요')).toBeVisible();
@@ -147,7 +148,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     });
     await seedPendingCreationRequest(page, completionRecord);
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await expect(page).toHaveURL(/\/chats\/chat-recovered$/, {
       timeout: 10000,
@@ -170,7 +171,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     });
     await seedPendingCreationRequest(page, storylineRecord);
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await expect(page.getByText('스토리라인을 만들지 못했어요')).toBeVisible();
     await expect(
@@ -184,7 +185,7 @@ test.describe('이어서 만들기 배너', () => {
     await skipOnboarding(page);
   });
 
-  test('홈에서 미정리 레코드가 있으면 배너를 표시하고 탭하면 복구로 진입한다', async ({
+  test('제작 탭에서 미정리 레코드가 있으면 배너를 표시하고 탭하면 복구로 진입한다', async ({
     page,
   }) => {
     await page.route(CREATION_REQUEST, async (route) => {
@@ -200,21 +201,21 @@ test.describe('이어서 만들기 배너', () => {
     });
     await seedPendingCreationRequest(page, storylineRecord);
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page
       .getByRole('button', { name: '이어서 만들기', exact: true })
       .click();
 
-    await expect(page).toHaveURL(/\/stories\/new$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
     await expect(page.getByText('스토리라인을 만들고 있어요')).toBeVisible();
   });
 
   test('배너를 닫으면 레코드를 폐기하고 배너가 사라진다', async ({ page }) => {
     await seedPendingCreationRequest(page, storylineRecord);
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page.getByRole('button', { name: '이어서 만들기 배너 닫기' }).click();
@@ -230,7 +231,7 @@ test.describe('이어서 만들기 배너', () => {
   });
 
   test('레코드가 없으면 배너를 표시하지 않는다', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeHidden();
