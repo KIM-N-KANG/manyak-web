@@ -23,6 +23,9 @@ export type GuestLimitTrigger =
 /** 회원 크레딧 부족(402·INSUFFICIENT_CREDIT) 다이얼로그를 연 발생 지점. 게스트 한도와 동일한 지점 집합이다. */
 export type CreditShortageTrigger = GuestLimitTrigger;
 
+/** 홈 스토리 카드가 속한 섹션. 오리지널 노출·클릭 기여를 내가 만든 스토리와 분리해 본다. */
+export type StoryCardSection = 'original' | 'created';
+
 /** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
   // login
@@ -73,8 +76,16 @@ export type AnalyticsEventProps = {
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;
   client_storyList_createButton_clicked: { source: 'fab' | 'emptyState' };
-  client_storyList_storyCard_clicked: { story_id: string; position?: number };
-  client_storyList_storyCard_impressed: { story_id: string; position?: number };
+  client_storyList_storyCard_clicked: {
+    story_id: string;
+    position?: number;
+    section: StoryCardSection;
+  };
+  client_storyList_storyCard_impressed: {
+    story_id: string;
+    position?: number;
+    section: StoryCardSection;
+  };
   // storyCreate
   client_storyCreate_viewed: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };

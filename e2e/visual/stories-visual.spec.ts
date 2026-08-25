@@ -11,6 +11,7 @@ import {
  */
 
 const STORIES_BATCH = '**/api/v1/stories/batch';
+const STORIES_ORIGINALS = '**/api/v1/stories/originals';
 const STORY_DETAIL = '**/api/v1/stories/s1';
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
@@ -96,6 +97,37 @@ test.describe('스토리 비주얼', () => {
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-default.png');
+  });
+
+  test('스토리 목록 오리지널 섹션 (STORY-LIST)', async ({ page }) => {
+    await seedStoryIds(page, ['s1']);
+    await page.route(STORIES_ORIGINALS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            ...story('o1', '마냑의 첫 이야기'),
+            author: { id: 1, nickname: '마냑', profileImageUrl: null },
+          },
+        ]),
+      });
+    });
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page.getByText('마냑의 첫 이야기', { exact: true }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('story-list-originals.png');
   });
 
   test('스토리 목록 빈 상태 (STORY-LIST)', async ({ page }) => {

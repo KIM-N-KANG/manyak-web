@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { StorySummaryResponse } from '@/api/generated/models';
 import {
-  toMyStoryListItems,
+  toOrderedStoryListItems,
   toStoryListItems,
 } from '@/features/stories/list/utils/to-story-list-items';
 
@@ -25,15 +25,18 @@ describe('toStoryListItems', () => {
   });
 });
 
-describe('toMyStoryListItems', () => {
+describe('toOrderedStoryListItems', () => {
   it('서버 응답 순서를 그대로 유지한다', () => {
-    const result = toMyStoryListItems([story('s1', ['판타지']), story('s2')]);
+    const result = toOrderedStoryListItems([
+      story('s1', ['판타지']),
+      story('s2'),
+    ]);
 
     expect(result.map((item) => item.id)).toEqual(['s1', 's2']);
   });
 
   it('누락된 장르를 빈 배열로 보정한다', () => {
-    const result = toMyStoryListItems([story('s1')]);
+    const result = toOrderedStoryListItems([story('s1')]);
 
     expect(result[0]?.genres).toEqual([]);
   });

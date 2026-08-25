@@ -14,11 +14,14 @@ import { APP_PATH } from '@/constants/app-path';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
 
+import { STORY_SECTION_TITLE } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
+import { useOriginalStories } from '../hooks/use-original-stories';
 import { ContinueCreationBanner } from './continue-creation-banner';
 import { CreateStoryFab } from './create-story-fab';
-import { StoryCard } from './story-card';
+import { StoryCardGrid } from './story-card-grid';
 import { StoryListSkeleton } from './story-list-skeleton';
+import { StorySection } from './story-section';
 
 export function StoryList() {
   useEffect(() => {
@@ -26,6 +29,7 @@ export function StoryList() {
   }, []);
 
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
+  const originalStories = useOriginalStories();
   const showSkeleton = useDelayedLoading(isLoading);
 
   let stateKey: string;
@@ -73,13 +77,7 @@ export function StoryList() {
     stateKey = 'list';
     content = (
       <>
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-8 p-4 pb-8">
-          {stories.map((story, index) => (
-            <li key={story.id}>
-              <StoryCard story={story} position={index} />
-            </li>
-          ))}
-        </ul>
+        <StoryCardGrid stories={stories} section="created" />
         <CreateStoryFab />
       </>
     );
@@ -88,11 +86,23 @@ export function StoryList() {
   return (
     <>
       <ContinueCreationBanner />
-      <FadeStateSwitch
-        stateKey={stateKey}
-        className="flex min-h-0 flex-1 flex-col">
-        {content}
-      </FadeStateSwitch>
+      {/* 섹션 사이 간격은 여기서만 준다 — 섹션이 각자 세로 여백을 가지면 이중으로 벌어진다. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-8 pt-4 pb-8">
+        {/* 오리지널은 보조 콘텐츠다. 로딩·실패·빈 배열(공식 계정 미설정)에서는 자리를 만들지 않고 접는다. */}
+        {originalStories.length > 0 && (
+          <StorySection title={STORY_SECTION_TITLE.ORIGINAL}>
+            <StoryCardGrid stories={originalStories} section="original" />
+          </StorySection>
+        )}
+        {/* 내가 만든 스토리는 제목을 항상 두고 내용만 상태에 따라 바꾼다. */}
+        <StorySection title={STORY_SECTION_TITLE.CREATED}>
+          <FadeStateSwitch
+            stateKey={stateKey}
+            className="flex min-h-0 flex-1 flex-col">
+            {content}
+          </FadeStateSwitch>
+        </StorySection>
+      </div>
     </>
   );
 }

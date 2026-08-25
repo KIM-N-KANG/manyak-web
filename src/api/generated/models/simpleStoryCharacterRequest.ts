@@ -23,8 +23,15 @@ export interface SimpleStoryCharacterRequest {
    * @nullable
    */
   gender?: SimpleStoryCharacterRequestGender;
-  /** 선택한 사전 정의 특징 태그 ID 목록 */
+  /**
+   * 선택한 사전 정의 특징 태그 ID 목록
+   * @items.minimum 1
+   */
   featureTagIds?: number[];
-  /** 직접 추가한 특징 태그 이름 목록 */
+  /**
+   * 직접 추가한 특징 태그 이름 목록
+   * @items.minLength 0
+   * @items.maxLength 30
+   */
   customTags?: string[];
 }

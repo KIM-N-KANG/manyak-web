@@ -8,7 +8,7 @@ import { useGetMyStories } from '@/api/generated/endpoints/users/users';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 
 import {
-  toMyStoryListItems,
+  toOrderedStoryListItems,
   toStoryListItems,
 } from '../utils/to-story-list-items';
 
@@ -46,7 +46,7 @@ export function useCreatedStories() {
   if (status !== 'unauthenticated') {
     const stories =
       myStoriesQuery.data?.status === 200
-        ? toMyStoryListItems(myStoriesQuery.data.data)
+        ? toOrderedStoryListItems(myStoriesQuery.data.data)
         : [];
     const isError =
       myStoriesQuery.isError ||

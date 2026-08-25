@@ -9,4 +9,5 @@ export type {
   CreditShortageTrigger,
   GuestLimitTrigger,
   StepName,
+  StoryCardSection,
 } from './events';

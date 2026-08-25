@@ -36,6 +36,7 @@ export interface GeneralStartSettingInput {
    * 추천 입력(정확히 3개)
    * @minItems 3
    * @maxItems 3
+   * @items.minLength 1
    */
   suggestedInputs?: string[];
   /**

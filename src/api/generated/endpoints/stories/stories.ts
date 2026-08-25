@@ -848,6 +848,176 @@ export function useGetEditForm<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+export type getOriginalStoriesResponse200 = {
+  data: StorySummaryResponse[];
+  status: 200;
+};
+
+export type getOriginalStoriesResponseSuccess =
+  getOriginalStoriesResponse200 & {
+    headers: Headers;
+  };
+export type getOriginalStoriesResponse = getOriginalStoriesResponseSuccess;
+
+export const getGetOriginalStoriesUrl = () => {
+  return `/api/v1/stories/originals`;
+};
+
+/**
+ * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 피드·검색이 나오기 전까지 홈의 오리지널 섹션이 사용하며, 인증은 필요 없습니다. 공식 계정 미설정 환경은 빈 목록입니다.
+ * @summary 오리지널 스토리 목록 조회
+ */
+export const getOriginalStories = async (
+  options?: RequestInit,
+): Promise<getOriginalStoriesResponse> => {
+  return customInstance<getOriginalStoriesResponse>(
+    getGetOriginalStoriesUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getGetOriginalStoriesQueryKey = () => {
+  return [`/api/v1/stories/originals`] as const;
+};
+
+export const getGetOriginalStoriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getOriginalStories>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetOriginalStoriesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getOriginalStories>>
+  > = ({ signal }) => getOriginalStories({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOriginalStories>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetOriginalStoriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOriginalStories>>
+>;
+export type GetOriginalStoriesQueryError = ErrorType<unknown>;
+
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOriginalStories>>,
+          TError,
+          Awaited<ReturnType<typeof getOriginalStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOriginalStories>>,
+          TError,
+          Awaited<ReturnType<typeof getOriginalStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 오리지널 스토리 목록 조회
+ */
+
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetOriginalStoriesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export type getLorebooksResponse200 = {
   data: LorebookListItemResponse[];
   status: 200;
