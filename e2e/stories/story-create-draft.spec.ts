@@ -1,10 +1,11 @@
+import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
 // 임시 저장(draft, KNK-648): 뒤로 가기 이탈 시 제작 상태를 저장하고
-// 홈 배너·재개 다이얼로그로 이어 만드는 흐름.
+// 제작 탭 배너·재개 다이얼로그로 이어 만드는 흐름.
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 
@@ -65,6 +66,20 @@ test.describe('스토리 임시 저장·재개', () => {
     });
   });
 
+  test('키워드 단계에서 브라우저 뒤로 가기를 하면 제작 탭으로 이동한다 (KNK-988)', async ({
+    page,
+  }) => {
+    await page.goto(APP_PATH.CREATOR.STORY);
+    // 퍼널이 마운트돼야 브라우저 뒤로가기용 더미 히스토리가 설치된다.
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => window.history.length))
+      .toBeGreaterThan(2);
+    await page.goBack();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
+  });
+
   test('스토리라인 생성 후 뒤로 가기로 나가면 임시 저장되고 배너로 복원한다', async ({
     page,
   }) => {
@@ -76,10 +91,9 @@ test.describe('스토리 임시 저장·재개', () => {
       });
     });
 
-    // 홈에서 퍼널로 진입해야 이탈 확정(history.go(-2)) 후 홈으로 복귀한다.
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
     await page.getByRole('button', { name: '스토리 만들기' }).click();
-    await expect(page).toHaveURL(/\/stories\/new$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -95,13 +109,13 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(page.getByText('스토리가 임시 저장되었어요')).toBeVisible();
     await expect(page.getByText('스토리를 그만 만들까요?')).toBeHidden();
 
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page
       .getByRole('button', { name: '이어서 만들기', exact: true })
       .click();
 
-    await expect(page).toHaveURL(/\/stories\/new$/);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
     await expect(page.getByRole('button', { name: '선택하기' })).toBeVisible();
 
@@ -117,7 +131,7 @@ test.describe('스토리 임시 저장·재개', () => {
   }) => {
     await seedPendingCreationRequest(page, draftRecord);
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page.getByRole('button', { name: '이어서 만들기' }).click();
@@ -135,7 +149,7 @@ test.describe('스토리 임시 저장·재개', () => {
   }) => {
     await seedPendingCreationRequest(page, draftRecord);
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page.getByRole('button', { name: '새로 만들기' }).click();
@@ -149,12 +163,12 @@ test.describe('스토리 임시 저장·재개', () => {
       .toBeNull();
   });
 
-  test('홈 배너에서 draft 문구를 표시하고 닫으면 폐기한다', async ({
+  test('제작 탭 배너에서 draft 문구를 표시하고 닫으면 폐기한다', async ({
     page,
   }) => {
     await seedPendingCreationRequest(page, draftRecord);
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
     await page.getByRole('button', { name: '이어서 만들기 배너 닫기' }).click();

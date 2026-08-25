@@ -1,3 +1,5 @@
+import { APP_PATH } from '@/constants/app-path';
+
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
@@ -6,7 +8,7 @@ import {
 } from '../fixtures/visual';
 
 /**
- * 스토리 목록(홈)·상세·생성 퍼널의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
+ * 홈 오리지널·제작 목록·상세·생성 퍼널의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
  * 퍼널 진행·삭제 같은 동작 검증은 `stories/*.spec.ts`가 담당한다.
  */
 
@@ -79,7 +81,7 @@ test.describe('스토리 비주얼', () => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
   });
 
-  test('스토리 목록 기본 상태 (STORY-LIST)', async ({ page }) => {
+  test('제작 목록 기본 상태 (STORY-LIST)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
@@ -92,14 +94,14 @@ test.describe('스토리 비주얼', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-default.png');
   });
 
-  test('스토리 목록 오리지널 섹션 (STORY-LIST)', async ({ page }) => {
+  test('홈 오리지널 목록 (STORY-LIST)', async ({ page }) => {
     await seedStoryIds(page, ['s1']);
     await page.route(STORIES_ORIGINALS, async (route) => {
       await route.fulfill({
@@ -130,10 +132,10 @@ test.describe('스토리 비주얼', () => {
     await expect(page).toHaveScreenshot('story-list-originals.png');
   });
 
-  test('스토리 목록 빈 상태 (STORY-LIST)', async ({ page }) => {
+  test('제작 목록 빈 상태 (STORY-LIST)', async ({ page }) => {
     await skipOnboarding(page);
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
     await waitForFonts(page);
@@ -172,7 +174,7 @@ test.describe('스토리 비주얼', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await expect(page.getByRole('button', { name: '판타지' })).toBeVisible();
     await waitForFonts(page);
@@ -208,7 +210,7 @@ test.describe('스토리 오버레이 비주얼', () => {
   });
 
   test('키워드 추가 다이얼로그 (STORY-KEYWORD)', async ({ page }) => {
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     await expect(
@@ -227,7 +229,7 @@ test.describe('스토리 오버레이 비주얼', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '용감한' }).click();
@@ -271,7 +273,7 @@ test.describe('스토리 오버레이 비주얼', () => {
   });
 });
 
-/** 다크 모드 대표 스냅샷. 카드·FAB·하단 탭과 상세 히어로·배지·CTA의 토큰을 덮는다. */
+/** 다크 모드 대표 스냅샷. 카드·헤더 만들기·하단 탭과 상세 히어로·배지·CTA의 토큰을 덮는다. */
 test.describe('스토리 다크 모드 비주얼', () => {
   test.use({ colorScheme: 'dark' });
 
@@ -279,7 +281,7 @@ test.describe('스토리 다크 모드 비주얼', () => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
   });
 
-  test('스토리 목록 기본 상태 (다크)', async ({ page }) => {
+  test('제작 목록 기본 상태 (다크)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
@@ -292,7 +294,7 @@ test.describe('스토리 다크 모드 비주얼', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await waitForDarkTheme(page);

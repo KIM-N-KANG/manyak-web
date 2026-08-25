@@ -1,5 +1,7 @@
 import { type Page } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
+
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
 
@@ -82,14 +84,14 @@ const goToAdditionalInfoStep = async (page: Page) => {
 };
 
 test.describe('생성 퍼널 진입 백스톱', () => {
-  test('스토리 한도(1) 도달 게스트가 /stories/new에 직접 진입하면 백스톱 다이얼로그를 띄우고, 닫으면 재노출 없이 조작 가능하다 (STORY-LIMIT-02)', async ({
+  test('스토리 한도(1) 도달 게스트가 /create/story에 직접 진입하면 백스톱 다이얼로그를 띄우고, 닫으면 재노출 없이 조작 가능하다 (STORY-LIMIT-02)', async ({
     page,
   }) => {
     await mockTags(page);
     await seedGuestUsage(page, { storyCreate: 1 });
 
-    // FAB를 우회한 딥링크 진입을 재현한다.
-    await page.goto('/stories/new');
+    // 제작 목록 CTA를 우회한 딥링크 진입을 재현한다.
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     const dialog = page.getByRole('dialog');
 
@@ -125,7 +127,7 @@ test.describe('스토리라인 생성 한도', () => {
       await route.abort();
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
@@ -160,7 +162,7 @@ test.describe('스토리라인 생성 한도', () => {
       await route.fulfill(paymentRequired('GUEST_TRIAL_LIMIT_EXCEEDED'));
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
@@ -188,7 +190,7 @@ test.describe('스토리라인 생성 한도', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
@@ -221,7 +223,7 @@ test.describe('스토리 완성 한도·크레딧', () => {
       await route.fulfill(paymentRequired('GUEST_TRIAL_LIMIT_EXCEEDED'));
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await goToAdditionalInfoStep(page);
 
     const recommendation = page.getByRole('button', {
@@ -271,7 +273,7 @@ test.describe('스토리 완성 한도·크레딧', () => {
       await route.fulfill(paymentRequired('INSUFFICIENT_CREDIT'));
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
     await goToAdditionalInfoStep(page);
 
     const additionalInfoInput = page.locator(
@@ -301,7 +303,7 @@ test.describe('게스트 카운터 시드', () => {
     await mockTags(page);
     await seedStoryIds(page, ['s1']);
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.CREATOR.STORY);
 
     await expect(
       page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
