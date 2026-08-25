@@ -75,7 +75,7 @@ export type AnalyticsEventProps = {
   // storyList
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;
-  client_storyList_createButton_clicked: { source: 'header' | 'emptyState' };
+  client_storyList_createButton_clicked: { source: 'fab' | 'emptyState' };
   client_storyList_storyCard_clicked: {
     story_id: string;
     position?: number;

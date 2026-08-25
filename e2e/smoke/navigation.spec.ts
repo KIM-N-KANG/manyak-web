@@ -37,6 +37,17 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
     new RegExp(`^${HOME_FILLED_PATH}`),
   );
 
+  const foregroundColor = await homeLink.evaluate(
+    (element) => getComputedStyle(element).color,
+  );
+
+  for (const label of ['채팅', '제작', '마이']) {
+    await expect(bottomNav.getByRole('link', { name: label })).toHaveCSS(
+      'color',
+      foregroundColor,
+    );
+  }
+
   // 채팅으로 이동
   await bottomNav.getByRole('link', { name: '채팅' }).click();
   await expect(page).toHaveURL(/\/chats$/);

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { MAIN_NAVIGATION_ITEMS } from '@/constants/main-navigation';
-import { cn } from '@/lib/utils';
 
 export function BottomNavigationBar() {
   const pathname = usePathname();
@@ -25,10 +24,7 @@ export function BottomNavigationBar() {
                 replace
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  'flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2',
-                  isActive ? 'text-foreground' : 'text-foreground-tertiary',
-                )}>
+                className="flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-foreground">
                 <Icon className="size-6" aria-hidden="true" />
                 <span className="text-xs leading-4 font-medium">
                   {item.label}

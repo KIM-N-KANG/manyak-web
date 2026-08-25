@@ -1,13 +1,14 @@
 import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
+import { CREATE_STORY_FAB_COPY } from '@/features/create/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
 
 /**
  * 스토리 생성(게스트 1회)·채팅 시작(게스트 5회) 한도 게이팅 스펙.
- * 제작 탭 헤더 버튼과 상세 CTA의 클라이언트 선차단, 채팅 생성 402 사유별 분기를 검증한다
+ * 제작 탭 FAB와 상세 CTA의 클라이언트 선차단, 채팅 생성 402 사유별 분기를 검증한다
  * (QA STORY-LIMIT-01·07·08).
  * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`를 따른다.
  */
@@ -46,7 +47,7 @@ const mockStoryDetail = async (page: Page) => {
 };
 
 test.describe('스토리 게스트 한도 게이팅', () => {
-  test('스토리 생성 한도(1)에 도달한 게스트가 헤더 만들기를 누르면 이동 없이 로그인 유도 다이얼로그를 띄운다 (US-10-5)', async ({
+  test('스토리 생성 한도(1)에 도달한 게스트가 제작 FAB를 누르면 이동 없이 로그인 유도 다이얼로그를 띄운다 (US-10-5)', async ({
     page,
   }) => {
     // 저장된 스토리 ID 1개가 storyCreate 카운터 시드로도 작용한다(guest-usage-storage).
@@ -61,7 +62,9 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     });
 
     await page.goto(APP_PATH.MAIN.CREATE);
-    await page.getByRole('button', { name: '만들기', exact: true }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
 
     const dialog = page.getByRole('dialog');
 

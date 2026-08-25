@@ -1,7 +1,10 @@
 import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
-import { CREATED_STORY_SECTION_TITLE } from '@/features/create/menu/constants';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATED_STORY_SECTION_TITLE,
+} from '@/features/create/menu/constants';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -135,7 +138,7 @@ test.describe('홈·제작 스토리 목록', () => {
       '0px',
     );
     await expect(
-      page.getByRole('button', { name: '만들기', exact: true }),
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toBeVisible();
   });
 
@@ -174,9 +177,9 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('button', { name: '스토리 만들기' }),
     ).toBeVisible();
-    // 헤더 만들기 버튼은 목록 상태 전용이라 빈 상태에는 없다.
+    // FAB는 목록 상태 전용이라 빈 상태에는 없다.
     await expect(
-      page.getByRole('button', { name: '만들기', exact: true }),
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toHaveCount(0);
   });
 
@@ -312,14 +315,14 @@ test.describe('홈·제작 스토리 목록', () => {
       page.getByRole('heading', { name: CREATED_STORY_SECTION_TITLE }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: '만들기', exact: true }),
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toHaveCount(0);
 
     await page.getByRole('button', { name: '다시 시도하기' }).click();
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(
-      page.getByRole('button', { name: '만들기', exact: true }),
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toBeVisible();
   });
 
@@ -364,7 +367,9 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.goto(APP_PATH.MAIN.CREATE);
 
     await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: '만들기', exact: true }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
   });
 

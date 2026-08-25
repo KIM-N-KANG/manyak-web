@@ -18,7 +18,7 @@ import { track } from '@/observability/analytics';
 import { CREATED_STORY_SECTION_TITLE } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { ContinueCreationBanner } from './continue-creation-banner';
-import { CreateStoryButton } from './create-story-button';
+import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
 
 export function CreatedStoryList() {
@@ -68,16 +68,20 @@ export function CreatedStoryList() {
     );
   } else {
     stateKey = 'list';
-    content = <StoryCardGrid stories={stories} section="created" />;
+    content = (
+      <>
+        <StoryCardGrid stories={stories} section="created" />
+        <CreateStoryFab />
+      </>
+    );
   }
 
   return (
     <>
       <ContinueCreationBanner />
       <section className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-8">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center">
           <h2 className="text-lg font-bold">{CREATED_STORY_SECTION_TITLE}</h2>
-          {stateKey === 'list' && <CreateStoryButton />}
         </div>
         <FadeStateSwitch
           stateKey={stateKey}
