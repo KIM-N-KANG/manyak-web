@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import type { StoryCardSection } from '@/observability/analytics';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
+import { ORIGINAL_TAG_SRC } from '../constants';
 import type { StoryListItem } from '../types';
 import { StoryGenreBadges } from './story-genre-badges';
 
@@ -80,6 +81,17 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
               className="size-8 text-foreground-tertiary"
             />
           </div>
+        )}
+        {isOriginal && (
+          <Image
+            src={ORIGINAL_TAG_SRC}
+            alt="오리지널"
+            width={72}
+            height={26}
+            // 벡터라 최적화할 것이 없고, next/image의 SVG 최적화는 기본적으로 막혀 있다.
+            unoptimized
+            className="absolute top-0 left-0 w-18"
+          />
         )}
         <div className="absolute right-3 bottom-3">
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />

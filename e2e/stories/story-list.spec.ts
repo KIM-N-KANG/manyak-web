@@ -102,6 +102,8 @@ test.describe('스토리 목록', () => {
       STORY_SECTION_TITLE.ORIGINAL,
       STORY_SECTION_TITLE.CREATED,
     ]);
+    // ORIGINAL 태그는 오리지널 카드에만 붙는다(내 서재 카드에는 없다).
+    await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
   });
 
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
@@ -118,7 +120,7 @@ test.describe('스토리 목록', () => {
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
   });
 
-  test('오리지널 카드는 제목 아래에 제작자를 보여준다 (KNK-983)', async ({
+  test('오리지널 카드는 ORIGINAL 태그와 제작자를 보여준다 (KNK-983)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -127,6 +129,7 @@ test.describe('스토리 목록', () => {
     await page.goto('/');
 
     await expect(page.getByText('마냑', { exact: true })).toBeVisible();
+    await expect(page.getByRole('img', { name: '오리지널' })).toBeVisible();
     // 내 서재 카드와 달리 한 줄 소개·장르는 노출하지 않는다.
     await expect(page.getByText('한 줄 소개입니다')).toBeHidden();
   });
