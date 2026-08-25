@@ -9,9 +9,6 @@ export const ONBOARDING_SEEN_VALUE = '1';
 export const ONBOARDING_SEEN_COOKIE = 'manyak_onboarding_seen';
 export const ONBOARDING_SEEN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
-export const ONBOARDING_ENTRY_STORAGE_KEY = 'manyak:onboarding-entry';
-export const ONBOARDING_ENTRY_VALUE = '1';
-
 export const ONBOARDING_TITLE_LINES = [
   '눈을 떠보니',
   '스토리 속 주인공이 되었다',

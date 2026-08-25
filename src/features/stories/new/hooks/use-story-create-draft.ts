@@ -100,7 +100,7 @@ export function useStoryCreateDraft({ onRestore }: UseStoryCreateDraftArgs) {
     clearPendingCreationRequest();
   };
 
-  // ESC 등으로 닫으면 draft를 남겨 둔다(홈 배너로 여전히 재개 가능).
+  // ESC 등으로 닫으면 draft를 남겨 둔다(제작 탭 배너로 여전히 재개 가능).
   const closeResumeDialog = () => {
     setResumeDialogRecord(null);
   };

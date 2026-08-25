@@ -52,7 +52,7 @@ export function ChatList() {
         {hasStories ? (
           <Button
             nativeButton={false}
-            render={<Link href={APP_PATH.MAIN.STORIES} />}
+            render={<Link href={APP_PATH.MAIN.CREATE} />}
             size="lg">
             스토리 목록으로 가기
           </Button>

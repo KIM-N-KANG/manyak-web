@@ -4,7 +4,7 @@ import type { StorySummaryResponse } from '@/api/generated/models';
 import {
   toOrderedStoryListItems,
   toStoryListItems,
-} from '@/features/stories/list/utils/to-story-list-items';
+} from '@/features/stories/_shared/utils/to-story-list-items';
 
 const story = (id: string, genres?: string[]): StorySummaryResponse => ({
   id,

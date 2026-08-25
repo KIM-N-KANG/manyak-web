@@ -1,6 +1,5 @@
 import type { StorySummaryResponse } from '@/api/generated/models';
-
-import type { StoryListItem } from '../types';
+import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 
 /**
  * 조회한 스토리들을 저장된 ID 순서대로 정렬해 목록 아이템으로 변환한다.

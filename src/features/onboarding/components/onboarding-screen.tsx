@@ -12,7 +12,6 @@ import { track } from '@/observability/analytics';
 
 import { ONBOARDING_DESCRIPTION, ONBOARDING_TITLE_LINES } from '../constants';
 import { useOnboardingGate } from '../hooks/use-onboarding-gate';
-import { markOnboardingEntry } from '../utils/onboarding-entry-storage';
 import {
   markOnboardingSeen,
   setOnboardingSeenCookie,
@@ -73,7 +72,6 @@ export function OnboardingScreen() {
   const handleStartCreate = () => {
     hasChosenRef.current = true;
     markOnboardingSeen();
-    markOnboardingEntry();
     track('client_onboarding_createButton_clicked');
     router.replace(APP_PATH.CREATOR.STORY);
   };

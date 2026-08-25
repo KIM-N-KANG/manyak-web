@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function StoryListSkeleton() {
+export function CreatedStoryListSkeleton() {
   return (
     <ul className="grid grid-cols-2 gap-x-2 gap-y-4" aria-hidden>
       {Array.from({ length: 6 }).map((_, index) => (

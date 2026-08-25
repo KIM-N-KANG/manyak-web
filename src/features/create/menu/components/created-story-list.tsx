@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -11,25 +11,18 @@ import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryCardGrid } from '@/features/stories/_shared/components/story-card-grid';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
 
-import { STORY_SECTION_TITLE } from '../constants';
+import { CREATED_STORY_SECTION_TITLE } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
-import { useOriginalStories } from '../hooks/use-original-stories';
 import { ContinueCreationBanner } from './continue-creation-banner';
-import { CreateStoryFab } from './create-story-fab';
-import { StoryCardGrid } from './story-card-grid';
-import { StoryListSkeleton } from './story-list-skeleton';
-import { StorySection } from './story-section';
+import { CreateStoryButton } from './create-story-button';
+import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
 
-export function StoryList() {
-  useEffect(() => {
-    track('client_storyList_viewed');
-  }, []);
-
+export function CreatedStoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
-  const originalStories = useOriginalStories();
   const showSkeleton = useDelayedLoading(isLoading);
 
   let stateKey: string;
@@ -37,7 +30,7 @@ export function StoryList() {
 
   if (showSkeleton) {
     stateKey = 'skeleton';
-    content = <StoryListSkeleton />;
+    content = <CreatedStoryListSkeleton />;
   } else if (isLoading) {
     stateKey = 'pending';
     content = null;
@@ -75,34 +68,23 @@ export function StoryList() {
     );
   } else {
     stateKey = 'list';
-    content = (
-      <>
-        <StoryCardGrid stories={stories} section="created" />
-        <CreateStoryFab />
-      </>
-    );
+    content = <StoryCardGrid stories={stories} section="created" />;
   }
 
   return (
     <>
       <ContinueCreationBanner />
-      {/* 섹션 사이 간격은 여기서만 준다 — 섹션이 각자 세로 여백을 가지면 이중으로 벌어진다. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-8 pt-4 pb-8">
-        {/* 오리지널은 보조 콘텐츠다. 로딩·실패·빈 배열(공식 계정 미설정)에서는 자리를 만들지 않고 접는다. */}
-        {originalStories.length > 0 && (
-          <StorySection title={STORY_SECTION_TITLE.ORIGINAL}>
-            <StoryCardGrid stories={originalStories} section="original" />
-          </StorySection>
-        )}
-        {/* 내가 만든 스토리는 제목을 항상 두고 내용만 상태에 따라 바꾼다. */}
-        <StorySection title={STORY_SECTION_TITLE.CREATED}>
-          <FadeStateSwitch
-            stateKey={stateKey}
-            className="flex min-h-0 flex-1 flex-col">
-            {content}
-          </FadeStateSwitch>
-        </StorySection>
-      </div>
+      <section className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-8">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-bold">{CREATED_STORY_SECTION_TITLE}</h2>
+          {stateKey === 'list' && <CreateStoryButton />}
+        </div>
+        <FadeStateSwitch
+          stateKey={stateKey}
+          className="flex min-h-0 flex-1 flex-col">
+          {content}
+        </FadeStateSwitch>
+      </section>
     </>
   );
 }

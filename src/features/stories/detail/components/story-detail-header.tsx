@@ -45,7 +45,7 @@ export function StoryDetailHeader({
       <StoryOptionsMenu
         storyId={storyId}
         size="icon"
-        onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STORIES)}
+        onDeleteSuccess={() => router.replace(APP_PATH.MAIN.CREATE)}
       />
     </header>
   );
