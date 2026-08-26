@@ -73,7 +73,7 @@ export function OnboardingScreen() {
     hasChosenRef.current = true;
     markOnboardingSeen();
     track('client_onboarding_createButton_clicked');
-    router.replace(APP_PATH.CREATOR.STORY);
+    router.replace(APP_PATH.STUDIO.STORY.SIMPLE);
   };
 
   const handleSkip = () => {

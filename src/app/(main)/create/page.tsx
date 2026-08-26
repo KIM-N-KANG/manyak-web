@@ -1,9 +1,7 @@
-import { CreatedStoryList } from '@/features/create/menu/components/created-story-list';
+import { permanentRedirect } from 'next/navigation';
 
-export default function CreatePage() {
-  return (
-    <main className="flex flex-1 flex-col">
-      <CreatedStoryList />
-    </main>
-  );
+import { APP_PATH } from '@/constants/app-path';
+
+export default function LegacyCreatePage() {
+  permanentRedirect(APP_PATH.MAIN.STUDIO);
 }

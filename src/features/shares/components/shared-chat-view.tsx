@@ -77,7 +77,7 @@ export function SharedChatView({
           nativeButton={false}
           size="lg"
           className="w-full"
-          render={<Link href={APP_PATH.CREATOR.STORY} />}
+          render={<Link href={APP_PATH.STUDIO.STORY.SIMPLE} />}
           onClick={() => {
             track('client_chatShare_ctaButton_clicked', { story_id: storyId });
             markOnboardingSeen();

@@ -85,8 +85,6 @@ export const ADDITIONAL_INFO_PLACEHOLDERS = [
 
 export const STORYLINE_RATING_SYNC_DEBOUNCE_MS = 300;
 
-export const SELECTED_STORYLINE_COLLAPSED_MAX_HEIGHT = 64;
-
 // description은 화면에 그대로 노출하는 완성 문장이다. 선택 개수 상한은 섹션
 // 라벨이 알리므로(장르·특징) 여기서는 인원 상한만 덧붙인다.
 export const GENRE_CATEGORY = {

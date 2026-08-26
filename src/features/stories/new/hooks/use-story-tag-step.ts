@@ -4,11 +4,16 @@ import { useState } from 'react';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
+import type {
+  KeywordCharacterSnapshot,
+  KeywordDraftSnapshot,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import type { CharacterTagCategory, TagCategory } from '../types';
 import { getDuplicateNameCharacterIds } from '../utils/character-name';
 import { toCharacterRequest } from '../utils/character-request';
+import { hasKeywordDraftInput } from '../utils/keyword-draft';
 import { getTagsByCategory } from '../utils/tag-categories';
 import { useCategoryNavigation } from './use-category-navigation';
 import { useCharacterInputs } from './use-character-inputs';
@@ -20,6 +25,26 @@ type UseStoryTagStepArgs = {
     request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
   ) => void;
 };
+
+/**
+ * 화면 인물 입력을 저장 스냅숏으로 변환한다.
+ *
+ * @param character 변환할 화면 인물 입력
+ * @returns 로컬 ID를 제외한 저장 스냅숏
+ */
+function toKeywordCharacterSnapshot(
+  character: ReturnType<typeof useCharacterInputs>['protagonist'],
+): KeywordCharacterSnapshot {
+  return {
+    name: character.name,
+    gender: character.gender,
+    selectedTagIds: character.selectedTagIds,
+    customTags: character.customTags.map(({ id, name }) => ({
+      name,
+      selected: character.selectedCustomTagIds.includes(id),
+    })),
+  };
+}
 
 /**
  * 키워드 스텝의 장르 선택·인물 입력·카테고리 이동을 묶어 화면에 필요한 상태로 제공하는 훅.
@@ -167,7 +192,31 @@ export function useStoryTagStep({
     onGenerateStorylines(buildGenerateRequest());
   };
 
+  const keywordDraftSnapshot: KeywordDraftSnapshot = {
+    selectedGenreTagIds: genreSelection.selectedGenreTagIds,
+    customGenreTags: genreSelection.customGenreTags.map(({ id, name }) => ({
+      name,
+      selected: genreSelection.selectedCustomGenreTagIds.includes(id),
+    })),
+    protagonist: toKeywordCharacterSnapshot(characterInputs.protagonist),
+    supportingCharacters: characterInputs.supportingCharacters.map(
+      toKeywordCharacterSnapshot,
+    ),
+  };
+
+  /** 저장본을 복원하되 활성 카테고리는 항상 첫 탭으로 시작한다. */
+  const restoreKeywordDraft = (snapshot: KeywordDraftSnapshot) => {
+    genreSelection.restoreGenreSelection(snapshot);
+    characterInputs.restoreCharacterInputs(snapshot);
+    navigation.resetActiveCategory();
+    setValidationErrorCategory(null);
+    setHasAttemptedGenerate(false);
+  };
+
   return {
+    keywordDraftSnapshot,
+    hasKeywordInput: hasKeywordDraftInput(keywordDraftSnapshot),
+    restoreKeywordDraft,
     activeCategory: navigation.activeCategory,
     changeCategory: navigation.changeCategory,
     selectedGenreTagIds: genreSelection.selectedGenreTagIds,
@@ -206,3 +255,5 @@ export function useStoryTagStep({
     handleGenerateStorylines,
   };
 }
+
+export type StoryTagStepController = ReturnType<typeof useStoryTagStep>;

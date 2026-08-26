@@ -1,6 +1,5 @@
 'use client';
 
-import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -14,7 +13,7 @@ import {
   SUPPORTING_CHARACTER_CATEGORY,
   TAG_CATEGORIES,
 } from '../../constants';
-import { useStoryTagStep } from '../../hooks/use-story-tag-step';
+import type { StoryTagStepController } from '../../hooks/use-story-tag-step';
 import type { TagCategory } from '../../types';
 import { getGenerateStorylinesErrorMessage } from '../../utils/generate-storylines-error-message';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
@@ -26,20 +25,16 @@ import { SupportingCharacterList } from './supporting-character-list';
 import { TagChipGrid } from './tag-chip-grid';
 
 type StoryTagStepSectionProps = {
-  isGeneratingStorylines: boolean;
+  controller: StoryTagStepController;
   hasGenerateStorylinesError: boolean;
   isGuestLimitReached: boolean;
-  onGenerateStorylines: (
-    request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
-  ) => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryTagStepSection({
-  isGeneratingStorylines,
+  controller,
   hasGenerateStorylinesError,
   isGuestLimitReached,
-  onGenerateStorylines,
   onScroll,
 }: StoryTagStepSectionProps) {
   const {
@@ -58,6 +53,7 @@ export function StoryTagStepSection({
     tagsByCategory,
     hasCategoryValidationError,
     hasDuplicateNameError,
+    isGeneratingStorylines,
     isDuplicateName,
     isCategoryUnlocked,
     isFirstCategory,
@@ -76,10 +72,7 @@ export function StoryTagStepSection({
     removeSupportingCharacter,
     registerCharacterNameInput,
     handleGenerateStorylines,
-  } = useStoryTagStep({
-    isGeneratingStorylines,
-    onGenerateStorylines,
-  });
+  } = controller;
 
   const activeCategoryConfig = TAG_CATEGORIES.find(
     (category) => category.value === activeCategory,

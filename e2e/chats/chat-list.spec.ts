@@ -75,7 +75,7 @@ test.describe('채팅 목록', () => {
     const link = page.getByRole('button', { name: '스토리 만들기' });
 
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', APP_PATH.CREATOR.STORY);
+    await expect(link).toHaveAttribute('href', APP_PATH.STUDIO.STORY.SIMPLE);
   });
 
   test('진행 중인 채팅은 없지만 스토리가 있으면 스토리 목록으로 안내한다 (US-5-4)', async ({
@@ -92,7 +92,7 @@ test.describe('채팅 목록', () => {
     const link = page.getByRole('button', { name: '스토리 목록으로 가기' });
 
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', APP_PATH.MAIN.CREATE);
+    await expect(link).toHaveAttribute('href', APP_PATH.MAIN.STUDIO);
   });
 
   test('로그인 상태에서는 서버의 내 채팅 목록을 보여준다', async ({ page }) => {

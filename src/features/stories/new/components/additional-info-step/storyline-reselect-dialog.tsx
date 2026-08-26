@@ -11,34 +11,33 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type StoryCreateResumeDialogProps = {
+type StorylineReselectDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onContinue: () => void;
-  onDiscard: () => void;
+  onConfirm: () => void;
 };
 
-export function StoryCreateResumeDialog({
+export function StorylineReselectDialog({
   open,
   onOpenChange,
-  onContinue,
-  onDiscard,
-}: StoryCreateResumeDialogProps) {
+  onConfirm,
+}: StorylineReselectDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
-          <AlertDialogTitle>만들고 있는 스토리가 있어요</AlertDialogTitle>
+          <AlertDialogTitle>스토리라인을 바꿀까요?</AlertDialogTitle>
           <AlertDialogDescription>
-            새로 만들면 임시 저장된 내용은 사라져요
+            입력한 추가 정보는 모두 사라져요
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onContinue}>
-            이어서 만들기
-          </AlertDialogCancel>
-          <AlertDialogAction type="button" onClick={onDiscard}>
-            새로 만들기
+          <AlertDialogCancel>닫기</AlertDialogCancel>
+          <AlertDialogAction
+            type="button"
+            variant="destructive"
+            onClick={onConfirm}>
+            다시 선택하기
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

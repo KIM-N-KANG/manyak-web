@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import type { KeywordDraftSnapshot } from '@/features/stories/_shared/utils/creation-request-storage';
 import { createClientId } from '@/lib/create-client-id';
 
 import type { CustomTag } from '../types';
@@ -63,6 +64,22 @@ export function useGenreSelection() {
     setSelectedCustomGenreTagIds((previous) => [...previous, customTag.id]);
   };
 
+  /** 키워드 저장본으로 장르 제공 태그와 직접 추가 키워드를 복원한다. */
+  const restoreGenreSelection = (snapshot: KeywordDraftSnapshot) => {
+    const restoredCustomTags = snapshot.customGenreTags.map(({ name }) => ({
+      id: createClientId(),
+      name,
+    }));
+
+    setSelectedGenreTagIds(snapshot.selectedGenreTagIds);
+    setCustomGenreTags(restoredCustomTags);
+    setSelectedCustomGenreTagIds(
+      restoredCustomTags
+        .filter((_, index) => snapshot.customGenreTags[index]?.selected)
+        .map(({ id }) => id),
+    );
+  };
+
   return {
     selectedGenreTagIds,
     selectedCustomGenreTagIds,
@@ -77,5 +94,6 @@ export function useGenreSelection() {
     toggleGenreTag,
     toggleCustomGenreTag,
     addCustomGenreTag,
+    restoreGenreSelection,
   };
 }

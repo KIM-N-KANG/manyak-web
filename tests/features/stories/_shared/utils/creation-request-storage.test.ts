@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type {
   CreateSimpleStoryRequest,
@@ -6,8 +6,18 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
-import { parsePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type {
+  KeywordDraftRecord,
+  PendingCreationRequest,
+  StoryDraftRecord,
+} from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  loadPendingCreationRequest,
+  markPendingStoryCreated,
+  parsePendingCreationRequest,
+  saveDraftCreationRecord,
+  savePendingCreationRequest,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 
 const generationRequest: GenerateSimpleStorylinesRequest = {
   requestId: '11111111-1111-4111-8111-111111111111',
@@ -54,6 +64,29 @@ const completionRecord: PendingCreationRequest = {
   completionRequest,
 };
 
+const keywordDraftRecord: KeywordDraftRecord = {
+  stage: 'KEYWORD_DRAFT',
+  requestId: '44444444-4444-4444-8444-444444444444',
+  snapshot: {
+    selectedGenreTagIds: [1],
+    customGenreTags: [{ name: '느와르', selected: false }],
+    protagonist: {
+      name: '마냑',
+      gender: 'FEMALE',
+      selectedTagIds: [3],
+      customTags: [{ name: '비밀스러운', selected: true }],
+    },
+    supportingCharacters: [
+      {
+        name: '',
+        gender: null,
+        selectedTagIds: [],
+        customTags: [],
+      },
+    ],
+  },
+};
+
 describe('parsePendingCreationRequest', () => {
   it('스토리라인 생성 레코드를 직렬화-역직렬화로 복원한다', () => {
     expect(
@@ -65,6 +98,12 @@ describe('parsePendingCreationRequest', () => {
     expect(
       parsePendingCreationRequest(JSON.stringify(completionRecord)),
     ).toEqual(completionRecord);
+  });
+
+  it('키워드 draft를 직렬화-역직렬화로 복원한다', () => {
+    expect(
+      parsePendingCreationRequest(JSON.stringify(keywordDraftRecord)),
+    ).toEqual(keywordDraftRecord);
   });
 
   it('저장값이 없으면 null을 반환한다', () => {
@@ -123,9 +162,72 @@ describe('parsePendingCreationRequest', () => {
       parsePendingCreationRequest(JSON.stringify(withoutStoryline)),
     ).toBeNull();
   });
+
+  it('완성 레코드의 생성된 스토리 ID가 문자열·null이 아니면 거부한다', () => {
+    expect(
+      parsePendingCreationRequest(
+        JSON.stringify({ ...completionRecord, createdStoryId: 7 }),
+      ),
+    ).toBeNull();
+  });
 });
 
-const draftRecord: PendingCreationRequest = {
+describe('saveDraftCreationRecord 우선순위', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const stubStorage = () => {
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    };
+
+    vi.stubGlobal('localStorage', storage);
+    vi.stubGlobal('window', { dispatchEvent: vi.fn() });
+  };
+
+  it('진행 중 요청은 지연된 story draft보다 우선한다', () => {
+    stubStorage();
+    savePendingCreationRequest(storylineRecord);
+
+    expect(saveDraftCreationRecord(draftRecord)).toBe(false);
+    expect(loadPendingCreationRequest()).toEqual(storylineRecord);
+  });
+
+  it('story draft는 지연된 keyword draft보다 우선한다', () => {
+    stubStorage();
+    savePendingCreationRequest(draftRecord);
+
+    expect(saveDraftCreationRecord(keywordDraftRecord)).toBe(false);
+    expect(loadPendingCreationRequest()).toEqual(draftRecord);
+  });
+
+  it('story draft는 기존 keyword draft를 승격해 덮어쓴다', () => {
+    stubStorage();
+    savePendingCreationRequest(keywordDraftRecord);
+
+    expect(saveDraftCreationRecord(draftRecord)).toBe(true);
+    expect(loadPendingCreationRequest()).toEqual(draftRecord);
+  });
+
+  it('완성 레코드에 생성된 storyId를 확정해 채팅 재시도에 남긴다', () => {
+    stubStorage();
+    savePendingCreationRequest(completionRecord);
+
+    expect(
+      markPendingStoryCreated(completionRecord.requestId, 'story-created'),
+    ).toBe(true);
+    expect(loadPendingCreationRequest()).toEqual({
+      ...completionRecord,
+      createdStoryId: 'story-created',
+    });
+  });
+});
+
+const draftRecord: StoryDraftRecord = {
   stage: 'STORY_DRAFT',
   requestId: '33333333-3333-4333-8333-333333333333',
   step: 'additional-info',

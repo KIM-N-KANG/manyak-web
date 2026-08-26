@@ -1,12 +1,12 @@
 import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
+import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
+import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
 import {
   CREATE_STORY_FAB_COPY,
   CREATED_STORY_SECTION_TITLE,
-} from '@/features/create/menu/constants';
-import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
-import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
+} from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -66,6 +66,30 @@ const mockOriginalStories = async (page: Page, stories: unknown[]) => {
 };
 
 test.describe('홈·제작 스토리 목록', () => {
+  test('기존 제작 URL을 새 studio URL로 이동시킨다 (KNK-994)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+
+    await page.goto(APP_PATH.LEGACY.CREATE);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    await page.goto(APP_PATH.LEGACY.CREATE_STORY);
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+
+    await page.goto(APP_PATH.LEGACY.STUDIO_STORY);
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+
+    await page.goto(APP_PATH.LEGACY.NEW_STORY);
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+  });
+
   test('보관한 ID로 스토리 카드 목록을 보여준다 (US-2-1)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
     await page.route(STORIES_BATCH, async (route) => {
@@ -79,7 +103,7 @@ test.describe('홈·제작 스토리 목록', () => {
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
@@ -122,7 +146,7 @@ test.describe('홈·제작 스토리 목록', () => {
       .getByRole('link', { name: '제작' })
       .click();
 
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(
       page.getByText('마냑의 첫 이야기', { exact: true }),
@@ -159,7 +183,7 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeHidden();
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
   });
@@ -169,7 +193,7 @@ test.describe('홈·제작 스토리 목록', () => {
   }) => {
     await skipOnboarding(page);
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(
       page.getByRole('heading', { name: CREATED_STORY_SECTION_TITLE }),
@@ -294,15 +318,22 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test('로그인 상태에서는 헤더에 로그인 버튼이 없다', async ({ page }) => {
+  test('로그인 상태에서는 메인 헤더에 로그인 버튼이 없다', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page);
 
-    await page.goto('/');
+    for (const pathname of [
+      APP_PATH.MAIN.STORIES,
+      APP_PATH.MAIN.CHATS,
+      APP_PATH.MAIN.STUDIO,
+      APP_PATH.MAIN.MY,
+    ]) {
+      await page.goto(pathname);
 
-    await expect(
-      page.getByRole('banner').getByRole('link', { name: '로그인' }),
-    ).toBeHidden();
+      await expect(
+        page.getByRole('banner').getByRole('link', { name: '로그인' }),
+      ).toHaveCount(0);
+    }
   });
 
   test('카드를 누르면 스토리 상세로 이동한다 (US-2-2)', async ({ page }) => {
@@ -315,7 +346,7 @@ test.describe('홈·제작 스토리 목록', () => {
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
     await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
 
     await expect(page).toHaveURL(/\/stories\/s1$/);
@@ -346,7 +377,7 @@ test.describe('홈·제작 스토리 목록', () => {
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText(STORY_LIST_ERROR_TITLE)).toBeVisible();
     await expect(
@@ -375,7 +406,7 @@ test.describe('홈·제작 스토리 목록', () => {
     });
     await mockStoryDetailWithDelete(page, 's1', '용의 계곡');
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
     await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
@@ -402,13 +433,15 @@ test.describe('홈·제작 스토리 목록', () => {
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
       .click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
   });
 
   test('로그인 상태에서 스토리를 삭제하면 목록에서 사라진다', async ({
@@ -430,7 +463,7 @@ test.describe('홈·제작 스토리 목록', () => {
       deleted = true;
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
     await page.getByRole('link', { name: '회원의 서재 상세 보기' }).click();
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
@@ -440,7 +473,7 @@ test.describe('홈·제작 스토리 목록', () => {
       .click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
       page.getByText('회원의 서재', { exact: true }),
     ).not.toBeVisible();
