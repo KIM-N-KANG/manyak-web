@@ -74,10 +74,6 @@ export function StoryTagStepSection({
     handleGenerateStorylines,
   } = controller;
 
-  const activeCategoryConfig = TAG_CATEGORIES.find(
-    (category) => category.value === activeCategory,
-  );
-
   return (
     <StoryCreateStepLayout
       titleLines={['만들고 싶은 스토리의', '키워드를 선택해주세요']}
@@ -132,31 +128,22 @@ export function StoryTagStepSection({
         onValueChange={(value) => changeCategory(value as TagCategory)}
         className="gap-0">
         <StickyTabsList
-          bottomSlot={
-            activeCategoryConfig && (
-              <div className="flex items-baseline justify-between gap-2 pt-2 text-sm text-foreground-secondary">
-                <p>{activeCategoryConfig.description}</p>
-                {activeCategory === 'SUPPORTING_CHARACTER' && (
-                  <p className="shrink-0">
-                    현재 {supportingCharacters.length}명
-                  </p>
-                )}
-              </div>
-            )
-          }>
+          variant="line"
+          containerClassName="mt-0 px-0 py-0"
+          className="w-full gap-0 border-b p-0">
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
               key={value}
               value={value}
               disabled={!isCategoryUnlocked(value)}
-              className="gap-0.5">
+              className="h-full gap-0.5 rounded-none border-0 px-2 py-0 after:-bottom-px!">
               {label}
               {required && <span className="text-destructive">*</span>}
             </TabsTrigger>
           ))}
         </StickyTabsList>
 
-        <TabsContent value="GENRE" className="p-4 pt-2 pb-6">
+        <TabsContent value="GENRE" className="px-4 pt-4 pb-6">
           <FieldGroup className="gap-8">
             <Field className="gap-2" aria-labelledby="genre-label">
               <FieldLabel id="genre-label" className="gap-0.5">
@@ -232,7 +219,7 @@ export function StoryTagStepSection({
           />
         </TabsContent>
 
-        <TabsContent value="SUPPORTING_CHARACTER" className="p-4 pt-2 pb-6">
+        <TabsContent value="SUPPORTING_CHARACTER" className="pb-6">
           <SupportingCharacterList
             categoryLabel={SUPPORTING_CHARACTER_CATEGORY.label}
             characters={supportingCharacters}

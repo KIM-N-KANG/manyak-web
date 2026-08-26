@@ -24,7 +24,6 @@ export type StorylineRating =
 export type TagCategoryConfig = {
   value: TagCategory;
   label: string;
-  description: string;
   placeholder: string;
   namePlaceholder?: string;
   required: boolean;

@@ -3,6 +3,7 @@ import { type Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
+import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
 
 import { expect, skipChatTour, test } from '../fixtures/test';
 
@@ -141,7 +142,7 @@ test.describe('스토리 생성', () => {
     await expect(validationError).toBeHidden();
     await nextButton.click();
     await expect(
-      page.getByRole('tab', { name: /주인공 특징/ }),
+      page.getByRole('tab', { name: PROTAGONIST_CATEGORY.label }),
     ).toHaveAttribute('aria-selected', 'true');
 
     await expect(nextButton).toBeEnabled();

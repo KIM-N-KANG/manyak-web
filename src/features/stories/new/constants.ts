@@ -85,12 +85,9 @@ export const ADDITIONAL_INFO_PLACEHOLDERS = [
 
 export const STORYLINE_RATING_SYNC_DEBOUNCE_MS = 300;
 
-// description은 화면에 그대로 노출하는 완성 문장이다. 선택 개수 상한은 섹션
-// 라벨이 알리므로(장르·특징) 여기서는 인원 상한만 덧붙인다.
 export const GENRE_CATEGORY = {
   value: 'GENRE',
   label: '장르',
-  description: '스토리의 분위기와 소재를 정해요',
   placeholder: '예: 타임루프, 영지물, 먼치킨',
   required: true,
   maxSelectionCount: GENRE_MAX_SELECTION_COUNT,
@@ -98,8 +95,7 @@ export const GENRE_CATEGORY = {
 
 export const PROTAGONIST_CATEGORY = {
   value: 'PROTAGONIST',
-  label: '주인공 특징',
-  description: '스토리 속 나를 설정해요',
+  label: '주인공 (나)',
   placeholder: '예: 사랑에 서툰, 타인을 믿지 못하는',
   namePlaceholder: '예: 서지우',
   required: true,
@@ -108,8 +104,7 @@ export const PROTAGONIST_CATEGORY = {
 
 export const SUPPORTING_CHARACTER_CATEGORY = {
   value: 'SUPPORTING_CHARACTER',
-  label: '주변 인물 특징',
-  description: `주변 인물들을 설정해요 (최대 ${SUPPORTING_CHARACTER_MAX_COUNT}명)`,
+  label: '주변 인물',
   placeholder: '예: 상냥해서 더 위험한, 어딘가 망가진',
   required: false,
   maxSelectionCount: CHARACTER_FEATURE_MAX_COUNT,
@@ -185,6 +180,8 @@ export const getStorylineTabLabel = (index: number): string => {
 };
 
 export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
+
+export const SELECTED_TAGS_TRIGGER_LABEL = '선택한 키워드 보기';
 
 export const STORYLINE_GENERATING_LOADING_PHRASES = [
   '선택한 키워드 살펴보는 중...',

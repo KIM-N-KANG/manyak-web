@@ -1,4 +1,5 @@
 import { APP_PATH } from '@/constants/app-path';
+import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
 
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
@@ -237,7 +238,9 @@ test.describe('스토리 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
-    await page.getByRole('button', { name: '선택한 키워드 보기 버튼' }).click();
+    await page
+      .getByRole('button', { name: SELECTED_TAGS_TRIGGER_LABEL })
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible();
     await waitForFonts(page);

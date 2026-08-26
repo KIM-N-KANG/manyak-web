@@ -1,8 +1,5 @@
 'use client';
 
-import { LayoutAlignBottomIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -14,6 +11,7 @@ import {
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
+import { SELECTED_TAGS_TRIGGER_LABEL } from '../../constants';
 import type { SelectedTagGroup as SelectedTagGroupModel } from '../../types';
 import { SelectedTagGroup } from '../tag-step/selected-tag-group';
 
@@ -44,10 +42,9 @@ export function SelectedTagsDrawer({
       <DrawerTrigger asChild>
         <Button
           type="button"
-          size="icon"
           variant="secondary"
-          aria-label="선택한 키워드 보기 버튼">
-          <HugeiconsIcon icon={LayoutAlignBottomIcon} aria-hidden="true" />
+          className="h-10 w-full rounded-none px-0 text-foreground-secondary">
+          {SELECTED_TAGS_TRIGGER_LABEL}
         </Button>
       </DrawerTrigger>
       <DrawerContent
@@ -57,7 +54,7 @@ export function SelectedTagsDrawer({
         <DrawerHeader>
           <DrawerTitle>선택한 키워드</DrawerTitle>
         </DrawerHeader>
-        <div className="flex flex-col gap-8 overflow-y-auto overscroll-contain p-4 pb-8">
+        <div className="flex flex-col gap-6 overflow-y-auto overscroll-contain p-4 pb-8">
           {groups.map((group) => (
             <SelectedTagGroup key={group.id} group={group} />
           ))}

@@ -1,5 +1,6 @@
 import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
 import { expect, skipOnboarding, test } from '../fixtures/test';
@@ -105,7 +106,7 @@ test.describe('스토리 임시 저장·재개', () => {
       'aria-pressed',
       'true',
     );
-    await page.getByRole('tab', { name: /주인공 특징/ }).click();
+    await page.getByRole('tab', { name: PROTAGONIST_CATEGORY.label }).click();
     await expect(
       page.getByRole('textbox', { name: '주인공 이름' }),
     ).toHaveValue('마냑');
