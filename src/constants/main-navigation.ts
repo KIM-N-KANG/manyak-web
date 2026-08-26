@@ -33,7 +33,7 @@ export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
     inactiveIcon: ChatRoundOutlineIcon,
   },
   {
-    href: APP_PATH.MAIN.CREATE,
+    href: APP_PATH.MAIN.STUDIO,
     label: '제작',
     activeIcon: PlusCircleFilledIcon,
     inactiveIcon: PlusCircleOutlineIcon,

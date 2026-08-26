@@ -52,14 +52,14 @@ export function ChatList() {
         {hasStories ? (
           <Button
             nativeButton={false}
-            render={<Link href={APP_PATH.MAIN.CREATE} />}
+            render={<Link href={APP_PATH.MAIN.STUDIO} />}
             size="lg">
             스토리 목록으로 가기
           </Button>
         ) : (
           <Button
             nativeButton={false}
-            render={<Link href={APP_PATH.CREATOR.STORY} />}
+            render={<Link href={APP_PATH.STUDIO.STORY.SIMPLE} />}
             size="lg">
             <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
             <span>스토리 만들기</span>

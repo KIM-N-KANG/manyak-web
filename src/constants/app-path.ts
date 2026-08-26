@@ -2,7 +2,7 @@ export const APP_PATH = {
   MAIN: {
     STORIES: '/',
     CHATS: '/chats',
-    CREATE: '/create',
+    STUDIO: '/studio',
     MY: '/my',
   },
   LOGIN: '/login',
@@ -17,8 +17,16 @@ export const APP_PATH = {
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   SHARE_VIEW: (shareId: string) => `/share/${shareId}`,
-  CREATOR: {
-    STORY: '/create/story',
+  STUDIO: {
+    STORY: {
+      SIMPLE: '/studio/story/simple',
+    },
+  },
+  LEGACY: {
+    CREATE: '/create',
+    CREATE_STORY: '/create/story',
+    NEW_STORY: '/stories/new',
+    STUDIO_STORY: '/studio/story',
   },
 } as const;
 

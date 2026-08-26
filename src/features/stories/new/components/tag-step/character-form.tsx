@@ -1,7 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
-
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import {
   Field,
@@ -60,8 +58,6 @@ type CharacterFormProps = {
   disabled: boolean;
   /** 이름 인풋 아래에 띄울 오류. 없으면 오류를 표시하지 않는다. */
   nameErrorMessage?: string;
-  /** 기본 정보 라벨과 같은 줄 오른쪽 끝에 놓을 조작 버튼(주변 인물 삭제 등) */
-  headerAction?: ReactNode;
   onRegisterNameInput?: (id: string, element: HTMLInputElement | null) => void;
   onChangeName: (name: string) => void;
   onChangeGender: (gender: CharacterGender | null) => void;
@@ -85,7 +81,6 @@ export function CharacterForm({
   hasTagsError,
   disabled,
   nameErrorMessage,
-  headerAction,
   onRegisterNameInput,
   onChangeName,
   onChangeGender,
@@ -99,22 +94,13 @@ export function CharacterForm({
   const featureLabelId = `${fieldId}-feature-label`;
 
   return (
-    <FieldGroup className="gap-8">
+    <FieldGroup className="gap-6">
       <Field className="gap-2" aria-labelledby={basicInfoLabelId}>
-        {/* 삭제 버튼이 라벨보다 커서 줄 높이를 밀어내지 않도록 흐름에서 빼낸다.
-            버튼이 없는 주인공 폼과 라벨~인풋 간격을 같게 유지한다. */}
-        <div className="relative flex items-center">
-          <FieldLabel id={basicInfoLabelId} htmlFor={`${fieldId}-name`}>
-            {CHARACTER_BASIC_INFO_LABEL}
-          </FieldLabel>
-          {headerAction && (
-            <div className="absolute top-1/2 -right-1 -translate-y-1/2">
-              {headerAction}
-            </div>
-          )}
-        </div>
+        <FieldLabel id={basicInfoLabelId} htmlFor={`${fieldId}-name`}>
+          {CHARACTER_BASIC_INFO_LABEL}
+        </FieldLabel>
         <div className="flex items-start gap-2">
-          <InputGroup className="flex-1">
+          <InputGroup className="min-w-0 flex-[3]">
             <InputGroupInput
               id={`${fieldId}-name`}
               ref={(element) => onRegisterNameInput?.(character.id, element)}
@@ -151,7 +137,7 @@ export function CharacterForm({
             }>
             <SelectTrigger
               className={cn(
-                'w-32 shrink-0',
+                'min-w-0 flex-[2]',
                 character.gender === null && 'text-foreground-tertiary',
               )}
               aria-label={`${fieldLabelPrefix} 성별`}>

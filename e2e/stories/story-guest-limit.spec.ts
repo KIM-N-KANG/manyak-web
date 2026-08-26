@@ -1,7 +1,7 @@
 import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
-import { CREATE_STORY_FAB_COPY } from '@/features/create/menu/constants';
+import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
@@ -61,7 +61,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
       .click();
@@ -71,7 +71,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await expect(
       dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
     ).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
     await page.keyboard.press('Escape');
 

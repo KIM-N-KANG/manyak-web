@@ -13,7 +13,7 @@ describe('robots', () => {
       disallow: [
         '/api/',
         APP_PATH.MAIN.CHATS,
-        APP_PATH.MAIN.CREATE,
+        APP_PATH.MAIN.STUDIO,
         APP_PATH.MAIN.MY,
         APP_PATH.LOGIN,
         '/stories/',

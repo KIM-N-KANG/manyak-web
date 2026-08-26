@@ -2,7 +2,7 @@ import { APP_PATH } from '@/constants/app-path';
 
 import { expect, mockChatShareView, test } from '../fixtures/test';
 
-// 공유 열람(/share/[shareId])은 온보딩 게이트 매처(/, /chats, /create, /my) 밖이라 게이팅이 없다.
+// 공유 열람(/share/[shareId])은 온보딩 게이트 매처(/, /chats, /studio, /my) 밖이라 게이팅이 없다.
 // 열람: GET /api/v1/shares/{shareId} (무인증).
 const SHARE_BODY = {
   id: 'share-1',
@@ -56,7 +56,7 @@ test.describe('공유된 채팅 열람', () => {
     // role="button"을 붙인다. 이동은 href로 이뤄지므로 링크 대상을 함께 확인한다.
     await expect(page.getByRole('button', { name: CTA_NAME })).toHaveAttribute(
       'href',
-      APP_PATH.CREATOR.STORY,
+      APP_PATH.STUDIO.STORY.SIMPLE,
     );
   });
 
@@ -67,7 +67,9 @@ test.describe('공유된 채팅 열람', () => {
     await page.goto('/share/share-1');
 
     await page.getByRole('button', { name: CTA_NAME }).click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
 
     // 온보딩 게이트는 서버(proxy)가 쿠키로 판정하므로, 홈에 직접 진입해
     // 리다이렉트 없이 도착했는지를 응답 URL로 확인한다(smoke/onboarding과 동일 방식).

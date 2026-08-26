@@ -39,7 +39,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
   return (
     <article
       ref={impressionRef}
-      className="relative flex items-center gap-4 p-4">
+      className="relative flex items-center gap-4 px-4 py-2">
       <Link
         href={APP_PATH.CHAT_ROOM(chat.id)}
         aria-label={`${chat.storyTitle} 채팅 보기`}

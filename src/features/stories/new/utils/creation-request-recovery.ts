@@ -3,7 +3,7 @@ import type {
   SimpleStoryCreateResponse,
   StoryCreationRequestStatusResponse,
 } from '@/api/generated/models';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type { InFlightCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { FetchError } from '@/lib/custom-fetch';
 
 /**
@@ -83,7 +83,7 @@ export type CreationRecoveryAction =
  * @returns 화면 복원 액션
  */
 export function resolveCreationRecovery(
-  stage: PendingCreationRequest['stage'],
+  stage: InFlightCreationRequest['stage'],
   response: StoryCreationRequestStatusResponse,
 ): CreationRecoveryAction {
   if (response.status === 'PENDING') {

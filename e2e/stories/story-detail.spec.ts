@@ -247,7 +247,7 @@ test.describe('스토리 상세', () => {
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CREATE}$`));
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 
   test('로드에 실패하면 다시 시도로 복구한다 (US-4-4)', async ({ page }) => {

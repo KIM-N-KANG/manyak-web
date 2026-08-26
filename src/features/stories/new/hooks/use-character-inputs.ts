@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 
+import type {
+  KeywordCharacterSnapshot,
+  KeywordDraftSnapshot,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 import { createClientId } from '@/lib/create-client-id';
 
@@ -42,6 +46,32 @@ const createInitialSupportingCharacters = (): CharacterInput[] =>
     { length: SUPPORTING_CHARACTER_INITIAL_COUNT },
     createEmptyCharacter,
   );
+
+/**
+ * 저장 스냅숏의 인물 입력에 새 화면 로컬 ID를 부여한다.
+ *
+ * @param snapshot 복원할 인물 입력 스냅숏
+ * @returns 화면에서 사용할 인물 입력
+ */
+const restoreCharacter = (
+  snapshot: KeywordCharacterSnapshot,
+): CharacterInput => {
+  const customTags = snapshot.customTags.map(({ name }) => ({
+    id: createClientId(),
+    name,
+  }));
+
+  return {
+    id: createClientId(),
+    name: snapshot.name,
+    gender: snapshot.gender,
+    selectedTagIds: snapshot.selectedTagIds,
+    selectedCustomTagIds: customTags
+      .filter((_, index) => snapshot.customTags[index]?.selected)
+      .map(({ id }) => id),
+    customTags,
+  };
+};
 
 /**
  * 인물이 고른 특징 개수를 센다. 사전 정의 태그와 직접 추가 태그를 합산한다.
@@ -201,6 +231,19 @@ export function useCharacterInputs() {
     );
   };
 
+  /** 키워드 저장본으로 주인공과 주변 인물 입력을 복원한다. */
+  const restoreCharacterInputs = (snapshot: KeywordDraftSnapshot) => {
+    const restoredSupportingCharacters =
+      snapshot.supportingCharacters.map(restoreCharacter);
+
+    setProtagonist(restoreCharacter(snapshot.protagonist));
+    setSupportingCharacters(
+      restoredSupportingCharacters.length > 0
+        ? restoredSupportingCharacters
+        : createInitialSupportingCharacters(),
+    );
+  };
+
   return {
     protagonist,
     supportingCharacters,
@@ -217,5 +260,6 @@ export function useCharacterInputs() {
     addSupportingCharacter,
     removeSupportingCharacter,
     registerCharacterNameInput: registerInput,
+    restoreCharacterInputs,
   };
 }

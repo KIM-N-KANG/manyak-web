@@ -1,4 +1,5 @@
 import { APP_PATH } from '@/constants/app-path';
+import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
 
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
@@ -94,7 +95,7 @@ test.describe('스토리 비주얼', () => {
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await waitForFonts(page);
@@ -135,7 +136,7 @@ test.describe('스토리 비주얼', () => {
   test('제작 목록 빈 상태 (STORY-LIST)', async ({ page }) => {
     await skipOnboarding(page);
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
     await waitForFonts(page);
@@ -174,7 +175,7 @@ test.describe('스토리 비주얼', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await expect(page.getByRole('button', { name: '판타지' })).toBeVisible();
     await waitForFonts(page);
@@ -210,7 +211,7 @@ test.describe('스토리 오버레이 비주얼', () => {
   });
 
   test('키워드 추가 다이얼로그 (STORY-KEYWORD)', async ({ page }) => {
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     await expect(
@@ -229,7 +230,7 @@ test.describe('스토리 오버레이 비주얼', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '용감한' }).click();
@@ -237,7 +238,9 @@ test.describe('스토리 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
-    await page.getByRole('button', { name: '선택한 키워드 보기 버튼' }).click();
+    await page
+      .getByRole('button', { name: SELECTED_TAGS_TRIGGER_LABEL })
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible();
     await waitForFonts(page);
@@ -294,7 +297,7 @@ test.describe('스토리 다크 모드 비주얼', () => {
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await waitForDarkTheme(page);

@@ -51,7 +51,7 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
       });
     });
 
-    await page.goto(APP_PATH.MAIN.CREATE);
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(

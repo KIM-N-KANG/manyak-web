@@ -1,4 +1,9 @@
+import { type Page } from '@playwright/test';
+
 import { APP_PATH } from '@/constants/app-path';
+import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usage-storage';
+import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
+import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
 
 import { expect, skipChatTour, test } from '../fixtures/test';
 
@@ -7,13 +12,14 @@ test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
 });
 
-// 스토리 생성 4단계 funnel(/create/story, (story) 레이아웃이라 온보딩 게이팅 없음).
+// 스토리 생성 4단계 funnel(/studio/story/simple, (story) 레이아웃이라 온보딩 게이팅 없음).
 // API 순서: GET /stories/simple/tags → POST /stories/simple/storylines
 //           → POST /stories/simple → POST /chats → /chats/{id} 이동
 // 각 URL이 명확히 달라 글롭 패턴이 겹치지 않는다(/simple 은 /simple/tags·/simple/storylines 와 별개).
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 const CREATE_STORY = '**/api/v1/stories/simple';
+const CREATION_REQUEST = '**/api/v1/stories/simple/creation-requests/*';
 const CREATE_CHAT = '**/api/v1/chats';
 const LEGACY_STORY_CREATE_PATH = '/stories/new';
 
@@ -37,11 +43,42 @@ const storylinesResponse = {
   ],
 };
 
+async function reachAdditionalInfo(page: Page): Promise<void> {
+  await page.route(TAGS, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(tags),
+    });
+  });
+  await page.route(STORYLINES, async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify(storylinesResponse),
+    });
+  });
+
+  await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+  await page.getByRole('button', { name: '판타지' }).click();
+  await page.getByRole('button', { name: '다음' }).click();
+  await page.getByRole('button', { name: '용감한' }).click();
+  await page.getByRole('button', { name: '다음' }).click();
+  await page.getByRole('button', { name: '스토리라인 만들기' }).click();
+  await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+  await page.getByRole('button', { name: '선택하기' }).click();
+  await expect(
+    page.getByRole('button', { name: '스토리 완성하기' }),
+  ).toBeVisible();
+}
+
 test.describe('스토리 생성', () => {
   test('기존 생성 URL은 새 제작 URL로 이동한다 (KNK-988)', async ({ page }) => {
     await page.goto(LEGACY_STORY_CREATE_PATH);
 
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.CREATOR.STORY}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
   });
 
   test('직접 키워드가 비어 있으면 인풋 아래 오류를 표시하고 입력하면 해제한다', async ({
@@ -55,7 +92,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     const dialog = page.getByRole('dialog');
@@ -85,7 +122,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     const nextButton = page.getByRole('button', { name: '다음' });
     const validationError = page.getByText('키워드를 하나 이상 선택해주세요');
@@ -105,7 +142,7 @@ test.describe('스토리 생성', () => {
     await expect(validationError).toBeHidden();
     await nextButton.click();
     await expect(
-      page.getByRole('tab', { name: /주인공 특징/ }),
+      page.getByRole('tab', { name: PROTAGONIST_CATEGORY.label }),
     ).toHaveAttribute('aria-selected', 'true');
 
     await expect(nextButton).toBeEnabled();
@@ -135,7 +172,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -209,7 +246,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     // Step 1: 키워드 선택 (장르 → 주인공 → 주변 인물)
     await page.getByRole('button', { name: '판타지' }).click();
@@ -263,7 +300,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -290,6 +327,264 @@ test.describe('스토리 생성', () => {
       '비밀은 사라진 왕국의 문장이다',
     );
     await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('추가 정보가 있으면 재선택을 경고하고 확정할 때만 입력을 초기화한다', async ({
+    page,
+  }) => {
+    await reachAdditionalInfo(page);
+
+    const recommendation = page.getByRole('button', {
+      name: '주인공은 비밀을 품고 있다',
+    });
+    const additionalInfoInput = page.locator(
+      'textarea[aria-label="추가 정보 1"]',
+    );
+    const reselectButton = page
+      .getByRole('navigation')
+      .getByRole('button', { name: '다시 선택하기' });
+
+    await recommendation.click();
+    await additionalInfoInput.fill('사라진 왕국의 비밀');
+    await reselectButton.click();
+
+    const warning = page.getByRole('alertdialog', {
+      name: '스토리라인을 바꿀까요?',
+    });
+
+    await expect(
+      warning.getByText('입력한 추가 정보는 모두 사라져요'),
+    ).toBeVisible();
+    await warning.getByRole('button', { name: '닫기' }).click();
+    await expect(additionalInfoInput).toHaveValue('사라진 왕국의 비밀');
+    await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
+
+    await reselectButton.click();
+    await warning.getByRole('button', { name: '다시 선택하기' }).click();
+    await expect(
+      page.getByRole('button', { name: '선택하기', exact: true }),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: '선택하기', exact: true }).click();
+    await expect(
+      page.locator('textarea[aria-label="추가 정보 1"]'),
+    ).toHaveValue('');
+    await expect(
+      page.getByRole('button', { name: '주인공은 비밀을 품고 있다' }),
+    ).toHaveAttribute('aria-pressed', 'false');
+
+    // 초기 빈 입력 칸만 있으면 경고 없이 즉시 스토리라인 선택으로 돌아간다.
+    await reselectButton.click();
+    await expect(
+      page.getByRole('button', { name: '선택하기', exact: true }),
+    ).toBeVisible();
+    await expect(warning).toBeHidden();
+  });
+
+  test('추가 정보 첫 렌더에서 선택한 스토리라인 박스 높이가 변하지 않는다', async ({
+    page,
+  }) => {
+    await reachAdditionalInfo(page);
+
+    const selectedStorylineBox = page.getByTestId('selected-storyline-content');
+    const initialHeight = await selectedStorylineBox.evaluate(
+      (element) => element.getBoundingClientRect().height,
+    );
+
+    await page.waitForTimeout(350);
+
+    const settledHeight = await selectedStorylineBox.evaluate(
+      (element) => element.getBoundingClientRect().height,
+    );
+
+    expect(settledHeight).toBe(initialHeight);
+    await expect(page.getByRole('button', { name: '더보기' })).toBeVisible();
+  });
+
+  test('채팅 생성 실패 재시도는 스토리를 중복 완성하지 않고 채팅만 다시 만든다', async ({
+    page,
+  }) => {
+    let storyRequestCount = 0;
+    let chatRequestCount = 0;
+
+    await page.route(CREATE_STORY, async (route) => {
+      storyRequestCount += 1;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'story-chat-retry',
+          title: '채팅 재시도 스토리',
+          genres: ['판타지'],
+        }),
+      });
+    });
+    await page.route(CREATE_CHAT, async (route) => {
+      chatRequestCount += 1;
+
+      if (chatRequestCount === 1) {
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'failed to create chat' }),
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'chat-retried',
+          storyId: 'story-chat-retry',
+        }),
+      });
+    });
+    await reachAdditionalInfo(page);
+
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+
+    await expect(page).toHaveURL(/\/chats\/chat-retried$/);
+    expect(storyRequestCount).toBe(1);
+    expect(chatRequestCount).toBe(2);
+  });
+
+  test('채팅 생성 실패 후 새로고침 복구도 스토리 성공을 중복 적용하지 않는다', async ({
+    page,
+  }) => {
+    let storyRequestCount = 0;
+    let chatRequestCount = 0;
+
+    await page.route(CREATE_STORY, async (route) => {
+      storyRequestCount += 1;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'story-chat-refresh',
+          title: '새로고침 채팅 재시도 스토리',
+          genres: ['판타지'],
+        }),
+      });
+    });
+    await page.route(CREATION_REQUEST, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          stage: 'STORY_COMPLETION',
+          status: 'COMPLETED',
+          result: {
+            id: 'story-chat-refresh',
+            title: '새로고침 채팅 재시도 스토리',
+            genres: ['판타지'],
+          },
+        }),
+      });
+    });
+    await page.route(CREATE_CHAT, async (route) => {
+      chatRequestCount += 1;
+      await route.fulfill({
+        status: chatRequestCount === 1 ? 500 : 201,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatRequestCount === 1
+            ? { message: 'failed to create chat' }
+            : {
+                id: 'chat-refresh-retried',
+                storyId: 'story-chat-refresh',
+              },
+        ),
+      });
+    });
+    await reachAdditionalInfo(page);
+
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
+
+    const usageAfterStorySuccess = await page.evaluate(
+      (key) => localStorage.getItem(key),
+      GUEST_USAGE_STORAGE_KEY,
+    );
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => localStorage.getItem(key),
+          PENDING_CREATION_REQUEST_STORAGE_KEY,
+        ),
+      )
+      .toContain('"createdStoryId":"story-chat-refresh"');
+
+    await page.reload();
+
+    await expect(page).toHaveURL(/\/chats\/chat-refresh-retried$/, {
+      timeout: 10000,
+    });
+    expect(storyRequestCount).toBe(1);
+    expect(chatRequestCount).toBe(2);
+    expect(
+      await page.evaluate(
+        (key) => localStorage.getItem(key),
+        GUEST_USAGE_STORAGE_KEY,
+      ),
+    ).toBe(usageAfterStorySuccess);
+  });
+
+  test('같은 완성 요청의 409는 실패로 끝내지 않고 저장한 requestId로 복구한다', async ({
+    page,
+  }) => {
+    const completionRequestIds: string[] = [];
+
+    await page.route(CREATE_STORY, async (route) => {
+      const body = route.request().postDataJSON() as { requestId: string };
+
+      completionRequestIds.push(body.requestId);
+      await route.fulfill({
+        status: completionRequestIds.length === 1 ? 500 : 409,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'completion is pending' }),
+      });
+    });
+    await page.route(CREATION_REQUEST, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          stage: 'STORY_COMPLETION',
+          status: 'COMPLETED',
+          result: {
+            id: 'story-conflict-recovered',
+            title: '409 복구 스토리',
+            genres: ['판타지'],
+          },
+        }),
+      });
+    });
+    await page.route(CREATE_CHAT, async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'chat-conflict-recovered',
+          storyId: 'story-conflict-recovered',
+        }),
+      });
+    });
+    await reachAdditionalInfo(page);
+
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+
+    await expect(page).toHaveURL(/\/chats\/chat-conflict-recovered$/, {
+      timeout: 10000,
+    });
+    expect(completionRequestIds).toHaveLength(2);
+    expect(completionRequestIds[1]).toBe(completionRequestIds[0]);
   });
 
   test('스토리라인 생성 실패 시 첫 생성과 재생성을 구분해 안내한다', async ({
@@ -326,7 +621,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -377,7 +672,7 @@ test.describe('스토리 생성', () => {
       });
     });
 
-    await page.goto(APP_PATH.CREATOR.STORY);
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
