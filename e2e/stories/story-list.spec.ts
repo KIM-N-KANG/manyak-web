@@ -5,6 +5,7 @@ import {
   CREATE_STORY_FAB_COPY,
   CREATED_STORY_SECTION_TITLE,
 } from '@/features/create/menu/constants';
+import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -209,6 +210,43 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeHidden();
   });
 
+  test('오리지널 목록 로드에 실패하면 다시 시도로 복구한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+
+    let callCount = 0;
+
+    await page.route(STORIES_ORIGINALS, async (route) => {
+      callCount += 1;
+
+      if (callCount === 1) {
+        await route.fulfill({ status: 500, body: '{}' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([originalStory('o1', '마냑의 첫 이야기')]),
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page.getByRole('heading', { name: STORY_SECTION_TITLE.ORIGINAL }),
+    ).toBeVisible();
+    await expect(page.getByText(STORY_LIST_ERROR_TITLE)).toBeVisible();
+
+    await page.getByRole('button', { name: '다시 시도하기' }).click();
+
+    await expect(
+      page.getByText('마냑의 첫 이야기', { exact: true }),
+    ).toBeVisible();
+  });
+
   test('오리지널 로딩 중에는 제목과 카드 구조에 맞는 스켈레톤을 보여준다 (KNK-988)', async ({
     page,
   }) => {
@@ -310,7 +348,7 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await page.goto(APP_PATH.MAIN.CREATE);
 
-    await expect(page.getByText('스토리를 불러오지 못했어요')).toBeVisible();
+    await expect(page.getByText(STORY_LIST_ERROR_TITLE)).toBeVisible();
     await expect(
       page.getByRole('heading', { name: CREATED_STORY_SECTION_TITLE }),
     ).toBeVisible();

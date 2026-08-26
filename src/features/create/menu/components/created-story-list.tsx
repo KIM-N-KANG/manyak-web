@@ -12,6 +12,7 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryCardGrid } from '@/features/stories/_shared/components/story-card-grid';
+import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
 
@@ -38,7 +39,7 @@ export function CreatedStoryList() {
     stateKey = 'error';
     content = (
       <RetryListStatus
-        title="스토리를 불러오지 못했어요"
+        title={STORY_LIST_ERROR_TITLE}
         onRetry={() => refetch()}
       />
     );

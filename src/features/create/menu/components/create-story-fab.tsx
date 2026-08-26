@@ -40,7 +40,7 @@ export function CreateStoryFab() {
         href={APP_PATH.CREATOR.STORY}
         onClick={handleClick}
         aria-label={CREATE_STORY_FAB_COPY.accessibleLabel}
-        className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md shadow-primary/20 transition-[filter] outline-none hover:bg-primary/80 focus-visible:ring-2 focus-visible:ring-ring/50">
+        className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md shadow-primary/20 transition-transform outline-none hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:hover:scale-100">
         <HugeiconsIcon
           icon={PlusSignIcon}
           className="size-6 shrink-0"
