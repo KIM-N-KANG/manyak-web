@@ -105,7 +105,7 @@ export const PROTAGONIST_CATEGORY = {
 export const SUPPORTING_CHARACTER_CATEGORY = {
   value: 'SUPPORTING_CHARACTER',
   label: '주변 인물',
-  placeholder: '예: 상냥해서 더 위험한, 어딘가 망가진',
+  placeholder: '예: 위험한, 어딘가 망가진',
   required: false,
   maxSelectionCount: CHARACTER_FEATURE_MAX_COUNT,
 } satisfies TagCategoryConfig;
