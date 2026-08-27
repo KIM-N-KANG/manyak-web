@@ -32,11 +32,12 @@ async function collect(
 }
 
 describe('parseSseStream', () => {
-  it('parses started → token → completed in order', async () => {
+  it('parses token and character images in arrival order', async () => {
     const events = await collect(
       streamFrom([
         'event: started\ndata: {}\n\n',
         'event: token\ndata: {"text":"안녕"}\n\n',
+        'event: character_image\ndata: {"name":"세린","imageUrl":"https://cdn.manyak.app/characters/generated/serin.webp"}\n\n',
         'event: token\ndata: {"text":"하세요"}\n\n',
         'event: completed\ndata: {"aiOutput":"안녕하세요"}\n\n',
       ]),
@@ -45,6 +46,11 @@ describe('parseSseStream', () => {
     expect(events).toEqual([
       { type: 'started' },
       { type: 'token', content: '안녕' },
+      {
+        type: 'character-image',
+        name: '세린',
+        imageUrl: 'https://cdn.manyak.app/characters/generated/serin.webp',
+      },
       { type: 'token', content: '하세요' },
       { type: 'completed', aiOutput: '안녕하세요' },
     ]);
@@ -81,5 +87,16 @@ describe('parseSseStream', () => {
     );
 
     expect(events).toEqual([{ type: 'token', content: 'y' }]);
+  });
+
+  it('skips character image events missing required fields', async () => {
+    const events = await collect(
+      streamFrom([
+        'event: character_image\ndata: {"name":"세린"}\n\n',
+        'event: character_image\ndata: {"imageUrl":"https://cdn.manyak.app/characters/generated/serin.webp"}\n\n',
+      ]),
+    );
+
+    expect(events).toEqual([]);
   });
 });

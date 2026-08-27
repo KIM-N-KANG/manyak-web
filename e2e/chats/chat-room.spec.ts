@@ -13,13 +13,21 @@ import {
 
 // 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
-// SSE 포맷: started → token({"text":...})×N → completed({"aiOutput":...}) | error({"message":...})
+// SSE 포맷: started → (token | character_image)×N → completed | error
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
 const CHAT_REGENERATE = '**/api/v1/chats/c1/turns/regenerate/stream';
 const CHAT_CHOICES = '**/api/v1/chats/c1/turns/1/choices';
 const PLAY_FILLED_PATH =
   'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
+const CHARACTER_IMAGE_URL =
+  'https://dev-cdn.manyak.app/characters/generated/serin.webp';
+
+// 1x1 투명 PNG. 인물 이미지 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 // 기본 모드가 블럭 입력이므로, textarea 기반 테스트는 일반 모드를 고정한다.
 const setPlainInputMode = async (page: Page) => {
@@ -284,6 +292,132 @@ test.describe('채팅 스트리밍', () => {
     await expect
       .poll(() => pixelLogs.filter((log) => log.includes('StartTrial')).length)
       .toBe(1);
+  });
+
+  test('인물 이미지를 completed 전에 표시하고 확정 마커로 이어서 복원한다 (US-6-11)', async ({
+    page,
+  }) => {
+    const confirmedOutput =
+      `*문이 열린다.*\n[[세린:${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
+    const completedTurn = {
+      id: 1,
+      userInput: '문 안으로 들어간다',
+      aiOutput: confirmedOutput,
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1 ? chatDetail() : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    // Playwright route.fulfill은 응답 본문을 한 번에 전달하므로, 브라우저 fetch를
+    // ReadableStream으로 바꿔 이미지 이벤트와 completed 사이의 실제 화면을 관찰한다.
+    await page.addInitScript(
+      ({ imageUrl, confirmed }) => {
+        const originalFetch = window.fetch;
+
+        window.fetch = async (...args) => {
+          const input = args[0];
+          const url = input instanceof Request ? input.url : input.toString();
+
+          if (!url.endsWith('/api/v1/chats/c1/turns/stream')) {
+            return originalFetch(...args);
+          }
+
+          const encoder = new TextEncoder();
+          const stream = new ReadableStream<Uint8Array>({
+            start(controller) {
+              document.documentElement.dataset.chatStreamCompleted = 'false';
+              controller.enqueue(
+                encoder.encode(
+                  'event: started\ndata: {}\n\n' +
+                    'event: token\ndata: {"text":"*문이 열린다.*\\n"}\n\n' +
+                    `event: character_image\ndata: ${JSON.stringify({ name: '세린', imageUrl })}\n\n` +
+                    'event: token\ndata: {"text":"세린: 기다렸어?"}\n\n',
+                ),
+              );
+
+              window.setTimeout(() => {
+                document.documentElement.dataset.chatStreamCompleted = 'true';
+                controller.enqueue(
+                  encoder.encode(
+                    `event: completed\ndata: ${JSON.stringify({ aiOutput: confirmed })}\n\n`,
+                  ),
+                );
+                controller.close();
+              }, 1000);
+            },
+          });
+
+          return new Response(stream, {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          });
+        };
+      },
+      { imageUrl: CHARACTER_IMAGE_URL, confirmed: confirmedOutput },
+    );
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('문 안으로 들어간다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    const image = page.getByRole('img', { name: '세린 인물 이미지' });
+    const imageBlock = page.locator('[data-slot="chat-character-image"]');
+    const aiMessageContent = imageBlock.locator('..');
+    const aiMessage = imageBlock.locator(
+      'xpath=ancestor::*[@data-slot="message-content"]',
+    );
+    const characterLine = page
+      .getByText('세린: 기다렸어?')
+      .locator('xpath=ancestor::p');
+
+    await expect(image).toBeVisible();
+    await expect(page.getByText('세린: 기다렸어?')).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-chat-stream-completed',
+      'false',
+    );
+
+    await expect(aiMessage).toHaveCSS('padding-left', '0px');
+    await expect(characterLine).toHaveCSS('padding-left', '16px');
+    await expect(aiMessageContent).toHaveCSS('row-gap', '16px');
+    await expect(imageBlock).toHaveCSS('border-top-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-bottom-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-left-width', '0px');
+    await expect(imageBlock).toHaveCSS('border-right-width', '0px');
+
+    const imageBox = await imageBlock.boundingBox();
+    const messageBox = await aiMessage.boundingBox();
+
+    expect(imageBox).not.toBeNull();
+    expect(messageBox).not.toBeNull();
+    expect(Math.abs(imageBox!.x - messageBox!.x)).toBeLessThan(1);
+    expect(Math.abs(imageBox!.width - messageBox!.width)).toBeLessThan(1);
+    expect(imageBox!.width / imageBox!.height).toBeCloseTo(4 / 3, 1);
+
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-chat-stream-completed',
+      'true',
+    );
+    await expect.poll(() => detailCallCount).toBeGreaterThanOrEqual(2);
+    await expect(image).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[[세린:');
   });
 
   test('추천 입력의 수정 버튼을 누르면 입력창에 채워진다 (US-6-4)', async ({

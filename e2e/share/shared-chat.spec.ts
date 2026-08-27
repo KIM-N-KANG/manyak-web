@@ -20,6 +20,8 @@ const SHARE_BODY = {
 };
 
 const CTA_NAME = '나만의 스토리 만들고 채팅하기';
+const CHARACTER_IMAGE_URL =
+  'https://cdn.manyak.app/characters/generated/serin.webp';
 
 test.describe('공유된 채팅 열람', () => {
   test('스토리 제목과 대화가 순서대로 보인다', async ({ page }) => {
@@ -43,6 +45,26 @@ test.describe('공유된 채팅 열람', () => {
       .locator('xpath=ancestor::footer');
 
     await expect(sharedChatActions).toHaveCSS('padding-top', '0px');
+  });
+
+  test('저장된 인물 이미지 마커는 숨기고 공유 화면에는 이미지를 표시하지 않는다', async ({
+    page,
+  }) => {
+    const imageOutput =
+      `*문이 열린다.*\n[[세린:${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
+
+    await mockChatShareView(page, {
+      ...SHARE_BODY,
+      turns: [{ ...SHARE_BODY.turns[0], aiOutput: imageOutput }],
+    });
+    await page.goto('/share/share-1');
+
+    await expect(page.getByText('문이 열린다.')).toBeVisible();
+    await expect(page.getByText('세린: 기다렸어?')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[[세린:');
+    await expect(
+      page.getByRole('img', { name: '세린 인물 이미지' }),
+    ).toHaveCount(0);
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
