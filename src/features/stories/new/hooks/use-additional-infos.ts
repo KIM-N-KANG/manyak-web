@@ -36,7 +36,7 @@ const createInitialAdditionalInfos = (): AdditionalInfoInput[] =>
 
 /**
  * 추가 정보 인풋 목록의 추가·삭제·수정 상태를 관리하는 훅.
- * 새 인풋을 추가하면 해당 인풋으로 포커스와 스크롤을 이동한다.
+ * 새 인풋을 추가하면 포커스를 옮기지 않고 해당 인풋으로 스크롤한다.
  *
  * @returns 추가 정보 목록과 추가·삭제·수정·리셋·제출값 조회 함수들
  */
@@ -44,7 +44,7 @@ export function useAdditionalInfos() {
   const [additionalInfos, setAdditionalInfos] = useState<AdditionalInfoInput[]>(
     createInitialAdditionalInfos,
   );
-  const { registerInput, focusInput } =
+  const { registerInput, scrollInputIntoView } =
     useInputRefRegistry<HTMLTextAreaElement>();
 
   const addAdditionalInfo = () => {
@@ -56,7 +56,7 @@ export function useAdditionalInfos() {
 
     track('client_storyCreate_additionalInfoAddButton_clicked');
     setAdditionalInfos((previous) => [...previous, additionalInfo]);
-    focusInput(additionalInfo.id, { scrollIntoView: true });
+    scrollInputIntoView(additionalInfo.id);
   };
 
   const removeAdditionalInfo = (id: string) => {

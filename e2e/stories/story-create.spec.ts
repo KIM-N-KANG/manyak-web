@@ -401,6 +401,24 @@ test.describe('스토리 생성', () => {
     await expect(page.getByRole('button', { name: '더보기' })).toBeVisible();
   });
 
+  test('추가 정보 입력의 Tab은 삭제 버튼을 건너뛰고 다음 입력으로 이동한다 (KNK-999)', async ({
+    page,
+  }) => {
+    await reachAdditionalInfo(page);
+    await page.getByRole('button', { name: '정보 추가' }).click();
+
+    const firstInput = page.getByRole('textbox', { name: '추가 정보 1' });
+    const secondInput = page.getByRole('textbox', { name: '추가 정보 2' });
+    const firstRemoveButton = page.getByRole('button', {
+      name: '추가 정보 1 삭제',
+    });
+
+    await expect(firstRemoveButton).toHaveAttribute('tabindex', '-1');
+    await firstInput.focus();
+    await firstInput.press('Tab');
+    await expect(secondInput).toBeFocused();
+  });
+
   test('채팅 생성 실패 재시도는 스토리를 중복 완성하지 않고 채팅만 다시 만든다', async ({
     page,
   }) => {

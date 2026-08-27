@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 import type { StoryCreateStep } from '../../types';
 import type { DraftSaveStatus } from '../../utils/draft-autosave';
@@ -31,16 +32,15 @@ export function StoryCreateHeader({
       <header className="flex shrink-0 flex-col bg-background">
         <div className="flex h-14 items-center gap-2 px-4">
           <h1 className="font-semibold">스토리 만들기</h1>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1">
             {draftSaveStatus !== 'hidden' && (
               <Badge
                 variant="secondary"
                 aria-live="polite"
-                className={
-                  draftSaveStatus === 'saved'
-                    ? 'bg-primary/10 text-primary'
-                    : undefined
-                }>
+                className={cn(
+                  'h-auto px-2.5 py-1 text-sm',
+                  draftSaveStatus === 'saved' && 'bg-primary/10 text-primary',
+                )}>
                 {draftSaveStatus === 'saving' ? '임시 저장중' : '임시 저장됨'}
               </Badge>
             )}

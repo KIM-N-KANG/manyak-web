@@ -4,6 +4,7 @@ import { type MouseEvent, type ReactNode, useState } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -36,6 +37,7 @@ export function CreatedStoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const pendingCreationRecord = usePendingCreationRequest();
   const showSkeleton = useDelayedLoading(isLoading);
+  const shouldReduceMotion = useReducedMotion();
   const [resumeDialogRecord, setResumeDialogRecord] =
     useState<DraftCreationRecord | null>(null);
 
@@ -138,9 +140,21 @@ export function CreatedStoryList() {
 
   return (
     <>
-      {pendingCreationRecord ? (
-        <ContinueCreationBanner record={pendingCreationRecord} />
-      ) : null}
+      <AnimatePresence>
+        {pendingCreationRecord ? (
+          <m.div
+            key={pendingCreationRecord.requestId}
+            initial={shouldReduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.2,
+              ease: 'easeOut',
+            }}>
+            <ContinueCreationBanner record={pendingCreationRecord} />
+          </m.div>
+        ) : null}
+      </AnimatePresence>
       <section className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-8">
         <div className="flex items-center">
           <h2 className="text-lg font-bold">{CREATED_STORY_SECTION_TITLE}</h2>

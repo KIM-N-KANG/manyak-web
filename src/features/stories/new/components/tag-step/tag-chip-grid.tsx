@@ -68,6 +68,7 @@ export function TagChipGrid({
             <ToggleChip
               key={`${keyPrefix}-${id}`}
               pressed={isSelected}
+              className="aria-pressed:bg-primary/10"
               disabled={disabled || (!isSelected && isMaxSelectionReached)}
               onPressedChange={(pressed) => onTogglePredefinedTag(id, pressed)}>
               {name}
@@ -82,6 +83,7 @@ export function TagChipGrid({
             <ToggleChip
               key={customTag.id}
               pressed={isSelected}
+              className="aria-pressed:bg-primary/10"
               disabled={disabled || (!isSelected && isMaxSelectionReached)}
               onPressedChange={(pressed) =>
                 onToggleCustomTag(customTag.id, pressed)
