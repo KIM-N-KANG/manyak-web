@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryOptionsMenu } from '@/features/stories/_shared/components/story-options-menu';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
@@ -90,6 +91,14 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
             className="absolute top-0 left-0 w-18 rounded-tl-[11px] rounded-br-[6px] backdrop-blur-md"
           />
         )}
+        {!isOriginal && storyId != null ? (
+          <div className="absolute top-2 right-2 z-20">
+            <StoryOptionsMenu
+              storyId={storyId}
+              triggerClassName="size-7 rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/20 hover:text-white aria-expanded:bg-black/20 aria-expanded:text-white [&_svg:not([class*='size-'])]:size-3.5"
+            />
+          </div>
+        ) : null}
         <div className="absolute right-2 bottom-2">
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
         </div>

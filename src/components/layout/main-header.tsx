@@ -28,7 +28,9 @@ export function MainHeader() {
   return (
     <header className="flex h-14 shrink-0 items-center gap-4 bg-background px-4">
       {isHome ? <ManyakLogo className="h-6 w-auto text-primary" /> : null}
-      <h1 className="text-xl font-semibold">{title}</h1>
+      <h1 className={cn('text-xl font-semibold', isHome && 'sr-only')}>
+        {title}
+      </h1>
       {showLoginButton && (
         <Link
           href={APP_PATH.LOGIN}

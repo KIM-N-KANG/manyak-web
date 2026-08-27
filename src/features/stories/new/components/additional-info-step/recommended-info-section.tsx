@@ -20,7 +20,7 @@ export function RecommendedInfoSection({
   return (
     <section
       aria-labelledby="recommended-info-label"
-      className="mt-4 flex flex-col gap-2 p-4">
+      className="mt-4 mb-2 flex flex-col gap-2 p-4">
       <Label>추천 추가 정보</Label>
       <ul className="flex flex-col gap-2">
         {recommendedInfos.map((recommendedInfo, index) => {

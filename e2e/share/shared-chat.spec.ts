@@ -37,6 +37,12 @@ test.describe('공유된 채팅 열람', () => {
     await expect(
       page.getByText('먼지 쌓인 책 한 권이 눈에 들어왔다'),
     ).toBeVisible();
+
+    const sharedChatActions = page
+      .getByRole('button', { name: CTA_NAME })
+      .locator('xpath=ancestor::footer');
+
+    await expect(sharedChatActions).toHaveCSS('padding-top', '0px');
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {

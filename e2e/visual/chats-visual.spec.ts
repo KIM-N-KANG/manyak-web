@@ -141,6 +141,34 @@ test.describe('채팅 비주얼', () => {
     await expect(page).toHaveScreenshot('chat-room-turns.png');
   });
 
+  test('채팅방 엔딩 도달 턴 (CHAT-ENDING)', async ({ page }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatDetail([
+            {
+              id: 1,
+              userInput: '용의 제안을 받아들인다',
+              aiOutput:
+                '계곡을 뒤덮었던 안개가 걷히고, 용은 오래된 약속을 지키기 위해 날아올랐다.',
+              choices: [],
+              reachedEnding: '용과 맺은 약속',
+              createdAt: '2026-06-01T00:00:00Z',
+            },
+          ]),
+        ),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText('엔딩 · 용과 맺은 약속')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-room-ending.png');
+  });
+
   test('채팅방 로드 실패 상태 (CHAT-ENTRY-04)', async ({ page }) => {
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({ status: 500, body: '' });

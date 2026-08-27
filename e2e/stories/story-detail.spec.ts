@@ -1,11 +1,8 @@
 import type { Route } from '@playwright/test';
 
-import { APP_PATH } from '@/constants/app-path';
-
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
-// 같은 URL을 DELETE 로 삭제하므로 메서드로 분기해 모킹한다.
 const STORY_DETAIL = '**/api/v1/stories/s1';
 
 const storyDetail = {
@@ -16,18 +13,27 @@ const storyDetail = {
   genres: ['판타지', '모험'],
   turnCount: 1280,
   createdAt: '2026-06-24T12:00:00Z',
+  reachedEndings: ['용과 맺은 약속'],
   startSettings: [
     {
       id: 'ss1',
       name: '계곡 입구',
       prologue: '안개 낀 계곡 앞에 섰다',
       startSituation: '용의 흔적을 따라왔다',
+      endings: [
+        {
+          name: '잃어버린 용과의 재회',
+          requirement: { minTurns: 10, achievementCondition: '용을 찾는다' },
+          epilogue: '두 존재가 다시 만난다',
+        },
+      ],
     },
     {
       id: 'ss2',
       name: '용의 둥지',
       prologue: '거대한 둥지 앞에 도착했다',
       startSituation: '용의 숨소리가 들려온다',
+      endings: [{ name: '새로운 수호자' }],
     },
   ],
 };
@@ -62,6 +68,13 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
     await expect(page.getByText('생성일')).toBeVisible();
     await expect(page.getByText('2026-06-24')).toBeVisible();
+    await expect(page.getByText('용과 맺은 약속')).toBeVisible();
+
+    const cta = page
+      .getByRole('button', { name: '새 채팅 시작하기' })
+      .locator('xpath=ancestor::nav');
+
+    await expect(cta).toHaveCSS('padding-top', '0px');
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
@@ -95,6 +108,17 @@ test.describe('스토리 상세', () => {
       page.getByRole('img', { name: '스토리 썸네일' }),
     ).toBeVisible();
     await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+
+    const headerGradientCount = await page
+      .locator('header, header *')
+      .evaluateAll(
+        (elements) =>
+          elements.filter((element) =>
+            getComputedStyle(element).backgroundImage.includes('gradient'),
+          ).length,
+      );
+
+    expect(headerGradientCount).toBe(0);
   });
 
   test('썸네일을 누르면 이미지 뷰어가 열리고 X·뒤로가기로 닫힌다 (US-4-1)', async ({
@@ -154,13 +178,25 @@ test.describe('스토리 상세', () => {
 
     await expect(trigger).toContainText('계곡 입구');
     await expect(page.getByText('용의 흔적을 따라왔다')).toBeVisible();
+    await expect(page.getByText('잃어버린 용과의 재회')).toBeVisible();
+    await expect(page.getByText('두 존재가 다시 만난다')).not.toBeVisible();
+
+    await page.getByRole('button', { name: '엔딩 안내' }).click();
+    await expect(page.getByText('엔딩은 시작 상황마다 달라져요')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     await trigger.click();
-    await page.getByRole('option', { name: '용의 둥지' }).click();
+
+    const secondOption = page.getByRole('option', { name: '용의 둥지' });
+
+    await expect(secondOption).toHaveCSS('border-radius', '10px');
+    await secondOption.click();
 
     await expect(trigger).toContainText('용의 둥지');
     await expect(page.getByText('용의 숨소리가 들려온다')).toBeVisible();
+    await expect(page.getByText('새로운 수호자')).toBeVisible();
     await expect(page.getByText('용의 흔적을 따라왔다')).not.toBeVisible();
+    await expect(page.getByText('잃어버린 용과의 재회')).not.toBeVisible();
   });
 
   test('"채팅 시작하기"를 누르면 선택한 시작 설정으로 채팅 화면에 이동한다 (US-4-2)', async ({
@@ -222,34 +258,6 @@ test.describe('스토리 상세', () => {
     await expect(page).toHaveURL(/\/chats\/c1$/);
   });
 
-  test('스토리를 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-4-3)', async ({
-    page,
-  }) => {
-    // 삭제 후 제작 탭 복귀 검증이 목적이므로 온보딩은 열람 처리 상태를 전제한다.
-    await skipOnboarding(page);
-    await page.route(STORY_DETAIL, async (route) => {
-      if (route.request().method() === 'DELETE') {
-        await route.fulfill({ status: 204, body: '' });
-
-        return;
-      }
-
-      await fulfillStoryDetail(route);
-    });
-
-    await page.goto('/stories/s1');
-    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '삭제하기' }).click();
-
-    const dialog = page.getByRole('alertdialog');
-
-    await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
-    await dialog.getByRole('button', { name: '삭제하기' }).click();
-
-    await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-  });
-
   test('로드에 실패하면 다시 시도로 복구한다 (US-4-4)', async ({ page }) => {
     let callCount = 0;
 
@@ -277,5 +285,22 @@ test.describe('스토리 상세', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: '용의 계곡' }),
     ).toBeVisible();
+  });
+
+  test('없는 스토리에는 재시도 버튼을 표시하지 않는다', async ({ page }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: '{}',
+      });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(page.getByText('스토리를 찾을 수 없어요')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '다시 시도하기' }),
+    ).not.toBeVisible();
   });
 });

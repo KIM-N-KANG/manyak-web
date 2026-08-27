@@ -601,6 +601,12 @@ test.describe('블럭 입력 모드 (기본)', () => {
       page.getByPlaceholder('어떤 상황을 묘사할까요?'),
     ).toBeVisible();
     await expect(page.getByPlaceholder('어떤 대사를 건넬까요?')).toBeVisible();
+
+    const inputActions = page
+      .getByRole('button', { name: '상황 묘사 추가' })
+      .locator('..');
+
+    await expect(inputActions).toHaveCSS('padding-top', '0px');
   });
 
   test('입력 모드 메뉴에서 일반 입력을 선택하면 입력창이 전환된다 (US-6-16)', async ({
@@ -985,7 +991,16 @@ test.describe('응답 재생성', () => {
 
     await page.goto('/chats/c1');
 
+    const endingBadge = page.getByText('엔딩 · 새드엔딩');
+    const endingMessage = endingBadge.locator(
+      'xpath=ancestor::*[@data-slot="message-content"]',
+    );
+
     await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    await expect(endingBadge).toBeVisible();
+    await expect(endingMessage.locator(':scope > *').first()).toHaveText(
+      '엔딩 · 새드엔딩',
+    );
     await expect(page.getByRole('button', { name: '다시 생성' })).toBeHidden();
   });
 
