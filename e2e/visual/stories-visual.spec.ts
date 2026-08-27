@@ -53,18 +53,21 @@ const storyDetail = {
   genres: ['판타지', '모험'],
   turnCount: 1280,
   createdAt: '2026-06-01T00:00:00Z',
+  reachedEndings: ['용과 맺은 약속'],
   startSettings: [
     {
       id: 'ss1',
       name: '계곡 입구',
       prologue: '안개 낀 계곡 앞에 섰다',
       startSituation: '용의 흔적을 따라왔다',
+      endings: [{ name: '잃어버린 용과의 재회' }],
     },
     {
       id: 'ss2',
       name: '용의 둥지',
       prologue: '거대한 둥지 앞에 도착했다',
       startSituation: '용의 숨소리가 들려온다',
+      endings: [{ name: '새로운 수호자' }],
     },
   ],
 };
@@ -98,6 +101,15 @@ test.describe('스토리 비주얼', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+
+    const optionButtons = page.getByRole('button', {
+      name: '스토리 옵션 더보기',
+    });
+
+    await expect(optionButtons).toHaveCount(2);
+    await expect(optionButtons.first()).toBeVisible();
+    await expect(optionButtons.first()).toHaveCSS('width', '28px');
+    await expect(optionButtons.first()).toHaveCSS('height', '28px');
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-default.png');
   });
@@ -159,6 +171,9 @@ test.describe('스토리 비주얼', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: '용의 계곡' }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '스토리 옵션 더보기' }),
+    ).toHaveCount(0);
     await expect(page.getByText('용의 흔적을 따라왔다')).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-detail-default.png');
@@ -300,6 +315,9 @@ test.describe('스토리 다크 모드 비주얼', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '스토리 옵션 더보기' }),
+    ).toHaveCount(2);
     await waitForDarkTheme(page);
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-default-dark.png');

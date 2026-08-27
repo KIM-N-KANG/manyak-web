@@ -25,27 +25,15 @@ const story = (id: string, title: string) => ({
   createdAt: '2026-06-01T00:00:00Z',
 });
 
-// 목록 카드에는 옵션 메뉴가 없어 삭제는 상세 페이지를 경유한다.
-// 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
-const mockStoryDetailWithDelete = async (
+// 제작 카드의 옵션 메뉴에서 호출하는 삭제 API를 목킹한다.
+const mockStoryDelete = async (
   page: Page,
   id: string,
-  title: string,
   onDelete?: () => void,
 ) => {
   await page.route(`**/api/v1/stories/${id}`, async (route) => {
-    if (route.request().method() === 'DELETE') {
-      onDelete?.();
-      await route.fulfill({ status: 204, body: '' });
-
-      return;
-    }
-
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ ...story(id, title), startSettings: [] }),
-    });
+    onDelete?.();
+    await route.fulfill({ status: 204, body: '' });
   });
 };
 
@@ -140,6 +128,9 @@ test.describe('홈·제작 스토리 목록', () => {
       '0px',
     );
     await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
+    await expect(
+      page.getByRole('button', { name: '스토리 옵션 더보기' }),
+    ).toHaveCount(0);
 
     await page
       .getByRole('navigation', { name: '하단 네비게이션' })
@@ -165,6 +156,29 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toBeVisible();
+
+    const storyOptionsButton = page.getByRole('button', {
+      name: '스토리 옵션 더보기',
+    });
+    const turnCountBadge = page
+      .getByText('누적 턴 수', { exact: true })
+      .locator('xpath=../..');
+    const turnCountBackgroundColor = await turnCountBadge.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    );
+    const turnCountBackdropFilter = await turnCountBadge.evaluate(
+      (element) => getComputedStyle(element).backdropFilter,
+    );
+
+    await expect(storyOptionsButton).toBeVisible();
+    await expect(storyOptionsButton).toHaveCSS(
+      'background-color',
+      turnCountBackgroundColor,
+    );
+    await expect(storyOptionsButton).toHaveCSS(
+      'backdrop-filter',
+      turnCountBackdropFilter,
+    );
   });
 
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
@@ -404,11 +418,11 @@ test.describe('홈·제작 스토리 목록', () => {
         body: JSON.stringify([story('s1', '용의 계곡')]),
       });
     });
-    await mockStoryDetailWithDelete(page, 's1', '용의 계곡');
+    await mockStoryDelete(page, 's1');
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
 
     const dialog = page.getByRole('alertdialog');
@@ -417,6 +431,10 @@ test.describe('홈·제작 스토리 목록', () => {
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(
+      page.getByText('용의 계곡', { exact: true }),
+    ).not.toBeVisible();
   });
 
   test('로그인 상태에서는 서버의 내 스토리 목록을 보여준다', async ({
@@ -459,12 +477,11 @@ test.describe('홈·제작 스토리 목록', () => {
         body: JSON.stringify(deleted ? [] : [story('s1', '회원의 서재')]),
       });
     });
-    await mockStoryDetailWithDelete(page, 's1', '회원의 서재', () => {
+    await mockStoryDelete(page, 's1', () => {
       deleted = true;
     });
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('link', { name: '회원의 서재 상세 보기' }).click();
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
     await page

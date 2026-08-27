@@ -24,14 +24,12 @@ type StoryOptionsMenuProps = {
   storyId: string;
   size?: ButtonSize;
   triggerClassName?: string;
-  onDeleteSuccess?: () => void;
 };
 
 export function StoryOptionsMenu({
   storyId,
   size = 'icon-xs',
   triggerClassName,
-  onDeleteSuccess,
 }: StoryOptionsMenuProps) {
   const { status } = useSession();
   const queryClient = useQueryClient();
@@ -50,7 +48,6 @@ export function StoryOptionsMenu({
     deleteResource: () => mutateAsync({ storyId }),
     successMessage: TOAST_MESSAGE.STORY_DELETED,
     failureMessage: TOAST_MESSAGE.STORY_DELETE_FAILED,
-    onDeleteSuccess,
   });
 
   return (

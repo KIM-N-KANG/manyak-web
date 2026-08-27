@@ -197,3 +197,18 @@
 @utility scrollbar-track-transparent {
   --scrollbar-track: transparent;
 }
+
+@keyframes story-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.story-detail-skeleton [data-slot='skeleton'] {
+  animation: story-skeleton-pulse 1.4s ease-in-out infinite;
+}

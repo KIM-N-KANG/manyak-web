@@ -12,6 +12,7 @@ type StoryInfo = {
   oneLineIntro?: string | null;
   description?: string | null;
   genres?: string[];
+  reachedEndings?: string[];
   startSettings?: StoryStartSettingResponse[];
   createdAt?: string;
 };
@@ -30,18 +31,24 @@ export function StoryInfoSection({
   onStartSettingValueChange,
 }: StoryInfoSectionProps) {
   const genres = story.genres ?? [];
+  const reachedEndings = story.reachedEndings ?? [];
   const startSettings = story.startSettings ?? [];
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
           <h1 ref={titleRef} className="text-2xl font-bold">
             {story.title}
           </h1>
-          <p>{story.oneLineIntro}</p>
+          {story.oneLineIntro ? (
+            <p className="text-foreground-secondary">{story.oneLineIntro}</p>
+          ) : null}
         </div>
-        <StoryDetailTags genres={genres} />
+        {genres.length > 0 ? <StoryDetailTags genres={genres} /> : null}
+        {reachedEndings.length > 0 ? (
+          <StoryDetailTags genres={reachedEndings} />
+        ) : null}
       </div>
 
       {story.description && (
@@ -60,13 +67,9 @@ export function StoryInfoSection({
       )}
 
       {story.createdAt && (
-        <div className="flex items-center gap-3 rounded-md bg-muted px-3.5 py-2.5 text-sm">
-          <p className="flex items-center gap-1.5">
-            <span className="text-foreground-secondary">생성일</span>
-            <time dateTime={story.createdAt} className="font-semibold">
-              {formatDate(story.createdAt)}
-            </time>
-          </p>
+        <div className="-mx-4 flex items-center justify-between bg-muted px-4 py-3 text-sm text-foreground-secondary">
+          <span className="font-semibold">생성일</span>
+          <time dateTime={story.createdAt}>{formatDate(story.createdAt)}</time>
         </div>
       )}
     </div>
