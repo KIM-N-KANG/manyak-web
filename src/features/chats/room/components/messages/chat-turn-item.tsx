@@ -37,7 +37,9 @@ export function ChatTurnItem({
         <UserMessageBubble>{turn.userInput}</UserMessageBubble>
       ) : null}
       {turn.aiOutput ? (
-        <AiMessageBubble>{turn.aiOutput}</AiMessageBubble>
+        <AiMessageBubble endingName={turn.reachedEnding}>
+          {turn.aiOutput}
+        </AiMessageBubble>
       ) : null}
       {isLast && canRegenerate(turn) ? (
         <RegenerateButton onClick={() => onRegenerate(turn)} />

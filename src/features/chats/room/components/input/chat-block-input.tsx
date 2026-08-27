@@ -141,7 +141,7 @@ export function ChatBlockInput({
           ))}
         </div>
       )}
-      <div className="flex items-center gap-1 p-4 pt-2">
+      <div className="flex items-center gap-1 p-4 pt-0">
         <Button
           type="button"
           aria-label="상황 묘사 추가"
