@@ -24,7 +24,7 @@ export function ChatCharacterImage({
   return (
     <div
       data-slot="chat-character-image"
-      className="relative aspect-4/3 w-full overflow-hidden border-y border-border bg-muted">
+      className="relative box-content aspect-4/3 w-full overflow-hidden border-y border-border bg-muted">
       <Image
         src={imageUrl}
         alt={`${name} 인물 이미지`}
