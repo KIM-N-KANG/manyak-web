@@ -68,6 +68,19 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.manyak.app',
         pathname: '/thumbnails/**',
       },
+      {
+        // 채팅 인물 이미지(KNK-1013). 저장 마커와 SSE 이벤트 모두
+        // 백엔드가 검증·저장한 생성 이미지 URL만 전달한다.
+        protocol: 'https',
+        hostname: 'cdn.manyak.app',
+        pathname: '/characters/generated/**',
+      },
+      {
+        // 개발 환경은 별도 CloudFront 도메인에서 같은 생성 이미지 경로를 서빙한다.
+        protocol: 'https',
+        hostname: 'dev-cdn.manyak.app',
+        pathname: '/characters/generated/**',
+      },
     ],
   },
 };

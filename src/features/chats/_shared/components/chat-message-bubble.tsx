@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Message, MessageContent } from '@/components/ui/message';
 
@@ -7,7 +9,8 @@ type ChatMessageBubbleProps = {
   children: string;
 };
 
-type AiMessageBubbleProps = ChatMessageBubbleProps & {
+type AiMessageBubbleProps = {
+  children: ReactNode;
   endingName?: string | null;
 };
 
@@ -27,16 +30,18 @@ export function AiMessageBubble({
 }: AiMessageBubbleProps) {
   return (
     <Message>
-      <MessageContent className="p-4">
+      <MessageContent className="gap-2.5 py-4">
         {endingName ? (
-          <Badge
-            variant="secondary"
-            aria-live="polite"
-            className="h-auto max-w-full bg-primary/10 px-2.5 py-1 text-sm whitespace-normal text-primary">
-            엔딩 · {endingName}
-          </Badge>
+          <div className="px-4">
+            <Badge
+              variant="secondary"
+              aria-live="polite"
+              className="h-auto max-w-full bg-primary/10 px-2.5 py-1 text-sm whitespace-normal text-primary">
+              엔딩 · {endingName}
+            </Badge>
+          </div>
         ) : null}
-        <ChatMessageContent>{children}</ChatMessageContent>
+        {children}
       </MessageContent>
     </Message>
   );

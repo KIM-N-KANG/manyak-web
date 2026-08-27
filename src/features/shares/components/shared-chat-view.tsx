@@ -10,6 +10,8 @@ import {
   AiMessageBubble,
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
+import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
+import { stripChatCharacterImageMarkers } from '@/features/chats/_shared/utils/chat-message-segments';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { track, useTrackOnView } from '@/observability/analytics';
 
@@ -59,14 +61,22 @@ export function SharedChatView({
         <p className="p-4 text-center text-sm text-foreground-secondary">
           친구가 공유한 채팅을 보고 있어요
         </p>
-        {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
+        {prologue ? (
+          <AiMessageBubble>
+            <ChatMessageContent className="px-4">{prologue}</ChatMessageContent>
+          </AiMessageBubble>
+        ) : null}
         {turns.map((turn, index) => (
           <div key={turn.createdAt ?? index}>
             {turn.userInput ? (
               <UserMessageBubble>{turn.userInput}</UserMessageBubble>
             ) : null}
             {turn.aiOutput ? (
-              <AiMessageBubble>{turn.aiOutput}</AiMessageBubble>
+              <AiMessageBubble>
+                <ChatMessageContent className="px-4">
+                  {stripChatCharacterImageMarkers(turn.aiOutput)}
+                </ChatMessageContent>
+              </AiMessageBubble>
             ) : null}
           </div>
         ))}

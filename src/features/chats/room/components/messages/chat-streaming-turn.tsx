@@ -1,5 +1,6 @@
 import { AnimatePresence, m } from 'motion/react';
 
+import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
 import {
   AiMessageBubble,
   UserMessageBubble,
@@ -17,13 +18,18 @@ export function ChatStreamingTurn({ turn }: ChatStreamingTurnProps) {
     <div>
       <UserMessageBubble>{turn.userInput}</UserMessageBubble>
       <AnimatePresence mode="wait" initial={false}>
-        {turn.aiOutput ? (
+        {turn.segments.length > 0 ? (
           <m.div
             key="output"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}>
-            <AiMessageBubble>{turn.aiOutput}</AiMessageBubble>
+            <AiMessageBubble>
+              <ChatAiMessageContent
+                segments={turn.segments}
+                imageLoading="eager"
+              />
+            </AiMessageBubble>
           </m.div>
         ) : (
           <m.div

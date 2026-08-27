@@ -10,6 +10,10 @@ import type {
 } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { isPaymentRequiredError } from '@/features/auth/_shared/utils/guest-limit-error';
+import {
+  appendChatCharacterImageSegment,
+  appendChatTextSegment,
+} from '@/features/chats/_shared/utils/chat-message-segments';
 import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
@@ -55,7 +59,7 @@ export function useChatStream(
     userSource?: ContinueChatRequestUserSource,
     selection?: ChatChoiceSelection,
   ) => {
-    setStreamingTurn({ userInput, aiOutput: '', baseTurnCount: turnCount });
+    setStreamingTurn({ userInput, segments: [], baseTurnCount: turnCount });
 
     const controller = new AbortController();
 
@@ -73,7 +77,24 @@ export function useChatStream(
       for await (const event of parseSseStream(stream)) {
         if (event.type === 'token') {
           setStreamingTurn((prev) =>
-            prev ? { ...prev, aiOutput: prev.aiOutput + event.content } : prev,
+            prev
+              ? {
+                  ...prev,
+                  segments: appendChatTextSegment(prev.segments, event.content),
+                }
+              : prev,
+          );
+        } else if (event.type === 'character-image') {
+          setStreamingTurn((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  segments: appendChatCharacterImageSegment(prev.segments, {
+                    name: event.name,
+                    imageUrl: event.imageUrl,
+                  }),
+                }
+              : prev,
           );
         } else if (event.type === 'completed') {
           terminalReceived = true;
@@ -148,7 +169,7 @@ export function useChatStream(
     }
 
     setRegeneratingTurnId(turn.id);
-    setStreamingTurn({ userInput: turn.userInput ?? '', aiOutput: '' });
+    setStreamingTurn({ userInput: turn.userInput ?? '', segments: [] });
 
     const controller = new AbortController();
 
@@ -166,7 +187,24 @@ export function useChatStream(
       for await (const event of parseSseStream(stream)) {
         if (event.type === 'token') {
           setStreamingTurn((prev) =>
-            prev ? { ...prev, aiOutput: prev.aiOutput + event.content } : prev,
+            prev
+              ? {
+                  ...prev,
+                  segments: appendChatTextSegment(prev.segments, event.content),
+                }
+              : prev,
+          );
+        } else if (event.type === 'character-image') {
+          setStreamingTurn((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  segments: appendChatCharacterImageSegment(prev.segments, {
+                    name: event.name,
+                    imageUrl: event.imageUrl,
+                  }),
+                }
+              : prev,
           );
         } else if (event.type === 'completed') {
           terminalReceived = true;
