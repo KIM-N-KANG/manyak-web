@@ -88,6 +88,7 @@ export function AdditionalInfoList({
             size="icon-sm"
             variant="ghost"
             aria-label={`추가 정보 ${index + 1} 삭제`}
+            tabIndex={-1}
             disabled={disabled}
             onClick={() => onRemoveAdditionalInfo(additionalInfo.id)}
             className="shrink-0 text-foreground-secondary">

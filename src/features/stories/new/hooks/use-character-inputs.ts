@@ -94,7 +94,8 @@ export function useCharacterInputs() {
   const [supportingCharacters, setSupportingCharacters] = useState<
     CharacterInput[]
   >(createInitialSupportingCharacters);
-  const { registerInput, focusInput } = useInputRefRegistry<HTMLInputElement>();
+  const { registerInput, scrollInputIntoView } =
+    useInputRefRegistry<HTMLInputElement>();
 
   const getCharacters = (category: CharacterTagCategory) =>
     category === 'PROTAGONIST' ? [protagonist] : supportingCharacters;
@@ -213,7 +214,6 @@ export function useCharacterInputs() {
 
   // 인원 상한은 갱신 함수 안에서 최신 목록으로 판정한다. 렌더 시점의 길이로
   // 막으면 상태가 반영되기 전에 연달아 눌린 클릭이 모두 통과한다.
-  // 상한에 걸려 추가되지 않으면 등록된 인풋이 없어 포커스 이동도 그냥 지나간다.
   const addSupportingCharacter = () => {
     const character = createEmptyCharacter();
 
@@ -222,7 +222,7 @@ export function useCharacterInputs() {
         ? previous
         : [...previous, character],
     );
-    focusInput(character.id, { scrollIntoView: true });
+    scrollInputIntoView(character.id);
   };
 
   const removeSupportingCharacter = (characterId: string) => {
