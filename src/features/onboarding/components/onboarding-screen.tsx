@@ -145,7 +145,7 @@ export function OnboardingScreen() {
       <m.nav
         variants={rise}
         custom={ENTRANCE_DELAY.buttons}
-        className="flex w-full shrink-0 items-center gap-2 bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] [&>button]:flex-1">
+        className="flex w-full shrink-0 items-center gap-2 bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [&>button]:flex-1">
         <Button
           type="button"
           size="lg"

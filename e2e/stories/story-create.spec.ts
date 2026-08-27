@@ -3,7 +3,10 @@ import { type Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
-import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
+import {
+  PROTAGONIST_CATEGORY,
+  SUPPORTING_CHARACTER_CATEGORY,
+} from '@/features/stories/new/constants';
 
 import { expect, skipChatTour, test } from '../fixtures/test';
 
@@ -66,10 +69,21 @@ async function reachAdditionalInfo(page: Page): Promise<void> {
   await page.getByRole('button', { name: '다음' }).click();
   await page.getByRole('button', { name: '스토리라인 만들기' }).click();
   await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+  await expect(page.getByRole('tabpanel')).toHaveCSS('padding-bottom', '32px');
   await page.getByRole('button', { name: '선택하기' }).click();
   await expect(
     page.getByRole('button', { name: '스토리 완성하기' }),
   ).toBeVisible();
+
+  const recommendedInfoSection = page.locator(
+    'section[aria-labelledby="recommended-info-label"]',
+  );
+  const additionalInfoSection = page.locator(
+    'section[aria-labelledby="additional-info-label"]',
+  );
+
+  await expect(recommendedInfoSection).toHaveCSS('margin-bottom', '8px');
+  await expect(additionalInfoSection).toHaveCSS('padding-bottom', '32px');
 }
 
 test.describe('스토리 생성', () => {
@@ -127,8 +141,10 @@ test.describe('스토리 생성', () => {
     const nextButton = page.getByRole('button', { name: '다음' });
     const validationError = page.getByText('키워드를 하나 이상 선택해주세요');
     const footer = page.getByRole('navigation').filter({ has: nextButton });
+    const activePanel = page.getByRole('tabpanel');
 
     await expect(nextButton).toBeEnabled();
+    await expect(activePanel).toHaveCSS('padding-bottom', '32px');
     await nextButton.click();
     await expect(
       footer.getByText('키워드를 하나 이상 선택해주세요'),
@@ -144,10 +160,20 @@ test.describe('스토리 생성', () => {
     await expect(
       page.getByRole('tab', { name: PROTAGONIST_CATEGORY.label }),
     ).toHaveAttribute('aria-selected', 'true');
+    await expect(activePanel).toHaveCSS('padding-top', '16px');
+    await expect(activePanel).toHaveCSS('padding-bottom', '32px');
 
     await expect(nextButton).toBeEnabled();
     await nextButton.click();
     await expect(validationError).toBeVisible();
+
+    await page.getByRole('button', { name: '용감한' }).click();
+    await expect(validationError).toBeHidden();
+    await nextButton.click();
+    await expect(
+      page.getByRole('tab', { name: SUPPORTING_CHARACTER_CATEGORY.label }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(activePanel).toHaveCSS('padding-bottom', '32px');
   });
 
   test('주인공과 주변 인물의 이름이 겹치면 생성 요청을 막는다 (스펙 §4-3-2)', async ({

@@ -19,15 +19,14 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
 
   const bottomNav = page.getByRole('navigation', { name: '하단 네비게이션' });
   const homeLink = bottomNav.getByRole('link', { name: '홈' });
+  const homeHeading = page.getByRole('heading', { level: 1, name: '홈' });
   const logo = page.getByRole('banner').getByRole('img', { name: '마냑' });
   const loginButton = page
     .getByRole('banner')
     .getByRole('link', { name: '로그인' });
 
   // 시작: 홈 페이지
-  await expect(
-    page.getByRole('heading', { level: 1, name: '홈' }),
-  ).toBeVisible();
+  await expect(homeHeading).toHaveClass(/sr-only/);
   await expect(logo).toBeVisible();
   await expect(loginButton).toBeVisible();
   await expect(bottomNav.getByRole('link')).toHaveCount(4);
@@ -109,9 +108,7 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
   // 로컬 개발 모드의 Next.js Dev Tools 버튼이 모바일에서 홈 탭을 덮을 수 있어 키보드로 활성화한다.
   await homeLink.press('Enter');
   await expect(page).toHaveURL(/\/$/);
-  await expect(
-    page.getByRole('heading', { level: 1, name: '홈' }),
-  ).toBeVisible();
+  await expect(homeHeading).toHaveClass(/sr-only/);
   await expect(logo).toBeVisible();
   await expect(loginButton).toBeVisible();
 });

@@ -23,6 +23,15 @@ test.describe('피드백 제출', () => {
     await skipOnboarding(page);
     await page.goto('/my/feedback');
 
+    const feedbackActions = page
+      .getByRole('button', { name: '피드백 보내기' })
+      .locator('..');
+    const feedbackFields = page.locator('[data-slot="field-group"]');
+
+    await expect(feedbackActions).toHaveCSS('padding-top', '0px');
+    await expect(feedbackFields).toHaveCSS('row-gap', '24px');
+    await expect(feedbackFields).toHaveCSS('padding-bottom', '32px');
+
     await page
       .getByRole('textbox', { name: '피드백 내용' })
       .fill('버튼이 너무 작아요');

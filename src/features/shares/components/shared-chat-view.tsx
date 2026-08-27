@@ -72,7 +72,7 @@ export function SharedChatView({
         ))}
       </div>
 
-      <footer className="flex shrink-0 flex-col bg-background px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <footer className="flex shrink-0 flex-col bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <Button
           nativeButton={false}
           size="lg"

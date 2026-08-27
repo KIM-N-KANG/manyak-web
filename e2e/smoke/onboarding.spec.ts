@@ -24,6 +24,12 @@ test.describe('온보딩', () => {
     await expect(
       page.getByRole('button', { name: '나중에 하기' }),
     ).toBeVisible();
+
+    const onboardingActions = page
+      .getByRole('button', { name: '첫 장면 만들기' })
+      .locator('xpath=ancestor::nav');
+
+    await expect(onboardingActions).toHaveCSS('padding-top', '0px');
   });
 
   test('온보딩 리다이렉트는 원본 쿼리를 유지한다', async ({ page }) => {
