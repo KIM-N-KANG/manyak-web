@@ -37,7 +37,7 @@ describe('parseSseStream', () => {
       streamFrom([
         'event: started\ndata: {}\n\n',
         'event: token\ndata: {"text":"안녕"}\n\n',
-        'event: character_image\ndata: {"name":"세린","imageUrl":"https://cdn.manyak.app/characters/generated/serin.webp"}\n\n',
+        'event: character_image\ndata: {"name":"세린","imageName":"세린_기본","imageUrl":"https://cdn.manyak.app/characters/generated/serin.webp"}\n\n',
         'event: token\ndata: {"text":"하세요"}\n\n',
         'event: completed\ndata: {"aiOutput":"안녕하세요"}\n\n',
       ]),

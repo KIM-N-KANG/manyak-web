@@ -57,7 +57,7 @@ test.describe('공유된 채팅 열람', () => {
     page,
   }) => {
     const imageOutput =
-      `*문이 열린다.*\n[[세린:${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
+      `*문이 열린다.*\n[[${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
 
     await mockChatShareView(page, {
       ...SHARE_BODY,
@@ -70,7 +70,9 @@ test.describe('공유된 채팅 열람', () => {
 
     await expect(page.getByText('문이 열린다.')).toBeVisible();
     await expect(page.getByText('세린: 기다렸어?')).toBeVisible();
-    await expect(page.locator('body')).not.toContainText('[[세린:');
+    await expect(page.locator('body')).not.toContainText(
+      `[[${CHARACTER_IMAGE_URL}]]`,
+    );
     await expect(
       page.getByRole('img', { name: '세린 인물 이미지' }),
     ).toBeVisible();
@@ -80,7 +82,7 @@ test.describe('공유된 채팅 열람', () => {
     page,
   }) => {
     const externalMarker =
-      '[[세린:https://example.com/serin.webp]]\n\n세린: 기다렸어?';
+      '[[https://example.com/serin.webp]]\n\n세린: 기다렸어?';
 
     await mockChatShareView(page, {
       ...SHARE_BODY,
@@ -89,7 +91,7 @@ test.describe('공유된 채팅 열람', () => {
     await page.goto('/share/share-1');
 
     await expect(page.locator('body')).toContainText(
-      '[[세린:https://example.com/serin.webp]]',
+      '[[https://example.com/serin.webp]]',
     );
     await expect(
       page.getByRole('img', { name: '세린 인물 이미지' }),

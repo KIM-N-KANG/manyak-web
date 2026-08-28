@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import {
   CHARACTER_FEATURE_RANDOM_DESCRIPTION,
   CHARACTER_NAME_DUPLICATE_ERROR,
-  CHARACTER_NAME_RESERVED_CHARACTER_ERROR,
   SUPPORTING_CHARACTER_MAX_COUNT,
   SUPPORTING_CHARACTER_NAME_PLACEHOLDERS,
 } from '../../constants';
@@ -28,7 +27,6 @@ type SupportingCharacterListProps = {
   disabled: boolean;
   isFeatureMaxReached: (characterId: string) => boolean;
   isDuplicateName: (characterId: string) => boolean;
-  hasReservedCharacterName: (characterId: string) => boolean;
   onRegisterNameInput: (id: string, element: HTMLInputElement | null) => void;
   onChangeName: (characterId: string, name: string) => void;
   onChangeGender: (characterId: string, gender: CharacterGender | null) => void;
@@ -58,7 +56,6 @@ export function SupportingCharacterList({
   disabled,
   isFeatureMaxReached,
   isDuplicateName,
-  hasReservedCharacterName,
   onRegisterNameInput,
   onChangeName,
   onChangeGender,
@@ -120,11 +117,9 @@ export function SupportingCharacterList({
                 hasTagsError={hasTagsError}
                 disabled={disabled}
                 nameErrorMessage={
-                  hasReservedCharacterName(character.id)
-                    ? CHARACTER_NAME_RESERVED_CHARACTER_ERROR
-                    : isDuplicateName(character.id)
-                      ? CHARACTER_NAME_DUPLICATE_ERROR
-                      : undefined
+                  isDuplicateName(character.id)
+                    ? CHARACTER_NAME_DUPLICATE_ERROR
+                    : undefined
                 }
                 onRegisterNameInput={onRegisterNameInput}
                 onChangeName={(name) => onChangeName(character.id, name)}

@@ -7,9 +7,9 @@ const CHARACTER_IMAGE_HOSTNAMES = new Set([
   'dev-cdn.manyak.app',
 ]);
 const CHARACTER_IMAGE_PATH_PREFIX = '/characters/generated/';
-const CHARACTER_IMAGE_MARKER_LINE = /^\[\[(.+):(https:\/\/[^\r\n]+)\]\]$/;
+const CHARACTER_IMAGE_MARKER_LINE = /^\[\[(https:\/\/[^\r\n]+)\]\]$/;
 const LEADING_HORIZONTAL_WHITESPACE = /^[ \t]*/;
-const SPEAKER_LABEL_SEPARATOR = /^[ \t]*:/;
+const SPEAKER_LABEL = /^(.+?)[ \t]*:(?=[ \t]|$)/;
 
 type CharacterImageMarkerMatch = {
   start: number;
@@ -43,34 +43,30 @@ export function isAllowedChatCharacterImageUrl(imageUrl: string): boolean {
 }
 
 /**
- * 저장 마커 뒤의 대사 줄이 같은 인물 이름으로 시작하는지 확인한다.
+ * 저장 마커 뒤의 대사 줄에서 인물 이름을 추출한다.
  *
  * @param content 저장된 AI 본문
  * @param speakerLineStart 대사 줄이 시작하는 문자열 인덱스
- * @param name 마커가 가리키는 인물 이름
- * @returns 대사 줄의 인물 이름이 일치하면 true, 아니면 false
+ * @returns `인물명:` 라벨의 이름. 라벨이 없으면 null
  */
-function hasMatchingSpeakerLabel(
+function extractSpeakerName(
   content: string,
   speakerLineStart: number,
-  name: string,
-): boolean {
+): string | null {
   const speakerLineEnd = content.indexOf('\n', speakerLineStart);
   const speakerLine = content.slice(
     speakerLineStart,
     speakerLineEnd === -1 ? content.length : speakerLineEnd,
   );
   const label = speakerLine.replace(LEADING_HORIZONTAL_WHITESPACE, '');
+  const name = SPEAKER_LABEL.exec(label)?.[1].trim();
 
-  return (
-    label.startsWith(name) &&
-    SPEAKER_LABEL_SEPARATOR.test(label.slice(name.length))
-  );
+  return name || null;
 }
 
 /**
  * 저장 본문에서 웹이 신뢰할 수 있는 인물 이미지 마커 위치를 찾는다.
- * 마커 전용 줄·허용 CDN·바로 뒤의 동일 인물 대사를 모두 만족해야 한다.
+ * 마커 전용 줄·허용 CDN·바로 뒤의 인물 대사를 모두 만족해야 한다.
  *
  * @param content 저장된 AI 본문
  * @returns 이미지로 치환할 수 있는 마커 위치와 인물 정보 목록
@@ -88,17 +84,15 @@ function findCharacterImageMarkerMatches(
     const marker = CHARACTER_IMAGE_MARKER_LINE.exec(line);
 
     if (marker) {
-      const name = marker[1];
-      const imageUrl = marker[2];
+      const imageUrl = marker[1];
       const speakerLineStart = markerLineEnd + 2;
+      const name = extractSpeakerName(content, speakerLineStart);
 
       if (
         name &&
-        name === name.trim() &&
         imageUrl &&
         content.startsWith('\n\n', markerLineEnd) &&
-        isAllowedChatCharacterImageUrl(imageUrl) &&
-        hasMatchingSpeakerLabel(content, speakerLineStart, name)
+        isAllowedChatCharacterImageUrl(imageUrl)
       ) {
         matches.push({
           start: lineStart,

@@ -4,7 +4,6 @@ import { APP_PATH } from '@/constants/app-path';
 import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
-  CHARACTER_NAME_RESERVED_CHARACTER_ERROR,
   PROTAGONIST_CATEGORY,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
@@ -237,9 +236,7 @@ test.describe('스토리 생성', () => {
     expect(storylineRequestCount).toBe(1);
   });
 
-  test('인물 이름에 저장 마커 예약 문자가 있으면 생성 요청을 막는다', async ({
-    page,
-  }) => {
+  test('인물 이름에 닫는 대괄호를 허용한다', async ({ page }) => {
     await page.route(TAGS, async (route) => {
       await route.fulfill({
         status: 200,
@@ -268,32 +265,11 @@ test.describe('스토리 생성', () => {
     const supportingName = page.getByRole('textbox', {
       name: '주변 인물 1 이름',
     });
-    const createStorylineButton = page.getByRole('button', {
-      name: '스토리라인 만들기',
-    });
-    const footer = page
-      .getByRole('navigation')
-      .filter({ has: createStorylineButton });
 
     await supportingName.fill('세]린');
-    await expect(supportingName).toHaveAttribute('aria-invalid', 'true');
-    await expect(
-      page.getByText(CHARACTER_NAME_RESERVED_CHARACTER_ERROR).first(),
-    ).toBeVisible();
-
-    await createStorylineButton.click();
-    await expect(
-      footer.getByText(CHARACTER_NAME_RESERVED_CHARACTER_ERROR),
-    ).toBeVisible();
-    expect(storylineRequestCount).toBe(0);
-
-    await supportingName.fill('세린');
     await expect(supportingName).not.toHaveAttribute('aria-invalid', 'true');
-    await expect(
-      footer.getByText(CHARACTER_NAME_RESERVED_CHARACTER_ERROR),
-    ).toBeHidden();
+    await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
-    await createStorylineButton.click();
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
     expect(storylineRequestCount).toBe(1);
   });

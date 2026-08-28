@@ -11,10 +11,7 @@ import type {
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 
 import type { CharacterTagCategory, TagCategory } from '../types';
-import {
-  getDuplicateNameCharacterIds,
-  hasReservedCharacterNameCharacter,
-} from '../utils/character-name';
+import { getDuplicateNameCharacterIds } from '../utils/character-name';
 import { toCharacterRequest } from '../utils/character-request';
 import { hasKeywordDraftInput } from '../utils/keyword-draft';
 import { getTagsByCategory } from '../utils/tag-categories';
@@ -72,13 +69,7 @@ export function useStoryTagStep({
     ...characterInputs.supportingCharacters,
   ];
   const duplicateNameCharacterIds = getDuplicateNameCharacterIds(characters);
-  const reservedCharacterNameIds = new Set(
-    characters
-      .filter((character) => hasReservedCharacterNameCharacter(character.name))
-      .map((character) => character.id),
-  );
   const hasDuplicateName = duplicateNameCharacterIds.size > 0;
-  const hasReservedCharacterName = reservedCharacterNameIds.size > 0;
 
   const isCategoryComplete = (category: TagCategory) => {
     if (category === 'GENRE') {
@@ -174,8 +165,7 @@ export function useStoryTagStep({
   const canGenerateStorylines =
     genreSelection.hasGenreTag &&
     characterInputs.hasProtagonistFeature &&
-    !hasDuplicateName &&
-    !hasReservedCharacterName;
+    !hasDuplicateName;
 
   // requestId는 요청(mutate) 시점마다 새로 부여해야 하므로(백그라운드 복구 멱등 키)
   // 여기서는 붙이지 않고 퍼널 훅이 채운다.
@@ -191,7 +181,7 @@ export function useStoryTagStep({
       characterInputs.supportingCharacters.map(toCharacterRequest),
   });
 
-  // 이름 중복이나 저장 마커 예약 문자가 있으면 요청 전에 막는다.
+  // 이름이 중복되면 요청 전에 막는다.
   // 눌러 본 뒤에만 푸터 오류를 띄우고, 이름을 고치면 저절로 사라진다.
   const handleGenerateStorylines = () => {
     setHasAttemptedGenerate(true);
@@ -245,12 +235,8 @@ export function useStoryTagStep({
     hasCategoryValidationError:
       validationErrorCategory === navigation.activeCategory,
     hasDuplicateNameError: hasAttemptedGenerate && hasDuplicateName,
-    hasReservedCharacterNameError:
-      hasAttemptedGenerate && hasReservedCharacterName,
     isDuplicateName: (characterId: string) =>
       duplicateNameCharacterIds.has(characterId),
-    hasReservedCharacterName: (characterId: string) =>
-      reservedCharacterNameIds.has(characterId),
     isCategoryUnlocked: navigation.isCategoryUnlocked,
     isFirstCategory: navigation.isFirstCategory,
     isLastCategory: navigation.isLastCategory,

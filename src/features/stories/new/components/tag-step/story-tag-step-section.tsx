@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
 import {
   CHARACTER_NAME_DUPLICATE_FOOTER_ERROR,
-  CHARACTER_NAME_RESERVED_CHARACTER_ERROR,
   GENRE_CATEGORY,
   GENRE_SECTION_LABEL,
   PROTAGONIST_CATEGORY,
@@ -54,10 +53,8 @@ export function StoryTagStepSection({
     tagsByCategory,
     hasCategoryValidationError,
     hasDuplicateNameError,
-    hasReservedCharacterNameError,
     isGeneratingStorylines,
     isDuplicateName,
-    hasReservedCharacterName,
     isCategoryUnlocked,
     isFirstCategory,
     isLastCategory,
@@ -86,10 +83,6 @@ export function StoryTagStepSection({
         hasCategoryValidationError ? (
           <StoryCreateErrorMessage>
             키워드를 하나 이상 선택해주세요
-          </StoryCreateErrorMessage>
-        ) : hasReservedCharacterNameError ? (
-          <StoryCreateErrorMessage>
-            {CHARACTER_NAME_RESERVED_CHARACTER_ERROR}
           </StoryCreateErrorMessage>
         ) : hasDuplicateNameError ? (
           <StoryCreateErrorMessage>
@@ -203,11 +196,6 @@ export function StoryTagStepSection({
             isLoadingTags={showTagsSkeleton}
             hasTagsError={simpleStoryTags.isError}
             disabled={isGeneratingStorylines}
-            nameErrorMessage={
-              hasReservedCharacterName(protagonist.id)
-                ? CHARACTER_NAME_RESERVED_CHARACTER_ERROR
-                : undefined
-            }
             onChangeName={(name) =>
               changeCharacterName('PROTAGONIST', protagonist.id, name)
             }
@@ -245,7 +233,6 @@ export function StoryTagStepSection({
               isFeatureMaxReached('SUPPORTING_CHARACTER', characterId)
             }
             isDuplicateName={isDuplicateName}
-            hasReservedCharacterName={hasReservedCharacterName}
             onRegisterNameInput={registerCharacterNameInput}
             onChangeName={(characterId, name) =>
               changeCharacterName('SUPPORTING_CHARACTER', characterId, name)

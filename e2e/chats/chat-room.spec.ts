@@ -298,7 +298,7 @@ test.describe('채팅 스트리밍', () => {
     page,
   }) => {
     const confirmedOutput =
-      `*문이 열린다.*\n[[세린:${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
+      `*문이 열린다.*\n[[${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
     const completedTurn = {
       id: 1,
       userInput: '문 안으로 들어간다',
@@ -442,7 +442,9 @@ test.describe('채팅 스트리밍', () => {
     );
     await expect.poll(() => detailCallCount).toBeGreaterThanOrEqual(2);
     await expect(image).toBeVisible();
-    await expect(page.locator('body')).not.toContainText('[[세린:');
+    await expect(page.locator('body')).not.toContainText(
+      `[[${CHARACTER_IMAGE_URL}]]`,
+    );
   });
 
   test('추천 입력의 수정 버튼을 누르면 입력창에 채워진다 (US-6-4)', async ({
