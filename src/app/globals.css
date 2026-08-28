@@ -63,6 +63,7 @@
 .font-maruburi,
 .font-serif {
   letter-spacing: -0.02em;
+  line-height: 1.75;
 }
 
 /* 라이트 테마 변수 */

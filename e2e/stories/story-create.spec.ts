@@ -68,7 +68,14 @@ async function reachAdditionalInfo(page: Page): Promise<void> {
   await page.getByRole('button', { name: '용감한' }).click();
   await page.getByRole('button', { name: '다음' }).click();
   await page.getByRole('button', { name: '스토리라인 만들기' }).click();
-  await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+
+  const storyline = page.getByText('첫 번째 이야기 흐름입니다.');
+
+  await expect(storyline).toBeVisible();
+  await expect(storyline.locator('xpath=ancestor::p')).toHaveCSS(
+    'line-height',
+    '28px',
+  );
   await expect(page.getByRole('tabpanel')).toHaveCSS('padding-bottom', '32px');
   await page.getByRole('button', { name: '선택하기' }).click();
   await expect(
@@ -81,9 +88,13 @@ async function reachAdditionalInfo(page: Page): Promise<void> {
   const additionalInfoSection = page.locator(
     'section[aria-labelledby="additional-info-label"]',
   );
+  const selectedStoryline = page.locator(
+    '[data-testid="selected-storyline-content"] p',
+  );
 
   await expect(recommendedInfoSection).toHaveCSS('margin-bottom', '8px');
   await expect(additionalInfoSection).toHaveCSS('padding-bottom', '32px');
+  await expect(selectedStoryline).toHaveCSS('line-height', '28px');
 }
 
 test.describe('스토리 생성', () => {

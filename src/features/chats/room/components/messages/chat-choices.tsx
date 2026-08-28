@@ -43,7 +43,7 @@ export function ChatChoices({
       variants={listVariants}
       initial="hidden"
       animate="show"
-      className="flex flex-col gap-2 px-4 pt-2 pb-6">
+      className="flex flex-col gap-2 px-4 pt-3 pb-6">
       {showsHint && (
         <m.div
           variants={itemVariants}

@@ -67,12 +67,23 @@ test.describe('채팅 스트리밍', () => {
 
     await page.goto('/chats/c1');
 
-    await expect(
-      page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.'),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: '던전에 진입한다' }),
-    ).toBeVisible();
+    const prologue = page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.');
+    const prologueContent = prologue.locator(
+      'xpath=ancestor::*[@data-slot="message-content"]',
+    );
+    const firstChoice = page.getByRole('button', { name: '던전에 진입한다' });
+    const choices = firstChoice.locator('xpath=../..');
+
+    await expect(prologue).toBeVisible();
+    await expect(firstChoice).toBeVisible();
+    await expect(prologue.locator('xpath=ancestor::p')).toHaveCSS(
+      'line-height',
+      '28px',
+    );
+    await expect(prologueContent).toHaveCSS('padding-top', '20px');
+    await expect(prologueContent).toHaveCSS('padding-bottom', '20px');
+    await expect(firstChoice).toHaveCSS('line-height', '24.5px');
+    await expect(choices).toHaveCSS('padding-top', '12px');
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
@@ -400,7 +411,9 @@ test.describe('채팅 스트리밍', () => {
     await expect(aiMessage).toHaveCSS('padding-left', '0px');
     await expect(aiMessageContent).toHaveCSS('padding-left', '16px');
     await expect(characterLine).toHaveCSS('padding-left', '0px');
-    await expect(aiMessageContent).toHaveCSS('row-gap', '16px');
+    await expect(aiMessage).toHaveCSS('padding-top', '20px');
+    await expect(aiMessage).toHaveCSS('padding-bottom', '20px');
+    await expect(aiMessageContent).toHaveCSS('row-gap', '20px');
     await expect(imageBlock).toHaveCSS('border-top-width', '1px');
     await expect(imageBlock).toHaveCSS('border-bottom-width', '1px');
     await expect(imageBlock).toHaveCSS('border-left-width', '1px');
@@ -430,9 +443,9 @@ test.describe('채팅 스트리밍', () => {
     expect(imageElementBox!.height).toBeCloseTo(imageBox!.height - 2, 1);
     expect(
       imageBox!.y - (precedingLineBox!.y + precedingLineBox!.height),
-    ).toBeCloseTo(48, 1);
+    ).toBeCloseTo(40, 1);
     expect(characterLineBox!.y - (imageBox!.y + imageBox!.height)).toBeCloseTo(
-      16,
+      20,
       1,
     );
 
@@ -1131,7 +1144,20 @@ test.describe('응답 재생성', () => {
 
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '다시 생성' }).click();
+    const regenerateButton = page.getByRole('button', { name: '다시 생성' });
+    const regenerateArea = regenerateButton.locator('xpath=..');
+    const choiceButton = page.getByRole('button', { name: '들어간다' });
+    const choicesArea = choiceButton.locator('xpath=../..');
+    const userMessage = page
+      .getByText('문을 연다')
+      .locator('xpath=ancestor::*[@data-slot="message-content"]');
+
+    await expect(userMessage).toHaveCSS('padding-top', '20px');
+    await expect(userMessage).toHaveCSS('padding-bottom', '20px');
+    await expect(regenerateArea).toHaveCSS('padding-bottom', '20px');
+    await expect(choicesArea).toHaveCSS('padding-top', '12px');
+
+    await regenerateButton.click();
 
     // 새 본문으로 교체되고, 사용자 입력 버블은 유지된다.
     await expect(page.getByText('문이 굉음과 함께 부서졌다.')).toBeVisible();
