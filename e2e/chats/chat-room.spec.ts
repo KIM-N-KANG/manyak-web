@@ -386,6 +386,9 @@ test.describe('채팅 스트리밍', () => {
     const characterLine = page
       .getByText('세린: 기다렸어?')
       .locator('xpath=ancestor::p');
+    const precedingLine = page
+      .getByText('문이 열린다.', { exact: true })
+      .locator('xpath=ancestor::p');
 
     await expect(image).toBeVisible();
     await expect(page.getByText('세린: 기다렸어?')).toBeVisible();
@@ -408,10 +411,14 @@ test.describe('채팅 스트리밍', () => {
     const imageBox = await imageBlock.boundingBox();
     const imageElementBox = await image.boundingBox();
     const messageBox = await aiMessage.boundingBox();
+    const precedingLineBox = await precedingLine.boundingBox();
+    const characterLineBox = await characterLine.boundingBox();
 
     expect(imageBox).not.toBeNull();
     expect(imageElementBox).not.toBeNull();
     expect(messageBox).not.toBeNull();
+    expect(precedingLineBox).not.toBeNull();
+    expect(characterLineBox).not.toBeNull();
     expect(imageBox!.x - messageBox!.x).toBeCloseTo(16, 1);
     expect(
       messageBox!.x + messageBox!.width - (imageBox!.x + imageBox!.width),
@@ -421,6 +428,13 @@ test.describe('채팅 스트리밍', () => {
     expect(imageElementBox!.y).toBeCloseTo(imageBox!.y + 1, 1);
     expect(imageElementBox!.width).toBeCloseTo(imageBox!.width - 2, 1);
     expect(imageElementBox!.height).toBeCloseTo(imageBox!.height - 2, 1);
+    expect(
+      imageBox!.y - (precedingLineBox!.y + precedingLineBox!.height),
+    ).toBeCloseTo(32, 1);
+    expect(characterLineBox!.y - (imageBox!.y + imageBox!.height)).toBeCloseTo(
+      16,
+      1,
+    );
 
     await expect(page.locator('html')).toHaveAttribute(
       'data-chat-stream-completed',

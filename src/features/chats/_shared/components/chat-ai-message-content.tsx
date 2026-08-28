@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils';
+
 import type { ChatMessageSegment } from '../utils/chat-message-segments';
 import { parseChatMessageSegments } from '../utils/chat-message-segments';
 import { ChatCharacterImage } from './chat-character-image';
@@ -35,6 +37,7 @@ export function ChatAiMessageContent({
             name={segment.name}
             imageUrl={segment.imageUrl}
             loading={imageLoading}
+            className={cn(index > 0 && 'mt-4')}
           />
         ),
       )}
