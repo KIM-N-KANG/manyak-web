@@ -17,7 +17,7 @@ type AiMessageBubbleProps = {
 export function UserMessageBubble({ children }: ChatMessageBubbleProps) {
   return (
     <Message>
-      <MessageContent className="bg-muted p-4">
+      <MessageContent className="bg-muted px-4 py-5">
         <ChatMessageContent>{children}</ChatMessageContent>
       </MessageContent>
     </Message>
@@ -30,7 +30,7 @@ export function AiMessageBubble({
 }: AiMessageBubbleProps) {
   return (
     <Message>
-      <MessageContent className="gap-2.5 py-4">
+      <MessageContent className="gap-2.5 py-5">
         {endingName ? (
           <div className="px-4">
             <Badge

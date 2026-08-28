@@ -25,7 +25,7 @@ export function ChatAiMessageContent({
   const messageSegments = segments ?? parseChatMessageSegments(content);
 
   return (
-    <div className="flex flex-col gap-4 px-4">
+    <div className="flex flex-col gap-5 px-4">
       {messageSegments.map((segment, index) =>
         segment.type === 'text' ? (
           <ChatMessageContent key={`text-${index}`}>
@@ -37,7 +37,7 @@ export function ChatAiMessageContent({
             name={segment.name}
             imageUrl={segment.imageUrl}
             loading={imageLoading}
-            className={cn(index > 0 && 'mt-8')}
+            className={cn(index > 0 && 'mt-5')}
           />
         ),
       )}
