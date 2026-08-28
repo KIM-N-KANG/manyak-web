@@ -95,7 +95,8 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
           <div className="absolute top-2 right-2 z-20">
             <StoryOptionsMenu
               storyId={storyId}
-              triggerClassName="size-7 rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/20 hover:text-white aria-expanded:bg-black/20 aria-expanded:text-white [&_svg:not([class*='size-'])]:size-3.5"
+              size="icon-sm"
+              triggerClassName="rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/20 hover:text-white aria-expanded:bg-black/20 aria-expanded:text-white"
             />
           </div>
         ) : null}
