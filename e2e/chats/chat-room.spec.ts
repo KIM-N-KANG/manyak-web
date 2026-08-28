@@ -1157,15 +1157,6 @@ test.describe('응답 재생성', () => {
     await expect(regenerateArea).toHaveCSS('padding-bottom', '20px');
     await expect(choicesArea).toHaveCSS('padding-top', '12px');
 
-    const regenerateBox = await regenerateButton.boundingBox();
-    const choiceBox = await choiceButton.boundingBox();
-
-    expect(regenerateBox).not.toBeNull();
-    expect(choiceBox).not.toBeNull();
-    expect(
-      choiceBox!.y - (regenerateBox!.y + regenerateBox!.height),
-    ).toBeCloseTo(32, 1);
-
     await regenerateButton.click();
 
     // 새 본문으로 교체되고, 사용자 입력 버블은 유지된다.

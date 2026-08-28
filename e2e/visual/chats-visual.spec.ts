@@ -136,7 +136,20 @@ test.describe('채팅 비주얼', () => {
 
     await page.goto('/chats/c1');
 
-    await expect(page.getByRole('button', { name: '다시 생성' })).toBeVisible();
+    const regenerateButton = page.getByRole('button', { name: '다시 생성' });
+    const lastChoiceButton = page.getByRole('button', {
+      name: '소리의 방향을 살핀다',
+    });
+
+    await expect(regenerateButton).toBeVisible();
+    await expect(regenerateButton.locator('xpath=..')).toHaveCSS(
+      'transform',
+      'none',
+    );
+    await expect(lastChoiceButton.locator('xpath=..')).toHaveCSS(
+      'transform',
+      'none',
+    );
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('chat-room-turns.png');
   });
