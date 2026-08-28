@@ -37,7 +37,7 @@ export function ChatAiMessageContent({
             name={segment.name}
             imageUrl={segment.imageUrl}
             loading={imageLoading}
-            className={cn(index > 0 && 'mt-4')}
+            className={cn(index > 0 && 'mt-8')}
           />
         ),
       )}

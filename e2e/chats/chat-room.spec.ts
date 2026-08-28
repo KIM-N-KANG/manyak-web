@@ -430,7 +430,7 @@ test.describe('채팅 스트리밍', () => {
     expect(imageElementBox!.height).toBeCloseTo(imageBox!.height - 2, 1);
     expect(
       imageBox!.y - (precedingLineBox!.y + precedingLineBox!.height),
-    ).toBeCloseTo(32, 1);
+    ).toBeCloseTo(48, 1);
     expect(characterLineBox!.y - (imageBox!.y + imageBox!.height)).toBeCloseTo(
       16,
       1,
