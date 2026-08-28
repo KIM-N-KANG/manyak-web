@@ -421,7 +421,14 @@ test.describe('홈·제작 스토리 목록', () => {
     await mockStoryDelete(page, 's1');
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+
+    const optionsButton = page.getByRole('button', {
+      name: '스토리 옵션 더보기',
+    });
+
+    await expect(optionsButton).toHaveCSS('width', '32px');
+    await expect(optionsButton).toHaveCSS('height', '32px');
+    await optionsButton.click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
 

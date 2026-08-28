@@ -60,6 +60,11 @@
   --radius-4xl: calc(var(--radius) * 3.4); /* 34 */
 }
 
+.font-maruburi,
+.font-serif {
+  letter-spacing: -0.02em;
+}
+
 /* 라이트 테마 변수 */
 :root {
   /* 기본 화면 색상 */

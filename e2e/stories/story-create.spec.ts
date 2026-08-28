@@ -236,6 +236,44 @@ test.describe('스토리 생성', () => {
     expect(storylineRequestCount).toBe(1);
   });
 
+  test('인물 이름에 닫는 대괄호를 허용한다', async ({ page }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tags),
+      });
+    });
+
+    let storylineRequestCount = 0;
+
+    await page.route(STORYLINES, async (route) => {
+      storylineRequestCount += 1;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(storylinesResponse),
+      });
+    });
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+
+    const supportingName = page.getByRole('textbox', {
+      name: '주변 인물 1 이름',
+    });
+
+    await supportingName.fill('세]린');
+    await expect(supportingName).not.toHaveAttribute('aria-invalid', 'true');
+    await page.getByRole('button', { name: '스토리라인 만들기' }).click();
+
+    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
+    expect(storylineRequestCount).toBe(1);
+  });
+
   test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅 화면으로 이동한다 (US-3)', async ({
     page,
   }) => {

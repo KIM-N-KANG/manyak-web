@@ -53,7 +53,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
       />
       <AspectRatio
         ratio={3 / 4}
-        className="w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+        className="w-12 shrink-0 overflow-hidden rounded-sm border border-border bg-muted">
         {thumbnailUrl ? (
           <Image
             src={thumbnailUrl}

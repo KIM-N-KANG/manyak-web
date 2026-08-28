@@ -6,10 +6,12 @@ import type { ChatShareTurnResponse } from '@/api/generated/models';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
 import {
   AiMessageBubble,
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
+import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { track, useTrackOnView } from '@/observability/analytics';
 
@@ -59,14 +61,20 @@ export function SharedChatView({
         <p className="p-4 text-center text-sm text-foreground-secondary">
           친구가 공유한 채팅을 보고 있어요
         </p>
-        {prologue ? <AiMessageBubble>{prologue}</AiMessageBubble> : null}
+        {prologue ? (
+          <AiMessageBubble>
+            <ChatMessageContent className="px-4">{prologue}</ChatMessageContent>
+          </AiMessageBubble>
+        ) : null}
         {turns.map((turn, index) => (
           <div key={turn.createdAt ?? index}>
             {turn.userInput ? (
               <UserMessageBubble>{turn.userInput}</UserMessageBubble>
             ) : null}
             {turn.aiOutput ? (
-              <AiMessageBubble>{turn.aiOutput}</AiMessageBubble>
+              <AiMessageBubble>
+                <ChatAiMessageContent content={turn.aiOutput} />
+              </AiMessageBubble>
             ) : null}
           </div>
         ))}

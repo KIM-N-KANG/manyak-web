@@ -13,6 +13,7 @@ import {
   useMessageScroller,
 } from '@/components/ui/message-scroller';
 import { AiMessageBubble } from '@/features/chats/_shared/components/chat-message-bubble';
+import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
 import { cn } from '@/lib/utils';
 
 import type { ChoicesStatus } from '../../hooks/use-chat-choices';
@@ -110,7 +111,11 @@ export function ChatMessages({
           <MessageScrollerContent className="gap-0">
             {prologue ? (
               <MessageScrollerItem>
-                <AiMessageBubble>{prologue}</AiMessageBubble>
+                <AiMessageBubble>
+                  <ChatMessageContent className="px-4">
+                    {prologue}
+                  </ChatMessageContent>
+                </AiMessageBubble>
               </MessageScrollerItem>
             ) : null}
 

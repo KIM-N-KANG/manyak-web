@@ -64,10 +64,11 @@ export function useStoryTagStep({
   const [hasAttemptedGenerate, setHasAttemptedGenerate] = useState(false);
 
   // 주인공을 앞에 둬야 주인공 이름이 남고 뒤에 같은 이름을 쓴 주변 인물이 걸린다.
-  const duplicateNameCharacterIds = getDuplicateNameCharacterIds([
+  const characters = [
     characterInputs.protagonist,
     ...characterInputs.supportingCharacters,
-  ]);
+  ];
+  const duplicateNameCharacterIds = getDuplicateNameCharacterIds(characters);
   const hasDuplicateName = duplicateNameCharacterIds.size > 0;
 
   const isCategoryComplete = (category: TagCategory) => {
@@ -180,8 +181,8 @@ export function useStoryTagStep({
       characterInputs.supportingCharacters.map(toCharacterRequest),
   });
 
-  // 이름이 겹치면 서버가 400으로 막으므로 요청 전에 세운다(스펙 §4-3-2).
-  // 눌러 본 뒤에만 푸터 오류를 띄우고, 이름을 고쳐 중복이 풀리면 저절로 사라진다.
+  // 이름이 중복되면 요청 전에 막는다.
+  // 눌러 본 뒤에만 푸터 오류를 띄우고, 이름을 고치면 저절로 사라진다.
   const handleGenerateStorylines = () => {
     setHasAttemptedGenerate(true);
 
