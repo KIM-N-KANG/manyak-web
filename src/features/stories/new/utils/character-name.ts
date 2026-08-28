@@ -12,6 +12,15 @@ export const getCharacterNameKey = (name: string): string =>
   name.normalize('NFC').replace(/\s+/g, '').toLowerCase();
 
 /**
+ * 저장 인물 이미지 마커와 충돌하는 문자가 이름에 있는지 확인한다.
+ *
+ * @param name 확인할 인물 이름
+ * @returns 닫는 대괄호가 포함돼 있으면 true, 아니면 false
+ */
+export const hasReservedCharacterNameCharacter = (name: string): boolean =>
+  name.includes(']');
+
+/**
  * 앞선 인물과 이름이 겹치는 인물의 id를 모은다.
  * 주인공을 먼저 보고 주변 인물을 입력 순서로 보므로, 먼저 쓴 이름이 남고 뒤에 같은
  * 이름을 쓴 인물만 걸린다. 비워 둔 이름은 AI가 각각 지어 주므로 판정 대상이 아니다.

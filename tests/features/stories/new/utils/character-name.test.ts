@@ -4,6 +4,7 @@ import type { CharacterInput } from '@/features/stories/new/types';
 import {
   getCharacterNameKey,
   getDuplicateNameCharacterIds,
+  hasReservedCharacterNameCharacter,
 } from '@/features/stories/new/utils/character-name';
 
 const createCharacter = (id: string, name: string): CharacterInput => ({
@@ -29,6 +30,17 @@ describe('getCharacterNameKey', () => {
 
   it('공백만 있으면 빈 키를 반환한다', () => {
     expect(getCharacterNameKey('   ')).toBe('');
+  });
+});
+
+describe('hasReservedCharacterNameCharacter', () => {
+  it('닫는 대괄호가 포함된 이름을 저장 마커 충돌로 판정한다', () => {
+    expect(hasReservedCharacterNameCharacter('세]린')).toBe(true);
+  });
+
+  it('콜론·여는 대괄호·이모지는 허용한다', () => {
+    expect(hasReservedCharacterNameCharacter('A:B[✨')).toBe(false);
+    expect(hasReservedCharacterNameCharacter('')).toBe(false);
   });
 });
 

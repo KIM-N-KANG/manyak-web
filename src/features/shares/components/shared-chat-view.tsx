@@ -6,12 +6,12 @@ import type { ChatShareTurnResponse } from '@/api/generated/models';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
 import {
   AiMessageBubble,
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
 import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
-import { stripChatCharacterImageMarkers } from '@/features/chats/_shared/utils/chat-message-segments';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { track, useTrackOnView } from '@/observability/analytics';
 
@@ -73,9 +73,7 @@ export function SharedChatView({
             ) : null}
             {turn.aiOutput ? (
               <AiMessageBubble>
-                <ChatMessageContent className="px-4">
-                  {stripChatCharacterImageMarkers(turn.aiOutput)}
-                </ChatMessageContent>
+                <ChatAiMessageContent content={turn.aiOutput} />
               </AiMessageBubble>
             ) : null}
           </div>

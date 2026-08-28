@@ -49,6 +49,9 @@ export const CHARACTER_NAME_DUPLICATE_ERROR = '이미 사용한 이름이에요'
 export const CHARACTER_NAME_DUPLICATE_FOOTER_ERROR =
   '인물 이름이 겹치지 않게 해주세요';
 
+export const CHARACTER_NAME_RESERVED_CHARACTER_ERROR =
+  '이름에는 ]를 사용할 수 없어요';
+
 export const CHARACTER_GENDER_OPTIONS = [
   { value: 'MALE', label: '남성' },
   { value: 'FEMALE', label: '여성' },

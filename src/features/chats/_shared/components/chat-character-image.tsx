@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
+import { isAllowedChatCharacterImageUrl } from '../utils/chat-message-segments';
+
 type ChatCharacterImageProps = {
   name: string;
   imageUrl: string;
@@ -17,7 +19,7 @@ export function ChatCharacterImage({
 }: ChatCharacterImageProps) {
   const [hasError, setHasError] = useState(false);
 
-  if (hasError) {
+  if (hasError || !isAllowedChatCharacterImageUrl(imageUrl)) {
     return null;
   }
 

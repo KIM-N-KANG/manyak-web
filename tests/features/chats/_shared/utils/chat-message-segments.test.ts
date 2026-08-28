@@ -3,13 +3,15 @@ import { describe, expect, it } from 'vitest';
 import {
   appendChatCharacterImageSegment,
   appendChatTextSegment,
+  isAllowedChatCharacterImageUrl,
   parseChatMessageSegments,
-  stripChatCharacterImageMarkers,
 } from '@/features/chats/_shared/utils/chat-message-segments';
 
 const SERIN_IMAGE_URL =
   'https://cdn.manyak.app/characters/generated/serin.webp';
 const REI_IMAGE_URL = 'https://cdn.manyak.app/characters/generated/rei.webp';
+const DEV_IMAGE_URL =
+  'https://dev-cdn.manyak.app/characters/generated/serin.webp';
 
 describe('채팅 메시지 조각', () => {
   it('텍스트 토큰은 마지막 텍스트 조각에 누적한다', () => {
@@ -55,6 +57,47 @@ describe('채팅 메시지 조각', () => {
     ).toHaveLength(2);
   });
 
+  it('허용된 CDN의 생성 인물 이미지 URL만 받는다', () => {
+    expect(isAllowedChatCharacterImageUrl(SERIN_IMAGE_URL)).toBe(true);
+    expect(isAllowedChatCharacterImageUrl(DEV_IMAGE_URL)).toBe(true);
+    expect(
+      isAllowedChatCharacterImageUrl(
+        'http://cdn.manyak.app/characters/generated/serin.webp',
+      ),
+    ).toBe(false);
+    expect(
+      isAllowedChatCharacterImageUrl(
+        'https://example.com/characters/generated/serin.webp',
+      ),
+    ).toBe(false);
+    expect(
+      isAllowedChatCharacterImageUrl(
+        'https://cdn.manyak.app/thumbnails/serin.webp',
+      ),
+    ).toBe(false);
+    expect(
+      isAllowedChatCharacterImageUrl(
+        'https://cdn.manyak.app/characters/generated/',
+      ),
+    ).toBe(false);
+    expect(
+      isAllowedChatCharacterImageUrl(
+        'https://user@cdn.manyak.app/characters/generated/serin.webp',
+      ),
+    ).toBe(false);
+  });
+
+  it('허용되지 않은 이미지 이벤트는 스트리밍 조각에 추가하지 않는다', () => {
+    const segments = [{ type: 'text' as const, content: '세린: 안녕\n' }];
+
+    expect(
+      appendChatCharacterImageSegment(segments, {
+        name: '세린',
+        imageUrl: 'https://example.com/serin.webp',
+      }),
+    ).toEqual(segments);
+  });
+
   it('저장 마커를 본문 순서의 텍스트와 이미지 조각으로 복원한다', () => {
     const content =
       `*문이 열린다.*\n[[세린:${SERIN_IMAGE_URL}]]\n\n세린: 기다렸어?\n` +
@@ -77,14 +120,43 @@ describe('채팅 메시지 조각', () => {
     ]);
   });
 
-  it('공유 본문에서는 저장 마커만 숨기고 텍스트 줄 순서를 보존한다', () => {
-    const content =
-      `*문이 열린다.*\n[[세린:${SERIN_IMAGE_URL}]]\n\n세린: 기다렸어?\n` +
-      `[[레이:${REI_IMAGE_URL}]]\n\n레이: 들어가자.`;
+  it('구분 문자가 포함된 인물 이름도 같은 대사 문맥이면 복원한다', () => {
+    const name = 'A:B]✨';
+    const content = `[[${name}:${SERIN_IMAGE_URL}]]\n\n` + `${name}: 기다렸어?`;
 
-    expect(stripChatCharacterImageMarkers(content)).toBe(
-      '*문이 열린다.*\n세린: 기다렸어?\n레이: 들어가자.',
-    );
+    expect(parseChatMessageSegments(content)).toEqual([
+      {
+        type: 'character-image',
+        name,
+        imageUrl: SERIN_IMAGE_URL,
+      },
+      { type: 'text', content: `${name}: 기다렸어?` },
+    ]);
+  });
+
+  it('외부 호스트를 가리키는 마커 모양 문자열은 본문으로 유지한다', () => {
+    const content =
+      '[[세린:https://example.com/serin.webp]]\n\n세린: 기다렸어?';
+
+    expect(parseChatMessageSegments(content)).toEqual([
+      { type: 'text', content },
+    ]);
+  });
+
+  it('마커와 다음 대사의 인물 이름이 다르면 본문으로 유지한다', () => {
+    const content = `[[세린:${SERIN_IMAGE_URL}]]\n\n레이: 기다렸어?`;
+
+    expect(parseChatMessageSegments(content)).toEqual([
+      { type: 'text', content },
+    ]);
+  });
+
+  it('다른 텍스트와 같은 줄에 있는 마커 모양 문자열은 본문으로 유지한다', () => {
+    const content = `설명 [[세린:${SERIN_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
+
+    expect(parseChatMessageSegments(content)).toEqual([
+      { type: 'text', content },
+    ]);
   });
 
   it('인물 이미지 마커가 없으면 본문을 그대로 유지한다', () => {
@@ -93,6 +165,5 @@ describe('채팅 메시지 조각', () => {
     expect(parseChatMessageSegments(content)).toEqual([
       { type: 'text', content },
     ]);
-    expect(stripChatCharacterImageMarkers(content)).toBe(content);
   });
 });

@@ -2,7 +2,122 @@ export type ChatMessageSegment =
   | { type: 'text'; content: string }
   | { type: 'character-image'; name: string; imageUrl: string };
 
-const CHARACTER_IMAGE_MARKER = /\[\[([^\]\r\n]+?):(https?:\/\/[^\]\r\n]+)\]\]/g;
+const CHARACTER_IMAGE_HOSTNAMES = new Set([
+  'cdn.manyak.app',
+  'dev-cdn.manyak.app',
+]);
+const CHARACTER_IMAGE_PATH_PREFIX = '/characters/generated/';
+const CHARACTER_IMAGE_MARKER_LINE = /^\[\[(.+):(https:\/\/[^\r\n]+)\]\]$/;
+const LEADING_HORIZONTAL_WHITESPACE = /^[ \t]*/;
+const SPEAKER_LABEL_SEPARATOR = /^[ \t]*:/;
+
+type CharacterImageMarkerMatch = {
+  start: number;
+  end: number;
+  name: string;
+  imageUrl: string;
+};
+
+/**
+ * 채팅 인물 이미지로 허용된 CDN URL인지 확인한다.
+ *
+ * @param imageUrl 확인할 이미지 URL
+ * @returns 운영·개발 생성 인물 이미지 경로이면 true, 아니면 false
+ */
+export function isAllowedChatCharacterImageUrl(imageUrl: string): boolean {
+  try {
+    const url = new URL(imageUrl);
+
+    return (
+      url.protocol === 'https:' &&
+      url.username === '' &&
+      url.password === '' &&
+      url.port === '' &&
+      CHARACTER_IMAGE_HOSTNAMES.has(url.hostname) &&
+      url.pathname.startsWith(CHARACTER_IMAGE_PATH_PREFIX) &&
+      url.pathname.length > CHARACTER_IMAGE_PATH_PREFIX.length
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 저장 마커 뒤의 대사 줄이 같은 인물 이름으로 시작하는지 확인한다.
+ *
+ * @param content 저장된 AI 본문
+ * @param speakerLineStart 대사 줄이 시작하는 문자열 인덱스
+ * @param name 마커가 가리키는 인물 이름
+ * @returns 대사 줄의 인물 이름이 일치하면 true, 아니면 false
+ */
+function hasMatchingSpeakerLabel(
+  content: string,
+  speakerLineStart: number,
+  name: string,
+): boolean {
+  const speakerLineEnd = content.indexOf('\n', speakerLineStart);
+  const speakerLine = content.slice(
+    speakerLineStart,
+    speakerLineEnd === -1 ? content.length : speakerLineEnd,
+  );
+  const label = speakerLine.replace(LEADING_HORIZONTAL_WHITESPACE, '');
+
+  return (
+    label.startsWith(name) &&
+    SPEAKER_LABEL_SEPARATOR.test(label.slice(name.length))
+  );
+}
+
+/**
+ * 저장 본문에서 웹이 신뢰할 수 있는 인물 이미지 마커 위치를 찾는다.
+ * 마커 전용 줄·허용 CDN·바로 뒤의 동일 인물 대사를 모두 만족해야 한다.
+ *
+ * @param content 저장된 AI 본문
+ * @returns 이미지로 치환할 수 있는 마커 위치와 인물 정보 목록
+ */
+function findCharacterImageMarkerMatches(
+  content: string,
+): CharacterImageMarkerMatch[] {
+  const matches: CharacterImageMarkerMatch[] = [];
+  let lineStart = 0;
+
+  while (lineStart <= content.length) {
+    const lineEnd = content.indexOf('\n', lineStart);
+    const markerLineEnd = lineEnd === -1 ? content.length : lineEnd;
+    const line = content.slice(lineStart, markerLineEnd);
+    const marker = CHARACTER_IMAGE_MARKER_LINE.exec(line);
+
+    if (marker) {
+      const name = marker[1];
+      const imageUrl = marker[2];
+      const speakerLineStart = markerLineEnd + 2;
+
+      if (
+        name &&
+        name === name.trim() &&
+        imageUrl &&
+        content.startsWith('\n\n', markerLineEnd) &&
+        isAllowedChatCharacterImageUrl(imageUrl) &&
+        hasMatchingSpeakerLabel(content, speakerLineStart, name)
+      ) {
+        matches.push({
+          start: lineStart,
+          end: speakerLineStart,
+          name,
+          imageUrl,
+        });
+      }
+    }
+
+    if (lineEnd === -1) {
+      break;
+    }
+
+    lineStart = lineEnd + 1;
+  }
+
+  return matches;
+}
 
 /**
  * 텍스트 토큰을 마지막 텍스트 조각에 이어 붙인다.
@@ -43,6 +158,10 @@ export function appendChatCharacterImageSegment(
   segments: readonly ChatMessageSegment[],
   image: { name: string; imageUrl: string },
 ): ChatMessageSegment[] {
+  if (!image.name.trim() || !isAllowedChatCharacterImageUrl(image.imageUrl)) {
+    return [...segments];
+  }
+
   const nextSegments = [...segments];
   const lastSegment = nextSegments.at(-1);
 
@@ -71,19 +190,18 @@ export function appendChatCharacterImageSegment(
 export function parseChatMessageSegments(
   content: string,
 ): ChatMessageSegment[] {
+  const normalizedContent = content.replace(/\r\n/g, '\n');
+  const markerMatches = findCharacterImageMarkerMatches(normalizedContent);
+
+  if (markerMatches.length === 0) {
+    return content ? [{ type: 'text', content }] : [];
+  }
+
   const segments: ChatMessageSegment[] = [];
   let cursor = 0;
 
-  for (const match of content.matchAll(CHARACTER_IMAGE_MARKER)) {
-    const matchIndex = match.index;
-    const name = match[1];
-    const imageUrl = match[2];
-
-    if (matchIndex == null || !name || !imageUrl) {
-      continue;
-    }
-
-    const textBeforeMarker = content.slice(cursor, matchIndex);
+  for (const match of markerMatches) {
+    const textBeforeMarker = normalizedContent.slice(cursor, match.start);
     const textContent = textBeforeMarker.endsWith('\n')
       ? textBeforeMarker.slice(0, -1)
       : textBeforeMarker;
@@ -92,32 +210,19 @@ export function parseChatMessageSegments(
       segments.push({ type: 'text', content: textContent });
     }
 
-    segments.push({ type: 'character-image', name, imageUrl });
-    cursor = matchIndex + match[0].length;
-
-    if (content.startsWith('\n\n', cursor)) {
-      cursor += 2;
-    }
+    segments.push({
+      type: 'character-image',
+      name: match.name,
+      imageUrl: match.imageUrl,
+    });
+    cursor = match.end;
   }
 
-  const remainingText = content.slice(cursor);
+  const remainingText = normalizedContent.slice(cursor);
 
   if (remainingText) {
     segments.push({ type: 'text', content: remainingText });
   }
 
   return segments;
-}
-
-/**
- * 공유 본문에서 저장 마커만 숨기고 원래 텍스트 줄 순서를 복원한다.
- *
- * @param content 저장된 AI 본문
- * @returns 인물 이미지 마커를 제거한 본문
- */
-export function stripChatCharacterImageMarkers(content: string): string {
-  return content.replace(
-    /\n?\[\[[^\]\r\n]+?:https?:\/\/[^\]\r\n]+\]\](?:\n\n)?/g,
-    (matched) => (matched.startsWith('\n') ? '\n' : ''),
-  );
 }
