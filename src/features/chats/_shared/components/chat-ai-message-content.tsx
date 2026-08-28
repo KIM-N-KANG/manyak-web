@@ -23,10 +23,10 @@ export function ChatAiMessageContent({
   const messageSegments = segments ?? parseChatMessageSegments(content);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 px-4">
       {messageSegments.map((segment, index) =>
         segment.type === 'text' ? (
-          <ChatMessageContent key={`text-${index}`} className="px-4">
+          <ChatMessageContent key={`text-${index}`}>
             {segment.content}
           </ChatMessageContent>
         ) : (

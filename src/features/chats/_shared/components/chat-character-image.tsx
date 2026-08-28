@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+
 import { isAllowedChatCharacterImageUrl } from '../utils/chat-message-segments';
 
 type ChatCharacterImageProps = {
@@ -24,18 +26,19 @@ export function ChatCharacterImage({
   }
 
   return (
-    <div
+    <AspectRatio
+      ratio={4 / 3}
       data-slot="chat-character-image"
-      className="relative box-content aspect-4/3 w-full overflow-hidden border-y border-border bg-muted">
+      className="overflow-hidden rounded-xl border border-border bg-muted">
       <Image
         src={imageUrl}
         alt={`${name} 인물 이미지`}
         fill
-        sizes="(max-width: 448px) 100vw, 448px"
+        sizes="(max-width: 448px) calc(100vw - 32px), 416px"
         loading={loading}
         className="object-contain"
         onError={() => setHasError(true)}
       />
-    </div>
+    </AspectRatio>
   );
 }

@@ -395,29 +395,32 @@ test.describe('채팅 스트리밍', () => {
     );
 
     await expect(aiMessage).toHaveCSS('padding-left', '0px');
-    await expect(characterLine).toHaveCSS('padding-left', '16px');
+    await expect(aiMessageContent).toHaveCSS('padding-left', '16px');
+    await expect(characterLine).toHaveCSS('padding-left', '0px');
     await expect(aiMessageContent).toHaveCSS('row-gap', '16px');
     await expect(imageBlock).toHaveCSS('border-top-width', '1px');
     await expect(imageBlock).toHaveCSS('border-bottom-width', '1px');
-    await expect(imageBlock).toHaveCSS('border-left-width', '0px');
-    await expect(imageBlock).toHaveCSS('border-right-width', '0px');
-    await expect(imageBlock).toHaveCSS('box-sizing', 'content-box');
+    await expect(imageBlock).toHaveCSS('border-left-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-right-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-radius', '20px');
+    await expect(imageBlock).toHaveCSS('box-sizing', 'border-box');
 
     const imageBox = await imageBlock.boundingBox();
+    const imageElementBox = await image.boundingBox();
     const messageBox = await aiMessage.boundingBox();
-    const imageContentSize = await imageBlock.evaluate((element) => ({
-      width: element.clientWidth,
-      height: element.clientHeight,
-    }));
 
     expect(imageBox).not.toBeNull();
+    expect(imageElementBox).not.toBeNull();
     expect(messageBox).not.toBeNull();
-    expect(Math.abs(imageBox!.x - messageBox!.x)).toBeLessThan(1);
-    expect(Math.abs(imageBox!.width - messageBox!.width)).toBeLessThan(1);
-    expect(imageContentSize.width / imageContentSize.height).toBeCloseTo(
-      4 / 3,
-      2,
-    );
+    expect(imageBox!.x - messageBox!.x).toBeCloseTo(16, 1);
+    expect(
+      messageBox!.x + messageBox!.width - (imageBox!.x + imageBox!.width),
+    ).toBeCloseTo(16, 1);
+    expect(imageBox!.width / imageBox!.height).toBeCloseTo(4 / 3, 2);
+    expect(imageElementBox!.x).toBeCloseTo(imageBox!.x + 1, 1);
+    expect(imageElementBox!.y).toBeCloseTo(imageBox!.y + 1, 1);
+    expect(imageElementBox!.width).toBeCloseTo(imageBox!.width - 2, 1);
+    expect(imageElementBox!.height).toBeCloseTo(imageBox!.height - 2, 1);
 
     await expect(page.locator('html')).toHaveAttribute(
       'data-chat-stream-completed',
