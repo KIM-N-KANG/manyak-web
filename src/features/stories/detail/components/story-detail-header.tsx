@@ -14,7 +14,7 @@ type StoryDetailHeaderProps = {
   showTitle: boolean;
   hasHeroImage: boolean;
   scrollContainerRef: RefObject<HTMLElement | null>;
-  heroRef: RefObject<HTMLElement | null>;
+  heroElement: HTMLElement | null;
 };
 
 export function StoryDetailHeader({
@@ -22,7 +22,7 @@ export function StoryDetailHeader({
   showTitle,
   hasHeroImage,
   scrollContainerRef,
-  heroRef,
+  heroElement,
 }: StoryDetailHeaderProps) {
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
@@ -30,7 +30,7 @@ export function StoryDetailHeader({
   useEffect(() => {
     const header = headerRef.current;
     const scrollContainer = scrollContainerRef.current;
-    const hero = heroRef.current;
+    const hero = heroElement;
 
     if (!header || !scrollContainer || !hero || !hasHeroImage) {
       header?.style.setProperty('--story-header-alpha', '1');
@@ -81,7 +81,7 @@ export function StoryDetailHeader({
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, [hasHeroImage, heroRef, scrollContainerRef]);
+  }, [hasHeroImage, heroElement, scrollContainerRef]);
 
   return (
     <header

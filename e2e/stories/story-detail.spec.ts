@@ -109,6 +109,10 @@ test.describe('스토리 상세', () => {
     ).toBeVisible();
     await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
 
+    const header = page.locator('header');
+
+    await expect(header).toHaveCSS('--story-header-alpha', '0');
+
     const headerGradientCount = await page
       .locator('header, header *')
       .evaluateAll(
