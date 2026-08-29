@@ -17,7 +17,7 @@ export function TextContent({
       className={cn(
         'whitespace-pre-wrap',
         size === 'sm' ? 'text-sm' : 'text-base',
-        font === 'maruburi' ? 'font-maruburi' : 'leading-loose',
+        font === 'maruburi' ? 'font-maruburi leading-7' : 'leading-loose',
       )}>
       {parseTextSegments(children ?? '').map((segment, index) => (
         <span
