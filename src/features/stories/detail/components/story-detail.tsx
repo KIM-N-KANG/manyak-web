@@ -78,7 +78,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   };
 
   const contentRef = useRef<HTMLElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
+  const [heroElement, setHeroElement] = useState<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   const isTitleInView = useInView({
@@ -97,7 +97,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         showTitle={showTitle}
         hasHeroImage={Boolean(thumbnailUrl)}
         scrollContainerRef={contentRef}
-        heroRef={heroRef}
+        heroElement={heroElement}
       />
 
       <AnimatePresence mode="wait" initial={false}>
@@ -136,7 +136,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             <main
               ref={contentRef}
               className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain">
-              <div ref={heroRef} className="shrink-0">
+              <div ref={setHeroElement} className="shrink-0">
                 {thumbnailUrl ? (
                   <button
                     type="button"
