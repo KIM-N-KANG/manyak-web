@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
@@ -15,9 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
+import { LoginConsentNotice } from '@/features/auth/_shared/components/login-consent-notice';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
   useSocialLogin,
@@ -108,18 +107,7 @@ export function LoginRequiredDialog({
           </Button>
         </div>
         <DialogFooter className="grid-cols-1">
-          <p className="text-center text-xs leading-relaxed text-foreground-secondary">
-            로그인 시{' '}
-            <Link href={APP_PATH.TERMS} className="underline">
-              서비스이용약관
-            </Link>{' '}
-            및{' '}
-            <Link href={APP_PATH.PRIVACY} className="underline">
-              개인정보처리방침
-            </Link>
-            에<br />
-            동의하는 것으로 간주해요
-          </p>
+          <LoginConsentNotice />
         </DialogFooter>
       </DialogContent>
     </Dialog>

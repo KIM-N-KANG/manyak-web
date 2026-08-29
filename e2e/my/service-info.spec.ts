@@ -19,25 +19,40 @@ test.describe('서비스 안내', () => {
     ).toBeVisible();
   });
 
-  test('약관 및 정책 링크가 각 문서를 연다', async ({ page }) => {
+  test('약관 및 정책 링크가 각 문서를 새 탭에서 연다', async ({ page }) => {
     await skipOnboarding(page);
     await page.goto('/my/about');
 
-    await page.getByRole('link', { name: '서비스이용약관' }).click();
-    await expect(page).toHaveURL('/terms');
-    await expect(
-      page.getByRole('banner').getByText('서비스이용약관'),
-    ).toBeVisible();
+    const termsPopupPromise = page.waitForEvent('popup');
 
     await page
-      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .getByRole('link', { name: '서비스 이용약관', exact: true })
       .click();
-    await expect(page).toHaveURL('/my/about');
 
-    await page.getByRole('link', { name: '개인정보처리방침' }).click();
-    await expect(page).toHaveURL('/privacy');
+    const termsPage = await termsPopupPromise;
+
+    await expect(page).toHaveURL('/my/about');
+    await expect(termsPage).toHaveURL('/terms');
     await expect(
-      page.getByRole('banner').getByText('개인정보처리방침'),
+      termsPage.getByRole('heading', { level: 1, name: '서비스 이용약관' }),
+    ).toBeVisible();
+    await termsPage.close();
+
+    const privacyPopupPromise = page.waitForEvent('popup');
+
+    await page
+      .getByRole('link', { name: '개인정보 처리방침', exact: true })
+      .click();
+
+    const privacyPage = await privacyPopupPromise;
+
+    await expect(page).toHaveURL('/my/about');
+    await expect(privacyPage).toHaveURL('/privacy');
+    await expect(
+      privacyPage.getByRole('heading', {
+        level: 1,
+        name: '개인정보 처리방침',
+      }),
     ).toBeVisible();
   });
 

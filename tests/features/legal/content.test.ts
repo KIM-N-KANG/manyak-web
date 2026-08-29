@@ -17,7 +17,7 @@ function collectText(doc: LegalDocument): string {
 
 describe('법적 문서 콘텐츠', () => {
   it('약관은 제목·시행일·버전과 필수 조항을 갖는다', () => {
-    expect(termsContent.title).toBe('서비스이용약관');
+    expect(termsContent.title).toBe('서비스 이용약관');
     expect(termsContent.effectiveDate).not.toHaveLength(0);
     expect(termsContent.version).not.toHaveLength(0);
 
@@ -55,8 +55,8 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('회사의 고의 또는 중대한 과실');
   });
 
-  it('개인정보처리방침은 제목·시행일·버전과 필수 항목을 갖는다', () => {
-    expect(privacyContent.title).toBe('개인정보처리방침');
+  it('개인정보 처리방침은 제목·시행일·버전과 필수 항목을 갖는다', () => {
+    expect(privacyContent.title).toBe('개인정보 처리방침');
     expect(privacyContent.effectiveDate).not.toHaveLength(0);
     expect(privacyContent.version).not.toHaveLength(0);
 
@@ -78,7 +78,7 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).not.toContain('{{');
   });
 
-  it('개인정보처리방침은 보유·파기와 쿠키·분석 도구를 구체적으로 고지한다', () => {
+  it('개인정보 처리방침은 보유·파기와 쿠키·분석 도구를 구체적으로 고지한다', () => {
     const text = collectText(privacyContent);
 
     expect(text).toContain('분리 보관한 뒤 파기합니다');
@@ -90,7 +90,7 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).not.toContain('탈퇴 시 지체 없이 파기합니다');
   });
 
-  it('개인정보처리방침은 AI 품질 관리·학습 데이터 활용을 고지한다', () => {
+  it('개인정보 처리방침은 AI 품질 관리·학습 데이터 활용을 고지한다', () => {
     const text = collectText(privacyContent);
 
     // 수탁·국외 이전 상대방과 저장 위치가 명시돼야 한다.
@@ -106,7 +106,7 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('학습 활용에서 제외하거나 삭제');
   });
 
-  it('개인정보처리방침은 Meta 픽셀 행태정보 수집을 고지한다', () => {
+  it('개인정보 처리방침은 Meta 픽셀 행태정보 수집을 고지한다', () => {
     const text = collectText(privacyContent);
 
     // 광고 사업자 명칭과 국외 이전 대상에 Meta가 명시돼야 한다.
