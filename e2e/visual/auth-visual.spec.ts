@@ -17,7 +17,9 @@ test.describe('계정 비주얼', () => {
     await expect(
       page.getByRole('button', { name: /Google로 시작하기/ }),
     ).toBeVisible();
-    await expect(page.getByText('계정당 한 번만 진행돼요')).toBeVisible();
+    await expect(
+      page.getByText('한 번만 이 기기의 스토리와 채팅을 그 계정에 저장해요'),
+    ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('login-page.png');
   });

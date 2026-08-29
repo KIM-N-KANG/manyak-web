@@ -282,7 +282,7 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     ).toBeVisible();
     // 로그인 페이지와 동일하게 약관 동의 고지를 상시 표시한다.
     await expect(
-      page.getByRole('link', { name: '서비스이용약관' }),
+      page.getByRole('link', { name: '서비스 이용약관', exact: true }),
     ).toBeVisible();
   });
 

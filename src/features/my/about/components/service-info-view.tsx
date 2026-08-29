@@ -1,5 +1,7 @@
 'use client';
 
+import { LinkSquare01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
 import { BackHeader } from '@/components/layout/back-header';
@@ -15,7 +17,7 @@ export function ServiceInfoView() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <BackHeader title="서비스 안내" fallbackHref={APP_PATH.MAIN.MY} />
-      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4 pb-8">
+      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
         <article className="flex flex-col gap-8">
           <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">크레딧 안내</h2>
@@ -92,15 +94,29 @@ export function ServiceInfoView() {
               <li>
                 <Link
                   href={APP_PATH.TERMS}
-                  className="underline underline-offset-4">
-                  서비스이용약관
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 underline underline-offset-4">
+                  서비스 이용약관
+                  <HugeiconsIcon
+                    icon={LinkSquare01Icon}
+                    className="size-4"
+                    aria-hidden="true"
+                  />
                 </Link>
               </li>
               <li>
                 <Link
                   href={APP_PATH.PRIVACY}
-                  className="underline underline-offset-4">
-                  개인정보처리방침
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 underline underline-offset-4">
+                  개인정보 처리방침
+                  <HugeiconsIcon
+                    icon={LinkSquare01Icon}
+                    className="size-4"
+                    aria-hidden="true"
+                  />
                 </Link>
               </li>
             </ul>

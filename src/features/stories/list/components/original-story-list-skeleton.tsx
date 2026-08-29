@@ -5,7 +5,7 @@ export function OriginalStoryListSkeleton() {
     <section
       role="status"
       aria-label="오리지널 스토리 불러오는 중"
-      className="flex flex-col gap-3 px-4 pb-8">
+      className="flex flex-col gap-3 px-4 pb-4">
       <div aria-hidden="true" className="flex flex-col gap-3">
         <Skeleton className="h-7 w-32" />
         <ul className="grid grid-cols-2 gap-x-2 gap-y-4">

@@ -47,7 +47,7 @@ export function AdditionalInfoList({
   return (
     <section
       aria-labelledby="additional-info-label"
-      className="flex flex-col gap-2 px-4 pt-2 pb-8">
+      className="flex flex-col gap-2 px-4 pt-2 pb-4">
       <div className="flex items-baseline gap-1">
         <Label>추가 정보</Label>
         <p className="text-sm text-foreground">

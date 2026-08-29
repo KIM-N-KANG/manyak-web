@@ -67,7 +67,7 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
             src={thumbnailUrl}
             alt=""
             fill
-            sizes="50vw"
+            sizes="(max-width: 448px) calc(50vw - 20px), 204px"
             priority={position != null && position < 4}
             className="object-cover"
           />

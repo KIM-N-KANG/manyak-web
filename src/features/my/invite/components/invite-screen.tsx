@@ -94,7 +94,7 @@ export function InviteScreen() {
   };
 
   return (
-    <div className="flex flex-1 flex-col pb-4">
+    <div className="flex flex-1 flex-col">
       <Script
         src={KAKAO_SDK_URL}
         strategy="lazyOnload"

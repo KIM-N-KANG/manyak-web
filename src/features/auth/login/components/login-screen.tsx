@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -14,6 +13,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
+import { LoginConsentNotice } from '@/features/auth/_shared/components/login-consent-notice';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
   useSocialLogin,
@@ -76,67 +76,58 @@ export function LoginScreen() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <BackHeader title="로그인" fallbackHref={APP_PATH.MAIN.STORIES} />
-      <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4 pt-0">
-        <div className="flex flex-col items-center gap-4">
-          <ManyakLogo className="h-6 w-auto text-primary" />
-          <p className="text-center text-lg font-semibold">
-            로그인하고 나만의 스토리를
-            <br />
-            어디서든 이어서 즐겨보세요
-          </p>
-        </div>
-        <div className="flex w-full flex-col items-center gap-4">
-          <p className="text-center text-sm leading-relaxed text-foreground-secondary">
-            처음 로그인하면 이 기기의 스토리와 채팅이 계정에 저장돼요
-            <br />이 과정은 계정당 한 번만 진행돼요
-          </p>
-          <div className="flex w-full flex-col gap-2">
-            <Button
-              type="button"
-              size="lg"
-              className="relative w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
-              disabled={pendingProvider !== null}
-              onClick={() => handleSocialLogin('kakao')}>
-              <LoadingButtonContent
-                isLoading={pendingProvider === 'kakao'}
-                loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
-                <KakaoLogo />
-                카카오로 시작하기
-              </LoadingButtonContent>
-            </Button>
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              className="relative w-full"
-              disabled={pendingProvider !== null}
-              onClick={() => handleSocialLogin('google')}>
-              <LoadingButtonContent
-                isLoading={pendingProvider === 'google'}
-                loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
-                <GoogleLogo />
-                Google로 시작하기
-              </LoadingButtonContent>
-            </Button>
+      <main className="flex min-h-0 flex-1 flex-col items-center p-4 pt-0">
+        <div className="flex w-full flex-1 flex-col items-center justify-center gap-8">
+          <div className="flex flex-col items-center gap-4">
+            <ManyakLogo className="h-6 w-auto text-primary" />
+            <p className="text-center text-lg font-semibold">
+              로그인하고 나만의 스토리를
+              <br />
+              어디서든 이어서 즐겨보세요
+            </p>
           </div>
-          <p className="text-center text-xs leading-relaxed text-foreground-secondary">
-            이전에 로그인했던 계정으로 시작해주세요
-            <br />
-            카카오와 Google로 각각 로그인하면 나중에 연동할 수 없어요
-          </p>
-          <p className="text-center text-xs leading-relaxed text-foreground-secondary">
-            로그인 시{' '}
-            <Link href={APP_PATH.TERMS} className="underline">
-              서비스이용약관
-            </Link>{' '}
-            및{' '}
-            <Link href={APP_PATH.PRIVACY} className="underline">
-              개인정보처리방침
-            </Link>
-            에<br />
-            동의하는 것으로 간주해요
-          </p>
+          <div className="flex w-full flex-col items-center gap-4">
+            <p className="text-center text-sm leading-relaxed text-foreground-secondary">
+              계정마다 처음 로그인할 때
+              <br />한 번만 이 기기의 스토리와 채팅을 그 계정에 저장해요
+            </p>
+            <div className="flex w-full flex-col gap-2">
+              <Button
+                type="button"
+                size="lg"
+                className="relative w-full bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/80"
+                disabled={pendingProvider !== null}
+                onClick={() => handleSocialLogin('kakao')}>
+                <LoadingButtonContent
+                  isLoading={pendingProvider === 'kakao'}
+                  loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+                  <KakaoLogo />
+                  카카오로 시작하기
+                </LoadingButtonContent>
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="relative w-full"
+                disabled={pendingProvider !== null}
+                onClick={() => handleSocialLogin('google')}>
+                <LoadingButtonContent
+                  isLoading={pendingProvider === 'google'}
+                  loadingLabel={SOCIAL_LOGIN_PENDING_LABEL}>
+                  <GoogleLogo />
+                  Google로 시작하기
+                </LoadingButtonContent>
+              </Button>
+            </div>
+            <p className="text-center text-sm leading-relaxed text-foreground-secondary">
+              소셜 계정 하나로 먼저 로그인한 뒤 다른 계정을 연동하면,
+              <br />
+              어느 계정으로 로그인해도 똑같이 이용할 수 있어요
+            </p>
+          </div>
         </div>
+        <LoginConsentNotice />
       </main>
     </div>
   );

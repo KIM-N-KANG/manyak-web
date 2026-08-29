@@ -143,7 +143,7 @@ export function StoryTagStepSection({
           ))}
         </StickyTabsList>
 
-        <TabsContent value="GENRE" className="px-4 pt-4 pb-8">
+        <TabsContent value="GENRE" className="px-4 pt-4 pb-4">
           <FieldGroup className="gap-8">
             <Field className="gap-2" aria-labelledby="genre-label">
               <FieldLabel id="genre-label" className="gap-0.5">
@@ -179,7 +179,7 @@ export function StoryTagStepSection({
           </FieldGroup>
         </TabsContent>
 
-        <TabsContent value="PROTAGONIST" className="p-4 pb-8">
+        <TabsContent value="PROTAGONIST" className="p-4">
           <CharacterForm
             category="PROTAGONIST"
             categoryLabel={PROTAGONIST_CATEGORY.label}
@@ -219,7 +219,7 @@ export function StoryTagStepSection({
           />
         </TabsContent>
 
-        <TabsContent value="SUPPORTING_CHARACTER" className="pb-8">
+        <TabsContent value="SUPPORTING_CHARACTER" className="pb-4">
           <SupportingCharacterList
             categoryLabel={SUPPORTING_CHARACTER_CATEGORY.label}
             characters={supportingCharacters}

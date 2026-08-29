@@ -135,7 +135,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             {...FADE_TRANSITION_PROPS}>
             <main
               ref={contentRef}
-              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain pb-4">
+              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain">
               <div ref={heroRef} className="shrink-0">
                 {thumbnailUrl ? (
                   <button
@@ -150,7 +150,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                         src={thumbnailUrl}
                         alt="스토리 썸네일"
                         fill
-                        sizes="100vw"
+                        sizes="(max-width: 448px) 100vw, 448px"
                         priority
                         className="object-cover"
                       />
