@@ -30,7 +30,7 @@ test.describe('피드백 제출', () => {
 
     await expect(feedbackActions).toHaveCSS('padding-top', '0px');
     await expect(feedbackFields).toHaveCSS('row-gap', '24px');
-    await expect(feedbackFields).toHaveCSS('padding-bottom', '32px');
+    await expect(feedbackFields).toHaveCSS('padding-bottom', '16px');
 
     await page
       .getByRole('textbox', { name: '피드백 내용' })

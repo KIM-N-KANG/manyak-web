@@ -55,7 +55,7 @@ export function FeedbackForm() {
           <p className="text-foreground-secondary">{FEEDBACK_DESCRIPTION}</p>
         </div>
 
-        <FieldGroup className="gap-6 p-4 pb-8">
+        <FieldGroup className="gap-6 p-4">
           <Field className="gap-2" aria-labelledby="feedback-body-label">
             <FieldLabel
               id="feedback-body-label"

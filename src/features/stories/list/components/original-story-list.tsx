@@ -27,7 +27,7 @@ export function OriginalStoryList() {
 
   if (isError) {
     return (
-      <section className="flex flex-1 flex-col gap-3 px-4 pb-8">
+      <section className="flex flex-1 flex-col gap-3 px-4 pb-4">
         <h2 className="text-lg font-bold">{STORY_SECTION_TITLE.ORIGINAL}</h2>
         <RetryListStatus
           title={STORY_LIST_ERROR_TITLE}
@@ -42,7 +42,7 @@ export function OriginalStoryList() {
   }
 
   return (
-    <div className="pb-8">
+    <div className="pb-4">
       <StorySection title={STORY_SECTION_TITLE.ORIGINAL}>
         <StoryCardGrid stories={stories} section="original" />
       </StorySection>

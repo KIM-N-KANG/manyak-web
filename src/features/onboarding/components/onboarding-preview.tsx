@@ -105,7 +105,7 @@ export function OnboardingPreview() {
                   alt={slide.label}
                   width={PREVIEW_WIDTH}
                   height={PREVIEW_HEIGHT}
-                  sizes="(max-width: 448px) 100vw, 448px"
+                  sizes="(max-width: 448px) calc(100vw - 32px), 416px"
                   priority={index === 0}
                   className={PREVIEW_CLASS}
                 />

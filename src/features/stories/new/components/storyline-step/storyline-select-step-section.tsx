@@ -127,7 +127,7 @@ export function StorylineSelectStepSection({
             <TabsContent
               key={storylineItem.id ?? index}
               value={String(index)}
-              className="px-4 pt-4 pb-8">
+              className="px-4 pt-4 pb-4">
               <div className="flex h-full flex-col gap-4">
                 <TextContent font="maruburi">
                   {storylineItem.storyline}

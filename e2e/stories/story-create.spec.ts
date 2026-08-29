@@ -76,7 +76,7 @@ async function reachAdditionalInfo(page: Page): Promise<void> {
     'line-height',
     '28px',
   );
-  await expect(page.getByRole('tabpanel')).toHaveCSS('padding-bottom', '32px');
+  await expect(page.getByRole('tabpanel')).toHaveCSS('padding-bottom', '16px');
   await page.getByRole('button', { name: '선택하기' }).click();
   await expect(
     page.getByRole('button', { name: '스토리 완성하기' }),
@@ -93,7 +93,7 @@ async function reachAdditionalInfo(page: Page): Promise<void> {
   );
 
   await expect(recommendedInfoSection).toHaveCSS('margin-bottom', '8px');
-  await expect(additionalInfoSection).toHaveCSS('padding-bottom', '32px');
+  await expect(additionalInfoSection).toHaveCSS('padding-bottom', '16px');
   await expect(selectedStoryline).toHaveCSS('line-height', '28px');
 }
 
@@ -155,7 +155,7 @@ test.describe('스토리 생성', () => {
     const activePanel = page.getByRole('tabpanel');
 
     await expect(nextButton).toBeEnabled();
-    await expect(activePanel).toHaveCSS('padding-bottom', '32px');
+    await expect(activePanel).toHaveCSS('padding-bottom', '16px');
     await nextButton.click();
     await expect(
       footer.getByText('키워드를 하나 이상 선택해주세요'),
@@ -172,7 +172,7 @@ test.describe('스토리 생성', () => {
       page.getByRole('tab', { name: PROTAGONIST_CATEGORY.label }),
     ).toHaveAttribute('aria-selected', 'true');
     await expect(activePanel).toHaveCSS('padding-top', '16px');
-    await expect(activePanel).toHaveCSS('padding-bottom', '32px');
+    await expect(activePanel).toHaveCSS('padding-bottom', '16px');
 
     await expect(nextButton).toBeEnabled();
     await nextButton.click();
@@ -184,7 +184,7 @@ test.describe('스토리 생성', () => {
     await expect(
       page.getByRole('tab', { name: SUPPORTING_CHARACTER_CATEGORY.label }),
     ).toHaveAttribute('aria-selected', 'true');
-    await expect(activePanel).toHaveCSS('padding-bottom', '32px');
+    await expect(activePanel).toHaveCSS('padding-bottom', '16px');
   });
 
   test('주인공과 주변 인물의 이름이 겹치면 생성 요청을 막는다 (스펙 §4-3-2)', async ({

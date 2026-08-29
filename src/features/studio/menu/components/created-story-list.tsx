@@ -155,7 +155,7 @@ export function CreatedStoryList() {
           </m.div>
         ) : null}
       </AnimatePresence>
-      <section className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-8">
+      <section className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
         <div className="flex items-center">
           <h2 className="text-lg font-bold">{CREATED_STORY_SECTION_TITLE}</h2>
         </div>
