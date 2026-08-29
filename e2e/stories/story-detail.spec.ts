@@ -125,6 +125,46 @@ test.describe('스토리 상세', () => {
     expect(headerGradientCount).toBe(0);
   });
 
+  test('느린 조회 후 본문 제목이 사라지면 헤더 제목을 보여준다 (KNK-1039)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 650));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, thumbnailUrl: THUMBNAIL_URL }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    const contentTitle = page.getByRole('heading', {
+      level: 1,
+      name: '용의 계곡',
+    });
+    const headerTitle = page.locator('header').getByText('용의 계곡');
+
+    await expect(contentTitle).toBeVisible();
+    await expect(headerTitle).toHaveCSS('opacity', '0');
+
+    await page.locator('main').evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+
+    await expect
+      .poll(() =>
+        contentTitle.evaluate(
+          (element) => element.getBoundingClientRect().bottom,
+        ),
+      )
+      .toBeLessThanOrEqual(56);
+    await expect(headerTitle).toHaveCSS('opacity', '1');
+  });
+
   test('썸네일을 누르면 이미지 뷰어가 열리고 X·뒤로가기로 닫힌다 (US-4-1)', async ({
     page,
   }) => {
