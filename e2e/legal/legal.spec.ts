@@ -53,10 +53,10 @@ test.describe('약관·개인정보 처리방침', () => {
     await expect(
       termsPage.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
     ).toBeVisible();
-    await expect(termsPage.getByText('시행일 2026-07-28 · v1.1')).toBeVisible();
+    await expect(termsPage.getByText('시행일 2026-09-01 · v1.2')).toBeVisible();
     await expect(
       termsPage.getByRole('heading', {
-        name: '제5조 (게스트 데이터의 이관)',
+        name: '제6조 (게스트 데이터와 회원 전환)',
       }),
     ).toBeVisible();
   });
@@ -89,11 +89,11 @@ test.describe('약관·개인정보 처리방침', () => {
         .getByRole('link', { name: '홈으로 이동' }),
     ).toBeVisible();
     await expect(
-      privacyPage.getByText('시행일 2026-07-28 · v1.2'),
+      privacyPage.getByText('시행일 2026-09-01 · v1.3'),
     ).toBeVisible();
     await expect(
       privacyPage.getByRole('heading', {
-        name: '1. 수집하는 개인정보 항목',
+        name: '1. 개인정보처리자와 적용 범위',
       }),
     ).toBeVisible();
     await expect(
@@ -103,7 +103,7 @@ test.describe('약관·개인정보 처리방침', () => {
     ).toBeVisible();
     await expect(
       privacyPage.getByRole('heading', {
-        name: '13. AI 품질 관리 및 학습 데이터 활용',
+        name: '13. AI 처리와 평가 데이터 활용',
       }),
     ).toBeVisible();
   });
@@ -116,7 +116,9 @@ test.describe('약관·개인정보 처리방침', () => {
       page.getByRole('heading', { level: 1, name: '서비스 이용약관' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: '제5조 (게스트 데이터의 이관)' }),
+      page.getByRole('heading', {
+        name: '제6조 (게스트 데이터와 회원 전환)',
+      }),
     ).toBeVisible();
   });
 
