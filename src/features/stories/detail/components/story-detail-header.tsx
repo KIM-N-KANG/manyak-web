@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties, type RefObject, useEffect, useRef } from 'react';
+import { type CSSProperties, useEffect, useRef } from 'react';
 
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -13,7 +13,7 @@ type StoryDetailHeaderProps = {
   title: string;
   showTitle: boolean;
   hasHeroImage: boolean;
-  scrollContainerRef: RefObject<HTMLElement | null>;
+  scrollContainerElement: HTMLElement | null;
   heroElement: HTMLElement | null;
 };
 
@@ -21,7 +21,7 @@ export function StoryDetailHeader({
   title,
   showTitle,
   hasHeroImage,
-  scrollContainerRef,
+  scrollContainerElement,
   heroElement,
 }: StoryDetailHeaderProps) {
   const router = useRouter();
@@ -29,7 +29,7 @@ export function StoryDetailHeader({
 
   useEffect(() => {
     const header = headerRef.current;
-    const scrollContainer = scrollContainerRef.current;
+    const scrollContainer = scrollContainerElement;
     const hero = heroElement;
 
     if (!header || !scrollContainer || !hero || !hasHeroImage) {
@@ -81,7 +81,7 @@ export function StoryDetailHeader({
         window.cancelAnimationFrame(animationFrame);
       }
     };
-  }, [hasHeroImage, heroElement, scrollContainerRef]);
+  }, [hasHeroImage, heroElement, scrollContainerElement]);
 
   return (
     <header

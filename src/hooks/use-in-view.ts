@@ -1,12 +1,12 @@
 'use client';
 
-import { type RefObject, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type UseInViewParams = {
-  /** 가시성을 관찰할 대상 요소 ref */
-  targetRef: RefObject<Element | null>;
-  /** 교차 영역으로 사용할 스크롤 컨테이너 ref (생략 시 뷰포트) */
-  rootRef?: RefObject<Element | null>;
+  /** 가시성을 관찰할 대상 요소 */
+  target: Element | null;
+  /** 교차 영역으로 사용할 스크롤 컨테이너 (생략 시 뷰포트) */
+  root?: Element | null;
   /** 대상이 마운트된 뒤 관찰을 시작하기 위한 활성화 플래그 */
   enabled?: boolean;
   /** 교차 영역을 확장/축소하는 마진 (IntersectionObserver rootMargin) */
@@ -18,12 +18,12 @@ type UseInViewParams = {
 /**
  * IntersectionObserver로 대상 요소가 화면(또는 컨테이너)에 보이는지 관찰하는 훅.
  *
- * @param params 관찰 대상 ref와 루트/마진/임계값 등의 옵션
+ * @param params 관찰 대상과 루트/마진/임계값 등의 옵션
  * @returns 대상이 화면(또는 컨테이너)에 보이는지 여부
  */
 export function useInView({
-  targetRef,
-  rootRef,
+  target,
+  root,
   enabled = true,
   rootMargin,
   threshold = 0,
@@ -31,24 +31,20 @@ export function useInView({
   const [isInView, setIsInView] = useState(true);
 
   useEffect(() => {
-    if (!enabled) return;
-
-    const target = targetRef.current;
-
-    if (!target) return;
+    if (!enabled || !target) return;
 
     const observer = new IntersectionObserver(
       ([entry]) =>
         setIsInView(
           entry.isIntersecting && entry.intersectionRatio >= threshold,
         ),
-      { root: rootRef?.current ?? null, rootMargin, threshold },
+      { root: root ?? null, rootMargin, threshold },
     );
 
     observer.observe(target);
 
     return () => observer.disconnect();
-  }, [enabled, targetRef, rootRef, rootMargin, threshold]);
+  }, [enabled, target, root, rootMargin, threshold]);
 
   return isInView;
 }

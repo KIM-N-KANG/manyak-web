@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Image01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -77,13 +77,17 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     setIsThumbnailViewerOpen(true);
   };
 
-  const contentRef = useRef<HTMLElement>(null);
+  const [contentElement, setContentElement] = useState<HTMLElement | null>(
+    null,
+  );
   const [heroElement, setHeroElement] = useState<HTMLDivElement | null>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [titleElement, setTitleElement] = useState<HTMLHeadingElement | null>(
+    null,
+  );
 
   const isTitleInView = useInView({
-    targetRef: titleRef,
-    rootRef: contentRef,
+    target: titleElement,
+    root: contentElement,
     enabled: Boolean(story),
     rootMargin: '-56px 0px 0px',
   });
@@ -96,7 +100,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         title={story?.title ?? ''}
         showTitle={showTitle}
         hasHeroImage={Boolean(thumbnailUrl)}
-        scrollContainerRef={contentRef}
+        scrollContainerElement={contentElement}
         heroElement={heroElement}
       />
 
@@ -134,7 +138,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             className="flex min-h-0 flex-1 flex-col"
             {...FADE_TRANSITION_PROPS}>
             <main
-              ref={contentRef}
+              ref={setContentElement}
               className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain">
               <div ref={setHeroElement} className="shrink-0">
                 {thumbnailUrl ? (
@@ -181,7 +185,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
               <div className="px-4 pt-4">
                 <StoryInfoSection
                   story={story}
-                  titleRef={titleRef}
+                  titleRef={setTitleElement}
                   startSettingValue={activeStartSetting}
                   onStartSettingValueChange={setSelectedStartSetting}
                 />
