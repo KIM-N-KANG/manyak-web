@@ -7,9 +7,9 @@ import { toast } from 'sonner';
 
 import { getMeQueryKey } from '@/api/generated/endpoints/auth/auth';
 import { useRedeemInviteCode as useRedeemInviteCodeMutation } from '@/api/generated/endpoints/invite/invite';
-import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { track } from '@/observability/analytics';
 
+import { INVITE_REWARD_COPY } from '../constants';
 import {
   type InviteCodeSource,
   normalizeInviteCode,
@@ -42,7 +42,7 @@ export function useRedeemInviteCode({
 
         setErrorMessage(null);
         track('client_invite_codeInput_succeeded', { source });
-        toast.success(TOAST_MESSAGE.INVITE_REDEEMED);
+        toast.success(INVITE_REWARD_COPY.redeemedToast);
         void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
         onSuccess?.();
       },

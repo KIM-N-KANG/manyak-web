@@ -18,6 +18,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
+import { INVITE_REWARD_COPY } from '../constants';
 import { InviteOnboardingCodeForm } from './invite-onboarding-code-form';
 
 export function InviteOnboardingSheet() {
@@ -127,7 +128,7 @@ export function InviteOnboardingSheet() {
         overlayClassName="absolute">
         <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
           <DrawerTitle className="text-xl leading-snug font-bold whitespace-pre-line">
-            {'초대 코드를 등록하면\n500 크레딧을 받을 수 있어요'}
+            {INVITE_REWARD_COPY.onboardingTitle}
           </DrawerTitle>
           <DrawerDescription className="text-base leading-relaxed">
             지금은 건너뛰고 나중에 등록해도 돼요
@@ -140,7 +141,7 @@ export function InviteOnboardingSheet() {
             role="status"
             aria-busy={isCompleting}>
             <p className="rounded-lg bg-muted p-4 text-sm">
-              500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요
+              {INVITE_REWARD_COPY.onboardingCloseFailed}
             </p>
             <Button
               type="button"

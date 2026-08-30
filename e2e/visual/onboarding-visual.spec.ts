@@ -1,3 +1,5 @@
+import { INVITE_REWARD_COPY } from '@/features/my/invite/constants';
+
 import {
   expect,
   mockMemberSession,
@@ -46,7 +48,7 @@ test.describe('온보딩 비주얼', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: '초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
+        name: INVITE_REWARD_COPY.onboardingTitle,
       }),
     ).toBeVisible();
     await waitForFonts(page);

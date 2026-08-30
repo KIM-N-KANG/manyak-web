@@ -7,11 +7,11 @@ import { toast } from 'sonner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 
+import { INVITE_REWARD_COPY } from '../constants';
+
 /** Kakao JS SDK v2 스크립트 URL(공식 CDN). invite-screen의 next/script로 lazy 로드한다. */
 export const KAKAO_SDK_URL =
   'https://t1.kakaocdn.net/kakao_js_sdk/2.7.7/kakao.min.js';
-
-const KAKAO_SHARE_TITLE = '초대 코드 등록하고 500 크레딧 받기 🎁';
 
 /**
  * 공유 카드 썸네일. 카카오 서버가 가져갈 수 있도록 절대 URL을 사용한다.
@@ -88,7 +88,7 @@ export function useKakaoShare() {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: KAKAO_SHARE_TITLE,
+          title: INVITE_REWARD_COPY.kakaoShareTitle,
           description: `초대 코드: ${inviteCode}`,
           imageUrl: shareImageUrl(),
           link,
