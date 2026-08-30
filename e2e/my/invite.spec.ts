@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 
+import { INVITE_PAGE_REWARD_DESCRIPTION } from '@/features/my/invite/constants';
+
 import {
   expect,
   mockMemberSession,
@@ -82,6 +84,9 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
       '친구를 초대하고',
     );
+    await expect(
+      page.getByText(INVITE_PAGE_REWARD_DESCRIPTION, { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText('내 초대 코드', { exact: true })).toBeVisible();
     await expect(page.getByText(INVITE_CODE)).toBeVisible();
     await expect(page.getByText('이번 달 받은 보상 3/10회')).toBeVisible();
