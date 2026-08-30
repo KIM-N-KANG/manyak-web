@@ -8,6 +8,7 @@
 import type { GeneralStartSettingInput } from './generalStartSettingInput';
 import type { GeneralStorySettingsInput } from './generalStorySettingsInput';
 import type { MainEventItem } from './mainEventItem';
+import type { UpdateStoryRequestVisibility } from './updateStoryRequestVisibility';
 
 /**
  * 스토리 부분 갱신 요청. 보낸 필드만 교체하고 나머지는 유지한다.
@@ -48,4 +49,9 @@ export interface UpdateStoryRequest {
    * @nullable
    */
   mainEvents?: MainEventItem[] | null;
+  /**
+   * 공개 범위(PUBLIC · PRIVATE). 생략하면 현재 값을 유지한다.
+   * @nullable
+   */
+  visibility?: UpdateStoryRequestVisibility;
 }

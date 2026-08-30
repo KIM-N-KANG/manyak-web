@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 
+import { ACCOUNT_DELETION_CTA_LABEL } from '@/features/my/account-deletion/constants';
 import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
 import {
   LINK_RESULT_COOKIE,
@@ -161,6 +162,19 @@ test.describe('마이 비주얼', () => {
     await expect(page).toHaveScreenshot('invite-member.png');
   });
 
+  test('회원 탈퇴 확인 기본 상태 (MY-ACCOUNT-DELETION)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+
+    await page.goto('/my/account-deletion');
+
+    await expect(
+      page.getByRole('button', { name: ACCOUNT_DELETION_CTA_LABEL }),
+    ).toBeDisabled();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('account-deletion.png');
+  });
+
   test('서비스 안내 상단 (MY-INFO)', async ({ page }) => {
     await skipOnboarding(page);
 
@@ -180,7 +194,7 @@ test.describe('마이 비주얼', () => {
   });
 });
 
-/** 다크 모드 대표 스냅샷. 크레딧 카드·섹션 메뉴와 destructive(로그아웃) 토큰을 덮는다. */
+/** 다크 모드 대표 스냅샷. 크레딧 카드·섹션 메뉴와 destructive(회원 탈퇴) 토큰을 덮는다. */
 test.describe('마이 다크 모드 비주얼', () => {
   test.use({ colorScheme: 'dark' });
 

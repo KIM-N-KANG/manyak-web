@@ -55,4 +55,6 @@ export interface StoryDetailResponse {
   reachedEndings?: string[];
   /** 생성 시각 */
   createdAt?: string;
+  isOwner?: boolean;
+  isLiked?: boolean;
 }
