@@ -34,3 +34,4 @@ export const ACCOUNT_DELETION_CONFIRMATIONS = [
 ] as const;
 
 export const ACCOUNT_DELETION_CTA_LABEL = '회원 탈퇴하기';
+export const ACCOUNT_DELETION_PENDING_LABEL = '회원 탈퇴 중';
