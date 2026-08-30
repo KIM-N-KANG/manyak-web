@@ -17,10 +17,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import { isGuestOverLimit } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
-import type {
-  CreditShortageTrigger,
-  GuestLimitTrigger,
-} from '@/observability/analytics';
+import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
 /**
@@ -30,7 +27,7 @@ import { track } from '@/observability/analytics';
  *
  * @param storyId 채팅을 시작할 스토리 id
  * @param startSettingId 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용)
- * @returns 채팅 시작 함수와 진행/에러 상태, 한도·크레딧 다이얼로그 제어값
+ * @returns 채팅 시작 함수와 진행/에러 상태, 게스트 한도 바텀 시트 제어값
  */
 export function useStartChat(storyId: string, startSettingId?: string) {
   const router = useRouter();
@@ -38,9 +35,6 @@ export function useStartChat(storyId: string, startSettingId?: string) {
   const { status } = useSession();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
-  const [creditShortageTrigger, setCreditShortageTrigger] =
-    useState<CreditShortageTrigger | null>(null);
-
   const createChat = useCreateChat({
     mutation: {
       onSuccess: async (response) => {
@@ -63,18 +57,12 @@ export function useStartChat(storyId: string, startSettingId?: string) {
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: (error) => {
-        // 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도, 그 외는 실패 토스트.
-        // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
+        // 게스트 체험 한도면 로그인 유도, 그 외는 실패 토스트를 띄운다.
+        // 채팅 생성은 크레딧을 소모하지 않으므로 회원 크레딧 부족을 처리하지 않는다.
         const reason = resolvePaymentRequiredReason(error, status);
 
         if (reason === 'guest-trial-limit') {
           setGuestLimitTrigger('chat_start');
-
-          return;
-        }
-
-        if (reason === 'insufficient-credit') {
-          setCreditShortageTrigger('chat_start');
 
           return;
         }
@@ -101,7 +89,5 @@ export function useStartChat(storyId: string, startSettingId?: string) {
     isError: createChat.isError,
     guestLimitTrigger,
     closeGuestLimitDialog: () => setGuestLimitTrigger(null),
-    creditShortageTrigger,
-    closeCreditShortageDialog: () => setCreditShortageTrigger(null),
   };
 }

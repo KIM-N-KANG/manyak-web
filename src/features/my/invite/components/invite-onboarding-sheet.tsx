@@ -8,20 +8,21 @@ import { toast } from 'sonner';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
 import { InviteOnboardingCodeForm } from './invite-onboarding-code-form';
 
-export function InviteOnboardingDialog() {
+export function InviteOnboardingSheet() {
   const { data: session, status, update } = useSession();
+  const container = useAppFrameContainer();
   const [dismissedUserId, setDismissedUserId] = useState<string | null>(null);
   const [completingUserId, setCompletingUserId] = useState<string | null>(null);
   const [redeemedUserId, setRedeemedUserId] = useState<string | null>(null);
@@ -34,6 +35,7 @@ export function InviteOnboardingDialog() {
   const hasRedeemed = userId !== null && redeemedUserId === userId;
   const hasCloseFailed = userId !== null && closeFailedUserId === userId;
   const isOpen =
+    container !== null &&
     (status === 'authenticated' || isCompleting) &&
     userId !== null &&
     session?.inviteOnboardingPending === true &&
@@ -115,35 +117,43 @@ export function InviteOnboardingDialog() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain">
-        <DialogHeader>
-          <DialogTitle>초대 코드가 있나요?</DialogTitle>
-          <DialogDescription className="leading-relaxed">
-            친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer
+      open={isOpen}
+      dismissible={!isCompleting}
+      onOpenChange={handleOpenChange}>
+      <DrawerContent
+        container={container}
+        className="absolute overflow-y-auto overscroll-contain"
+        overlayClassName="absolute">
+        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
+          <DrawerTitle className="text-xl leading-snug font-bold whitespace-pre-line">
+            {'초대 코드를 등록하면\n500 크레딧을 받을 수 있어요'}
+          </DrawerTitle>
+          <DrawerDescription className="text-base leading-relaxed">
+            지금은 건너뛰고 나중에 등록해도 돼요
+          </DrawerDescription>
+        </DrawerHeader>
 
         {hasCloseFailed ? (
-          <div className="contents" role="status" aria-busy={isCompleting}>
+          <div
+            className="flex flex-col gap-8 px-4 pt-8 pb-4"
+            role="status"
+            aria-busy={isCompleting}>
             <p className="rounded-lg bg-muted p-4 text-sm">
               500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요
             </p>
-            <DialogFooter className="grid-cols-1">
-              <Button
-                type="button"
-                className="relative"
-                disabled={isCompleting}
-                onClick={() => void complete({ fromRedeem: true })}>
-                <LoadingButtonContent
-                  isLoading={isCompleting}
-                  loadingLabel="닫는 중">
-                  닫기
-                </LoadingButtonContent>
-              </Button>
-            </DialogFooter>
+            <Button
+              type="button"
+              size="lg"
+              className="relative w-full"
+              disabled={isCompleting}
+              onClick={() => void complete({ fromRedeem: true })}>
+              <LoadingButtonContent
+                isLoading={isCompleting}
+                loadingLabel="닫는 중">
+                닫기
+              </LoadingButtonContent>
+            </Button>
           </div>
         ) : (
           <InviteOnboardingCodeForm
@@ -154,7 +164,7 @@ export function InviteOnboardingDialog() {
             onSuccess={handleRedeemSuccess}
           />
         )}
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }

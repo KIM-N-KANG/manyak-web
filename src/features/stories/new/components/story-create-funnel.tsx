@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
-import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { StoryCreateResumeDialog } from '@/features/stories/_shared/components/story-create-resume-dialog';
 import { track } from '@/observability/analytics';
 
@@ -37,8 +36,6 @@ export function StoryCreateFunnel() {
     guestLimitTrigger,
     isGuestLimitReached,
     closeGuestLimitDialog,
-    creditShortageTrigger,
-    closeCreditShortageDialog,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
@@ -142,19 +139,11 @@ export function StoryCreateFunnel() {
         onContinue={handleResumeContinue}
         onDiscard={handleResumeDiscard}
       />
-      <LoginRequiredDialog
+      <LoginRequiredSheet
         trigger={guestLimitTrigger}
         onOpenChange={(open) => {
           if (!open) {
             closeGuestLimitDialog();
-          }
-        }}
-      />
-      <CreditShortageDialog
-        trigger={creditShortageTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeCreditShortageDialog();
           }
         }}
       />

@@ -26,7 +26,7 @@ import {
 } from '@/constants/site';
 import { AutoMigration } from '@/features/auth/_shared/components/auto-migration';
 import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
-import { InviteOnboardingDialog } from '@/features/my/invite/components/invite-onboarding-dialog';
+import { InviteOnboardingSheet } from '@/features/my/invite/components/invite-onboarding-sheet';
 
 export const metadata: Metadata = {
   // 하위 화면이 제목을 선언하면 `제목 - 마냑`으로 붙고, 없으면 기본 문서 제목이 남는다.
@@ -112,7 +112,7 @@ export default function RootLayout({
                     <SessionExpiryWatcher />
                     <AutoMigration />
                     <HandoffCleanup />
-                    <InviteOnboardingDialog />
+                    <InviteOnboardingSheet />
                   </MotionProvider>
                 </ThemeProvider>
               </QueryProvider>

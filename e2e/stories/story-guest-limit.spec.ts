@@ -1,9 +1,9 @@
 import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
+import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
 import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
 
-import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
 
 /**
@@ -47,7 +47,7 @@ const mockStoryDetail = async (page: Page) => {
 };
 
 test.describe('스토리 게스트 한도 게이팅', () => {
-  test('스토리 생성 한도(1)에 도달한 게스트가 제작 FAB를 누르면 이동 없이 로그인 유도 다이얼로그를 띄운다 (US-10-5)', async ({
+  test('스토리 생성 한도(1)에 도달한 게스트가 제작 FAB를 누르면 이동 없이 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
     page,
   }) => {
     // 저장된 스토리 ID 1개가 storyCreate 카운터 시드로도 작용한다(guest-usage-storage).
@@ -69,7 +69,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     const dialog = page.getByRole('dialog');
 
     await expect(
-      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
@@ -78,7 +78,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('채팅 한도(5)에 도달한 게스트가 상세에서 채팅을 시작하면 요청 없이 로그인 유도 다이얼로그를 띄운다 (US-10-5)', async ({
+  test('채팅 한도(5)에 도달한 게스트가 상세에서 채팅을 시작하면 요청 없이 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
     page,
   }) => {
     let createChatCount = 0;
@@ -96,13 +96,13 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     const dialog = page.getByRole('dialog');
 
     await expect(
-      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/stories\/s1$/);
     expect(createChatCount).toBe(0);
   });
 
-  test('게스트 채팅 생성이 402(체험 한도)로 거절되면 실패 토스트가 아닌 로그인 다이얼로그를 띄운다 (STORY-LIMIT-08)', async ({
+  test('게스트 채팅 생성이 402(체험 한도)로 거절되면 실패 토스트가 아닌 로그인 바텀 시트를 띄운다 (STORY-LIMIT-08)', async ({
     page,
   }) => {
     // 로컬 카운터는 미달(0)이어도 서버 판정이 최종이다.
@@ -115,30 +115,11 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
 
     await expect(
-      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     await expect(page.getByText('채팅을 시작하지 못했어요')).toBeHidden();
     await expect(page).toHaveURL(/\/stories\/s1$/);
-  });
-
-  test('회원 채팅 생성이 402(크레딧 부족)로 거절되면 크레딧 부족 다이얼로그를 띄운다 (STORY-LIMIT-08)', async ({
-    page,
-  }) => {
-    await mockMemberSession(page);
-    await mockStoryDetail(page);
-    await page.route(CREATE_CHAT, async (route) => {
-      await route.fulfill(paymentRequired('INSUFFICIENT_CREDIT'));
-    });
-
-    await page.goto('/stories/s1');
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
-
-    const dialog = page.getByRole('dialog');
-
-    await expect(dialog.getByText('크레딧이 부족해요')).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: '친구 초대 하러 가기' }),
-    ).toBeVisible();
-    await expect(page.getByText('채팅을 시작하지 못했어요')).toBeHidden();
   });
 });

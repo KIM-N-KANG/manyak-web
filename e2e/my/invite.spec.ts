@@ -497,13 +497,13 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   });
 });
 
-test.describe('신규 가입 초대 코드 다이얼로그', () => {
+test.describe('신규 가입 초대 코드 바텀 시트', () => {
   async function preparePendingMember(page: Page): Promise<void> {
     await skipOnboarding(page);
     await mockMemberSession(page, { inviteOnboardingPending: true });
   }
 
-  test('신규 회원에게만 초대 코드 다이얼로그를 표시하고 초점은 팝업에 둔다', async ({
+  test('신규 회원에게만 초대 코드 바텀 시트를 표시하고 입력에는 자동 초점을 주지 않는다', async ({
     page,
   }) => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
@@ -513,18 +513,15 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
 
     await expect(dialog).toBeVisible();
     await expect(
-      dialog.getByRole('heading', { name: '초대 코드가 있나요?' }),
+      dialog.getByRole('heading', {
+        name: '초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
+      }),
     ).toBeVisible();
-    await expect(dialog).toContainText(
-      '친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
-    );
-    await expect(dialog).toBeFocused();
+    await expect(dialog).toContainText('지금은 건너뛰고 나중에 등록해도 돼요');
     await expect(
       dialog.getByLabel('초대 코드', { exact: true }),
     ).not.toBeFocused();
-    await expect(
-      dialog.getByRole('button', { name: '나중에 하기' }),
-    ).toBeVisible();
+    await expect(dialog.getByRole('button', { name: '닫기' })).toBeVisible();
     await expect(
       dialog.getByRole('button', { name: '등록하기' }),
     ).toBeVisible();
@@ -533,7 +530,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('"나중에 하기"를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
+  test('"닫기"를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
     page,
   }) => {
     await preparePendingMember(page);
@@ -547,7 +544,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 하기' }).click();
+    await page.getByRole('button', { name: '닫기' }).click();
 
     const response = await updateResponse;
 
@@ -656,7 +653,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(page.getByText('창을 닫지 못했어요')).toHaveCount(0);
   });
 
-  test('열려 있던 게스트 온보딩은 인증 전환 시 닫혀 초대 다이얼로그와 겹치지 않는다', async ({
+  test('열려 있던 게스트 온보딩은 인증 전환 시 닫혀 초대 바텀 시트와 겹치지 않는다', async ({
     page,
   }) => {
     let isAuthenticated = false;
@@ -692,7 +689,9 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     });
 
     await expect(
-      page.getByRole('heading', { name: '초대 코드가 있나요?' }),
+      page.getByRole('heading', {
+        name: '초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
+      }),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', {
@@ -777,7 +776,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(
       page.getByText('500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요'),
     ).toHaveCount(0);
-    await expect(page.getByRole('button', { name: '닫기' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '닫기' })).toBeDisabled();
 
     releaseUpdate();
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -856,7 +855,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     );
 
     await page
-      .locator('[data-slot="dialog-overlay"]')
+      .locator('[data-slot="drawer-overlay"]')
       .click({ position: { x: 4, y: 4 } });
 
     const response = await updateResponse;

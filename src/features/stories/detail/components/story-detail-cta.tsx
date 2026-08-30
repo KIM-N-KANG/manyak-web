@@ -1,9 +1,8 @@
 'use client';
 
-import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
-import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 
 import { useStartChat } from '../hooks/use-start-chat';
 
@@ -17,14 +16,8 @@ export function StoryDetailCta({
   storyId,
   startSettingId,
 }: StoryDetailCtaProps) {
-  const {
-    startChat,
-    isStarting,
-    guestLimitTrigger,
-    closeGuestLimitDialog,
-    creditShortageTrigger,
-    closeCreditShortageDialog,
-  } = useStartChat(storyId, startSettingId);
+  const { startChat, isStarting, guestLimitTrigger, closeGuestLimitDialog } =
+    useStartChat(storyId, startSettingId);
 
   return (
     <>
@@ -45,19 +38,11 @@ export function StoryDetailCta({
           </Button>
         </div>
       </nav>
-      <LoginRequiredDialog
+      <LoginRequiredSheet
         trigger={guestLimitTrigger}
         onOpenChange={(open) => {
           if (!open) {
             closeGuestLimitDialog();
-          }
-        }}
-      />
-      <CreditShortageDialog
-        trigger={creditShortageTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeCreditShortageDialog();
           }
         }}
       />

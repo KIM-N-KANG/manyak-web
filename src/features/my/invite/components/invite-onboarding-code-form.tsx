@@ -4,7 +4,6 @@ import { type SubmitEvent, useId, useState } from 'react';
 
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
-import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,7 +46,10 @@ export function InviteOnboardingCodeForm({
   };
 
   return (
-    <form className="contents" aria-busy={isBusy} onSubmit={handleSubmit}>
+    <form
+      className="flex flex-col gap-8 px-4 pt-8 pb-4"
+      aria-busy={isBusy}
+      onSubmit={handleSubmit}>
       <FieldGroup>
         <Field
           data-invalid={Boolean(errorMessage)}
@@ -74,22 +76,28 @@ export function InviteOnboardingCodeForm({
         </Field>
       </FieldGroup>
 
-      <DialogFooter>
+      <div className="flex flex-col gap-1">
         <Button
-          type="button"
-          variant="secondary"
-          disabled={isBusy}
-          onClick={onSkip}>
-          나중에 하기
-        </Button>
-        <Button className="relative" type="submit" disabled={isBusy}>
+          className="relative w-full"
+          type="submit"
+          size="lg"
+          disabled={isBusy}>
           <LoadingButtonContent
             isLoading={isRedeeming || isSubmitPending}
             loadingLabel="등록 중">
             등록하기
           </LoadingButtonContent>
         </Button>
-      </DialogFooter>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-full text-foreground-secondary"
+          disabled={isBusy}
+          onClick={onSkip}>
+          닫기
+        </Button>
+      </div>
     </form>
   );
 }

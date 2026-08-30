@@ -11,6 +11,7 @@ export const TOAST_MESSAGE = {
   STORYLINE_DISLIKED: '싫어요를 남겼어요',
   STORYLINE_EVALUATE_FAILED: '평가 저장에 실패했어요',
   RESPONSE_STREAM_FAILED: '응답 생성에 실패했어요',
+  CREDIT_SHORTAGE: '크레딧이 부족해요',
   FEEDBACK_SUBMITTED: '소중한 피드백을 보내주셔서 감사해요',
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요',
   LOGIN_FAILED: '로그인에 실패했어요',
