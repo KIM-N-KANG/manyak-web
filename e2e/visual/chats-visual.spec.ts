@@ -1,4 +1,5 @@
-import { mockMemberSession } from '../fixtures/auth';
+import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+
 import {
   expect,
   seedChatIds,
@@ -249,7 +250,7 @@ test.describe('채팅 오버레이 비주얼', () => {
     await expect(page).toHaveScreenshot('confirm-alert-dialog.png');
   });
 
-  test('게스트 한도 로그인 유도 다이얼로그 (CHAT-LIMIT-01)', async ({
+  test('게스트 한도 로그인 유도 바텀 시트 (CHAT-LIMIT-01)', async ({
     page,
   }) => {
     await seedGuestUsage(page, { chat: 5 });
@@ -257,30 +258,12 @@ test.describe('채팅 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 
     await expect(
-      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('login-required-dialog.png');
-  });
-
-  test('회원 크레딧 부족 다이얼로그 (CHAT-LIMIT-03)', async ({ page }) => {
-    await mockMemberSession(page);
-    await page.route('**/api/v1/chats/c1/turns/stream', async (route) => {
-      await route.fulfill({
-        status: 402,
-        contentType: 'application/json',
-        body: JSON.stringify({ code: 'INSUFFICIENT_CREDIT' }),
-      });
-    });
-
-    await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
-
-    await expect(
-      page.getByRole('dialog').getByText('크레딧이 부족해요'),
-    ).toBeVisible();
-    await waitForFonts(page);
-    await expect(page).toHaveScreenshot('credit-shortage-dialog.png');
+    await expect(page).toHaveScreenshot('login-required-sheet.png');
   });
 });
 

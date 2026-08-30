@@ -1,6 +1,11 @@
 import type { Page } from '@playwright/test';
 
 import {
+  INVITE_REWARD_AMOUNT,
+  INVITE_REWARD_COPY,
+} from '@/features/my/invite/constants';
+
+import {
   expect,
   mockMemberSession,
   skipOnboarding,
@@ -82,6 +87,9 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
       '친구를 초대하고',
     );
+    await expect(
+      page.getByText(INVITE_REWARD_COPY.pageDescription, { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText('내 초대 코드', { exact: true })).toBeVisible();
     await expect(page.getByText(INVITE_CODE)).toBeVisible();
     await expect(page.getByText('이번 달 받은 보상 3/10회')).toBeVisible();
@@ -175,9 +183,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     );
     const homeUrl = new URL('/', page.url()).toString();
 
-    expect(settings?.content.title).toBe(
-      '초대 코드 등록하고 500 크레딧 받기 🎁',
-    );
+    expect(settings?.content.title).toBe(INVITE_REWARD_COPY.kakaoShareTitle);
     expect(settings?.content.description).toBe(`초대 코드: ${INVITE_CODE}`);
     expect(settings?.content.link).toEqual({
       mobileWebUrl: homeUrl,
@@ -213,7 +219,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     ).toBeEnabled();
   });
 
-  test('입력 코드를 정규화해 제출하고 500 크레딧 성공을 안내한다', async ({
+  test(`입력 코드를 정규화해 제출하고 ${INVITE_REWARD_AMOUNT.toLocaleString('ko-KR')} 크레딧 성공을 안내한다`, async ({
     page,
   }) => {
     await prepareMemberInvitePage(page);
@@ -222,7 +228,9 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
 
     await page.route(REDEEM_API, async (route) => {
       requestBody = route.request().postDataJSON();
-      await route.fulfill({ json: { amount: 500, balance: 1_000 } });
+      await route.fulfill({
+        json: { amount: INVITE_REWARD_AMOUNT, balance: 1_000 },
+      });
     });
     await page.goto('/my/invite');
 
@@ -230,7 +238,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await page.getByRole('button', { name: '등록', exact: true }).click();
 
     await expect(
-      page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
+      page.getByText(INVITE_REWARD_COPY.redeemedToast),
     ).toBeVisible();
     expect(requestBody).toEqual({ code: INVITE_CODE });
   });
@@ -252,7 +260,9 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await page.route(REDEEM_API, async (route) => {
       markRequestReceived();
       await redeemReleased;
-      await route.fulfill({ json: { amount: 500, balance: 1_000 } });
+      await route.fulfill({
+        json: { amount: INVITE_REWARD_AMOUNT, balance: 1_000 },
+      });
     });
     await page.goto('/my/invite');
 
@@ -294,7 +304,9 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
 
     await page.route(REDEEM_API, async (route) => {
       requestCount += 1;
-      await route.fulfill({ json: { amount: 500, balance: 1_000 } });
+      await route.fulfill({
+        json: { amount: INVITE_REWARD_AMOUNT, balance: 1_000 },
+      });
     });
     await page.goto('/my/invite');
 
@@ -497,13 +509,13 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   });
 });
 
-test.describe('신규 가입 초대 코드 다이얼로그', () => {
+test.describe('신규 가입 초대 코드 바텀 시트', () => {
   async function preparePendingMember(page: Page): Promise<void> {
     await skipOnboarding(page);
     await mockMemberSession(page, { inviteOnboardingPending: true });
   }
 
-  test('신규 회원에게만 초대 코드 다이얼로그를 표시하고 초점은 팝업에 둔다', async ({
+  test('신규 회원에게만 초대 코드 바텀 시트를 표시하고 입력에는 자동 초점을 주지 않는다', async ({
     page,
   }) => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
@@ -513,18 +525,15 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
 
     await expect(dialog).toBeVisible();
     await expect(
-      dialog.getByRole('heading', { name: '초대 코드가 있나요?' }),
+      dialog.getByRole('heading', {
+        name: INVITE_REWARD_COPY.onboardingTitle,
+      }),
     ).toBeVisible();
-    await expect(dialog).toContainText(
-      '친구에게 받은 초대 코드를 등록하면 500 크레딧을 받을 수 있어요',
-    );
-    await expect(dialog).toBeFocused();
+    await expect(dialog).toContainText('지금은 건너뛰고 나중에 등록해도 돼요');
     await expect(
       dialog.getByLabel('초대 코드', { exact: true }),
     ).not.toBeFocused();
-    await expect(
-      dialog.getByRole('button', { name: '나중에 하기' }),
-    ).toBeVisible();
+    await expect(dialog.getByRole('button', { name: '닫기' })).toBeVisible();
     await expect(
       dialog.getByRole('button', { name: '등록하기' }),
     ).toBeVisible();
@@ -533,7 +542,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('"나중에 하기"를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
+  test('"닫기"를 누르면 세션 플래그를 소비해 새로고침 후에도 닫혀 있다', async ({
     page,
   }) => {
     await preparePendingMember(page);
@@ -547,7 +556,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
         response.request().method() === 'POST',
     );
 
-    await page.getByRole('button', { name: '나중에 하기' }).click();
+    await page.getByRole('button', { name: '닫기' }).click();
 
     const response = await updateResponse;
 
@@ -630,7 +639,9 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
       sessionUpdateStatus: 500,
     });
     await page.route(REDEEM_API, (route) =>
-      route.fulfill({ json: { amount: 500, balance: 1_000 } }),
+      route.fulfill({
+        json: { amount: INVITE_REWARD_AMOUNT, balance: 1_000 },
+      }),
     );
     await page.goto('/');
 
@@ -645,18 +656,18 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await updateResponse;
 
     await expect(
-      page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
+      page.getByText(INVITE_REWARD_COPY.redeemedToast),
     ).toBeVisible();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByLabel('초대 코드', { exact: true })).toHaveCount(0);
     await expect(
-      page.getByText('500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요'),
+      page.getByText(INVITE_REWARD_COPY.onboardingCloseFailed),
     ).toBeVisible();
     await expect(page.getByRole('button', { name: '닫기' })).toBeVisible();
     await expect(page.getByText('창을 닫지 못했어요')).toHaveCount(0);
   });
 
-  test('열려 있던 게스트 온보딩은 인증 전환 시 닫혀 초대 다이얼로그와 겹치지 않는다', async ({
+  test('열려 있던 게스트 온보딩은 인증 전환 시 닫혀 초대 바텀 시트와 겹치지 않는다', async ({
     page,
   }) => {
     let isAuthenticated = false;
@@ -692,7 +703,9 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     });
 
     await expect(
-      page.getByRole('heading', { name: '초대 코드가 있나요?' }),
+      page.getByRole('heading', {
+        name: INVITE_REWARD_COPY.onboardingTitle,
+      }),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', {
@@ -707,7 +720,9 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
   }) => {
     await preparePendingMember(page);
     await page.route(REDEEM_API, (route) =>
-      route.fulfill({ json: { amount: 500, balance: 1_000 } }),
+      route.fulfill({
+        json: { amount: INVITE_REWARD_AMOUNT, balance: 1_000 },
+      }),
     );
     await page.goto('/');
 
@@ -722,7 +737,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await updateResponse;
 
     await expect(
-      page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
+      page.getByText(INVITE_REWARD_COPY.redeemedToast),
     ).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
@@ -761,7 +776,9 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
       });
     });
     await page.route(REDEEM_API, (route) =>
-      route.fulfill({ json: { amount: 500, balance: 1_000 } }),
+      route.fulfill({
+        json: { amount: INVITE_REWARD_AMOUNT, balance: 1_000 },
+      }),
     );
     await page.goto('/');
 
@@ -770,14 +787,14 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await updateReceived;
 
     await expect(
-      page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
+      page.getByText(INVITE_REWARD_COPY.redeemedToast),
     ).toBeVisible();
     await expect(page.getByLabel('초대 코드', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '등록 중' })).toBeDisabled();
     await expect(
-      page.getByText('500 크레딧은 정상 지급되었지만, 창을 닫는 데 실패했어요'),
+      page.getByText(INVITE_REWARD_COPY.onboardingCloseFailed),
     ).toHaveCount(0);
-    await expect(page.getByRole('button', { name: '닫기' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '닫기' })).toBeDisabled();
 
     releaseUpdate();
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -800,7 +817,9 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     await page.route(REDEEM_API, async (route) => {
       markRequestReceived();
       await redeemReleased;
-      await route.fulfill({ json: { amount: 500, balance: 1_000 } });
+      await route.fulfill({
+        json: { amount: INVITE_REWARD_AMOUNT, balance: 1_000 },
+      });
     });
     await page.goto('/');
 
@@ -835,7 +854,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     }
 
     await expect(
-      page.getByText('친구 초대 보상으로 500 크레딧을 받았어요'),
+      page.getByText(INVITE_REWARD_COPY.redeemedToast),
     ).toBeVisible();
   });
 
@@ -856,7 +875,7 @@ test.describe('신규 가입 초대 코드 다이얼로그', () => {
     );
 
     await page
-      .locator('[data-slot="dialog-overlay"]')
+      .locator('[data-slot="drawer-overlay"]')
       .click({ position: { x: 4, y: 4 } });
 
     const response = await updateResponse;

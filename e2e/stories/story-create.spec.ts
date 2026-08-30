@@ -5,6 +5,7 @@ import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usa
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   PROTAGONIST_CATEGORY,
+  STORY_COMPLETION_CREDIT_COST,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
 
@@ -474,6 +475,21 @@ test.describe('스토리 생성', () => {
 
     expect(settledHeight).toBe(initialHeight);
     await expect(page.getByRole('button', { name: '더보기' })).toBeVisible();
+  });
+
+  test('추가 정보 하단에 스토리 완성 크레딧 비용을 표시한다', async ({
+    page,
+  }) => {
+    await reachAdditionalInfo(page);
+
+    const creditCost = page.getByLabel(STORY_COMPLETION_CREDIT_COST.label);
+    const amount = creditCost.getByText(
+      String(STORY_COMPLETION_CREDIT_COST.amount),
+      { exact: true },
+    );
+
+    await expect(creditCost).toBeVisible();
+    await expect(amount).toHaveCSS('font-weight', '700');
   });
 
   test('추가 정보 입력의 Tab은 삭제 버튼을 건너뛰고 다음 입력으로 이동한다 (KNK-999)', async ({

@@ -35,6 +35,7 @@ import {
   isGuestOverLimit,
   isGuestUsageLimitReached,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
+import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 import type {
   DraftCreationRecord,
@@ -52,10 +53,7 @@ import {
 import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
-import type {
-  CreditShortageTrigger,
-  GuestLimitTrigger,
-} from '@/observability/analytics';
+import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
@@ -108,8 +106,6 @@ export function useStoryCreateFunnel() {
   const [hasCompleteStoryError, setHasCompleteStoryError] = useState(false);
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
-  const [creditShortageTrigger, setCreditShortageTrigger] =
-    useState<CreditShortageTrigger | null>(null);
   const [isGuestLimitReached, setIsGuestLimitReached] = useState(false);
   const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
   const [isReselectDialogOpen, setIsReselectDialogOpen] = useState(false);
@@ -190,9 +186,9 @@ export function useStoryCreateFunnel() {
     setHasCompleteStoryError(true);
   };
 
-  // 402 처리: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 크레딧 획득 유도 다이얼로그를 연다.
+  // 402 처리: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 토스트를 띄운다.
   // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
-  // 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행되고, 이 핸들러는 다이얼로그만 얹는다.
+  // 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행되고, 이 핸들러는 안내 UI만 띄운다.
   const handlePaymentRequiredError = (
     error: unknown,
     trigger: GuestLimitTrigger,
@@ -206,12 +202,12 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (reason === 'insufficient-credit') {
-      setCreditShortageTrigger(trigger);
+    if (reason === 'insufficient-credit' && trigger === 'story_create') {
+      showCreditShortageToast(trigger);
     }
   };
 
-  // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 다이얼로그를 열고 true를 반환한다.
+  // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 바텀 시트를 열고 true를 반환한다.
   // 각 진입점(생성·재생성·완료)의 사전 차단을 한 곳으로 모은다.
   const guardGuestLimit = (
     action: GuestUsageAction,
@@ -370,7 +366,14 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        handlePaymentRequiredError(error, 'chat_start');
+        // 채팅 생성은 크레딧을 소모하지 않는다. 게스트 한도 응답만 로그인 유도로 처리한다.
+        if (
+          resolvePaymentRequiredReason(error, sessionStatus) ===
+          'guest-trial-limit'
+        ) {
+          setGuestLimitTrigger('chat_start');
+        }
+
         failToAdditionalInfo('chat');
       },
     },
@@ -1060,8 +1063,6 @@ export function useStoryCreateFunnel() {
       setGuestLimitTrigger(null);
       setIsBackstopDismissed(true);
     },
-    creditShortageTrigger,
-    closeCreditShortageDialog: () => setCreditShortageTrigger(null),
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,

@@ -12,6 +12,7 @@ type ChatInputProps = {
   isStreaming: boolean;
   choicesEnabled: boolean;
   onChoicesEnabledChange: (enabled: boolean) => void;
+  showCreditCost: boolean;
 };
 
 export function ChatInput({
@@ -21,6 +22,7 @@ export function ChatInput({
   isStreaming,
   choicesEnabled,
   onChoicesEnabledChange,
+  showCreditCost,
 }: ChatInputProps) {
   if (mode === 'block') {
     return (
@@ -38,6 +40,7 @@ export function ChatInput({
         onModeChange={onModeChange}
         choicesEnabled={choicesEnabled}
         onChoicesEnabledChange={onChoicesEnabledChange}
+        showCreditCost={showCreditCost}
       />
     );
   }
@@ -56,6 +59,7 @@ export function ChatInput({
       onModeChange={onModeChange}
       choicesEnabled={choicesEnabled}
       onChoicesEnabledChange={onChoicesEnabledChange}
+      showCreditCost={showCreditCost}
     />
   );
 }

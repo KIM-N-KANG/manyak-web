@@ -1,5 +1,8 @@
 import { formatDocumentTitle } from '@/constants/site';
-import { SERVICE_INFO_TITLE } from '@/features/about/constants';
+import {
+  SERVICE_INFO_CREDIT_ITEMS,
+  SERVICE_INFO_TITLE,
+} from '@/features/about/constants';
 
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
@@ -46,6 +49,13 @@ test.describe('서비스 안내', () => {
     await expect(
       serviceInfoPage.getByRole('heading', { name: '크레딧 안내' }),
     ).toBeVisible();
+
+    for (const item of SERVICE_INFO_CREDIT_ITEMS) {
+      await expect(
+        serviceInfoPage.getByText(item, { exact: true }),
+      ).toBeVisible();
+    }
+
     await expect(
       serviceInfoPage.getByRole('heading', { name: '게스트 이용 안내' }),
     ).toBeVisible();

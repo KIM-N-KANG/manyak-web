@@ -1,6 +1,7 @@
 import { type Page } from '@playwright/test';
 
 import { DEFAULT_TITLE } from '@/constants/site';
+import { CHAT_TURN_CREDIT_COST_LABEL } from '@/features/chats/room/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -56,6 +57,35 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
+  test('회원 전송 버튼 왼쪽에 20 크레딧 비용을 작고 회색으로 표시한다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const creditCost = page.getByText(CHAT_TURN_CREDIT_COST_LABEL, {
+      exact: true,
+    });
+    const sendButton = page.locator('[data-tour="send"]');
+
+    await expect(creditCost).toBeVisible();
+    await expect(creditCost).toHaveCSS('font-size', '12px');
+    await expect(creditCost).toHaveClass(/text-foreground-secondary/);
+    await expect(creditCost.locator('xpath=..')).toHaveCSS('column-gap', '8px');
+    await expect(
+      creditCost.locator('xpath=following-sibling::*[1]'),
+    ).toHaveAttribute('data-tour', 'send');
+    await expect(sendButton).toBeVisible();
+  });
+
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({

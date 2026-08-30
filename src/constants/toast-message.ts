@@ -11,6 +11,7 @@ export const TOAST_MESSAGE = {
   STORYLINE_DISLIKED: '싫어요를 남겼어요',
   STORYLINE_EVALUATE_FAILED: '평가 저장에 실패했어요',
   RESPONSE_STREAM_FAILED: '응답 생성에 실패했어요',
+  CREDIT_SHORTAGE: '크레딧이 부족해요',
   FEEDBACK_SUBMITTED: '소중한 피드백을 보내주셔서 감사해요',
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요',
   LOGIN_FAILED: '로그인에 실패했어요',
@@ -26,7 +27,6 @@ export const TOAST_MESSAGE = {
   ATTENDANCE_FAILED: '출석 체크에 실패했어요',
   INVITE_CODE_COPIED: '초대 코드를 복사했어요',
   INVITE_CODE_COPY_FAILED: '초대 코드 복사에 실패했어요',
-  INVITE_REDEEMED: '친구 초대 보상으로 500 크레딧을 받았어요',
   INVITE_ONBOARDING_SAVE_FAILED: '창을 닫지 못했어요',
   INVITE_SHARE_FAILED: '카카오톡 공유를 열지 못했어요',
   LINK_SUCCEEDED: (providerLabel: string) =>

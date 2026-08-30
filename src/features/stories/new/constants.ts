@@ -1,3 +1,4 @@
+import { CREDIT_POLICY } from '@/constants/credit';
 import type { RevealHint } from '@/hooks/use-revealed-hints';
 
 import type {
@@ -182,6 +183,12 @@ export const getStorylineTabLabel = (index: number): string => {
 export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 
 export const SELECTED_TAGS_TRIGGER_LABEL = '선택한 키워드 보기';
+
+/** 추가 정보 단계 하단에 표시하는 스토리 완성 크레딧 비용. */
+export const STORY_COMPLETION_CREDIT_COST = {
+  label: '스토리 완성 크레딧 비용',
+  amount: CREDIT_POLICY.storyCompletion,
+} as const;
 
 export const STORYLINE_GENERATING_LOADING_PHRASES = [
   '선택한 키워드 살펴보는 중...',

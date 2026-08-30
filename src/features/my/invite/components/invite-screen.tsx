@@ -16,6 +16,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { track } from '@/observability/analytics';
 
+import { INVITE_REWARD_COPY } from '../constants';
 import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
 import { InviteCodeForm } from './invite-code-form';
 
@@ -108,7 +109,7 @@ export function InviteScreen() {
           함께 크레딧을 받아보세요
         </h1>
         <p className="text-foreground-secondary">
-          친구가 내 초대 코드를 등록하면 모두 500 크레딧을 받아요
+          {INVITE_REWARD_COPY.pageDescription}
         </p>
       </header>
 

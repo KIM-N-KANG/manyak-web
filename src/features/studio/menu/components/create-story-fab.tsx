@@ -10,7 +10,7 @@ import { useSession } from 'next-auth/react';
 
 import { useMainScroll } from '@/components/layout/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
-import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { isGuestOverLimit } from '@/features/auth/_shared/utils/guest-usage-storage';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 
@@ -62,7 +62,7 @@ export function CreateStoryFab({ onCreate }: CreateStoryFabProps) {
           </span>
         </m.span>
       </Link>
-      <LoginRequiredDialog
+      <LoginRequiredSheet
         trigger={guestLimitTrigger}
         onOpenChange={(open) => {
           if (!open) {
