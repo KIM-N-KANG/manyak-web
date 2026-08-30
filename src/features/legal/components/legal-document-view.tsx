@@ -1,9 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-
-import { ManyakLogo } from '@/components/layout/manyak-logo';
-import { APP_PATH } from '@/constants/app-path';
+import { HomeLogoHeader } from '@/components/layout/home-logo-header';
 import { useTrackOnView } from '@/observability/analytics';
 
 import type { LegalDocument } from '../types';
@@ -18,11 +15,7 @@ export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-14 shrink-0 items-center bg-background px-4">
-        <Link href={APP_PATH.MAIN.STORIES} aria-label="홈으로 이동">
-          <ManyakLogo className="h-6 w-auto text-primary" />
-        </Link>
-      </header>
+      <HomeLogoHeader />
       <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
         <article className="flex flex-col gap-8">
           <header className="flex flex-col gap-1">

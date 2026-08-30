@@ -164,8 +164,14 @@ test.describe('마이 비주얼', () => {
   test('서비스 안내 상단 (MY-INFO)', async ({ page }) => {
     await skipOnboarding(page);
 
-    await page.goto('/my/about');
+    await page.goto('/about');
 
+    await expect(
+      page.getByRole('heading', { level: 1, name: '서비스 안내' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
+    ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '크레딧 안내' }),
     ).toBeVisible();

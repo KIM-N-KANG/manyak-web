@@ -3,10 +3,7 @@ import type { Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
-import {
-  CREATE_STORY_FAB_COPY,
-  CREATED_STORY_SECTION_TITLE,
-} from '@/features/studio/menu/constants';
+import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -143,16 +140,9 @@ test.describe('홈·제작 스토리 목록', () => {
       page.getByText('마냑의 첫 이야기', { exact: true }),
     ).toBeHidden();
 
-    const createdHeading = page.getByRole('heading', {
-      name: CREATED_STORY_SECTION_TITLE,
-    });
-
-    await expect(createdHeading).toBeVisible();
-    await expect(createdHeading).toHaveCSS('font-weight', '700');
-    await expect(createdHeading.locator('xpath=../..')).toHaveCSS(
-      'padding-top',
-      '0px',
-    );
+    await expect(
+      page.getByRole('main').getByRole('heading', { level: 2 }),
+    ).toHaveCount(0);
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toBeVisible();
@@ -160,25 +150,42 @@ test.describe('홈·제작 스토리 목록', () => {
     const storyOptionsButton = page.getByRole('button', {
       name: '스토리 옵션 더보기',
     });
-    const turnCountBadge = page
-      .getByText('누적 턴 수', { exact: true })
-      .locator('xpath=../..');
-    const turnCountBackgroundColor = await turnCountBadge.evaluate(
-      (element) => getComputedStyle(element).backgroundColor,
+    const createdStoryLink = page.getByRole('link', {
+      name: '용의 계곡 상세 보기',
+    });
+    const createdStoryCard = createdStoryLink.locator('..');
+    const createdStoryCover = createdStoryCard.locator(
+      '[data-slot="aspect-ratio"]',
     );
-    const turnCountBackdropFilter = await turnCountBadge.evaluate(
-      (element) => getComputedStyle(element).backdropFilter,
-    );
+    const createdStoryTitle = createdStoryCard.getByText('용의 계곡', {
+      exact: true,
+    });
 
     await expect(storyOptionsButton).toBeVisible();
-    await expect(storyOptionsButton).toHaveCSS(
-      'background-color',
-      turnCountBackgroundColor,
-    );
-    await expect(storyOptionsButton).toHaveCSS(
-      'backdrop-filter',
-      turnCountBackdropFilter,
-    );
+    await expect(storyOptionsButton).toHaveCSS('width', '24px');
+    await expect(storyOptionsButton).toHaveCSS('height', '24px');
+    await expect(createdStoryCard).toHaveCSS('display', 'flex');
+    await expect(createdStoryCard).toHaveCSS('column-gap', '16px');
+    await expect(createdStoryCard).toHaveCSS('padding-top', '8px');
+    await expect(createdStoryCard).toHaveCSS('padding-right', '16px');
+    await expect(createdStoryCard).toHaveCSS('padding-bottom', '8px');
+    await expect(createdStoryCard).toHaveCSS('padding-left', '16px');
+    await expect(createdStoryCover).toHaveCSS('width', '128px');
+    await expect(createdStoryTitle).toHaveCSS('-webkit-line-clamp', '2');
+    await expect(createdStoryCard.getByText('2026-06-01')).toBeVisible();
+
+    const [mainBox, cardBox, linkBox] = await Promise.all([
+      page.getByRole('main').boundingBox(),
+      createdStoryCard.boundingBox(),
+      createdStoryLink.boundingBox(),
+    ]);
+
+    expect(mainBox).not.toBeNull();
+    expect(cardBox).not.toBeNull();
+    expect(linkBox).not.toBeNull();
+    expect(cardBox?.x).toBeCloseTo(mainBox?.x ?? 0);
+    expect(cardBox?.width).toBeCloseTo(mainBox?.width ?? 0);
+    expect(linkBox).toEqual(cardBox);
   });
 
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
@@ -202,7 +209,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
   });
 
-  test('만든 스토리가 없는 제작 화면은 제목과 기존 빈 상태만 표시한다 (KNK-988)', async ({
+  test('만든 스토리가 없는 제작 화면은 기존 빈 상태만 표시한다 (KNK-988)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -210,8 +217,8 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(
-      page.getByRole('heading', { name: CREATED_STORY_SECTION_TITLE }),
-    ).toBeVisible();
+      page.getByRole('main').getByRole('heading', { level: 2 }),
+    ).toHaveCount(0);
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
     await expect(
       page.getByRole('button', { name: '스토리 만들기' }),
@@ -318,6 +325,48 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(loading).toBeHidden();
   });
 
+  test('제작 목록 로딩 중에는 가로 카드 구조와 같은 스켈레톤을 보여준다 (KNK-1043)', async ({
+    page,
+  }) => {
+    await seedStoryIds(page, ['s1']);
+
+    let releaseResponse!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+
+    await page.route(STORIES_BATCH, async (route) => {
+      await responseGate;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const skeletonList = page.locator('main ul[aria-hidden="true"]');
+    const skeletonRows = skeletonList.locator(':scope > li');
+    const firstRow = skeletonRows.first();
+    const cover = firstRow.locator('[data-slot="aspect-ratio"]');
+
+    await expect(skeletonList).toBeVisible();
+    await expect(skeletonRows).toHaveCount(5);
+    await expect(firstRow).toHaveCSS('display', 'flex');
+    await expect(firstRow).toHaveCSS('column-gap', '16px');
+    await expect(firstRow).toHaveCSS('padding-top', '8px');
+    await expect(firstRow).toHaveCSS('padding-right', '16px');
+    await expect(firstRow).toHaveCSS('padding-bottom', '8px');
+    await expect(firstRow).toHaveCSS('padding-left', '16px');
+    await expect(cover).toHaveCSS('width', '128px');
+
+    releaseResponse();
+    await expect(
+      page.getByRole('link', { name: '용의 계곡 상세 보기' }),
+    ).toBeVisible();
+  });
+
   test('게스트는 헤더의 로그인 버튼으로 로그인 화면에 간다', async ({
     page,
   }) => {
@@ -395,8 +444,8 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(page.getByText(STORY_LIST_ERROR_TITLE)).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: CREATED_STORY_SECTION_TITLE }),
-    ).toBeVisible();
+      page.getByRole('main').getByRole('heading', { level: 2 }),
+    ).toHaveCount(0);
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toHaveCount(0);
@@ -426,8 +475,8 @@ test.describe('홈·제작 스토리 목록', () => {
       name: '스토리 옵션 더보기',
     });
 
-    await expect(optionsButton).toHaveCSS('width', '32px');
-    await expect(optionsButton).toHaveCSS('height', '32px');
+    await expect(optionsButton).toHaveCSS('width', '24px');
+    await expect(optionsButton).toHaveCSS('height', '24px');
     await optionsButton.click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
