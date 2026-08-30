@@ -58,6 +58,54 @@ export const RedeemInviteCodeResponse = zod.unknown();
 export const ClaimAttendanceResponse = zod.unknown();
 
 /**
+ * 스토리를 신고합니다. 인증 필수이며(게스트 불가) 같은 스토리를 다시 신고해도 같은 201로 응답합니다(멱등 — 행이 늘거나 알림이 중복 발송되지 않습니다). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 신고 등록
+ */
+export const ReportStoryParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const reportStoryBodyDetailMin = 0;
+export const reportStoryBodyDetailMax = 500;
+
+export const ReportStoryBody = zod
+  .object({
+    reason: zod
+      .enum(['SPAM', 'INAPPROPRIATE', 'ETC'])
+      .optional()
+      .describe('신고 사유'),
+    detail: zod
+      .string()
+      .min(reportStoryBodyDetailMin)
+      .max(reportStoryBodyDetailMax)
+      .nullish()
+      .describe('자유 서술(선택, 500자 이내). ETC 사유의 맥락 전달용.'),
+  })
+  .describe('스토리 신고 요청(KNK-1020)');
+
+export const ReportStoryResponse = zod.void();
+
+/**
+ * 스토리에 좋아요를 등록합니다(like만 있고 dislike는 없습니다). 인증 필수이며(게스트 불가) 이미 좋아요한 스토리를 다시 등록해도 같은 204로 응답합니다(멱등). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 좋아요 등록
+ */
+export const LikeStoryParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const LikeStoryResponse = zod.void();
+
+/**
+ * 스토리 좋아요를 취소합니다. 인증 필수이며(게스트 불가) 좋아요하지 않은 스토리를 취소해도 같은 204로 응답합니다(멱등). 읽을 수 없는 스토리는 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 좋아요 취소
+ */
+export const UnlikeStoryParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const UnlikeStoryResponse = zod.void();
+
+/**
  * 선택한 스토리라인과 추가 정보를 AI 서버에 전달해 최종 스토리를 생성하고 저장합니다. 응답으로 받은 id는 클라이언트 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다.
  * @summary 간편 제작 스토리 생성
  */
@@ -882,7 +930,7 @@ export const DeleteStoryParams = zod.object({
 export const DeleteStoryResponse = zod.void();
 
 /**
- * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404.
+ * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404. 스토리 공개 전환(PRIVATE↔PUBLIC)도 별도 엔드포인트 없이 visibility 부분 갱신으로 수행하며, 전환은 읽기 가시성에 즉시 반영됩니다. 단 등록되지 않은(PUBLISHED가 아닌) 스토리의 공개 범위 변경은 400입니다(읽기 게이트상 공개해도 읽히지 않는 모순 방지).
  * @summary 스토리 수정(부분 갱신)
  */
 export const UpdateStoryParams = zod.object({
@@ -1049,6 +1097,10 @@ export const UpdateStoryBody = zod
       .min(updateStoryBodyMainEventsMin)
       .max(updateStoryBodyMainEventsMax)
       .nullish(),
+    visibility: zod
+      .enum(['PUBLIC', 'PRIVATE'])
+      .nullish()
+      .describe('공개 범위(PUBLIC · PRIVATE). 생략하면 현재 값을 유지한다.'),
   })
   .describe('스토리 부분 갱신 요청. 보낸 필드만 교체하고 나머지는 유지한다.');
 
@@ -1190,3 +1242,9 @@ export const StatusHeader = zod.object({
 });
 
 export const StatusResponse = zod.unknown();
+
+/**
+ * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
+ * @summary 회원 탈퇴
+ */
+export const WithdrawResponse = zod.void();

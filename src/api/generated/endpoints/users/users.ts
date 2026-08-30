@@ -9,14 +9,17 @@ import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import type { ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
@@ -382,3 +385,104 @@ export function useGetMyChats<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+export type withdrawResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type withdrawResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type withdrawResponseSuccess = withdrawResponse204 & {
+  headers: Headers;
+};
+export type withdrawResponseError = withdrawResponse401 & {
+  headers: Headers;
+};
+
+export type withdrawResponse = withdrawResponseSuccess | withdrawResponseError;
+
+export const getWithdrawUrl = () => {
+  return `/api/v1/users/me`;
+};
+
+/**
+ * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
+ * @summary 회원 탈퇴
+ */
+export const withdraw = async (
+  options?: RequestInit,
+): Promise<withdrawResponse> => {
+  return customInstance<withdrawResponse>(getWithdrawUrl(), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getWithdrawMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof withdraw>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof withdraw>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ['withdraw'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof withdraw>>,
+    void
+  > = () => {
+    return withdraw(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type WithdrawMutationResult = NonNullable<
+  Awaited<ReturnType<typeof withdraw>>
+>;
+
+export type WithdrawMutationError = ErrorType<void>;
+
+/**
+ * @summary 회원 탈퇴
+ */
+export const useWithdraw = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof withdraw>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof withdraw>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getWithdrawMutationOptions(options), queryClient);
+};
