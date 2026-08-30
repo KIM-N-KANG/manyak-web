@@ -13,6 +13,7 @@ import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatChoicesMenu } from './chat-choices-menu';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
+import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 import { SendButtonIcon } from './send-button-icon';
 
 type ChatPlainInputProps = {
@@ -28,6 +29,7 @@ type ChatPlainInputProps = {
   onModeChange: (mode: ChatInputMode) => void;
   choicesEnabled: boolean;
   onChoicesEnabledChange: (enabled: boolean) => void;
+  showCreditCost: boolean;
 };
 
 export function ChatPlainInput({
@@ -43,6 +45,7 @@ export function ChatPlainInput({
   onModeChange,
   choicesEnabled,
   onChoicesEnabledChange,
+  showCreditCost,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
   const canSend =
@@ -97,19 +100,21 @@ export function ChatPlainInput({
               onEnabledChange={onChoicesEnabledChange}
             />
             <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
-            <Button
-              type="submit"
-              variant="default"
-              size="icon-sm"
-              aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
-              data-tour="send"
-              disabled={!canSend}
-              className="ml-auto">
-              <SendButtonIcon
-                isStreaming={isStreaming}
-                showsRandomSend={showsRandomSend}
-              />
-            </Button>
+            <div className="ml-auto flex items-center gap-2">
+              {showCreditCost ? <ChatTurnCreditCost /> : null}
+              <Button
+                type="submit"
+                variant="default"
+                size="icon-sm"
+                aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
+                data-tour="send"
+                disabled={!canSend}>
+                <SendButtonIcon
+                  isStreaming={isStreaming}
+                  showsRandomSend={showsRandomSend}
+                />
+              </Button>
+            </div>
           </InputGroupAddon>
         </InputGroup>
       </form>

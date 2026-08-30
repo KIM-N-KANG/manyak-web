@@ -9,7 +9,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { GUEST_LIMITS } from '@/features/onboarding/constants';
 import { useTrackOnView } from '@/observability/analytics';
 
-import { SERVICE_INFO_TITLE } from '../constants';
+import { SERVICE_INFO_CREDIT_ITEMS, SERVICE_INFO_TITLE } from '../constants';
 
 const CONTACT_EMAIL = 'manyak.help@gmail.com';
 
@@ -27,18 +27,9 @@ export function ServiceInfoView() {
           <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">크레딧 안내</h2>
             <ul className="flex list-disc flex-col pl-5">
-              <li>스토리를 완성할 때 20크레딧이 차감돼요.</li>
-              <li>
-                채팅을 한 번 보내거나 다시 생성할 때마다 10크레딧이 차감돼요.
-              </li>
-              <li>스토리라인 생성은 크레딧이 들지 않아요.</li>
-              <li>
-                출석 체크와 친구 초대로 크레딧을 받을 수 있어요. 친구 초대는
-                초대한 사람과 코드를 입력한 사람 모두 500크레딧을 받아요.
-              </li>
-              <li>
-                보상으로 받은 크레딧은 적립일부터 30일 동안 사용할 수 있어요.
-              </li>
+              {SERVICE_INFO_CREDIT_ITEMS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
           </section>
           <section className="flex flex-col gap-4">

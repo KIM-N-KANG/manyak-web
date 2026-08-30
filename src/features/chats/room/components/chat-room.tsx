@@ -336,6 +336,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           isStreaming={isStreaming}
           choicesEnabled={choicesEnabled}
           onChoicesEnabledChange={handleChoicesEnabledChange}
+          showCreditCost={sessionStatus === 'authenticated'}
         />
         <ConfirmAlertDialog
           open={pendingFill !== null}
