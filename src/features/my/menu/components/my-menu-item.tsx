@@ -1,4 +1,4 @@
-import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { ArrowRight01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import Link from 'next/link';
 
@@ -15,12 +15,19 @@ type MyMenuItemBaseProps = {
 
 type MyMenuItemProps = MyMenuItemBaseProps &
   (
-    | { href: string; onClick?: never; loading?: never }
+    | {
+        href: string;
+        onClick?: never;
+        loading?: never;
+        /** 링크를 새 브라우저 탭에서 여는지 여부다. */
+        newTab?: boolean;
+      }
     | {
         href?: never;
         onClick: () => void;
         /** 진행 중 여부. true면 오른쪽에 스피너를 표시하고 클릭을 막는다. */
         loading?: boolean;
+        newTab?: never;
       }
   );
 
@@ -32,6 +39,7 @@ export function MyMenuItem({
   href,
   onClick,
   loading,
+  newTab,
 }: MyMenuItemProps) {
   const className = cn(
     'flex h-12 items-center gap-4 px-4',
@@ -50,7 +58,7 @@ export function MyMenuItem({
       )}
       {href && (
         <HugeiconsIcon
-          icon={ArrowRight01Icon}
+          icon={newTab ? LinkSquare01Icon : ArrowRight01Icon}
           className="size-5 text-foreground-tertiary"
           aria-hidden="true"
         />
@@ -60,7 +68,11 @@ export function MyMenuItem({
 
   if (href) {
     return (
-      <Link href={href} className={className}>
+      <Link
+        href={href}
+        className={className}
+        target={newTab ? '_blank' : undefined}
+        rel={newTab ? 'noopener noreferrer' : undefined}>
         {content}
       </Link>
     );

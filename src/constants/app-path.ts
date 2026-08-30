@@ -10,7 +10,7 @@ export const APP_PATH = {
   ONBOARDING: '/onboarding',
   TERMS: '/terms',
   PRIVACY: '/privacy',
-  MY_ABOUT: '/my/about',
+  ABOUT: '/about',
   MY_FEEDBACK: '/my/feedback',
   MY_INVITE: '/my/invite',
   MY_LINK_CONTINUE: '/my/link/continue',

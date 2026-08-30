@@ -108,8 +108,8 @@ test.describe('스토리 비주얼', () => {
 
     await expect(optionButtons).toHaveCount(2);
     await expect(optionButtons.first()).toBeVisible();
-    await expect(optionButtons.first()).toHaveCSS('width', '32px');
-    await expect(optionButtons.first()).toHaveCSS('height', '32px');
+    await expect(optionButtons.first()).toHaveCSS('width', '24px');
+    await expect(optionButtons.first()).toHaveCSS('height', '24px');
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-default.png');
   });

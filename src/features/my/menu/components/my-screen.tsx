@@ -67,7 +67,8 @@ export function MyScreen() {
         <MyMenuItem
           icon={InformationCircleIcon}
           label="서비스 안내"
-          href={APP_PATH.MY_ABOUT}
+          href={APP_PATH.ABOUT}
+          newTab
         />
         <MyMenuItem
           icon={MailEdit01Icon}
