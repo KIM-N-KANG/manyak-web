@@ -12,6 +12,7 @@ export const APP_PATH = {
   PRIVACY: '/privacy',
   ABOUT: '/about',
   MY_ACCOUNT_DELETION: '/my/account-deletion',
+  MY_CREDITS: '/my/credits',
   MY_FEEDBACK: '/my/feedback',
   MY_INVITE: '/my/invite',
   MY_LINK_CONTINUE: '/my/link/continue',
