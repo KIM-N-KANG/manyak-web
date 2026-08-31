@@ -62,36 +62,20 @@ const nextConfig: NextConfig = {
         pathname: '/profile-presets/**',
       },
       {
-        // 스토리 썸네일(KNK-552). 백엔드가 CDN으로 서빙하며
-        // story.thumbnailUrl에 전체 URL이 실린다.
+        // 이미지 CDN(KNK-552·1013·1055·1079). 스토리 썸네일(/thumbnails/**)과
+        // 인물 이미지(/characters/**)를 모두 여기서 서빙하며, 백엔드가
+        // thumbnailUrl·character_image 등에 전체 URL을 실어 보낸다. 이 호스트는
+        // 우리가 올린 이미지 자산 전용이라 경로를 나눠 등록하지 않고 호스트 단위로
+        // 허용한다 — 새 이미지 종류가 생길 때마다 여기를 고치지 않기 위함이다.
+        // 모델 출력 경로로 들어오는 인물 이미지 URL은 이 설정과 별개로 렌더 직전
+        // isAllowedChatCharacterImageUrl()이 호스트·경로를 다시 검사한다.
         protocol: 'https',
         hostname: 'cdn.manyak.app',
-        pathname: '/thumbnails/**',
       },
       {
-        // 채팅 인물 이미지(KNK-1013). 저장 마커와 SSE 이벤트 모두
-        // 백엔드가 검증·저장한 생성 이미지 URL만 전달한다.
-        protocol: 'https',
-        hostname: 'cdn.manyak.app',
-        pathname: '/characters/generated/**',
-      },
-      {
-        // 오리지널 스토리 인물 이미지(KNK-1055)도 같은 채팅 이미지 계약으로 전달한다.
-        protocol: 'https',
-        hostname: 'cdn.manyak.app',
-        pathname: '/characters/originals/**',
-      },
-      {
-        // 개발 환경은 별도 CloudFront 도메인에서 같은 생성 이미지 경로를 서빙한다.
+        // 개발 환경은 별도 CloudFront 도메인에서 같은 이미지들을 서빙한다.
         protocol: 'https',
         hostname: 'dev-cdn.manyak.app',
-        pathname: '/characters/generated/**',
-      },
-      {
-        // 개발 오리지널 스토리 인물 이미지도 별도 CloudFront 도메인에서 서빙한다.
-        protocol: 'https',
-        hostname: 'dev-cdn.manyak.app',
-        pathname: '/characters/originals/**',
       },
     ],
   },
