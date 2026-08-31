@@ -12,6 +12,7 @@ const storyDetail = {
   description: '깊은 계곡 속 전설의 이야기',
   genres: ['판타지', '모험'],
   turnCount: 1280,
+  author: { id: null, nickname: '마냑', profileImageUrl: null },
   createdAt: '2026-06-24T12:00:00Z',
   reachedEndings: ['용과 맺은 약속'],
   startSettings: [
@@ -48,6 +49,16 @@ const fulfillStoryDetail = async (route: Route) => {
 
 const THUMBNAIL_URL = 'https://cdn.manyak.app/thumbnails/dragon.png';
 
+// 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 이미지 생성에 실패한
+// 인물은 imageUrl이 null로 내려오므로 이름만 남는 경우도 함께 덮는다.
+const STORY_CHARACTERS = [
+  {
+    name: '이무기',
+    imageUrl: 'https://cdn.manyak.app/characters/generated/s1/imugi.webp',
+  },
+  { name: '계곡지기', imageUrl: null },
+];
+
 // 1x1 투명 PNG. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -66,6 +77,8 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
     await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('제작자')).toBeVisible();
+    await expect(page.getByText('마냑', { exact: true })).toBeVisible();
     await expect(page.getByText('생성일')).toBeVisible();
     await expect(page.getByText('2026-06-24')).toBeVisible();
     await expect(page.getByText('용과 맺은 약속')).toBeVisible();
@@ -123,6 +136,37 @@ test.describe('스토리 상세', () => {
       );
 
     expect(headerGradientCount).toBe(0);
+  });
+
+  test('주변 인물 이름과 인물 이미지를 보여준다 (KNK-1058)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, characters: STORY_CHARACTERS }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('heading', { name: '주변 인물' }),
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: '이무기' })).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: '이무기 인물 이미지' }),
+    ).toBeVisible();
+
+    // 이미지가 없는 인물도 이름은 남는다
+    await expect(page.getByRole('heading', { name: '계곡지기' })).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: '계곡지기 인물 이미지' }),
+    ).toHaveCount(0);
   });
 
   test('느린 조회 후 본문 제목이 사라지면 헤더 제목을 보여준다 (KNK-1039)', async ({

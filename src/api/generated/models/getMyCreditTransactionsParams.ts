@@ -6,10 +6,8 @@
  * OpenAPI spec version: v1
  */
 
-/**
- * 이프 잔액
- */
-export interface CreditBalanceResponse {
-  /** 현재 이프 잔액. 지갑이 없으면 0 */
-  balance?: number;
-}
+export type GetMyCreditTransactionsParams = {
+  type?: string;
+  limit?: number;
+  cursor?: string;
+};

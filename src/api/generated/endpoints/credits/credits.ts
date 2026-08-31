@@ -26,6 +26,8 @@ import { customInstance } from '../../../mutator/custom-instance';
 import type {
   CreditAttendanceResponse,
   CreditBalanceResponse,
+  CreditTransactionPageResponse,
+  GetMyCreditTransactionsParams,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -56,7 +58,7 @@ export const getClaimAttendanceUrl = () => {
 };
 
 /**
- * 출석 보상 크레딧을 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
+ * 출석 보상 이프를 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
  * @summary 출석체크 보상
  */
 export const claimAttendance = async (
@@ -161,8 +163,8 @@ export const getGetMyCreditsUrl = () => {
 };
 
 /**
- * 요청자의 현재 크레딧 잔액을 반환합니다. 지갑이 없으면 0입니다. 인증 필수입니다.
- * @summary 크레딧 잔액 조회
+ * 요청자의 현재 이프 잔액을 반환합니다. 지갑이 없으면 0입니다. 인증 필수입니다.
+ * @summary 이프 잔액 조회
  */
 export const getMyCredits = async (
   options?: RequestInit,
@@ -265,7 +267,7 @@ export function useGetMyCredits<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary 크레딧 잔액 조회
+ * @summary 이프 잔액 조회
  */
 
 export function useGetMyCredits<
@@ -283,6 +285,232 @@ export function useGetMyCredits<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetMyCreditsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type getMyCreditTransactionsResponse200 = {
+  data: CreditTransactionPageResponse;
+  status: 200;
+};
+
+export type getMyCreditTransactionsResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type getMyCreditTransactionsResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type getMyCreditTransactionsResponseSuccess =
+  getMyCreditTransactionsResponse200 & {
+    headers: Headers;
+  };
+export type getMyCreditTransactionsResponseError = (
+  | getMyCreditTransactionsResponse400
+  | getMyCreditTransactionsResponse401
+) & {
+  headers: Headers;
+};
+
+export type getMyCreditTransactionsResponse =
+  | getMyCreditTransactionsResponseSuccess
+  | getMyCreditTransactionsResponseError;
+
+export const getGetMyCreditTransactionsUrl = (
+  params?: GetMyCreditTransactionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/users/me/credits/transactions?${stringifiedParams}`
+    : `/api/v1/users/me/credits/transactions`;
+};
+
+/**
+ *
+ *             요청자의 크레딧 증감 내역을 최신순으로 반환합니다. 인증 필수입니다.
+ *
+ *             - `type`: 화면 필터 칩과 같은 값(`ALL`·`SPEND`·`EARN`·`EXPIRE`). 환불(REFUND)은 획득으로 분류하고,
+ *               구매(PURCHASE)는 구매내역 탭 몫이라 `ALL`에서도 제외합니다.
+ *             - `limit`: 1~100으로 보정합니다(기본 50).
+ *             - `cursor`: 이전 응답의 `nextCursor`를 그대로 넘기면 다음 페이지입니다. 다음이 없으면 `nextCursor`는 null입니다.
+ *             - `title`은 관련 스토리 제목이며, 보상·소멸 행이거나 스토리가 삭제됐으면 null입니다.
+ *             - 소멸 행의 `createdAt`은 회수가 기록된 시각이라 실제 만료일과 다릅니다. 날짜 표시는 `expiresAt`을 쓰세요.
+ * @summary 이프 이용내역 조회
+ */
+export const getMyCreditTransactions = async (
+  params?: GetMyCreditTransactionsParams,
+  options?: RequestInit,
+): Promise<getMyCreditTransactionsResponse> => {
+  return customInstance<getMyCreditTransactionsResponse>(
+    getGetMyCreditTransactionsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getGetMyCreditTransactionsQueryKey = (
+  params?: GetMyCreditTransactionsParams,
+) => {
+  return [
+    `/api/v1/users/me/credits/transactions`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetMyCreditTransactionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyCreditTransactions>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetMyCreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMyCreditTransactions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMyCreditTransactionsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMyCreditTransactions>>
+  > = ({ signal }) =>
+    getMyCreditTransactions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyCreditTransactions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMyCreditTransactionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyCreditTransactions>>
+>;
+export type GetMyCreditTransactionsQueryError = ErrorType<void>;
+
+export function useGetMyCreditTransactions<
+  TData = Awaited<ReturnType<typeof getMyCreditTransactions>>,
+  TError = ErrorType<void>,
+>(
+  params: undefined | GetMyCreditTransactionsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMyCreditTransactions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyCreditTransactions>>,
+          TError,
+          Awaited<ReturnType<typeof getMyCreditTransactions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMyCreditTransactions<
+  TData = Awaited<ReturnType<typeof getMyCreditTransactions>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetMyCreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMyCreditTransactions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyCreditTransactions>>,
+          TError,
+          Awaited<ReturnType<typeof getMyCreditTransactions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMyCreditTransactions<
+  TData = Awaited<ReturnType<typeof getMyCreditTransactions>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetMyCreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMyCreditTransactions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 이프 이용내역 조회
+ */
+
+export function useGetMyCreditTransactions<
+  TData = Awaited<ReturnType<typeof getMyCreditTransactions>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetMyCreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMyCreditTransactions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetMyCreditTransactionsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

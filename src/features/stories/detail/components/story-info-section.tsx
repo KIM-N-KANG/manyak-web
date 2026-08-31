@@ -1,9 +1,14 @@
 import type { Ref } from 'react';
 
-import type { StoryStartSettingResponse } from '@/api/generated/models';
+import type {
+  StoryAuthorResponse,
+  StoryCharacterResponse,
+  StoryStartSettingResponse,
+} from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
 import { formatDate } from '@/lib/format-date';
 
+import { StoryCharacters } from './story-characters';
 import { StoryDetailTags } from './story-detail-tags';
 import { StoryStartSettings } from './story-start-settings';
 
@@ -12,6 +17,8 @@ type StoryInfo = {
   oneLineIntro?: string | null;
   description?: string | null;
   genres?: string[];
+  author?: StoryAuthorResponse | null;
+  characters?: StoryCharacterResponse[];
   reachedEndings?: string[];
   startSettings?: StoryStartSettingResponse[];
   createdAt?: string;
@@ -32,7 +39,11 @@ export function StoryInfoSection({
 }: StoryInfoSectionProps) {
   const genres = story.genres ?? [];
   const reachedEndings = story.reachedEndings ?? [];
+  const characters = (story.characters ?? []).filter((character) =>
+    Boolean(character.name),
+  );
   const startSettings = story.startSettings ?? [];
+  const authorNickname = story.author?.nickname;
 
   return (
     <div className="flex flex-col gap-8">
@@ -58,6 +69,8 @@ export function StoryInfoSection({
         </div>
       )}
 
+      {characters.length > 0 && <StoryCharacters characters={characters} />}
+
       {startSettings.length > 0 && (
         <StoryStartSettings
           startSettings={startSettings}
@@ -66,10 +79,22 @@ export function StoryInfoSection({
         />
       )}
 
-      {story.createdAt && (
-        <div className="-mx-4 flex items-center justify-between bg-muted px-4 py-3 text-sm text-foreground-secondary">
-          <span className="font-semibold">생성일</span>
-          <time dateTime={story.createdAt}>{formatDate(story.createdAt)}</time>
+      {(authorNickname || story.createdAt) && (
+        <div className="-mx-4 flex flex-col gap-4 bg-muted p-4 text-sm text-foreground-secondary">
+          {authorNickname && (
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">제작자</span>
+              <span>{authorNickname}</span>
+            </div>
+          )}
+          {story.createdAt && (
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">생성일</span>
+              <time dateTime={story.createdAt}>
+                {formatDate(story.createdAt)}
+              </time>
+            </div>
+          )}
         </div>
       )}
     </div>
