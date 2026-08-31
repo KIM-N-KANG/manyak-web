@@ -1,4 +1,5 @@
-import { mockMemberSession } from '../fixtures/auth';
+import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+
 import {
   expect,
   seedChatIds,
@@ -136,9 +137,50 @@ test.describe('채팅 비주얼', () => {
 
     await page.goto('/chats/c1');
 
-    await expect(page.getByRole('button', { name: '다시 생성' })).toBeVisible();
+    const regenerateButton = page.getByRole('button', { name: '다시 생성' });
+    const lastChoiceButton = page.getByRole('button', {
+      name: '소리의 방향을 살핀다',
+    });
+
+    await expect(regenerateButton).toBeVisible();
+    await expect(regenerateButton.locator('xpath=..')).toHaveCSS(
+      'transform',
+      'none',
+    );
+    await expect(lastChoiceButton.locator('xpath=..')).toHaveCSS(
+      'transform',
+      'none',
+    );
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('chat-room-turns.png');
+  });
+
+  test('채팅방 엔딩 도달 턴 (CHAT-ENDING)', async ({ page }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatDetail([
+            {
+              id: 1,
+              userInput: '용의 제안을 받아들인다',
+              aiOutput:
+                '계곡을 뒤덮었던 안개가 걷히고, 용은 오래된 약속을 지키기 위해 날아올랐다.',
+              choices: [],
+              reachedEnding: '용과 맺은 약속',
+              createdAt: '2026-06-01T00:00:00Z',
+            },
+          ]),
+        ),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText('엔딩 · 용과 맺은 약속')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-room-ending.png');
   });
 
   test('채팅방 로드 실패 상태 (CHAT-ENTRY-04)', async ({ page }) => {
@@ -208,7 +250,7 @@ test.describe('채팅 오버레이 비주얼', () => {
     await expect(page).toHaveScreenshot('confirm-alert-dialog.png');
   });
 
-  test('게스트 한도 로그인 유도 다이얼로그 (CHAT-LIMIT-01)', async ({
+  test('게스트 한도 로그인 유도 바텀 시트 (CHAT-LIMIT-01)', async ({
     page,
   }) => {
     await seedGuestUsage(page, { chat: 5 });
@@ -216,30 +258,12 @@ test.describe('채팅 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 
     await expect(
-      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('login-required-dialog.png');
-  });
-
-  test('회원 크레딧 부족 다이얼로그 (CHAT-LIMIT-03)', async ({ page }) => {
-    await mockMemberSession(page);
-    await page.route('**/api/v1/chats/c1/turns/stream', async (route) => {
-      await route.fulfill({
-        status: 402,
-        contentType: 'application/json',
-        body: JSON.stringify({ code: 'INSUFFICIENT_CREDIT' }),
-      });
-    });
-
-    await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
-
-    await expect(
-      page.getByRole('dialog').getByText('크레딧이 부족해요'),
-    ).toBeVisible();
-    await waitForFonts(page);
-    await expect(page).toHaveScreenshot('credit-shortage-dialog.png');
+    await expect(page).toHaveScreenshot('login-required-sheet.png');
   });
 });
 

@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
+
 import {
   expect,
   mockHandoffCreate,
@@ -28,7 +30,9 @@ const readLocalStorage = (page: Page, key: string) =>
 test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', () => {
   test.use({ userAgent: INSTAGRAM_UA });
 
-  test('인앱에서도 전면 차단 없이 스토리 목록을 이용한다', async ({ page }) => {
+  test('인앱에서도 전면 차단 없이 제작 스토리 목록을 이용한다', async ({
+    page,
+  }) => {
     await skipOnboarding(page);
     await seedStoryIds(page, ['s1']);
     await page.route(STORIES_BATCH, async (route) => {
@@ -47,7 +51,7 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(
@@ -278,7 +282,7 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     ).toBeVisible();
     // 로그인 페이지와 동일하게 약관 동의 고지를 상시 표시한다.
     await expect(
-      page.getByRole('link', { name: '서비스이용약관' }),
+      page.getByRole('link', { name: '서비스 이용약관', exact: true }),
     ).toBeVisible();
   });
 

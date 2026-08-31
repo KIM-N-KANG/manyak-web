@@ -4,7 +4,7 @@ import { termsContent } from '@/features/legal/content/terms-content';
 
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
-test.describe('약관·개인정보처리방침', () => {
+test.describe('약관·개인정보 처리방침', () => {
   test('브라우저 탭 제목이 문서 제목 - 마냑이 된다', async ({ page }) => {
     await page.goto('/terms');
     await expect(page).toHaveTitle(formatDocumentTitle(termsContent.title));
@@ -19,51 +19,91 @@ test.describe('약관·개인정보처리방침', () => {
     await skipOnboarding(page);
     await page.goto('/login');
 
-    await expect(page.getByText('계정당 한 번만 진행돼요')).toBeVisible();
+    await expect(page.getByText('계정마다 처음 로그인할 때')).toBeVisible();
     await expect(
-      page.getByRole('link', { name: '서비스이용약관' }),
+      page.getByText('한 번만 이 기기의 스토리와 채팅을 그 계정에 저장해요'),
     ).toBeVisible();
     await expect(
-      page.getByRole('link', { name: '개인정보처리방침' }),
+      page.getByRole('link', { name: '서비스 이용약관', exact: true }),
+    ).toHaveAttribute('target', '_blank');
+    await expect(
+      page.getByRole('link', { name: '개인정보 처리방침', exact: true }),
+    ).toHaveAttribute('target', '_blank');
+  });
+
+  test('서비스 이용약관 링크가 새 탭에서 /terms 페이지를 연다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.goto('/login');
+
+    const popupPromise = page.waitForEvent('popup');
+
+    await page
+      .getByRole('link', { name: '서비스 이용약관', exact: true })
+      .click();
+
+    const termsPage = await popupPromise;
+
+    await expect(page).toHaveURL('/login');
+    await expect(termsPage).toHaveURL('/terms');
+    await expect(
+      termsPage.getByRole('heading', { level: 1, name: '서비스 이용약관' }),
+    ).toBeVisible();
+    await expect(
+      termsPage.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
+    ).toBeVisible();
+    await expect(termsPage.getByText('시행일 2026-09-01 · v1.2')).toBeVisible();
+    await expect(
+      termsPage.getByRole('heading', {
+        name: '제6조 (게스트 데이터와 회원 전환)',
+      }),
     ).toBeVisible();
   });
 
-  test('서비스이용약관 링크가 /terms 페이지를 연다', async ({ page }) => {
+  test('개인정보 처리방침 링크가 새 탭에서 /privacy 페이지를 연다', async ({
+    page,
+  }) => {
     await skipOnboarding(page);
     await page.goto('/login');
-    await page.getByRole('link', { name: '서비스이용약관' }).click();
 
-    await expect(page).toHaveURL('/terms');
-    await expect(
-      page.getByRole('heading', { level: 1, name: '서비스이용약관' }),
-    ).toBeVisible();
-    await expect(page.getByText('시행일 2026-07-28 · v1.1')).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: '제5조 (게스트 데이터의 이관)' }),
-    ).toBeVisible();
-  });
+    const popupPromise = page.waitForEvent('popup');
 
-  test('개인정보처리방침 링크가 /privacy 페이지를 연다', async ({ page }) => {
-    await skipOnboarding(page);
-    await page.goto('/login');
-    await page.getByRole('link', { name: '개인정보처리방침' }).click();
+    await page
+      .getByRole('link', { name: '개인정보 처리방침', exact: true })
+      .click();
 
-    await expect(page).toHaveURL('/privacy');
+    const privacyPage = await popupPromise;
+
+    await expect(page).toHaveURL('/login');
+    await expect(privacyPage).toHaveURL('/privacy');
     await expect(
-      page.getByRole('heading', { level: 1, name: '개인정보처리방침' }),
+      privacyPage.getByRole('heading', {
+        level: 1,
+        name: '개인정보 처리방침',
+      }),
     ).toBeVisible();
-    await expect(page.getByText('시행일 2026-07-28 · v1.2')).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: '1. 수집하는 개인정보 항목' }),
+      privacyPage
+        .getByRole('banner')
+        .getByRole('link', { name: '홈으로 이동' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', {
+      privacyPage.getByText('시행일 2026-09-01 · v1.3'),
+    ).toBeVisible();
+    await expect(
+      privacyPage.getByRole('heading', {
+        name: '1. 개인정보처리자와 적용 범위',
+      }),
+    ).toBeVisible();
+    await expect(
+      privacyPage.getByRole('heading', {
         name: '12. 행태정보의 수집 및 맞춤형 광고',
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', {
-        name: '13. AI 품질 관리 및 학습 데이터 활용',
+      privacyPage.getByRole('heading', {
+        name: '13. AI 처리와 평가 데이터 활용',
       }),
     ).toBeVisible();
   });
@@ -73,38 +113,39 @@ test.describe('약관·개인정보처리방침', () => {
     await page.goto('/terms');
 
     await expect(
-      page.getByRole('heading', { level: 1, name: '서비스이용약관' }),
+      page.getByRole('heading', { level: 1, name: '서비스 이용약관' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: '제5조 (게스트 데이터의 이관)' }),
+      page.getByRole('heading', {
+        name: '제6조 (게스트 데이터와 회원 전환)',
+      }),
     ).toBeVisible();
   });
 
-  test('본문을 스크롤하면 헤더에 문서 제목이 나타난다', async ({ page }) => {
+  test('헤더에는 뒤로가기와 문서 제목 대신 홈 로고가 보인다', async ({
+    page,
+  }) => {
     await skipOnboarding(page);
     await page.goto('/privacy');
 
-    // 최상단에서는 본문 h1이 제목을 담당하고 헤더 제목은 숨어 있다.
-    const headerTitle = page.getByRole('banner').getByText('개인정보처리방침');
+    const header = page.getByRole('banner');
 
-    await expect(headerTitle).toHaveCSS('opacity', '0');
-
-    await page
-      .getByRole('heading', { name: '12. 행태정보의 수집 및 맞춤형 광고' })
-      .scrollIntoViewIfNeeded();
-
-    await expect(headerTitle).toHaveCSS('opacity', '1');
+    await expect(
+      header.getByRole('link', { name: '홈으로 이동' }),
+    ).toBeVisible();
+    await expect(
+      header.getByRole('button', { name: '이전 페이지로 돌아가기 버튼' }),
+    ).toHaveCount(0);
+    await expect(header.getByText('개인정보 처리방침')).toHaveCount(0);
   });
 
-  test('게스트가 /terms에 직접 진입한 뒤 뒤로가기를 누르면 홈으로 이동한다', async ({
+  test('게스트가 /terms에 직접 진입한 뒤 헤더 로고를 누르면 홈으로 이동한다', async ({
     page,
   }) => {
     await skipOnboarding(page);
     await page.goto('/terms');
 
-    await page
-      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
-      .click();
+    await page.getByRole('link', { name: '홈으로 이동' }).click();
 
     await expect(page).toHaveURL('/');
   });

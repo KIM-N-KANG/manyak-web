@@ -35,6 +35,8 @@ export interface CreateGeneralStoryRequest {
    * 장르 태그 목록(1~8개, 각 30자 이내)
    * @minItems 1
    * @maxItems 8
+   * @items.minLength 0
+   * @items.maxLength 30
    */
   genres?: string[];
   /** 스토리 설정 통글 4필드 */

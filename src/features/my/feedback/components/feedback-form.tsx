@@ -55,7 +55,7 @@ export function FeedbackForm() {
           <p className="text-foreground-secondary">{FEEDBACK_DESCRIPTION}</p>
         </div>
 
-        <FieldGroup className="gap-8 p-4 pb-6">
+        <FieldGroup className="gap-6 p-4">
           <Field className="gap-2" aria-labelledby="feedback-body-label">
             <FieldLabel
               id="feedback-body-label"
@@ -102,7 +102,7 @@ export function FeedbackForm() {
         </FieldGroup>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-2 p-4 pt-2">
+      <div className="flex shrink-0 flex-col gap-2 px-4 pb-4">
         <FieldError>{validationError}</FieldError>
         <Button
           type="submit"

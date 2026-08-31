@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
+import { APP_PATH } from '@/constants/app-path';
 import { ONBOARDING_SEEN_COOKIE } from '@/features/onboarding/constants';
-import { proxy } from '@/proxy';
+import { config, proxy } from '@/proxy';
 
 /**
  * 온보딩 게이트에 걸리는 요청을 만든다. 쿠키가 없으면 신규 방문자로 판정된다.
@@ -48,6 +49,10 @@ function redirectTarget(response: Response) {
 }
 
 describe('proxy', () => {
+  it('matches every main tab', () => {
+    expect(config.matcher).toEqual(Object.values(APP_PATH.MAIN));
+  });
+
   it('redirects a new visitor to onboarding with the original destination', () => {
     const response = proxy(request('http://localhost:3000/chats'));
     const target = redirectTarget(response);
@@ -123,7 +128,7 @@ describe('proxy', () => {
     const googlebot =
       'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
-    for (const path of ['/', '/chats', '/my']) {
+    for (const path of Object.values(APP_PATH.MAIN)) {
       const response = proxy(
         request(`http://localhost:3000${path}`, {}, googlebot),
       );

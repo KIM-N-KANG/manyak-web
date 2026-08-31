@@ -34,7 +34,7 @@ export const CancelStorylineRatingParams = zod.object({
 export const CancelStorylineRatingResponse = zod.void();
 
 /**
- * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 각 500 크레딧을 적립합니다(스펙 §4-3-7, KNK-567). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한(10회)에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
+ * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 초대 보상 이프를 적립합니다(스펙 §4-3-7, KNK-567). 적립액과 월 상한은 **운영 중 조정 가능한 정책값**이라 이 문서가 계약이 아닙니다 — 적립액은 응답 amount로, 월 상한은 GET /users/me/invite의 monthlyRewardLimit으로 확인하세요(KNK-1056). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
  * @summary 초대 코드 입력·보상 적립
  */
 
@@ -52,10 +52,58 @@ export const RedeemInviteCodeBody = zod
 export const RedeemInviteCodeResponse = zod.unknown();
 
 /**
- * 출석 보상 크레딧을 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
+ * 출석 보상 이프를 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
  * @summary 출석체크 보상
  */
 export const ClaimAttendanceResponse = zod.unknown();
+
+/**
+ * 스토리를 신고합니다. 인증 필수이며(게스트 불가) 같은 스토리를 다시 신고해도 같은 201로 응답합니다(멱등 — 행이 늘거나 알림이 중복 발송되지 않습니다). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 신고 등록
+ */
+export const ReportStoryParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const reportStoryBodyDetailMin = 0;
+export const reportStoryBodyDetailMax = 500;
+
+export const ReportStoryBody = zod
+  .object({
+    reason: zod
+      .enum(['SPAM', 'INAPPROPRIATE', 'ETC'])
+      .optional()
+      .describe('신고 사유'),
+    detail: zod
+      .string()
+      .min(reportStoryBodyDetailMin)
+      .max(reportStoryBodyDetailMax)
+      .nullish()
+      .describe('자유 서술(선택, 500자 이내). ETC 사유의 맥락 전달용.'),
+  })
+  .describe('스토리 신고 요청(KNK-1020)');
+
+export const ReportStoryResponse = zod.void();
+
+/**
+ * 스토리에 좋아요를 등록합니다(like만 있고 dislike는 없습니다). 인증 필수이며(게스트 불가) 이미 좋아요한 스토리를 다시 등록해도 같은 204로 응답합니다(멱등). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 좋아요 등록
+ */
+export const LikeStoryParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const LikeStoryResponse = zod.void();
+
+/**
+ * 스토리 좋아요를 취소합니다. 인증 필수이며(게스트 불가) 좋아요하지 않은 스토리를 취소해도 같은 204로 응답합니다(멱등). 읽을 수 없는 스토리는 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 좋아요 취소
+ */
+export const UnlikeStoryParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const UnlikeStoryResponse = zod.void();
 
 /**
  * 선택한 스토리라인과 추가 정보를 AI 서버에 전달해 최종 스토리를 생성하고 저장합니다. 응답으로 받은 id는 클라이언트 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다.
@@ -65,6 +113,7 @@ export const CreateSimpleStoryHeader = zod.object({
   'X-Manyak-Device-Id': zod.string().optional(),
 });
 
+export const createSimpleStoryBodyAdditionalInfosItemMin = 0;
 export const createSimpleStoryBodyAdditionalInfosItemMax = 100;
 
 export const createSimpleStoryBodyAdditionalInfosMin = 0;
@@ -91,6 +140,7 @@ export const CreateSimpleStoryBody = zod
       .array(
         zod
           .string()
+          .min(createSimpleStoryBodyAdditionalInfosItemMin)
           .max(createSimpleStoryBodyAdditionalInfosItemMax)
           .describe('추가 정보'),
       )
@@ -115,6 +165,7 @@ export const GenerateSimpleStorylinesHeader = zod.object({
 export const generateSimpleStorylinesBodyGenreTagIdsMin = 0;
 export const generateSimpleStorylinesBodyGenreTagIdsMax = 20;
 
+export const generateSimpleStorylinesBodyCustomGenreTagsItemMin = 0;
 export const generateSimpleStorylinesBodyCustomGenreTagsItemMax = 30;
 
 export const generateSimpleStorylinesBodyCustomGenreTagsMin = 0;
@@ -123,8 +174,14 @@ export const generateSimpleStorylinesBodyCustomGenreTagsMax = 20;
 export const generateSimpleStorylinesBodyProtagonistNameMin = 0;
 export const generateSimpleStorylinesBodyProtagonistNameMax = 30;
 
+export const generateSimpleStorylinesBodyProtagonistCustomTagsItemMin = 0;
+export const generateSimpleStorylinesBodyProtagonistCustomTagsItemMax = 30;
+
 export const generateSimpleStorylinesBodySupportingCharactersItemNameMin = 0;
 export const generateSimpleStorylinesBodySupportingCharactersItemNameMax = 30;
+
+export const generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMin = 0;
+export const generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMax = 30;
 
 export const generateSimpleStorylinesBodySupportingCharactersMin = 0;
 export const generateSimpleStorylinesBodySupportingCharactersMax = 5;
@@ -137,7 +194,7 @@ export const GenerateSimpleStorylinesBody = zod
         '클라이언트 생성 요청 ID(UUID). 백그라운드 생성 복구 조회·재시도 멱등 키로 쓴다(스펙 §4-3-8).',
       ),
     genreTagIds: zod
-      .array(zod.number().describe('사전 정의 장르 태그 ID'))
+      .array(zod.number().min(1).describe('사전 정의 장르 태그 ID'))
       .min(generateSimpleStorylinesBodyGenreTagIdsMin)
       .max(generateSimpleStorylinesBodyGenreTagIdsMax)
       .optional()
@@ -146,6 +203,7 @@ export const GenerateSimpleStorylinesBody = zod
       .array(
         zod
           .string()
+          .min(generateSimpleStorylinesBodyCustomGenreTagsItemMin)
           .max(generateSimpleStorylinesBodyCustomGenreTagsItemMax)
           .describe('직접 입력한 장르 이름'),
       )
@@ -166,11 +224,16 @@ export const GenerateSimpleStorylinesBody = zod
           .nullish()
           .describe('인물 성별. 비우면 AI가 생성합니다.'),
         featureTagIds: zod
-          .array(zod.number())
+          .array(zod.number().min(1))
           .optional()
           .describe('선택한 사전 정의 특징 태그 ID 목록'),
         customTags: zod
-          .array(zod.string())
+          .array(
+            zod
+              .string()
+              .min(generateSimpleStorylinesBodyProtagonistCustomTagsItemMin)
+              .max(generateSimpleStorylinesBodyProtagonistCustomTagsItemMax),
+          )
           .optional()
           .describe('직접 추가한 특징 태그 이름 목록'),
       })
@@ -190,11 +253,20 @@ export const GenerateSimpleStorylinesBody = zod
               .nullish()
               .describe('인물 성별. 비우면 AI가 생성합니다.'),
             featureTagIds: zod
-              .array(zod.number())
+              .array(zod.number().min(1))
               .optional()
               .describe('선택한 사전 정의 특징 태그 ID 목록'),
             customTags: zod
-              .array(zod.string())
+              .array(
+                zod
+                  .string()
+                  .min(
+                    generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMin,
+                  )
+                  .max(
+                    generateSimpleStorylinesBodySupportingCharactersItemCustomTagsItemMax,
+                  ),
+              )
               .optional()
               .describe('직접 추가한 특징 태그 이름 목록'),
           })
@@ -225,6 +297,9 @@ export const createGeneralStoryBodyTitleMax = 100;
 
 export const createGeneralStoryBodyOneLineIntroMin = 0;
 export const createGeneralStoryBodyOneLineIntroMax = 255;
+
+export const createGeneralStoryBodyGenresItemMin = 0;
+export const createGeneralStoryBodyGenresItemMax = 30;
 
 export const createGeneralStoryBodyGenresMax = 8;
 
@@ -266,7 +341,12 @@ export const CreateGeneralStoryBody = zod
       .describe('한 줄 소개'),
     description: zod.string().nullish().describe('주요 내용(선택).'),
     genres: zod
-      .array(zod.string())
+      .array(
+        zod
+          .string()
+          .min(createGeneralStoryBodyGenresItemMin)
+          .max(createGeneralStoryBodyGenresItemMax),
+      )
       .min(1)
       .max(createGeneralStoryBodyGenresMax)
       .optional()
@@ -300,7 +380,7 @@ export const CreateGeneralStoryBody = zod
             prologue: zod.string().min(1).describe('도입부 내레이션(프롤로그)'),
             startSituation: zod.string().min(1).describe('시작 상황'),
             suggestedInputs: zod
-              .array(zod.string())
+              .array(zod.string().min(1))
               .min(createGeneralStoryBodyStartSettingsItemSuggestedInputsMin)
               .max(createGeneralStoryBodyStartSettingsItemSuggestedInputsMax)
               .optional()
@@ -718,6 +798,8 @@ export const LoginWithGoogleResponse = zod.unknown();
  * 이 API는 새 계정도, 새 세션도 만들지 않습니다(가입 보상·토큰 발급 없음). 기존 access·refresh 토큰은 그대로 유효하며, 연동 후 상태는 `GET /auth/me`의 `linkedProviders`로 확인합니다.
  *
  * 링크 코드는 **성공했을 때만** 소비됩니다. 403·409로 실패하면 코드가 남아 만료 전까지 재인증 없이 다시 시도할 수 있습니다. 이미 연동된 소셜 계정을 다시 보내면(내 계정이든 남의 계정이든) 409입니다. 연동 해제는 제공하지 않습니다.
+ *
+ * 탈퇴한 계정에 연결됐던 소셜 계정도 409(code=SOCIAL_ACCOUNT_WITHDRAWN)입니다. 그 신원으로 **로그인**은 여전히 가능하며(재가입), 막히는 것은 다른 계정에 붙이는 것뿐입니다.
  * @summary 계정 연동 추가
  */
 export const LinkParams = zod.object({
@@ -850,7 +932,7 @@ export const DeleteStoryParams = zod.object({
 export const DeleteStoryResponse = zod.void();
 
 /**
- * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404.
+ * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404. 스토리 공개 전환(PRIVATE↔PUBLIC)도 별도 엔드포인트 없이 visibility 부분 갱신으로 수행하며, 전환은 읽기 가시성에 즉시 반영됩니다. 단 등록되지 않은(PUBLISHED가 아닌) 스토리의 공개 범위 변경은 400입니다(읽기 게이트상 공개해도 읽히지 않는 모순 방지).
  * @summary 스토리 수정(부분 갱신)
  */
 export const UpdateStoryParams = zod.object({
@@ -862,6 +944,9 @@ export const updateStoryBodyTitleMax = 100;
 
 export const updateStoryBodyOneLineIntroMin = 0;
 export const updateStoryBodyOneLineIntroMax = 255;
+
+export const updateStoryBodyGenresItemMin = 0;
+export const updateStoryBodyGenresItemMax = 30;
 
 export const updateStoryBodyGenresMax = 8;
 
@@ -901,7 +986,12 @@ export const UpdateStoryBody = zod
       .nullish(),
     description: zod.string().nullish(),
     genres: zod
-      .array(zod.string())
+      .array(
+        zod
+          .string()
+          .min(updateStoryBodyGenresItemMin)
+          .max(updateStoryBodyGenresItemMax),
+      )
       .min(1)
       .max(updateStoryBodyGenresMax)
       .nullish(),
@@ -939,7 +1029,7 @@ export const UpdateStoryBody = zod
             prologue: zod.string().min(1).describe('도입부 내레이션(프롤로그)'),
             startSituation: zod.string().min(1).describe('시작 상황'),
             suggestedInputs: zod
-              .array(zod.string())
+              .array(zod.string().min(1))
               .min(updateStoryBodyStartSettingsItemSuggestedInputsMin)
               .max(updateStoryBodyStartSettingsItemSuggestedInputsMax)
               .optional()
@@ -1009,6 +1099,10 @@ export const UpdateStoryBody = zod
       .min(updateStoryBodyMainEventsMin)
       .max(updateStoryBodyMainEventsMax)
       .nullish(),
+    visibility: zod
+      .enum(['PUBLIC', 'PRIVATE'])
+      .nullish()
+      .describe('공개 범위(PUBLIC · PRIVATE). 생략하면 현재 값을 유지한다.'),
   })
   .describe('스토리 부분 갱신 요청. 보낸 필드만 교체하고 나머지는 유지한다.');
 
@@ -1036,10 +1130,33 @@ export const GetMyStoriesResponse = zod.unknown();
 export const GetMyInviteResponse = zod.unknown();
 
 /**
- * 요청자의 현재 크레딧 잔액을 반환합니다. 지갑이 없으면 0입니다. 인증 필수입니다.
- * @summary 크레딧 잔액 조회
+ * 요청자의 현재 이프 잔액을 반환합니다. 지갑이 없으면 0입니다. 인증 필수입니다.
+ * @summary 이프 잔액 조회
  */
 export const GetMyCreditsResponse = zod.unknown();
+
+/**
+ *
+ *             요청자의 크레딧 증감 내역을 최신순으로 반환합니다. 인증 필수입니다.
+ *
+ *             - `type`: 화면 필터 칩과 같은 값(`ALL`·`SPEND`·`EARN`·`EXPIRE`). 환불(REFUND)은 획득으로 분류하고,
+ *               구매(PURCHASE)는 구매내역 탭 몫이라 `ALL`에서도 제외합니다.
+ *             - `limit`: 1~100으로 보정합니다(기본 50).
+ *             - `cursor`: 이전 응답의 `nextCursor`를 그대로 넘기면 다음 페이지입니다. 다음이 없으면 `nextCursor`는 null입니다.
+ *             - `title`은 관련 스토리 제목이며, 보상·소멸 행이거나 스토리가 삭제됐으면 null입니다.
+ *             - 소멸 행의 `createdAt`은 회수가 기록된 시각이라 실제 만료일과 다릅니다. 날짜 표시는 `expiresAt`을 쓰세요.
+ * @summary 이프 이용내역 조회
+ */
+export const getMyCreditTransactionsQueryTypeDefault = `ALL`;
+export const getMyCreditTransactionsQueryLimitDefault = 50;
+
+export const GetMyCreditTransactionsQueryParams = zod.object({
+  type: zod.string().default(getMyCreditTransactionsQueryTypeDefault),
+  limit: zod.number().default(getMyCreditTransactionsQueryLimitDefault),
+  cursor: zod.string().optional(),
+});
+
+export const GetMyCreditTransactionsResponse = zod.unknown();
 
 /**
  * 요청자가 소유한 채팅 카드를 최근 활동순으로 반환합니다. 소프트 삭제는 제외하며, limit(기본 100, 최대 100)으로 상한을 둡니다.
@@ -1087,6 +1204,12 @@ export const GetCreationRequestHeader = zod.object({
 export const GetCreationRequestResponse = zod.unknown();
 
 /**
+ * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 피드·검색이 나오기 전까지 홈의 오리지널 섹션이 사용하며, 인증은 필요 없습니다. 공식 계정 미설정 환경은 빈 목록입니다.
+ * @summary 오리지널 스토리 목록 조회
+ */
+export const GetOriginalStoriesResponse = zod.unknown();
+
+/**
  * 일반 제작에서 참조할 로어북(장르 공용 용어 사전) 목록을 조회합니다. genre로 필터할 수 있습니다.
  * @summary 로어북 카탈로그 조회
  */
@@ -1100,7 +1223,7 @@ export const GetLorebooksQueryParams = zod.object({
 export const GetLorebooksResponse = zod.unknown();
 
 /**
- * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목·프롤로그는 조회 시점의 라이브 값입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.
+ * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목은 열람자가 그 스토리를 읽을 수 있을 때만 조회 시점의 값이고, 비공개로 전환됐거나 삭제됐으면 채팅 시작 시점의 스냅샷입니다(KNK-1059). 프롤로그도 같은 규칙입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.
  * @summary 공유된 채팅 열람
  */
 export const GetChatShareParams = zod.object({
@@ -1144,3 +1267,9 @@ export const StatusHeader = zod.object({
 });
 
 export const StatusResponse = zod.unknown();
+
+/**
+ * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
+ * @summary 회원 탈퇴
+ */
+export const WithdrawResponse = zod.void();

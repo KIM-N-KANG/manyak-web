@@ -1,6 +1,5 @@
 'use client';
 
-import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -14,7 +13,7 @@ import {
   SUPPORTING_CHARACTER_CATEGORY,
   TAG_CATEGORIES,
 } from '../../constants';
-import { useStoryTagStep } from '../../hooks/use-story-tag-step';
+import type { StoryTagStepController } from '../../hooks/use-story-tag-step';
 import type { TagCategory } from '../../types';
 import { getGenerateStorylinesErrorMessage } from '../../utils/generate-storylines-error-message';
 import { StickyTabsList } from '../shared/sticky-tabs-list';
@@ -26,20 +25,16 @@ import { SupportingCharacterList } from './supporting-character-list';
 import { TagChipGrid } from './tag-chip-grid';
 
 type StoryTagStepSectionProps = {
-  isGeneratingStorylines: boolean;
+  controller: StoryTagStepController;
   hasGenerateStorylinesError: boolean;
   isGuestLimitReached: boolean;
-  onGenerateStorylines: (
-    request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
-  ) => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryTagStepSection({
-  isGeneratingStorylines,
+  controller,
   hasGenerateStorylinesError,
   isGuestLimitReached,
-  onGenerateStorylines,
   onScroll,
 }: StoryTagStepSectionProps) {
   const {
@@ -58,6 +53,7 @@ export function StoryTagStepSection({
     tagsByCategory,
     hasCategoryValidationError,
     hasDuplicateNameError,
+    isGeneratingStorylines,
     isDuplicateName,
     isCategoryUnlocked,
     isFirstCategory,
@@ -76,14 +72,7 @@ export function StoryTagStepSection({
     removeSupportingCharacter,
     registerCharacterNameInput,
     handleGenerateStorylines,
-  } = useStoryTagStep({
-    isGeneratingStorylines,
-    onGenerateStorylines,
-  });
-
-  const activeCategoryConfig = TAG_CATEGORIES.find(
-    (category) => category.value === activeCategory,
-  );
+  } = controller;
 
   return (
     <StoryCreateStepLayout
@@ -139,31 +128,22 @@ export function StoryTagStepSection({
         onValueChange={(value) => changeCategory(value as TagCategory)}
         className="gap-0">
         <StickyTabsList
-          bottomSlot={
-            activeCategoryConfig && (
-              <div className="flex items-baseline justify-between gap-2 pt-2 text-sm text-foreground-secondary">
-                <p>{activeCategoryConfig.description}</p>
-                {activeCategory === 'SUPPORTING_CHARACTER' && (
-                  <p className="shrink-0">
-                    현재 {supportingCharacters.length}명
-                  </p>
-                )}
-              </div>
-            )
-          }>
+          variant="line"
+          containerClassName="mt-0 px-0 py-0"
+          className="w-full gap-0 border-b p-0">
           {TAG_CATEGORIES.map(({ value, label, required }) => (
             <TabsTrigger
               key={value}
               value={value}
               disabled={!isCategoryUnlocked(value)}
-              className="gap-0.5">
+              className="h-full gap-0.5 rounded-none border-0 px-2 py-0 after:-bottom-px!">
               {label}
               {required && <span className="text-destructive">*</span>}
             </TabsTrigger>
           ))}
         </StickyTabsList>
 
-        <TabsContent value="GENRE" className="p-4 pt-2 pb-6">
+        <TabsContent value="GENRE" className="px-4 pt-4 pb-4">
           <FieldGroup className="gap-8">
             <Field className="gap-2" aria-labelledby="genre-label">
               <FieldLabel id="genre-label" className="gap-0.5">
@@ -199,7 +179,7 @@ export function StoryTagStepSection({
           </FieldGroup>
         </TabsContent>
 
-        <TabsContent value="PROTAGONIST" className="p-4 pt-2 pb-6">
+        <TabsContent value="PROTAGONIST" className="p-4">
           <CharacterForm
             category="PROTAGONIST"
             categoryLabel={PROTAGONIST_CATEGORY.label}
@@ -239,7 +219,7 @@ export function StoryTagStepSection({
           />
         </TabsContent>
 
-        <TabsContent value="SUPPORTING_CHARACTER" className="p-4 pt-2 pb-6">
+        <TabsContent value="SUPPORTING_CHARACTER" className="pb-4">
           <SupportingCharacterList
             categoryLabel={SUPPORTING_CHARACTER_CATEGORY.label}
             characters={supportingCharacters}

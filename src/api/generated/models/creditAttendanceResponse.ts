@@ -12,7 +12,7 @@
 export interface CreditAttendanceResponse {
   /** 이번 요청으로 보상을 지급했는지. 오늘 이미 받았으면 false(멱등) */
   rewarded?: boolean;
-  /** 이번 요청으로 적립한 크레딧. 이미 받았으면 0 */
+  /** 이번 요청으로 적립한 이프. 이미 받았으면 0 */
   amount?: number;
   /** 지급 후 현재 잔액 */
   balance?: number;

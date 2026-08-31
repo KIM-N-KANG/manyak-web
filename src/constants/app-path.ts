@@ -2,6 +2,7 @@ export const APP_PATH = {
   MAIN: {
     STORIES: '/',
     CHATS: '/chats',
+    STUDIO: '/studio',
     MY: '/my',
   },
   LOGIN: '/login',
@@ -9,15 +10,25 @@ export const APP_PATH = {
   ONBOARDING: '/onboarding',
   TERMS: '/terms',
   PRIVACY: '/privacy',
-  MY_ABOUT: '/my/about',
+  ABOUT: '/about',
+  MY_ACCOUNT_DELETION: '/my/account-deletion',
+  MY_CREDITS: '/my/credits',
   MY_FEEDBACK: '/my/feedback',
   MY_INVITE: '/my/invite',
   MY_LINK_CONTINUE: '/my/link/continue',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   SHARE_VIEW: (shareId: string) => `/share/${shareId}`,
-  CREATOR: {
-    STORY: '/stories/new',
+  STUDIO: {
+    STORY: {
+      SIMPLE: '/studio/story/simple',
+    },
+  },
+  LEGACY: {
+    CREATE: '/create',
+    CREATE_STORY: '/create/story',
+    NEW_STORY: '/stories/new',
+    STUDIO_STORY: '/studio/story',
   },
 } as const;
 

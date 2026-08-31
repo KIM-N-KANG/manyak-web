@@ -1,5 +1,7 @@
-import { StoryCreateFunnel } from '@/features/stories/new/components/story-create-funnel';
+import { permanentRedirect } from 'next/navigation';
 
-export default function NewStoryPage() {
-  return <StoryCreateFunnel />;
+import { APP_PATH } from '@/constants/app-path';
+
+export default function LegacyNewStoryPage() {
+  permanentRedirect(APP_PATH.STUDIO.STORY.SIMPLE);
 }

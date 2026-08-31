@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { StoryEditFormResponseVisibility } from './storyEditFormResponseVisibility';
 import type { StoryEditSettingsResponse } from './storyEditSettingsResponse';
 import type { StoryMainEventResponse } from './storyMainEventResponse';
 import type { StoryStartSettingResponse } from './storyStartSettingResponse';
@@ -32,4 +33,6 @@ export interface StoryEditFormResponse {
   /** 시작 설정 목록(등록 순서, KNK-515 복수화). 각 시작 설정에 추천 입력·엔딩이 종속된다. 없으면 빈 배열. */
   startSettings?: StoryStartSettingResponse[];
   mainEvents?: StoryMainEventResponse[];
+  /** 공개 범위(PUBLIC · PRIVATE) */
+  visibility?: StoryEditFormResponseVisibility;
 }

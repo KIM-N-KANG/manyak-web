@@ -48,7 +48,7 @@ function hasMemberSessionCookie(request: NextRequest): boolean {
  *
  * 검색 크롤러·링크 스크래퍼(User-Agent 판별)는 게이트를 적용하지 않고 통과시킨다.
  *
- * @param request 매처(`/`·`/chats`·`/my`)에 걸린 요청
+ * @param request 매처(`/`·`/chats`·`/studio`·`/my`)에 걸린 요청
  * @returns 온보딩 리다이렉트 또는 통과 응답
  */
 export function proxy(request: NextRequest) {
@@ -77,5 +77,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/chats', '/my'],
+  matcher: ['/', '/chats', '/studio', '/my'],
 };

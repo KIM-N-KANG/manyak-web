@@ -60,7 +60,7 @@ describe('resolvePaymentRequiredReason', () => {
     ).toBe('guest-trial-limit');
   });
 
-  it('code 없는 402 + 로그인/세션 미확정은 크레딧 부족으로 폴백', () => {
+  it('code 없는 402 + 로그인/세션 미확정은 이프 부족으로 폴백', () => {
     expect(resolvePaymentRequiredReason(fetchError(402), 'authenticated')).toBe(
       'insufficient-credit',
     );

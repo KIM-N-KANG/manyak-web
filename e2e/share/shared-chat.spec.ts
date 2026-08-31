@@ -1,6 +1,8 @@
+import { APP_PATH } from '@/constants/app-path';
+
 import { expect, mockChatShareView, test } from '../fixtures/test';
 
-// 공유 열람(/share/[shareId])은 온보딩 게이트 매처(/, /chats, /my) 밖이라 게이팅이 없다.
+// 공유 열람(/share/[shareId])은 온보딩 게이트 매처(/, /chats, /studio, /my) 밖이라 게이팅이 없다.
 // 열람: GET /api/v1/shares/{shareId} (무인증).
 const SHARE_BODY = {
   id: 'share-1',
@@ -18,6 +20,14 @@ const SHARE_BODY = {
 };
 
 const CTA_NAME = '나만의 스토리 만들고 채팅하기';
+const CHARACTER_IMAGE_URL =
+  'https://cdn.manyak.app/characters/generated/serin.webp';
+
+// 1x1 투명 PNG. 인물 이미지 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 test.describe('공유된 채팅 열람', () => {
   test('스토리 제목과 대화가 순서대로 보인다', async ({ page }) => {
@@ -35,6 +45,57 @@ test.describe('공유된 채팅 열람', () => {
     await expect(
       page.getByText('먼지 쌓인 책 한 권이 눈에 들어왔다'),
     ).toBeVisible();
+
+    const sharedChatActions = page
+      .getByRole('button', { name: CTA_NAME })
+      .locator('xpath=ancestor::footer');
+
+    await expect(sharedChatActions).toHaveCSS('padding-top', '0px');
+  });
+
+  test('저장된 인물 이미지 마커를 공유 화면에서도 이미지로 표시한다', async ({
+    page,
+  }) => {
+    const imageOutput =
+      `*문이 열린다.*\n[[${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
+
+    await mockChatShareView(page, {
+      ...SHARE_BODY,
+      turns: [{ ...SHARE_BODY.turns[0], aiOutput: imageOutput }],
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+    await page.goto('/share/share-1');
+
+    await expect(page.getByText('문이 열린다.')).toBeVisible();
+    await expect(page.getByText('세린: 기다렸어?')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(
+      `[[${CHARACTER_IMAGE_URL}]]`,
+    );
+    await expect(
+      page.getByRole('img', { name: '세린 인물 이미지' }),
+    ).toBeVisible();
+  });
+
+  test('외부 호스트의 마커 모양 문자열은 공유 화면에서 이미지로 해석하지 않는다', async ({
+    page,
+  }) => {
+    const externalMarker =
+      '[[https://example.com/serin.webp]]\n\n세린: 기다렸어?';
+
+    await mockChatShareView(page, {
+      ...SHARE_BODY,
+      turns: [{ ...SHARE_BODY.turns[0], aiOutput: externalMarker }],
+    });
+    await page.goto('/share/share-1');
+
+    await expect(page.locator('body')).toContainText(
+      '[[https://example.com/serin.webp]]',
+    );
+    await expect(
+      page.getByRole('img', { name: '세린 인물 이미지' }),
+    ).toHaveCount(0);
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
@@ -54,7 +115,7 @@ test.describe('공유된 채팅 열람', () => {
     // role="button"을 붙인다. 이동은 href로 이뤄지므로 링크 대상을 함께 확인한다.
     await expect(page.getByRole('button', { name: CTA_NAME })).toHaveAttribute(
       'href',
-      '/stories/new',
+      APP_PATH.STUDIO.STORY.SIMPLE,
     );
   });
 
@@ -65,7 +126,9 @@ test.describe('공유된 채팅 열람', () => {
     await page.goto('/share/share-1');
 
     await page.getByRole('button', { name: CTA_NAME }).click();
-    await expect(page).toHaveURL(/\/stories\/new$/);
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
 
     // 온보딩 게이트는 서버(proxy)가 쿠키로 판정하므로, 홈에 직접 진입해
     // 리다이렉트 없이 도착했는지를 응답 URL로 확인한다(smoke/onboarding과 동일 방식).

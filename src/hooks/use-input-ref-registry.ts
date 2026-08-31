@@ -6,10 +6,10 @@ type FocusInputOptions = {
 };
 
 /**
- * id 기반으로 인풋 요소를 등록하고, 다음 프레임에 포커스를 이동하는 레지스트리.
+ * id 기반으로 인풋 요소를 등록하고 다음 프레임에 포커스·스크롤하는 레지스트리.
  * 동적으로 추가되는 인풋 목록(채팅 블록, 추가 정보 등)에서 사용한다.
  *
- * @returns 인풋을 등록하는 registerInput과 포커스를 이동하는 focusInput
+ * @returns 인풋 등록·포커스 이동·스크롤 이동 함수
  */
 export function useInputRefRegistry<Element extends HTMLElement>() {
   const inputRefs = useRef(new Map<string, Element>());
@@ -37,5 +37,13 @@ export function useInputRefRegistry<Element extends HTMLElement>() {
     });
   };
 
-  return { registerInput, focusInput };
+  const scrollInputIntoView = (id: string) => {
+    requestAnimationFrame(() => {
+      inputRefs.current
+        .get(id)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
+
+  return { registerInput, focusInput, scrollInputIntoView };
 }

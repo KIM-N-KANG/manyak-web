@@ -7,6 +7,7 @@ import {
   InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
+  UserRemove01Icon,
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
 
@@ -67,7 +68,8 @@ export function MyScreen() {
         <MyMenuItem
           icon={InformationCircleIcon}
           label="서비스 안내"
-          href={APP_PATH.MY_ABOUT}
+          href={APP_PATH.ABOUT}
+          newTab
         />
         <MyMenuItem
           icon={MailEdit01Icon}
@@ -83,9 +85,14 @@ export function MyScreen() {
           <MyMenuItem
             icon={Logout03Icon}
             label="로그아웃"
-            destructive
             onClick={handleLogout}
             loading={isLoggingOut}
+          />
+          <MyMenuItem
+            icon={UserRemove01Icon}
+            label="회원 탈퇴"
+            href={APP_PATH.MY_ACCOUNT_DELETION}
+            destructive
           />
         </section>
       )}

@@ -1,9 +1,14 @@
 import type { Ref } from 'react';
 
-import type { StoryStartSettingResponse } from '@/api/generated/models';
+import type {
+  StoryAuthorResponse,
+  StoryCharacterResponse,
+  StoryStartSettingResponse,
+} from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
 import { formatDate } from '@/lib/format-date';
 
+import { StoryCharacters } from './story-characters';
 import { StoryDetailTags } from './story-detail-tags';
 import { StoryStartSettings } from './story-start-settings';
 
@@ -12,6 +17,9 @@ type StoryInfo = {
   oneLineIntro?: string | null;
   description?: string | null;
   genres?: string[];
+  author?: StoryAuthorResponse | null;
+  characters?: StoryCharacterResponse[];
+  reachedEndings?: string[];
   startSettings?: StoryStartSettingResponse[];
   createdAt?: string;
 };
@@ -30,18 +38,28 @@ export function StoryInfoSection({
   onStartSettingValueChange,
 }: StoryInfoSectionProps) {
   const genres = story.genres ?? [];
+  const reachedEndings = story.reachedEndings ?? [];
+  const characters = (story.characters ?? []).filter((character) =>
+    Boolean(character.name),
+  );
   const startSettings = story.startSettings ?? [];
+  const authorNickname = story.author?.nickname;
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
           <h1 ref={titleRef} className="text-2xl font-bold">
             {story.title}
           </h1>
-          <p>{story.oneLineIntro}</p>
+          {story.oneLineIntro ? (
+            <p className="text-foreground-secondary">{story.oneLineIntro}</p>
+          ) : null}
         </div>
-        <StoryDetailTags genres={genres} />
+        {genres.length > 0 ? <StoryDetailTags genres={genres} /> : null}
+        {reachedEndings.length > 0 ? (
+          <StoryDetailTags genres={reachedEndings} />
+        ) : null}
       </div>
 
       {story.description && (
@@ -51,6 +69,8 @@ export function StoryInfoSection({
         </div>
       )}
 
+      {characters.length > 0 && <StoryCharacters characters={characters} />}
+
       {startSettings.length > 0 && (
         <StoryStartSettings
           startSettings={startSettings}
@@ -59,14 +79,22 @@ export function StoryInfoSection({
         />
       )}
 
-      {story.createdAt && (
-        <div className="flex items-center gap-3 rounded-md bg-muted px-3.5 py-2.5 text-sm">
-          <p className="flex items-center gap-1.5">
-            <span className="text-foreground-secondary">생성일</span>
-            <time dateTime={story.createdAt} className="font-semibold">
-              {formatDate(story.createdAt)}
-            </time>
-          </p>
+      {(authorNickname || story.createdAt) && (
+        <div className="-mx-4 flex flex-col gap-4 bg-muted p-4 text-sm text-foreground-secondary">
+          {authorNickname && (
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">제작자</span>
+              <span>{authorNickname}</span>
+            </div>
+          )}
+          {story.createdAt && (
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">생성일</span>
+              <time dateTime={story.createdAt}>
+                {formatDate(story.createdAt)}
+              </time>
+            </div>
+          )}
         </div>
       )}
     </div>

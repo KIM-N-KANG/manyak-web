@@ -19,6 +19,7 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/api/',
         APP_PATH.MAIN.CHATS,
+        APP_PATH.MAIN.STUDIO,
         APP_PATH.MAIN.MY,
         APP_PATH.LOGIN,
         // 스토리 상세·생성 플로우. 사용자 생성물 노출은 프라이버시 검토 전까지 제외한다.

@@ -1,10 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
-
-import { BackHeader } from '@/components/layout/back-header';
-import { APP_PATH } from '@/constants/app-path';
-import { useInView } from '@/hooks/use-in-view';
+import { HomeLogoHeader } from '@/components/layout/home-logo-header';
 import { useTrackOnView } from '@/observability/analytics';
 
 import type { LegalDocument } from '../types';
@@ -17,26 +13,13 @@ type LegalDocumentViewProps = {
 export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
   useTrackOnView(viewEvent);
 
-  const contentRef = useRef<HTMLElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-
-  const isTitleInView = useInView({ targetRef: titleRef, rootRef: contentRef });
-
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <BackHeader
-        title={doc.title}
-        fallbackHref={APP_PATH.MAIN.STORIES}
-        showTitle={!isTitleInView}
-      />
-      <main
-        ref={contentRef}
-        className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4 pb-8">
+      <HomeLogoHeader />
+      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
         <article className="flex flex-col gap-8">
           <header className="flex flex-col gap-1">
-            <h1 ref={titleRef} className="text-xl font-bold">
-              {doc.title}
-            </h1>
+            <h1 className="text-xl font-bold">{doc.title}</h1>
             <p className="text-sm text-foreground-secondary">
               시행일 {doc.effectiveDate} · {doc.version}
             </p>

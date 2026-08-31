@@ -31,12 +31,379 @@ import type {
   SimpleStoryCreateResponse,
   StoryDetailResponse,
   StoryEditFormResponse,
+  StoryReportRequest,
   StorySummaryResponse,
   UpdateStoryRequest,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export type reportStoryResponse201 = {
+  data: void;
+  status: 201;
+};
+
+export type reportStoryResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type reportStoryResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type reportStoryResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type reportStoryResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type reportStoryResponseSuccess = reportStoryResponse201 & {
+  headers: Headers;
+};
+export type reportStoryResponseError = (
+  | reportStoryResponse400
+  | reportStoryResponse401
+  | reportStoryResponse403
+  | reportStoryResponse404
+) & {
+  headers: Headers;
+};
+
+export type reportStoryResponse =
+  | reportStoryResponseSuccess
+  | reportStoryResponseError;
+
+export const getReportStoryUrl = (storyId: string) => {
+  return `/api/v1/stories/${storyId}/reports`;
+};
+
+/**
+ * 스토리를 신고합니다. 인증 필수이며(게스트 불가) 같은 스토리를 다시 신고해도 같은 201로 응답합니다(멱등 — 행이 늘거나 알림이 중복 발송되지 않습니다). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 신고 등록
+ */
+export const reportStory = async (
+  storyId: string,
+  storyReportRequest: StoryReportRequest,
+  options?: RequestInit,
+): Promise<reportStoryResponse> => {
+  return customInstance<reportStoryResponse>(getReportStoryUrl(storyId), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(storyReportRequest),
+  });
+};
+
+export const getReportStoryMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reportStory>>,
+    TError,
+    { storyId: string; data: BodyType<StoryReportRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reportStory>>,
+  TError,
+  { storyId: string; data: BodyType<StoryReportRequest> },
+  TContext
+> => {
+  const mutationKey = ['reportStory'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reportStory>>,
+    { storyId: string; data: BodyType<StoryReportRequest> }
+  > = (props) => {
+    const { storyId, data } = props ?? {};
+
+    return reportStory(storyId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReportStoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reportStory>>
+>;
+export type ReportStoryMutationBody = BodyType<StoryReportRequest>;
+export type ReportStoryMutationError = ErrorType<void>;
+
+/**
+ * @summary 스토리 신고 등록
+ */
+export const useReportStory = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof reportStory>>,
+      TError,
+      { storyId: string; data: BodyType<StoryReportRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof reportStory>>,
+  TError,
+  { storyId: string; data: BodyType<StoryReportRequest> },
+  TContext
+> => {
+  return useMutation(getReportStoryMutationOptions(options), queryClient);
+};
+export type likeStoryResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type likeStoryResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type likeStoryResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type likeStoryResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type likeStoryResponseSuccess = likeStoryResponse204 & {
+  headers: Headers;
+};
+export type likeStoryResponseError = (
+  | likeStoryResponse401
+  | likeStoryResponse403
+  | likeStoryResponse404
+) & {
+  headers: Headers;
+};
+
+export type likeStoryResponse =
+  | likeStoryResponseSuccess
+  | likeStoryResponseError;
+
+export const getLikeStoryUrl = (storyId: string) => {
+  return `/api/v1/stories/${storyId}/like`;
+};
+
+/**
+ * 스토리에 좋아요를 등록합니다(like만 있고 dislike는 없습니다). 인증 필수이며(게스트 불가) 이미 좋아요한 스토리를 다시 등록해도 같은 204로 응답합니다(멱등). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 좋아요 등록
+ */
+export const likeStory = async (
+  storyId: string,
+  options?: RequestInit,
+): Promise<likeStoryResponse> => {
+  return customInstance<likeStoryResponse>(getLikeStoryUrl(storyId), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getLikeStoryMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof likeStory>>,
+    TError,
+    { storyId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof likeStory>>,
+  TError,
+  { storyId: string },
+  TContext
+> => {
+  const mutationKey = ['likeStory'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof likeStory>>,
+    { storyId: string }
+  > = (props) => {
+    const { storyId } = props ?? {};
+
+    return likeStory(storyId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LikeStoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof likeStory>>
+>;
+
+export type LikeStoryMutationError = ErrorType<void>;
+
+/**
+ * @summary 스토리 좋아요 등록
+ */
+export const useLikeStory = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof likeStory>>,
+      TError,
+      { storyId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof likeStory>>,
+  TError,
+  { storyId: string },
+  TContext
+> => {
+  return useMutation(getLikeStoryMutationOptions(options), queryClient);
+};
+export type unlikeStoryResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type unlikeStoryResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type unlikeStoryResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type unlikeStoryResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type unlikeStoryResponseSuccess = unlikeStoryResponse204 & {
+  headers: Headers;
+};
+export type unlikeStoryResponseError = (
+  | unlikeStoryResponse401
+  | unlikeStoryResponse403
+  | unlikeStoryResponse404
+) & {
+  headers: Headers;
+};
+
+export type unlikeStoryResponse =
+  | unlikeStoryResponseSuccess
+  | unlikeStoryResponseError;
+
+export const getUnlikeStoryUrl = (storyId: string) => {
+  return `/api/v1/stories/${storyId}/like`;
+};
+
+/**
+ * 스토리 좋아요를 취소합니다. 인증 필수이며(게스트 불가) 좋아요하지 않은 스토리를 취소해도 같은 204로 응답합니다(멱등). 읽을 수 없는 스토리는 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
+ * @summary 스토리 좋아요 취소
+ */
+export const unlikeStory = async (
+  storyId: string,
+  options?: RequestInit,
+): Promise<unlikeStoryResponse> => {
+  return customInstance<unlikeStoryResponse>(getUnlikeStoryUrl(storyId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getUnlikeStoryMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlikeStory>>,
+    TError,
+    { storyId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unlikeStory>>,
+  TError,
+  { storyId: string },
+  TContext
+> => {
+  const mutationKey = ['unlikeStory'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unlikeStory>>,
+    { storyId: string }
+  > = (props) => {
+    const { storyId } = props ?? {};
+
+    return unlikeStory(storyId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnlikeStoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unlikeStory>>
+>;
+
+export type UnlikeStoryMutationError = ErrorType<void>;
+
+/**
+ * @summary 스토리 좋아요 취소
+ */
+export const useUnlikeStory = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof unlikeStory>>,
+      TError,
+      { storyId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof unlikeStory>>,
+  TError,
+  { storyId: string },
+  TContext
+> => {
+  return useMutation(getUnlikeStoryMutationOptions(options), queryClient);
+};
 export type createGeneralStoryResponse201 = {
   data: SimpleStoryCreateResponse;
   status: 201;
@@ -588,7 +955,7 @@ export const getUpdateStoryUrl = (storyId: string) => {
 };
 
 /**
- * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404.
+ * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404. 스토리 공개 전환(PRIVATE↔PUBLIC)도 별도 엔드포인트 없이 visibility 부분 갱신으로 수행하며, 전환은 읽기 가시성에 즉시 반영됩니다. 단 등록되지 않은(PUBLISHED가 아닌) 스토리의 공개 범위 변경은 400입니다(읽기 게이트상 공개해도 읽히지 않는 모순 방지).
  * @summary 스토리 수정(부분 갱신)
  */
 export const updateStory = async (
@@ -839,6 +1206,176 @@ export function useGetEditForm<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetEditFormQueryOptions(storyId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type getOriginalStoriesResponse200 = {
+  data: StorySummaryResponse[];
+  status: 200;
+};
+
+export type getOriginalStoriesResponseSuccess =
+  getOriginalStoriesResponse200 & {
+    headers: Headers;
+  };
+export type getOriginalStoriesResponse = getOriginalStoriesResponseSuccess;
+
+export const getGetOriginalStoriesUrl = () => {
+  return `/api/v1/stories/originals`;
+};
+
+/**
+ * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 피드·검색이 나오기 전까지 홈의 오리지널 섹션이 사용하며, 인증은 필요 없습니다. 공식 계정 미설정 환경은 빈 목록입니다.
+ * @summary 오리지널 스토리 목록 조회
+ */
+export const getOriginalStories = async (
+  options?: RequestInit,
+): Promise<getOriginalStoriesResponse> => {
+  return customInstance<getOriginalStoriesResponse>(
+    getGetOriginalStoriesUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getGetOriginalStoriesQueryKey = () => {
+  return [`/api/v1/stories/originals`] as const;
+};
+
+export const getGetOriginalStoriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getOriginalStories>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetOriginalStoriesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getOriginalStories>>
+  > = ({ signal }) => getOriginalStories({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOriginalStories>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetOriginalStoriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOriginalStories>>
+>;
+export type GetOriginalStoriesQueryError = ErrorType<unknown>;
+
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOriginalStories>>,
+          TError,
+          Awaited<ReturnType<typeof getOriginalStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOriginalStories>>,
+          TError,
+          Awaited<ReturnType<typeof getOriginalStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 오리지널 스토리 목록 조회
+ */
+
+export function useGetOriginalStories<
+  TData = Awaited<ReturnType<typeof getOriginalStories>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getOriginalStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetOriginalStoriesQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

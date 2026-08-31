@@ -1,3 +1,5 @@
+import { CREDIT_POLICY } from '@/constants/credit';
+
 import type { ChatInputMode } from './utils/chat-input-config';
 import type { InputBlockType } from './utils/input-blocks';
 
@@ -59,3 +61,5 @@ export const CHAT_CHOICES_HINT_SEEN_STORAGE_KEY =
   'manyak:chat-choices-hint-seen';
 
 export const CHAT_CHOICES_HINT_SEEN_VALUE = 'true';
+
+export const CHAT_TURN_CREDIT_COST_LABEL = `${CREDIT_POLICY.chatTurn} 이프`;

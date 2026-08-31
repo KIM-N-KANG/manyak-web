@@ -9,7 +9,9 @@ import {
 describe('resolveLoginCallbackUrl', () => {
   it('앱 내 상대 경로를 그대로 반환한다', () => {
     expect(resolveLoginCallbackUrl('/chats/abc-123')).toBe('/chats/abc-123');
-    expect(resolveLoginCallbackUrl('/stories/new')).toBe('/stories/new');
+    expect(resolveLoginCallbackUrl(APP_PATH.STUDIO.STORY.SIMPLE)).toBe(
+      APP_PATH.STUDIO.STORY.SIMPLE,
+    );
   });
 
   it('절대 URL은 기본 경로로 폴백한다 (오픈 리다이렉트 방지)', () => {

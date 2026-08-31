@@ -1,10 +1,14 @@
 import { type Page } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
 
 /**
- * 스토리 생성 퍼널의 게스트 한도·크레딧 게이팅 스펙(QA STORY-LIMIT-02~06·09).
+ * 스토리 생성 퍼널의 게스트 한도·이프 게이팅 스펙(QA STORY-LIMIT-02~06·09).
  * 로컬 카운터 선차단, 서버 402 사유별 다이얼로그 분기, 카운터 증가 규칙을 검증한다.
  * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`
  * (스토리라인 5·스토리 1)를 따른다.
@@ -82,22 +86,22 @@ const goToAdditionalInfoStep = async (page: Page) => {
 };
 
 test.describe('생성 퍼널 진입 백스톱', () => {
-  test('스토리 한도(1) 도달 게스트가 /stories/new에 직접 진입하면 백스톱 다이얼로그를 띄우고, 닫으면 재노출 없이 조작 가능하다 (STORY-LIMIT-02)', async ({
+  test('스토리 한도(1) 도달 게스트가 /studio/story/simple에 직접 진입하면 백스톱 바텀 시트를 띄우고, 닫으면 재노출 없이 조작 가능하다 (STORY-LIMIT-02)', async ({
     page,
   }) => {
     await mockTags(page);
     await seedGuestUsage(page, { storyCreate: 1 });
 
-    // FAB를 우회한 딥링크 진입을 재현한다.
-    await page.goto('/stories/new');
+    // 제작 목록 CTA를 우회한 딥링크 진입을 재현한다.
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     const dialog = page.getByRole('dialog');
 
     await expect(
-      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
 
-    // 닫기 버튼이 없는 다이얼로그라 바깥(백드롭) 터치로 닫는다.
+    // 닫기 버튼이 없는 바텀 시트라 바깥(백드롭) 터치로 닫는다.
     await page.mouse.click(10, 10);
 
     await expect(dialog).toBeHidden();
@@ -113,7 +117,7 @@ test.describe('생성 퍼널 진입 백스톱', () => {
 });
 
 test.describe('스토리라인 생성 한도', () => {
-  test('스토리라인 카운터가 한도(5)에 도달하면 요청 없이 로그인 다이얼로그를 띄우고 키워드 단계에 머문다 (STORY-LIMIT-03)', async ({
+  test('스토리라인 카운터가 한도(5)에 도달하면 요청 없이 로그인 바텀 시트를 띄우고 키워드 단계에 머문다 (STORY-LIMIT-03)', async ({
     page,
   }) => {
     let storylineRequestCount = 0;
@@ -125,18 +129,18 @@ test.describe('스토리라인 생성 한도', () => {
       await route.abort();
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
     const dialog = page.getByRole('dialog');
 
     await expect(
-      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     expect(storylineRequestCount).toBe(0);
 
-    // 다이얼로그가 배경을 aria-hidden 처리하므로, 바깥 터치로 닫은 뒤에 단계 유지를 확인한다.
+    // 바텀 시트가 배경을 aria-hidden 처리하므로, 바깥 터치로 닫은 뒤에 단계 유지를 확인한다.
     await page.mouse.click(10, 10);
     await expect(dialog).toBeHidden();
 
@@ -151,7 +155,7 @@ test.describe('스토리라인 생성 한도', () => {
     ).toBeHidden();
   });
 
-  test('서버 402(체험 한도)면 로그인 다이얼로그와 인라인 한도 문구를 함께 표시한다 (STORY-LIMIT-04)', async ({
+  test('서버 402(체험 한도)면 로그인 바텀 시트와 인라인 한도 문구를 함께 표시한다 (STORY-LIMIT-04)', async ({
     page,
   }) => {
     // 로컬 카운터는 미달(0)이어도 서버 판정이 최종이다.
@@ -160,12 +164,14 @@ test.describe('스토리라인 생성 한도', () => {
       await route.fulfill(paymentRequired('GUEST_TRIAL_LIMIT_EXCEEDED'));
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
     await expect(
-      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     await expect(
       page.getByText('게스트 스토리라인 생성 횟수를 모두 사용했어요'),
@@ -188,7 +194,7 @@ test.describe('스토리라인 생성 한도', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
@@ -199,13 +205,15 @@ test.describe('스토리라인 생성 한도', () => {
     await page.getByRole('button', { name: '다시 만들기' }).click();
 
     await expect(
-      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
     expect(storylineRequestCount).toBe(1);
   });
 });
 
-test.describe('스토리 완성 한도·크레딧', () => {
+test.describe('스토리 완성 한도·이프', () => {
   test('게스트 완성 요청이 402(체험 한도)면 추가 정보 단계로 복귀하고 입력을 유지한다 (STORY-LIMIT-05)', async ({
     page,
   }) => {
@@ -221,7 +229,7 @@ test.describe('스토리 완성 한도·크레딧', () => {
       await route.fulfill(paymentRequired('GUEST_TRIAL_LIMIT_EXCEEDED'));
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await goToAdditionalInfoStep(page);
 
     const recommendation = page.getByRole('button', {
@@ -238,11 +246,11 @@ test.describe('스토리 완성 한도·크레딧', () => {
     const dialog = page.getByRole('dialog');
 
     await expect(
-      dialog.getByText('게스트 체험 횟수를 모두 사용했어요'),
+      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
 
-    // 다이얼로그가 배경을 aria-hidden 처리하고 제목이 인라인 문구와 같은 문장이라,
-    // 바깥 터치로 닫은 뒤에 인라인 문구와 입력 유지를 확인한다.
+    // 바텀 시트가 배경을 aria-hidden 처리하므로, 바깥 터치로 닫은 뒤에
+    // 인라인 문구와 입력 유지를 확인한다.
     await page.mouse.click(10, 10);
     await expect(dialog).toBeHidden();
 
@@ -255,7 +263,7 @@ test.describe('스토리 완성 한도·크레딧', () => {
     await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('회원 완성 요청이 402(크레딧 부족)면 크레딧 부족 다이얼로그를 띄우고 입력을 유지한다 (STORY-LIMIT-06)', async ({
+  test('회원 완성 요청이 402(이프 부족)면 현재 화면에서 토스트만 띄우고 입력을 유지한다 (STORY-LIMIT-06)', async ({
     page,
   }) => {
     await mockTags(page);
@@ -271,7 +279,7 @@ test.describe('스토리 완성 한도·크레딧', () => {
       await route.fulfill(paymentRequired('INSUFFICIENT_CREDIT'));
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await goToAdditionalInfoStep(page);
 
     const additionalInfoInput = page.locator(
@@ -281,12 +289,8 @@ test.describe('스토리 완성 한도·크레딧', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    const dialog = page.getByRole('dialog');
-
-    await expect(dialog.getByText('크레딧이 부족해요')).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: '친구 초대 하러 가기' }),
-    ).toBeVisible();
+    await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
@@ -301,10 +305,12 @@ test.describe('게스트 카운터 시드', () => {
     await mockTags(page);
     await seedStoryIds(page, ['s1']);
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await expect(
-      page.getByRole('dialog').getByText('게스트 체험 횟수를 모두 사용했어요'),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
     ).toBeVisible();
   });
 });

@@ -4,6 +4,7 @@ import type { SimpleStorylineResponse } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 
+import { STORY_COMPLETION_CREDIT_COST } from '../../constants';
 import type { AdditionalInfoInput } from '../../types';
 import { SelectedStorylineContent } from '../shared/selected-storyline-content';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
@@ -36,6 +37,17 @@ type StoryAdditionalInfoStepSectionProps = {
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
+const storyCompletionCreditCost = (
+  <dl
+    className="flex h-10 w-full items-center justify-between bg-muted px-4 text-sm text-foreground-secondary"
+    aria-label={STORY_COMPLETION_CREDIT_COST.label}>
+    <dt>{STORY_COMPLETION_CREDIT_COST.label}</dt>
+    <dd className="font-bold text-foreground">
+      {STORY_COMPLETION_CREDIT_COST.amountLabel}
+    </dd>
+  </dl>
+);
+
 export function StoryAdditionalInfoStepSection({
   storylineItem,
   isCompletingStory,
@@ -59,6 +71,7 @@ export function StoryAdditionalInfoStepSection({
       titleLines={['스토리라인에 더하고 싶은', '정보를 자유롭게 입력해주세요']}
       description="입력한 정보는 스토리를 완성하는 데 반영돼요"
       onScroll={onScroll}
+      footerTop={storyCompletionCreditCost}
       footer={
         <>
           <Button

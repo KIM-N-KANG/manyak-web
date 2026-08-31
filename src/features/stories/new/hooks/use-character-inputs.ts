@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 
+import type {
+  KeywordCharacterSnapshot,
+  KeywordDraftSnapshot,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 import { createClientId } from '@/lib/create-client-id';
 
@@ -44,6 +48,32 @@ const createInitialSupportingCharacters = (): CharacterInput[] =>
   );
 
 /**
+ * 저장 스냅숏의 인물 입력에 새 화면 로컬 ID를 부여한다.
+ *
+ * @param snapshot 복원할 인물 입력 스냅숏
+ * @returns 화면에서 사용할 인물 입력
+ */
+const restoreCharacter = (
+  snapshot: KeywordCharacterSnapshot,
+): CharacterInput => {
+  const customTags = snapshot.customTags.map(({ name }) => ({
+    id: createClientId(),
+    name,
+  }));
+
+  return {
+    id: createClientId(),
+    name: snapshot.name,
+    gender: snapshot.gender,
+    selectedTagIds: snapshot.selectedTagIds,
+    selectedCustomTagIds: customTags
+      .filter((_, index) => snapshot.customTags[index]?.selected)
+      .map(({ id }) => id),
+    customTags,
+  };
+};
+
+/**
  * 인물이 고른 특징 개수를 센다. 사전 정의 태그와 직접 추가 태그를 합산한다.
  *
  * @param character 대상 인물 입력
@@ -64,7 +94,8 @@ export function useCharacterInputs() {
   const [supportingCharacters, setSupportingCharacters] = useState<
     CharacterInput[]
   >(createInitialSupportingCharacters);
-  const { registerInput, focusInput } = useInputRefRegistry<HTMLInputElement>();
+  const { registerInput, scrollInputIntoView } =
+    useInputRefRegistry<HTMLInputElement>();
 
   const getCharacters = (category: CharacterTagCategory) =>
     category === 'PROTAGONIST' ? [protagonist] : supportingCharacters;
@@ -183,7 +214,6 @@ export function useCharacterInputs() {
 
   // 인원 상한은 갱신 함수 안에서 최신 목록으로 판정한다. 렌더 시점의 길이로
   // 막으면 상태가 반영되기 전에 연달아 눌린 클릭이 모두 통과한다.
-  // 상한에 걸려 추가되지 않으면 등록된 인풋이 없어 포커스 이동도 그냥 지나간다.
   const addSupportingCharacter = () => {
     const character = createEmptyCharacter();
 
@@ -192,12 +222,25 @@ export function useCharacterInputs() {
         ? previous
         : [...previous, character],
     );
-    focusInput(character.id, { scrollIntoView: true });
+    scrollInputIntoView(character.id);
   };
 
   const removeSupportingCharacter = (characterId: string) => {
     setSupportingCharacters((previous) =>
       previous.filter((character) => character.id !== characterId),
+    );
+  };
+
+  /** 키워드 저장본으로 주인공과 주변 인물 입력을 복원한다. */
+  const restoreCharacterInputs = (snapshot: KeywordDraftSnapshot) => {
+    const restoredSupportingCharacters =
+      snapshot.supportingCharacters.map(restoreCharacter);
+
+    setProtagonist(restoreCharacter(snapshot.protagonist));
+    setSupportingCharacters(
+      restoredSupportingCharacters.length > 0
+        ? restoredSupportingCharacters
+        : createInitialSupportingCharacters(),
     );
   };
 
@@ -217,5 +260,6 @@ export function useCharacterInputs() {
     addSupportingCharacter,
     removeSupportingCharacter,
     registerCharacterNameInput: registerInput,
+    restoreCharacterInputs,
   };
 }

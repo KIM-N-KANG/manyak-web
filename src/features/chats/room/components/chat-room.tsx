@@ -13,7 +13,6 @@ import type {
   ContinueChatRequestUserSource,
 } from '@/api/generated/models';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
-import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { ListStatus } from '@/components/common/list-status';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
@@ -21,18 +20,16 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   incrementGuestUsage,
   isGuestOverLimit,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
+import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import type {
-  CreditShortageTrigger,
-  GuestLimitTrigger,
-} from '@/observability/analytics';
+import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import { useChatChoices } from '../hooks/use-chat-choices';
@@ -62,9 +59,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const { status: sessionStatus } = useSession();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
-  const [creditShortageTrigger, setCreditShortageTrigger] =
-    useState<CreditShortageTrigger | null>(null);
-
   const handlePaymentRequired = (error: unknown) => {
     const reason = resolvePaymentRequiredReason(error, sessionStatus);
 
@@ -75,7 +69,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
 
     if (reason === 'insufficient-credit') {
-      setCreditShortageTrigger('chat_turn');
+      showCreditShortageToast('chat_turn');
 
       return;
     }
@@ -342,6 +336,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           isStreaming={isStreaming}
           choicesEnabled={choicesEnabled}
           onChoicesEnabledChange={handleChoicesEnabledChange}
+          showCreditCost={sessionStatus === 'authenticated'}
         />
         <ConfirmAlertDialog
           open={pendingFill !== null}
@@ -356,19 +351,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           cancelLabel="그대로 두기"
           confirmLabel="바꾸기"
         />
-        <LoginRequiredDialog
+        <LoginRequiredSheet
           trigger={guestLimitTrigger}
           onOpenChange={(open) => {
             if (!open) {
               setGuestLimitTrigger(null);
-            }
-          }}
-        />
-        <CreditShortageDialog
-          trigger={creditShortageTrigger}
-          onOpenChange={(open) => {
-            if (!open) {
-              setCreditShortageTrigger(null);
             }
           }}
         />

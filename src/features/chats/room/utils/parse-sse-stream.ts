@@ -2,6 +2,7 @@
 export type SseEvent =
   | { type: 'started' }
   | { type: 'token'; content: string }
+  | { type: 'character-image'; name: string; imageUrl: string }
   | { type: 'completed'; aiOutput: string }
   | { type: 'error'; message?: string };
 
@@ -10,6 +11,8 @@ const SSE_DATA_PREFIX = 'data:';
 
 const SSE_FIELD = {
   TEXT: 'text',
+  NAME: 'name',
+  IMAGE_URL: 'imageUrl',
   AI_OUTPUT: 'aiOutput',
   MESSAGE: 'message',
 } as const;
@@ -62,6 +65,14 @@ function toSseEvent(eventName: string, dataStr: string): SseEvent | null {
       const content = extractField(dataStr, SSE_FIELD.TEXT);
 
       return content == null ? null : { type: 'token', content };
+    }
+    case 'character_image': {
+      const name = extractField(dataStr, SSE_FIELD.NAME);
+      const imageUrl = extractField(dataStr, SSE_FIELD.IMAGE_URL);
+
+      return name && imageUrl
+        ? { type: 'character-image', name, imageUrl }
+        : null;
     }
     case 'completed':
       return {

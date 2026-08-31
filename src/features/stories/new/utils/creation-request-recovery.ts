@@ -3,7 +3,7 @@ import type {
   SimpleStoryCreateResponse,
   StoryCreationRequestStatusResponse,
 } from '@/api/generated/models';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type { InFlightCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { FetchError } from '@/lib/custom-fetch';
 
 /**
@@ -25,7 +25,7 @@ export type SuccessSettlement = 'apply' | 'defer-to-recovery';
 /**
  * 원 생성 요청의 성공 응답을 어떻게 정착시킬지 판정한다.
  * 퍼널이 언마운트된 뒤 도착한 응답은 상태 반영이 불가능하므로 레코드를
- * 소비하지 않고 남겨, 홈 배너 유지·재진입 복구 조회로 결과를 되찾게 한다.
+ * 소비하지 않고 남겨, 제작 탭 배너 유지·재진입 복구 조회로 결과를 되찾게 한다.
  *
  * @param isFunnelMounted 응답 도착 시점의 퍼널 마운트 여부
  * @returns 정착 방식
@@ -83,7 +83,7 @@ export type CreationRecoveryAction =
  * @returns 화면 복원 액션
  */
 export function resolveCreationRecovery(
-  stage: PendingCreationRequest['stage'],
+  stage: InFlightCreationRequest['stage'],
   response: StoryCreationRequestStatusResponse,
 ): CreationRecoveryAction {
   if (response.status === 'PENDING') {

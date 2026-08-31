@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Image01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -17,6 +17,7 @@ import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useInView } from '@/hooks/use-in-view';
+import { FetchError } from '@/lib/custom-fetch';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
 import { queryFnWithoutAbortSignal } from '@/lib/query-client';
 import { track } from '@/observability/analytics';
@@ -37,14 +38,18 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     track('client_storyDetail_viewed', { story_id: storyId });
   }, [storyId]);
 
-  const { data, isPending, isError, refetch } = useGetStoryDetail(storyId, {
-    query: {
-      queryFn: queryFnWithoutAbortSignal(() => getStoryDetail(storyId)),
+  const { data, error, isPending, isError, refetch } = useGetStoryDetail(
+    storyId,
+    {
+      query: {
+        queryFn: queryFnWithoutAbortSignal(() => getStoryDetail(storyId)),
+      },
     },
-  });
+  );
 
-  const showSkeleton = useDelayedLoading(isPending);
+  const showSkeleton = useDelayedLoading(isPending, { delay: 300 });
   const story = data?.status === 200 ? data.data : undefined;
+  const isNotFound = error instanceof FetchError && error.status === 404;
 
   useDocumentTitle(story?.title ?? '');
 
@@ -72,23 +77,31 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     setIsThumbnailViewerOpen(true);
   };
 
-  const contentRef = useRef<HTMLElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [contentElement, setContentElement] = useState<HTMLElement | null>(
+    null,
+  );
+  const [heroElement, setHeroElement] = useState<HTMLDivElement | null>(null);
+  const [titleElement, setTitleElement] = useState<HTMLHeadingElement | null>(
+    null,
+  );
 
   const isTitleInView = useInView({
-    targetRef: titleRef,
-    rootRef: contentRef,
+    target: titleElement,
+    root: contentElement,
     enabled: Boolean(story),
+    rootMargin: '-56px 0px 0px',
   });
 
   const showTitle = Boolean(story) && !isTitleInView;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <StoryDetailHeader
-        storyId={storyId}
         title={story?.title ?? ''}
         showTitle={showTitle}
+        hasHeroImage={Boolean(thumbnailUrl)}
+        scrollContainerElement={contentElement}
+        heroElement={heroElement}
       />
 
       <AnimatePresence mode="wait" initial={false}>
@@ -104,12 +117,18 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         {!showSkeleton && isError && (
           <m.main
             key="error"
-            className="flex min-h-0 flex-1 flex-col"
+            className="flex min-h-0 flex-1 flex-col pt-14"
             {...FADE_TRANSITION_PROPS}>
-            <RetryListStatus
-              title="스토리를 불러오지 못했어요"
-              onRetry={() => refetch()}
-            />
+            {isNotFound ? (
+              <div className="flex flex-1 items-center justify-center px-4 text-center text-sm">
+                스토리를 찾을 수 없어요
+              </div>
+            ) : (
+              <RetryListStatus
+                title="스토리를 불러오지 못했어요"
+                onRetry={() => refetch()}
+              />
+            )}
           </m.main>
         )}
 
@@ -119,46 +138,54 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             className="flex min-h-0 flex-1 flex-col"
             {...FADE_TRANSITION_PROPS}>
             <main
-              ref={contentRef}
-              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain pb-4">
-              <div className="shrink-0 px-4">
-                <button
-                  type="button"
-                  aria-label="썸네일 크게 보기"
-                  className="block w-full"
-                  onClick={handleThumbnailClick}>
-                  <AspectRatio
-                    ratio={3 / 4}
-                    className="w-full overflow-hidden rounded-xl border border-border">
-                    {thumbnailUrl ? (
+              ref={setContentElement}
+              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain">
+              <div ref={setHeroElement} className="shrink-0">
+                {thumbnailUrl ? (
+                  <button
+                    type="button"
+                    aria-label="썸네일 크게 보기"
+                    className="block w-full"
+                    onClick={handleThumbnailClick}>
+                    <AspectRatio
+                      ratio={3 / 4}
+                      className="w-full overflow-hidden border-b border-border bg-muted">
                       <Image
                         src={thumbnailUrl}
                         alt="스토리 썸네일"
                         fill
-                        sizes="100vw"
+                        sizes="(max-width: 448px) 100vw, 448px"
                         priority
                         className="object-cover"
                       />
-                    ) : (
-                      <div
-                        aria-hidden="true"
-                        className="flex size-full items-center justify-center bg-muted">
-                        <HugeiconsIcon
-                          icon={Image01Icon}
-                          className="size-12 text-foreground-tertiary"
-                        />
+                      <div className="absolute right-2 bottom-2">
+                        <StoryTurnCount turnCount={story.turnCount ?? 0} />
                       </div>
-                    )}
-                    <div className="absolute right-4 bottom-4">
+                    </AspectRatio>
+                  </button>
+                ) : (
+                  <AspectRatio
+                    ratio={3 / 4}
+                    className="w-full overflow-hidden border-b border-border bg-muted">
+                    <div
+                      role="img"
+                      aria-label="스토리 썸네일 없음"
+                      className="flex size-full items-center justify-center">
+                      <HugeiconsIcon
+                        icon={Image01Icon}
+                        className="size-8 text-foreground-tertiary"
+                      />
+                    </div>
+                    <div className="absolute right-2 bottom-2">
                       <StoryTurnCount turnCount={story.turnCount ?? 0} />
                     </div>
                   </AspectRatio>
-                </button>
+                )}
               </div>
               <div className="px-4 pt-4">
                 <StoryInfoSection
                   story={story}
-                  titleRef={titleRef}
+                  titleRef={setTitleElement}
                   startSettingValue={activeStartSetting}
                   onStartSettingValueChange={setSelectedStartSetting}
                 />

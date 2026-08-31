@@ -1,6 +1,7 @@
 import { type Page } from '@playwright/test';
 
 import { DEFAULT_TITLE } from '@/constants/site';
+import { CHAT_TURN_CREDIT_COST_LABEL } from '@/features/chats/room/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -13,13 +14,21 @@ import {
 
 // 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
-// SSE 포맷: started → token({"text":...})×N → completed({"aiOutput":...}) | error({"message":...})
+// SSE 포맷: started → (token | character_image)×N → completed | error
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
 const CHAT_REGENERATE = '**/api/v1/chats/c1/turns/regenerate/stream';
 const CHAT_CHOICES = '**/api/v1/chats/c1/turns/1/choices';
 const PLAY_FILLED_PATH =
   'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
+const CHARACTER_IMAGE_URL =
+  'https://dev-cdn.manyak.app/characters/originals/story-id/serin.webp';
+
+// 1x1 투명 PNG. 인물 이미지 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 // 기본 모드가 블럭 입력이므로, textarea 기반 테스트는 일반 모드를 고정한다.
 const setPlainInputMode = async (page: Page) => {
@@ -48,6 +57,35 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
+  test('회원 전송 버튼 왼쪽에 20 이프 비용을 작고 회색으로 표시한다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const creditCost = page.getByText(CHAT_TURN_CREDIT_COST_LABEL, {
+      exact: true,
+    });
+    const sendButton = page.locator('[data-tour="send"]');
+
+    await expect(creditCost).toBeVisible();
+    await expect(creditCost).toHaveCSS('font-size', '12px');
+    await expect(creditCost).toHaveClass(/text-foreground-secondary/);
+    await expect(creditCost.locator('xpath=..')).toHaveCSS('column-gap', '8px');
+    await expect(
+      creditCost.locator('xpath=following-sibling::*[1]'),
+    ).toHaveAttribute('data-tour', 'send');
+    await expect(sendButton).toBeVisible();
+  });
+
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
@@ -59,12 +97,23 @@ test.describe('채팅 스트리밍', () => {
 
     await page.goto('/chats/c1');
 
-    await expect(
-      page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.'),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: '던전에 진입한다' }),
-    ).toBeVisible();
+    const prologue = page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.');
+    const prologueContent = prologue.locator(
+      'xpath=ancestor::*[@data-slot="message-content"]',
+    );
+    const firstChoice = page.getByRole('button', { name: '던전에 진입한다' });
+    const choices = firstChoice.locator('xpath=../..');
+
+    await expect(prologue).toBeVisible();
+    await expect(firstChoice).toBeVisible();
+    await expect(prologue.locator('xpath=ancestor::p')).toHaveCSS(
+      'line-height',
+      '28px',
+    );
+    await expect(prologueContent).toHaveCSS('padding-top', '20px');
+    await expect(prologueContent).toHaveCSS('padding-bottom', '20px');
+    await expect(firstChoice).toHaveCSS('line-height', '24.5px');
+    await expect(choices).toHaveCSS('padding-top', '12px');
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
@@ -284,6 +333,161 @@ test.describe('채팅 스트리밍', () => {
     await expect
       .poll(() => pixelLogs.filter((log) => log.includes('StartTrial')).length)
       .toBe(1);
+  });
+
+  test('인물 이미지를 completed 전에 표시하고 확정 마커로 이어서 복원한다 (US-6-11)', async ({
+    page,
+  }) => {
+    const confirmedOutput =
+      `*문이 열린다.*\n[[${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
+    const completedTurn = {
+      id: 1,
+      userInput: '문 안으로 들어간다',
+      aiOutput: confirmedOutput,
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1 ? chatDetail() : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    // Playwright route.fulfill은 응답 본문을 한 번에 전달하므로, 브라우저 fetch를
+    // ReadableStream으로 바꿔 이미지 이벤트와 completed 사이의 실제 화면을 관찰한다.
+    await page.addInitScript(
+      ({ imageUrl, confirmed }) => {
+        const originalFetch = window.fetch;
+
+        window.fetch = async (...args) => {
+          const input = args[0];
+          const url = input instanceof Request ? input.url : input.toString();
+
+          if (!url.endsWith('/api/v1/chats/c1/turns/stream')) {
+            return originalFetch(...args);
+          }
+
+          const encoder = new TextEncoder();
+          const stream = new ReadableStream<Uint8Array>({
+            start(controller) {
+              document.documentElement.dataset.chatStreamCompleted = 'false';
+              controller.enqueue(
+                encoder.encode(
+                  'event: started\ndata: {}\n\n' +
+                    'event: token\ndata: {"text":"*문이 열린다.*\\n"}\n\n' +
+                    `event: character_image\ndata: ${JSON.stringify({ name: '세린', imageUrl })}\n\n` +
+                    'event: token\ndata: {"text":"세린: 기다렸어?"}\n\n',
+                ),
+              );
+
+              window.setTimeout(() => {
+                document.documentElement.dataset.chatStreamCompleted = 'true';
+                controller.enqueue(
+                  encoder.encode(
+                    `event: completed\ndata: ${JSON.stringify({ aiOutput: confirmed })}\n\n`,
+                  ),
+                );
+                controller.close();
+              }, 1000);
+            },
+          });
+
+          return new Response(stream, {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          });
+        };
+      },
+      { imageUrl: CHARACTER_IMAGE_URL, confirmed: confirmedOutput },
+    );
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('문 안으로 들어간다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    const image = page.getByRole('img', { name: '세린 인물 이미지' });
+    const imageBlock = page.locator('[data-slot="chat-character-image"]');
+    const aiMessageContent = imageBlock.locator('..');
+    const aiMessage = imageBlock.locator(
+      'xpath=ancestor::*[@data-slot="message-content"]',
+    );
+    const characterLine = page
+      .getByText('세린: 기다렸어?')
+      .locator('xpath=ancestor::p');
+    const precedingLine = page
+      .getByText('문이 열린다.', { exact: true })
+      .locator('xpath=ancestor::p');
+
+    await expect(image).toBeVisible();
+    await expect(page.getByText('세린: 기다렸어?')).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-chat-stream-completed',
+      'false',
+    );
+
+    await expect(aiMessage).toHaveCSS('padding-left', '0px');
+    await expect(aiMessageContent).toHaveCSS('padding-left', '16px');
+    await expect(characterLine).toHaveCSS('padding-left', '0px');
+    await expect(aiMessage).toHaveCSS('padding-top', '20px');
+    await expect(aiMessage).toHaveCSS('padding-bottom', '20px');
+    await expect(aiMessageContent).toHaveCSS('row-gap', '20px');
+    await expect(imageBlock).toHaveCSS('border-top-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-bottom-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-left-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-right-width', '1px');
+    await expect(imageBlock).toHaveCSS('border-radius', '20px');
+    await expect(imageBlock).toHaveCSS('box-sizing', 'border-box');
+
+    const imageBox = await imageBlock.boundingBox();
+    const imageElementBox = await image.boundingBox();
+    const messageBox = await aiMessage.boundingBox();
+    const precedingLineBox = await precedingLine.boundingBox();
+    const characterLineBox = await characterLine.boundingBox();
+
+    expect(imageBox).not.toBeNull();
+    expect(imageElementBox).not.toBeNull();
+    expect(messageBox).not.toBeNull();
+    expect(precedingLineBox).not.toBeNull();
+    expect(characterLineBox).not.toBeNull();
+    expect(imageBox!.x - messageBox!.x).toBeCloseTo(16, 1);
+    expect(
+      messageBox!.x + messageBox!.width - (imageBox!.x + imageBox!.width),
+    ).toBeCloseTo(16, 1);
+    expect(imageBox!.width / imageBox!.height).toBeCloseTo(4 / 3, 2);
+    expect(imageElementBox!.x).toBeCloseTo(imageBox!.x + 1, 1);
+    expect(imageElementBox!.y).toBeCloseTo(imageBox!.y + 1, 1);
+    expect(imageElementBox!.width).toBeCloseTo(imageBox!.width - 2, 1);
+    expect(imageElementBox!.height).toBeCloseTo(imageBox!.height - 2, 1);
+    expect(
+      imageBox!.y - (precedingLineBox!.y + precedingLineBox!.height),
+    ).toBeCloseTo(40, 1);
+    expect(characterLineBox!.y - (imageBox!.y + imageBox!.height)).toBeCloseTo(
+      20,
+      1,
+    );
+
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-chat-stream-completed',
+      'true',
+    );
+    await expect.poll(() => detailCallCount).toBeGreaterThanOrEqual(2);
+    await expect(image).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(
+      `[[${CHARACTER_IMAGE_URL}]]`,
+    );
   });
 
   test('추천 입력의 수정 버튼을 누르면 입력창에 채워진다 (US-6-4)', async ({
@@ -601,6 +805,12 @@ test.describe('블럭 입력 모드 (기본)', () => {
       page.getByPlaceholder('어떤 상황을 묘사할까요?'),
     ).toBeVisible();
     await expect(page.getByPlaceholder('어떤 대사를 건넬까요?')).toBeVisible();
+
+    const inputActions = page
+      .getByRole('button', { name: '상황 묘사 추가' })
+      .locator('..');
+
+    await expect(inputActions).toHaveCSS('padding-top', '0px');
   });
 
   test('입력 모드 메뉴에서 일반 입력을 선택하면 입력창이 전환된다 (US-6-16)', async ({
@@ -964,7 +1174,20 @@ test.describe('응답 재생성', () => {
 
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '다시 생성' }).click();
+    const regenerateButton = page.getByRole('button', { name: '다시 생성' });
+    const regenerateArea = regenerateButton.locator('xpath=..');
+    const choiceButton = page.getByRole('button', { name: '들어간다' });
+    const choicesArea = choiceButton.locator('xpath=../..');
+    const userMessage = page
+      .getByText('문을 연다')
+      .locator('xpath=ancestor::*[@data-slot="message-content"]');
+
+    await expect(userMessage).toHaveCSS('padding-top', '20px');
+    await expect(userMessage).toHaveCSS('padding-bottom', '20px');
+    await expect(regenerateArea).toHaveCSS('padding-bottom', '20px');
+    await expect(choicesArea).toHaveCSS('padding-top', '12px');
+
+    await regenerateButton.click();
 
     // 새 본문으로 교체되고, 사용자 입력 버블은 유지된다.
     await expect(page.getByText('문이 굉음과 함께 부서졌다.')).toBeVisible();
@@ -985,7 +1208,16 @@ test.describe('응답 재생성', () => {
 
     await page.goto('/chats/c1');
 
+    const endingBadge = page.getByText('엔딩 · 새드엔딩');
+    const endingMessage = endingBadge.locator(
+      'xpath=ancestor::*[@data-slot="message-content"]',
+    );
+
     await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    await expect(endingBadge).toBeVisible();
+    await expect(endingMessage.locator(':scope > *').first()).toHaveText(
+      '엔딩 · 새드엔딩',
+    );
     await expect(page.getByRole('button', { name: '다시 생성' })).toBeHidden();
   });
 

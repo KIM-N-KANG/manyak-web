@@ -60,6 +60,12 @@
   --radius-4xl: calc(var(--radius) * 3.4); /* 34 */
 }
 
+.font-maruburi,
+.font-serif {
+  letter-spacing: -0.02em;
+  line-height: 1.75;
+}
+
 /* 라이트 테마 변수 */
 :root {
   /* 기본 화면 색상 */
@@ -196,4 +202,29 @@
 
 @utility scrollbar-track-transparent {
   --scrollbar-track: transparent;
+}
+
+/* 스크롤바를 완전히 숨긴다. 온보딩 랜딩의 가로 스냅 스트립처럼
+   스와이프 힌트(다음 카드 살짝 보임)가 스크롤바를 대신하는 곳에 쓴다. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes story-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.story-detail-skeleton [data-slot='skeleton'] {
+  animation: story-skeleton-pulse 1.4s ease-in-out infinite;
 }

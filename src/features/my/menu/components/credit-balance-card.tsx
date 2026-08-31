@@ -1,12 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
 import { useMe } from '@/api/generated/endpoints/auth/auth';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { APP_PATH } from '@/constants/app-path';
 import { useClaimAttendance } from '@/features/my/_shared/hooks/use-claim-attendance';
+import { CREDIT_HISTORY_COPY } from '@/features/my/credits/constants';
 import { track } from '@/observability/analytics';
 
 export function CreditBalanceCard() {
@@ -39,7 +42,7 @@ export function CreditBalanceCard() {
     <section className="-mt-4 mb-4 p-4 pt-0">
       <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="text-foreground-secondary">내 크레딧</span>
+          <span className="text-foreground-secondary">내 이프</span>
           {isLoading || balance === undefined ? (
             <Skeleton className="h-7 w-12 bg-foreground/5" />
           ) : (
@@ -48,21 +51,30 @@ export function CreditBalanceCard() {
             </span>
           )}
         </div>
-        <Button
-          type="button"
-          className="relative"
-          disabled={!isMeReady || attendedToday || isClaiming}
-          onClick={() => {
-            track('client_account_attendanceButton_clicked');
-            claimAttendance();
-          }}>
-          <span className={isClaiming ? 'invisible' : undefined}>
-            {attendedToday ? '출석 완료' : '출석 체크'}
-          </span>
-          {isClaiming && (
-            <Spinner className="absolute" aria-label="출석 체크 중" />
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* 주 동작은 출석이라 내역은 배경만 다른 보조 버튼으로 둔다. */}
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href={APP_PATH.MY_CREDITS} />}>
+            {CREDIT_HISTORY_COPY.entryButton}
+          </Button>
+          <Button
+            type="button"
+            className="relative"
+            disabled={!isMeReady || attendedToday || isClaiming}
+            onClick={() => {
+              track('client_account_attendanceButton_clicked');
+              claimAttendance();
+            }}>
+            <span className={isClaiming ? 'invisible' : undefined}>
+              {attendedToday ? '출석 완료' : '출석 체크'}
+            </span>
+            {isClaiming && (
+              <Spinner className="absolute" aria-label="출석 체크 중" />
+            )}
+          </Button>
+        </div>
       </div>
     </section>
   );

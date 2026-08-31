@@ -7,6 +7,7 @@
  */
 import type { LorebookResponse } from './lorebookResponse';
 import type { StoryAuthorResponse } from './storyAuthorResponse';
+import type { StoryCharacterResponse } from './storyCharacterResponse';
 import type { StoryDetailResponseStatus } from './storyDetailResponseStatus';
 import type { StoryDetailResponseVisibility } from './storyDetailResponseVisibility';
 import type { StoryMainEventResponse } from './storyMainEventResponse';
@@ -19,7 +20,7 @@ export interface StoryDetailResponse {
   /** 스토리 ID(공개 식별자) */
   id?: string;
   /**
-   * 썸네일 이미지 URL(§4-3-9). 소스가 없으면 null.
+   * 썸네일 이미지 URL(§4-3-9). 컴파일이 생성한 표지가 있으면 그 URL(webp), 없으면 프리셋 표지(png). 소스가 없으면 null.
    * @nullable
    */
   thumbnailUrl?: string | null;
@@ -51,8 +52,12 @@ export interface StoryDetailResponse {
   lorebooks?: LorebookResponse[];
   /** 스토리 주요 사건 목록(표시 순서). 없으면 빈 배열입니다. */
   mainEvents?: StoryMainEventResponse[];
+  /** 스토리 인물 목록(저장 순서 = 컴파일 응답 순서, KNK-1058). 인물이 없으면 빈 배열입니다. */
+  characters?: StoryCharacterResponse[];
   /** 요청 회원이 이 스토리에서 도달한 엔딩 이름 목록(엔딩은 이름으로 식별). 게스트는 빈 배열입니다. */
   reachedEndings?: string[];
   /** 생성 시각 */
   createdAt?: string;
+  isOwner?: boolean;
+  isLiked?: boolean;
 }

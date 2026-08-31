@@ -20,6 +20,7 @@ import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatChoicesMenu } from './chat-choices-menu';
 import { ChatInputModeMenu } from './chat-input-mode-menu';
+import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 import { SendButtonIcon } from './send-button-icon';
 
 type ChatBlockInputProps = {
@@ -36,6 +37,7 @@ type ChatBlockInputProps = {
   onModeChange: (mode: ChatInputMode) => void;
   choicesEnabled: boolean;
   onChoicesEnabledChange: (enabled: boolean) => void;
+  showCreditCost: boolean;
 };
 
 export function ChatBlockInput({
@@ -52,6 +54,7 @@ export function ChatBlockInput({
   onModeChange,
   choicesEnabled,
   onChoicesEnabledChange,
+  showCreditCost,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -141,7 +144,7 @@ export function ChatBlockInput({
           ))}
         </div>
       )}
-      <div className="flex items-center gap-1 p-4 pt-2">
+      <div className="flex items-center gap-1 p-4 pt-0">
         <Button
           type="button"
           aria-label="상황 묘사 추가"
@@ -167,19 +170,21 @@ export function ChatBlockInput({
           onEnabledChange={onChoicesEnabledChange}
         />
         <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
-        <Button
-          type="button"
-          size="icon-sm"
-          aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
-          data-tour="send"
-          disabled={!canSend}
-          onClick={handleSend}
-          className="ml-auto">
-          <SendButtonIcon
-            isStreaming={isStreaming}
-            showsRandomSend={showsRandomSend}
-          />
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          {showCreditCost ? <ChatTurnCreditCost /> : null}
+          <Button
+            type="button"
+            size="icon-sm"
+            aria-label={showsRandomSend ? '추천 입력 랜덤 전송' : '전송'}
+            data-tour="send"
+            disabled={!canSend}
+            onClick={handleSend}>
+            <SendButtonIcon
+              isStreaming={isStreaming}
+              showsRandomSend={showsRandomSend}
+            />
+          </Button>
+        </div>
       </div>
 
       <ConfirmAlertDialog

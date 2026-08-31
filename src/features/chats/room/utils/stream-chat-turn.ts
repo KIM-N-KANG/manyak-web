@@ -32,7 +32,7 @@ async function postSseStream(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // 성공 응답은 SSE지만, 402(크레딧 부족·게스트 한도) 같은 에러는 동기 JSON으로 온다.
+      // 성공 응답은 SSE지만, 402(이프 부족·게스트 한도) 같은 에러는 동기 JSON으로 온다.
       // application/json을 함께 요청해야 서버가 에러 바디(code)를 실어 보낸다(백엔드 KNK-524).
       Accept: 'text/event-stream, application/json',
       ...getAnalyticsIdentityHeaders(),

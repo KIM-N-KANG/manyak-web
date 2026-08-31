@@ -7,9 +7,9 @@
  */
 
 /**
- * 크레딧 잔액
+ * 이프 잔액
  */
 export interface CreditBalanceResponse {
-  /** 현재 크레딧 잔액. 지갑이 없으면 0 */
+  /** 현재 이프 잔액. 지갑이 없으면 0 */
   balance?: number;
 }

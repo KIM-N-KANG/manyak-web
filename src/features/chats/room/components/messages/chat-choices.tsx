@@ -43,7 +43,7 @@ export function ChatChoices({
       variants={listVariants}
       initial="hidden"
       animate="show"
-      className="flex flex-col gap-2 px-4 pt-2 pb-6">
+      className="flex flex-col gap-2 px-4 pt-3 pb-6">
       {showsHint && (
         <m.div
           variants={itemVariants}
@@ -78,7 +78,7 @@ export function ChatChoices({
             type="button"
             variant="secondary"
             onClick={() => onSend(choice, index, sourceTurnId)}
-            className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi font-normal whitespace-normal">
+            className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi leading-[1.75] font-normal whitespace-normal">
             <span>
               <ChatTextSegments>{choice}</ChatTextSegments>
             </span>

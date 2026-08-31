@@ -14,6 +14,6 @@ export interface InviteResponse {
   inviteCode?: string;
   /** 이번 KST 월에 요청자가 수령한 초대 보상 횟수. 초대 보상 판정과 동일하게 적립 시점 월 귀속 INVITE_REWARD 원장 집계이며, 상한에 도달하면 monthlyRewardLimit과 같아진다. */
   monthlyRewardCount?: number;
-  /** 초대 보상 월 상한(현재 10). 정책 수치라 클라이언트 하드코딩을 피하도록 응답에 함께 싣는다. */
+  /** 초대 보상 월 상한. 운영 중 조정 가능한 정책값이라 클라이언트가 하드코딩하지 않도록 응답에 함께 싣는다 — example은 현재 기본값일 뿐 계약이 아니다(KNK-1056). */
   monthlyRewardLimit?: number;
 }

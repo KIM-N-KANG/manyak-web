@@ -39,7 +39,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
   return (
     <article
       ref={impressionRef}
-      className="relative flex items-center gap-4 p-4">
+      className="relative flex items-center gap-4 px-4 py-2">
       <Link
         href={APP_PATH.CHAT_ROOM(chat.id)}
         aria-label={`${chat.storyTitle} 채팅 보기`}
@@ -53,7 +53,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
       />
       <AspectRatio
         ratio={3 / 4}
-        className="w-12 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+        className="w-12 shrink-0 overflow-hidden rounded-sm border border-border bg-muted">
         {thumbnailUrl ? (
           <Image
             src={thumbnailUrl}

@@ -1,3 +1,6 @@
+import { APP_PATH } from '@/constants/app-path';
+import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
+
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
@@ -6,11 +9,12 @@ import {
 } from '../fixtures/visual';
 
 /**
- * 스토리 목록(홈)·상세·생성 퍼널의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
+ * 홈 오리지널·제작 목록·상세·생성 퍼널의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
  * 퍼널 진행·삭제 같은 동작 검증은 `stories/*.spec.ts`가 담당한다.
  */
 
 const STORIES_BATCH = '**/api/v1/stories/batch';
+const STORIES_ORIGINALS = '**/api/v1/stories/originals';
 const STORY_DETAIL = '**/api/v1/stories/s1';
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
@@ -49,18 +53,21 @@ const storyDetail = {
   genres: ['판타지', '모험'],
   turnCount: 1280,
   createdAt: '2026-06-01T00:00:00Z',
+  reachedEndings: ['용과 맺은 약속'],
   startSettings: [
     {
       id: 'ss1',
       name: '계곡 입구',
       prologue: '안개 낀 계곡 앞에 섰다',
       startSituation: '용의 흔적을 따라왔다',
+      endings: [{ name: '잃어버린 용과의 재회' }],
     },
     {
       id: 'ss2',
       name: '용의 둥지',
       prologue: '거대한 둥지 앞에 도착했다',
       startSituation: '용의 숨소리가 들려온다',
+      endings: [{ name: '새로운 수호자' }],
     },
   ],
 };
@@ -78,7 +85,7 @@ test.describe('스토리 비주얼', () => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
   });
 
-  test('스토리 목록 기본 상태 (STORY-LIST)', async ({ page }) => {
+  test('제작 목록 기본 상태 (STORY-LIST)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
@@ -91,17 +98,57 @@ test.describe('스토리 비주얼', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+
+    const optionButtons = page.getByRole('button', {
+      name: '스토리 옵션 더보기',
+    });
+
+    await expect(optionButtons).toHaveCount(2);
+    await expect(optionButtons.first()).toBeVisible();
+    await expect(optionButtons.first()).toHaveCSS('width', '24px');
+    await expect(optionButtons.first()).toHaveCSS('height', '24px');
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-default.png');
   });
 
-  test('스토리 목록 빈 상태 (STORY-LIST)', async ({ page }) => {
-    await skipOnboarding(page);
+  test('홈 오리지널 목록 (STORY-LIST)', async ({ page }) => {
+    await seedStoryIds(page, ['s1']);
+    await page.route(STORIES_ORIGINALS, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            ...story('o1', '마냑의 첫 이야기'),
+            author: { id: 1, nickname: '마냑', profileImageUrl: null },
+          },
+        ]),
+      });
+    });
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '용의 계곡')]),
+      });
+    });
 
     await page.goto('/');
+
+    await expect(
+      page.getByText('마냑의 첫 이야기', { exact: true }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('story-list-originals.png');
+  });
+
+  test('제작 목록 빈 상태 (STORY-LIST)', async ({ page }) => {
+    await skipOnboarding(page);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
     await waitForFonts(page);
@@ -124,6 +171,9 @@ test.describe('스토리 비주얼', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: '용의 계곡' }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '스토리 옵션 더보기' }),
+    ).toHaveCount(0);
     await expect(page.getByText('용의 흔적을 따라왔다')).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-detail-default.png');
@@ -140,7 +190,7 @@ test.describe('스토리 비주얼', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await expect(page.getByRole('button', { name: '판타지' })).toBeVisible();
     await waitForFonts(page);
@@ -176,7 +226,7 @@ test.describe('스토리 오버레이 비주얼', () => {
   });
 
   test('키워드 추가 다이얼로그 (STORY-KEYWORD)', async ({ page }) => {
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     await expect(
@@ -195,7 +245,7 @@ test.describe('스토리 오버레이 비주얼', () => {
       });
     });
 
-    await page.goto('/stories/new');
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '판타지' }).click();
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '용감한' }).click();
@@ -203,7 +253,9 @@ test.describe('스토리 오버레이 비주얼', () => {
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
-    await page.getByRole('button', { name: '선택한 키워드 보기 버튼' }).click();
+    await page
+      .getByRole('button', { name: SELECTED_TAGS_TRIGGER_LABEL })
+      .click();
 
     await expect(page.getByRole('dialog')).toBeVisible();
     await waitForFonts(page);
@@ -247,7 +299,7 @@ test.describe('스토리 다크 모드 비주얼', () => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
   });
 
-  test('스토리 목록 기본 상태 (다크)', async ({ page }) => {
+  test('제작 목록 기본 상태 (다크)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
@@ -260,9 +312,12 @@ test.describe('스토리 다크 모드 비주얼', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '스토리 옵션 더보기' }),
+    ).toHaveCount(2);
     await waitForDarkTheme(page);
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-default-dark.png');

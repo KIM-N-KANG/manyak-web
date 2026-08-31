@@ -65,6 +65,14 @@ export function StorylineSelectStepSection({
           : '선택한 스토리라인이 스토리의 기본 흐름이 돼요'
       }
       onScroll={onScroll}
+      footerTop={
+        isGeneratingStorylines ? undefined : (
+          <SelectedTagsDrawer
+            groups={selectedTagGroups}
+            creationId={creationId}
+          />
+        )
+      }
       footer={
         isGeneratingStorylines ? undefined : (
           <>
@@ -93,22 +101,24 @@ export function StorylineSelectStepSection({
           onValueChange={(value) => onActiveStorylineIndexChange(Number(value))}
           className="gap-0">
           <StickyTabsList
-            rightSlot={
-              <SelectedTagsDrawer
-                groups={selectedTagGroups}
-                creationId={creationId}
-              />
-            }>
+            variant="line"
+            containerClassName="mt-0 px-0 py-0"
+            className="w-full gap-0 border-b p-0">
             {storylines.length > 0
               ? storylines.map((storylineItem, index) => (
                   <TabsTrigger
                     key={storylineItem.id ?? index}
-                    value={String(index)}>
+                    value={String(index)}
+                    className="h-full rounded-none border-0 px-2 py-0 after:-bottom-px!">
                     {getStorylineTabLabel(index)}
                   </TabsTrigger>
                 ))
               : Array.from({ length: EXPECTED_STORYLINE_COUNT }, (_, index) => (
-                  <TabsTrigger key={index} value={String(index)} disabled>
+                  <TabsTrigger
+                    key={index}
+                    value={String(index)}
+                    disabled
+                    className="h-full rounded-none border-0 px-2 py-0 after:-bottom-px!">
                     {getStorylineTabLabel(index)}
                   </TabsTrigger>
                 ))}
@@ -117,7 +127,7 @@ export function StorylineSelectStepSection({
             <TabsContent
               key={storylineItem.id ?? index}
               value={String(index)}
-              className="p-4 pt-2 pb-6">
+              className="px-4 pt-4 pb-4">
               <div className="flex h-full flex-col gap-4">
                 <TextContent font="maruburi">
                   {storylineItem.storyline}

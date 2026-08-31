@@ -1,4 +1,5 @@
 import type { ChatTurnResponse } from '@/api/generated/models';
+import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
 import {
   AiMessageBubble,
   UserMessageBubble,
@@ -37,7 +38,9 @@ export function ChatTurnItem({
         <UserMessageBubble>{turn.userInput}</UserMessageBubble>
       ) : null}
       {turn.aiOutput ? (
-        <AiMessageBubble>{turn.aiOutput}</AiMessageBubble>
+        <AiMessageBubble endingName={turn.reachedEnding}>
+          <ChatAiMessageContent content={turn.aiOutput} />
+        </AiMessageBubble>
       ) : null}
       {isLast && canRegenerate(turn) ? (
         <RegenerateButton onClick={() => onRegenerate(turn)} />

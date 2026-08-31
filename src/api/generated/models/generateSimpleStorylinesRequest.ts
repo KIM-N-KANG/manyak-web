@@ -17,12 +17,14 @@ export interface GenerateSimpleStorylinesRequest {
    * 사용자가 선택한 사전 정의 장르 태그 ID 목록
    * @minItems 0
    * @maxItems 20
+   * @items.minimum 1
    */
   genreTagIds?: number[];
   /**
    * 사용자가 직접 입력한 장르 이름 목록
    * @minItems 0
    * @maxItems 20
+   * @items.minLength 0
    * @items.maxLength 30
    */
   customGenreTags?: string[];

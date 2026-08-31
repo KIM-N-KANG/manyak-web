@@ -20,8 +20,11 @@ export type GuestLimitTrigger =
   | 'chat_start'
   | 'chat_turn';
 
-/** 회원 크레딧 부족(402·INSUFFICIENT_CREDIT) 다이얼로그를 연 발생 지점. 게스트 한도와 동일한 지점 집합이다. */
-export type CreditShortageTrigger = GuestLimitTrigger;
+/** 회원 이프 부족(402·INSUFFICIENT_CREDIT) 토스트를 띄운 유료 동작 지점. */
+export type CreditShortageTrigger = 'story_create' | 'chat_turn';
+
+/** 스토리 카드가 속한 섹션. 오리지널 노출·클릭 기여를 내가 만든 스토리와 분리해 본다. */
+export type StoryCardSection = 'original' | 'created';
 
 /** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
@@ -56,25 +59,26 @@ export type AnalyticsEventProps = {
     provider: SocialLoginProvider;
   };
   client_guestLimitDialog_dismissed: { trigger: GuestLimitTrigger };
-  // credit shortage (회원 크레딧 부족 → 크레딧 획득 유도)
+  // credit shortage (회원 이프 부족 → 토스트 안내, 이벤트 이름은 하위 호환 유지)
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
-  client_creditShortageDialog_earnButton_clicked: {
-    trigger: CreditShortageTrigger;
-  };
-  client_creditShortageDialog_attendanceButton_clicked: {
-    trigger: CreditShortageTrigger;
-  };
-  client_creditShortageDialog_dismissed: { trigger: CreditShortageTrigger };
   // onboarding
   client_onboarding_viewed: void;
   client_onboarding_createButton_clicked: void;
-  client_onboarding_skipButton_clicked: void;
+  client_onboarding_logo_clicked: void;
   // storyList
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;
   client_storyList_createButton_clicked: { source: 'fab' | 'emptyState' };
-  client_storyList_storyCard_clicked: { story_id: string; position?: number };
-  client_storyList_storyCard_impressed: { story_id: string; position?: number };
+  client_storyList_storyCard_clicked: {
+    story_id: string;
+    position?: number;
+    section: StoryCardSection;
+  };
+  client_storyList_storyCard_impressed: {
+    story_id: string;
+    position?: number;
+    section: StoryCardSection;
+  };
   // storyCreate
   client_storyCreate_viewed: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
@@ -109,19 +113,24 @@ export type AnalyticsEventProps = {
   client_storyCreate_storyCompletion_requested: { creation_id: string };
   client_storyCreate_completeError_shown: { stage: 'story' | 'chat' };
   client_storyCreate_draftSaved: {
-    step: 'storyline-select' | 'additional-info';
+    step: 'keyword' | 'storyline-select' | 'additional-info';
   };
   client_storyCreate_resumeDialog_shown: void;
   client_storyCreate_resumeDialog_continued: void;
   client_storyCreate_resumeDialog_discarded: void;
   client_storyCreate_continueBanner_shown: {
-    stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' | 'STORY_DRAFT';
+    stage:
+      | 'KEYWORD_DRAFT'
+      | 'STORYLINE_GENERATION'
+      | 'STORY_COMPLETION'
+      | 'STORY_DRAFT';
   };
   client_storyCreate_continueBanner_clicked: {
-    stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' | 'STORY_DRAFT';
-  };
-  client_storyCreate_continueBanner_dismissed: {
-    stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' | 'STORY_DRAFT';
+    stage:
+      | 'KEYWORD_DRAFT'
+      | 'STORYLINE_GENERATION'
+      | 'STORY_COMPLETION'
+      | 'STORY_DRAFT';
   };
   client_storyCreate_exitButton_clicked: {
     step_name: StepName;

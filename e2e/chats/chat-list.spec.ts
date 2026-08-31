@@ -1,3 +1,5 @@
+import { APP_PATH } from '@/constants/app-path';
+
 import { mockMemberSession } from '../fixtures/auth';
 import {
   expect,
@@ -43,6 +45,57 @@ test.describe('채팅 목록', () => {
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
   });
 
+  test('조회 중에는 실제 채팅 카드와 같은 행 스켈레톤을 보여준다 (KNK-1043)', async ({
+    page,
+  }) => {
+    await seedChatIds(page, ['c1']);
+
+    let releaseResponse!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+
+    await page.route(CHATS_BATCH, async (route) => {
+      await responseGate;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([chat('c1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto(APP_PATH.MAIN.CHATS);
+
+    const skeletonList = page.locator('main ul[aria-hidden="true"]');
+    const skeletonRow = skeletonList.locator(':scope > li').first();
+    const skeletonCover = skeletonRow.locator('[data-slot="aspect-ratio"]');
+    const skeletonSurface = skeletonCover.locator('[data-slot="skeleton"]');
+
+    await expect(skeletonList).toBeVisible();
+    await expect(skeletonList).toHaveCSS('padding-bottom', '8px');
+    await expect(skeletonRow).toHaveCSS('padding-top', '8px');
+    await expect(skeletonRow).toHaveCSS('padding-right', '16px');
+    await expect(skeletonRow).toHaveCSS('padding-bottom', '8px');
+    await expect(skeletonRow).toHaveCSS('padding-left', '16px');
+    await expect(skeletonCover).toHaveCSS('width', '48px');
+    await expect(skeletonSurface).toHaveCSS('border-radius', '12px');
+
+    releaseResponse();
+
+    const chatCard = page
+      .getByRole('link', { name: '용의 계곡 채팅 보기' })
+      .locator('..');
+    const chatCover = chatCard.locator('[data-slot="aspect-ratio"]');
+
+    await expect(chatCard).toBeVisible();
+    await expect(chatCard).toHaveCSS('padding-top', '8px');
+    await expect(chatCard).toHaveCSS('padding-right', '16px');
+    await expect(chatCard).toHaveCSS('padding-bottom', '8px');
+    await expect(chatCard).toHaveCSS('padding-left', '16px');
+    await expect(chatCover).toHaveCSS('width', '48px');
+    await expect(chatCover).toHaveCSS('border-radius', '12px');
+  });
+
   test('채팅을 누르면 채팅 화면으로 이어간다 (US-5-2)', async ({ page }) => {
     await seedChatIds(page, ['c1']);
     await page.route(CHATS_BATCH, async (route) => {
@@ -73,7 +126,7 @@ test.describe('채팅 목록', () => {
     const link = page.getByRole('button', { name: '스토리 만들기' });
 
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', '/stories/new');
+    await expect(link).toHaveAttribute('href', APP_PATH.STUDIO.STORY.SIMPLE);
   });
 
   test('진행 중인 채팅은 없지만 스토리가 있으면 스토리 목록으로 안내한다 (US-5-4)', async ({
@@ -90,7 +143,7 @@ test.describe('채팅 목록', () => {
     const link = page.getByRole('button', { name: '스토리 목록으로 가기' });
 
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', '/');
+    await expect(link).toHaveAttribute('href', APP_PATH.MAIN.STUDIO);
   });
 
   test('로그인 상태에서는 서버의 내 채팅 목록을 보여준다', async ({ page }) => {

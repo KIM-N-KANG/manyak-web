@@ -47,11 +47,11 @@ export function AdditionalInfoList({
   return (
     <section
       aria-labelledby="additional-info-label"
-      className="flex flex-col gap-2 p-4 pb-6">
+      className="flex flex-col gap-2 px-4 pt-2 pb-4">
       <div className="flex items-baseline gap-1">
         <Label>추가 정보</Label>
-        <p className="text-sm text-foreground-secondary">
-          (최대 {ADDITIONAL_INFO_MAX_COUNT}개 입력)
+        <p className="text-sm text-foreground">
+          (최대 {ADDITIONAL_INFO_MAX_COUNT}개)
         </p>
       </div>
 
@@ -88,6 +88,7 @@ export function AdditionalInfoList({
             size="icon-sm"
             variant="ghost"
             aria-label={`추가 정보 ${index + 1} 삭제`}
+            tabIndex={-1}
             disabled={disabled}
             onClick={() => onRemoveAdditionalInfo(additionalInfo.id)}
             className="shrink-0 text-foreground-secondary">

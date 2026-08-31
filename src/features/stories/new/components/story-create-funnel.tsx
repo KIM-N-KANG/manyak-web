@@ -2,22 +2,24 @@
 
 import { useEffect } from 'react';
 
-import { CreditShortageDialog } from '@/components/common/credit-shortage-dialog';
-import { LoginRequiredDialog } from '@/features/auth/_shared/components/login-required-dialog';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { StoryCreateResumeDialog } from '@/features/stories/_shared/components/story-create-resume-dialog';
 import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { StoryAdditionalInfoStepSection } from './additional-info-step/story-additional-info-step-section';
+import { StorylineReselectDialog } from './additional-info-step/storyline-reselect-dialog';
 import { StoryCompletionLoading } from './complete-step/story-completion-loading';
 import { StoryCreateHeader } from './header/story-create-header';
-import { StoryCreateResumeDialog } from './shared/story-create-resume-dialog';
 import { StorylineSelectStepSection } from './storyline-step/storyline-select-step-section';
 import { StoryTagStepSection } from './tag-step/story-tag-step-section';
 
 export function StoryCreateFunnel() {
   const {
     step,
+    tagStep,
+    draftSaveStatus,
     creationId,
     storylines,
     selectedTagGroups,
@@ -34,9 +36,6 @@ export function StoryCreateFunnel() {
     guestLimitTrigger,
     isGuestLimitReached,
     closeGuestLimitDialog,
-    creditShortageTrigger,
-    closeCreditShortageDialog,
-    handleGenerateStorylines,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
@@ -49,6 +48,9 @@ export function StoryCreateFunnel() {
     handleCompleteStory,
     backDialogOpen,
     onBackDialogOpenChange,
+    reselectDialogOpen,
+    onReselectDialogOpenChange,
+    handleConfirmReselect,
     resumeDialogOpen,
     handleResumeContinue,
     handleResumeDiscard,
@@ -69,6 +71,7 @@ export function StoryCreateFunnel() {
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <StoryCreateHeader
         step={step}
+        draftSaveStatus={draftSaveStatus}
         backDialogOpen={backDialogOpen}
         onBackClick={handleHeaderBack}
         onBackDialogOpenChange={onBackDialogOpenChange}
@@ -77,10 +80,9 @@ export function StoryCreateFunnel() {
 
       {step === 'keyword' && (
         <StoryTagStepSection
-          isGeneratingStorylines={isGeneratingStorylines}
+          controller={tagStep}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
           isGuestLimitReached={isGuestLimitReached}
-          onGenerateStorylines={handleGenerateStorylines}
         />
       )}
 
@@ -121,6 +123,12 @@ export function StoryCreateFunnel() {
 
       {step === 'complete' && <StoryCompletionLoading />}
 
+      <StorylineReselectDialog
+        open={reselectDialogOpen}
+        onOpenChange={onReselectDialogOpenChange}
+        onConfirm={handleConfirmReselect}
+      />
+
       <StoryCreateResumeDialog
         open={resumeDialogOpen}
         onOpenChange={(open) => {
@@ -131,19 +139,11 @@ export function StoryCreateFunnel() {
         onContinue={handleResumeContinue}
         onDiscard={handleResumeDiscard}
       />
-      <LoginRequiredDialog
+      <LoginRequiredSheet
         trigger={guestLimitTrigger}
         onOpenChange={(open) => {
           if (!open) {
             closeGuestLimitDialog();
-          }
-        }}
-      />
-      <CreditShortageDialog
-        trigger={creditShortageTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeCreditShortageDialog();
           }
         }}
       />

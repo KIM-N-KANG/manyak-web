@@ -31,7 +31,7 @@ export function StoryThumbnailViewer({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
-        <DialogOverlay className="bg-black/90" />
+        <DialogOverlay className="bg-black/[0.92]" />
         <DialogPrimitive.Popup
           data-slot="dialog-content"
           className="fixed inset-0 z-50 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
@@ -51,7 +51,7 @@ export function StoryThumbnailViewer({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="absolute top-[calc(1rem+env(safe-area-inset-top))] right-4 text-white hover:bg-white/10 hover:text-white"
+                className="absolute top-[calc(.5rem+env(safe-area-inset-top))] right-2 text-white hover:bg-white/10 hover:text-white"
               />
             }>
             <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />

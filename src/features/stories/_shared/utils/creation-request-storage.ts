@@ -2,6 +2,7 @@ import type {
   CreateSimpleStoryRequest,
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
+  SimpleStoryCharacterRequestGender,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
 
@@ -54,7 +55,11 @@ export function subscribePendingCreationRequest(
  * @returns 저장된 원본 문자열. 없으면 null
  */
 export function getPendingCreationRequestSnapshot(): string | null {
-  return localStorage.getItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
+  try {
+    return localStorage.getItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -69,12 +74,39 @@ export function getServerPendingCreationRequestSnapshot(): null {
 /** 임시 저장(draft) 레코드가 복원할 퍼널 스텝 */
 export type StoryDraftStep = 'storyline-select' | 'additional-info';
 
+/** 직접 추가한 키워드의 저장 스냅숏 */
+export type KeywordCustomTagSnapshot = {
+  name: string;
+  selected: boolean;
+};
+
+/** 인물 키워드 입력의 저장 스냅숏 */
+export type KeywordCharacterSnapshot = {
+  name: string;
+  gender: SimpleStoryCharacterRequestGender;
+  selectedTagIds: number[];
+  customTags: KeywordCustomTagSnapshot[];
+};
+
+/** 키워드 단계 전체 입력의 저장 스냅숏. 활성 탭은 복원하지 않는다. */
+export type KeywordDraftSnapshot = {
+  selectedGenreTagIds: number[];
+  customGenreTags: KeywordCustomTagSnapshot[];
+  protagonist: KeywordCharacterSnapshot;
+  supportingCharacters: KeywordCharacterSnapshot[];
+};
+
 /**
  * 백그라운드 복구 대상 생성 요청 레코드.
  * 완성 단계는 재진입 시 추가 정보 화면·재시도를 복원할 수 있도록 퍼널 컨텍스트를 함께 보관한다.
- * STORY_DRAFT는 뒤로 가기 이탈 시 저장하는 임시 저장본으로, 서버 복구 조회 대상이 아니다.
+ * KEYWORD_DRAFT와 STORY_DRAFT는 편집 자동 저장본으로, 서버 복구 조회 대상이 아니다.
  */
 export type PendingCreationRequest =
+  | {
+      stage: 'KEYWORD_DRAFT';
+      requestId: string;
+      snapshot: KeywordDraftSnapshot;
+    }
   | {
       stage: 'STORYLINE_GENERATION';
       requestId: string;
@@ -85,7 +117,12 @@ export type PendingCreationRequest =
       requestId: string;
       generationRequest: GenerateSimpleStorylinesRequest;
       generationResult: GenerateSimpleStorylinesResponse;
+      activeStorylineIndex?: number;
       selectedStoryline: SimpleStorylineResponse;
+      additionalInfos?: string[];
+      selectedRecommendations?: string[];
+      /** 스토리 성공 부수효과까지 적용한 ID. 채팅 실패 후 재진입 시 중복 적용을 막는다. */
+      createdStoryId?: string | null;
       completionRequest: CreateSimpleStoryRequest;
     }
   | {
@@ -103,9 +140,15 @@ export type PendingCreationRequest =
     };
 
 /** 진행 중 요청 레코드(서버 복구 조회 대상) */
-export type InFlightCreationRequest = Exclude<
+export type InFlightCreationRequest = Extract<
   PendingCreationRequest,
-  { stage: 'STORY_DRAFT' }
+  { stage: 'STORYLINE_GENERATION' | 'STORY_COMPLETION' }
+>;
+
+/** 키워드 임시 저장 레코드 */
+export type KeywordDraftRecord = Extract<
+  PendingCreationRequest,
+  { stage: 'KEYWORD_DRAFT' }
 >;
 
 /** 임시 저장(draft) 레코드 */
@@ -113,6 +156,9 @@ export type StoryDraftRecord = Extract<
   PendingCreationRequest,
   { stage: 'STORY_DRAFT' }
 >;
+
+/** 서버 조회 대상이 아닌 편집 임시 저장 레코드 */
+export type DraftCreationRecord = KeywordDraftRecord | StoryDraftRecord;
 
 /**
  * 값이 배열이 아닌 순수 객체인지 판별한다.
@@ -133,6 +179,79 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 function isStringArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) && value.every((item) => typeof item === 'string')
+  );
+}
+
+/**
+ * 값이 숫자로만 이루어진 배열인지 판별한다.
+ *
+ * @param value 검사할 값
+ * @returns 숫자 배열 여부
+ */
+function isNumberArray(value: unknown): value is number[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === 'number')
+  );
+}
+
+/**
+ * 직접 추가 키워드 스냅숏의 형태를 판별한다.
+ *
+ * @param value 검사할 값
+ * @returns 직접 추가 키워드 스냅숏 여부
+ */
+function isKeywordCustomTagSnapshot(
+  value: unknown,
+): value is KeywordCustomTagSnapshot {
+  return (
+    isPlainObject(value) &&
+    typeof value.name === 'string' &&
+    typeof value.selected === 'boolean'
+  );
+}
+
+/**
+ * 인물 키워드 스냅숏의 형태를 판별한다.
+ *
+ * @param value 검사할 값
+ * @returns 인물 키워드 스냅숏 여부
+ */
+function isKeywordCharacterSnapshot(
+  value: unknown,
+): value is KeywordCharacterSnapshot {
+  if (!isPlainObject(value)) {
+    return false;
+  }
+
+  const isValidGender =
+    value.gender === null ||
+    value.gender === 'MALE' ||
+    value.gender === 'FEMALE';
+
+  return (
+    typeof value.name === 'string' &&
+    isValidGender &&
+    isNumberArray(value.selectedTagIds) &&
+    Array.isArray(value.customTags) &&
+    value.customTags.every(isKeywordCustomTagSnapshot)
+  );
+}
+
+/**
+ * 키워드 단계 스냅숏의 형태를 판별한다.
+ *
+ * @param value 검사할 값
+ * @returns 키워드 단계 스냅숏 여부
+ */
+function isKeywordDraftSnapshot(value: unknown): value is KeywordDraftSnapshot {
+  return (
+    isPlainObject(value) &&
+    isNumberArray(value.selectedGenreTagIds) &&
+    Array.isArray(value.customGenreTags) &&
+    value.customGenreTags.every(isKeywordCustomTagSnapshot) &&
+    isKeywordCharacterSnapshot(value.protagonist) &&
+    Array.isArray(value.supportingCharacters) &&
+    value.supportingCharacters.every(isKeywordCharacterSnapshot)
   );
 }
 
@@ -162,10 +281,18 @@ export function parsePendingCreationRequest(
     return null;
   }
 
+  if (typeof parsed.requestId !== 'string') {
+    return null;
+  }
+
   if (
-    typeof parsed.requestId !== 'string' ||
-    !isPlainObject(parsed.generationRequest)
+    parsed.stage === 'KEYWORD_DRAFT' &&
+    isKeywordDraftSnapshot(parsed.snapshot)
   ) {
+    return parsed as unknown as PendingCreationRequest;
+  }
+
+  if (!isPlainObject(parsed.generationRequest)) {
     return null;
   }
 
@@ -177,6 +304,9 @@ export function parsePendingCreationRequest(
     parsed.stage === 'STORY_COMPLETION' &&
     isPlainObject(parsed.generationResult) &&
     isPlainObject(parsed.selectedStoryline) &&
+    (parsed.createdStoryId === undefined ||
+      parsed.createdStoryId === null ||
+      typeof parsed.createdStoryId === 'string') &&
     isPlainObject(parsed.completionRequest)
   ) {
     return parsed as unknown as PendingCreationRequest;
@@ -221,28 +351,124 @@ export function loadPendingCreationRequest(): PendingCreationRequest | null {
     return null;
   }
 
-  return parsePendingCreationRequest(
-    localStorage.getItem(PENDING_CREATION_REQUEST_STORAGE_KEY),
-  );
+  return parsePendingCreationRequest(getPendingCreationRequestSnapshot());
+}
+
+/**
+ * 복구 슬롯에 레코드를 쓰고 성공 여부를 반환한다.
+ *
+ * @param record 저장할 레코드
+ * @returns 저장에 성공했으면 true
+ */
+function writePendingCreationRequest(record: PendingCreationRequest): boolean {
+  try {
+    localStorage.setItem(
+      PENDING_CREATION_REQUEST_STORAGE_KEY,
+      JSON.stringify(record),
+    );
+    notifyPendingCreationRequestChange();
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
  * 생성 요청 직전에 복구 레코드를 저장한다. 진행 중 요청은 항상 하나뿐이므로 덮어쓴다.
  *
  * @param record 저장할 복구 레코드
+ * @returns 저장에 성공했으면 true
  */
 export function savePendingCreationRequest(
   record: PendingCreationRequest,
-): void {
+): boolean {
   if (typeof window === 'undefined') {
-    return;
+    return false;
   }
 
-  localStorage.setItem(
-    PENDING_CREATION_REQUEST_STORAGE_KEY,
-    JSON.stringify(record),
-  );
-  notifyPendingCreationRequestChange();
+  return writePendingCreationRequest(record);
+}
+
+/**
+ * 편집 임시 저장본을 우선순위에 따라 쓴다.
+ * 진행 중 생성·완성 요청은 모든 draft보다 우선하고, 생성 결과가 담긴 STORY_DRAFT는
+ * 키워드 draft보다 우선해 지연된 자동 저장이 복구 재료를 덮지 못하게 한다.
+ *
+ * @param record 저장할 편집 임시 저장본
+ * @returns 실제로 저장했으면 true
+ */
+export function saveDraftCreationRecord(record: DraftCreationRecord): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const current = loadPendingCreationRequest();
+
+  if (
+    current?.stage === 'STORYLINE_GENERATION' ||
+    current?.stage === 'STORY_COMPLETION'
+  ) {
+    return false;
+  }
+
+  if (record.stage === 'KEYWORD_DRAFT' && current?.stage === 'STORY_DRAFT') {
+    return false;
+  }
+
+  return writePendingCreationRequest(record);
+}
+
+/**
+ * 지정한 요청 레코드를 새 레코드로 교체한다. 원 응답과 복구 조회 경합에서
+ * 현재 requestId를 가진 쪽만 성공 결과를 draft로 승격할 수 있다.
+ *
+ * @param requestId 교체할 현재 레코드의 요청 ID
+ * @param replacement 교체할 레코드
+ * @returns 교체에 성공했으면 true
+ */
+export function replacePendingCreationRequest(
+  requestId: string,
+  replacement: PendingCreationRequest,
+): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  if (loadPendingCreationRequest()?.requestId !== requestId) {
+    return false;
+  }
+
+  return writePendingCreationRequest(replacement);
+}
+
+/**
+ * 완성 레코드에 이미 생성된 스토리 ID를 확정한다.
+ * 채팅 생성 전에 새로고침해도 복구 결과의 게스트 카운터·로컬 저장 부수효과를
+ * 다시 적용하지 않고 채팅 생성만 이어가기 위한 표시다.
+ *
+ * @param requestId 완성 요청 ID
+ * @param storyId 생성된 스토리 ID
+ * @returns 같은 완성 레코드에 저장했으면 true
+ */
+export function markPendingStoryCreated(
+  requestId: string,
+  storyId: string,
+): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const current = loadPendingCreationRequest();
+
+  if (
+    current?.stage !== 'STORY_COMPLETION' ||
+    current.requestId !== requestId
+  ) {
+    return false;
+  }
+
+  return writePendingCreationRequest({ ...current, createdStoryId: storyId });
 }
 
 /**
@@ -264,8 +490,12 @@ export function takePendingCreationRequest(requestId: string): boolean {
     return false;
   }
 
-  localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
-  notifyPendingCreationRequestChange();
+  try {
+    localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
+    notifyPendingCreationRequestChange();
+  } catch {
+    return false;
+  }
 
   return true;
 }
@@ -276,6 +506,10 @@ export function clearPendingCreationRequest(): void {
     return;
   }
 
-  localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
-  notifyPendingCreationRequestChange();
+  try {
+    localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
+    notifyPendingCreationRequestChange();
+  } catch {
+    // 저장소 접근이 막힌 환경에서는 메모리 화면 흐름만 계속한다.
+  }
 }

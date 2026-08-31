@@ -75,6 +75,9 @@ export function useCategoryNavigation({
     }
   };
 
+  /** 저장본 복원 시 활성 탭을 영속하지 않고 첫 카테고리로 돌린다. */
+  const resetActiveCategory = () => setActiveCategory('GENRE');
+
   return {
     activeCategory,
     changeCategory,
@@ -83,5 +86,6 @@ export function useCategoryNavigation({
     isLastCategory,
     goToNextCategory,
     goToPreviousCategory,
+    resetActiveCategory,
   };
 }

@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 
+import { ACCOUNT_DELETION_CTA_LABEL } from '@/features/my/account-deletion/constants';
 import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
 import {
   LINK_RESULT_COOKIE,
@@ -20,7 +21,7 @@ import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
  */
 
 /**
- * 회원 프로필·크레딧 조회(/auth/me)를 목킹한다. 회원은 로그인 수단이 최소 하나라
+ * 회원 프로필·이프 조회(/auth/me)를 목킹한다. 회원은 로그인 수단이 최소 하나라
  * linkedProviders도 함께 담아야 실제 화면(연동 Chip·연동 버튼)과 같아진다.
  *
  * @param page 대상 페이지
@@ -54,7 +55,7 @@ test.describe('마이 비주얼', () => {
     await expect(page).toHaveScreenshot('my-guest.png');
   });
 
-  test('마이 회원 상태: 프로필·크레딧 카드 (MY-MENU)', async ({ page }) => {
+  test('마이 회원 상태: 프로필·이프 카드 (MY-MENU)', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
@@ -65,6 +66,59 @@ test.describe('마이 비주얼', () => {
     await expect(page.getByRole('button', { name: /로그아웃/ })).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('my-member.png');
+  });
+
+  test('이프 내역 목록 (MY-CREDITS)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    await page.route('**/api/v1/users/me/credits/transactions*', (route) =>
+      route.fulfill({
+        json: {
+          items: [
+            {
+              type: 'SPEND',
+              reason: 'CHAT_TURN',
+              amount: -20,
+              title: '유운잔검기',
+              expiresAt: null,
+              createdAt: '2026-08-31T09:00:00Z',
+            },
+            {
+              type: 'EARN',
+              reason: 'ATTENDANCE_REWARD',
+              amount: 350,
+              title: null,
+              expiresAt: '2026-09-30T00:00:00Z',
+              createdAt: '2026-08-31T00:10:00Z',
+            },
+            {
+              type: 'SPEND',
+              reason: 'STORY_CREATION',
+              amount: -200,
+              title: null,
+              expiresAt: null,
+              createdAt: '2026-08-30T09:00:00Z',
+            },
+            {
+              type: 'EXPIRE',
+              reason: 'EXPIRE',
+              amount: -1000,
+              title: null,
+              expiresAt: '2026-08-29T00:00:00Z',
+              createdAt: '2026-08-30T01:00:00Z',
+            },
+          ],
+          nextCursor: null,
+        },
+      }),
+    );
+
+    await page.goto('/my/credits');
+
+    await expect(page.getByText('채팅 전송')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('credit-history.png');
   });
 
   test('계정 연동 확인 다이얼로그 (MY-MENU)', async ({ page }) => {
@@ -161,20 +215,39 @@ test.describe('마이 비주얼', () => {
     await expect(page).toHaveScreenshot('invite-member.png');
   });
 
+  test('회원 탈퇴 확인 기본 상태 (MY-ACCOUNT-DELETION)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+
+    await page.goto('/my/account-deletion');
+
+    await expect(
+      page.getByRole('button', { name: ACCOUNT_DELETION_CTA_LABEL }),
+    ).toBeDisabled();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('account-deletion.png');
+  });
+
   test('서비스 안내 상단 (MY-INFO)', async ({ page }) => {
     await skipOnboarding(page);
 
-    await page.goto('/my/about');
+    await page.goto('/about');
 
     await expect(
-      page.getByRole('heading', { name: '크레딧 안내' }),
+      page.getByRole('heading', { level: 1, name: '서비스 안내' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: '이프 안내' }),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('service-info-top.png');
   });
 });
 
-/** 다크 모드 대표 스냅샷. 크레딧 카드·섹션 메뉴와 destructive(로그아웃) 토큰을 덮는다. */
+/** 다크 모드 대표 스냅샷. 이프 카드·섹션 메뉴와 destructive(회원 탈퇴) 토큰을 덮는다. */
 test.describe('마이 다크 모드 비주얼', () => {
   test.use({ colorScheme: 'dark' });
 
