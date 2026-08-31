@@ -13,43 +13,6 @@ export async function waitForFonts(page: Page): Promise<void> {
 }
 
 /**
- * 자동재생 영상을 지정한 시점에 멈춰 스냅샷이 흔들리지 않게 한다.
- * 재생 중에는 찍을 때마다 프레임이 달라 비교가 성립하지 않는다.
- *
- * @param page 대상 페이지
- * @param time 정지시킬 재생 시점(초)
- */
-export async function freezeVideos(page: Page, time = 0): Promise<void> {
-  await page.evaluate(async (seekTo) => {
-    const videos = [...document.querySelectorAll('video')];
-
-    await Promise.all(
-      videos.map(async (video) => {
-        // preload="none"으로 받지 않기로 한 영상은 포스터만 그려져 이미 정적이다.
-        // 탐색을 걸어도 seeked가 오지 않아 대기 시간만 늘어나므로 건너뛴다.
-        // 받는 중이라 아직 프레임이 없는 영상(느린 CI의 preload="auto")은
-        // 여기서 빠지면 이후 재생이 시작돼 임의 프레임이 찍히므로 제외하지 않는다.
-        if (video.preload === 'none' && video.readyState === 0) {
-          return;
-        }
-
-        video.pause();
-        video.currentTime = seekTo;
-
-        if (video.readyState >= 2 && video.currentTime === seekTo) {
-          return;
-        }
-
-        await new Promise<void>((resolve) => {
-          video.addEventListener('seeked', () => resolve(), { once: true });
-          setTimeout(resolve, 3_000);
-        });
-      }),
-    );
-  }, time);
-}
-
-/**
  * next-themes가 `.dark` 클래스를 붙일 때까지 기다린다.
  * 테마는 하이드레이션 이후 클라이언트에서 적용되므로(`attribute="class"`,
  * `defaultTheme="system"`), 이 대기 없이 찍으면 라이트 모드가 섞여 들어온다.

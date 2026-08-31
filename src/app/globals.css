@@ -204,6 +204,16 @@
   --scrollbar-track: transparent;
 }
 
+/* 스크롤바를 완전히 숨긴다. 온보딩 랜딩의 가로 스냅 스트립처럼
+   스와이프 힌트(다음 카드 살짝 보임)가 스크롤바를 대신하는 곳에 쓴다. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @keyframes story-skeleton-pulse {
   0%,
   100% {
