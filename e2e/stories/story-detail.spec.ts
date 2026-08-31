@@ -12,6 +12,7 @@ const storyDetail = {
   description: '깊은 계곡 속 전설의 이야기',
   genres: ['판타지', '모험'],
   turnCount: 1280,
+  author: { id: null, nickname: '마냑', profileImageUrl: null },
   createdAt: '2026-06-24T12:00:00Z',
   reachedEndings: ['용과 맺은 약속'],
   startSettings: [
@@ -76,6 +77,8 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
     await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('제작자')).toBeVisible();
+    await expect(page.getByText('마냑', { exact: true })).toBeVisible();
     await expect(page.getByText('생성일')).toBeVisible();
     await expect(page.getByText('2026-06-24')).toBeVisible();
     await expect(page.getByText('용과 맺은 약속')).toBeVisible();

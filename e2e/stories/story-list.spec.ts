@@ -237,7 +237,8 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await page.goto('/');
 
-    await expect(page.getByText('마냑', { exact: true })).toBeVisible();
+    // 홈 오리지널 카드는 닉네임 앞에 @를 붙인다
+    await expect(page.getByText('@마냑', { exact: true })).toBeVisible();
     await expect(page.getByRole('img', { name: '오리지널' })).toBeVisible();
     // 내가 만든 스토리 카드와 달리 한 줄 소개·장르는 노출하지 않는다.
     await expect(page.getByText('한 줄 소개입니다')).toBeHidden();

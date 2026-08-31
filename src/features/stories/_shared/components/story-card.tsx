@@ -110,7 +110,7 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
         {isOriginal ? (
           story.author?.nickname != null && (
             <p className="line-clamp-1 text-sm text-foreground-secondary">
-              {story.author.nickname}
+              @{story.author.nickname}
             </p>
           )
         ) : (
