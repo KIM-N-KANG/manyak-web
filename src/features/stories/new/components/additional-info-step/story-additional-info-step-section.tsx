@@ -43,7 +43,7 @@ const storyCompletionCreditCost = (
     aria-label={STORY_COMPLETION_CREDIT_COST.label}>
     <dt>{STORY_COMPLETION_CREDIT_COST.label}</dt>
     <dd className="font-bold text-foreground">
-      {STORY_COMPLETION_CREDIT_COST.amount}
+      {STORY_COMPLETION_CREDIT_COST.amountLabel}
     </dd>
   </dl>
 );

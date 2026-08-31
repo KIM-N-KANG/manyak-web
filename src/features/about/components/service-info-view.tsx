@@ -11,8 +11,6 @@ import { useTrackOnView } from '@/observability/analytics';
 
 import { SERVICE_INFO_CREDIT_ITEMS, SERVICE_INFO_TITLE } from '../constants';
 
-const CONTACT_EMAIL = 'manyak.help@gmail.com';
-
 export function ServiceInfoView() {
   useTrackOnView('client_serviceInfo_viewed');
 
@@ -25,7 +23,7 @@ export function ServiceInfoView() {
             <h1 className="text-xl font-bold">{SERVICE_INFO_TITLE}</h1>
           </header>
           <section className="flex flex-col gap-4">
-            <h2 className="text-lg font-bold">크레딧 안내</h2>
+            <h2 className="text-lg font-bold">이프 안내</h2>
             <ul className="flex list-disc flex-col pl-5">
               {SERVICE_INFO_CREDIT_ITEMS.map((item) => (
                 <li key={item}>{item}</li>
@@ -62,17 +60,8 @@ export function ServiceInfoView() {
             </ul>
           </section>
           <section className="flex flex-col gap-4">
-            <h2 className="text-lg font-bold">회원 탈퇴·문의</h2>
+            <h2 className="text-lg font-bold">문의</h2>
             <ul className="flex list-disc flex-col pl-5">
-              <li>
-                회원 탈퇴를 원하시면{' '}
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="underline underline-offset-4">
-                  {CONTACT_EMAIL}
-                </a>
-                로 요청해 주세요. 확인 후 처리해드려요.
-              </li>
               <li>
                 서비스 개선 의견은{' '}
                 <Link

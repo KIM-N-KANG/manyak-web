@@ -9,9 +9,8 @@ export const ACCOUNT_DELETION_DESCRIPTION =
 export const ACCOUNT_DELETION_CONFIRMATIONS = [
   {
     id: 'credit',
-    title: '남은 크레딧을 더 이상 사용할 수 없음을 확인했어요.',
-    description:
-      '탈퇴 후 잔여 크레딧은 환불되거나 새 계정으로 이전되지 않아요.',
+    title: '남은 이프를 더 이상 사용할 수 없음을 확인했어요.',
+    description: '탈퇴 후 잔여 이프는 환불되거나 새 계정으로 이전되지 않아요.',
   },
   {
     id: 'library',
@@ -29,7 +28,7 @@ export const ACCOUNT_DELETION_CONFIRMATIONS = [
     title:
       '같은 소셜 계정으로 다시 로그인해도 기존 계정이 복구되지 않음을 확인했어요.',
     description:
-      '다시 로그인하면 새 계정이 만들어지며 기존 콘텐츠와 크레딧은 복구되지 않아요.',
+      '다시 로그인하면 새 계정이 만들어지며 기존 콘텐츠와 이프는 복구되지 않아요.',
   },
 ] as const;
 

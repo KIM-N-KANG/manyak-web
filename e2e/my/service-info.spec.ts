@@ -47,7 +47,7 @@ test.describe('서비스 안내', () => {
       }),
     ).toHaveCount(0);
     await expect(
-      serviceInfoPage.getByRole('heading', { name: '크레딧 안내' }),
+      serviceInfoPage.getByRole('heading', { name: '이프 안내' }),
     ).toBeVisible();
 
     for (const item of SERVICE_INFO_CREDIT_ITEMS) {
@@ -59,6 +59,10 @@ test.describe('서비스 안내', () => {
     await expect(
       serviceInfoPage.getByRole('heading', { name: '게스트 이용 안내' }),
     ).toBeVisible();
+    await expect(
+      serviceInfoPage.getByRole('heading', { name: '문의' }),
+    ).toBeVisible();
+    await expect(serviceInfoPage.getByText(/회원 탈퇴/)).toHaveCount(0);
   });
 
   test('약관 및 정책 링크가 각 문서를 새 탭에서 연다', async ({ page }) => {

@@ -57,7 +57,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
-  test('회원 전송 버튼 왼쪽에 20 크레딧 비용을 작고 회색으로 표시한다', async ({
+  test('회원 전송 버튼 왼쪽에 20 이프 비용을 작고 회색으로 표시한다', async ({
     page,
   }) => {
     await mockMemberSession(page);

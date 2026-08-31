@@ -39,7 +39,7 @@ export function CreditBalanceCard() {
     <section className="-mt-4 mb-4 p-4 pt-0">
       <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="text-foreground-secondary">내 크레딧</span>
+          <span className="text-foreground-secondary">내 이프</span>
           {isLoading || balance === undefined ? (
             <Skeleton className="h-7 w-12 bg-foreground/5" />
           ) : (

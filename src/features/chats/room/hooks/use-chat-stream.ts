@@ -33,7 +33,7 @@ import {
  * @param chatId 대상 채팅 ID
  * @param turnCount 현재까지의 턴 개수
  * @param onCompleted 스트림 완료 시 호출되는 콜백
- * @param onPaymentRequired 402(체험 한도·크레딧 부족) 발생 시 호출되는 콜백
+ * @param onPaymentRequired 402(체험 한도·이프 부족) 발생 시 호출되는 콜백
  * @param onIndeterminate 서버 확정 상태가 불명(EOF·409)일 때 호출되는 콜백
  * @returns 진행 중인 턴·스트리밍 여부와 전송·재생성 동작
  */
@@ -137,7 +137,7 @@ export function useChatStream(
 
       setStreamingTurn(null);
 
-      // 402(체험 한도 초과·크레딧 부족)는 일반 스트림 실패와 다른 UX라 상위에 위임한다.
+      // 402(체험 한도 초과·이프 부족)는 일반 스트림 실패와 다른 UX라 상위에 위임한다.
       // 사유 구분(로그인 유도 vs 실패 토스트)은 세션을 아는 상위에서 code로 판정한다.
       if (onPaymentRequired && isPaymentRequiredError(error)) {
         onPaymentRequired(error);
@@ -160,7 +160,7 @@ export function useChatStream(
    * 진행 중에는 대상 턴을 스트리밍 블록으로 대체하고, 실패 종류별로 처리한다:
    * - `error` 이벤트: 서버가 교체하지 않았음이 보장됨 → 기존 본문 복원(턴 다시 표시) + 실패 토스트
    * - EOF(completed·error 없이 종료): 교체 여부 불명 → refetch로 서버 확정본 표시
-   * - 402: 크레딧/로그인 다이얼로그 위임, 기존 본문 유지
+   * - 402: 이프/로그인 다이얼로그 위임, 기존 본문 유지
    * - 409(낡은 turnId): refetch로 최신 상태 반영
    */
   const regenerate = async (turn: ChatTurnResponse) => {
@@ -228,7 +228,7 @@ export function useChatStream(
         return;
       }
 
-      // 402(체험 한도 초과·크레딧 부족)는 전송과 동일하게 상위에 위임한다.
+      // 402(체험 한도 초과·이프 부족)는 전송과 동일하게 상위에 위임한다.
       if (onPaymentRequired && isPaymentRequiredError(error)) {
         onPaymentRequired(error);
 

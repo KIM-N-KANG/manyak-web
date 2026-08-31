@@ -23,7 +23,7 @@ import { InviteCodeForm } from './invite-code-form';
 const INVITE_GUIDE_LINES = [
   '초대 보상은 매월 최대 10회까지 받을 수 있으며, 매월 1일 초기화돼요. (한국 시간 기준)',
   '초대 코드는 계정당 한 번 입력할 수 있어요.',
-  '보상으로 받은 크레딧은 적립일부터 30일 동안 사용할 수 있어요.',
+  '보상으로 받은 이프는 적립일부터 30일 동안 사용할 수 있어요.',
   '본 이벤트는 사전 고지 없이 변경되거나 종료될 수 있어요.',
 ];
 
@@ -106,7 +106,7 @@ export function InviteScreen() {
         <h1 className="text-xl font-semibold">
           친구를 초대하고
           <br />
-          함께 크레딧을 받아보세요
+          함께 이프를 받아보세요
         </h1>
         <p className="text-foreground-secondary">
           {INVITE_REWARD_COPY.pageDescription}

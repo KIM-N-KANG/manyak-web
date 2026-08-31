@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * 채팅 턴의 게스트 체험 한도(전 채팅방 합산 5회)·크레딧 게이팅 스펙.
+ * 채팅 턴의 게스트 체험 한도(전 채팅방 합산 5회)·이프 게이팅 스펙.
  * 로컬 카운터 선차단, 서버 402 사유별 바텀 시트·토스트 분기를 검증한다(QA CHAT-LIMIT-01~03).
  * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`를 따른다.
  */
@@ -42,7 +42,7 @@ const prepareChatRoom = async (page: Page) => {
   });
 };
 
-test.describe('채팅 게스트 한도·크레딧 게이팅', () => {
+test.describe('채팅 게스트 한도·이프 게이팅', () => {
   test('게스트 로컬 카운터가 한도(5)에 도달하면 요청 없이 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
     page,
   }) => {
@@ -101,7 +101,7 @@ test.describe('채팅 게스트 한도·크레딧 게이팅', () => {
     await expect(page.getByText('한계를 넘어선다')).toBeHidden();
   });
 
-  test('회원이 서버 402(크레딧 부족)를 받으면 현재 화면에서 토스트만 띄운다 (US-10-4)', async ({
+  test('회원이 서버 402(이프 부족)를 받으면 현재 화면에서 토스트만 띄운다 (US-10-4)', async ({
     page,
   }) => {
     await prepareChatRoom(page);

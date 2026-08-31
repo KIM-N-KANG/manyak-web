@@ -219,7 +219,7 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     ).toBeEnabled();
   });
 
-  test(`입력 코드를 정규화해 제출하고 ${INVITE_REWARD_AMOUNT.toLocaleString('ko-KR')} 크레딧 성공을 안내한다`, async ({
+  test(`입력 코드를 정규화해 제출하고 ${INVITE_REWARD_AMOUNT.toLocaleString('ko-KR')} 이프 성공을 안내한다`, async ({
     page,
   }) => {
     await prepareMemberInvitePage(page);

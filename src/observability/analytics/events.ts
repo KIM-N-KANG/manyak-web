@@ -20,7 +20,7 @@ export type GuestLimitTrigger =
   | 'chat_start'
   | 'chat_turn';
 
-/** 회원 크레딧 부족(402·INSUFFICIENT_CREDIT) 토스트를 띄운 유료 동작 지점. */
+/** 회원 이프 부족(402·INSUFFICIENT_CREDIT) 토스트를 띄운 유료 동작 지점. */
 export type CreditShortageTrigger = 'story_create' | 'chat_turn';
 
 /** 스토리 카드가 속한 섹션. 오리지널 노출·클릭 기여를 내가 만든 스토리와 분리해 본다. */
@@ -59,7 +59,7 @@ export type AnalyticsEventProps = {
     provider: SocialLoginProvider;
   };
   client_guestLimitDialog_dismissed: { trigger: GuestLimitTrigger };
-  // credit shortage (회원 크레딧 부족 → 토스트 안내, 이벤트 이름은 하위 호환 유지)
+  // credit shortage (회원 이프 부족 → 토스트 안내, 이벤트 이름은 하위 호환 유지)
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
   // onboarding
   client_onboarding_viewed: void;
