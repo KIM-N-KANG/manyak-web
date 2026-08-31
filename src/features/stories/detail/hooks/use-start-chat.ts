@@ -58,7 +58,7 @@ export function useStartChat(storyId: string, startSettingId?: string) {
       },
       onError: (error) => {
         // 게스트 체험 한도면 로그인 유도, 그 외는 실패 토스트를 띄운다.
-        // 채팅 생성은 크레딧을 소모하지 않으므로 회원 크레딧 부족을 처리하지 않는다.
+        // 채팅 생성은 이프를 소모하지 않으므로 회원 이프 부족을 처리하지 않는다.
         const reason = resolvePaymentRequiredReason(error, status);
 
         if (reason === 'guest-trial-limit') {

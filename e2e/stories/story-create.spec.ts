@@ -477,14 +477,14 @@ test.describe('스토리 생성', () => {
     await expect(page.getByRole('button', { name: '더보기' })).toBeVisible();
   });
 
-  test('추가 정보 하단에 스토리 완성 크레딧 비용을 표시한다', async ({
+  test('추가 정보 하단에 스토리 완성 비용과 200 이프를 표시한다', async ({
     page,
   }) => {
     await reachAdditionalInfo(page);
 
     const creditCost = page.getByLabel(STORY_COMPLETION_CREDIT_COST.label);
     const amount = creditCost.getByText(
-      String(STORY_COMPLETION_CREDIT_COST.amount),
+      STORY_COMPLETION_CREDIT_COST.amountLabel,
       { exact: true },
     );
 

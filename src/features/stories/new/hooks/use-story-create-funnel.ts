@@ -186,7 +186,7 @@ export function useStoryCreateFunnel() {
     setHasCompleteStoryError(true);
   };
 
-  // 402 처리: 게스트 체험 한도면 로그인 유도, 회원 크레딧 부족이면 토스트를 띄운다.
+  // 402 처리: 게스트 체험 한도면 로그인 유도, 회원 이프 부족이면 토스트를 띄운다.
   // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
   // 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행되고, 이 핸들러는 안내 UI만 띄운다.
   const handlePaymentRequiredError = (
@@ -366,7 +366,7 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        // 채팅 생성은 크레딧을 소모하지 않는다. 게스트 한도 응답만 로그인 유도로 처리한다.
+        // 채팅 생성은 이프를 소모하지 않는다. 게스트 한도 응답만 로그인 유도로 처리한다.
         if (
           resolvePaymentRequiredReason(error, sessionStatus) ===
           'guest-trial-limit'

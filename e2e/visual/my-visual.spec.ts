@@ -21,7 +21,7 @@ import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
  */
 
 /**
- * 회원 프로필·크레딧 조회(/auth/me)를 목킹한다. 회원은 로그인 수단이 최소 하나라
+ * 회원 프로필·이프 조회(/auth/me)를 목킹한다. 회원은 로그인 수단이 최소 하나라
  * linkedProviders도 함께 담아야 실제 화면(연동 Chip·연동 버튼)과 같아진다.
  *
  * @param page 대상 페이지
@@ -55,7 +55,7 @@ test.describe('마이 비주얼', () => {
     await expect(page).toHaveScreenshot('my-guest.png');
   });
 
-  test('마이 회원 상태: 프로필·크레딧 카드 (MY-MENU)', async ({ page }) => {
+  test('마이 회원 상태: 프로필·이프 카드 (MY-MENU)', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
@@ -187,14 +187,14 @@ test.describe('마이 비주얼', () => {
       page.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: '크레딧 안내' }),
+      page.getByRole('heading', { name: '이프 안내' }),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('service-info-top.png');
   });
 });
 
-/** 다크 모드 대표 스냅샷. 크레딧 카드·섹션 메뉴와 destructive(회원 탈퇴) 토큰을 덮는다. */
+/** 다크 모드 대표 스냅샷. 이프 카드·섹션 메뉴와 destructive(회원 탈퇴) 토큰을 덮는다. */
 test.describe('마이 다크 모드 비주얼', () => {
   test.use({ colorScheme: 'dark' });
 

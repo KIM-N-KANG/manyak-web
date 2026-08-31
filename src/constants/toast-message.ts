@@ -11,7 +11,7 @@ export const TOAST_MESSAGE = {
   STORYLINE_DISLIKED: '싫어요를 남겼어요',
   STORYLINE_EVALUATE_FAILED: '평가 저장에 실패했어요',
   RESPONSE_STREAM_FAILED: '응답 생성에 실패했어요',
-  CREDIT_SHORTAGE: '크레딧이 부족해요',
+  CREDIT_SHORTAGE: '이프가 부족해요',
   FEEDBACK_SUBMITTED: '소중한 피드백을 보내주셔서 감사해요',
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요',
   ACCOUNT_DELETION_FAILED: '회원 탈퇴에 실패했어요',
@@ -23,7 +23,7 @@ export const TOAST_MESSAGE = {
   MIGRATION_ALREADY_DONE:
     '이미 스토리와 채팅을 옮긴 이력이 있어 옮기지 못했어요',
   ATTENDANCE_CLAIMED: (amount: number) =>
-    `출석 체크 보상으로 ${amount} 크레딧을 받았어요`,
+    `출석 체크 보상으로 ${amount} 이프를 받았어요`,
   ATTENDANCE_ALREADY: '오늘은 이미 출석 체크했어요',
   ATTENDANCE_FAILED: '출석 체크에 실패했어요',
   INVITE_CODE_COPIED: '초대 코드를 복사했어요',

@@ -8,7 +8,7 @@ import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
 
 /**
- * 스토리 생성 퍼널의 게스트 한도·크레딧 게이팅 스펙(QA STORY-LIMIT-02~06·09).
+ * 스토리 생성 퍼널의 게스트 한도·이프 게이팅 스펙(QA STORY-LIMIT-02~06·09).
  * 로컬 카운터 선차단, 서버 402 사유별 다이얼로그 분기, 카운터 증가 규칙을 검증한다.
  * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`
  * (스토리라인 5·스토리 1)를 따른다.
@@ -213,7 +213,7 @@ test.describe('스토리라인 생성 한도', () => {
   });
 });
 
-test.describe('스토리 완성 한도·크레딧', () => {
+test.describe('스토리 완성 한도·이프', () => {
   test('게스트 완성 요청이 402(체험 한도)면 추가 정보 단계로 복귀하고 입력을 유지한다 (STORY-LIMIT-05)', async ({
     page,
   }) => {
@@ -263,7 +263,7 @@ test.describe('스토리 완성 한도·크레딧', () => {
     await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('회원 완성 요청이 402(크레딧 부족)면 현재 화면에서 토스트만 띄우고 입력을 유지한다 (STORY-LIMIT-06)', async ({
+  test('회원 완성 요청이 402(이프 부족)면 현재 화면에서 토스트만 띄우고 입력을 유지한다 (STORY-LIMIT-06)', async ({
     page,
   }) => {
     await mockTags(page);

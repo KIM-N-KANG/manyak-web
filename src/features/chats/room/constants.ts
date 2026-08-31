@@ -62,4 +62,4 @@ export const CHAT_CHOICES_HINT_SEEN_STORAGE_KEY =
 
 export const CHAT_CHOICES_HINT_SEEN_VALUE = 'true';
 
-export const CHAT_TURN_CREDIT_COST_LABEL = `${CREDIT_POLICY.chatTurn} 크레딧`;
+export const CHAT_TURN_CREDIT_COST_LABEL = `${CREDIT_POLICY.chatTurn} 이프`;
