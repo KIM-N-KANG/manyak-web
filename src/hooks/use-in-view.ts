@@ -13,6 +13,12 @@ type UseInViewParams = {
   rootMargin?: string;
   /** in-view로 판정할 최소 가시 비율 (0~1). 예: 0.99면 거의 전부 보여야 true */
   threshold?: number;
+  /**
+   * 첫 관찰 결과가 도착하기 전에 사용할 초기값.
+   * 관찰은 마운트 직후가 아니라 다음 렌더링 기회에 처음 보고되므로, 목록 끝 sentinel처럼
+   * "보이면 무언가를 시작"하는 용도라면 false로 시작해야 첫 렌더에서 헛돌지 않는다.
+   */
+  initialInView?: boolean;
 };
 
 /**
@@ -27,8 +33,9 @@ export function useInView({
   enabled = true,
   rootMargin,
   threshold = 0,
+  initialInView = true,
 }: UseInViewParams) {
-  const [isInView, setIsInView] = useState(true);
+  const [isInView, setIsInView] = useState(initialInView);
 
   useEffect(() => {
     if (!enabled || !target) return;

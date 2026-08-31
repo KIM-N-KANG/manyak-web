@@ -68,6 +68,59 @@ test.describe('마이 비주얼', () => {
     await expect(page).toHaveScreenshot('my-member.png');
   });
 
+  test('이프 내역 목록 (MY-CREDITS)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    await page.route('**/api/v1/users/me/credits/transactions*', (route) =>
+      route.fulfill({
+        json: {
+          items: [
+            {
+              type: 'SPEND',
+              reason: 'CHAT_TURN',
+              amount: -20,
+              title: '유운잔검기',
+              expiresAt: null,
+              createdAt: '2026-08-31T09:00:00Z',
+            },
+            {
+              type: 'EARN',
+              reason: 'ATTENDANCE_REWARD',
+              amount: 350,
+              title: null,
+              expiresAt: '2026-09-30T00:00:00Z',
+              createdAt: '2026-08-31T00:10:00Z',
+            },
+            {
+              type: 'SPEND',
+              reason: 'STORY_CREATION',
+              amount: -200,
+              title: null,
+              expiresAt: null,
+              createdAt: '2026-08-30T09:00:00Z',
+            },
+            {
+              type: 'EXPIRE',
+              reason: 'EXPIRE',
+              amount: -1000,
+              title: null,
+              expiresAt: '2026-08-29T00:00:00Z',
+              createdAt: '2026-08-30T01:00:00Z',
+            },
+          ],
+          nextCursor: null,
+        },
+      }),
+    );
+
+    await page.goto('/my/credits');
+
+    await expect(page.getByText('채팅 전송')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('credit-history.png');
+  });
+
   test('계정 연동 확인 다이얼로그 (MY-MENU)', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
