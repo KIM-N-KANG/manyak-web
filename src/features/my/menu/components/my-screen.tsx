@@ -7,7 +7,7 @@ import {
   InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
-  UserRemove02Icon,
+  UserRemove01Icon,
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
 
@@ -89,7 +89,7 @@ export function MyScreen() {
             loading={isLoggingOut}
           />
           <MyMenuItem
-            icon={UserRemove02Icon}
+            icon={UserRemove01Icon}
             label="회원 탈퇴"
             href={APP_PATH.MY_ACCOUNT_DELETION}
             destructive
