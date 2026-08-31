@@ -6,7 +6,10 @@ const CHARACTER_IMAGE_HOSTNAMES = new Set([
   'cdn.manyak.app',
   'dev-cdn.manyak.app',
 ]);
-const CHARACTER_IMAGE_PATH_PREFIX = '/characters/generated/';
+const CHARACTER_IMAGE_PATH_PREFIXES = [
+  '/characters/generated/',
+  '/characters/originals/',
+] as const;
 const CHARACTER_IMAGE_MARKER_LINE = /^\[\[(https:\/\/[^\r\n]+)\]\]$/;
 const LEADING_HORIZONTAL_WHITESPACE = /^[ \t]*/;
 const SPEAKER_LABEL = /^(.+?)[ \t]*:(?=[ \t]|$)/;
@@ -22,7 +25,7 @@ type CharacterImageMarkerMatch = {
  * 채팅 인물 이미지로 허용된 CDN URL인지 확인한다.
  *
  * @param imageUrl 확인할 이미지 URL
- * @returns 운영·개발 생성 인물 이미지 경로이면 true, 아니면 false
+ * @returns 운영·개발 생성·오리지널 인물 이미지 경로이면 true, 아니면 false
  */
 export function isAllowedChatCharacterImageUrl(imageUrl: string): boolean {
   try {
@@ -34,8 +37,11 @@ export function isAllowedChatCharacterImageUrl(imageUrl: string): boolean {
       url.password === '' &&
       url.port === '' &&
       CHARACTER_IMAGE_HOSTNAMES.has(url.hostname) &&
-      url.pathname.startsWith(CHARACTER_IMAGE_PATH_PREFIX) &&
-      url.pathname.length > CHARACTER_IMAGE_PATH_PREFIX.length
+      CHARACTER_IMAGE_PATH_PREFIXES.some(
+        (pathPrefix) =>
+          url.pathname.startsWith(pathPrefix) &&
+          url.pathname.length > pathPrefix.length,
+      )
     );
   } catch {
     return false;

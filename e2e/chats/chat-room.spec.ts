@@ -22,7 +22,7 @@ const CHAT_CHOICES = '**/api/v1/chats/c1/turns/1/choices';
 const PLAY_FILLED_PATH =
   'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
 const CHARACTER_IMAGE_URL =
-  'https://dev-cdn.manyak.app/characters/generated/serin.webp';
+  'https://dev-cdn.manyak.app/characters/originals/story-id/serin.webp';
 
 // 1x1 투명 PNG. 인물 이미지 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
