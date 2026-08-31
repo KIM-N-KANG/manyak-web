@@ -40,6 +40,10 @@ export function useCreditTransactions({
       lastPage.status === 200
         ? (lastPage.data.nextCursor ?? undefined)
         : undefined,
+    // 화면을 떠나면 받아 둔 페이지를 버려 진입할 때마다 첫 페이지부터 다시 읽는다.
+    // 이프는 채팅·제작에서 계속 줄어들어 남겨 둔 목록이 곧 낡고, 쌓아 둔 페이지를 함께
+    // 다시 읽으면 그사이 앞에 끼어든 항목만큼 페이지 경계가 밀려 같은 줄이 겹친다.
+    gcTime: 0,
     enabled,
   });
 
@@ -52,6 +56,8 @@ export function useCreditTransactions({
     transactions,
     isPending: query.isPending,
     isError: query.isError,
+    /** 조회가 진행 중인지 여부. 재시도 버튼의 중복 요청을 막는 데 쓴다. */
+    isFetching: query.isFetching,
     refetch: query.refetch,
     fetchNextPage: query.fetchNextPage,
     hasNextPage: query.hasNextPage,

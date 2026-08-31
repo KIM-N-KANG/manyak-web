@@ -8,6 +8,7 @@ export const CREDIT_HISTORY_COPY = {
   empty: '아직 이프 내역이 없어요',
   loadFailed: '이프 내역을 불러오지 못했어요',
   retry: '다시 시도하기',
+  retrying: '다시 시도 중...',
   deletedStory: '삭제된 스토리',
   loading: '이프 내역을 불러오는 중',
 } as const;

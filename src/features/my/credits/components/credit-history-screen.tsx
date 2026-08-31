@@ -42,6 +42,7 @@ export function CreditHistoryScreen() {
     transactions,
     isPending,
     isError,
+    isFetching,
     refetch,
     fetchNextPage,
     hasNextPage,
@@ -116,8 +117,11 @@ export function CreditHistoryScreen() {
               type="button"
               size="sm"
               variant="secondary"
+              disabled={isFetching}
               onClick={() => void refetch()}>
-              {CREDIT_HISTORY_COPY.retry}
+              {isFetching
+                ? CREDIT_HISTORY_COPY.retrying
+                : CREDIT_HISTORY_COPY.retry}
             </Button>
           </div>
         ) : null}
@@ -146,7 +150,7 @@ export function CreditHistoryScreen() {
           </div>
         ) : null}
 
-        {isFetchNextPageError ? (
+        {isFetchNextPageError && !isFetchingNextPage ? (
           <div className="flex justify-center py-4">
             <Button
               type="button"

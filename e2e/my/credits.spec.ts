@@ -130,6 +130,33 @@ test.describe('이프 내역 (/my/credits)', () => {
     ).toBeVisible();
   });
 
+  test('다시 진입하면 첫 페이지부터 새로 조회한다', async ({ page }) => {
+    await prepareMember(page);
+
+    const requestedCursors = await mockTransactions(page, {
+      '': { items: [CHAT_TURN_TRANSACTION], nextCursor: null },
+    });
+
+    await page.goto('/my');
+
+    await page
+      .getByRole('button', { name: CREDIT_HISTORY_COPY.entryButton })
+      .click();
+    await expect(page.getByText('유운잔검기')).toBeVisible();
+
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(/\/my$/);
+
+    await page
+      .getByRole('button', { name: CREDIT_HISTORY_COPY.entryButton })
+      .click();
+    await expect(page.getByText('유운잔검기')).toBeVisible();
+
+    expect(requestedCursors).toEqual(['', '']);
+  });
+
   test('잔액과 내역 목록을 표시한다', async ({ page }) => {
     await prepareMember(page);
     await mockTransactions(page, {
