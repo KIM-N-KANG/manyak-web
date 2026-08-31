@@ -16,16 +16,19 @@ import {
   markOnboardingSeen,
   setOnboardingSeenCookie,
 } from '../utils/onboarding-storage';
-import { OnboardingPreview } from './onboarding-preview';
+import { OnboardingLanding } from './onboarding-landing';
 
 // 위에서 아래로 읽는 순서를 따라가는 등장 시점(초). 타이틀 두 줄은
 // 소설 도입부처럼 반 박자 간격을 두고, CTA가 마지막에 나타난다.
 const ENTRANCE_DELAY = {
-  titleSecondLine: 0.35,
-  description: 0.55,
-  preview: 0.7,
-  buttons: 0.85,
+  titleSecondLine: 0.25,
+  description: 0.45,
+  buttons: 0.65,
 } as const;
+
+// 초반에 빠르게 감속한 뒤 긴 꼬리로 잦아드는 커브. 기본 easeOut보다
+// 멈추는 순간이 드러나지 않아 등장이 우아하게 느껴진다.
+const ENTRANCE_EASE = [0.22, 1, 0.36, 1] as const;
 
 const MAIN_PATHS = new Set<string>(Object.values(APP_PATH.MAIN));
 
@@ -76,28 +79,22 @@ export function OnboardingScreen() {
     router.replace(APP_PATH.STUDIO.STORY.SIMPLE);
   };
 
-  const handleSkip = () => {
+  const handleGoHome = () => {
     hasChosenRef.current = true;
     markOnboardingSeen();
-    track('client_onboarding_skipButton_clicked');
+    track('client_onboarding_logo_clicked');
     router.replace(APP_PATH.MAIN.STORIES);
   };
 
   const rise: Variants = {
-    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 12 },
+    hidden: {
+      opacity: 0,
+      ...(prefersReducedMotion ? {} : { y: 18, filter: 'blur(5px)' }),
+    },
     show: (delay: number) => ({
       opacity: 1,
-      y: 0,
-      transition: { delay, duration: 0.3, ease: 'easeOut' },
-    }),
-  };
-
-  const previewRise: Variants = {
-    hidden: { opacity: 0, scale: prefersReducedMotion ? 1 : 0.97 },
-    show: (delay: number) => ({
-      opacity: 1,
-      scale: 1,
-      transition: { delay, duration: 0.35, ease: 'easeOut' },
+      ...(prefersReducedMotion ? {} : { y: 0, filter: 'blur(0px)' }),
+      transition: { delay, duration: 0.6, ease: ENTRANCE_EASE },
     }),
   };
 
@@ -111,10 +108,12 @@ export function OnboardingScreen() {
       animate="show"
       className="flex h-full min-h-0 flex-col">
       <header className="flex h-14 shrink-0 items-center bg-background px-4">
-        <ManyakLogo className="h-6 w-auto text-primary" />
+        <button type="button" aria-label="홈으로 이동" onClick={handleGoHome}>
+          <ManyakLogo className="h-6 w-auto text-primary" />
+        </button>
       </header>
-      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="flex shrink-0 flex-col items-start gap-1 p-4">
+      <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain">
+        <div className="flex flex-col items-start gap-1 p-4">
           <h1 className="text-xl font-semibold">
             {ONBOARDING_TITLE_LINES.map((titleLine, index) => (
               <m.span
@@ -134,26 +133,18 @@ export function OnboardingScreen() {
           </m.p>
         </div>
 
-        <m.div
-          variants={previewRise}
-          custom={ENTRANCE_DELAY.preview}
-          className="flex min-h-0 flex-1">
-          <OnboardingPreview />
-        </m.div>
+        <OnboardingLanding />
       </main>
 
       <m.nav
         variants={rise}
         custom={ENTRANCE_DELAY.buttons}
-        className="flex w-full shrink-0 items-center gap-2 bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [&>button]:flex-1">
+        className="flex w-full shrink-0 items-center bg-background px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <Button
           type="button"
           size="lg"
-          variant="secondary"
-          onClick={handleSkip}>
-          나중에 하기
-        </Button>
-        <Button type="button" size="lg" onClick={handleStartCreate}>
+          className="flex-1"
+          onClick={handleStartCreate}>
           첫 장면 만들기
         </Button>
       </m.nav>

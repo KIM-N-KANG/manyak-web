@@ -1,4 +1,5 @@
 import { INVITE_REWARD_COPY } from '@/features/my/invite/constants';
+import { ONBOARDING_SECTIONS } from '@/features/onboarding/constants';
 
 import {
   expect,
@@ -6,7 +7,7 @@ import {
   skipOnboarding,
   test,
 } from '../fixtures/test';
-import { freezeVideos, waitForFonts } from '../fixtures/visual';
+import { waitForFonts } from '../fixtures/visual';
 
 /**
  * 온보딩 화면(게스트 온보딩 페이지·신규 가입 초대 코드 바텀 시트)의 정적 상태를
@@ -35,7 +36,21 @@ test.describe('온보딩 비주얼', () => {
           ),
       )
       .toBe('1');
-    await freezeVideos(page);
+    // 첫 화면에 걸치는 첫 섹션은 CTA보다 늦게(히어로 핸드오프 후) 정착하므로,
+    // 스크린샷이 실제 픽셀까지 내려오고 등장 애니메이션까지 끝난 뒤에 찍는다.
+    await expect
+      .poll(() =>
+        page
+          .getByRole('img', { name: ONBOARDING_SECTIONS[0].scenes[0].alt })
+          .evaluate(
+            (image) =>
+              (image as HTMLImageElement).complete &&
+              (image as HTMLImageElement).naturalWidth > 0 &&
+              getComputedStyle(image.parentElement as HTMLElement).opacity ===
+                '1',
+          ),
+      )
+      .toBe(true);
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('onboarding-guest-page.png');
   });
