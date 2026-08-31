@@ -12,6 +12,10 @@ const SERIN_IMAGE_URL =
 const REI_IMAGE_URL = 'https://cdn.manyak.app/characters/generated/rei.webp';
 const DEV_IMAGE_URL =
   'https://dev-cdn.manyak.app/characters/generated/serin.webp';
+const ORIGINAL_IMAGE_URL =
+  'https://cdn.manyak.app/characters/originals/story-id/serin.webp';
+const DEV_ORIGINAL_IMAGE_URL =
+  'https://dev-cdn.manyak.app/characters/originals/story-id/serin.webp';
 
 describe('채팅 메시지 조각', () => {
   it('텍스트 토큰은 마지막 텍스트 조각에 누적한다', () => {
@@ -57,9 +61,11 @@ describe('채팅 메시지 조각', () => {
     ).toHaveLength(2);
   });
 
-  it('허용된 CDN의 생성 인물 이미지 URL만 받는다', () => {
+  it('허용된 CDN의 생성·오리지널 인물 이미지 URL만 받는다', () => {
     expect(isAllowedChatCharacterImageUrl(SERIN_IMAGE_URL)).toBe(true);
     expect(isAllowedChatCharacterImageUrl(DEV_IMAGE_URL)).toBe(true);
+    expect(isAllowedChatCharacterImageUrl(ORIGINAL_IMAGE_URL)).toBe(true);
+    expect(isAllowedChatCharacterImageUrl(DEV_ORIGINAL_IMAGE_URL)).toBe(true);
     expect(
       isAllowedChatCharacterImageUrl(
         'http://cdn.manyak.app/characters/generated/serin.webp',
@@ -78,6 +84,11 @@ describe('채팅 메시지 조각', () => {
     expect(
       isAllowedChatCharacterImageUrl(
         'https://cdn.manyak.app/characters/generated/',
+      ),
+    ).toBe(false);
+    expect(
+      isAllowedChatCharacterImageUrl(
+        'https://cdn.manyak.app/characters/originals/',
       ),
     ).toBe(false);
     expect(
@@ -117,6 +128,19 @@ describe('채팅 메시지 조각', () => {
         imageUrl: REI_IMAGE_URL,
       },
       { type: 'text', content: '레이: 들어가자.' },
+    ]);
+  });
+
+  it('오리지널 스토리 인물 이미지 저장 마커를 복원한다', () => {
+    const content = `[[${DEV_ORIGINAL_IMAGE_URL}]]\n\n세린: 기다렸어?`;
+
+    expect(parseChatMessageSegments(content)).toEqual([
+      {
+        type: 'character-image',
+        name: '세린',
+        imageUrl: DEV_ORIGINAL_IMAGE_URL,
+      },
+      { type: 'text', content: '세린: 기다렸어?' },
     ]);
   });
 

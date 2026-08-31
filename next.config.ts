@@ -76,10 +76,22 @@ const nextConfig: NextConfig = {
         pathname: '/characters/generated/**',
       },
       {
+        // 오리지널 스토리 인물 이미지(KNK-1055)도 같은 채팅 이미지 계약으로 전달한다.
+        protocol: 'https',
+        hostname: 'cdn.manyak.app',
+        pathname: '/characters/originals/**',
+      },
+      {
         // 개발 환경은 별도 CloudFront 도메인에서 같은 생성 이미지 경로를 서빙한다.
         protocol: 'https',
         hostname: 'dev-cdn.manyak.app',
         pathname: '/characters/generated/**',
+      },
+      {
+        // 개발 오리지널 스토리 인물 이미지도 별도 CloudFront 도메인에서 서빙한다.
+        protocol: 'https',
+        hostname: 'dev-cdn.manyak.app',
+        pathname: '/characters/originals/**',
       },
     ],
   },
