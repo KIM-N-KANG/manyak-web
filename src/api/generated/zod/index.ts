@@ -34,7 +34,7 @@ export const CancelStorylineRatingParams = zod.object({
 export const CancelStorylineRatingResponse = zod.void();
 
 /**
- * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 각 500 크레딧을 적립합니다(스펙 §4-3-7, KNK-567). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한(10회)에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
+ * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 초대 보상 이프를 적립합니다(스펙 §4-3-7, KNK-567). 적립액과 월 상한은 **운영 중 조정 가능한 정책값**이라 이 문서가 계약이 아닙니다 — 적립액은 응답 amount로, 월 상한은 GET /users/me/invite의 monthlyRewardLimit으로 확인하세요(KNK-1056). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
  * @summary 초대 코드 입력·보상 적립
  */
 
@@ -52,7 +52,7 @@ export const RedeemInviteCodeBody = zod
 export const RedeemInviteCodeResponse = zod.unknown();
 
 /**
- * 출석 보상 크레딧을 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
+ * 출석 보상 이프를 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
  * @summary 출석체크 보상
  */
 export const ClaimAttendanceResponse = zod.unknown();
@@ -798,6 +798,8 @@ export const LoginWithGoogleResponse = zod.unknown();
  * 이 API는 새 계정도, 새 세션도 만들지 않습니다(가입 보상·토큰 발급 없음). 기존 access·refresh 토큰은 그대로 유효하며, 연동 후 상태는 `GET /auth/me`의 `linkedProviders`로 확인합니다.
  *
  * 링크 코드는 **성공했을 때만** 소비됩니다. 403·409로 실패하면 코드가 남아 만료 전까지 재인증 없이 다시 시도할 수 있습니다. 이미 연동된 소셜 계정을 다시 보내면(내 계정이든 남의 계정이든) 409입니다. 연동 해제는 제공하지 않습니다.
+ *
+ * 탈퇴한 계정에 연결됐던 소셜 계정도 409(code=SOCIAL_ACCOUNT_WITHDRAWN)입니다. 그 신원으로 **로그인**은 여전히 가능하며(재가입), 막히는 것은 다른 계정에 붙이는 것뿐입니다.
  * @summary 계정 연동 추가
  */
 export const LinkParams = zod.object({
@@ -1128,10 +1130,33 @@ export const GetMyStoriesResponse = zod.unknown();
 export const GetMyInviteResponse = zod.unknown();
 
 /**
- * 요청자의 현재 크레딧 잔액을 반환합니다. 지갑이 없으면 0입니다. 인증 필수입니다.
- * @summary 크레딧 잔액 조회
+ * 요청자의 현재 이프 잔액을 반환합니다. 지갑이 없으면 0입니다. 인증 필수입니다.
+ * @summary 이프 잔액 조회
  */
 export const GetMyCreditsResponse = zod.unknown();
+
+/**
+ *
+ *             요청자의 크레딧 증감 내역을 최신순으로 반환합니다. 인증 필수입니다.
+ *
+ *             - `type`: 화면 필터 칩과 같은 값(`ALL`·`SPEND`·`EARN`·`EXPIRE`). 환불(REFUND)은 획득으로 분류하고,
+ *               구매(PURCHASE)는 구매내역 탭 몫이라 `ALL`에서도 제외합니다.
+ *             - `limit`: 1~100으로 보정합니다(기본 50).
+ *             - `cursor`: 이전 응답의 `nextCursor`를 그대로 넘기면 다음 페이지입니다. 다음이 없으면 `nextCursor`는 null입니다.
+ *             - `title`은 관련 스토리 제목이며, 보상·소멸 행이거나 스토리가 삭제됐으면 null입니다.
+ *             - 소멸 행의 `createdAt`은 회수가 기록된 시각이라 실제 만료일과 다릅니다. 날짜 표시는 `expiresAt`을 쓰세요.
+ * @summary 이프 이용내역 조회
+ */
+export const getMyCreditTransactionsQueryTypeDefault = `ALL`;
+export const getMyCreditTransactionsQueryLimitDefault = 50;
+
+export const GetMyCreditTransactionsQueryParams = zod.object({
+  type: zod.string().default(getMyCreditTransactionsQueryTypeDefault),
+  limit: zod.number().default(getMyCreditTransactionsQueryLimitDefault),
+  cursor: zod.string().optional(),
+});
+
+export const GetMyCreditTransactionsResponse = zod.unknown();
 
 /**
  * 요청자가 소유한 채팅 카드를 최근 활동순으로 반환합니다. 소프트 삭제는 제외하며, limit(기본 100, 최대 100)으로 상한을 둡니다.
@@ -1198,7 +1223,7 @@ export const GetLorebooksQueryParams = zod.object({
 export const GetLorebooksResponse = zod.unknown();
 
 /**
- * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목·프롤로그는 조회 시점의 라이브 값입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.
+ * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목은 열람자가 그 스토리를 읽을 수 있을 때만 조회 시점의 값이고, 비공개로 전환됐거나 삭제됐으면 채팅 시작 시점의 스냅샷입니다(KNK-1059). 프롤로그도 같은 규칙입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.
  * @summary 공유된 채팅 열람
  */
 export const GetChatShareParams = zod.object({

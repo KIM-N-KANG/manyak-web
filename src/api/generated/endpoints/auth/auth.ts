@@ -649,6 +649,8 @@ export const getLinkUrl = (provider: string) => {
  * 이 API는 새 계정도, 새 세션도 만들지 않습니다(가입 보상·토큰 발급 없음). 기존 access·refresh 토큰은 그대로 유효하며, 연동 후 상태는 `GET /auth/me`의 `linkedProviders`로 확인합니다.
  *
  * 링크 코드는 **성공했을 때만** 소비됩니다. 403·409로 실패하면 코드가 남아 만료 전까지 재인증 없이 다시 시도할 수 있습니다. 이미 연동된 소셜 계정을 다시 보내면(내 계정이든 남의 계정이든) 409입니다. 연동 해제는 제공하지 않습니다.
+ *
+ * 탈퇴한 계정에 연결됐던 소셜 계정도 409(code=SOCIAL_ACCOUNT_WITHDRAWN)입니다. 그 신원으로 **로그인**은 여전히 가능하며(재가입), 막히는 것은 다른 계정에 붙이는 것뿐입니다.
  * @summary 계정 연동 추가
  */
 export const link = async (

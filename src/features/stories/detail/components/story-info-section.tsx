@@ -1,9 +1,13 @@
 import type { Ref } from 'react';
 
-import type { StoryStartSettingResponse } from '@/api/generated/models';
+import type {
+  StoryCharacterResponse,
+  StoryStartSettingResponse,
+} from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
 import { formatDate } from '@/lib/format-date';
 
+import { StoryCharacters } from './story-characters';
 import { StoryDetailTags } from './story-detail-tags';
 import { StoryStartSettings } from './story-start-settings';
 
@@ -12,6 +16,7 @@ type StoryInfo = {
   oneLineIntro?: string | null;
   description?: string | null;
   genres?: string[];
+  characters?: StoryCharacterResponse[];
   reachedEndings?: string[];
   startSettings?: StoryStartSettingResponse[];
   createdAt?: string;
@@ -32,6 +37,9 @@ export function StoryInfoSection({
 }: StoryInfoSectionProps) {
   const genres = story.genres ?? [];
   const reachedEndings = story.reachedEndings ?? [];
+  const characters = (story.characters ?? []).filter((character) =>
+    Boolean(character.name),
+  );
   const startSettings = story.startSettings ?? [];
 
   return (
@@ -57,6 +65,8 @@ export function StoryInfoSection({
           <TextContent>{story.description}</TextContent>
         </div>
       )}
+
+      {characters.length > 0 && <StoryCharacters characters={characters} />}
 
       {startSettings.length > 0 && (
         <StoryStartSettings

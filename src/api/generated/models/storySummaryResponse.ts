@@ -15,7 +15,7 @@ export interface StorySummaryResponse {
   /** 스토리 ID(공개 식별자) */
   id?: string;
   /**
-   * 썸네일 축소 변형 URL(§4-3-9 반응형 변형). 목록 카드용. 소스가 없으면 null.
+   * 썸네일 축소 변형 URL(§4-3-9 반응형 변형). 목록 카드용. 소스가 없으면 null. 컴파일이 생성한 표지가 있으면 축소본 없이 그 원본 URL(webp)이 실린다(KNK-1069).
    * @nullable
    */
   thumbnailUrlSm?: string | null;
