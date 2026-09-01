@@ -107,6 +107,19 @@ describe('formatCreditDateLine', () => {
     ).toBe('2026-08-31 · 2026-09-30 만료');
   });
 
+  it('KST 자정 직후 적립은 UTC 전날이 아니라 그날 날짜로 적는다', () => {
+    expect(
+      formatCreditDateLine(
+        createTransaction({
+          type: 'EARN',
+          reason: 'ATTENDANCE_REWARD',
+          createdAt: '2026-09-01T15:10:00Z',
+          expiresAt: '2026-10-01T15:10:00Z',
+        }),
+      ),
+    ).toBe('2026-09-02 · 2026-10-02 만료');
+  });
+
   it('날짜 형식이 예상과 다르면 그 줄을 만들지 않는다', () => {
     expect(
       formatCreditDateLine(createTransaction({ createdAt: 'unknown' })),
