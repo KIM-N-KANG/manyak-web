@@ -1,13 +1,17 @@
 import type { Page } from '@playwright/test';
 
+import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
+  buildAttendanceTitleLines,
   CREDIT_CHARGE_COPY,
   CREDIT_HISTORY_COPY,
 } from '@/features/my/credits/constants';
 
 import {
+  CREDIT_POLICY_FIXTURE,
   expect,
+  mockCreditPolicies,
   mockMemberSession,
   skipOnboarding,
   test,
@@ -314,6 +318,42 @@ test.describe('이프 충전 (/my/credits)', () => {
       }),
     ).toBeDisabled();
     await expect(page.getByText('3,860')).toBeVisible();
+  });
+
+  test('출석 보상 문구는 서버가 내려준 이프 수치를 따라간다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+    // 픽스처 기본값과 다른 값을 응답해야 서버를 따라간다는 것이 드러난다.
+    await mockCreditPolicies(page, {
+      ...CREDIT_POLICY_FIXTURE,
+      attendanceReward: 350,
+    });
+
+    await page.goto('/my/credits');
+
+    const [, rewardLine] = buildAttendanceTitleLines(formatCreditAmount(350));
+
+    await expect(page.getByText(rewardLine)).toBeVisible();
+  });
+
+  test('정책 조회가 실패하면 출석 문구를 자리표시 숫자와 쉬머로 그린다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+    await page.route('**/api/v1/credits/policies', (route) =>
+      route.fulfill({ status: 500, json: {} }),
+    );
+
+    await page.goto('/my/credits');
+
+    const [, rewardLine] = buildAttendanceTitleLines(
+      formatCreditAmount(undefined),
+    );
+    const title = page.getByRole('heading', { name: rewardLine });
+
+    await expect(title).toBeVisible();
+    await expect(title).toHaveClass(/animate-pulse/);
   });
 
   test('이미 출석한 날에는 출석 버튼이 비활성이다', async ({ page }) => {

@@ -1,5 +1,3 @@
-import { CREDIT_POLICY } from '@/constants/credit';
-
 import type { ChatInputMode } from './utils/chat-input-config';
 import type { InputBlockType } from './utils/input-blocks';
 
@@ -62,4 +60,11 @@ export const CHAT_CHOICES_HINT_SEEN_STORAGE_KEY =
 
 export const CHAT_CHOICES_HINT_SEEN_VALUE = 'true';
 
-export const CHAT_TURN_CREDIT_COST_LABEL = `${CREDIT_POLICY.chatTurn} 이프`;
+/**
+ * 전송 버튼 옆에 붙는 채팅 턴 비용 문구를 만든다. 금액은 서버 정책값이라 문자열로 받는다.
+ *
+ * @param amount 채팅 한 턴에 드는 이프의 표시 문자열
+ * @returns 비용 표시 문구
+ */
+export const buildChatTurnCreditCostLabel = (amount: string) =>
+  `${amount} 이프`;

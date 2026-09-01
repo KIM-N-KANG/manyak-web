@@ -16,9 +16,9 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { track } from '@/observability/analytics';
 
-import { INVITE_REWARD_COPY } from '../constants';
 import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
 import { InviteCodeForm } from './invite-code-form';
+import { InviteRewardDescription } from './invite-reward-description';
 
 const INVITE_GUIDE_LINES = [
   '초대 보상은 매월 최대 10회까지 받을 수 있으며, 매월 1일 초기화돼요. (한국 시간 기준)',
@@ -108,9 +108,7 @@ export function InviteScreen() {
           <br />
           함께 이프를 받아보세요
         </h1>
-        <p className="text-foreground-secondary">
-          {INVITE_REWARD_COPY.pageDescription}
-        </p>
+        <InviteRewardDescription />
       </header>
 
       <section className="flex flex-col gap-2 p-4" aria-label="내 초대 코드">

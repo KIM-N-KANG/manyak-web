@@ -1,16 +1,22 @@
 import type { Page } from '@playwright/test';
 
-import {
-  INVITE_REWARD_AMOUNT,
-  INVITE_REWARD_COPY,
-} from '@/features/my/invite/constants';
+import { formatCreditAmount } from '@/constants/credit';
+import { buildInviteRewardCopy } from '@/features/my/invite/constants';
 
 import {
+  CREDIT_POLICY_FIXTURE,
   expect,
   mockMemberSession,
   skipOnboarding,
   test,
 } from '../fixtures/test';
+
+// 초대 보상 문구는 공개 정책 조회를 따라간다. mockApi가 픽스처 수치를 응답하므로
+// 기대 문구도 같은 수치에서 만든다.
+const INVITE_REWARD_AMOUNT = CREDIT_POLICY_FIXTURE.inviteReward;
+const INVITE_REWARD_COPY = buildInviteRewardCopy(
+  formatCreditAmount(INVITE_REWARD_AMOUNT),
+);
 
 const INVITE_CODE = 'CW6VZX7D';
 const INVITE_API = '**/api/v1/users/me/invite';

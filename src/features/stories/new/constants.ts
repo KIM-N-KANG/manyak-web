@@ -1,4 +1,3 @@
-import { CREDIT_POLICY } from '@/constants/credit';
 import type { RevealHint } from '@/hooks/use-revealed-hints';
 
 import type {
@@ -184,12 +183,17 @@ export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 
 export const SELECTED_TAGS_TRIGGER_LABEL = '선택한 키워드 보기';
 
-/** 추가 정보 단계 하단에 표시하는 스토리 완성 비용. */
-export const STORY_COMPLETION_CREDIT_COST = {
-  label: '스토리 완성 비용',
-  amount: CREDIT_POLICY.storyCompletion,
-  amountLabel: `${CREDIT_POLICY.storyCompletion} 이프`,
-} as const;
+/** 추가 정보 단계 하단에 표시하는 스토리 완성 비용의 라벨. */
+export const STORY_COMPLETION_CREDIT_COST_LABEL = '스토리 완성 비용';
+
+/**
+ * 스토리 완성 비용의 금액 문구를 만든다. 금액은 서버 정책값이라 문자열로 받는다.
+ *
+ * @param amount 간편 제작 스토리 완성에 드는 이프의 표시 문자열
+ * @returns 금액 표시 문구
+ */
+export const buildStoryCompletionCreditCostLabel = (amount: string) =>
+  `${amount} 이프`;
 
 export const STORYLINE_GENERATING_LOADING_PHRASES = [
   '선택한 키워드 살펴보는 중...',

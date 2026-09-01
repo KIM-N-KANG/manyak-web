@@ -29,6 +29,7 @@ export * from './createGeneralStoryRequestVisibility';
 export * from './createSimpleStoryRequest';
 export * from './creditAttendanceResponse';
 export * from './creditBalanceResponse';
+export * from './creditPolicyResponse';
 export * from './creditTransactionPageResponse';
 export * from './creditTransactionResponse';
 export * from './creditTransactionResponseReason';

@@ -1,8 +1,4 @@
 import type { CreditTransactionResponseReason } from '@/api/generated/models';
-import { CREDIT_POLICY } from '@/constants/credit';
-
-const attendanceRewardText =
-  CREDIT_POLICY.launchAttendanceReward.toLocaleString('ko-KR');
 
 /** 이프 충전 화면(탭 셸·무료 충전 탭)의 사용자 문구 정본. E2E와 문서는 리터럴 대신 이 상수를 참조한다. */
 export const CREDIT_CHARGE_COPY = {
@@ -11,10 +7,6 @@ export const CREDIT_CHARGE_COPY = {
   balanceLabel: '내 이프',
   freeChargeTab: '무료 충전',
   historyTab: '내역',
-  attendanceTitleLines: [
-    '매일 출석하고',
-    `매일 ${attendanceRewardText} 이프 받으세요`,
-  ],
   attendanceButton: '출석 하기',
   attendanceDoneButton: '출석 완료',
   attendanceClaiming: '출석 체크 중',
@@ -23,6 +15,15 @@ export const CREDIT_CHARGE_COPY = {
     '보상으로 받은 이프는 적립일로부터 30일 동안 사용할 수 있어요',
   ],
 } as const;
+
+/**
+ * 출석 상자의 두 줄 제목을 만든다. 보상 금액은 서버 정책값이라 문자열로 받는다.
+ *
+ * @param amount 하루 한 번 출석으로 받는 이프의 표시 문자열
+ * @returns 제목 두 줄
+ */
+export const buildAttendanceTitleLines = (amount: string) =>
+  ['매일 출석하고', `매일 ${amount} 이프 받으세요`] as const;
 
 /** 이프 충전의 내역 탭 문구 정본. */
 export const CREDIT_HISTORY_COPY = {
