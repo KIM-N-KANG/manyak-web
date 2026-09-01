@@ -8,14 +8,40 @@ import {
   isYesterday,
 } from 'date-fns';
 
+const DATE_PART_LENGTH = 10;
+
 /**
- * ISO 날짜 문자열에서 날짜 부분(yyyy-MM-dd)만 잘라 반환한다.
+ * 표시 기준 시간대. 서버 시각 필드는 UTC라 문자열을 그대로 자르면 KST 자정~오전 9시에
+ * 벌어진 일이 전날로 보인다. 서비스의 하루 경계(출석 보상·초대 월 한도)가 KST로 고정돼
+ * 있으므로 표시도 기기 시간대가 아닌 KST로 통일한다.
+ */
+const DISPLAY_TIME_ZONE = 'Asia/Seoul';
+
+const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: DISPLAY_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/**
+ * ISO 날짜 문자열을 KST 기준 날짜(yyyy-MM-dd)로 반환한다.
  *
  * @param isoDate ISO 8601 날짜 문자열
- * @returns yyyy-MM-dd 형식의 날짜 문자열
+ * @returns yyyy-MM-dd 형식의 날짜 문자열. 해석할 수 없으면 입력의 앞 10자
  */
 export function formatDate(isoDate: string): string {
-  return isoDate.slice(0, 10);
+  const date = new Date(isoDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return isoDate.slice(0, DATE_PART_LENGTH);
+  }
+
+  const parts = DISPLAY_DATE_FORMATTER.formatToParts(date);
+  const partOf = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+
+  return `${partOf('year')}-${partOf('month')}-${partOf('day')}`;
 }
 
 const HOUR_THRESHOLD = 12;
