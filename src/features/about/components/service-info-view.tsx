@@ -9,7 +9,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { GUEST_LIMITS } from '@/features/onboarding/constants';
 import { useTrackOnView } from '@/observability/analytics';
 
-import { SERVICE_INFO_CREDIT_ITEMS, SERVICE_INFO_TITLE } from '../constants';
+import { SERVICE_INFO_TITLE } from '../constants';
 
 export function ServiceInfoView() {
   useTrackOnView('client_serviceInfo_viewed');
@@ -22,14 +22,6 @@ export function ServiceInfoView() {
           <header>
             <h1 className="text-xl font-bold">{SERVICE_INFO_TITLE}</h1>
           </header>
-          <section className="flex flex-col gap-4">
-            <h2 className="text-lg font-bold">이프 안내</h2>
-            <ul className="flex list-disc flex-col pl-5">
-              {SERVICE_INFO_CREDIT_ITEMS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
           <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">게스트 이용 안내</h2>
             <ul className="flex list-disc flex-col pl-5">

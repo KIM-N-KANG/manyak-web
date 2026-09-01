@@ -12,18 +12,21 @@ import {
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
-  DrawerTitle,
 } from '@/components/ui/drawer';
+import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
+import { useCreditPolicySnapshot } from '@/hooks/use-credit-policy';
 import { track } from '@/observability/analytics';
 
-import { INVITE_REWARD_COPY } from '../constants';
+import { buildInviteRewardCopy } from '../constants';
 import { InviteOnboardingCodeForm } from './invite-onboarding-code-form';
+import { InviteOnboardingTitle } from './invite-onboarding-title';
 
 export function InviteOnboardingSheet() {
   const { data: session, status, update } = useSession();
   const container = useAppFrameContainer();
+  const readCreditPolicy = useCreditPolicySnapshot();
   const [dismissedUserId, setDismissedUserId] = useState<string | null>(null);
   const [completingUserId, setCompletingUserId] = useState<string | null>(null);
   const [redeemedUserId, setRedeemedUserId] = useState<string | null>(null);
@@ -127,9 +130,7 @@ export function InviteOnboardingSheet() {
         className="absolute overflow-y-auto overscroll-contain"
         overlayClassName="absolute">
         <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
-          <DrawerTitle className="text-xl leading-snug font-bold whitespace-pre-line">
-            {INVITE_REWARD_COPY.onboardingTitle}
-          </DrawerTitle>
+          <InviteOnboardingTitle />
           <DrawerDescription className="text-base leading-relaxed">
             지금은 건너뛰고 나중에 등록해도 돼요
           </DrawerDescription>
@@ -141,7 +142,11 @@ export function InviteOnboardingSheet() {
             role="status"
             aria-busy={isCompleting}>
             <p className="rounded-lg bg-muted p-4 text-sm">
-              {INVITE_REWARD_COPY.onboardingCloseFailed}
+              {
+                buildInviteRewardCopy(
+                  formatCreditAmount(readCreditPolicy()?.inviteReward),
+                ).onboardingCloseFailed
+              }
             </p>
             <Button
               type="button"

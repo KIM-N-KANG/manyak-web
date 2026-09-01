@@ -1,10 +1,12 @@
 import { type Page } from '@playwright/test';
 
+import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
-import { CHAT_TURN_CREDIT_COST_LABEL } from '@/features/chats/room/constants';
+import { buildChatTurnCreditCostLabel } from '@/features/chats/room/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
+  CREDIT_POLICY_FIXTURE,
   expect,
   seedChatIds,
   skipChatTour,
@@ -71,9 +73,12 @@ test.describe('채팅 스트리밍', () => {
 
     await page.goto('/chats/c1');
 
-    const creditCost = page.getByText(CHAT_TURN_CREDIT_COST_LABEL, {
-      exact: true,
-    });
+    const creditCost = page.getByText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatTurnCost),
+      ),
+      { exact: true },
+    );
     const sendButton = page.locator('[data-tour="send"]');
 
     await expect(creditCost).toBeVisible();

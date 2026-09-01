@@ -14,8 +14,18 @@ import type { ChatListItem } from '../types';
 export const CHATS_BATCH_QUERY_KEY = 'chats-batch';
 
 /**
+ * 카드를 그리는 데 필요한 필드가 채워진 요약.
+ * 제목은 스토리가 삭제되면 비므로 필수에서 뺀다 — 카드가 폴백 문구로 대체한다.
+ */
+type DrawableChatSummary = Omit<Required<ChatSummaryResponse>, 'storyTitle'> &
+  Pick<ChatSummaryResponse, 'storyTitle'>;
+
+/**
  * 서버는 채팅 목록을 최신순(마지막 활동순)으로 응답하므로 그 순서를 그대로 보존한다.
  * localStorage의 chatId 순서(생성순)로 재정렬하지 않는다.
+ *
+ * 참조 스토리가 삭제된 채팅도 목록에 남긴다 — 스토리는 사라져도 그 채팅은 계속 열 수 있고,
+ * 제목이 비었다는 이유로 걸러내면 사용자가 자기 채팅을 잃는다.
  *
  * @param chats 서버가 응답한 채팅 요약 목록
  * @returns 필수 필드가 모두 채워진 채팅 목록 아이템 배열
@@ -24,10 +34,9 @@ export const toChatListItems = (
   chats: ChatSummaryResponse[],
 ): ChatListItem[] => {
   return chats.filter(
-    (chat): chat is Required<ChatSummaryResponse> =>
+    (chat): chat is DrawableChatSummary =>
       chat.id != null &&
       chat.storyId != null &&
-      chat.storyTitle != null &&
       chat.lastStoryPreview != null &&
       chat.updatedAt != null,
   );

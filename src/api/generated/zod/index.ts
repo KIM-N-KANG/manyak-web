@@ -1233,6 +1233,19 @@ export const GetChatShareParams = zod.object({
 export const GetChatShareResponse = zod.unknown();
 
 /**
+ *
+ *             현재 유효한 이프 수치를 반환합니다. 인증이 필요 없습니다.
+ *
+ *             - 운영 중 이벤트로 바뀔 수 있으니 화면에 하드코딩하지 말고 이 값을 표시하세요.
+ *             - `inviteMonthlyCap`만 이프가 아니라 월 적립 **횟수**이며, **초대자 몫에만** 걸립니다(제출자 몫은 상한 없음).
+ *             - `storyCreationCost`는 **간편 제작**에만 듭니다(일반 제작은 무료).
+ *             - `storyCreationCost`·`chatTurnCost`는 회원의 무료 체험 잔여를 소진한 뒤 적용되는 단가입니다(게스트는 디바이스 한도를 씁니다).
+ *             - 변경 반영은 서버의 정책 스냅샷 갱신 주기를 따릅니다(기본 설정 기준 약 1분).
+ * @summary 이프 적립·소모 수치 조회
+ */
+export const GetCreditPoliciesResponse = zod.unknown();
+
+/**
  * 프롤로그와 지금까지의 사용자 입력, AI 이어쓰기 결과를 조회합니다.
  * @summary 채팅 상세 조회
  */

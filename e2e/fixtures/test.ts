@@ -1,9 +1,11 @@
 import { expect, test as base } from '@playwright/test';
 
 import {
+  CREDIT_POLICY_FIXTURE,
   mockApi,
   mockChatShareCreate,
   mockChatShareView,
+  mockCreditPolicies,
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
@@ -30,8 +32,10 @@ export {
 } from './storage';
 export { mockMemberSession } from './auth';
 export {
+  CREDIT_POLICY_FIXTURE,
   mockChatShareCreate,
   mockChatShareView,
+  mockCreditPolicies,
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,

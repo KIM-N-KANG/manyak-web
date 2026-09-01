@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import {
-  AddTeamIcon,
   InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
@@ -13,11 +12,12 @@ import { signOut, useSession } from 'next-auth/react';
 
 import { Label } from '@/components/ui/label';
 import { APP_PATH } from '@/constants/app-path';
+import { InviteMenuItem } from '@/features/my/_shared/components/invite-menu-item';
+import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
 import { clearPendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { resetAnalyticsUser, track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
-import { MyMenuItem } from './my-menu-item';
 import { ProfileHeader } from './profile-header';
 import { ThemeMenuItem } from './theme-menu-item';
 
@@ -48,11 +48,7 @@ export function MyScreen() {
           <div className="mb-2 px-4">
             <Label>이벤트</Label>
           </div>
-          <MyMenuItem
-            icon={AddTeamIcon}
-            label="친구 초대"
-            href={APP_PATH.MY_INVITE}
-          />
+          <InviteMenuItem />
         </section>
       )}
       <section className="flex flex-col py-4">

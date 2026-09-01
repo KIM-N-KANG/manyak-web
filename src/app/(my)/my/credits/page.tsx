@@ -1,12 +1,12 @@
 import { BackHeader } from '@/components/layout/back-header';
-import { CreditHistoryScreen } from '@/features/my/credits/components/credit-history-screen';
-import { CREDIT_HISTORY_COPY } from '@/features/my/credits/constants';
+import { CreditChargeScreen } from '@/features/my/credits/components/credit-charge-screen';
+import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 
 export default function MyCreditsPage() {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <BackHeader title={CREDIT_HISTORY_COPY.title} />
-      <CreditHistoryScreen />
+      <BackHeader title={CREDIT_CHARGE_COPY.title} />
+      <CreditChargeScreen />
     </div>
   );
 }

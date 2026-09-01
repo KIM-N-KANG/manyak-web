@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { ACCOUNT_DELETION_CTA_LABEL } from '@/features/my/account-deletion/constants';
+import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
 import {
   LINK_RESULT_COOKIE,
@@ -16,7 +17,7 @@ import {
 import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
 
 /**
- * 마이·피드백·친구 초대·서비스 안내 화면의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
+ * 마이·이프 충전·피드백·친구 초대·서비스 안내 화면의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
  * 메뉴 이동·폼 제출 같은 동작 검증은 `my/*.spec.ts`·`feedback/*.spec.ts`가 담당한다.
  */
 
@@ -68,7 +69,21 @@ test.describe('마이 비주얼', () => {
     await expect(page).toHaveScreenshot('my-member.png');
   });
 
-  test('이프 내역 목록 (MY-CREDITS)', async ({ page }) => {
+  test('이프 충전 무료 충전 탭 (MY-CREDITS)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/my/credits');
+
+    await expect(
+      page.getByRole('button', { name: CREDIT_CHARGE_COPY.attendanceButton }),
+    ).toBeEnabled();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('credit-charge-free.png');
+  });
+
+  test('이프 충전 내역 탭 (MY-CREDITS)', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
@@ -115,6 +130,9 @@ test.describe('마이 비주얼', () => {
     );
 
     await page.goto('/my/credits');
+    await page
+      .getByRole('tab', { name: CREDIT_CHARGE_COPY.historyTab })
+      .click();
 
     await expect(page.getByText('채팅 전송')).toBeVisible();
     await waitForFonts(page);
@@ -240,7 +258,7 @@ test.describe('마이 비주얼', () => {
       page.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: '이프 안내' }),
+      page.getByRole('heading', { name: '게스트 이용 안내' }),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('service-info-top.png');

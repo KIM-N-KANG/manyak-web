@@ -1,8 +1,5 @@
 import { formatDocumentTitle } from '@/constants/site';
-import {
-  SERVICE_INFO_CREDIT_ITEMS,
-  SERVICE_INFO_TITLE,
-} from '@/features/about/constants';
+import { SERVICE_INFO_TITLE } from '@/features/about/constants';
 
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
@@ -46,15 +43,10 @@ test.describe('서비스 안내', () => {
         name: '이전 페이지로 돌아가기 버튼',
       }),
     ).toHaveCount(0);
+    // 이프 수치는 서버 정책을 따라가므로 안내 문구로 중복 고지하지 않는다(KNK-1095).
     await expect(
       serviceInfoPage.getByRole('heading', { name: '이프 안내' }),
-    ).toBeVisible();
-
-    for (const item of SERVICE_INFO_CREDIT_ITEMS) {
-      await expect(
-        serviceInfoPage.getByText(item, { exact: true }),
-      ).toBeVisible();
-    }
+    ).toHaveCount(0);
 
     await expect(
       serviceInfoPage.getByRole('heading', { name: '게스트 이용 안내' }),

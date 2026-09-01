@@ -1,4 +1,5 @@
 import { APP_PATH } from '@/constants/app-path';
+import { CHAT_LIST_COPY } from '@/features/chats/list/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -43,6 +44,31 @@ test.describe('채팅 목록', () => {
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
+  });
+
+  test('참조 스토리가 삭제된 채팅은 제목 자리에 상태를 보여준다', async ({
+    page,
+  }) => {
+    await seedChatIds(page, ['c1']);
+    await page.route(CHATS_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        // 스토리가 삭제되면 서버가 제목을 빈 문자열로 내려준다.
+        body: JSON.stringify([chat('c1', '')]),
+      });
+    });
+
+    await page.goto('/chats');
+
+    await expect(
+      page.getByText(CHAT_LIST_COPY.deletedStory, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', {
+        name: `${CHAT_LIST_COPY.deletedStory} 채팅 보기`,
+      }),
+    ).toBeVisible();
   });
 
   test('조회 중에는 실제 채팅 카드와 같은 행 스켈레톤을 보여준다 (KNK-1043)', async ({
