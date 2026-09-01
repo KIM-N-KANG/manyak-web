@@ -26,6 +26,7 @@ import { customInstance } from '../../../mutator/custom-instance';
 import type {
   CreditAttendanceResponse,
   CreditBalanceResponse,
+  CreditPolicyResponse,
   CreditTransactionPageResponse,
   GetMyCreditTransactionsParams,
 } from '../../models';
@@ -511,6 +512,179 @@ export function useGetMyCreditTransactions<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetMyCreditTransactionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type getCreditPoliciesResponse200 = {
+  data: CreditPolicyResponse;
+  status: 200;
+};
+
+export type getCreditPoliciesResponseSuccess = getCreditPoliciesResponse200 & {
+  headers: Headers;
+};
+export type getCreditPoliciesResponse = getCreditPoliciesResponseSuccess;
+
+export const getGetCreditPoliciesUrl = () => {
+  return `/api/v1/credits/policies`;
+};
+
+/**
+ *
+ *             현재 유효한 이프 수치를 반환합니다. 인증이 필요 없습니다.
+ *
+ *             - 운영 중 이벤트로 바뀔 수 있으니 화면에 하드코딩하지 말고 이 값을 표시하세요.
+ *             - `inviteMonthlyCap`만 이프가 아니라 월 적립 **횟수**이며, **초대자 몫에만** 걸립니다(제출자 몫은 상한 없음).
+ *             - `storyCreationCost`는 **간편 제작**에만 듭니다(일반 제작은 무료).
+ *             - `storyCreationCost`·`chatTurnCost`는 회원의 무료 체험 잔여를 소진한 뒤 적용되는 단가입니다(게스트는 디바이스 한도를 씁니다).
+ *             - 변경 반영은 서버의 정책 스냅샷 갱신 주기를 따릅니다(기본 설정 기준 약 1분).
+ * @summary 이프 적립·소모 수치 조회
+ */
+export const getCreditPolicies = async (
+  options?: RequestInit,
+): Promise<getCreditPoliciesResponse> => {
+  return customInstance<getCreditPoliciesResponse>(getGetCreditPoliciesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetCreditPoliciesQueryKey = () => {
+  return [`/api/v1/credits/policies`] as const;
+};
+
+export const getGetCreditPoliciesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCreditPolicies>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getCreditPolicies>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCreditPoliciesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCreditPolicies>>
+  > = ({ signal }) => getCreditPolicies({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCreditPolicies>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCreditPoliciesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCreditPolicies>>
+>;
+export type GetCreditPoliciesQueryError = ErrorType<unknown>;
+
+export function useGetCreditPolicies<
+  TData = Awaited<ReturnType<typeof getCreditPolicies>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreditPolicies>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCreditPolicies>>,
+          TError,
+          Awaited<ReturnType<typeof getCreditPolicies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCreditPolicies<
+  TData = Awaited<ReturnType<typeof getCreditPolicies>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreditPolicies>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCreditPolicies>>,
+          TError,
+          Awaited<ReturnType<typeof getCreditPolicies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetCreditPolicies<
+  TData = Awaited<ReturnType<typeof getCreditPolicies>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreditPolicies>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 이프 적립·소모 수치 조회
+ */
+
+export function useGetCreditPolicies<
+  TData = Awaited<ReturnType<typeof getCreditPolicies>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getCreditPolicies>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetCreditPoliciesQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

@@ -11,6 +11,8 @@ type MyMenuItemBaseProps = {
   destructive?: boolean;
   /** 라벨 아래에 강조색으로 덧붙이는 보조 문구. 라벨과 이어 읽히는 한 문장으로 쓴다. */
   subLabel?: string;
+  /** 보조 문구가 아직 확정되지 않은 값(자리표시)인지 여부. true면 쉬머를 준다. */
+  subLabelPending?: boolean;
   /** 오른쪽 끝에 표시하는 현재 상태 문구. */
   trailingText?: string;
 };
@@ -38,6 +40,7 @@ export function MyMenuItem({
   label,
   destructive,
   subLabel,
+  subLabelPending,
   trailingText,
   href,
   onClick,
@@ -55,7 +58,13 @@ export function MyMenuItem({
       <span className="flex flex-1 flex-col text-left">
         {label}
         {subLabel && (
-          <span className="text-xs font-medium text-primary">{subLabel}</span>
+          <span
+            className={cn(
+              'text-xs font-medium text-primary',
+              subLabelPending && 'animate-pulse',
+            )}>
+            {subLabel}
+          </span>
         )}
       </span>
       {loading && <Spinner className="text-foreground-tertiary" />}

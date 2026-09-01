@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 
 import { getMeQueryKey } from '@/api/generated/endpoints/auth/auth';
 import { useRedeemInviteCode as useRedeemInviteCodeMutation } from '@/api/generated/endpoints/invite/invite';
+import { useCreditPolicySnapshot } from '@/hooks/use-credit-policy';
 import { track } from '@/observability/analytics';
 
-import { INVITE_REWARD_COPY } from '../constants';
+import { buildInviteRewardCopy } from '../constants';
 import {
   type InviteCodeSource,
   normalizeInviteCode,
@@ -32,6 +33,7 @@ export function useRedeemInviteCode({
   onSuccess?: () => void;
 }) {
   const queryClient = useQueryClient();
+  const readCreditPolicy = useCreditPolicySnapshot();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const mutation = useRedeemInviteCodeMutation({
     mutation: {
@@ -42,7 +44,13 @@ export function useRedeemInviteCode({
 
         setErrorMessage(null);
         track('client_invite_codeInput_succeeded', { source });
-        toast.success(INVITE_REWARD_COPY.redeemedToast);
+        // 토스트는 그 순간 문자열이 필요해 자리표시·쉬머를 둘 수 없다. 화면을 띄운 뒤 코드를
+        // 제출하는 흐름이라 정책은 이미 도착해 있고, 못 받은 경우까지 별도 문구를 두지는 않는다.
+        toast.success(
+          buildInviteRewardCopy(
+            readCreditPolicy()?.inviteReward?.toLocaleString('ko-KR'),
+          ).redeemedToast,
+        );
         void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
         onSuccess?.();
       },

@@ -258,7 +258,7 @@ test.describe('마이 비주얼', () => {
       page.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: '이프 안내' }),
+      page.getByRole('heading', { name: '게스트 이용 안내' }),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('service-info-top.png');

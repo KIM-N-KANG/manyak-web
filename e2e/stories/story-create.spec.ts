@@ -1,15 +1,22 @@
 import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
+import { formatCreditAmount } from '@/constants/credit';
 import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  buildStoryCompletionCreditCostLabel,
   PROTAGONIST_CATEGORY,
-  STORY_COMPLETION_CREDIT_COST,
+  STORY_COMPLETION_CREDIT_COST_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
 
-import { expect, skipChatTour, test } from '../fixtures/test';
+import {
+  CREDIT_POLICY_FIXTURE,
+  expect,
+  skipChatTour,
+  test,
+} from '../fixtures/test';
 
 // 스토리 완성 후 도착하는 채팅 화면에서 안내 투어가 뜨지 않게 한다.
 test.beforeEach(async ({ page }) => {
@@ -482,9 +489,11 @@ test.describe('스토리 생성', () => {
   }) => {
     await reachAdditionalInfo(page);
 
-    const creditCost = page.getByLabel(STORY_COMPLETION_CREDIT_COST.label);
+    const creditCost = page.getByLabel(STORY_COMPLETION_CREDIT_COST_LABEL);
     const amount = creditCost.getByText(
-      STORY_COMPLETION_CREDIT_COST.amountLabel,
+      buildStoryCompletionCreditCostLabel(
+        formatCreditAmount(CREDIT_POLICY_FIXTURE.storyCreationCost),
+      ),
       { exact: true },
     );
 

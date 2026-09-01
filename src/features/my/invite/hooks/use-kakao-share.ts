@@ -6,8 +6,9 @@ import { toast } from 'sonner';
 
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useCreditPolicySnapshot } from '@/hooks/use-credit-policy';
 
-import { INVITE_REWARD_COPY } from '../constants';
+import { buildInviteRewardCopy } from '../constants';
 
 /** Kakao JS SDK v2 스크립트 URL(공식 CDN). invite-screen의 next/script로 lazy 로드한다. */
 export const KAKAO_SDK_URL =
@@ -54,6 +55,7 @@ declare global {
  */
 export function useKakaoShare() {
   const [isReady, setIsReady] = useState(false);
+  const readCreditPolicy = useCreditPolicySnapshot();
   const appKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
 
   const handleSdkLoad = () => {
@@ -88,7 +90,11 @@ export function useKakaoShare() {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: INVITE_REWARD_COPY.kakaoShareTitle,
+          // 공유 카드도 그 순간 문자열이 필요해 자리표시·쉬머를 둘 수 없다. 초대 화면을 띄운 뒤
+          // 공유를 누르는 흐름이라 정책은 이미 도착해 있다.
+          title: buildInviteRewardCopy(
+            readCreditPolicy()?.inviteReward?.toLocaleString('ko-KR'),
+          ).kakaoShareTitle,
           description: `초대 코드: ${inviteCode}`,
           imageUrl: shareImageUrl(),
           link,

@@ -1,7 +1,9 @@
-import { INVITE_REWARD_COPY } from '@/features/my/invite/constants';
+import { formatCreditAmount } from '@/constants/credit';
+import { buildInviteRewardCopy } from '@/features/my/invite/constants';
 import { ONBOARDING_SECTIONS } from '@/features/onboarding/constants';
 
 import {
+  CREDIT_POLICY_FIXTURE,
   expect,
   mockMemberSession,
   skipOnboarding,
@@ -63,7 +65,9 @@ test.describe('온보딩 비주얼', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: INVITE_REWARD_COPY.onboardingTitle,
+        name: buildInviteRewardCopy(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.inviteReward),
+        ).onboardingTitle,
       }),
     ).toBeVisible();
     await waitForFonts(page);
