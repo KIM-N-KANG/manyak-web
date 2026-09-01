@@ -12,7 +12,7 @@ export function CreditHistorySkeleton() {
       role="status"
       aria-label={CREDIT_HISTORY_COPY.loading}>
       {Array.from({ length: PLACEHOLDER_ROW_COUNT }, (_, index) => (
-        <div key={index} className="flex items-center gap-2 py-3">
+        <div key={index} className="flex items-center gap-2 py-2">
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <Skeleton className="h-4 w-2/5" />
             <Skeleton className="h-3 w-24" />

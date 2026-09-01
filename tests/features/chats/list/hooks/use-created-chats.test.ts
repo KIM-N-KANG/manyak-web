@@ -39,4 +39,30 @@ describe('toChatListItems', () => {
 
     expect(result.map((chat) => chat.id)).toEqual(['a']);
   });
+
+  it('참조 스토리가 삭제돼 제목이 비어도 목록에 남긴다', () => {
+    const deletedStoryChat = {
+      ...makeChat('d', '2026-06-22T10:00:00Z'),
+      storyTitle: '',
+    };
+    const serverChats = [
+      deletedStoryChat,
+      makeChat('a', '2026-06-21T10:00:00Z'),
+    ];
+
+    const result = toChatListItems(serverChats);
+
+    expect(result.map((chat) => chat.id)).toEqual(['d', 'a']);
+  });
+
+  it('제목 필드 자체가 없어도 목록에 남긴다', () => {
+    const { storyTitle: _storyTitle, ...withoutTitle } = makeChat(
+      'd',
+      '2026-06-22T10:00:00Z',
+    );
+
+    const result = toChatListItems([withoutTitle]);
+
+    expect(result.map((chat) => chat.id)).toEqual(['d']);
+  });
 });

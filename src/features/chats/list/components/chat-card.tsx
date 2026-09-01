@@ -15,6 +15,7 @@ import { formatRelativeDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
+import { CHAT_LIST_COPY } from '../constants';
 import type { ChatListItem } from '../types';
 
 type ChatCardProps = {
@@ -35,6 +36,13 @@ export function ChatCard({ chat, position }: ChatCardProps) {
   });
 
   const thumbnailUrl = chat.thumbnailUrlSm ?? null;
+  // 참조 스토리가 삭제되면 서버가 제목을 비워 보낸다. 제목 줄을 지우면 카드가 무엇의 채팅인지
+  // 알 수 없어지므로 그 자리에 상태를 적는다.
+  const storyTitle = chat.storyTitle?.trim();
+  const isStoryDeleted = !storyTitle;
+  const displayTitle = isStoryDeleted
+    ? CHAT_LIST_COPY.deletedStory
+    : storyTitle;
 
   return (
     <article
@@ -42,7 +50,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
       className="relative flex items-center gap-4 px-4 py-2">
       <Link
         href={APP_PATH.CHAT_ROOM(chat.id)}
-        aria-label={`${chat.storyTitle} 채팅 보기`}
+        aria-label={`${displayTitle} 채팅 보기`}
         className="absolute inset-0"
         onClick={() =>
           track('client_chatList_chatCard_clicked', {
@@ -75,7 +83,13 @@ export function ChatCard({ chat, position }: ChatCardProps) {
       </AspectRatio>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-col gap-0.5">
-          <p className="line-clamp-1 font-semibold">{chat.storyTitle}</p>
+          <p
+            className={cn(
+              'line-clamp-1 font-semibold',
+              isStoryDeleted && 'text-foreground-tertiary',
+            )}>
+            {displayTitle}
+          </p>
           <p
             className={cn(
               'line-clamp-1 text-sm leading-3.5',
@@ -83,7 +97,7 @@ export function ChatCard({ chat, position }: ChatCardProps) {
                 ? 'text-foreground-secondary'
                 : 'text-foreground-tertiary',
             )}>
-            {chat.lastStoryPreview || '채팅을 시작하고 이야기를 이어가 보세요'}
+            {chat.lastStoryPreview || CHAT_LIST_COPY.emptyPreview}
           </p>
         </div>
         <div className="flex items-center justify-end gap-2">

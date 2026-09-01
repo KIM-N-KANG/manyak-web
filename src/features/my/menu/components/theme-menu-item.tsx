@@ -10,7 +10,7 @@ import {
 import { type IconSvgElement } from '@hugeicons/react';
 import { useTheme } from 'next-themes';
 
-import { MyMenuItem } from './my-menu-item';
+import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
 
 const THEME_ORDER = ['system', 'light', 'dark'] as const;
 
