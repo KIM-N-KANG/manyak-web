@@ -8,9 +8,16 @@ import { m } from 'motion/react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { StoryOptionsMenu } from '@/features/stories/_shared/components/story-options-menu';
 
 type StoryDetailHeaderProps = {
+  storyId: string;
   title: string;
+  /** 신고하기 노출 여부(회원만) */
+  canReport: boolean;
+  /** 삭제하기 노출 여부(내가 만든 스토리만) */
+  canDelete: boolean;
+  onDeleteSuccess: () => void;
   showTitle: boolean;
   hasHeroImage: boolean;
   scrollContainerElement: HTMLElement | null;
@@ -18,7 +25,11 @@ type StoryDetailHeaderProps = {
 };
 
 export function StoryDetailHeader({
+  storyId,
   title,
+  canReport,
+  canDelete,
+  onDeleteSuccess,
   showTitle,
   hasHeroImage,
   scrollContainerElement,
@@ -115,6 +126,16 @@ export function StoryDetailHeader({
         className="relative min-w-0 flex-1 truncate font-semibold">
         {title}
       </m.span>
+
+      <StoryOptionsMenu
+        storyId={storyId}
+        source="storyDetail"
+        canReport={canReport}
+        canDelete={canDelete}
+        onDeleteSuccess={onDeleteSuccess}
+        size="icon"
+        triggerClassName="relative text-current hover:bg-black/10 hover:text-current aria-expanded:bg-black/10 aria-expanded:text-current"
+      />
     </header>
   );
 }

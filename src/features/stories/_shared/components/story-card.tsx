@@ -95,6 +95,9 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
           <div className="absolute top-2 right-2 z-20">
             <StoryOptionsMenu
               storyId={storyId}
+              source="studio"
+              canReport={false}
+              canDelete
               size="icon-sm"
               triggerClassName="rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/20 hover:text-white aria-expanded:bg-black/20 aria-expanded:text-white"
             />

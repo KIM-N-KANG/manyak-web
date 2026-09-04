@@ -1,6 +1,8 @@
 import { APP_PATH } from '@/constants/app-path';
+import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
 
+import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
@@ -288,6 +290,56 @@ test.describe('스토리 오버레이 비주얼', () => {
     await expect(viewer).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('thumbnail-viewer.png');
+  });
+
+  test('제작 카드 옵션 다이얼로그 (STORY-LIST)', async ({ page }) => {
+    await skipOnboarding(page);
+    await seedStoryIds(page, ['s1']);
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([story('s1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+
+    // 상단 축소판 + 항목 목록 대표 스냅샷이다(채팅 카드 옵션도 같은 컴포넌트).
+    const dialog = page.getByRole('dialog', { name: '스토리 옵션' });
+
+    await expect(
+      dialog.getByRole('menuitem', { name: '삭제하기' }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('card-options-dialog.png');
+  });
+
+  test('스토리 신고 시트 (STORY-DETAIL)', async ({ page }) => {
+    await mockMemberSession(page);
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(storyDetail),
+      });
+    });
+
+    await page.goto('/stories/s1');
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+    await page
+      .getByRole('menuitem', { name: STORY_REPORT_COPY.action })
+      .click();
+
+    const sheet = page.getByRole('dialog', { name: STORY_REPORT_COPY.title });
+
+    await sheet.getByRole('radio', { name: '부적절한 내용' }).check();
+    await expect(
+      sheet.getByRole('button', { name: STORY_REPORT_COPY.submit }),
+    ).toBeEnabled();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('story-report-sheet.png');
   });
 });
 

@@ -77,6 +77,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
   };
   const {
+    storyId,
     storyTitle,
     prologue,
     turns,
@@ -310,6 +311,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       <>
         <ChatRoomHeader
           chatId={chatId}
+          storyId={storyId}
           storyTitle={storyTitle}
           turnCount={turns.length}
         />

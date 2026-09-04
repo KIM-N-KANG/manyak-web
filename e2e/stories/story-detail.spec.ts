@@ -1,6 +1,11 @@
-import type { Route } from '@playwright/test';
+import type { Page, Route } from '@playwright/test';
 
-import { expect, test } from '../fixtures/test';
+import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+
+import { mockMemberSession } from '../fixtures/auth';
+import { expect, seedStoryIds, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
 const STORY_DETAIL = '**/api/v1/stories/s1';
@@ -390,5 +395,153 @@ test.describe('스토리 상세', () => {
     await expect(
       page.getByRole('button', { name: '다시 시도하기' }),
     ).not.toBeVisible();
+  });
+});
+
+test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
+  const STORY_REPORT = '**/api/v1/stories/s1/reports';
+
+  const openOptionsMenu = async (page: Page) => {
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+  };
+
+  const openReportSheet = async (page: Page) => {
+    await openOptionsMenu(page);
+    await page
+      .getByRole('menuitem', { name: STORY_REPORT_COPY.action })
+      .click();
+
+    return page.getByRole('dialog', { name: STORY_REPORT_COPY.title });
+  };
+
+  test('게스트에게는 내가 만들지 않은 스토리의 옵션 메뉴가 없다', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: '용의 계곡' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '스토리 옵션 더보기' }),
+    ).toHaveCount(0);
+  });
+
+  test('게스트가 만든 스토리는 메뉴에 삭제하기만 있고 신고하기는 없다', async ({
+    page,
+  }) => {
+    await seedStoryIds(page, ['s1']);
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    await page.goto('/stories/s1');
+    await openOptionsMenu(page);
+
+    await expect(
+      page.getByRole('menuitem', { name: '삭제하기' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: STORY_REPORT_COPY.action }),
+    ).toHaveCount(0);
+  });
+
+  test('회원은 사유를 고른 뒤 신고를 보낼 수 있고 접수되면 시트가 닫힌다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    let reportBody: unknown = null;
+
+    await page.route(STORY_REPORT, async (route) => {
+      reportBody = route.request().postDataJSON();
+      await route.fulfill({ status: 201, body: '' });
+    });
+
+    await page.goto('/stories/s1');
+
+    const sheet = await openReportSheet(page);
+    const submitButton = sheet.getByRole('button', {
+      name: STORY_REPORT_COPY.submit,
+    });
+
+    await expect(sheet.getByText(STORY_REPORT_COPY.description)).toBeVisible();
+    await expect(submitButton).toBeDisabled();
+
+    await sheet.getByRole('radio', { name: '부적절한 내용' }).check();
+    await expect(submitButton).toBeEnabled();
+    await sheet
+      .getByRole('textbox', { name: STORY_REPORT_COPY.detailLabel })
+      .fill('폭력적인 묘사가 있어요');
+    await submitButton.click();
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REPORTED)).toBeVisible();
+    await expect(sheet).toBeHidden();
+    expect(reportBody).toEqual({
+      reason: 'INAPPROPRIATE',
+      detail: '폭력적인 묘사가 있어요',
+    });
+  });
+
+  test('신고 접수에 실패하면 시트와 입력이 그대로 남는다', async ({ page }) => {
+    await mockMemberSession(page);
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+    await page.route(STORY_REPORT, async (route) => {
+      await route.fulfill({ status: 500, body: '' });
+    });
+
+    await page.goto('/stories/s1');
+
+    const sheet = await openReportSheet(page);
+    const detailInput = sheet.getByRole('textbox', {
+      name: STORY_REPORT_COPY.detailLabel,
+    });
+
+    await sheet.getByRole('radio', { name: '기타' }).check();
+    await detailInput.fill('설명이 어색해요');
+    await sheet.getByRole('button', { name: STORY_REPORT_COPY.submit }).click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_REPORT_FAILED),
+    ).toBeVisible();
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole('radio', { name: '기타' })).toBeChecked();
+    await expect(detailInput).toHaveValue('설명이 어색해요');
+  });
+
+  test('회원이 만든 스토리는 메뉴에서 삭제하면 제작 목록으로 돌아간다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(STORY_DETAIL, async (route) => {
+      if (route.request().method() === 'DELETE') {
+        await route.fulfill({ status: 204, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, isOwner: true }),
+      });
+    });
+
+    await page.goto('/stories/s1');
+    await openOptionsMenu(page);
+
+    await expect(
+      page.getByRole('menuitem', { name: STORY_REPORT_COPY.action }),
+    ).toBeVisible();
+    await page.getByRole('menuitem', { name: '삭제하기' }).click();
+
+    const dialog = page.getByRole('alertdialog');
+
+    await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
+    await dialog.getByRole('button', { name: '삭제하기' }).click();
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_DELETED)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 });
