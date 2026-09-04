@@ -8,6 +8,7 @@ export type {
   AnalyticsEventProps,
   CreditShortageTrigger,
   GuestLimitTrigger,
+  ReportSource,
   StepName,
   StoryCardSection,
 } from './events';

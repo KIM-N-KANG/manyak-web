@@ -1,5 +1,6 @@
 import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
 import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
@@ -81,6 +82,44 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 
+  test('키워드 입력이 있으면 헤더 X에서 확인 다이얼로그를 거쳐 제작 탭으로 나간다', async ({
+    page,
+  }) => {
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지' }).click();
+    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+
+    const savedDialog = page.getByRole('alertdialog', {
+      name: STORY_CREATE_BACK_DIALOG_COPY.saved.title,
+    });
+
+    await expect(savedDialog).toBeVisible();
+
+    // 닫기는 머무르고 입력을 유지한다.
+    await savedDialog
+      .getByRole('button', { name: STORY_CREATE_BACK_DIALOG_COPY.saved.cancel })
+      .click();
+    await expect(savedDialog).toBeHidden();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByRole('button', { name: '판타지' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+    await savedDialog
+      .getByRole('button', {
+        name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm,
+      })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
+  });
+
   test('키워드 입력을 자동 저장하고 새로고침 후 첫 탭에서 복원한다', async ({
     page,
   }) => {
@@ -141,10 +180,24 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
 
-    // 생성 성공 시 이미 저장돼 있으므로 확인 다이얼로그·저장 토스트 없이 바로 나간다.
+    // 생성 성공 시 이미 저장돼 있으므로 소실 경고가 아니라 이어서 만들 수 있다는
+    // 확인 다이얼로그를 띄우고, 확정하면 저장 토스트 없이 나간다.
     await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+
+    const savedDialog = page.getByRole('alertdialog', {
+      name: STORY_CREATE_BACK_DIALOG_COPY.saved.title,
+    });
+
+    await expect(savedDialog).toBeVisible();
+    await expect(
+      savedDialog.getByText(STORY_CREATE_BACK_DIALOG_COPY.saved.description),
+    ).toBeVisible();
+    await savedDialog
+      .getByRole('button', {
+        name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm,
+      })
+      .click();
     await expect(page.getByText('스토리가 임시 저장되었어요')).toHaveCount(0);
-    await expect(page.getByText('스토리를 그만 만들까요?')).toBeHidden();
 
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();

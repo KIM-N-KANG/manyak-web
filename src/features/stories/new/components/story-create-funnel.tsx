@@ -46,7 +46,7 @@ export function StoryCreateFunnel() {
     changeAdditionalInfo,
     registerAdditionalInfoInput,
     handleCompleteStory,
-    backDialogOpen,
+    backDialog,
     onBackDialogOpenChange,
     reselectDialogOpen,
     onReselectDialogOpenChange,
@@ -72,7 +72,7 @@ export function StoryCreateFunnel() {
       <StoryCreateHeader
         step={step}
         draftSaveStatus={draftSaveStatus}
-        backDialogOpen={backDialogOpen}
+        backDialog={backDialog}
         onBackClick={handleHeaderBack}
         onBackDialogOpenChange={onBackDialogOpenChange}
         onConfirmBack={handleConfirmBack}

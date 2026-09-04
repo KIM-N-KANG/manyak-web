@@ -15,6 +15,21 @@ export const SITE_DESCRIPTION =
   '나만의 스토리를 만들고 채팅으로 이어나가는 AI 스토리챗 서비스';
 
 /**
+ * 운영 팀명. 저작권 표기가 사용한다.
+ */
+export const SITE_TEAM_NAME = '김앤강';
+
+/**
+ * 공식 문의 이메일. 랜딩 푸터가 사용한다(약관·방침 본문의 문의처와 같은 값이어야 한다).
+ */
+export const SITE_CONTACT_EMAIL = 'manyak.help@gmail.com';
+
+/**
+ * 공식 인스타그램 프로필. 랜딩 푸터와 구조화 데이터(`sameAs`)가 공유한다.
+ */
+export const SITE_INSTAGRAM_URL = 'https://www.instagram.com/manyak.story/';
+
+/**
  * 기본 문서 제목. 고유 제목이 없는 화면(홈 포함)이 공유한다.
  * 브랜드명 단독으로는 검색엔진이 서비스 성격을 알 수 없어 카테고리 문구를 붙인다.
  */
@@ -51,7 +66,7 @@ export const SITE_STRUCTURED_DATA = {
       url: SITE_URL,
       logo: `${SITE_URL}/logo/manyak-logo.svg`,
       // 공식 SNS 프로필. 같은 이름의 외부 채널을 연결해 브랜드 엔티티 신호를 보강한다.
-      sameAs: ['https://www.instagram.com/manyak.story/'],
+      sameAs: [SITE_INSTAGRAM_URL],
     },
     {
       '@type': 'WebSite',

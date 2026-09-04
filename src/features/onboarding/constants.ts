@@ -20,19 +20,12 @@ export const ONBOARDING_DESCRIPTION =
 /**
  * 온보딩 랜딩 섹션에서 보여주는 화면 스크린샷 한 장.
  * 크기를 생략하면 전체 화면 스크린샷 공통 크기(810×1798)를 쓴다.
- * `detail`은 원본의 특정 부분을 잘라 원본 그 위치 위에 확대해 겹치는
- * 강조 크롭이다. 원본과 같은 내용이라 별도 대체 텍스트를 두지 않는다.
  */
 export interface OnboardingScene {
   src: string;
   alt: string;
   width?: number;
   height?: number;
-  detail?: {
-    src: string;
-    width: number;
-    height: number;
-  };
 }
 
 /** 온보딩 랜딩 섹션 하나. 스크린샷 묶음과 소개 문구로 구성된다. */
@@ -128,21 +121,11 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
         src: '/onboarding/chat-input-free.webp',
         alt: '한 줄로 자유롭게 입력하는 채팅 화면',
         height: 1799,
-        detail: {
-          src: '/onboarding/composer-free.webp',
-          width: 1034,
-          height: 260,
-        },
       },
       {
         src: '/onboarding/chat-input-block.webp',
         alt: '상황과 대사를 나눠 입력하는 채팅 화면',
         height: 1799,
-        detail: {
-          src: '/onboarding/composer-block.webp',
-          width: 1034,
-          height: 390,
-        },
       },
     ],
   },
@@ -161,8 +144,11 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
   },
 ] as const;
 
-/** 랜딩 마지막에 놓는 마무리 문장. 히어로 제목과 같은 서사 어조를 쓴다. */
-export const ONBOARDING_CLOSING_LINE = '이제, 당신의 이야기가 시작될 차례예요';
+/** 헤더 왼쪽 보조 버튼. 온보딩을 건너뛰고 홈으로 이동한다. */
+export const ONBOARDING_BROWSE_LABEL = '둘러보기';
+
+/** 헤더 오른쪽·본문 끝 주 CTA. 스토리 생성 퍼널로 바로 이동한다. */
+export const ONBOARDING_START_LABEL = '바로 시작하기';
 
 /**
  * 게스트(비로그인) 체험 한도. 안내 문구 표시용이며 실제 강제는 백엔드가 한다.

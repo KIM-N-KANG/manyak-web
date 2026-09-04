@@ -2,14 +2,17 @@
 
 import { useRef, useState } from 'react';
 
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { m, useReducedMotion, type Variants } from 'motion/react';
 import Image from 'next/image';
 
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import {
-  ONBOARDING_CLOSING_LINE,
   ONBOARDING_SECTIONS,
+  ONBOARDING_START_LABEL,
   type OnboardingScene,
 } from '../constants';
 
@@ -20,7 +23,6 @@ const SCENE_HEIGHT = 1798;
 
 const SCENE_IMAGE_CLASS = 'w-full rounded-2xl border border-border';
 const SCENE_IMAGE_SIZES = '(max-width: 448px) 82vw, 340px';
-const DETAIL_IMAGE_SIZES = '(max-width: 448px) 87vw, 362px';
 
 // 초반에 빠르게 감속한 뒤 긴 꼬리로 잦아드는 커브. 히어로 등장과 같은
 // 곡선을 써서 페이지 전체의 리듬을 하나로 맞춘다.
@@ -30,55 +32,25 @@ const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 // 히어로 시퀀스가 잦아든 뒤 이어받는 시점(초).
 const FIRST_SECTION_DELAY = 0.8;
 
-function SceneCard({
-  scene,
-  detailVariants,
-}: {
-  scene: OnboardingScene;
-  detailVariants: Variants;
-}) {
+function SceneCard({ scene }: { scene: OnboardingScene }) {
   return (
-    <div className="relative">
-      <Image
-        src={scene.src}
-        alt={scene.alt}
-        width={scene.width ?? SCENE_WIDTH}
-        height={scene.height ?? SCENE_HEIGHT}
-        sizes={SCENE_IMAGE_SIZES}
-        className={SCENE_IMAGE_CLASS}
-      />
-      {scene.detail && (
-        <m.div
-          variants={detailVariants}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.5 }}
-          className="absolute inset-x-[-3%] bottom-[2%] origin-bottom">
-          <Image
-            src={scene.detail.src}
-            alt=""
-            width={scene.detail.width}
-            height={scene.detail.height}
-            sizes={DETAIL_IMAGE_SIZES}
-            className="w-full rounded-xl border border-border shadow-lg"
-          />
-        </m.div>
-      )}
-    </div>
+    <Image
+      src={scene.src}
+      alt={scene.alt}
+      width={scene.width ?? SCENE_WIDTH}
+      height={scene.height ?? SCENE_HEIGHT}
+      sizes={SCENE_IMAGE_SIZES}
+      className={SCENE_IMAGE_CLASS}
+    />
   );
 }
 
 interface OnboardingSceneStripProps {
   scenes: readonly OnboardingScene[];
   variants: Variants;
-  detailVariants: Variants;
 }
 
-function OnboardingSceneStrip({
-  scenes,
-  variants,
-  detailVariants,
-}: OnboardingSceneStripProps) {
+function OnboardingSceneStrip({ scenes, variants }: OnboardingSceneStripProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -128,20 +100,15 @@ function OnboardingSceneStrip({
     });
   };
 
-  const hasDetail = scenes.some((scene) => scene.detail);
-
   return (
     <m.div variants={variants} className="flex flex-col gap-3">
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className={cn(
-          '-mx-4 -my-2 scrollbar-none flex snap-x snap-mandatory scroll-px-4 overflow-x-auto overscroll-x-contain px-4 py-2',
-          hasDetail ? 'gap-8' : 'gap-3',
-        )}>
+        className="-mx-4 -my-2 scrollbar-none flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 py-2">
         {scenes.map((scene) => (
           <div key={scene.src} className="w-[82%] shrink-0 snap-start">
-            <SceneCard scene={scene} detailVariants={detailVariants} />
+            <SceneCard scene={scene} />
           </div>
         ))}
       </div>
@@ -167,7 +134,12 @@ function OnboardingSceneStrip({
   );
 }
 
-export function OnboardingLanding() {
+interface OnboardingLandingProps {
+  /** 본문 끝 "바로 시작하기" CTA 탭 핸들러. 이동·열람 처리는 화면 컴포넌트가 맡는다. */
+  onStart: () => void;
+}
+
+export function OnboardingLanding({ onStart }: OnboardingLandingProps) {
   const prefersReducedMotion = useReducedMotion();
 
   const reveal: Variants = {
@@ -191,18 +163,6 @@ export function OnboardingLanding() {
       opacity: 1,
       ...(prefersReducedMotion ? {} : { y: 0, scale: 1 }),
       transition: { duration: 0.7, ease: REVEAL_EASE },
-    },
-  };
-
-  const detailReveal: Variants = {
-    hidden: {
-      opacity: 0,
-      ...(prefersReducedMotion ? {} : { scale: 0.9 }),
-    },
-    show: {
-      opacity: 1,
-      ...(prefersReducedMotion ? {} : { scale: 1 }),
-      transition: { delay: 0.4, duration: 0.55, ease: REVEAL_EASE },
     },
   };
 
@@ -238,28 +198,36 @@ export function OnboardingLanding() {
           </m.header>
           {section.scenes.length === 1 ? (
             <m.div variants={sceneReveal} className="w-[82%] self-center">
-              <SceneCard
-                scene={section.scenes[0]}
-                detailVariants={detailReveal}
-              />
+              <SceneCard scene={section.scenes[0]} />
             </m.div>
           ) : (
             <OnboardingSceneStrip
               scenes={section.scenes}
               variants={sceneReveal}
-              detailVariants={detailReveal}
             />
           )}
         </m.section>
       ))}
-      <m.p
+      <m.div
         initial="hidden"
         whileInView="show"
         viewport={{ once: true }}
         variants={reveal}
-        className="pt-2 text-center font-maruburi text-lg text-balance">
-        {ONBOARDING_CLOSING_LINE}
-      </m.p>
+        className="pt-2">
+        <Button
+          type="button"
+          size="lg"
+          onClick={onStart}
+          className="group/cta h-14 w-full border-0 bg-[linear-gradient(120deg,var(--primary),color-mix(in_oklch,var(--primary),white_18%))] text-lg font-semibold shadow-[0_8px_20px_-8px_color-mix(in_oklch,var(--primary),transparent_55%)] hover:scale-[1.02] hover:bg-[linear-gradient(120deg,var(--primary),color-mix(in_oklch,var(--primary),white_18%))] hover:brightness-105">
+          {ONBOARDING_START_LABEL}
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            data-icon="inline-end"
+            className="transition-transform group-hover/cta:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Button>
+      </m.div>
     </div>
   );
 }
