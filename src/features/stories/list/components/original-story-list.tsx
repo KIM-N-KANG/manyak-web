@@ -1,5 +1,6 @@
 'use client';
 
+import type { StorySummaryResponse } from '@/api/generated/models';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { StoryCardGrid } from '@/features/stories/_shared/components/story-card-grid';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
@@ -11,10 +12,16 @@ import { useOriginalStories } from '../hooks/use-original-stories';
 import { OriginalStoryListSkeleton } from './original-story-list-skeleton';
 import { StorySection } from './story-section';
 
-export function OriginalStoryList() {
+type OriginalStoryListProps = {
+  /** 서버 렌더 시점에 읽은 오리지널 목록. 없으면 클라이언트가 조회한다. */
+  initialStories?: StorySummaryResponse[];
+};
+
+export function OriginalStoryList({ initialStories }: OriginalStoryListProps) {
   useTrackOnView('client_storyList_viewed');
 
-  const { stories, isLoading, isError, refetch } = useOriginalStories();
+  const { stories, isLoading, isError, refetch } =
+    useOriginalStories(initialStories);
   const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) {
