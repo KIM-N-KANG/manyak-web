@@ -1,6 +1,9 @@
 import { formatCreditAmount } from '@/constants/credit';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
-import { ONBOARDING_SECTIONS } from '@/features/onboarding/constants';
+import {
+  ONBOARDING_SECTIONS,
+  ONBOARDING_START_LABEL,
+} from '@/features/onboarding/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
@@ -27,11 +30,12 @@ test.describe('온보딩 비주얼', () => {
         name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toBeVisible();
-    // 등장 애니메이션(마지막 요소는 버튼 영역)이 끝난 정적 상태에서 찍는다.
+    // 등장 애니메이션(마지막 요소는 헤더 버튼 영역)이 끝난 정적 상태에서 찍는다.
     await expect
       .poll(() =>
         page
-          .getByRole('button', { name: '첫 장면 만들기' })
+          .getByRole('banner')
+          .getByRole('button', { name: ONBOARDING_START_LABEL })
           .evaluate(
             (button) =>
               getComputedStyle(button.parentElement as HTMLElement).opacity,
