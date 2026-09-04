@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { APP_PATH } from '@/constants/app-path';
 import { SITE_CONTACT_EMAIL } from '@/constants/site';
 import {
@@ -7,6 +9,34 @@ import {
 } from '@/features/onboarding/constants';
 
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
+
+/** 1×1 투명 PNG. 브라우저는 요청한 확장자와 무관하게 실제 응답 형식을 따른다. */
+const TRANSPARENT_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
+
+/**
+ * `next/image` 최적화 응답을 1×1 이미지로 대체한다.
+ *
+ * 랜딩은 최적화 대상 이미지를 8장 이상 싣는데, CI처럼 최적화 캐시가 비어 있고
+ * `sharp`가 없는 환경에서는 이 변환이 Next 서버를 오래 붙잡는다. 그 사이 클릭이
+ * 만든 라우팅 요청(`?_rsc=`)까지 함께 응답을 못 받아 이동이 일어나지 않는다.
+ *
+ * 이동만 검증하는 케이스는 이미지 렌더 결과가 필요 없으므로 최적화를 건너뛴다.
+ * 이미지 자체를 보는 케이스(랜딩 스크롤·비주얼 회귀)에는 적용하지 않는다.
+ *
+ * @param page 대상 페이지
+ */
+async function stubOptimizedImages(page: Page): Promise<void> {
+  await page.route('**/_next/image**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      body: TRANSPARENT_PNG,
+    }),
+  );
+}
 
 test.describe('온보딩', () => {
   test('새 방문자는 첫 진입 시 온보딩 페이지로 이동한다', async ({ page }) => {
@@ -160,6 +190,7 @@ test.describe('온보딩', () => {
   test('헤더 "바로 시작하기"를 누르면 스토리 생성으로 이동하고 뒤로가기로 온보딩에 돌아오지 않는다', async ({
     page,
   }) => {
+    await stubOptimizedImages(page);
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
@@ -182,6 +213,7 @@ test.describe('온보딩', () => {
   test('본문 끝 "바로 시작하기"를 눌러도 스토리 생성으로 이동한다', async ({
     page,
   }) => {
+    await stubOptimizedImages(page);
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
@@ -200,6 +232,7 @@ test.describe('온보딩', () => {
   test('"둘러보기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
     page,
   }) => {
+    await stubOptimizedImages(page);
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
