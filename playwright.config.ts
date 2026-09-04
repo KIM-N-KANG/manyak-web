@@ -52,5 +52,10 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !isCI,
     timeout: 120_000,
+    // 브라우저 요청은 fixture가 전부 목킹하지만, 서버 렌더·메타데이터·사이트맵은 Next 서버가
+    // API_BASE_URL로 백엔드를 직접 읽는다. 로컬 .env.local의 실서버가 섞이면 홈 SSR 데이터가
+    // 목과 어긋나므로 비워서 서버 조회를 항상 실패(클라이언트 폴백)로 고정한다.
+    // 이미 떠 있는 dev 서버를 재사용하는 경우(reuseExistingServer)에는 적용되지 않는다.
+    env: { API_BASE_URL: '' },
   },
 });
