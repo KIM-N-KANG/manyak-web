@@ -57,6 +57,7 @@ import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
+import type { StoryCreateBackDialogVariant } from '../components/header/story-create-back-dialog';
 import type { StoryCreateStep } from '../types';
 import {
   resolveErrorSettlement,
@@ -107,7 +108,8 @@ export function useStoryCreateFunnel() {
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
   const [isGuestLimitReached, setIsGuestLimitReached] = useState(false);
-  const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
+  const [backDialog, setBackDialog] =
+    useState<StoryCreateBackDialogVariant | null>(null);
   const [isReselectDialogOpen, setIsReselectDialogOpen] = useState(false);
   const [keywordDraftRequestId, setKeywordDraftRequestId] =
     useState(createClientId);
@@ -989,12 +991,20 @@ export function useStoryCreateFunnel() {
     exitToCreate();
   };
 
-  // X·브라우저 뒤로가기 이탈 시도: 키워드는 비어 있어도 조용히 나가고,
-  // 뒤 단계는 진행 요청 또는 생성 결과가 있어 보존 가능할 때 바로 나간다.
+  // X·브라우저 뒤로가기 이탈 시도: 이탈은 늘 확인을 거친다(Android 패리티). 보존되는
+  // 내용(자동 저장본·진행 중 요청·생성 결과)이 있으면 이어서 만들 수 있다는 확인을,
+  // 저장할 수 없으면 소실 경고를 띄운다. 키워드 단계에서 입력이 비어 있으면 잃을 것이
+  // 없으므로 묻지 않고 조용히 나간다.
   const handleBackAttempt = () => {
     if (step === 'keyword') {
-      track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
-      flushAndExit();
+      if (!tagStep.hasKeywordInput) {
+        track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
+        flushAndExit();
+
+        return;
+      }
+
+      setBackDialog('saved');
 
       return;
     }
@@ -1005,23 +1015,26 @@ export function useStoryCreateFunnel() {
       slotRecord?.stage === 'STORYLINE_GENERATION' ||
       slotRecord?.stage === 'STORY_COMPLETION';
 
-    if (!hasPreservedContent) {
-      setIsBackDialogOpen(true);
-
-      return;
-    }
-
-    track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
-    flushAndExit();
+    setBackDialog(hasPreservedContent ? 'saved' : 'lost');
   };
 
   const handleHeaderBack = () => handleBackAttempt();
 
-  // 소실 경고 다이얼로그에서 이탈을 확정한 경우. 다이얼로그가 열린 사이 상태가
-  // 변할 수 있으므로 이탈 판정은 확정 시점에 다시 수행한다.
+  // 이탈 확인 다이얼로그에서 이탈을 확정한 경우. 보존 이탈은 예약된 편집을 즉시 저장하고
+  // 나가며, 소실 이탈은 저장 없이 나간다.
   const handleConfirmBack = () => {
     track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
-    setIsBackDialogOpen(false);
+
+    const variant = backDialog;
+
+    setBackDialog(null);
+
+    if (variant === 'saved') {
+      flushAndExit();
+
+      return;
+    }
+
     exitToCreate();
   };
 
@@ -1073,8 +1086,12 @@ export function useStoryCreateFunnel() {
     changeAdditionalInfo,
     registerAdditionalInfoInput,
     handleCompleteStory,
-    backDialogOpen: isBackDialogOpen,
-    onBackDialogOpenChange: setIsBackDialogOpen,
+    backDialog,
+    onBackDialogOpenChange: (open: boolean) => {
+      if (!open) {
+        setBackDialog(null);
+      }
+    },
     reselectDialogOpen: isReselectDialogOpen,
     onReselectDialogOpenChange: setIsReselectDialogOpen,
     handleConfirmReselect: confirmBackToStorylineSelect,

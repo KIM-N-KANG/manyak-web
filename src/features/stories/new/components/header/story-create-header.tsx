@@ -8,12 +8,15 @@ import { cn } from '@/lib/utils';
 import type { StoryCreateStep } from '../../types';
 import type { DraftSaveStatus } from '../../utils/draft-autosave';
 import { StoryCreateStepIndicator } from '../step-layout/story-create-step-indicator';
-import { StoryCreateBackDialog } from './story-create-back-dialog';
+import {
+  StoryCreateBackDialog,
+  type StoryCreateBackDialogVariant,
+} from './story-create-back-dialog';
 
 type StoryCreateHeaderProps = {
   step: StoryCreateStep;
   draftSaveStatus: DraftSaveStatus;
-  backDialogOpen: boolean;
+  backDialog: StoryCreateBackDialogVariant | null;
   onBackClick: () => void;
   onBackDialogOpenChange: (open: boolean) => void;
   onConfirmBack: () => void;
@@ -22,7 +25,7 @@ type StoryCreateHeaderProps = {
 export function StoryCreateHeader({
   step,
   draftSaveStatus,
-  backDialogOpen,
+  backDialog,
   onBackClick,
   onBackDialogOpenChange,
   onConfirmBack,
@@ -59,7 +62,7 @@ export function StoryCreateHeader({
         </div>
       </header>
       <StoryCreateBackDialog
-        open={backDialogOpen}
+        variant={backDialog}
         onOpenChange={onBackDialogOpenChange}
         onConfirm={onConfirmBack}
       />
