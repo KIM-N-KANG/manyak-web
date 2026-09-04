@@ -16,8 +16,13 @@ describe('robots', () => {
         APP_PATH.MAIN.STUDIO,
         APP_PATH.MAIN.MY,
         APP_PATH.LOGIN,
-        '/stories/',
       ],
+    });
+  });
+
+  it('does not block story detail so crawlers can read the page robots meta', () => {
+    expect(result.rules).not.toMatchObject({
+      disallow: expect.arrayContaining(['/stories/']),
     });
   });
 
