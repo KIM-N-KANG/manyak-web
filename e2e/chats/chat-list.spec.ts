@@ -1,5 +1,7 @@
 import { APP_PATH } from '@/constants/app-path';
-import { CHAT_LIST_COPY } from '@/features/chats/list/constants';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
+import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -62,11 +64,11 @@ test.describe('채팅 목록', () => {
     await page.goto('/chats');
 
     await expect(
-      page.getByText(CHAT_LIST_COPY.deletedStory, { exact: true }),
+      page.getByText(DELETED_STORY_LABEL, { exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole('link', {
-        name: `${CHAT_LIST_COPY.deletedStory} 채팅 보기`,
+        name: `${DELETED_STORY_LABEL} 채팅 보기`,
       }),
     ).toBeVisible();
   });
@@ -223,5 +225,133 @@ test.describe('채팅 목록', () => {
     await expect(
       page.getByRole('button', { name: '스토리 목록으로 가기' }),
     ).toBeVisible();
+  });
+});
+
+test.describe('채팅 카드 옵션 (KNK-1186)', () => {
+  const CHAT_DELETE = '**/api/v1/chats/c1';
+
+  test('카드 옵션 버튼은 제목 줄 오른쪽에 있고 다이얼로그 상단에 그 카드의 축소판을 보여준다', async ({
+    page,
+  }) => {
+    await seedChatIds(page, ['c1', 'c2']);
+    await page.route(CHATS_BATCH, async (route) => {
+      // 삭제 후 재조회는 남은 ID로만 오므로 요청 본문 기준으로 응답한다.
+      const { chatIds } = route.request().postDataJSON() as {
+        chatIds: string[];
+      };
+      // 긴 미리보기는 축소판이 다이얼로그 폭을 넘기지 않는지 함께 검증한다.
+      const chats = [
+        {
+          ...chat('c1', '용의 계곡'),
+          lastStoryPreview:
+            '*시현이손을뻗어인터페이스의비상봉인패널을연다붉은경고등이깜빡이고산소잔량표시가급격히떨어진다*',
+        },
+        chat('c2', '별빛 항해'),
+      ];
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chats.filter((item) => chatIds.includes(item.id))),
+      });
+    });
+    await page.route(CHAT_DELETE, async (route) => {
+      await route.fulfill({ status: 204, body: '' });
+    });
+
+    await page.goto('/chats');
+
+    const optionsButton = page
+      .getByRole('button', { name: '채팅 옵션 더보기' })
+      .first();
+    const title = page.getByText('용의 계곡', { exact: true });
+
+    await expect(optionsButton).toHaveCSS('height', '24px');
+
+    const [titleBox, buttonBox] = await Promise.all([
+      title.boundingBox(),
+      optionsButton.boundingBox(),
+    ]);
+
+    // 버튼 세로 중심은 제목 첫 줄(24px) 중심보다 1px 위다(한글 잉크·아이콘 점 위치 보정).
+    expect(buttonBox!.y + buttonBox!.height / 2).toBeCloseTo(
+      titleBox!.y + 11,
+      0,
+    );
+
+    await optionsButton.click();
+
+    const dialog = page.getByRole('dialog', { name: '채팅 옵션' });
+
+    await expect(dialog.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(dialog.getByText('별빛 항해')).toHaveCount(0);
+
+    const [dialogBox, previewBox] = await Promise.all([
+      dialog.boundingBox(),
+      dialog.getByText('용의 계곡', { exact: true }).boundingBox(),
+    ]);
+
+    expect(previewBox!.x + previewBox!.width).toBeLessThanOrEqual(
+      dialogBox!.x + dialogBox!.width,
+    );
+    // 게스트라 신고하기는 없고 삭제하기만 있다.
+    await expect(dialog.getByRole('menuitem')).toHaveText(['삭제하기']);
+
+    await dialog.getByRole('menuitem', { name: '삭제하기' }).click();
+
+    // 같은 창이 확인 화면으로 바뀌므로 접근 가능한 이름도 확인 질문으로 바뀐다.
+    const confirmDialog = page.getByRole('dialog', {
+      name: '채팅을 삭제할까요?',
+    });
+
+    await expect(
+      confirmDialog.getByText(
+        '삭제하면 나눈 이야기가 모두 사라지며 되돌릴 수 없어요',
+      ),
+    ).toBeVisible();
+    await confirmDialog.getByRole('button', { name: '삭제하기' }).click();
+
+    await expect(page.getByText(TOAST_MESSAGE.CHAT_DELETED)).toBeVisible();
+    await expect(page.getByText('용의 계곡', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
+  });
+
+  test('회원은 카드 옵션에서 참조 스토리를 신고할 수 있다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/chats**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([chat('c1', '용의 계곡')]),
+      });
+    });
+    await page.route('**/api/v1/stories/story-c1/reports', async (route) => {
+      await route.fulfill({ status: 201, body: '' });
+    });
+
+    await page.goto('/chats');
+    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+
+    const dialog = page.getByRole('dialog', { name: '채팅 옵션' });
+
+    await expect(dialog.getByRole('menuitem')).toHaveText([
+      STORY_REPORT_COPY.action,
+      '삭제하기',
+    ]);
+    await dialog
+      .getByRole('menuitem', { name: STORY_REPORT_COPY.action })
+      .click();
+
+    const sheet = page.getByRole('dialog', { name: STORY_REPORT_COPY.title });
+
+    await expect(dialog).toBeHidden();
+    await sheet.getByRole('radio', { name: '기타' }).check();
+    await sheet.getByRole('button', { name: STORY_REPORT_COPY.submit }).click();
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REPORTED)).toBeVisible();
   });
 });
