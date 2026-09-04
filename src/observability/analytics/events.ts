@@ -63,8 +63,8 @@ export type AnalyticsEventProps = {
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
   // onboarding
   client_onboarding_viewed: void;
-  client_onboarding_createButton_clicked: void;
-  client_onboarding_logo_clicked: void;
+  client_onboarding_createButton_clicked: { source: 'header' | 'bottom' };
+  client_onboarding_browseButton_clicked: void;
   // storyList
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;

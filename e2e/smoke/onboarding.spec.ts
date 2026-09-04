@@ -1,7 +1,9 @@
 import { APP_PATH } from '@/constants/app-path';
+import { SITE_CONTACT_EMAIL } from '@/constants/site';
 import {
-  ONBOARDING_CLOSING_LINE,
+  ONBOARDING_BROWSE_LABEL,
   ONBOARDING_SECTIONS,
+  ONBOARDING_START_LABEL,
 } from '@/features/onboarding/constants';
 
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -20,18 +22,23 @@ test.describe('온보딩', () => {
         name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toBeVisible();
+
+    // 헤더 오른쪽에 보조(둘러보기)·주(바로 시작하기) 버튼이 나란히 있고,
+    // 로고는 더 이상 홈 링크가 아니며 하단 고정 CTA도 없다.
+    const header = page.getByRole('banner');
+
     await expect(
-      page.getByRole('button', { name: '첫 장면 만들기' }),
+      header.getByRole('button', { name: ONBOARDING_BROWSE_LABEL }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: '홈으로 이동' }),
+      header.getByRole('button', { name: ONBOARDING_START_LABEL }),
     ).toBeVisible();
-
-    const onboardingActions = page
-      .getByRole('button', { name: '첫 장면 만들기' })
-      .locator('xpath=ancestor::nav');
-
-    await expect(onboardingActions).toHaveCSS('padding-top', '0px');
+    await expect(
+      header.getByRole('button', { name: '홈으로 이동' }),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('nav').filter({ hasText: ONBOARDING_START_LABEL }),
+    ).toHaveCount(0);
   });
 
   test('온보딩 리다이렉트는 원본 쿼리를 유지한다', async ({ page }) => {
@@ -66,14 +73,42 @@ test.describe('온보딩', () => {
       page.getByRole('img', { name: ONBOARDING_SECTIONS[0].scenes[0].alt }),
     ).toBeVisible();
 
-    const closingLine = page.getByText(ONBOARDING_CLOSING_LINE);
+    // 본문 끝에는 "바로 시작하기" CTA, 그 아래에 정책 링크·문의처를 담은 푸터가 이어진다.
+    // main 안의 footer는 contentinfo 랜드마크가 아니므로 요소로 찾는다.
+    const footer = page.locator('footer');
 
-    await closingLine.scrollIntoViewIfNeeded();
-    await expect(closingLine).toBeVisible();
-    // CTA는 스크롤 영역 밖의 고정 푸터라 끝까지 내려도 계속 보인다.
+    await footer.scrollIntoViewIfNeeded();
     await expect(
-      page.getByRole('button', { name: '첫 장면 만들기' }),
+      page
+        .getByRole('main')
+        .getByRole('button', { name: ONBOARDING_START_LABEL }),
     ).toBeVisible();
+    await expect(
+      footer.getByRole('link', { name: '이용약관' }),
+    ).toHaveAttribute('href', APP_PATH.TERMS);
+    await expect(
+      footer.getByRole('link', { name: '개인정보 처리방침' }),
+    ).toHaveAttribute('href', APP_PATH.PRIVACY);
+    await expect(
+      footer.getByRole('link', { name: SITE_CONTACT_EMAIL }),
+    ).toHaveAttribute('href', `mailto:${SITE_CONTACT_EMAIL}`);
+    // 헤더는 스크롤 영역의 형제라 끝까지 내려도 헤더 CTA는 계속 보인다.
+    await expect(
+      page
+        .getByRole('banner')
+        .getByRole('button', { name: ONBOARDING_START_LABEL }),
+    ).toBeVisible();
+
+    // 로고는 홈 링크가 아니라 맨 위로 되돌리는 버튼이다.
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: '맨 위로 이동' })
+      .click();
+
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+    await expect
+      .poll(() => page.getByRole('main').evaluate((main) => main.scrollTop))
+      .toBe(0);
   });
 
   test('채팅·제작 탭으로 진입해도 온보딩 페이지로 이동한다', async ({
@@ -122,13 +157,16 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('"첫 장면 만들기"를 누르면 스토리 생성으로 이동하고 뒤로가기로 온보딩에 돌아오지 않는다', async ({
+  test('헤더 "바로 시작하기"를 누르면 스토리 생성으로 이동하고 뒤로가기로 온보딩에 돌아오지 않는다', async ({
     page,
   }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
-    await page.getByRole('button', { name: '첫 장면 만들기' }).click();
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: ONBOARDING_START_LABEL })
+      .click();
 
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
@@ -141,13 +179,34 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 
-  test('로고를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
+  test('본문 끝 "바로 시작하기"를 눌러도 스토리 생성으로 이동한다', async ({
     page,
   }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
-    await page.getByRole('button', { name: '홈으로 이동' }).click();
+    const bottomCta = page
+      .getByRole('main')
+      .getByRole('button', { name: ONBOARDING_START_LABEL });
+
+    await bottomCta.scrollIntoViewIfNeeded();
+    await bottomCta.click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+  });
+
+  test('"둘러보기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: ONBOARDING_BROWSE_LABEL })
+      .click();
 
     await expect(page).toHaveURL(/\/$/);
 
