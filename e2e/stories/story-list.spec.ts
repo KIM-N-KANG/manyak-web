@@ -157,6 +157,8 @@ test.describe('홈·제작 스토리 목록', () => {
     const createdStoryCover = createdStoryCard.locator(
       '[data-slot="aspect-ratio"]',
     );
+    // 표지·본문 간격은 옵션 다이얼로그 축소판과 공유하는 본체 컨테이너가 가진다(KNK-1186).
+    const createdStoryBody = createdStoryCover.locator('..');
     const createdStoryTitle = createdStoryCard.getByText('용의 계곡', {
       exact: true,
     });
@@ -165,7 +167,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(storyOptionsButton).toHaveCSS('width', '24px');
     await expect(storyOptionsButton).toHaveCSS('height', '24px');
     await expect(createdStoryCard).toHaveCSS('display', 'flex');
-    await expect(createdStoryCard).toHaveCSS('column-gap', '16px');
+    await expect(createdStoryBody).toHaveCSS('column-gap', '16px');
     await expect(createdStoryCard).toHaveCSS('padding-top', '8px');
     await expect(createdStoryCard).toHaveCSS('padding-right', '16px');
     await expect(createdStoryCard).toHaveCSS('padding-bottom', '8px');
@@ -480,10 +482,12 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(optionsButton).toHaveCSS('height', '24px');
     await optionsButton.click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-    await page.getByRole('menuitem', { name: '삭제하기' }).click();
 
-    const dialog = page.getByRole('alertdialog');
+    // 카드 옵션 다이얼로그는 상단에 그 카드의 축소판을 보여준 뒤 같은 창에서 확인으로 바뀐다.
+    const dialog = page.getByRole('dialog');
 
+    await expect(dialog.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await dialog.getByRole('menuitem', { name: '삭제하기' }).click();
     await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
@@ -542,7 +546,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
     await page
-      .getByRole('alertdialog')
+      .getByRole('dialog')
       .getByRole('button', { name: '삭제하기' })
       .click();
 

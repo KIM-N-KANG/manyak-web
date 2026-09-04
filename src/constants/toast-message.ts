@@ -4,6 +4,8 @@ export const TOAST_MESSAGE = {
   CHAT_DELETED: '채팅이 삭제되었어요',
   STORY_DELETE_FAILED: '스토리 삭제에 실패했어요',
   CHAT_DELETE_FAILED: '채팅 삭제에 실패했어요',
+  STORY_REPORTED: '신고가 접수되었어요',
+  STORY_REPORT_FAILED: '신고를 접수하지 못했어요',
   CHAT_START_FAILED: '채팅을 시작하지 못했어요',
   CHAT_SHARE_LINK_COPIED: '채팅 공개 링크가 복사되었어요',
   CHAT_SHARE_FAILED: '공유 링크 생성에 실패했어요',

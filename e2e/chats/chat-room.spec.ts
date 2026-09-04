@@ -2,7 +2,10 @@ import { type Page } from '@playwright/test';
 
 import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import { buildChatTurnCreditCostLabel } from '@/features/chats/room/constants';
+import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -1517,5 +1520,86 @@ test.describe('추천 입력 토글', () => {
       page.getByRole('button', { name: '안으로 들어간다' }),
     ).toBeVisible();
     expect(choicesCalled).toBe(2);
+  });
+});
+
+test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
+  const STORY_REPORT = '**/api/v1/stories/s1/reports';
+
+  test('회원은 옵션 메뉴의 신고하기로 참조 스토리를 신고할 수 있다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    let reportBody: unknown = null;
+
+    await page.route(STORY_REPORT, async (route) => {
+      reportBody = route.request().postDataJSON();
+      await route.fulfill({ status: 201, body: '' });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+
+    // 신고하기는 파괴적 항목인 삭제하기 위에 놓인다.
+    const menuItems = page.getByRole('menuitem');
+
+    await expect(menuItems).toHaveText([STORY_REPORT_COPY.action, '삭제하기']);
+    await menuItems.first().click();
+
+    const sheet = page.getByRole('dialog', { name: STORY_REPORT_COPY.title });
+
+    await sheet.getByRole('radio', { name: '도배·홍보' }).check();
+    await sheet.getByRole('button', { name: STORY_REPORT_COPY.submit }).click();
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REPORTED)).toBeVisible();
+    await expect(sheet).toBeHidden();
+    expect(reportBody).toEqual({ reason: 'SPAM', detail: null });
+  });
+
+  test('게스트의 옵션 메뉴에는 신고하기가 없다', async ({ page }) => {
+    await skipOnboarding(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+
+    await expect(page.getByRole('menuitem')).toHaveText(['삭제하기']);
+  });
+
+  test('참조 스토리가 삭제된 채팅은 헤더에 삭제된 스토리를 보여주고 신고할 수 없다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...chatDetail(), storyTitle: '' }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: DELETED_STORY_LABEL }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await expect(page.getByRole('menuitem')).toHaveText(['삭제하기']);
   });
 });

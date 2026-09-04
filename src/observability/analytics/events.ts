@@ -1,4 +1,7 @@
-import type { SimpleStoryTagListItemResponseCategory } from '@/api/generated/models';
+import type {
+  SimpleStoryTagListItemResponseCategory,
+  StoryReportRequestReason,
+} from '@/api/generated/models';
 import {
   type InviteCodeErrorType,
   type InviteCodeSource,
@@ -25,6 +28,9 @@ export type CreditShortageTrigger = 'story_create' | 'chat_turn';
 
 /** 스토리 카드가 속한 섹션. 오리지널 노출·클릭 기여를 내가 만든 스토리와 분리해 본다. */
 export type StoryCardSection = 'original' | 'created';
+
+/** 신고 시트를 연 화면. 네 화면이 시트 하나를 공유하므로 이벤트 대신 프로퍼티로 구분한다(스펙 §6-4-2). */
+export type ReportSource = 'storyDetail' | 'studio' | 'chatList' | 'chat';
 
 /** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
@@ -61,6 +67,19 @@ export type AnalyticsEventProps = {
   client_guestLimitDialog_dismissed: { trigger: GuestLimitTrigger };
   // credit shortage (회원 이프 부족 → 토스트 안내, 이벤트 이름은 하위 호환 유지)
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
+  // report (스토리 신고 시트 — 채팅에서 열어도 대상은 참조 스토리라 target_type은 story 고정)
+  client_report_sheet_opened: {
+    target_type: 'story';
+    target_id: string;
+    source: ReportSource;
+  };
+  client_report_submitted: {
+    target_type: 'story';
+    target_id: string;
+    reason: StoryReportRequestReason;
+    has_detail: boolean;
+  };
+  client_report_failed: { target_type: 'story'; error_type: string };
   // onboarding
   client_onboarding_viewed: void;
   client_onboarding_createButton_clicked: { source: 'header' | 'bottom' };

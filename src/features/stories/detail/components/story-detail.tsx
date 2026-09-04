@@ -6,6 +6,8 @@ import { Image01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AnimatePresence, m } from 'motion/react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 import {
   getStoryDetail,
@@ -13,7 +15,9 @@ import {
 } from '@/api/generated/endpoints/stories/stories';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { APP_PATH } from '@/constants/app-path';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
+import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useInView } from '@/hooks/use-in-view';
@@ -50,6 +54,16 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   const showSkeleton = useDelayedLoading(isPending, { delay: 300 });
   const story = data?.status === 200 ? data.data : undefined;
   const isNotFound = error instanceof FetchError && error.status === 404;
+
+  const router = useRouter();
+  const { status: sessionStatus } = useSession();
+  const createdStoryIds = useCreatedStoryIds();
+  const isMember = sessionStatus === 'authenticated';
+  const canDelete =
+    story !== undefined &&
+    (isMember
+      ? story.isOwner === true
+      : (createdStoryIds?.includes(storyId) ?? false));
 
   useDocumentTitle(story?.title ?? '');
 
@@ -97,7 +111,11 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <StoryDetailHeader
+        storyId={storyId}
         title={story?.title ?? ''}
+        canReport={isMember && story !== undefined}
+        canDelete={canDelete}
+        onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STUDIO)}
         showTitle={showTitle}
         hasHeroImage={Boolean(thumbnailUrl)}
         scrollContainerElement={contentElement}
