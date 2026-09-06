@@ -29,6 +29,7 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
   await expect(homeHeading).toHaveClass(/sr-only/);
   await expect(logo).toBeVisible();
   await expect(loginButton).toBeVisible();
+  await expect(loginButton).toHaveCSS('height', '40px');
   await expect(bottomNav.getByRole('link')).toHaveCount(4);
   await expect(bottomNav.locator('span')).toHaveText([
     '홈',
@@ -60,6 +61,7 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
   ).toBeVisible();
   await expect(logo).toHaveCount(0);
   await expect(loginButton).toBeVisible();
+  await expect(loginButton).toHaveCSS('height', '40px');
   await expect(bottomNav.getByRole('link', { name: '채팅' })).toHaveAttribute(
     'aria-current',
     'page',
@@ -83,6 +85,7 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
   );
   await expect(logo).toHaveCount(0);
   await expect(loginButton).toBeVisible();
+  await expect(loginButton).toHaveCSS('height', '40px');
   await expect(createLink).toHaveAttribute('aria-current', 'page');
   await expect(createLink.locator('path').first()).toHaveAttribute(
     'd',
@@ -111,4 +114,5 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
   await expect(homeHeading).toHaveClass(/sr-only/);
   await expect(logo).toBeVisible();
   await expect(loginButton).toBeVisible();
+  await expect(loginButton).toHaveCSS('height', '40px');
 });

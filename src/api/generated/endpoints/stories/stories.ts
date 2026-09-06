@@ -24,13 +24,19 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
+  AddCharacterImageRequest,
   BatchStoryRequest,
+  CharacterImageResponse,
   CreateGeneralStoryRequest,
   GetLorebooksParams,
+  GetPublicStoriesParams,
+  ImagePresignRequest,
+  ImagePresignResponse,
   LorebookListItemResponse,
   SimpleStoryCreateResponse,
   StoryDetailResponse,
   StoryEditFormResponse,
+  StoryPageResponse,
   StoryReportRequest,
   StorySummaryResponse,
   UpdateStoryRequest,
@@ -403,6 +409,302 @@ export const useUnlikeStory = <TError = ErrorType<void>, TContext = unknown>(
   TContext
 > => {
   return useMutation(getUnlikeStoryMutationOptions(options), queryClient);
+};
+export type presignResponse201 = {
+  data: ImagePresignResponse;
+  status: 201;
+};
+
+export type presignResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type presignResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type presignResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type presignResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type presignResponse503 = {
+  data: void;
+  status: 503;
+};
+
+export type presignResponseSuccess = presignResponse201 & {
+  headers: Headers;
+};
+export type presignResponseError = (
+  | presignResponse400
+  | presignResponse401
+  | presignResponse403
+  | presignResponse404
+  | presignResponse503
+) & {
+  headers: Headers;
+};
+
+export type presignResponse = presignResponseSuccess | presignResponseError;
+
+export const getPresignUrl = (storyId: string) => {
+  return `/api/v1/stories/${storyId}/images/presign`;
+};
+
+/**
+ * 클라이언트가 S3에 직접 올릴 수 있는 서명 URL을 발급합니다(KNK-1126). 파일이 서버를 지나지 않습니다. 서명에 `Content-Type`·`Content-Length`가 고정되므로 클라이언트는 요청한 값 그대로 PUT해야 합니다. 객체 키는 서버가 정하며 만료는 10분입니다. PUT을 마친 뒤 그 `objectKey`를 표지 교체(`PATCH /stories/{storyId}`의 `thumbnailObjectKey`)나 인물 이미지 연결 요청에 넣습니다. 회원 소유 스토리만이며 게스트 소유(이관 전) 스토리는 400입니다.
+ * @summary 이미지 업로드용 presigned URL 발급
+ */
+export const presign = async (
+  storyId: string,
+  imagePresignRequest: ImagePresignRequest,
+  options?: RequestInit,
+): Promise<presignResponse> => {
+  return customInstance<presignResponse>(getPresignUrl(storyId), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(imagePresignRequest),
+  });
+};
+
+export const getPresignMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof presign>>,
+    TError,
+    { storyId: string; data: BodyType<ImagePresignRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof presign>>,
+  TError,
+  { storyId: string; data: BodyType<ImagePresignRequest> },
+  TContext
+> => {
+  const mutationKey = ['presign'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof presign>>,
+    { storyId: string; data: BodyType<ImagePresignRequest> }
+  > = (props) => {
+    const { storyId, data } = props ?? {};
+
+    return presign(storyId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PresignMutationResult = NonNullable<
+  Awaited<ReturnType<typeof presign>>
+>;
+export type PresignMutationBody = BodyType<ImagePresignRequest>;
+export type PresignMutationError = ErrorType<void>;
+
+/**
+ * @summary 이미지 업로드용 presigned URL 발급
+ */
+export const usePresign = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof presign>>,
+      TError,
+      { storyId: string; data: BodyType<ImagePresignRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof presign>>,
+  TError,
+  { storyId: string; data: BodyType<ImagePresignRequest> },
+  TContext
+> => {
+  return useMutation(getPresignMutationOptions(options), queryClient);
+};
+export type addCharacterImageResponse201 = {
+  data: CharacterImageResponse;
+  status: 201;
+};
+
+export type addCharacterImageResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type addCharacterImageResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type addCharacterImageResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type addCharacterImageResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type addCharacterImageResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type addCharacterImageResponseSuccess = addCharacterImageResponse201 & {
+  headers: Headers;
+};
+export type addCharacterImageResponseError = (
+  | addCharacterImageResponse400
+  | addCharacterImageResponse401
+  | addCharacterImageResponse403
+  | addCharacterImageResponse404
+  | addCharacterImageResponse409
+) & {
+  headers: Headers;
+};
+
+export type addCharacterImageResponse =
+  | addCharacterImageResponseSuccess
+  | addCharacterImageResponseError;
+
+export const getAddCharacterImageUrl = (
+  storyId: string,
+  characterId: string,
+) => {
+  return `/api/v1/stories/${storyId}/characters/${characterId}/images`;
+};
+
+/**
+ * 업로드한 이미지를 인물에 연결합니다(KNK-1126). 이름은 `{인물이름}_{접미}` 형식이며 접미는 1~20자 한글·영문·숫자(표정·상황·감정)입니다. 같은 인물 안에서 이름이 겹치면 409, 형식이 어긋나면 400, 인물당 10장을 넘으면 400입니다. 서버가 객체 키가 이 스토리의 업로드 경로 아래인지 확인하고 `HEAD`로 존재·크기·형식을 재검증합니다.
+ * @summary 인물 이미지 연결
+ */
+export const addCharacterImage = async (
+  storyId: string,
+  characterId: string,
+  addCharacterImageRequest: AddCharacterImageRequest,
+  options?: RequestInit,
+): Promise<addCharacterImageResponse> => {
+  return customInstance<addCharacterImageResponse>(
+    getAddCharacterImageUrl(storyId, characterId),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(addCharacterImageRequest),
+    },
+  );
+};
+
+export const getAddCharacterImageMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addCharacterImage>>,
+    TError,
+    {
+      storyId: string;
+      characterId: string;
+      data: BodyType<AddCharacterImageRequest>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addCharacterImage>>,
+  TError,
+  {
+    storyId: string;
+    characterId: string;
+    data: BodyType<AddCharacterImageRequest>;
+  },
+  TContext
+> => {
+  const mutationKey = ['addCharacterImage'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addCharacterImage>>,
+    {
+      storyId: string;
+      characterId: string;
+      data: BodyType<AddCharacterImageRequest>;
+    }
+  > = (props) => {
+    const { storyId, characterId, data } = props ?? {};
+
+    return addCharacterImage(storyId, characterId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddCharacterImageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addCharacterImage>>
+>;
+export type AddCharacterImageMutationBody = BodyType<AddCharacterImageRequest>;
+export type AddCharacterImageMutationError = ErrorType<void>;
+
+/**
+ * @summary 인물 이미지 연결
+ */
+export const useAddCharacterImage = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addCharacterImage>>,
+      TError,
+      {
+        storyId: string;
+        characterId: string;
+        data: BodyType<AddCharacterImageRequest>;
+      },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof addCharacterImage>>,
+  TError,
+  {
+    storyId: string;
+    characterId: string;
+    data: BodyType<AddCharacterImageRequest>;
+  },
+  TContext
+> => {
+  return useMutation(getAddCharacterImageMutationOptions(options), queryClient);
 };
 export type createGeneralStoryResponse201 = {
   data: SimpleStoryCreateResponse;
@@ -1037,6 +1339,209 @@ export const useUpdateStory = <TError = ErrorType<void>, TContext = unknown>(
 > => {
   return useMutation(getUpdateStoryMutationOptions(options), queryClient);
 };
+export type getPublicStoriesResponse200 = {
+  data: StoryPageResponse;
+  status: 200;
+};
+
+export type getPublicStoriesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type getPublicStoriesResponseSuccess = getPublicStoriesResponse200 & {
+  headers: Headers;
+};
+export type getPublicStoriesResponseError = getPublicStoriesResponse400 & {
+  headers: Headers;
+};
+
+export type getPublicStoriesResponse =
+  | getPublicStoriesResponseSuccess
+  | getPublicStoriesResponseError;
+
+export const getGetPublicStoriesUrl = (params?: GetPublicStoriesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/stories?${stringifiedParams}`
+    : `/api/v1/stories`;
+};
+
+/**
+ * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 latest(기본, 등록 최신순)와 popular(좋아요 많은 순)이며, 다음 페이지는 응답의 nextCursor를 **같은 sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
+ * @summary 공개 스토리 목록 조회
+ */
+export const getPublicStories = async (
+  params?: GetPublicStoriesParams,
+  options?: RequestInit,
+): Promise<getPublicStoriesResponse> => {
+  return customInstance<getPublicStoriesResponse>(
+    getGetPublicStoriesUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getGetPublicStoriesQueryKey = (
+  params?: GetPublicStoriesParams,
+) => {
+  return [`/api/v1/stories`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicStoriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetPublicStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPublicStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPublicStoriesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPublicStories>>
+  > = ({ signal }) => getPublicStories(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicStories>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPublicStoriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicStories>>
+>;
+export type GetPublicStoriesQueryError = ErrorType<void>;
+
+export function useGetPublicStories<
+  TData = Awaited<ReturnType<typeof getPublicStories>>,
+  TError = ErrorType<void>,
+>(
+  params: undefined | GetPublicStoriesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPublicStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicStories>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPublicStories<
+  TData = Awaited<ReturnType<typeof getPublicStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetPublicStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPublicStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicStories>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPublicStories<
+  TData = Awaited<ReturnType<typeof getPublicStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetPublicStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPublicStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 공개 스토리 목록 조회
+ */
+
+export function useGetPublicStories<
+  TData = Awaited<ReturnType<typeof getPublicStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetPublicStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPublicStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPublicStoriesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export type getEditFormResponse200 = {
   data: StoryEditFormResponse;
   status: 200;
@@ -1550,3 +2055,276 @@ export function useGetLorebooks<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+export type deleteThumbnailResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type deleteThumbnailResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type deleteThumbnailResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type deleteThumbnailResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type deleteThumbnailResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type deleteThumbnailResponseSuccess = deleteThumbnailResponse204 & {
+  headers: Headers;
+};
+export type deleteThumbnailResponseError = (
+  | deleteThumbnailResponse400
+  | deleteThumbnailResponse401
+  | deleteThumbnailResponse403
+  | deleteThumbnailResponse404
+) & {
+  headers: Headers;
+};
+
+export type deleteThumbnailResponse =
+  | deleteThumbnailResponseSuccess
+  | deleteThumbnailResponseError;
+
+export const getDeleteThumbnailUrl = (storyId: string) => {
+  return `/api/v1/stories/${storyId}/thumbnail`;
+};
+
+/**
+ * 업로드·생성 표지 URL을 지워 프리셋 표지로 되돌립니다(KNK-1126). 프리셋 키는 건드리지 않으므로 표지가 사라지는 것이 아니라 자동 연결된 프리셋으로 내려갑니다. 표지가 없어도 204입니다(멱등). S3 객체는 지우지 않습니다 — 지난 채팅 카드가 그 URL을 가리킬 수 있습니다.
+ * @summary 표지 삭제
+ */
+export const deleteThumbnail = async (
+  storyId: string,
+  options?: RequestInit,
+): Promise<deleteThumbnailResponse> => {
+  return customInstance<deleteThumbnailResponse>(
+    getDeleteThumbnailUrl(storyId),
+    {
+      ...options,
+      method: 'DELETE',
+    },
+  );
+};
+
+export const getDeleteThumbnailMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteThumbnail>>,
+    TError,
+    { storyId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteThumbnail>>,
+  TError,
+  { storyId: string },
+  TContext
+> => {
+  const mutationKey = ['deleteThumbnail'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteThumbnail>>,
+    { storyId: string }
+  > = (props) => {
+    const { storyId } = props ?? {};
+
+    return deleteThumbnail(storyId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteThumbnailMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteThumbnail>>
+>;
+
+export type DeleteThumbnailMutationError = ErrorType<void>;
+
+/**
+ * @summary 표지 삭제
+ */
+export const useDeleteThumbnail = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteThumbnail>>,
+      TError,
+      { storyId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteThumbnail>>,
+  TError,
+  { storyId: string },
+  TContext
+> => {
+  return useMutation(getDeleteThumbnailMutationOptions(options), queryClient);
+};
+export type deleteCharacterImageResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type deleteCharacterImageResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type deleteCharacterImageResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type deleteCharacterImageResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type deleteCharacterImageResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type deleteCharacterImageResponseSuccess =
+  deleteCharacterImageResponse204 & {
+    headers: Headers;
+  };
+export type deleteCharacterImageResponseError = (
+  | deleteCharacterImageResponse400
+  | deleteCharacterImageResponse401
+  | deleteCharacterImageResponse403
+  | deleteCharacterImageResponse404
+) & {
+  headers: Headers;
+};
+
+export type deleteCharacterImageResponse =
+  | deleteCharacterImageResponseSuccess
+  | deleteCharacterImageResponseError;
+
+export const getDeleteCharacterImageUrl = (
+  storyId: string,
+  characterId: string,
+  imageId: string,
+) => {
+  return `/api/v1/stories/${storyId}/characters/${characterId}/images/${imageId}`;
+};
+
+/**
+ * 인물 이미지 참조를 지웁니다(KNK-1126). 없어도 204입니다(멱등). **S3 객체는 남깁니다** — 지난 채팅 본문의 이미지 마커가 그 객체를 가리키고 있어 지우면 옛 대화가 깨집니다.
+ * @summary 인물 이미지 삭제
+ */
+export const deleteCharacterImage = async (
+  storyId: string,
+  characterId: string,
+  imageId: string,
+  options?: RequestInit,
+): Promise<deleteCharacterImageResponse> => {
+  return customInstance<deleteCharacterImageResponse>(
+    getDeleteCharacterImageUrl(storyId, characterId, imageId),
+    {
+      ...options,
+      method: 'DELETE',
+    },
+  );
+};
+
+export const getDeleteCharacterImageMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCharacterImage>>,
+    TError,
+    { storyId: string; characterId: string; imageId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCharacterImage>>,
+  TError,
+  { storyId: string; characterId: string; imageId: string },
+  TContext
+> => {
+  const mutationKey = ['deleteCharacterImage'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCharacterImage>>,
+    { storyId: string; characterId: string; imageId: string }
+  > = (props) => {
+    const { storyId, characterId, imageId } = props ?? {};
+
+    return deleteCharacterImage(storyId, characterId, imageId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCharacterImageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteCharacterImage>>
+>;
+
+export type DeleteCharacterImageMutationError = ErrorType<void>;
+
+/**
+ * @summary 인물 이미지 삭제
+ */
+export const useDeleteCharacterImage = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteCharacterImage>>,
+      TError,
+      { storyId: string; characterId: string; imageId: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCharacterImage>>,
+  TError,
+  { storyId: string; characterId: string; imageId: string },
+  TContext
+> => {
+  return useMutation(
+    getDeleteCharacterImageMutationOptions(options),
+    queryClient,
+  );
+};

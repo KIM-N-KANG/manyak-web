@@ -160,7 +160,7 @@ export function CreatedStoryList() {
           </m.div>
         ) : null}
       </AnimatePresence>
-      <section className="flex min-h-0 flex-1 flex-col pb-4">
+      <section className="flex min-h-0 flex-1 flex-col pb-2">
         <FadeStateSwitch
           stateKey={stateKey}
           className="flex min-h-0 flex-1 flex-col">

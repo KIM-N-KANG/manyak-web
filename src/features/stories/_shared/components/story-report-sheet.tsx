@@ -195,7 +195,7 @@ function StoryReportForm({
         </InputGroup>
       </div>
 
-      <div className="mt-8 flex flex-col">
+      <div className="mt-8 flex flex-col gap-1">
         <Button
           type="submit"
           size="lg"
@@ -211,8 +211,8 @@ function StoryReportForm({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="h-10 w-full text-foreground-secondary"
+          size="xs"
+          className="w-fit self-center text-foreground-secondary"
           disabled={isSubmitting}
           onClick={onClose}>
           {STORY_REPORT_COPY.close}

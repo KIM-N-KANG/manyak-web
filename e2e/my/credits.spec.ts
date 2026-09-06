@@ -409,7 +409,9 @@ test.describe('이프 충전 (/my/credits)', () => {
 
     await page.goto('/my/credits');
     await openHistoryTab(page);
-    await page.getByRole('listitem').last().scrollIntoViewIfNeeded();
+    await page
+      .getByText('첫 페이지 20', { exact: true })
+      .scrollIntoViewIfNeeded();
 
     await expect(
       page.getByRole('button', { name: CREDIT_HISTORY_COPY.retry }),

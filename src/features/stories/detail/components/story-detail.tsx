@@ -16,8 +16,10 @@ import {
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
+import { useStoryFooterBackground } from '@/features/stories/detail/hooks/use-story-footer-background';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useInView } from '@/hooks/use-in-view';
@@ -98,6 +100,13 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   const [titleElement, setTitleElement] = useState<HTMLHeadingElement | null>(
     null,
   );
+  const [metadataElement, setMetadataElement] = useState<HTMLDivElement | null>(
+    null,
+  );
+  const footerSurfaceRef = useStoryFooterBackground(
+    contentElement,
+    metadataElement,
+  );
 
   const isTitleInView = useInView({
     target: titleElement,
@@ -153,12 +162,13 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         {!showSkeleton && story && (
           <m.div
             key="content"
-            className="flex min-h-0 flex-1 flex-col"
+            ref={footerSurfaceRef}
+            className="flex min-h-0 flex-1 flex-col bg-[var(--story-footer-background,var(--background))]"
             {...FADE_TRANSITION_PROPS}>
             <main
               ref={setContentElement}
-              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain">
-              <div ref={setHeroElement} className="shrink-0">
+              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain bg-inherit">
+              <div ref={setHeroElement} className="shrink-0 bg-background">
                 {thumbnailUrl ? (
                   <button
                     type="button"
@@ -176,7 +186,8 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                         priority
                         className="object-cover"
                       />
-                      <div className="absolute right-2 bottom-2">
+                      <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                        <StoryLikeCount likeCount={story.likeCount ?? 0} />
                         <StoryTurnCount turnCount={story.turnCount ?? 0} />
                       </div>
                     </AspectRatio>
@@ -194,16 +205,18 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                         className="size-8 text-foreground-tertiary"
                       />
                     </div>
-                    <div className="absolute right-2 bottom-2">
+                    <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                      <StoryLikeCount likeCount={story.likeCount ?? 0} />
                       <StoryTurnCount turnCount={story.turnCount ?? 0} />
                     </div>
                   </AspectRatio>
                 )}
               </div>
-              <div className="px-4 pt-4">
+              <div className="bg-background px-4 pt-4">
                 <StoryInfoSection
                   story={story}
                   titleRef={setTitleElement}
+                  metadataRef={setMetadataElement}
                   startSettingValue={activeStartSetting}
                   onStartSettingValueChange={setSelectedStartSetting}
                 />
@@ -213,6 +226,13 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             <StoryDetailCta
               storyId={storyId}
               startSettingId={activeStartSettingId}
+              canLike={
+                sessionStatus !== 'loading' &&
+                (isMember || createdStoryIds !== null) &&
+                !canDelete &&
+                story.isOwner !== true
+              }
+              isLiked={story.isLiked === true}
             />
 
             {thumbnailUrl && (

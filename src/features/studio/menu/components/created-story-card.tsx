@@ -18,10 +18,12 @@ import {
   CardOptionsDialog,
   type CardOptionsDialogItem,
 } from '@/components/common/card-options-dialog';
+import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryGenreBadges } from '@/features/stories/_shared/components/story-genre-badges';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
+import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
@@ -223,10 +225,20 @@ function CreatedStoryCardBody({
         </div>
         <div
           className={cn(
-            'mt-1 flex items-center justify-end gap-2 text-foreground-secondary',
+            'mt-1 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-foreground-secondary',
             compact ? 'text-xs' : 'text-sm',
           )}>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 whitespace-nowrap">
+            <HeartOutlineIcon
+              className={compact ? 'size-3' : 'size-3.5'}
+              aria-hidden="true"
+            />
+            <p>
+              <span className="sr-only">{STORY_LIKE_COPY.count} </span>
+              {(story.likeCount ?? 0).toLocaleString()}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 whitespace-nowrap">
             <HugeiconsIcon
               icon={BubbleChatIcon}
               className={compact ? 'size-3' : 'size-3.5'}
@@ -238,7 +250,7 @@ function CreatedStoryCardBody({
             </p>
           </div>
           {story.createdAt ? (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 whitespace-nowrap">
               <HugeiconsIcon
                 icon={Calendar04Icon}
                 className={compact ? 'size-3' : 'size-3.5'}

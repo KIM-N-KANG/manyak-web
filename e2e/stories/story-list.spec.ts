@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
+import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
 import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
@@ -82,7 +83,7 @@ test.describe('홈·제작 스토리 목록', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          story('s1', '용의 계곡'),
+          { ...story('s1', '용의 계곡'), likeCount: 1234 },
           story('s2', '별빛 항해'),
         ]),
       });
@@ -92,6 +93,21 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(`${STORY_LIKE_COPY.count} 1,234`, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(`${STORY_LIKE_COPY.count} 0`, { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: '스토리 옵션 더보기' })
+      .first()
+      .click();
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByText(`${STORY_LIKE_COPY.count} 1,234`, { exact: true }),
+    ).toBeVisible();
   });
 
   test('오리지널과 내가 만든 스토리를 홈·제작 화면에 나눠 보여준다 (KNK-988)', async ({

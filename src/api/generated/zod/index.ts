@@ -8,6 +8,77 @@
 import * as zod from 'zod';
 
 /**
+ * 앱이 FCM에서 발급받은 토큰을 요청자의 기기로 등록합니다(KNK-1131). 같은 토큰 재등록은 갱신(멱등)이고, 다른 회원이 같은 토큰을 등록하면 소유자가 옮겨갑니다(한 기기에서 계정 전환). 한 회원이 기기 여러 대를 등록할 수 있습니다. 인증 필수이며 게스트는 대상이 아닙니다.
+ * @summary 디바이스 푸시 토큰 등록
+ */
+export const registerBodyTokenMin = 0;
+export const registerBodyTokenMax = 512;
+
+export const RegisterBody = zod
+  .object({
+    token: zod
+      .string()
+      .min(registerBodyTokenMin)
+      .max(registerBodyTokenMax)
+      .describe(
+        '앱이 FCM에서 발급받은 등록 토큰. 같은 값을 다시 보내면 갱신(멱등)이고, 토큰이 바뀌면(onNewToken) 새 값으로 다시 등록한다.',
+      ),
+    platform: zod.enum(['ANDROID']).optional().describe('기기 플랫폼'),
+  })
+  .describe('디바이스 푸시 토큰 등록 요청(KNK-1131)');
+
+export const RegisterResponse = zod.void();
+
+/**
+ * 로그아웃 등으로 이 기기가 더 이상 요청자의 푸시를 받지 않게 합니다. 요청자 소유 토큰만 지우며, 없거나 남의 토큰이면 아무 일도 하지 않고 204입니다(멱등). 탈퇴는 이 API 없이도 회원의 토큰을 전부 지웁니다. 지울 토큰은 경로가 아니라 **본문**으로 받습니다 — 경로에 실으면 토큰 원문이 액세스 로그·Sentry breadcrumb에 남습니다.
+ * @summary 디바이스 푸시 토큰 삭제
+ */
+export const unregisterBodyTokenMin = 0;
+export const unregisterBodyTokenMax = 512;
+
+export const UnregisterBody = zod
+  .object({
+    token: zod
+      .string()
+      .min(unregisterBodyTokenMin)
+      .max(unregisterBodyTokenMax)
+      .describe(
+        '지울 등록 토큰. 요청자 소유가 아니면 아무 일도 하지 않는다(멱등).',
+      ),
+  })
+  .describe('디바이스 푸시 토큰 삭제 요청(KNK-1131)');
+
+export const UnregisterResponse = zod.void();
+
+/**
+ * 요청 회원의 알림 수신 동의 상태를 조회합니다(KNK-1132). 서비스 알림은 기본 켜짐(옵트아웃), 광고 알림과 야간 광고 알림은 기본 꺼짐(옵트인)입니다. 저장 정본은 광고성 두 값의 동의 시각이지만 응답에는 토글 상태(boolean)만 싣습니다. 정지 계정은 설정 화면 자체를 쓸 수 없어 조회도 403입니다.
+ * @summary 알림 수신 동의 조회
+ */
+export const GetPushSettingsResponse = zod.unknown();
+
+/**
+ * 알림 수신 동의를 전체 교체합니다(KNK-1132). 세 필드가 **모두 필수**이며 누락은 400입니다 — 보내지 않은 설정이 조용히 꺼지지 않게 하기 위해서입니다. 광고 알림을 켜면 동의 시각을 기록하고, 이미 동의한 상태면 최초 동의 시각을 유지합니다(증빙은 최초 시점). 광고 알림을 끄면 야간 동의도 함께 지웁니다. 야간 광고만 켜는 요청(`marketingPush=false`, `marketingNightPush=true`)은 400입니다.
+ * @summary 알림 수신 동의 변경
+ */
+export const UpdatePushSettingsBody = zod
+  .object({
+    servicePush: zod.boolean().optional().describe('서비스 알림 수신 여부'),
+    marketingPush: zod
+      .boolean()
+      .optional()
+      .describe('광고 알림 수신 동의 여부. true로 바꾸면 동의 시각이 기록된다'),
+    marketingNightPush: zod
+      .boolean()
+      .optional()
+      .describe(
+        '야간(21~08시 KST) 광고 알림 수신 동의 여부. marketingPush가 false면 true로 둘 수 없다(400)',
+      ),
+  })
+  .describe('알림 수신 동의 변경 요청(KNK-1132). 세 필드 모두 필수');
+
+export const UpdatePushSettingsResponse = zod.unknown();
+
+/**
  * 간편 제작으로 생성된 스토리라인에 좋아요/나빠요 평가를 남깁니다. 같은 스토리라인을 다시 평가하면 값이 갱신됩니다(대상당 1개). 취소는 DELETE를 사용합니다.
  * @summary 스토리라인 평가 설정/변경
  */
@@ -104,6 +175,76 @@ export const UnlikeStoryParams = zod.object({
 });
 
 export const UnlikeStoryResponse = zod.void();
+
+/**
+ * 클라이언트가 S3에 직접 올릴 수 있는 서명 URL을 발급합니다(KNK-1126). 파일이 서버를 지나지 않습니다. 서명에 `Content-Type`·`Content-Length`가 고정되므로 클라이언트는 요청한 값 그대로 PUT해야 합니다. 객체 키는 서버가 정하며 만료는 10분입니다. PUT을 마친 뒤 그 `objectKey`를 표지 교체(`PATCH /stories/{storyId}`의 `thumbnailObjectKey`)나 인물 이미지 연결 요청에 넣습니다. 회원 소유 스토리만이며 게스트 소유(이관 전) 스토리는 400입니다.
+ * @summary 이미지 업로드용 presigned URL 발급
+ */
+export const PresignParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const presignBodyContentLengthMax = 5242880;
+
+export const PresignBody = zod
+  .object({
+    kind: zod
+      .enum(['COVER', 'CHARACTER'])
+      .nullable()
+      .describe('업로드 대상. 객체 키 prefix가 갈린다'),
+    contentType: zod
+      .string()
+      .min(1)
+      .nullable()
+      .describe('image\/jpeg · image\/png · image\/webp 중 하나'),
+    contentLength: zod
+      .number()
+      .min(1)
+      .max(presignBodyContentLengthMax)
+      .nullable()
+      .describe(
+        '바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다',
+      ),
+  })
+  .describe('이미지 업로드용 presigned URL 발급 요청');
+
+export const PresignResponse = zod.void();
+
+/**
+ * 업로드한 이미지를 인물에 연결합니다(KNK-1126). 이름은 `{인물이름}_{접미}` 형식이며 접미는 1~20자 한글·영문·숫자(표정·상황·감정)입니다. 같은 인물 안에서 이름이 겹치면 409, 형식이 어긋나면 400, 인물당 10장을 넘으면 400입니다. 서버가 객체 키가 이 스토리의 업로드 경로 아래인지 확인하고 `HEAD`로 존재·크기·형식을 재검증합니다.
+ * @summary 인물 이미지 연결
+ */
+export const AddCharacterImageParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+  characterId: zod
+    .string()
+    .describe('인물 ID(공개 식별자). 편집 폼 응답의 characters[].id'),
+});
+
+export const addCharacterImageBodyImageNameMin = 0;
+export const addCharacterImageBodyImageNameMax = 120;
+
+export const AddCharacterImageBody = zod
+  .object({
+    objectKey: zod
+      .string()
+      .min(1)
+      .nullable()
+      .describe(
+        'presign으로 받은 객체 키. 이 스토리의 인물 업로드 prefix 아래여야 한다',
+      ),
+    imageName: zod
+      .string()
+      .min(addCharacterImageBodyImageNameMin)
+      .max(addCharacterImageBodyImageNameMax)
+      .nullable()
+      .describe(
+        '`{인물이름}_{접미}` 형식. 접미는 1~20자 한글·영문·숫자(표정·상황·감정)이며 같은 인물 안에서 유일하다',
+      ),
+  })
+  .describe('인물 이미지 연결 요청');
+
+export const AddCharacterImageResponse = zod.void();
 
 /**
  * 선택한 스토리라인과 추가 정보를 AI 서버에 전달해 최종 스토리를 생성하고 저장합니다. 응답으로 받은 id는 클라이언트 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다.
@@ -912,6 +1053,35 @@ export const CreateBody = zod
 export const CreateResponse = zod.void();
 
 /**
+ * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
+ * @summary 회원 탈퇴
+ */
+export const WithdrawResponse = zod.void();
+
+/**
+ * 닉네임과 프로필 이미지를 바꿉니다(KNK-1147). **보낸 필드만 반영**하며 둘 다 없으면 400입니다. 닉네임은 앞뒤 공백을 지운 뒤 2~20자이고 한글·영문·숫자·공백만 쓸 수 있습니다(연속 공백·자모 단독·특수문자·이모지는 400). 유일성은 대소문자와 공백을 무시한 정규화 기준이라 `Story Teller`와 `storyteller`는 같은 닉네임으로 보고 409입니다 — 다만 자기 닉네임의 대소문자·공백만 바꾸는 것은 허용합니다. 프로필 이미지는 프리셋 선택만 지원하며(업로드 없음) 닉네임 변경과 독립입니다. 응답은 `GET /auth/me`와 같은 스키마입니다.
+ * @summary 프로필 수정
+ */
+export const UpdateProfileBody = zod
+  .object({
+    nickname: zod
+      .string()
+      .nullish()
+      .describe(
+        '새 닉네임. 앞뒤 공백을 지운 뒤 2~20자이며 한글·영문·숫자·공백만 쓸 수 있다. 대소문자·공백만 다른 닉네임은 이미 쓰는 것으로 본다(409).',
+      ),
+    profileImagePreset: zod
+      .string()
+      .nullish()
+      .describe(
+        '프로필 이미지 프리셋 키(명사). `GET \/api\/v1\/profile-presets`가 주는 값이며 업로드는 없다.',
+      ),
+  })
+  .describe('프로필 수정 요청(KNK-1147). 둘 중 최소 하나는 있어야 한다');
+
+export const UpdateProfileResponse = zod.unknown();
+
+/**
  * 목록에서 선택한 스토리의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
  * @summary 스토리 상세 조회
  */
@@ -1103,6 +1273,12 @@ export const UpdateStoryBody = zod
       .enum(['PUBLIC', 'PRIVATE'])
       .nullish()
       .describe('공개 범위(PUBLIC · PRIVATE). 생략하면 현재 값을 유지한다.'),
+    thumbnailObjectKey: zod
+      .string()
+      .nullish()
+      .describe(
+        '업로드한 표지의 객체 키(presign 응답의 objectKey). 생략하면 표지를 바꾸지 않는다.',
+      ),
   })
   .describe('스토리 부분 갱신 요청. 보낸 필드만 교체하고 나머지는 유지한다.');
 
@@ -1174,6 +1350,30 @@ export const GetMyChatsQueryParams = zod.object({
 export const GetMyChatsResponse = zod.unknown();
 
 /**
+ * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 latest(기본, 등록 최신순)와 popular(좋아요 많은 순)이며, 다음 페이지는 응답의 nextCursor를 **같은 sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
+ * @summary 공개 스토리 목록 조회
+ */
+export const getPublicStoriesQuerySortDefault = `latest`;
+export const getPublicStoriesQueryLimitDefault = 20;
+
+export const GetPublicStoriesQueryParams = zod.object({
+  sort: zod
+    .string()
+    .default(getPublicStoriesQuerySortDefault)
+    .describe('정렬. latest(기본) 또는 popular'),
+  limit: zod
+    .number()
+    .default(getPublicStoriesQueryLimitDefault)
+    .describe('한 페이지 개수(기본 20, 1~50으로 보정)'),
+  cursor: zod
+    .string()
+    .optional()
+    .describe('이전 응답의 nextCursor. 첫 페이지는 생략합니다.'),
+});
+
+export const GetPublicStoriesResponse = zod.unknown();
+
+/**
  * 수정 폼을 채우기 위한 편집 가능 필드 전체(통글 4필드 포함)를 조회합니다. 인증은 선택이며, 회원 소유 스토리는 소유자만(타인·미인증 403), 소유자 없는 게스트 스토리는 허용합니다. 없는 스토리는 404입니다.
  * @summary 스토리 수정 폼 조회
  */
@@ -1233,6 +1433,12 @@ export const GetChatShareParams = zod.object({
 export const GetChatShareResponse = zod.unknown();
 
 /**
+ * 고를 수 있는 프로필 이미지 전부를 돌려줍니다(KNK-1147). `key`를 프로필 수정 요청의 `profileImagePreset`에 그대로 넣습니다. 순서는 고정이라 요청마다 흔들리지 않습니다.
+ * @summary 프로필 이미지 프리셋 목록
+ */
+export const ListPresetsResponse = zod.unknown();
+
+/**
  *
  *             현재 유효한 이프 수치를 반환합니다. 인증이 필요 없습니다.
  *
@@ -1282,7 +1488,23 @@ export const StatusHeader = zod.object({
 export const StatusResponse = zod.unknown();
 
 /**
- * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
- * @summary 회원 탈퇴
+ * 업로드·생성 표지 URL을 지워 프리셋 표지로 되돌립니다(KNK-1126). 프리셋 키는 건드리지 않으므로 표지가 사라지는 것이 아니라 자동 연결된 프리셋으로 내려갑니다. 표지가 없어도 204입니다(멱등). S3 객체는 지우지 않습니다 — 지난 채팅 카드가 그 URL을 가리킬 수 있습니다.
+ * @summary 표지 삭제
  */
-export const WithdrawResponse = zod.void();
+export const DeleteThumbnailParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+});
+
+export const DeleteThumbnailResponse = zod.void();
+
+/**
+ * 인물 이미지 참조를 지웁니다(KNK-1126). 없어도 204입니다(멱등). **S3 객체는 남깁니다** — 지난 채팅 본문의 이미지 마커가 그 객체를 가리키고 있어 지우면 옛 대화가 깨집니다.
+ * @summary 인물 이미지 삭제
+ */
+export const DeleteCharacterImageParams = zod.object({
+  storyId: zod.string().describe('스토리 ID(공개 식별자)'),
+  characterId: zod.string().describe('인물 ID(공개 식별자)'),
+  imageId: zod.string().describe('이미지 ID(공개 식별자)'),
+});
+
+export const DeleteCharacterImageResponse = zod.void();
