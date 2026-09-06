@@ -135,6 +135,57 @@ test.describe('스토리 좋아요 비주얼', () => {
   }
 });
 
+test.describe('스토리 상세 CTA 배경 비주얼', () => {
+  for (const dark of [false, true]) {
+    test(`최하단 메타 정보와 CTA 배경 연결 (${dark ? '다크' : '라이트'})`, async ({
+      page,
+    }) => {
+      await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+      await mockMemberSession(page);
+
+      if (dark)
+        await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
+
+      await page.route(STORY_DETAIL, (route) =>
+        route.fulfill({
+          json: {
+            ...storyDetail,
+            author: { nickname: '마냑' },
+            isLiked: true,
+            isOwner: false,
+          },
+        }),
+      );
+      await page.goto(APP_PATH.STORY_DETAIL('s1'));
+      await expect(
+        page.getByRole('heading', { name: storyDetail.title, level: 1 }),
+      ).toBeVisible();
+
+      if (dark) await waitForDarkTheme(page);
+
+      await waitForFonts(page);
+      await page.getByRole('main').evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
+
+      const metadata = page
+        .getByText('제작자', { exact: true })
+        .locator('../..');
+      const metadataColor = await metadata.evaluate(
+        (element) => getComputedStyle(element).backgroundColor,
+      );
+
+      await expect(page.getByRole('navigation')).toHaveCSS(
+        'background-color',
+        metadataColor,
+      );
+      await expect(page).toHaveScreenshot(
+        `story-detail-footer${dark ? '-dark' : ''}.png`,
+      );
+    });
+  }
+});
+
 test.describe('스토리 비주얼', () => {
   test.beforeEach(async ({ page }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
