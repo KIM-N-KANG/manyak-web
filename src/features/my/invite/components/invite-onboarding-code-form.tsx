@@ -76,7 +76,7 @@ export function InviteOnboardingCodeForm({
         </Field>
       </FieldGroup>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2">
         <Button
           className="relative w-full"
           type="submit"
@@ -91,8 +91,8 @@ export function InviteOnboardingCodeForm({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="w-full text-foreground-secondary"
+          size="xs"
+          className="w-fit self-center text-foreground-secondary"
           disabled={isBusy}
           onClick={onSkip}>
           닫기

@@ -150,8 +150,8 @@ export function InviteOnboardingSheet() {
             </p>
             <Button
               type="button"
-              size="lg"
-              className="relative w-full"
+              size="xs"
+              className="relative w-fit self-center"
               disabled={isCompleting}
               onClick={() => void complete({ fromRedeem: true })}>
               <LoadingButtonContent

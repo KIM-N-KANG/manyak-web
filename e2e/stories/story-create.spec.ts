@@ -6,6 +6,7 @@ import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usa
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   buildStoryCompletionCreditCostLabel,
+  GENRE_CATEGORY,
   PROTAGONIST_CATEGORY,
   STORY_COMPLETION_CREDIT_COST_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
@@ -160,10 +161,18 @@ test.describe('스토리 생성', () => {
     const nextButton = page.getByRole('button', { name: '다음' });
     const validationError = page.getByText('키워드를 하나 이상 선택해주세요');
     const footer = page.getByRole('navigation').filter({ has: nextButton });
-    const activePanel = page.getByRole('tabpanel');
+    const genrePanel = page.getByRole('tabpanel', {
+      name: GENRE_CATEGORY.label,
+    });
+    const protagonistPanel = page.getByRole('tabpanel', {
+      name: PROTAGONIST_CATEGORY.label,
+    });
+    const supportingCharacterPanel = page.getByRole('tabpanel', {
+      name: SUPPORTING_CHARACTER_CATEGORY.label,
+    });
 
     await expect(nextButton).toBeEnabled();
-    await expect(activePanel).toHaveCSS('padding-bottom', '16px');
+    await expect(genrePanel).toHaveCSS('padding-bottom', '16px');
     await nextButton.click();
     await expect(
       footer.getByText('키워드를 하나 이상 선택해주세요'),
@@ -179,8 +188,8 @@ test.describe('스토리 생성', () => {
     await expect(
       page.getByRole('tab', { name: PROTAGONIST_CATEGORY.label }),
     ).toHaveAttribute('aria-selected', 'true');
-    await expect(activePanel).toHaveCSS('padding-top', '16px');
-    await expect(activePanel).toHaveCSS('padding-bottom', '16px');
+    await expect(protagonistPanel).toHaveCSS('padding-top', '16px');
+    await expect(protagonistPanel).toHaveCSS('padding-bottom', '16px');
 
     await expect(nextButton).toBeEnabled();
     await nextButton.click();
@@ -192,7 +201,7 @@ test.describe('스토리 생성', () => {
     await expect(
       page.getByRole('tab', { name: SUPPORTING_CHARACTER_CATEGORY.label }),
     ).toHaveAttribute('aria-selected', 'true');
-    await expect(activePanel).toHaveCSS('padding-bottom', '16px');
+    await expect(supportingCharacterPanel).toHaveCSS('padding-bottom', '16px');
   });
 
   test('주인공과 주변 인물의 이름이 겹치면 생성 요청을 막는다 (스펙 §4-3-2)', async ({

@@ -54,4 +54,9 @@ export interface UpdateStoryRequest {
    * @nullable
    */
   visibility?: UpdateStoryRequestVisibility;
+  /**
+   * 업로드한 표지의 객체 키(presign 응답의 objectKey). 생략하면 표지를 바꾸지 않는다.
+   * @nullable
+   */
+  thumbnailObjectKey?: string | null;
 }

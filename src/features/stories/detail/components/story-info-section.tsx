@@ -27,6 +27,7 @@ type StoryInfo = {
 type StoryInfoSectionProps = {
   story: StoryInfo;
   titleRef?: Ref<HTMLHeadingElement>;
+  metadataRef?: Ref<HTMLDivElement>;
   startSettingValue: string;
   onStartSettingValueChange: (value: string) => void;
 };
@@ -34,6 +35,7 @@ type StoryInfoSectionProps = {
 export function StoryInfoSection({
   story,
   titleRef,
+  metadataRef,
   startSettingValue,
   onStartSettingValueChange,
 }: StoryInfoSectionProps) {
@@ -80,7 +82,9 @@ export function StoryInfoSection({
       )}
 
       {(authorNickname || story.createdAt) && (
-        <div className="-mx-4 flex flex-col gap-4 bg-muted p-4 text-sm text-foreground-secondary">
+        <div
+          ref={metadataRef}
+          className="-mx-4 flex flex-col gap-4 bg-muted p-4 text-sm text-foreground-secondary">
           {authorNickname && (
             <div className="flex items-center justify-between">
               <span className="font-semibold">제작자</span>

@@ -1,8 +1,6 @@
 # 기본 지침
 
-작업을 시작하기 전에 다음 하네스 레포지토리를 먼저 확인하세요.
-
-- `../knk-harness`
+작업 시작 시 `../knk-harness/AGENTS.md`를 읽으세요. 이후에는 작업과 관련된 문서와 스킬만 확인하세요.
 
 ## 자주 쓰는 명령어
 
@@ -14,9 +12,9 @@ pnpm test:e2e         # Playwright E2E
 pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 필요)
 ```
 
-작업 완료 전 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요 (셋이 합쳐 6초 남짓이므로 작업 단위마다 돌립니다).
+코드·설정 변경을 마친 작업 단위마다 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요. 읽기 전용 검토와 문서만 변경한 작업은 관련 내용·경로·링크를 검증합니다. 통과한 검사는 이후 변경이나 새로운 실패 근거가 없으면 반복하지 않습니다.
 
-E2E는 **커밋 직전에만** 돌립니다. 화면·컴포넌트 코드(`src/app`·`src/features`·`src/components`)를 건드렸다면 커밋 전에 `pnpm test:e2e`를 반드시 통과시키세요 — `pnpm test`는 Vitest만 실행하므로 문구·구조 변경으로 깨진 E2E를 잡지 못합니다. 작업 단위마다 돌릴 필요는 없습니다. 진행 로그가 길어 답답하면 `pnpm test:e2e --reporter=dot`을 쓰세요(소요 시간은 동일).
+전체 E2E의 정기 실행은 **커밋 직전**에 합니다. 화면·컴포넌트 코드(`src/app`·`src/features`·`src/components`)를 변경했다면 커밋 전에 `pnpm test:e2e`를 반드시 통과시키세요. E2E 수정·오류 재현 시에는 커밋 전이 아니어도 필요한 스펙을 실행합니다.
 
 ## API 레이어 (Orval)
 
@@ -28,7 +26,7 @@ E2E는 **커밋 직전에만** 돌립니다. 화면·컴포넌트 코드(`src/ap
   ```
 - 브라우저는 백엔드를 직접 호출하지 않고 프록시 라우트(`src/app/api/[...path]/route.ts`)를 거칩니다. `API_BASE_URL`은 서버 전용 환경 변수이며 클라이언트에 노출하면 안 됩니다.
 - 공통 요청 로직(타임아웃, 에러 캡처, 분석 헤더)은 `src/api/mutator/custom-instance.ts`와 `src/lib/custom-fetch.ts`에 있습니다.
-- 서버(BFF)에서 백엔드를 **직접** 호출해야 할 때(예: NextAuth 콜백처럼 프록시/세션이 성립하기 전 실행되는 서버 코드)는 생성된 훅/함수를 쓸 수 없습니다. 이들은 브라우저 → `/api` 프록시 경유가 전제이기 때문입니다(`custom-instance`가 URL을 상대경로 `/api`로 바꾸고 세션 토큰은 프록시가 주입). 이 경우 `src/lib/auth/backend-client.ts`처럼 `API_BASE_URL` 절대 URL로 직접 `fetch` 하되, **경로 문자열은 하드코딩하지 말고 생성된 URL 빌더**(`get*Url`, 예: `getLoginWithGoogleUrl()`)를 재사용하세요. 그래야 `pnpm api:generate` 재생성만으로 경로가 함께 갱신돼 백엔드 스펙과의 드리프트(누락된 `/api` 접두사 등)를 막습니다.
+- 서버에서 백엔드를 직접 호출해야 할 때는 `API_BASE_URL` 절대 URL로 `fetch` 하되, 경로를 하드코딩하지 말고 생성된 `get*Url()` 빌더를 사용합니다. 생성된 호출 훅/함수는 브라우저 `/api` 프록시를 전제로 하므로 사용하지 않습니다. 구현 예시는 `src/lib/auth/backend-client.ts`를 참고하세요.
 
 ## 관측성 (Amplitude / Sentry)
 
@@ -40,16 +38,16 @@ E2E는 **커밋 직전에만** 돌립니다. 화면·컴포넌트 코드(`src/ap
 
 ## 디렉터리·코드 컨벤션
 
-- 도메인 로직은 `src/features/{도메인}/{라우트}/components|hooks|utils` 구조를 따릅니다 (예: `features/stories/detail/components/story-detail.tsx`). `src/app`의 페이지는 feature 컴포넌트를 감싸는 얇은 서버 컴포넌트로 유지합니다.
+- 도메인 로직은 `src/features/{도메인}/{라우트}/components|hooks|utils` 구조를 따릅니다. `src/app`의 페이지는 feature 컴포넌트를 감싸는 얇은 서버 컴포넌트로 유지합니다.
 - 도메인 폴더의 직속 자식은 "유닛"(라우트 폴더 또는 `_shared`)만 둡니다. `components`/`hooks`/`utils`/`lib` 같은 카테고리 폴더가 라우트 폴더와 같은 층에 뒤섞이지 않게 하세요.
-  - 여러 라우트가 함께 쓰는 공용 코드는 `{도메인}/_shared/{components|hooks|utils}`에 둡니다 (예: `features/stories/_shared/components/story-turn-count.tsx`).
-  - 도메인 간에도 같은 원칙을 적용합니다. 다른 도메인에서 import되는 코드는 소유 도메인의 `_shared`에 두고, 타 도메인의 라우트 유닛 내부(`{도메인}/{라우트}/...`)를 직접 import 하지 마세요. 그래야 라우트 유닛 내부를 그 유닛 전용으로 자유롭게 리팩터링할 수 있습니다.
-  - 도메인 폴더명은 실제 live 라우트 세그먼트와 맞춥니다 (예: `/more` 화면을 담는 도메인은 `features/more`). 도메인 인덱스 페이지(`/{도메인}` 자체) 코드도 의미에 맞는 이름의 유닛으로 둡니다 (예: `stories/list`, `more/menu`).
-  - 라우트가 하나뿐이거나 모든 라우트가 코드를 전부 공유하는 단일 기능 도메인(예: `onboarding`, `legal`)은 `components`/`hooks`/`utils`를 도메인 직속에 평평하게 두어도 됩니다(라우트 폴더와 섞일 일이 없으므로).
+  - 여러 라우트가 함께 쓰는 공용 코드는 `{도메인}/_shared/{components|hooks|utils}`에 둡니다.
+  - 다른 도메인에서 import되는 코드는 소유 도메인의 `_shared`에 둡니다. 타 도메인의 라우트 유닛 내부를 직접 import 하지 마세요.
+  - 도메인 폴더명은 실제 라우트 세그먼트와 맞춥니다. 도메인 인덱스 페이지도 의미에 맞는 유닛으로 둡니다(예: `stories/list`, `more/menu`).
+  - 라우트가 하나뿐이거나 모든 라우트가 코드를 전부 공유하는 단일 기능 도메인은 `components`/`hooks`/`utils`를 도메인 직속에 두어도 됩니다.
 - 주석(JSDoc·인라인)은 '~(이)다' 평서형으로 작성합니다 (예: "…를 반환한다."). 존댓말(~합니다)과 명사형 종결 단편(~보정. / ~무시.)은 쓰지 않되, 첫 줄 명사구 요약(예: "…를 관리하는 훅.")은 허용합니다. `src/api/generated/`는 재생성 대상이므로 예외입니다.
 - 배럴 파일(`index.ts`)을 만들지 않습니다(`src/observability`는 예외). 구체 경로로 직접 import 하세요.
 - 파일명은 kebab-case, named export가 기본입니다. default export는 App Router 규약 파일(page, layout 등)에만 사용합니다.
-- import는 `@/` 별칭(→ `src/`)을 사용하고, 정렬은 ESLint(simple-import-sort)가 강제합니다. 타입 import는 inline `type` 키워드를 사용합니다.
+- import는 `@/` 별칭(→ `src/`)을 사용합니다. 타입 import는 inline `type` 키워드를 사용합니다.
 - 라우트 경로 문자열을 하드코딩하지 말고 `src/constants/app-path.ts`의 `APP_PATH`를 사용하세요.
 - React Compiler를 사용 중이기 때문에 `useMemo`, `useCallback`을 사용하지 마세요.
 - `<form onSubmit>` 핸들러를 작성할 때는 deprecated된 `FormEvent` 대신 `SubmitEvent<HTMLFormElement>`를 사용하세요.
@@ -77,13 +75,12 @@ E2E는 **커밋 직전에만** 돌립니다. 화면·컴포넌트 코드(`src/ap
 ## 테스트
 
 - 단위 테스트: `tests/` 아래에 소스 구조를 미러링해 배치하고 `*.test.ts`로 명명합니다 (예: `tests/features/chats/room/utils/parse-sse-stream.test.ts`). Vitest node 환경이므로 DOM 없는 순수 로직 위주로 작성합니다.
-- E2E 테스트: `e2e/` 아래 `*.spec.ts`. 전체 E2E는 Mobile Chrome(Pixel 5)에서 실행하고, `e2e/smoke/` 스펙은 Desktop Chrome과 Mobile Safari(iPhone 13)에서도 실행합니다. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다.
-- 비주얼 회귀 테스트: `e2e/visual/` 아래 `*-visual.spec.ts`. Mobile Chrome(Pixel 5) 프로젝트에서만 실행하며, 화면의 **안정된 정적 상태만** `toHaveScreenshot()`으로 비교합니다(동작·요청 계약 검증은 일반 E2E 담당, 스트리밍 진행 중 같은 동적 상태 금지). 상대 시간 등 시간 의존 값은 `page.clock.setFixedTime()`으로 고정하세요. 기준 이미지는 Linux 렌더링만 정본이라 로컬에서는 비교를 건너뜁니다(`ignoreSnapshots`). 비교가 없으면 플로우만 돌고 검증이 남지 않으므로 **로컬 `pnpm test:e2e`는 `e2e/visual/`을 아예 제외**하며(CI에서는 포함), 갱신·확인은 `pnpm test:e2e:visual:update`(Docker 필요)로 합니다. UI를 의도적으로 바꾼 PR은 이 명령으로 기준 이미지를 함께 갱신해야 CI가 통과합니다.
-- QA 문서 갱신은 아래 "하네스 문서 동기화"를 따르세요.
+- E2E 테스트: `e2e/` 아래 `*.spec.ts`. 브라우저별 실행 대상은 `playwright.config.ts`를 참고하세요. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다.
+- 비주얼 회귀 테스트: `e2e/visual/` 아래 `*-visual.spec.ts`. 화면의 **안정된 정적 상태만** `toHaveScreenshot()`으로 비교하고, 동작·요청 계약은 일반 E2E로 검증합니다. 시간 의존 값은 `page.clock.setFixedTime()`으로 고정하세요. **로컬 기본 `pnpm test:e2e`는 비주얼 스펙을 제외하므로 비주얼 검증을 하지 않습니다.** UI를 의도적으로 바꾼 PR은 `pnpm test:e2e:visual:update`(Docker 필요)로 Linux 기준 이미지를 함께 갱신하세요.
 
 ## 하네스 문서 동기화
 
-동작을 바꾸는 작업은 코드와 하네스 문서(`../knk-harness/docs/`)를 **같은 작업 단위에서 함께** 갱신합니다. 문서가 정본이라 드리프트가 남으면 다음 작업자가 낡은 서술을 근거로 판단하게 됩니다. 웹 레포와 하네스 레포는 **같은 Jira 키로 각각 브랜치·PR**을 만듭니다.
+동작을 바꾸는 작업은 코드와 하네스 문서(`../knk-harness/docs/`)를 **같은 작업 단위에서 함께** 갱신합니다. 문서가 정본이라 드리프트가 남으면 다음 작업자가 낡은 서술을 근거로 판단하게 됩니다. 브랜치·PR을 생성하는 단계에서는 웹 레포와 하네스 레포에 **같은 Jira 키**를 사용합니다. 이 규칙 자체가 구현 요청의 범위를 PR 생성까지 확장하지는 않습니다. Jira 키가 없으면 임의로 만들지 않고 필요한 단계에서 요청하되, 키와 무관하게 가능한 조사·검토는 진행합니다.
 
 - **QA 문서** (`docs/qa/{도메인}.md`): 화면 동작(상태·문구·흐름)을 바꾸면 해당 도메인 문서의 케이스를 갱신합니다(추가·수정·삭제). E2E 스펙을 추가·변경했다면 대응 케이스의 자동화 컬럼도 갱신합니다.
 - **스펙 문서** (`docs/product-specs/`): 아래 표에서 관련 문서를 찾아 **기능 절을 먼저 grep으로 확인**하고, 구현과 어긋난 서술을 고칩니다. 새 동작이면 절을 추가하고, 결정의 근거(왜 그렇게 했는지)와 Jira 키를 남깁니다.
@@ -100,6 +97,6 @@ E2E는 **커밋 직전에만** 돌립니다. 화면·컴포넌트 코드(`src/ap
 - 화면을 바꾸면 두 문서를 함께 보세요. 플랫폼 무관 계약(무엇을 보여주고 어떻게 동작하는가)은 `3-1-client.md`, 웹이 그 계약을 어떻게 충족하는지(라우트·셸·프록시·저장소)는 `3-2-web-app.md`가 소유합니다.
 - `4-backend.md`·`5-ai-server.md`·`3-3-android-app.md`는 다른 팀원 소유이므로 웹 작업으로 수정하지 않습니다. 웹 변경이 백엔드·AI·앱 계약에 걸리면 문서를 고치지 말고 사용자에게 알리세요.
 - 문서에 걸린 절 참조(`§3-1-3` 등)를 새로 쓸 때는 실제로 존재하는 절인지 확인합니다. 없는 절을 가리키면 링크가 조용히 깨집니다.
-- **사용자에게 보이는 문구(카피)를 바꾸면 상수 정의·E2E 단언·문서 리터럴을 함께 확인하세요.** 문구는 변동값이라 여러 곳에 복제돼 있으면 한 곳만 고쳐도 나머지가 조용히 낡습니다. 정본은 코드 상수(예: `src/constants/site.ts`)이고, 문서는 규칙과 참조를 담습니다 — 스펙에 실제 값을 남길 때는 "현재 값·정본 위치"를 함께 적어 예시임을 드러내고, QA 케이스는 동작을 검증하므로 문자열 대신 스펙 절을 참조합니다.
-- **E2E에서 사용자 문구를 단언할 때는 리터럴 대신 상수를 import 하세요** (`e2e/`에서도 `@/` 별칭이 동작합니다). 리터럴을 쓰면 카피를 다듬을 때마다 테스트가 깨지는데, 그건 회귀가 아니라 잡음입니다.
+- **사용자에게 보이는 문구(카피)를 바꾸면 상수 정의·E2E 단언·문서 리터럴을 함께 확인하세요.** 정본은 코드 상수(예: `src/constants/site.ts`)입니다. 스펙에 실제 값을 적을 때는 "현재 값·정본 위치"를 함께 남기고, QA 케이스는 문자열 대신 스펙 절을 참조합니다.
+- **E2E에서 사용자 문구를 단언할 때는 리터럴 대신 상수를 import 하세요** (`e2e/`에서도 `@/` 별칭이 동작합니다).
 - 스펙 문서 갱신 대상이 없다고 판단했다면 그 사실을 작업 보고에 함께 적어, 확인을 건너뛴 것과 구분되게 하세요.
