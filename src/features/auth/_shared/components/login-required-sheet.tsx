@@ -17,6 +17,7 @@ import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
 import { LoginConsentNotice } from '@/features/auth/_shared/components/login-consent-notice';
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+import { LOGIN_REQUIRED_SHEET_COPY } from '@/features/auth/_shared/constants/login-required';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
   useSocialLogin,
@@ -27,17 +28,20 @@ import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredSheetProps = {
-  trigger: GuestLimitTrigger | null;
+  trigger?: GuestLimitTrigger | null;
+  open?: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
 export function LoginRequiredSheet({
-  trigger,
+  trigger = null,
+  open = trigger !== null,
   onOpenChange,
 }: LoginRequiredSheetProps) {
   const pathname = usePathname();
   const container = useAppFrameContainer();
   const { pendingProvider, startLogin } = useSocialLogin();
+  const copy = trigger ? GUEST_LIMIT_SHEET_COPY : LOGIN_REQUIRED_SHEET_COPY;
 
   useEffect(() => {
     if (trigger) {
@@ -73,7 +77,7 @@ export function LoginRequiredSheet({
 
   return (
     <Drawer
-      open={trigger !== null && container !== null}
+      open={open && container !== null}
       dismissible={pendingProvider === null}
       onOpenChange={handleOpenChange}>
       <DrawerContent
@@ -82,10 +86,10 @@ export function LoginRequiredSheet({
         overlayClassName="absolute">
         <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
           <DrawerTitle className="text-xl leading-snug font-bold whitespace-nowrap">
-            {GUEST_LIMIT_SHEET_COPY.title}
+            {copy.title}
           </DrawerTitle>
           <DrawerDescription className="text-base leading-relaxed">
-            {GUEST_LIMIT_SHEET_COPY.description}
+            {copy.description}
           </DrawerDescription>
         </DrawerHeader>
 

@@ -1,4 +1,6 @@
 import { APP_PATH } from '@/constants/app-path';
+import { LOGIN_REQUIRED_SHEET_COPY } from '@/features/auth/_shared/constants/login-required';
+import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
 
@@ -81,6 +83,57 @@ const tags = [
   { id: 3, name: '용감한', category: 'PROTAGONIST' },
   { id: 4, name: '든든한', category: 'SUPPORTING_CHARACTER' },
 ];
+
+test.describe('스토리 좋아요 비주얼', () => {
+  test('좋아요 로그인 바텀 시트', async ({ page }) => {
+    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.route(STORY_DETAIL, (route) =>
+      route.fulfill({ json: storyDetail }),
+    );
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+    await page
+      .getByRole('button', { name: STORY_LIKE_COPY.like, exact: true })
+      .click();
+    await expect(
+      page.getByRole('dialog', { name: LOGIN_REQUIRED_SHEET_COPY.title }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('story-like-login-sheet.png');
+  });
+
+  for (const dark of [false, true]) {
+    test(`좋아요 선택 상태 (${dark ? '다크' : '라이트'})`, async ({ page }) => {
+      await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+      await mockMemberSession(page);
+
+      if (dark) {
+        await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
+      }
+
+      await page.route(STORY_DETAIL, (route) =>
+        route.fulfill({
+          json: {
+            ...storyDetail,
+            isLiked: true,
+            isOwner: false,
+            likeCount: 1234,
+          },
+        }),
+      );
+      await page.goto(APP_PATH.STORY_DETAIL('s1'));
+      await expect(
+        page.getByRole('button', { name: STORY_LIKE_COPY.unlike }),
+      ).toBeVisible();
+
+      if (dark) await waitForDarkTheme(page);
+
+      await waitForFonts(page);
+      await expect(page).toHaveScreenshot(
+        `story-detail-liked${dark ? '-dark' : ''}.png`,
+      );
+    });
+  }
+});
 
 test.describe('스토리 비주얼', () => {
   test.beforeEach(async ({ page }) => {

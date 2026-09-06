@@ -16,6 +16,7 @@ import {
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
@@ -176,7 +177,8 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                         priority
                         className="object-cover"
                       />
-                      <div className="absolute right-2 bottom-2">
+                      <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                        <StoryLikeCount likeCount={story.likeCount ?? 0} />
                         <StoryTurnCount turnCount={story.turnCount ?? 0} />
                       </div>
                     </AspectRatio>
@@ -194,7 +196,8 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                         className="size-8 text-foreground-tertiary"
                       />
                     </div>
-                    <div className="absolute right-2 bottom-2">
+                    <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                      <StoryLikeCount likeCount={story.likeCount ?? 0} />
                       <StoryTurnCount turnCount={story.turnCount ?? 0} />
                     </div>
                   </AspectRatio>
@@ -213,6 +216,13 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             <StoryDetailCta
               storyId={storyId}
               startSettingId={activeStartSettingId}
+              canLike={
+                sessionStatus !== 'loading' &&
+                (isMember || createdStoryIds !== null) &&
+                !canDelete &&
+                story.isOwner !== true
+              }
+              isLiked={story.isLiked === true}
             />
 
             {thumbnailUrl && (
