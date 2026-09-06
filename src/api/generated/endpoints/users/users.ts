@@ -21,17 +21,247 @@ import type {
 } from '@tanstack/react-query';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import type { ErrorType } from '../../../mutator/custom-instance';
+import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
   ChatSummaryResponse,
   GetMyChatsParams,
   GetMyStoriesParams,
+  MeResponse,
+  ProfilePresetResponse,
   StorySummaryResponse,
+  UpdateProfileRequest,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export type withdrawResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type withdrawResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type withdrawResponseSuccess = withdrawResponse204 & {
+  headers: Headers;
+};
+export type withdrawResponseError = withdrawResponse401 & {
+  headers: Headers;
+};
+
+export type withdrawResponse = withdrawResponseSuccess | withdrawResponseError;
+
+export const getWithdrawUrl = () => {
+  return `/api/v1/users/me`;
+};
+
+/**
+ * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
+ * @summary 회원 탈퇴
+ */
+export const withdraw = async (
+  options?: RequestInit,
+): Promise<withdrawResponse> => {
+  return customInstance<withdrawResponse>(getWithdrawUrl(), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getWithdrawMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof withdraw>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof withdraw>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ['withdraw'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof withdraw>>,
+    void
+  > = () => {
+    return withdraw(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type WithdrawMutationResult = NonNullable<
+  Awaited<ReturnType<typeof withdraw>>
+>;
+
+export type WithdrawMutationError = ErrorType<void>;
+
+/**
+ * @summary 회원 탈퇴
+ */
+export const useWithdraw = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof withdraw>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof withdraw>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getWithdrawMutationOptions(options), queryClient);
+};
+export type updateProfileResponse200 = {
+  data: MeResponse;
+  status: 200;
+};
+
+export type updateProfileResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type updateProfileResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type updateProfileResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type updateProfileResponse409 = {
+  data: void;
+  status: 409;
+};
+
+export type updateProfileResponseSuccess = updateProfileResponse200 & {
+  headers: Headers;
+};
+export type updateProfileResponseError = (
+  | updateProfileResponse400
+  | updateProfileResponse401
+  | updateProfileResponse403
+  | updateProfileResponse409
+) & {
+  headers: Headers;
+};
+
+export type updateProfileResponse =
+  | updateProfileResponseSuccess
+  | updateProfileResponseError;
+
+export const getUpdateProfileUrl = () => {
+  return `/api/v1/users/me`;
+};
+
+/**
+ * 닉네임과 프로필 이미지를 바꿉니다(KNK-1147). **보낸 필드만 반영**하며 둘 다 없으면 400입니다. 닉네임은 앞뒤 공백을 지운 뒤 2~20자이고 한글·영문·숫자·공백만 쓸 수 있습니다(연속 공백·자모 단독·특수문자·이모지는 400). 유일성은 대소문자와 공백을 무시한 정규화 기준이라 `Story Teller`와 `storyteller`는 같은 닉네임으로 보고 409입니다 — 다만 자기 닉네임의 대소문자·공백만 바꾸는 것은 허용합니다. 프로필 이미지는 프리셋 선택만 지원하며(업로드 없음) 닉네임 변경과 독립입니다. 응답은 `GET /auth/me`와 같은 스키마입니다.
+ * @summary 프로필 수정
+ */
+export const updateProfile = async (
+  updateProfileRequest: UpdateProfileRequest,
+  options?: RequestInit,
+): Promise<updateProfileResponse> => {
+  return customInstance<updateProfileResponse>(getUpdateProfileUrl(), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateProfileRequest),
+  });
+};
+
+export const getUpdateProfileMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateProfile>>,
+    TError,
+    { data: BodyType<UpdateProfileRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateProfile>>,
+  TError,
+  { data: BodyType<UpdateProfileRequest> },
+  TContext
+> => {
+  const mutationKey = ['updateProfile'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateProfile>>,
+    { data: BodyType<UpdateProfileRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateProfile>>
+>;
+export type UpdateProfileMutationBody = BodyType<UpdateProfileRequest>;
+export type UpdateProfileMutationError = ErrorType<void>;
+
+/**
+ * @summary 프로필 수정
+ */
+export const useUpdateProfile = <TError = ErrorType<void>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateProfile>>,
+      TError,
+      { data: BodyType<UpdateProfileRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateProfile>>,
+  TError,
+  { data: BodyType<UpdateProfileRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateProfileMutationOptions(options), queryClient);
+};
 export type getMyStoriesResponse200 = {
   data: StorySummaryResponse[];
   status: 200;
@@ -386,103 +616,159 @@ export function useGetMyChats<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type withdrawResponse204 = {
-  data: void;
-  status: 204;
+export type listPresetsResponse200 = {
+  data: ProfilePresetResponse[];
+  status: 200;
 };
 
-export type withdrawResponse401 = {
+export type listPresetsResponse401 = {
   data: void;
   status: 401;
 };
 
-export type withdrawResponseSuccess = withdrawResponse204 & {
+export type listPresetsResponseSuccess = listPresetsResponse200 & {
   headers: Headers;
 };
-export type withdrawResponseError = withdrawResponse401 & {
+export type listPresetsResponseError = listPresetsResponse401 & {
   headers: Headers;
 };
 
-export type withdrawResponse = withdrawResponseSuccess | withdrawResponseError;
+export type listPresetsResponse =
+  | listPresetsResponseSuccess
+  | listPresetsResponseError;
 
-export const getWithdrawUrl = () => {
-  return `/api/v1/users/me`;
+export const getListPresetsUrl = () => {
+  return `/api/v1/profile-presets`;
 };
 
 /**
- * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
- * @summary 회원 탈퇴
+ * 고를 수 있는 프로필 이미지 전부를 돌려줍니다(KNK-1147). `key`를 프로필 수정 요청의 `profileImagePreset`에 그대로 넣습니다. 순서는 고정이라 요청마다 흔들리지 않습니다.
+ * @summary 프로필 이미지 프리셋 목록
  */
-export const withdraw = async (
+export const listPresets = async (
   options?: RequestInit,
-): Promise<withdrawResponse> => {
-  return customInstance<withdrawResponse>(getWithdrawUrl(), {
+): Promise<listPresetsResponse> => {
+  return customInstance<listPresetsResponse>(getListPresetsUrl(), {
     ...options,
-    method: 'DELETE',
+    method: 'GET',
   });
 };
 
-export const getWithdrawMutationOptions = <
-  TError = ErrorType<void>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof withdraw>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof customInstance>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof withdraw>>,
-  TError,
-  void,
-  TContext
-> => {
-  const mutationKey = ['withdraw'];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      'mutationKey' in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof withdraw>>,
-    void
-  > = () => {
-    return withdraw(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
+export const getListPresetsQueryKey = () => {
+  return [`/api/v1/profile-presets`] as const;
 };
 
-export type WithdrawMutationResult = NonNullable<
-  Awaited<ReturnType<typeof withdraw>>
+export const getListPresetsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPresets>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof listPresets>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPresetsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPresets>>> = ({
+    signal,
+  }) => listPresets({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPresets>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListPresetsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPresets>>
 >;
+export type ListPresetsQueryError = ErrorType<void>;
 
-export type WithdrawMutationError = ErrorType<void>;
-
-/**
- * @summary 회원 탈퇴
- */
-export const useWithdraw = <TError = ErrorType<void>, TContext = unknown>(
+export function useListPresets<
+  TData = Awaited<ReturnType<typeof listPresets>>,
+  TError = ErrorType<void>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPresets>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPresets>>,
+          TError,
+          Awaited<ReturnType<typeof listPresets>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPresets<
+  TData = Awaited<ReturnType<typeof listPresets>>,
+  TError = ErrorType<void>,
+>(
   options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof withdraw>>,
-      TError,
-      void,
-      TContext
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPresets>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPresets>>,
+          TError,
+          Awaited<ReturnType<typeof listPresets>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPresets<
+  TData = Awaited<ReturnType<typeof listPresets>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPresets>>, TError, TData>
     >;
     request?: SecondParameter<typeof customInstance>;
   },
   queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof withdraw>>,
-  TError,
-  void,
-  TContext
-> => {
-  return useMutation(getWithdrawMutationOptions(options), queryClient);
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
 };
+/**
+ * @summary 프로필 이미지 프리셋 목록
+ */
+
+export function useListPresets<
+  TData = Awaited<ReturnType<typeof listPresets>>,
+  TError = ErrorType<void>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPresets>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListPresetsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

@@ -5,6 +5,8 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { StoryEditCharacterResponse } from './storyEditCharacterResponse';
+import type { StoryEditFormResponseThumbnailModerationStatus } from './storyEditFormResponseThumbnailModerationStatus';
 import type { StoryEditFormResponseVisibility } from './storyEditFormResponseVisibility';
 import type { StoryEditSettingsResponse } from './storyEditSettingsResponse';
 import type { StoryMainEventResponse } from './storyMainEventResponse';
@@ -35,4 +37,13 @@ export interface StoryEditFormResponse {
   mainEvents?: StoryMainEventResponse[];
   /** 공개 범위(PUBLIC · PRIVATE) */
   visibility?: StoryEditFormResponseVisibility;
+  /**
+   * 현재 표지 URL(업로드·생성 표지 우선, 없으면 프리셋 조합). 표지가 없으면 null
+   * @nullable
+   */
+  thumbnailUrl?: string | null;
+  /** 표지 검수 상태(APPROVED · PENDING · REJECTED) */
+  thumbnailModerationStatus?: StoryEditFormResponseThumbnailModerationStatus;
+  /** 인물과 인물별 이미지 목록(KNK-1126). 인물이 없으면 빈 배열 */
+  characters?: StoryEditCharacterResponse[];
 }
