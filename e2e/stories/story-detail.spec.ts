@@ -469,6 +469,14 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
     await expect(sheet.getByText(STORY_REPORT_COPY.description)).toBeVisible();
     await expect(submitButton).toBeDisabled();
 
+    const closeButton = sheet.getByRole('button', {
+      name: STORY_REPORT_COPY.close,
+    });
+
+    await expect(closeButton).toHaveCSS('height', '24px');
+    await expect(closeButton).toHaveCSS('align-self', 'center');
+    await expect(closeButton.locator('..')).toHaveCSS('row-gap', '4px');
+
     await sheet.getByRole('radio', { name: '부적절한 내용' }).check();
     await expect(submitButton).toBeEnabled();
     await sheet

@@ -540,6 +540,13 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
       dialog.getByLabel('초대 코드', { exact: true }),
     ).not.toBeFocused();
     await expect(dialog.getByRole('button', { name: '닫기' })).toBeVisible();
+
+    const closeButton = dialog.getByRole('button', { name: '닫기' });
+
+    await expect(closeButton).toHaveCSS('height', '24px');
+    await expect(closeButton).toHaveCSS('align-self', 'center');
+    await expect(closeButton.locator('..')).toHaveCSS('row-gap', '8px');
+
     await expect(
       dialog.getByRole('button', { name: '등록하기' }),
     ).toBeVisible();
@@ -670,6 +677,15 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
       page.getByText(INVITE_REWARD_COPY.onboardingCloseFailed),
     ).toBeVisible();
     await expect(page.getByRole('button', { name: '닫기' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '닫기' })).toHaveCSS(
+      'height',
+      '24px',
+    );
+    await expect(page.getByRole('button', { name: '닫기' })).toHaveCSS(
+      'align-self',
+      'center',
+    );
+
     await expect(page.getByText('창을 닫지 못했어요')).toHaveCount(0);
   });
 
