@@ -36,7 +36,7 @@ export function MainHeader() {
           href={APP_PATH.LOGIN}
           className={cn(
             'ml-auto',
-            buttonVariants({ variant: 'secondary', size: 'sm' }),
+            buttonVariants({ variant: 'secondary', size: 'default' }),
           )}
           onClick={(event) => {
             track('client_storyList_loginButton_clicked');
