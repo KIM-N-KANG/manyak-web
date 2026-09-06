@@ -62,7 +62,7 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
 
   await expect(like).toHaveAttribute('aria-pressed', 'false');
   await expect(like).toHaveCSS('width', '48px');
-  await expect(like.locator('..')).toHaveCSS('column-gap', '4px');
+  await expect(like.locator('..')).toHaveCSS('column-gap', '16px');
   await like.click();
   await expect(
     page.getByRole('button', { name: STORY_LIKE_COPY.unlike }),

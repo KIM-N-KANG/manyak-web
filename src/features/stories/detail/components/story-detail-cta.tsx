@@ -38,7 +38,7 @@ export function StoryDetailCta({
   return (
     <>
       <nav className="shrink-0 bg-inherit px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <div className="flex w-full items-center gap-1">
+        <div className="flex w-full items-center gap-4">
           {canLike && (
             <Button
               type="button"
