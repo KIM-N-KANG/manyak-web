@@ -2,7 +2,7 @@
 
 - 상태: 기존 하네스 전환안을 이관한 초안. 구현 착수 전 검토 필요.
 - 이관: KNK-1236. 기능 구현 티켓·일정은 미배정이며 이 티켓으로 제품 코드를 변경하지 않습니다.
-- 현재 동작: [웹 제작 계약](../../../../knk-harness/docs/product-specs/3-2-web-spec.md#웹-제작-흐름). 변경 목표: [공통 계약](../../../../knk-harness/docs/product-specs/3-1-client-spec.md#제작-카드와-다중-완성-진행), [C-004](../../../../knk-harness/docs/product-specs/3-1-1-client-adr.md#c-004).
+- 현재 동작: [웹 제작 계약](../../../../knk-harness/docs/product-specs/3-3-web-spec.md#웹-제작-흐름). 변경 목표: [공통 계약](../../../../knk-harness/docs/product-specs/3-1-client-spec.md#제작-카드와-다중-완성-진행), [C-004](../../../../knk-harness/docs/product-specs/3-2-client-adr.md#c-004).
 
 ## 승인된 변경 목표와 적용 조건
 
