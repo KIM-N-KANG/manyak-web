@@ -10,7 +10,12 @@
 
 # testing
 /coverage
-/docs
+/docs/*
+!/docs/superpowers/
+/docs/superpowers/*
+!/docs/superpowers/plans/
+/docs/superpowers/plans/*
+!/docs/superpowers/plans/2026-09-09-studio-creation-cards.md
 
 # next.js
 /.next/
