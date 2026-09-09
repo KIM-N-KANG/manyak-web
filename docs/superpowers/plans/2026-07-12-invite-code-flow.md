@@ -50,10 +50,10 @@
 - `tests/lib/auth/backend-session.test.ts`: assert new-user propagation and remove cookie cases.
 - `e2e/fixtures/auth.ts`: stateful pending-session mock.
 - `e2e/my/invite.spec.ts`: code sharing, redemption, errors, and onboarding.
-- `knk-harness/docs/product-specs/0-glossary.md`: inviter-only monthly cap wording.
-- `knk-harness/docs/product-specs/1-background.md`: inviter-only monthly cap wording.
-- `knk-harness/docs/product-specs/4-backend.md`: acceptance wording.
-- `knk-harness/docs/product-specs/6-analytics.md`: analytics description wording.
+- `knk-harness/docs/spec/0-glossary.md`: inviter-only monthly cap wording.
+- `knk-harness/docs/spec/1-background.md`: inviter-only monthly cap wording.
+- `knk-harness/docs/spec/4-backend-server-spec.md`: acceptance wording.
+- `knk-harness/docs/spec/6-analytics.md`: analytics description wording.
 
 ### Delete
 
@@ -989,25 +989,25 @@ git commit -m "[KNK-566] Feat: 신규 가입 초대 코드 다이얼로그 추�
 
 **Files:**
 
-- Modify in `knk-harness`: `docs/product-specs/0-glossary.md`
-- Modify in `knk-harness`: `docs/product-specs/1-background.md`
-- Modify in `knk-harness`: `docs/product-specs/4-backend.md`
-- Modify in `knk-harness`: `docs/product-specs/6-analytics.md`
+- Modify in `knk-harness`: `docs/spec/0-glossary.md`
+- Modify in `knk-harness`: `docs/spec/1-background.md`
+- Modify in `knk-harness`: `docs/spec/4-backend-server-spec.md`
+- Modify in `knk-harness`: `docs/spec/6-analytics.md`
 
 **Interfaces:** None. This task makes the written policy match the already approved inviter-only cap.
 
 - [ ] **Step 1: Replace ambiguous monthly-cap wording**
 
-Use wording that says the cap applies to rewards a user earns when other members submit that user's code. Do not say all invite-reward recipients have a monthly cap. Keep the independent 500-credit submitter success rule in `4-backend.md` acceptance criteria.
+Use wording that says the cap applies to rewards a user earns when other members submit that user's code. Do not say all invite-reward recipients have a monthly cap. Keep the independent 500-credit submitter success rule in `spec/4-backend-server-spec.md` acceptance criteria.
 
 Apply these exact semantic replacements:
 
 ```text
-0-glossary.md 적립: 초대자 보상은 다른 회원이 내 코드를 입력한 건에 대해 KST 월 10회까지만 적립한다.
-0-glossary.md 초대 코드: 계정당 평생 1회 입력, 다른 회원이 내 코드를 입력해 내가 받는 초대자 보상은 KST 월 10회 상한.
-1-background.md: 회원가입 500 · 초대 양쪽 500(초대자 월 10회) · 출석체크 250.
-4-backend.md 검수: 초대자의 KST 월 수령 횟수가 10회를 넘으면 초대자 적립만 건너뛰고 입력자는 500을 적립한다.
-6-analytics.md: 가입 500 · 초대 500(초대자 월 10회) · 출석 250.
+spec/0-glossary.md 적립: 초대자 보상은 다른 회원이 내 코드를 입력한 건에 대해 KST 월 10회까지만 적립한다.
+spec/0-glossary.md 초대 코드: 계정당 평생 1회 입력, 다른 회원이 내 코드를 입력해 내가 받는 초대자 보상은 KST 월 10회 상한.
+spec/1-background.md: 회원가입 500 · 초대 양쪽 500(초대자 월 10회) · 출석체크 250.
+spec/4-backend-server-spec.md 검수: 초대자의 KST 월 수령 횟수가 10회를 넘으면 초대자 적립만 건너뛰고 입력자는 500을 적립한다.
+spec/6-analytics.md: 가입 500 · 초대 500(초대자 월 10회) · 출석 250.
 ```
 
 - [ ] **Step 2: Verify and commit the harness documentation**
@@ -1015,7 +1015,7 @@ Apply these exact semantic replacements:
 Run in `knk-harness`:
 
 ```bash
-rg -n "보상 수령 계정별|초대 500, 계정별 월 10회" docs/product-specs
+rg -n "보상 수령 계정별|초대 500, 계정별 월 10회" docs/spec
 git diff --check
 ```
 

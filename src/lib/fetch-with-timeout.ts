@@ -1,4 +1,4 @@
-/** 백엔드의 최장 동기 요청 예산(스토리 컴파일 180초 — 4-backend.md의 AI 호출 타임아웃 표). */
+/** 백엔드의 최장 동기 요청 예산(스토리 컴파일 180초 — spec/4-backend-server-spec.md의 AI 호출 타임아웃 표). */
 const BACKEND_BUDGET_MS = 180 * 1000;
 
 /**
