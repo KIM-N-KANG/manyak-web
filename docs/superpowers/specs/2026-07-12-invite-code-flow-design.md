@@ -14,7 +14,7 @@
 
 ## 정본과 확정 정책
 
-제품 계약은 `knk-harness/docs/product-specs/4-backend.md`의 크레딧 계약과
+제품 계약은 `knk-harness/docs/spec/4-backend-server-spec.md`의 크레딧 계약과
 `3-frontend.md`의 FE-SCREEN-008을 따릅니다. 대화에서 확정한 항목은 문서의 모호한
 표현보다 우선합니다.
 

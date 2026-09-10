@@ -4,6 +4,8 @@ import type { NextConfig } from 'next';
 import { APP_PATH } from './src/constants/app-path';
 
 const nextConfig: NextConfig = {
+  // E2E에서는 개발 도구 버튼이 제품 버튼을 덮어 클릭을 막지 않도록 숨긴다.
+  devIndicators: process.env.E2E === '1' ? false : undefined,
   // Vercel 배포 여부를 클라이언트 번들에서도 읽을 수 있게 빌드 시점에 인라인한다.
   // Sentry 게이팅이 로컬 프로덕션 빌드(pnpm build && pnpm start)를 배포와 구분하는 데 쓴다.
   // 대시보드의 시스템 환경 변수 노출 설정에 의존하지 않도록 직접 주입한다.
