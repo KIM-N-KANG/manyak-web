@@ -68,8 +68,8 @@ describe('법적 문서 콘텐츠', () => {
 
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
-    expect(privacyContent.effectiveDate).toBe('2026-09-01');
-    expect(privacyContent.version).toBe('v1.3');
+    expect(privacyContent.effectiveDate).toBe('2026-09-18');
+    expect(privacyContent.version).toBe('v1.4');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 
@@ -86,12 +86,13 @@ describe('법적 문서 콘텐츠', () => {
       '10. 개인정보의 안전성 확보 조치',
       '11. 쿠키·브라우저 저장소와 앱 단말 저장',
       '12. 행태정보의 수집 및 맞춤형 광고',
-      '13. AI 처리와 평가 데이터 활용',
-      '14. 만 14세 미만 아동의 개인정보',
-      '15. 자동화된 결정에 관한 사항',
-      '16. 개인정보 보호책임자와 열람청구 접수',
-      '17. 권익침해 구제기관',
-      '18. 개인정보 처리방침의 변경',
+      '13. 광고성 정보의 수신 동의 (선택)',
+      '14. AI 처리와 평가 데이터 활용',
+      '15. 만 14세 미만 아동의 개인정보',
+      '16. 자동화된 결정에 관한 사항',
+      '17. 개인정보 보호책임자와 열람청구 접수',
+      '18. 권익침해 구제기관',
+      '19. 개인정보 처리방침의 변경',
     ]) {
       expect(headings).toContain(required);
     }
@@ -112,6 +113,19 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain(
       '광고 ID, 연락처, 위치, 카메라·마이크 권한을 요청하지 않습니다',
     );
+  });
+
+  it('개인정보 처리방침은 앱 푸시와 광고성 정보 수신 동의를 별도로 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain('푸시 등록 토큰');
+    expect(text).toContain('광고성 정보 수신 동의 여부와 동의 일시');
+    expect(text).toContain('명시적 사전 동의');
+    expect(text).toContain('기기의 알림 권한 허용과 별개');
+    expect(text).toContain('오후 9시부터 다음 날 오전 8시');
+    expect(text).toContain('동의를 철회하거나 회원을 탈퇴할 때까지');
+    expect(text).toContain('전송자, 의사 표시 일시, 처리 내용');
+    expect(text).toContain('동의일부터 2년마다');
   });
 
   it('개인정보 처리방침은 삭제·피드백·로그·백업 보유기간을 구체적으로 고지한다', () => {
