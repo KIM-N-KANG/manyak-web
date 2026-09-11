@@ -12,6 +12,9 @@ import {
   test,
 } from '../fixtures/test';
 
+// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. UI를 되살릴 때 아래 skip을 제거한다.
+test.skip(true, 'KNK-1260: 좋아요 UI 임시 비노출');
+
 const DETAIL = '**/api/v1/stories/s1';
 const LIKE = '**/api/v1/stories/s1/like';
 const story = {
