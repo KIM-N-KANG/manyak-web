@@ -103,7 +103,12 @@ test.describe('약관·개인정보 처리방침', () => {
     ).toBeVisible();
     await expect(
       privacyPage.getByRole('heading', {
-        name: '13. AI 처리와 평가 데이터 활용',
+        name: '13. 광고성 정보의 수신 동의 (선택)',
+      }),
+    ).toBeVisible();
+    await expect(
+      privacyPage.getByRole('heading', {
+        name: '14. AI 처리와 평가 데이터 활용',
       }),
     ).toBeVisible();
   });
