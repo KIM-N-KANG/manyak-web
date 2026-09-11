@@ -89,7 +89,7 @@ test.describe('약관·개인정보 처리방침', () => {
         .getByRole('link', { name: '홈으로 이동' }),
     ).toBeVisible();
     await expect(
-      privacyPage.getByText('시행일 2026-09-01 · v1.3'),
+      privacyPage.getByText('시행일 2026-09-18 · v1.4'),
     ).toBeVisible();
     await expect(
       privacyPage.getByRole('heading', {
