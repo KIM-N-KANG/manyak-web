@@ -28,6 +28,7 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   type GuestUsageAction,
@@ -37,12 +38,17 @@ import {
 } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import {
+  resolveErrorSettlement,
+  resolveSuccessSettlement,
+} from '@/features/stories/_shared/utils/creation-request-recovery';
 import type {
   DraftCreationRecord,
   PendingCreationRequest,
   StoryDraftRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  demotePendingCompletionToDraft,
   loadPendingCreationRequest,
   markPendingStoryCreated,
   replacePendingCreationRequest,
@@ -59,10 +65,6 @@ import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateBackDialogVariant } from '../components/header/story-create-back-dialog';
 import type { StoryCreateStep } from '../types';
-import {
-  resolveErrorSettlement,
-  resolveSuccessSettlement,
-} from '../utils/creation-request-recovery';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedKeywordGroups } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
@@ -153,6 +155,13 @@ export function useStoryCreateFunnel() {
       isMountedRef.current = false;
     };
   }, []);
+
+  // 완성 제출 뒤 제작 탭으로 나가기로 한 뒤에는 언마운트 전에 도착한 응답도 이탈 후
+  // 도착으로 다룬다. 목·빠른 응답이 라우터 전환보다 먼저 오면 채팅 화면으로 끌려간다.
+  const hasLeftForCreateRef = useRef(false);
+  const [hasLeftForCreate, setHasLeftForCreate] = useState(false);
+  const isFunnelActive = () =>
+    isMountedRef.current && !hasLeftForCreateRef.current;
 
   const simpleStoryTags = useGetSimpleStoryTags();
 
@@ -290,6 +299,11 @@ export function useStoryCreateFunnel() {
           return;
         }
 
+        // 스토리라인 레코드는 초안으로 강등할 대상이 아니므로 재진입 복구에 맡긴다.
+        if (settlement === 'downgrade-to-draft') {
+          return;
+        }
+
         // 실패 재시도에 재사용한 requestId가 서버의 기존 PENDING과 겹친 409는
         // 실패가 아니라 진행 중 신호다. 레코드를 유지해 복구 폴링으로 합류한다.
         if (
@@ -386,7 +400,7 @@ export function useStoryCreateFunnel() {
       onSuccess: (response, variables) => {
         // 이탈 후 도착한 응답은 레코드를 남겨 재진입 복구 조회가 완성 결과와
         // 채팅 생성까지 이어가게 한다(언마운트 상태의 강제 이동·토스트 방지).
-        if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
+        if (resolveSuccessSettlement(isFunnelActive()) !== 'apply') {
           return;
         }
 
@@ -431,9 +445,26 @@ export function useStoryCreateFunnel() {
       },
       onError: (error, variables) => {
         // 이탈 후 도착한 오류는 레코드를 남겨 재진입 복구 조회에 맡긴다.
-        const settlement = resolveErrorSettlement(isMountedRef.current, error);
+        const settlement = resolveErrorSettlement(isFunnelActive(), error);
 
         if (settlement === 'defer-to-recovery') {
+          return;
+        }
+
+        // 제작 탭으로 돌아간 뒤 확정된 실패는 카드를 초안으로 되돌리고 토스트로만 알린다.
+        if (settlement === 'downgrade-to-draft') {
+          demotePendingCompletionToDraft(variables.data.requestId);
+
+          const reason = resolvePaymentRequiredReason(error, sessionStatus);
+
+          if (reason === 'guest-trial-limit') {
+            toast.error(GUEST_LIMIT_SHEET_COPY.title);
+          } else if (reason === 'insufficient-credit') {
+            showCreditShortageToast('story_create');
+          } else {
+            toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+          }
+
           return;
         }
 
@@ -491,6 +522,7 @@ export function useStoryCreateFunnel() {
     // 원 생성 요청이 진행 중이면 원 응답을 우선하고, 끝난 뒤에도 레코드가 남아
     // 있을 때(재진입·응답 유실)만 복구 조회를 시작한다.
     suspended:
+      hasLeftForCreate ||
       generateStorylines.isPending ||
       createStory.isPending ||
       createChat.isPending ||
@@ -932,7 +964,6 @@ export function useStoryCreateFunnel() {
     track('client_storyCreate_storyCompletion_requested', {
       creation_id: String(simpleCreationId),
     });
-    setStep('complete');
 
     const payload = {
       simpleCreationId: simpleCreationId,
@@ -963,10 +994,12 @@ export function useStoryCreateFunnel() {
 
     // 재진입 복원에 필요한 퍼널 컨텍스트가 온전할 때만 복구 레코드를 저장한다.
     // (완료 조건상 이 시점에 항상 존재하지만 타입 좁히기를 겸한다.)
+    let saved = false;
+
     if (generationRequest !== null && generationResult !== null) {
       draftAutosave.cancel();
 
-      const saved = savePendingCreationRequest({
+      saved = savePendingCreationRequest({
         stage: 'STORY_COMPLETION',
         requestId: request.requestId,
         generationRequest,
@@ -983,6 +1016,18 @@ export function useStoryCreateFunnel() {
     }
 
     createStory.mutate({ data: request });
+
+    // 복구 레코드가 있으면 응답을 기다리지 않고 제작 탭으로 돌아간다(앱 패리티).
+    // 결과는 제작 탭의 완성 중 카드에서 재진입해 복구 조회로 되찾는다. 레코드를
+    // 저장하지 못했으면 되찾을 길이 없으므로 퍼널의 완성 로딩에서 응답을 기다린다.
+    // 제작 탭으로 나가는 경로에서는 완성 로딩 화면을 한 프레임도 그리지 않는다.
+    if (saved) {
+      hasLeftForCreateRef.current = true;
+      setHasLeftForCreate(true);
+      exitToCreate();
+    } else {
+      setStep('complete');
+    }
   };
 
   /** 예약된 편집을 즉시 저장한 뒤 제작 탭으로 나간다. */

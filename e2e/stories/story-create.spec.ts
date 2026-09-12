@@ -2,7 +2,7 @@ import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
-import { GUEST_USAGE_STORAGE_KEY } from '@/features/auth/_shared/utils/guest-usage-storage';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   buildStoryCompletionCreditCostLabel,
@@ -11,28 +11,33 @@ import {
   STORY_COMPLETION_CREDIT_COST_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
   skipChatTour,
+  skipOnboarding,
   test,
 } from '../fixtures/test';
 
-// 스토리 완성 후 도착하는 채팅 화면에서 안내 투어가 뜨지 않게 한다.
+// 완성 제출 뒤 돌아오는 제작 탭의 온보딩 게이트와 채팅 화면의 안내 투어가 뜨지 않게 한다.
 test.beforeEach(async ({ page }) => {
+  await skipOnboarding(page);
   await skipChatTour(page);
 });
 
 // 스토리 생성 4단계 funnel(/studio/story/simple, (story) 레이아웃이라 온보딩 게이팅 없음).
 // API 순서: GET /stories/simple/tags → POST /stories/simple/storylines
-//           → POST /stories/simple → POST /chats → /chats/{id} 이동
+//           → POST /stories/simple(제출 직후 /studio 복귀) → 완성 중 카드가 5초마다
+//           GET /creation-requests/{id} → 완성되면 레코드 제거·목록 카드로 전환(채팅 자동 생성 없음)
 // 각 URL이 명확히 달라 글롭 패턴이 겹치지 않는다(/simple 은 /simple/tags·/simple/storylines 와 별개).
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 const CREATE_STORY = '**/api/v1/stories/simple';
 const CREATION_REQUEST = '**/api/v1/stories/simple/creation-requests/*';
 const CREATE_CHAT = '**/api/v1/chats';
+const STORIES_BATCH = '**/api/v1/stories/batch';
 const LEGACY_STORY_CREATE_PATH = '/stories/new';
 
 const tags = [
@@ -302,9 +307,44 @@ test.describe('스토리 생성', () => {
     expect(storylineRequestCount).toBe(1);
   });
 
-  test('키워드 → 스토리라인 → 추가정보 → 완성하면 채팅 화면으로 이동한다 (US-3)', async ({
+  test('키워드 → 스토리라인 → 추가정보 → 완성하면 제작 탭으로 돌아오고 완성 중 카드가 목록 카드로 바뀐다 (US-3)', async ({
     page,
   }) => {
+    let batchRequestCount = 0;
+
+    await page.route(CREATION_REQUEST, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          stage: 'STORY_COMPLETION',
+          status: 'COMPLETED',
+          result: { id: 'story-new', title: '새 스토리', genres: ['판타지'] },
+        }),
+      });
+    });
+    await page.route(STORIES_BATCH, async (route) => {
+      batchRequestCount += 1;
+
+      const { storyIds } = route.request().postDataJSON() as {
+        storyIds: string[];
+      };
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          storyIds.map((id) => ({
+            id,
+            title: '새 스토리',
+            oneLineIntro: '완성된 스토리',
+            genres: ['판타지'],
+            turnCount: 0,
+            createdAt: new Date().toISOString(),
+          })),
+        ),
+      });
+    });
     await page.route(TAGS, async (route) => {
       await route.fulfill({
         status: 200,
@@ -330,12 +370,12 @@ test.describe('스토리 생성', () => {
         }),
       });
     });
+
+    let chatRequestCount = 0;
+
     await page.route(CREATE_CHAT, async (route) => {
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({ id: 'chat-new', storyId: 'story-new' }),
-      });
+      chatRequestCount += 1;
+      await route.fulfill({ status: 500, body: '' });
     });
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
@@ -363,11 +403,28 @@ test.describe('스토리 생성', () => {
     ).toBeVisible();
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    // Step 4: 완료 후 채팅 화면 이동
-    await expect(page).toHaveURL(/\/chats\/chat-new$/);
+    // Step 4: 제출 직후 제작 탭으로 복귀. 완성 조회가 끝나면 완성 중 카드가 사라지고
+    // 게스트 서재에 실린 새 스토리 카드가 같은 자리에 나타난다. 채팅은 만들지 않는다.
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(
+      page.getByRole('link', { name: '새 스토리 상세 보기' }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.completingTitle),
+    ).toBeHidden();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => localStorage.getItem(key),
+          PENDING_CREATION_REQUEST_STORAGE_KEY,
+        ),
+      )
+      .toBeNull();
+    expect(batchRequestCount).toBeGreaterThan(0);
+    expect(chatRequestCount).toBe(0);
   });
 
-  test('스토리 완성 실패 후 추가 정보 입력값과 추천 선택을 유지한다', async ({
+  test('스토리 완성 실패는 제작 탭에서 토스트로 알리고 초안 카드로 되돌아가 입력을 유지한다', async ({
     page,
   }) => {
     await page.route(TAGS, async (route) => {
@@ -414,7 +471,17 @@ test.describe('스토리 생성', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_COMPLETE_FAILED),
+    ).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
@@ -528,139 +595,6 @@ test.describe('스토리 생성', () => {
     await expect(secondInput).toBeFocused();
   });
 
-  test('채팅 생성 실패 재시도는 스토리를 중복 완성하지 않고 채팅만 다시 만든다', async ({
-    page,
-  }) => {
-    let storyRequestCount = 0;
-    let chatRequestCount = 0;
-
-    await page.route(CREATE_STORY, async (route) => {
-      storyRequestCount += 1;
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'story-chat-retry',
-          title: '채팅 재시도 스토리',
-          genres: ['판타지'],
-        }),
-      });
-    });
-    await page.route(CREATE_CHAT, async (route) => {
-      chatRequestCount += 1;
-
-      if (chatRequestCount === 1) {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({ message: 'failed to create chat' }),
-        });
-
-        return;
-      }
-
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'chat-retried',
-          storyId: 'story-chat-retry',
-        }),
-      });
-    });
-    await reachAdditionalInfo(page);
-
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
-    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
-
-    await expect(page).toHaveURL(/\/chats\/chat-retried$/);
-    expect(storyRequestCount).toBe(1);
-    expect(chatRequestCount).toBe(2);
-  });
-
-  test('채팅 생성 실패 후 새로고침 복구도 스토리 성공을 중복 적용하지 않는다', async ({
-    page,
-  }) => {
-    let storyRequestCount = 0;
-    let chatRequestCount = 0;
-
-    await page.route(CREATE_STORY, async (route) => {
-      storyRequestCount += 1;
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'story-chat-refresh',
-          title: '새로고침 채팅 재시도 스토리',
-          genres: ['판타지'],
-        }),
-      });
-    });
-    await page.route(CREATION_REQUEST, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          stage: 'STORY_COMPLETION',
-          status: 'COMPLETED',
-          result: {
-            id: 'story-chat-refresh',
-            title: '새로고침 채팅 재시도 스토리',
-            genres: ['판타지'],
-          },
-        }),
-      });
-    });
-    await page.route(CREATE_CHAT, async (route) => {
-      chatRequestCount += 1;
-      await route.fulfill({
-        status: chatRequestCount === 1 ? 500 : 201,
-        contentType: 'application/json',
-        body: JSON.stringify(
-          chatRequestCount === 1
-            ? { message: 'failed to create chat' }
-            : {
-                id: 'chat-refresh-retried',
-                storyId: 'story-chat-refresh',
-              },
-        ),
-      });
-    });
-    await reachAdditionalInfo(page);
-
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
-    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
-
-    const usageAfterStorySuccess = await page.evaluate(
-      (key) => localStorage.getItem(key),
-      GUEST_USAGE_STORAGE_KEY,
-    );
-
-    await expect
-      .poll(() =>
-        page.evaluate(
-          (key) => localStorage.getItem(key),
-          PENDING_CREATION_REQUEST_STORAGE_KEY,
-        ),
-      )
-      .toContain('"createdStoryId":"story-chat-refresh"');
-
-    await page.reload();
-
-    await expect(page).toHaveURL(/\/chats\/chat-refresh-retried$/, {
-      timeout: 10000,
-    });
-    expect(storyRequestCount).toBe(1);
-    expect(chatRequestCount).toBe(2);
-    expect(
-      await page.evaluate(
-        (key) => localStorage.getItem(key),
-        GUEST_USAGE_STORAGE_KEY,
-      ),
-    ).toBe(usageAfterStorySuccess);
-  });
-
   test('같은 완성 요청의 409는 실패로 끝내지 않고 저장한 requestId로 복구한다', async ({
     page,
   }) => {
@@ -691,25 +625,45 @@ test.describe('스토리 생성', () => {
         }),
       });
     });
-    await page.route(CREATE_CHAT, async (route) => {
+    await page.route(STORIES_BATCH, async (route) => {
+      const { storyIds } = route.request().postDataJSON() as {
+        storyIds: string[];
+      };
+
       await route.fulfill({
-        status: 201,
+        status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'chat-conflict-recovered',
-          storyId: 'story-conflict-recovered',
-        }),
+        body: JSON.stringify(
+          storyIds.map((id) => ({
+            id,
+            title: '409 복구 스토리',
+            oneLineIntro: '',
+            genres: ['판타지'],
+            turnCount: 0,
+            createdAt: new Date().toISOString(),
+          })),
+        ),
       });
     });
     await reachAdditionalInfo(page);
 
+    // 첫 제출: 제작 탭 복귀 뒤 500이 도착하면 초안 카드로 되돌린다.
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
-    await expect(page.getByText('스토리를 완성하지 못했어요')).toBeVisible();
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_COMPLETE_FAILED),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
 
-    await expect(page).toHaveURL(/\/chats\/chat-conflict-recovered$/, {
-      timeout: 10000,
-    });
+    // 같은 입력의 재제출은 requestId를 재사용하고, 409는 완성 중 카드로 남아 조회로 결과를 되찾는다.
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    await expect(
+      page.getByRole('link', { name: '409 복구 스토리 상세 보기' }),
+    ).toBeVisible({ timeout: 10000 });
     expect(completionRequestIds).toHaveLength(2);
     expect(completionRequestIds[1]).toBe(completionRequestIds[0]);
   });
