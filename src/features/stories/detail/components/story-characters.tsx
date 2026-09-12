@@ -1,11 +1,15 @@
+'use client';
+
 import type { StoryCharacterResponse } from '@/api/generated/models';
 import { ChatCharacterImage } from '@/features/chats/_shared/components/chat-character-image';
+import { track } from '@/observability/analytics';
 
 type StoryCharactersProps = {
+  storyId: string;
   characters: StoryCharacterResponse[];
 };
 
-export function StoryCharacters({ characters }: StoryCharactersProps) {
+export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-bold">주변 인물</h2>
@@ -20,6 +24,11 @@ export function StoryCharacters({ characters }: StoryCharactersProps) {
               <ChatCharacterImage
                 name={character.name ?? ''}
                 imageUrl={character.imageUrl}
+                onZoom={() =>
+                  track('client_storyDetail_characterImage_clicked', {
+                    story_id: storyId,
+                  })
+                }
               />
             ) : null}
           </div>

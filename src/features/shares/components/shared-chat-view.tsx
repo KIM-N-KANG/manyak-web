@@ -73,7 +73,14 @@ export function SharedChatView({
             ) : null}
             {turn.aiOutput ? (
               <AiMessageBubble>
-                <ChatAiMessageContent content={turn.aiOutput} />
+                <ChatAiMessageContent
+                  content={turn.aiOutput}
+                  onCharacterImageZoom={() =>
+                    track('client_chatShare_characterImage_clicked', {
+                      story_id: storyId,
+                    })
+                  }
+                />
               </AiMessageBubble>
             ) : null}
           </div>

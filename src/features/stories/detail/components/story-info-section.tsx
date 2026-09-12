@@ -25,6 +25,7 @@ type StoryInfo = {
 };
 
 type StoryInfoSectionProps = {
+  storyId: string;
   story: StoryInfo;
   titleRef?: Ref<HTMLHeadingElement>;
   metadataRef?: Ref<HTMLDivElement>;
@@ -33,6 +34,7 @@ type StoryInfoSectionProps = {
 };
 
 export function StoryInfoSection({
+  storyId,
   story,
   titleRef,
   metadataRef,
@@ -71,7 +73,9 @@ export function StoryInfoSection({
         </div>
       )}
 
-      {characters.length > 0 && <StoryCharacters characters={characters} />}
+      {characters.length > 0 && (
+        <StoryCharacters storyId={storyId} characters={characters} />
+      )}
 
       {startSettings.length > 0 && (
         <StoryStartSettings

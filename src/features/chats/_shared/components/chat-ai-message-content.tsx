@@ -10,17 +10,20 @@ type ChatAiMessageContentProps =
       content: string;
       segments?: never;
       imageLoading?: 'eager' | 'lazy';
+      onCharacterImageZoom?: () => void;
     }
   | {
       content?: never;
       segments: readonly ChatMessageSegment[];
       imageLoading?: 'eager' | 'lazy';
+      onCharacterImageZoom?: () => void;
     };
 
 export function ChatAiMessageContent({
   content,
   segments,
   imageLoading,
+  onCharacterImageZoom,
 }: ChatAiMessageContentProps) {
   const messageSegments = segments ?? parseChatMessageSegments(content);
 
@@ -37,6 +40,7 @@ export function ChatAiMessageContent({
             name={segment.name}
             imageUrl={segment.imageUrl}
             loading={imageLoading}
+            onZoom={onCharacterImageZoom}
             className={cn(index > 0 && 'mt-5')}
           />
         ),

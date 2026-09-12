@@ -174,6 +174,46 @@ test.describe('스토리 상세', () => {
     ).toHaveCount(0);
   });
 
+  test('인물 이미지를 탭하면 풀스크린 뷰어가 열리고 페이지 이동 없이 닫힌다 (KNK-1276)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...storyDetail, characters: STORY_CHARACTERS }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    const viewer = page.getByRole('dialog', {
+      name: '이무기 인물 이미지 크게 보기',
+    });
+
+    await page
+      .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+    await expect(
+      viewer.getByRole('img', { name: '이무기 인물 이미지' }),
+    ).toBeVisible();
+    await viewer.getByRole('button', { name: '닫기' }).click();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+
+    await page
+      .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+    await page.goBack();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+  });
+
   test('느린 조회 후 본문 제목이 사라지면 헤더 제목을 보여준다 (KNK-1039)', async ({
     page,
   }) => {

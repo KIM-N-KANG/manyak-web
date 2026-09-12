@@ -12,20 +12,30 @@ import {
   DialogOverlay,
   DialogPortal,
 } from '@/components/ui/dialog';
+import { useCloseOnBack } from '@/hooks/use-close-on-back';
 
-import { useCloseOnBack } from '../hooks/use-close-on-back';
-
-type StoryThumbnailViewerProps = {
+type FullscreenImageViewerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   imageUrl: string;
+  /** 이미지 대체 텍스트. */
+  alt: string;
+  /** 다이얼로그의 접근 가능한 이름. */
+  title: string;
 };
 
-export function StoryThumbnailViewer({
+/**
+ * 이미지를 화면 전체로 크게 보여주는 뷰어.
+ *
+ * 배경·X·뒤로가기 어느 것으로든 페이지 이동 없이 뷰어만 닫힌다.
+ */
+export function FullscreenImageViewer({
   open,
   onOpenChange,
   imageUrl,
-}: StoryThumbnailViewerProps) {
+  alt,
+  title,
+}: FullscreenImageViewerProps) {
   useCloseOnBack({ open, onClose: () => onOpenChange(false) });
 
   return (
@@ -37,11 +47,11 @@ export function StoryThumbnailViewer({
           className="fixed inset-0 z-50 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
           onClick={() => onOpenChange(false)}>
           <DialogPrimitive.Title className="sr-only">
-            스토리 썸네일 크게 보기
+            {title}
           </DialogPrimitive.Title>
           <Image
             src={imageUrl}
-            alt="스토리 썸네일"
+            alt={alt}
             fill
             sizes="100vw"
             className="object-contain"
