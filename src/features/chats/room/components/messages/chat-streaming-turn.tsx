@@ -11,9 +11,13 @@ import { ChatStreamLoading } from './chat-stream-loading';
 
 type ChatStreamingTurnProps = {
   turn: StreamingTurn;
+  onCharacterImageZoom: () => void;
 };
 
-export function ChatStreamingTurn({ turn }: ChatStreamingTurnProps) {
+export function ChatStreamingTurn({
+  turn,
+  onCharacterImageZoom,
+}: ChatStreamingTurnProps) {
   return (
     <div>
       <UserMessageBubble>{turn.userInput}</UserMessageBubble>
@@ -28,6 +32,7 @@ export function ChatStreamingTurn({ turn }: ChatStreamingTurnProps) {
               <ChatAiMessageContent
                 segments={turn.segments}
                 imageLoading="eager"
+                onCharacterImageZoom={onCharacterImageZoom}
               />
             </AiMessageBubble>
           </m.div>

@@ -217,6 +217,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
               </div>
               <div className="bg-background px-4 pt-4">
                 <StoryInfoSection
+                  storyId={storyId}
                   story={story}
                   titleRef={setTitleElement}
                   metadataRef={setMetadataElement}

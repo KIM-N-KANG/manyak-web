@@ -55,6 +55,7 @@ type ChatMessagesProps = {
   onFillChoice: (text: string, position: number, sourceTurnId?: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
   onRetryChoices: () => void;
+  onCharacterImageZoom: () => void;
 };
 
 export function ChatMessages({
@@ -70,6 +71,7 @@ export function ChatMessages({
   onFillChoice,
   onRegenerate,
   onRetryChoices,
+  onCharacterImageZoom,
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
@@ -136,7 +138,10 @@ export function ChatMessages({
                       '[content-visibility:visible]',
                   )}>
                   {isRegenerating ? (
-                    <ChatStreamingTurn turn={activeStreamingTurn} />
+                    <ChatStreamingTurn
+                      turn={activeStreamingTurn}
+                      onCharacterImageZoom={onCharacterImageZoom}
+                    />
                   ) : (
                     <ChatTurnItem
                       turn={turn}
@@ -147,6 +152,7 @@ export function ChatMessages({
                       onFillChoice={onFillChoice}
                       onRegenerate={onRegenerate}
                       onRetryChoices={onRetryChoices}
+                      onCharacterImageZoom={onCharacterImageZoom}
                     />
                   )}
                 </MessageScrollerItem>
@@ -168,7 +174,10 @@ export function ChatMessages({
               <MessageScrollerItem
                 scrollAnchor
                 className="[content-visibility:visible]">
-                <ChatStreamingTurn turn={activeStreamingTurn} />
+                <ChatStreamingTurn
+                  turn={activeStreamingTurn}
+                  onCharacterImageZoom={onCharacterImageZoom}
+                />
               </MessageScrollerItem>
             ) : null}
           </MessageScrollerContent>

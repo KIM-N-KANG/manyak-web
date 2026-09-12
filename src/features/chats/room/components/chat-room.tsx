@@ -329,6 +329,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             onFillChoice={handleFillChoice}
             onRegenerate={guardedRegenerate}
             onRetryChoices={handleRetryChoices}
+            onCharacterImageZoom={() =>
+              track('client_chat_characterImage_clicked', { chat_id: chatId })
+            }
           />
         </div>
         <ChatInput
