@@ -472,6 +472,35 @@ export function markPendingStoryCreated(
 }
 
 /**
+ * 스토리라인 생성 결과를 스토리라인 선택 단계의 편집 초안 레코드로 만든다.
+ * 원 응답·재진입 복구·제작 탭 폴링이 같은 형태로 승격하도록 한 곳에서 조립한다.
+ *
+ * @param requestId 생성 요청 ID
+ * @param generationRequest 원 생성 요청
+ * @param generationResult 생성된 스토리라인 결과
+ * @returns 스토리라인 선택 단계의 STORY_DRAFT 레코드
+ */
+export function buildStorylineDraftRecord(
+  requestId: string,
+  generationRequest: GenerateSimpleStorylinesRequest,
+  generationResult: GenerateSimpleStorylinesResponse,
+): StoryDraftRecord {
+  return {
+    stage: 'STORY_DRAFT',
+    requestId,
+    step: 'storyline-select',
+    generationRequest,
+    generationResult,
+    activeStorylineIndex: 0,
+    selectedStoryline: null,
+    additionalInfos: [],
+    selectedRecommendations: [],
+    createdStoryId: null,
+    completionRequest: null,
+  };
+}
+
+/**
  * 완성 요청 레코드를 추가 정보 단계의 편집 초안으로 강등한다.
  * 퍼널을 떠난 뒤 서버가 실패를 확정하면 완성 중 카드를 유지할 수 없으므로,
  * 같은 입력으로 다시 완성할 수 있게 컨텍스트를 STORY_DRAFT로 되돌린다.

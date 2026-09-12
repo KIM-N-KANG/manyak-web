@@ -16,10 +16,7 @@ import {
   useGenerateSimpleStorylines,
   useGetSimpleStoryTags,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import {
-  getGetMyChatsQueryKey,
-  getGetMyStoriesQueryKey,
-} from '@/api/generated/endpoints/users/users';
+import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type {
   CreateSimpleStoryRequest,
   GenerateSimpleStorylinesRequest,
@@ -32,7 +29,6 @@ import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   type GuestUsageAction,
-  incrementGuestUsage,
   isGuestOverLimit,
   isGuestUsageLimitReached,
 } from '@/features/auth/_shared/utils/guest-usage-storage';
@@ -48,20 +44,22 @@ import type {
   StoryDraftRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  buildStorylineDraftRecord,
   demotePendingCompletionToDraft,
   loadPendingCreationRequest,
-  markPendingStoryCreated,
   replacePendingCreationRequest,
   saveDraftCreationRecord,
   savePendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
-import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
+import {
+  applyStoryCompletedEffects,
+  applyStorylinesGeneratedEffects,
+} from '@/features/stories/_shared/utils/creation-side-effects';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
-import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateBackDialogVariant } from '../components/header/story-create-back-dialog';
 import type { StoryCreateStep } from '../types';
@@ -252,19 +250,11 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        const draftRecord: StoryDraftRecord = {
-          stage: 'STORY_DRAFT',
-          requestId: variables.data.requestId,
-          step: 'storyline-select',
-          generationRequest: variables.data,
-          generationResult: response.data,
-          activeStorylineIndex: 0,
-          selectedStoryline: null,
-          additionalInfos: [],
-          selectedRecommendations: [],
-          createdStoryId: null,
-          completionRequest: null,
-        };
+        const draftRecord = buildStorylineDraftRecord(
+          variables.data.requestId,
+          variables.data,
+          response.data,
+        );
 
         // 복구 조회가 결과를 선점 반영했으면 이중 적용을 건너뛴다. 성공 결과는
         // 즉시 draft로 승격해 다음 편집 자동 저장의 기준점으로 남긴다.
@@ -275,13 +265,7 @@ export function useStoryCreateFunnel() {
         }
 
         draftAutosave.markCurrentAsSaved(true);
-
-        if (sessionStatus !== 'authenticated') {
-          incrementGuestUsage('storylineCreate');
-        }
-
-        // 스토리라인 생성 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회, 재생성 제외).
-        trackMetaPixelOnce('StorylinesGenerated');
+        applyStorylinesGeneratedEffects(sessionStatus);
 
         setGenerationRequest(variables.data);
         setGenerationResult(response.data);
@@ -421,24 +405,15 @@ export function useStoryCreateFunnel() {
         const storyId = response.data.id;
 
         if (typeof storyId === 'string') {
-          // 채팅 생성 전에 새로고침돼도 복구가 스토리 성공 부수효과를 다시
-          // 적용하지 않도록 완성 레코드에 생성된 ID를 먼저 확정한다.
-          markPendingStoryCreated(variables.data.requestId, storyId);
-
-          if (sessionStatus === 'authenticated') {
-            void queryClient.invalidateQueries({
-              queryKey: getGetMyStoriesQueryKey(),
-            });
-          } else {
-            saveCreatedStoryId(storyId);
-            incrementGuestUsage('storyCreate');
-          }
+          applyStoryCompletedEffects(
+            variables.data.requestId,
+            storyId,
+            sessionStatus,
+            queryClient,
+          );
 
           setCreatedStoryId(storyId);
           completedStoryRef.current = { storyId, genres: response.data.genres };
-
-          // 최종 스토리 컴파일 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회).
-          trackMetaPixelOnce('StoryCompiled');
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
@@ -552,28 +527,18 @@ export function useStoryCreateFunnel() {
         generateStorylines.reset();
       }
 
-      const saved = saveDraftCreationRecord({
-        stage: 'STORY_DRAFT',
-        requestId: record.requestId,
-        step: 'storyline-select',
-        generationRequest: record.generationRequest,
-        generationResult: result,
-        activeStorylineIndex: 0,
-        selectedStoryline: null,
-        additionalInfos: [],
-        selectedRecommendations: [],
-        createdStoryId: null,
-        completionRequest: null,
-      });
+      const saved = saveDraftCreationRecord(
+        buildStorylineDraftRecord(
+          record.requestId,
+          record.generationRequest,
+          result,
+        ),
+      );
 
       draftAutosave.markCurrentAsSaved(saved);
 
       // 원 onSuccess가 실행되지 못했으므로 성공 부수효과(카운터·픽셀)를 여기서 수행한다.
-      if (sessionStatus !== 'authenticated') {
-        incrementGuestUsage('storylineCreate');
-      }
-
-      trackMetaPixelOnce('StorylinesGenerated');
+      applyStorylinesGeneratedEffects(sessionStatus);
 
       setGenerationRequest(record.generationRequest);
       setGenerationResult(result);
@@ -600,18 +565,12 @@ export function useStoryCreateFunnel() {
       // 원 응답에서 이미 storyId를 확정한 레코드는 채팅 실패 후 재진입한
       // 경우다. 이때 게스트 카운터·로컬 ID를 다시 적용하지 않고 채팅만 잇는다.
       if (record.createdStoryId !== storyId) {
-        markPendingStoryCreated(record.requestId, storyId);
-
-        if (sessionStatus === 'authenticated') {
-          void queryClient.invalidateQueries({
-            queryKey: getGetMyStoriesQueryKey(),
-          });
-        } else {
-          saveCreatedStoryId(storyId);
-          incrementGuestUsage('storyCreate');
-        }
-
-        trackMetaPixelOnce('StoryCompiled');
+        applyStoryCompletedEffects(
+          record.requestId,
+          storyId,
+          sessionStatus,
+          queryClient,
+        );
       }
 
       setCreatedStoryId(storyId);

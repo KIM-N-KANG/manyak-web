@@ -10,20 +10,20 @@ import {
   type getCreationRequestResponse,
   useGetCreationRequest,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { incrementGuestUsage } from '@/features/auth/_shared/utils/guest-usage-storage';
 import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
 import {
+  buildStorylineDraftRecord,
   demotePendingCompletionToDraft,
   type InFlightCreationRequest,
-  markPendingStoryCreated,
   replacePendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
-import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
+import {
+  applyStoryCompletedEffects,
+  applyStorylinesGeneratedEffects,
+} from '@/features/stories/_shared/utils/creation-side-effects';
 import { FetchError } from '@/lib/custom-fetch';
-import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 /** 진행 카드가 보이는 동안의 생성·완성 상태 조회 간격(ms). 앱과 같은 5초다. */
 export const CREATION_PROGRESS_POLL_INTERVAL_MS = 5000;
@@ -72,27 +72,18 @@ export function useCreationProgressPolling(
     }
 
     if (action.type === 'storylines-completed') {
-      const promoted = replacePendingCreationRequest(requestId, {
-        stage: 'STORY_DRAFT',
+      const promoted = replacePendingCreationRequest(
         requestId,
-        step: 'storyline-select',
-        generationRequest: record.generationRequest,
-        generationResult: action.result,
-        activeStorylineIndex: 0,
-        selectedStoryline: null,
-        additionalInfos: [],
-        selectedRecommendations: [],
-        createdStoryId: null,
-        completionRequest: null,
-      });
+        buildStorylineDraftRecord(
+          requestId,
+          record.generationRequest,
+          action.result,
+        ),
+      );
 
       // 원 응답이 먼저 승격했으면 부수효과를 다시 적용하지 않는다.
       if (promoted) {
-        if (sessionStatus !== 'authenticated') {
-          incrementGuestUsage('storylineCreate');
-        }
-
-        trackMetaPixelOnce('StorylinesGenerated');
+        applyStorylinesGeneratedEffects(sessionStatus);
       }
 
       return;
@@ -114,20 +105,13 @@ export function useCreationProgressPolling(
     }
 
     // 원 응답이 먼저 ID를 확정한 레코드는 부수효과를 다시 적용하지 않는다.
-    if (
-      record.createdStoryId !== storyId &&
-      markPendingStoryCreated(requestId, storyId)
-    ) {
-      if (sessionStatus === 'authenticated') {
-        void queryClient.invalidateQueries({
-          queryKey: getGetMyStoriesQueryKey(),
-        });
-      } else {
-        saveCreatedStoryId(storyId);
-        incrementGuestUsage('storyCreate');
-      }
-
-      trackMetaPixelOnce('StoryCompiled');
+    if (record.createdStoryId !== storyId) {
+      applyStoryCompletedEffects(
+        requestId,
+        storyId,
+        sessionStatus,
+        queryClient,
+      );
     }
 
     takePendingCreationRequest(requestId);
