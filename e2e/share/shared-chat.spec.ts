@@ -76,6 +76,19 @@ test.describe('공유된 채팅 열람', () => {
     await expect(
       page.getByRole('img', { name: '세린 인물 이미지' }),
     ).toBeVisible();
+
+    // 인물 이미지를 탭하면 풀스크린 뷰어가 열리고 닫아도 공유 화면에 머문다
+    const viewer = page.getByRole('dialog', {
+      name: '세린 인물 이미지 크게 보기',
+    });
+
+    await page
+      .getByRole('button', { name: '세린 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+    await viewer.getByRole('button', { name: '닫기' }).click();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/share\/share-1$/);
   });
 
   test('외부 호스트의 마커 모양 문자열은 공유 화면에서 이미지로 해석하지 않는다', async ({

@@ -428,7 +428,8 @@ test.describe('채팅 스트리밍', () => {
 
     const image = page.getByRole('img', { name: '세린 인물 이미지' });
     const imageBlock = page.locator('[data-slot="chat-character-image"]');
-    const aiMessageContent = imageBlock.locator('..');
+    // 이미지 블록은 크게 보기 버튼으로 감싸므로 본문 컨테이너는 두 단계 위다.
+    const aiMessageContent = imageBlock.locator('../..');
     const aiMessage = imageBlock.locator(
       'xpath=ancestor::*[@data-slot="message-content"]',
     );
@@ -496,6 +497,19 @@ test.describe('채팅 스트리밍', () => {
     await expect(page.locator('body')).not.toContainText(
       `[[${CHARACTER_IMAGE_URL}]]`,
     );
+
+    // 확정된 이미지를 탭하면 풀스크린 뷰어가 열리고 닫아도 채팅방에 머문다
+    const viewer = page.getByRole('dialog', {
+      name: '세린 인물 이미지 크게 보기',
+    });
+
+    await page
+      .getByRole('button', { name: '세린 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+    await viewer.getByRole('button', { name: '닫기' }).click();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
   });
 
   test('추천 입력의 수정 버튼을 누르면 입력창에 채워진다 (US-6-4)', async ({
