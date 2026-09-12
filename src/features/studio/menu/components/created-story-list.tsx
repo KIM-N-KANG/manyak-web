@@ -26,10 +26,10 @@ import { track } from '@/observability/analytics';
 
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { usePendingCreationRequest } from '../hooks/use-pending-creation-request';
-import { ContinueCreationBanner } from './continue-creation-banner';
 import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryCard } from './created-story-card';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
+import { CreationProgressCard } from './creation-progress-card';
 
 export function CreatedStoryList() {
   const router = useRouter();
@@ -156,7 +156,7 @@ export function CreatedStoryList() {
               duration: shouldReduceMotion ? 0 : 0.2,
               ease: 'easeOut',
             }}>
-            <ContinueCreationBanner record={pendingCreationRecord} />
+            <CreationProgressCard record={pendingCreationRecord} />
           </m.div>
         ) : null}
       </AnimatePresence>

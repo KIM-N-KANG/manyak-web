@@ -1,5 +1,6 @@
 import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
 import { expect, skipOnboarding, test } from '../fixtures/test';
@@ -313,12 +314,12 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
   });
 });
 
-test.describe('이어서 만들기 배너', () => {
+test.describe('이어서 만들기 진행 카드', () => {
   test.beforeEach(async ({ page }) => {
     await skipOnboarding(page);
   });
 
-  test('제작 탭에서 미정리 레코드가 있으면 배너를 표시하고 탭하면 복구로 진입한다', async ({
+  test('제작 탭에서 미정리 레코드가 있으면 진행 카드를 표시하고 탭하면 복구로 진입한다', async ({
     page,
   }) => {
     await page.route(CREATION_REQUEST, async (route) => {
@@ -336,7 +337,9 @@ test.describe('이어서 만들기 배너', () => {
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
     await page
       .getByRole('button', { name: '이어서 만들기', exact: true })
       .click();
@@ -347,24 +350,83 @@ test.describe('이어서 만들기 배너', () => {
     await expect(page.getByText('스토리라인을 만들고 있어요')).toBeVisible();
   });
 
-  test('배너에는 닫기 버튼 없이 이어서 만들기만 표시한다', async ({ page }) => {
+  test('제작 탭에서 스토리라인 생성이 이미 끝나 있으면 카드 조회가 초안으로 승격해 로딩 없이 결과로 들어간다', async ({
+    page,
+  }) => {
+    let statusRequestCount = 0;
+
+    await page.route(CREATION_REQUEST, async (route) => {
+      statusRequestCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          stage: 'STORYLINE_GENERATION',
+          status: 'COMPLETED',
+          result: storylinesResult,
+        }),
+      });
+    });
     await seedPendingCreationRequest(page, storylineRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => localStorage.getItem(key),
+          'manyak:pending-creation-request',
+        ),
+      )
+      .toContain('"stage":"STORY_DRAFT"');
+
+    const statusRequestsBeforeResume = statusRequestCount;
+
+    await page
+      .getByRole('button', { name: '이어서 만들기', exact: true })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(
+      page.getByText('되찾은 첫 번째 이야기 흐름입니다.'),
+    ).toBeVisible();
+    expect(statusRequestCount).toBe(statusRequestsBeforeResume);
+  });
+
+  test('진행 카드에는 닫기 버튼 없이 이어서 만들기와 더보기만 표시한다', async ({
+    page,
+  }) => {
+    await seedPendingCreationRequest(page, storylineRecord);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
     await expect(
       page.getByRole('button', { name: '이어서 만들기 배너 닫기' }),
     ).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: '이어서 만들기', exact: true }),
-    ).toHaveClass(/text-primary/);
+    ).toHaveClass(/bg-primary/);
+    await expect(
+      page.getByRole('button', {
+        name: CREATION_PROGRESS_CARD_COPY.optionsTrigger,
+      }),
+    ).toBeVisible();
   });
 
-  test('레코드가 없으면 배너를 표시하지 않는다', async ({ page }) => {
+  test('레코드가 없으면 진행 카드를 표시하지 않는다', async ({ page }) => {
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeHidden();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeHidden();
   });
 });

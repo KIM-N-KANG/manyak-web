@@ -7,6 +7,7 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStoryCreateResponse,
 } from '@/api/generated/models';
+import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
 import type { InFlightCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   getPendingCreationRequestSnapshot,
@@ -16,8 +17,6 @@ import {
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { FetchError } from '@/lib/custom-fetch';
-
-import { resolveCreationRecovery } from '../utils/creation-request-recovery';
 
 /** PENDING 복구 레코드의 진행 상태를 재조회하는 폴링 주기(ms) */
 export const RECOVERY_POLL_INTERVAL_MS = 3000;

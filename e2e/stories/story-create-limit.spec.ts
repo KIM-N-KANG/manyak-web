@@ -3,9 +3,16 @@ import { type Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
+import {
+  expect,
+  seedGuestUsage,
+  seedStoryIds,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 
 /**
  * 스토리 생성 퍼널의 게스트 한도·이프 게이팅 스펙(QA STORY-LIMIT-02~06·09).
@@ -214,7 +221,12 @@ test.describe('스토리라인 생성 한도', () => {
 });
 
 test.describe('스토리 완성 한도·이프', () => {
-  test('게스트 완성 요청이 402(체험 한도)면 추가 정보 단계로 복귀하고 입력을 유지한다 (STORY-LIMIT-05)', async ({
+  // 완성 제출 뒤 돌아오는 제작 탭의 온보딩 게이트를 건너뛴다.
+  test.beforeEach(async ({ page }) => {
+    await skipOnboarding(page);
+  });
+
+  test('게스트 완성 요청이 402(체험 한도)면 제작 탭에서 토스트로 알리고 초안 카드로 되돌아가 입력을 유지한다 (STORY-LIMIT-05)', async ({
     page,
   }) => {
     await mockTags(page);
@@ -243,27 +255,23 @@ test.describe('스토리 완성 한도·이프', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    const dialog = page.getByRole('dialog');
-
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByText(GUEST_LIMIT_SHEET_COPY.title)).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(
-      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
 
-    // 바텀 시트가 배경을 aria-hidden 처리하므로, 바깥 터치로 닫은 뒤에
-    // 인라인 문구와 입력 유지를 확인한다.
-    await page.mouse.click(10, 10);
-    await expect(dialog).toBeHidden();
-
-    await expect(
-      page.getByText('게스트 체험 횟수를 모두 사용했어요', { exact: true }),
-    ).toBeVisible();
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
     await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('회원 완성 요청이 402(이프 부족)면 현재 화면에서 토스트만 띄우고 입력을 유지한다 (STORY-LIMIT-06)', async ({
+  test('회원 완성 요청이 402(이프 부족)면 제작 탭에서 토스트만 띄우고 초안 카드로 되돌아가 입력을 유지한다 (STORY-LIMIT-06)', async ({
     page,
   }) => {
     await mockTags(page);
@@ -289,8 +297,16 @@ test.describe('스토리 완성 한도·이프', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );

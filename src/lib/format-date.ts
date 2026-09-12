@@ -93,3 +93,33 @@ export function formatRelativeDate(isoDate: string): string {
 
   return format(date, 'yyyy-MM-dd');
 }
+
+/**
+ * 당일이면 경과 시간("방금 전" → "n분 전" → "n시간 전"), 날이 바뀌면 KST 날짜(yyyy-MM-dd)를
+ * 반환한다. 당일 판정은 상대 시간 규칙과 같이 기기 시간대를 따른다.
+ *
+ * @param isoDate ISO 8601 날짜 문자열
+ * @returns 당일은 경과 시간 표현, 그 외는 yyyy-MM-dd
+ */
+export function formatSameDayTimeOrDate(isoDate: string): string {
+  const date = new Date(isoDate);
+
+  if (Number.isNaN(date.getTime()) || !isToday(date)) {
+    return formatDate(isoDate);
+  }
+
+  const now = new Date();
+  const diffSec = differenceInSeconds(now, date);
+
+  if (diffSec < 60) {
+    return '방금 전';
+  }
+
+  const diffMin = differenceInMinutes(now, date);
+
+  if (diffMin < 60) {
+    return `${diffMin}분 전`;
+  }
+
+  return `${differenceInHours(now, date)}시간 전`;
+}

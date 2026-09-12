@@ -2,12 +2,13 @@ import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
 import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
 // 편집 자동 저장(draft): 마지막 변경 300ms 뒤 제작 상태를 저장하고
-// 제작 탭 배너·재개 다이얼로그로 이어 만드는 흐름.
+// 제작 탭 진행 카드·재개 다이얼로그로 이어 만드는 흐름.
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 
@@ -117,7 +118,9 @@ test.describe('스토리 임시 저장·재개', () => {
       })
       .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
   });
 
   test('키워드 입력을 자동 저장하고 새로고침 후 첫 탭에서 복원한다', async ({
@@ -134,7 +137,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
 
     await page.reload();
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
     await page.getByRole('button', { name: '이어서 만들기' }).click();
 
     await expect(page.getByRole('tab', { name: /장르/ })).toHaveAttribute(
@@ -200,7 +205,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(page.getByText('스토리가 임시 저장되었어요')).toHaveCount(0);
 
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
     await page
       .getByRole('button', { name: '이어서 만들기', exact: true })
       .click();
@@ -384,24 +391,71 @@ test.describe('스토리 임시 저장·재개', () => {
       .toBeNull();
   });
 
-  test('제작 탭 배너에서 draft 문구와 이어서 만들기만 표시한다', async ({
+  test('제작 탭 진행 카드는 닫기 없이 이어서 만들기와 더보기만 표시한다', async ({
     page,
   }) => {
     await seedPendingCreationRequest(page, draftRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
+    const card = page.getByRole('article', {
+      name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+    });
+
     await expect(
-      page.getByRole('button', { name: '이어서 만들기 배너 닫기' }),
+      card.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+    await expect(
+      card.getByText(CREATION_PROGRESS_CARD_COPY.draftDescription),
+    ).toBeVisible();
+    await expect(
+      card.getByRole('button', { name: '이어서 만들기 배너 닫기' }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole('button', { name: '이어서 만들기', exact: true }),
-    ).toHaveClass(/text-primary/);
+      card.getByRole('button', {
+        name: CREATION_PROGRESS_CARD_COPY.resume,
+        exact: true,
+      }),
+    ).toHaveClass(/bg-primary/);
+    await expect(
+      card.getByRole('button', {
+        name: CREATION_PROGRESS_CARD_COPY.optionsTrigger,
+      }),
+    ).toBeVisible();
     await expect
       .poll(() =>
         page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
       )
       .not.toBeNull();
+  });
+
+  test('진행 카드 더보기에서 삭제하면 확인 뒤 저장본을 지우고 카드를 숨긴다', async ({
+    page,
+  }) => {
+    await seedPendingCreationRequest(page, draftRecord);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.optionsTrigger })
+      .click();
+    await page
+      .getByRole('menuitem', { name: CREATION_PROGRESS_CARD_COPY.delete })
+      .click();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.deleteConfirmTitle),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.delete })
+      .click();
+
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeHidden();
+    await expect
+      .poll(() =>
+        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
+      )
+      .toBeNull();
   });
 });

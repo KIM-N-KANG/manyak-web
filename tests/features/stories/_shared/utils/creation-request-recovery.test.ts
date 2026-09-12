@@ -6,7 +6,7 @@ import {
   resolveErrorSettlement,
   resolveSuccessSettlement,
   shouldKeepPendingRecordOnError,
-} from '@/features/stories/new/utils/creation-request-recovery';
+} from '@/features/stories/_shared/utils/creation-request-recovery';
 import { FetchError } from '@/lib/custom-fetch';
 
 describe('shouldKeepPendingRecordOnError', () => {
@@ -43,12 +43,21 @@ describe('resolveSuccessSettlement', () => {
 });
 
 describe('resolveErrorSettlement', () => {
-  it('퍼널 언마운트 후 도착한 오류는 오류 종류와 무관하게 defer-to-recovery를 반환한다', () => {
+  it('퍼널 언마운트 후 서버가 확정한 HTTP 오류는 초안으로 강등하도록 downgrade-to-draft를 반환한다', () => {
     expect(
       resolveErrorSettlement(false, new FetchError('실패', 500, null)),
-    ).toBe('defer-to-recovery');
+    ).toBe('downgrade-to-draft');
+    expect(
+      resolveErrorSettlement(false, new FetchError('한도', 402, null)),
+    ).toBe('downgrade-to-draft');
+  });
+
+  it('퍼널 언마운트 후 네트워크 오류와 409는 레코드를 남겨 재진입 복구에 맡기도록 defer-to-recovery를 반환한다', () => {
     expect(
       resolveErrorSettlement(false, new TypeError('Failed to fetch')),
+    ).toBe('defer-to-recovery');
+    expect(
+      resolveErrorSettlement(false, new FetchError('진행 중', 409, null)),
     ).toBe('defer-to-recovery');
   });
 

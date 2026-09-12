@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDate } from '@/lib/format-date';
+import { formatDate, formatSameDayTimeOrDate } from '@/lib/format-date';
 
 describe('formatDate', () => {
   it('KST 자정을 넘긴 UTC 시각을 다음 날짜로 옮긴다', () => {
@@ -17,5 +17,26 @@ describe('formatDate', () => {
 
   it('해석할 수 없는 값은 앞 10자를 그대로 돌려준다', () => {
     expect(formatDate('unknown')).toBe('unknown');
+  });
+});
+
+describe('formatSameDayTimeOrDate', () => {
+  it('당일은 경과 시간으로 표시한다', () => {
+    const now = Date.now();
+
+    expect(formatSameDayTimeOrDate(new Date(now - 10_000).toISOString())).toBe(
+      '방금 전',
+    );
+    expect(
+      formatSameDayTimeOrDate(new Date(now - 5 * 60_000).toISOString()),
+    ).toBe('5분 전');
+  });
+
+  it('날이 바뀌면 KST 날짜로 표시한다', () => {
+    expect(formatSameDayTimeOrDate('2026-06-01T00:00:00Z')).toBe('2026-06-01');
+  });
+
+  it('해석할 수 없는 값은 앞 10자를 그대로 돌려준다', () => {
+    expect(formatSameDayTimeOrDate('not-a-date-value')).toBe('not-a-date');
   });
 });
