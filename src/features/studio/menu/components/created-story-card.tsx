@@ -28,7 +28,7 @@ import { StoryReportSheet } from '@/features/stories/_shared/components/story-re
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
-import { formatDate } from '@/lib/format-date';
+import { formatSameDayTimeOrDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
@@ -260,7 +260,7 @@ function CreatedStoryCardBody({
                 aria-hidden="true"
               />
               <time dateTime={story.createdAt}>
-                {formatDate(story.createdAt)}
+                {formatSameDayTimeOrDate(story.createdAt)}
               </time>
             </div>
           ) : null}
