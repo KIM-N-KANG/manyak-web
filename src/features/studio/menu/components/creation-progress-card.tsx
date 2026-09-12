@@ -3,6 +3,7 @@
 import { Delete02Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
 
+import { ImageGeneration } from '@/components/agents/image-generation';
 import { CardOptionsDialog } from '@/components/common/card-options-dialog';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -153,15 +154,15 @@ function CreationProgressCardBody({
           compact ? 'w-20' : 'w-32',
         )}>
         {isCompleting ? (
-          <div
-            role="status"
-            aria-label={CREATION_PROGRESS_CARD_COPY.completingState}
-            className="relative size-full creation-dot-grid">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 creation-dot-glow"
-            />
-          </div>
+          <ImageGeneration
+            status="generating"
+            label={CREATION_PROGRESS_CARD_COPY.completingState}
+            aspectRatio="3 / 4"
+            size="fluid"
+            interactive={false}
+            showStatus={false}
+            resolution=""
+          />
         ) : (
           <div className="flex size-full items-center justify-center text-foreground-tertiary">
             <ManyakSymbolIcon
