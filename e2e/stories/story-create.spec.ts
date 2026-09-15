@@ -424,6 +424,96 @@ test.describe('스토리 생성', () => {
     expect(chatRequestCount).toBe(0);
   });
 
+  for (const responseLost of [false, true]) {
+    test(`완성 POST 등록 지연 중에는 복구 조회를 보류하고 한 번 제출로 완료한다 (${responseLost ? '응답 유실' : '성공 응답'})`, async ({
+      page,
+    }) => {
+      let releaseCompletion!: () => void;
+      const completionReady = new Promise<void>((resolve) => {
+        releaseCompletion = resolve;
+      });
+      let completed = false;
+      let completionCount = 0;
+      let lookupCount = 0;
+      let chatCount = 0;
+      const story = {
+        id: 'story-delayed-registration',
+        title: '등록 지연 복구 스토리',
+        genres: ['판타지'],
+      };
+
+      await page.route(CREATE_STORY, async (route) => {
+        completionCount += 1;
+        await completionReady;
+        completed = true;
+
+        if (responseLost) {
+          await route.abort('failed');
+        } else {
+          await route.fulfill({ status: 201, json: story });
+        }
+      });
+      await page.route(CREATION_REQUEST, async (route) => {
+        lookupCount += 1;
+        await route.fulfill({
+          status: completed ? 200 : 404,
+          json: completed
+            ? { stage: 'STORY_COMPLETION', status: 'COMPLETED', result: story }
+            : { message: '생성 요청을 찾을 수 없습니다.' },
+        });
+      });
+      await page.route(STORIES_BATCH, async (route) => {
+        await route.fulfill({
+          json: [
+            {
+              ...story,
+              oneLineIntro: '',
+              turnCount: 0,
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        });
+      });
+      await page.route(CREATE_CHAT, async (route) => {
+        chatCount += 1;
+        await route.fulfill({ status: 500 });
+      });
+
+      await reachAdditionalInfo(page);
+      await page.getByRole('button', { name: '스토리 완성하기' }).click();
+      await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+      try {
+        // 첫 조회뿐 아니라 다음 폴링 시점에도 POST 등록 전 404로 실패시키지 않는다.
+        await page.waitForTimeout(5500);
+        await expect(
+          page.getByText(CREATION_PROGRESS_CARD_COPY.completingTitle),
+        ).toBeVisible();
+        await expect(
+          page.getByText(TOAST_MESSAGE.STORY_COMPLETE_FAILED),
+        ).toBeHidden();
+        expect(lookupCount).toBe(0);
+      } finally {
+        releaseCompletion();
+      }
+
+      await expect(
+        page.getByRole('link', { name: `${story.title} 상세 보기` }),
+      ).toBeVisible();
+      expect(completionCount).toBe(1);
+      expect(lookupCount).toBeGreaterThan(0);
+      expect(chatCount).toBe(0);
+      await expect
+        .poll(() =>
+          page.evaluate(
+            (key) => localStorage.getItem(key),
+            PENDING_CREATION_REQUEST_STORAGE_KEY,
+          ),
+        )
+        .toBeNull();
+    });
+  }
+
   test('스토리 완성 실패는 제작 탭에서 토스트로 알리고 초안 카드로 되돌아가 입력을 유지한다', async ({
     page,
   }) => {

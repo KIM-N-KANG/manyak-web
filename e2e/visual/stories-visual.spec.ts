@@ -3,8 +3,10 @@ import { LOGIN_REQUIRED_SHEET_COPY } from '@/features/auth/_shared/constants/log
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { seedPendingCreationRequest } from '../fixtures/storage';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
@@ -191,6 +193,62 @@ test.describe('스토리 비주얼', () => {
   test.beforeEach(async ({ page }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
   });
+
+  for (const hasExistingStory of [false, true]) {
+    test(`제작 목록 완성 대기 (${hasExistingStory ? '기존 목록' : '첫 스토리'})`, async ({
+      page,
+    }) => {
+      await skipOnboarding(page);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await seedStoryIds(page, hasExistingStory ? ['s1'] : []);
+      await seedPendingCreationRequest(page, {
+        stage: 'STORY_COMPLETION',
+        requestId: 'completion-visual',
+        generationRequest: {
+          requestId: 'generation-visual',
+          genreTagIds: [1],
+          protagonist: { featureTagIds: [2] },
+        },
+        generationResult: { simpleCreationId: 1001, storylines: [] },
+        selectedStoryline: { id: 101 },
+        completionRequest: {
+          requestId: 'completion-visual',
+          simpleCreationId: 1001,
+          storylineId: 101,
+        },
+      });
+      await page.route(
+        '**/api/v1/stories/simple/creation-requests/*',
+        (route) =>
+          route.fulfill({
+            json: {
+              stage: 'STORY_COMPLETION',
+              status: 'PENDING',
+              result: null,
+            },
+          }),
+      );
+      await page.route(STORIES_BATCH, (route) =>
+        route.fulfill({ json: [story('s1', '용의 계곡')] }),
+      );
+      await page.goto(APP_PATH.MAIN.STUDIO);
+      await expect(
+        page.getByRole('article', {
+          name: CREATION_PROGRESS_CARD_COPY.completingTitle,
+        }),
+      ).toBeVisible();
+
+      if (hasExistingStory)
+        await expect(
+          page.getByText('용의 계곡', { exact: true }),
+        ).toBeVisible();
+
+      await waitForFonts(page);
+      await expect(page).toHaveScreenshot(
+        `story-list-completing-${hasExistingStory ? 'existing' : 'first'}.png`,
+      );
+    });
+  }
 
   test('제작 목록 기본 상태 (STORY-LIST)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);

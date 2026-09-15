@@ -11,13 +11,13 @@ import {
   useGetCreationRequest,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useIsCreationRequestPending } from '@/features/stories/_shared/hooks/use-is-creation-request-pending';
 import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
 import {
   buildStorylineDraftRecord,
   demotePendingCompletionToDraft,
   type InFlightCreationRequest,
   replacePendingCreationRequest,
-  takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   applyStoryCompletedEffects,
@@ -32,8 +32,8 @@ export const CREATION_PROGRESS_POLL_INTERVAL_MS = 5000;
  * 제작 탭의 진행 카드가 보이는 동안 서버의 생성·완성 상태를 조회해 결과를 미리 반영한다.
  * 스토리라인 생성이 끝나 있으면 레코드를 스토리라인 선택 단계의 STORY_DRAFT로 승격해
  * "이어서 만들기"가 로딩 없이 바로 결과를 복원하게 하고, 스토리 완성이 끝나 있으면 성공
- * 부수효과(회원 목록 재조회·게스트 서재 ID·게스트 카운터·픽셀)를 한 번만 적용한 뒤 레코드를
- * 지워 카드를 일반 스토리 카드로 바꾼다. 채팅은 만들지 않는다.
+ * 부수효과(회원 목록 재조회·게스트 서재 ID·게스트 카운터·픽셀)를 한 번만 적용한다.
+ * 완성 레코드는 목록에 새 스토리가 도착한 뒤 목록 컴포넌트가 정리한다. 채팅은 만들지 않는다.
  * 완성 확정 실패·404는 레코드를 추가 정보 초안으로 되돌리고 토스트로 알린다. 스토리라인
  * 실패는 재시도 화면이 퍼널에 있으므로 조회만 멈추고 레코드는 재진입에 맡긴다.
  * 문서가 숨겨지면 TanStack Query 기본값대로 조회를 멈춘다.
@@ -46,9 +46,11 @@ export function useCreationProgressPolling(
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
   const { requestId, stage } = record;
+  const isOriginalRequestPending = useIsCreationRequestPending(record);
 
   const query = useGetCreationRequest(requestId, {
     query: {
+      enabled: !isOriginalRequestPending,
       refetchInterval: (state) =>
         isStorylineSettled(stage, state.state.data, state.state.error)
           ? false
@@ -61,7 +63,7 @@ export function useCreationProgressPolling(
   const { data, error } = query;
 
   useEffect(() => {
-    if (!data || data.status !== 200) {
+    if (isOriginalRequestPending || !data || data.status !== 200) {
       return;
     }
 
@@ -113,13 +115,20 @@ export function useCreationProgressPolling(
         queryClient,
       );
     }
-
-    takePendingCreationRequest(requestId);
-  }, [data, queryClient, record, requestId, sessionStatus, stage]);
+  }, [
+    data,
+    isOriginalRequestPending,
+    queryClient,
+    record,
+    requestId,
+    sessionStatus,
+    stage,
+  ]);
 
   // 404(미존재·타인)는 되찾을 수 없다. 완성은 초안으로 되돌리고, 스토리라인은 조회만 멈춘다.
   useEffect(() => {
     if (
+      !isOriginalRequestPending &&
       stage === 'STORY_COMPLETION' &&
       error instanceof FetchError &&
       error.status === 404 &&
@@ -127,7 +136,7 @@ export function useCreationProgressPolling(
     ) {
       toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
     }
-  }, [error, requestId, stage]);
+  }, [error, isOriginalRequestPending, requestId, stage]);
 }
 
 /**

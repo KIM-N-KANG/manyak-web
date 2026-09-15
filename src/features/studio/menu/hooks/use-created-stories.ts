@@ -39,6 +39,9 @@ export function useCreatedStories() {
       return toStoryListItems(storyIds ?? [], stories);
     },
     enabled: status === 'unauthenticated' && hasStoryIds,
+    // 새 스토리 조회 중 기존 카드를 유지하되, 삭제한 ID는 즉시 제외한다.
+    placeholderData: (previous) =>
+      previous ? toStoryListItems(storyIds ?? [], previous) : undefined,
   });
 
   // 세션 판별 중('loading')에는 회원 분기의 로딩 상태를 보여 깜빡임을 막는다.

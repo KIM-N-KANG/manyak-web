@@ -1,6 +1,6 @@
 'use client';
 
-import { type MouseEvent, type ReactNode, useState } from 'react';
+import { type MouseEvent, type ReactNode, useEffect, useState } from 'react';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -39,6 +39,32 @@ export function CreatedStoryList() {
   const shouldReduceMotion = useReducedMotion();
   const [resumeDialogRecord, setResumeDialogRecord] =
     useState<DraftCreationRecord | null>(null);
+  const completedStoryId =
+    pendingCreationRecord?.stage === 'STORY_COMPLETION'
+      ? pendingCreationRecord.createdStoryId
+      : null;
+  const isCompletedStoryVisible =
+    typeof completedStoryId === 'string' &&
+    !isLoading &&
+    !isError &&
+    stories.some((story) => story.id === completedStoryId);
+  const visiblePendingRecord = isCompletedStoryVisible
+    ? null
+    : pendingCreationRecord;
+  const completedRequestId = isCompletedStoryVisible
+    ? pendingCreationRecord?.requestId
+    : null;
+
+  useEffect(() => {
+    if (completedRequestId) takePendingCreationRequest(completedRequestId);
+  }, [completedRequestId]);
+
+  const rowMotion = {
+    initial: shouldReduceMotion ? false : { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+    transition: { duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' },
+  } as const;
 
   const handleCreateClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -93,7 +119,14 @@ export function CreatedStoryList() {
   let stateKey: string;
   let content: ReactNode;
 
-  if (showSkeleton) {
+  if (
+    visiblePendingRecord?.stage === 'STORY_COMPLETION' &&
+    stories.length === 0 &&
+    !isError
+  ) {
+    stateKey = 'completing';
+    content = null;
+  } else if (showSkeleton) {
     stateKey = 'skeleton';
     content = <CreatedStoryListSkeleton />;
   } else if (isLoading) {
@@ -130,36 +163,33 @@ export function CreatedStoryList() {
   } else {
     stateKey = 'list';
     content = (
-      <>
-        <ul className="flex flex-col">
-          {stories.map((story, index) => (
-            <li key={story.id}>
-              <CreatedStoryCard story={story} position={index} />
-            </li>
-          ))}
-        </ul>
-        <CreateStoryFab onCreate={(event) => handleCreateClick(event, 'fab')} />
-      </>
+      <CreateStoryFab onCreate={(event) => handleCreateClick(event, 'fab')} />
     );
   }
 
   return (
     <>
-      <AnimatePresence>
-        {pendingCreationRecord ? (
-          <m.div
-            key={pendingCreationRecord.requestId}
-            initial={shouldReduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: shouldReduceMotion ? 0 : 0.2,
-              ease: 'easeOut',
-            }}>
-            <CreationProgressCard record={pendingCreationRecord} />
-          </m.div>
-        ) : null}
-      </AnimatePresence>
+      <ul className="relative flex shrink-0 flex-col">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {visiblePendingRecord ? (
+            <m.li
+              key={`creation-${visiblePendingRecord.requestId}`}
+              {...rowMotion}>
+              <CreationProgressCard record={visiblePendingRecord} />
+            </m.li>
+          ) : null}
+          {!isLoading && !isError
+            ? stories.map((story, index) => (
+                <m.li
+                  key={story.id}
+                  layout={shouldReduceMotion ? false : 'position'}
+                  {...rowMotion}>
+                  <CreatedStoryCard story={story} position={index} />
+                </m.li>
+              ))
+            : null}
+        </AnimatePresence>
+      </ul>
       <section className="flex min-h-0 flex-1 flex-col pb-2">
         <FadeStateSwitch
           stateKey={stateKey}
