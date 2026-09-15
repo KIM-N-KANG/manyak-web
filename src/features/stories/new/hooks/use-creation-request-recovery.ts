@@ -7,6 +7,7 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStoryCreateResponse,
 } from '@/api/generated/models';
+import { useIsCreationRequestPending } from '@/features/stories/_shared/hooks/use-is-creation-request-pending';
 import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
 import type { InFlightCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
@@ -105,6 +106,7 @@ export function useCreationRequestRecovery({
       ? storedRecord
       : null;
   const activeRecord = suspended || !isPageVisible ? null : inFlightRecord;
+  const isOriginalRequestPending = useIsCreationRequestPending(inFlightRecord);
 
   const callbacksRef = useRef(callbacks);
   const restoredRequestIdRef = useRef<string | null>(null);
@@ -143,7 +145,7 @@ export function useCreationRequestRecovery({
 
   const recoveryQuery = useGetCreationRequest(activeRequestId ?? '', {
     query: {
-      enabled: activeRequestId !== null,
+      enabled: activeRequestId !== null && !isOriginalRequestPending,
       refetchInterval: RECOVERY_POLL_INTERVAL_MS,
       retry: false,
       staleTime: 0,
@@ -156,7 +158,12 @@ export function useCreationRequestRecovery({
   // 조회 결과를 화면 복원 액션으로 옮긴다. 레코드 제거는 스토리지 구독을 통해
   // activeRecord를 비워 폴링을 함께 멈춘다.
   useEffect(() => {
-    if (!activeRecord || !recoveryData || recoveryData.status !== 200) {
+    if (
+      isOriginalRequestPending ||
+      !activeRecord ||
+      !recoveryData ||
+      recoveryData.status !== 200
+    ) {
       return;
     }
 
@@ -194,12 +201,12 @@ export function useCreationRequestRecovery({
 
       callbacksRef.current.onFailed(activeRecord);
     }
-  }, [activeRecord, recoveryData]);
+  }, [activeRecord, isOriginalRequestPending, recoveryData]);
 
   // 404(미존재·타인)는 되찾을 수 없으므로 레코드를 지우고 실패 처리로 합류한다.
   // 그 외 오류(네트워크·5xx)는 레코드를 유지한 채 폴링을 계속한다.
   useEffect(() => {
-    if (!activeRecord || !recoveryError) {
+    if (isOriginalRequestPending || !activeRecord || !recoveryError) {
       return;
     }
 
@@ -208,7 +215,7 @@ export function useCreationRequestRecovery({
         callbacksRef.current.onFailed(activeRecord);
       }
     }
-  }, [activeRecord, recoveryError]);
+  }, [activeRecord, isOriginalRequestPending, recoveryError]);
 
   return {
     recoveringStage: activeRecord?.stage ?? null,

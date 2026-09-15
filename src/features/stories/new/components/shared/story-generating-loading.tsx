@@ -23,7 +23,12 @@ export function StoryGeneratingLoading({
 
   return (
     <div className="flex flex-col">
-      <ReasoningText phrases={phrases} aria-label={label} />
+      <ReasoningText
+        phrases={phrases}
+        interval={4000}
+        shimmerDuration={4}
+        aria-label={label}
+      />
 
       <div aria-live="polite" className="flex flex-col">
         {revealedHints.map(({ hint, isTextRevealed }) => (

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ImageGeneration } from '@/components/agents/image-generation';
 import { CardOptionsDialog } from '@/components/common/card-options-dialog';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
+import { TextShimmer } from '@/components/motion/text-shimmer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
@@ -159,7 +160,7 @@ function CreationProgressCardBody({
             label={CREATION_PROGRESS_CARD_COPY.completingState}
             aspectRatio="3 / 4"
             size="fluid"
-            interactive={false}
+            interactive
             showStatus={false}
             resolution=""
           />
@@ -184,7 +185,11 @@ function CreationProgressCardBody({
                 'line-clamp-2 min-w-0 flex-1 font-semibold break-keep text-foreground-secondary',
                 compact ? 'text-sm leading-5' : 'leading-6',
               )}>
-              {title}
+              {isCompleting ? (
+                <TextShimmer duration={4}>{title}</TextShimmer>
+              ) : (
+                title
+              )}
             </p>
             {action ? <div className="shrink-0">{action}</div> : null}
           </div>
