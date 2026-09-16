@@ -102,13 +102,10 @@ export function StoryReportSheet({
   return (
     <Drawer
       open={open && container !== null}
-      dismissible={!isPending}
+      disablePointerDismissal={isPending}
       onOpenChange={handleOpenChange}>
-      <DrawerContent
-        container={container}
-        className="absolute"
-        overlayClassName="absolute">
-        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
+      <DrawerContent container={container}>
+        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
           <DrawerTitle className="text-xl leading-snug font-bold">
             {STORY_REPORT_COPY.title}
           </DrawerTitle>

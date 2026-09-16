@@ -896,8 +896,9 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
         response.request().method() === 'POST',
     );
 
+    // Base UI 드로어는 배경 탭을 뷰포트가 받는다(백드롭은 포인터를 받지 않음).
     await page
-      .locator('[data-slot="drawer-overlay"]')
+      .locator('[data-slot="drawer-viewport"]')
       .click({ position: { x: 4, y: 4 } });
 
     const response = await updateResponse;

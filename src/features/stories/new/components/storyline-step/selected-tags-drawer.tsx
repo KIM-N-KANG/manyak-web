@@ -39,18 +39,17 @@ export function SelectedTagsDrawer({
           });
         }
       }}>
-      <DrawerTrigger asChild>
-        <Button
-          type="button"
-          variant="secondary"
-          className="h-10 w-full rounded-none px-0 text-foreground-secondary">
-          {SELECTED_TAGS_TRIGGER_LABEL}
-        </Button>
+      <DrawerTrigger
+        render={
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-10 w-full rounded-none px-0 text-foreground-secondary"
+          />
+        }>
+        {SELECTED_TAGS_TRIGGER_LABEL}
       </DrawerTrigger>
-      <DrawerContent
-        container={container}
-        className="absolute"
-        overlayClassName="absolute">
+      <DrawerContent container={container}>
         <DrawerHeader>
           <DrawerTitle>선택한 키워드</DrawerTitle>
         </DrawerHeader>

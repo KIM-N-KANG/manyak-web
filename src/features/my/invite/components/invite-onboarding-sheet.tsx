@@ -123,13 +123,10 @@ export function InviteOnboardingSheet() {
   return (
     <Drawer
       open={isOpen}
-      dismissible={!isCompleting}
+      disablePointerDismissal={isCompleting}
       onOpenChange={handleOpenChange}>
-      <DrawerContent
-        container={container}
-        className="absolute"
-        overlayClassName="absolute">
-        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
+      <DrawerContent container={container}>
+        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
           <InviteOnboardingTitle />
           <DrawerDescription className="text-base leading-relaxed">
             지금은 건너뛰고 나중에 등록해도 돼요

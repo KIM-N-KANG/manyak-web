@@ -95,21 +95,11 @@ export function ChatSettingsSheet({
   const imageRemaining = getTrialRemaining(useTrials(), 'chatImage');
 
   return (
-    // 채팅 입력창에 포커스가 있는 채로 열리므로 키보드가 닫히며 visualViewport가 바뀐다.
-    // 시트에는 입력 필드가 없으니 vaul의 키보드 대응(높이 재계산)을 끈다 — 켜 두면 시트가
-    // 뷰포트 높이만큼 늘어나 아래가 비고 안쪽 스크롤이 생긴다.
-    <Drawer
-      open={open && container !== null}
-      onOpenChange={onOpenChange}
-      repositionInputs={false}>
-      {/* 스크롤은 본문 래퍼가 맡는다. DrawerContent에 overflow를 주면 vaul이 러버밴드
-          틈을 메우려고 아래에 깔아 둔 ::after(높이 200%)까지 스크롤 영역에 잡힌다. */}
-      <DrawerContent
-        ref={sheetRef}
-        container={container}
-        className="absolute"
-        overlayClassName="absolute">
-        <DrawerHeader className="px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
+    <Drawer open={open && container !== null} onOpenChange={onOpenChange}>
+      {/* 스크롤은 본문 래퍼가 맡는다. 팝업 자체에 overflow를 주면 아래 틈을 메우는
+          bleed(::after)까지 스크롤 영역에 잡힌다. */}
+      <DrawerContent ref={sheetRef} container={container}>
+        <DrawerHeader className="px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
           <DrawerTitle className="text-xl leading-snug font-bold">
             {CHAT_SETTINGS_COPY.title}
           </DrawerTitle>
@@ -136,7 +126,7 @@ export function ChatSettingsSheet({
                   </Badge>
                 ) : (
                   <>
-                    {/* 팝오버는 시트 안으로 포탈한다. body로 나가면 vaul이 바깥 탭으로 보고 시트를 닫는다. */}
+                    {/* 팝오버는 시트 안으로 포탈한다. body로 나가면 드로어가 바깥 탭으로 보고 시트를 닫는다. */}
                     <Popover>
                       <PopoverTrigger
                         render={
