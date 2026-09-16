@@ -6,7 +6,7 @@ import {
   Alert02Icon,
   BubbleChatAddIcon,
   Delete02Icon,
-  Menu11Icon,
+  MoreVerticalIcon,
   Share03Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -93,9 +93,7 @@ export function ChatMenuDrawer({
       {/* 게스트 한도 시트가 뜨면 드로어는 닫는다. 두 드로어를 겹치지 않는다. */}
       <Drawer
         open={isOpen && guestLimitTrigger === null && container !== null}
-        onOpenChange={setIsOpen}
-        swipeDirection="right"
-        showSwipeHandle={false}>
+        onOpenChange={setIsOpen}>
         <DrawerTrigger
           render={
             <Button
@@ -105,13 +103,13 @@ export function ChatMenuDrawer({
               aria-label={CHAT_MENU_COPY.trigger}
             />
           }>
-          <HugeiconsIcon icon={Menu11Icon} aria-hidden="true" />
+          <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
         </DrawerTrigger>
-        <DrawerContent container={container} className="pt-4 text-base">
+        <DrawerContent container={container} className="text-base">
           <DrawerTitle className="sr-only">{CHAT_MENU_COPY.title}</DrawerTitle>
           <CreditBalanceCard className="m-0 p-4" />
-          {/* 항목은 채팅 목록 카드 옵션 다이얼로그와 같은 버튼이다. 본문 여백은 shadcn 데모처럼 p-4다. */}
-          <div className="flex flex-col p-4">
+          {/* 항목은 카드 옵션 시트와 같은 버튼이다. 위 여백은 이프 카드의 p-4가 맡는다. */}
+          <div className="flex flex-col px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {storyId !== null && (
               <OptionMenuButton
                 icon={BubbleChatAddIcon}

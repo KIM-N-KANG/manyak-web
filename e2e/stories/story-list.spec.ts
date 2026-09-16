@@ -503,15 +503,18 @@ test.describe('홈·제작 스토리 목록', () => {
     await optionsButton.click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
-    // 카드 옵션 시트는 머리글에 카드 종류와 제목을 보여준 뒤 같은 시트에서 확인으로 바뀐다.
+    // 카드 옵션 시트는 머리글에 카드 종류와 제목을 보여주고, 삭제는 시트를 닫은 뒤 확인 다이얼로그로 확정한다.
     const dialog = page.getByRole('dialog', { name: '용의 계곡' });
 
     await expect(
       dialog.getByText('내가 만든 스토리', { exact: true }),
     ).toBeVisible();
     await dialog.getByRole('menuitem', { name: '삭제하기' }).click();
-    await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
-    await dialog.getByRole('button', { name: '삭제하기' }).click();
+
+    const confirmDialog = page.getByRole('alertdialog');
+
+    await expect(confirmDialog.getByText('스토리를 삭제할까요?')).toBeVisible();
+    await confirmDialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
@@ -568,7 +571,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
     await page
-      .getByRole('dialog')
+      .getByRole('alertdialog')
       .getByRole('button', { name: '삭제하기' })
       .click();
 

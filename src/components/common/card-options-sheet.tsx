@@ -8,12 +8,20 @@ import type { VariantProps } from 'class-variance-authority';
 
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { OptionMenuButton } from '@/components/common/option-menu-button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button, type buttonVariants } from '@/components/ui/button';
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -24,8 +32,8 @@ import { cn } from '@/lib/utils';
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
 /**
- * 카드 옵션 시트의 항목 하나. `confirm`이 있으면 같은 시트 안에서 확인 화면으로
- * 바뀐 뒤 실행한다 — 시트를 닫고 새로 열면 스크림이 두 번 페이드돼 번쩍인다.
+ * 카드 옵션 시트의 항목 하나. `confirm`이 있으면 시트를 닫고 확인 다이얼로그를 띄운 뒤 실행한다.
+ * 시트 위에 다이얼로그를 겹치면 바깥 탭 판정이 서로 얽혀서 시트를 먼저 닫는다.
  */
 export type CardOptionsSheetItem = {
   icon: IconSvgElement;
@@ -72,21 +80,15 @@ export function CardOptionsSheet({
     confirmingIndex === null ? null : (items[confirmingIndex] ?? null);
   const isPending = confirmingItem?.confirm?.isPending ?? false;
 
-  const close = () => setOpen(false);
-
-  const openSheet = () => {
-    setConfirmingIndex(null);
-    setOpen(true);
-  };
-
   const handleSelect = async (item: CardOptionsSheetItem, index: number) => {
+    setOpen(false);
+
     if (item.confirm) {
       setConfirmingIndex(index);
 
       return;
     }
 
-    close();
     await item.onSelect();
   };
 
@@ -95,99 +97,90 @@ export function CardOptionsSheet({
       await confirmingItem.onSelect();
     }
 
-    close();
+    setConfirmingIndex(null);
   };
 
   return (
-    <Drawer
-      open={open && container !== null}
-      disablePointerDismissal={isPending}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          openSheet();
-        } else {
-          close();
-        }
-      }}>
-      <DrawerTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size={triggerSize}
-            aria-label={triggerAriaLabel}
-            className={cn(
-              triggerSize === 'icon-xs' && '-translate-y-px',
-              triggerClassName,
-            )}
-          />
-        }>
-        <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
-      </DrawerTrigger>
-      <DrawerContent container={container} className="text-base">
-        {confirmingItem ? (
-          <>
-            <DrawerHeader className="gap-2 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
-              <DrawerTitle className="text-xl leading-snug font-bold">
-                {confirmingItem.confirm?.title}
-              </DrawerTitle>
-              <DrawerDescription>
-                {confirmingItem.confirm?.description ??
-                  '삭제하면 목록에서 사라지며 되돌릴 수 없어요'}
-              </DrawerDescription>
-            </DrawerHeader>
-            <DrawerFooter className="mt-6 flex-row pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              <Button
-                type="button"
-                variant="secondary"
-                size="lg"
-                className="flex-1"
-                disabled={isPending}
-                onClick={() => setConfirmingIndex(null)}>
-                남겨두기
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="lg"
-                className="relative flex-1"
-                disabled={isPending}
-                onClick={() => void handleConfirm()}>
-                <LoadingButtonContent
-                  isLoading={isPending}
-                  loadingLabel="삭제 중">
-                  {confirmingItem.label}
-                </LoadingButtonContent>
-              </Button>
-            </DrawerFooter>
-          </>
-        ) : (
-          <>
-            <DrawerHeader className="gap-2 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
-              <p className="text-base leading-6 text-foreground-secondary">
-                {kind}
-              </p>
-              <DrawerTitle className="truncate text-xl leading-snug font-bold">
-                {title}
-              </DrawerTitle>
-            </DrawerHeader>
-            <div
-              role="menu"
-              className="flex flex-col p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              {items.map((item, index) => (
-                <OptionMenuButton
-                  key={item.label}
-                  role="menuitem"
-                  icon={item.icon}
-                  label={item.label}
-                  variant={item.variant}
-                  onClick={() => void handleSelect(item, index)}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </DrawerContent>
-    </Drawer>
+    <>
+      <Drawer open={open && container !== null} onOpenChange={setOpen}>
+        <DrawerTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size={triggerSize}
+              aria-label={triggerAriaLabel}
+              className={cn(
+                triggerSize === 'icon-xs' && '-translate-y-px',
+                triggerClassName,
+              )}
+            />
+          }>
+          <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
+        </DrawerTrigger>
+        <DrawerContent container={container} className="text-base">
+          <DrawerHeader className="gap-2 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
+            <p className="text-base leading-6 text-foreground-secondary">
+              {kind}
+            </p>
+            <DrawerTitle className="truncate text-xl leading-snug font-bold">
+              {title}
+            </DrawerTitle>
+          </DrawerHeader>
+          <div
+            role="menu"
+            className="flex flex-col p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {items.map((item, index) => (
+              <OptionMenuButton
+                key={item.label}
+                role="menuitem"
+                icon={item.icon}
+                label={item.label}
+                variant={item.variant}
+                onClick={() => void handleSelect(item, index)}
+              />
+            ))}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <AlertDialog
+        open={confirmingItem !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !isPending) {
+            setConfirmingIndex(null);
+          }
+        }}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmingItem?.confirm?.title ?? ''}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmingItem?.confirm?.description ??
+                '삭제하면 목록에서 사라지며 되돌릴 수 없어요'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>남겨두기</AlertDialogCancel>
+            <AlertDialogAction
+              type="button"
+              variant="destructive"
+              className="relative"
+              disabled={isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleConfirm();
+              }}>
+              <LoadingButtonContent
+                isLoading={isPending}
+                loadingLabel="삭제 중">
+                {confirmingItem?.label ?? ''}
+              </LoadingButtonContent>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

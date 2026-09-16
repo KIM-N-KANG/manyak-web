@@ -584,10 +584,9 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
     ).toBeVisible();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
 
-    // 같은 시트가 확인 화면으로 바뀐다.
-    const dialog = page.getByRole('dialog', { name: '스토리를 삭제할까요?' });
+    const dialog = page.getByRole('alertdialog');
 
-    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText(TOAST_MESSAGE.STORY_DELETED)).toBeVisible();

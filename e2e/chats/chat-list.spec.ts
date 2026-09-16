@@ -292,8 +292,8 @@ test.describe('채팅 카드 옵션 (KNK-1186)', () => {
 
     await dialog.getByRole('menuitem', { name: '삭제하기' }).click();
 
-    // 같은 시트가 확인 화면으로 바뀌므로 접근 가능한 이름도 확인 질문으로 바뀐다.
-    const confirmDialog = page.getByRole('dialog', {
+    // 시트가 닫히고 확인 다이얼로그가 뜬다.
+    const confirmDialog = page.getByRole('alertdialog', {
       name: '채팅을 삭제할까요?',
     });
 
