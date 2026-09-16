@@ -52,6 +52,23 @@ export const CHAT_SETTINGS_COPY = {
   },
 } as const;
 
+/** 채팅방 헤더 메뉴(우측 드로어)의 문구. 항목 순서는 화면 순서 그대로다. */
+export const CHAT_MENU_COPY = {
+  trigger: '채팅 메뉴',
+  title: '채팅 메뉴',
+  newChat: '새로운 채팅',
+  share: '채팅 공유',
+  report: '신고',
+  delete: '채팅 삭제',
+  deleteConfirm: {
+    title: '채팅을 삭제할까요?',
+    description: '삭제하면 목록에서 사라지며 되돌릴 수 없어요',
+    cancel: '남겨두기',
+    confirm: '삭제하기',
+    pending: '삭제 중',
+  },
+} as const;
+
 export const INPUT_BLOCK_PLACEHOLDERS: Record<InputBlockType, string> = {
   situation: '어떤 상황을 묘사할까요?',
   dialogue: '어떤 대사를 건넬까요?',

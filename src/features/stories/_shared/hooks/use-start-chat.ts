@@ -19,18 +19,26 @@ import { isGuestTrialExhausted } from '@/features/auth/_shared/utils/guest-trial
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 import { useTrials } from '@/hooks/use-trials';
 import type { GuestLimitTrigger } from '@/observability/analytics';
-import { track } from '@/observability/analytics';
+
+type UseStartChatOptions = {
+  /** 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용) */
+  startSettingId?: string;
+  /** 생성 요청 직전에 호출한다. 진입점별 분석 이벤트는 호출부가 소유한다. */
+  onStart?: () => void;
+};
 
 /**
- * 스토리 상세에서 채팅을 시작하는 훅.
+ * 스토리로 새 채팅을 시작하는 훅. 스토리 상세 CTA와 채팅방 메뉴가 함께 쓴다.
  * 채팅 생성 후 ID를 로컬에 저장하고 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
- * startSettingId를 넘기면 해당 시작 설정으로 시작한다(생략 시 백엔드가 첫 설정 사용).
  *
  * @param storyId 채팅을 시작할 스토리 id
- * @param startSettingId 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용)
+ * @param options 시작 설정 id와 요청 직전 콜백
  * @returns 채팅 시작 함수와 진행/에러 상태, 게스트 한도 바텀 시트 제어값
  */
-export function useStartChat(storyId: string, startSettingId?: string) {
+export function useStartChat(
+  storyId: string,
+  { startSettingId, onStart }: UseStartChatOptions = {},
+) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status } = useSession();
@@ -81,7 +89,7 @@ export function useStartChat(storyId: string, startSettingId?: string) {
       return;
     }
 
-    track('client_storyDetail_chatStartButton_clicked', { story_id: storyId });
+    onStart?.();
     createChat.mutate({ data: { storyId, startSettingId } });
   };
 
