@@ -19,10 +19,11 @@ export const ONBOARDING_DESCRIPTION =
 
 /**
  * 온보딩 랜딩 섹션에서 보여주는 화면 스크린샷 한 장.
- * 크기를 생략하면 전체 화면 스크린샷 공통 크기(810×1798)를 쓴다.
+ * 크기를 생략하면 전체 화면 스크린샷 공통 크기(1082×2402)를 쓴다.
  */
 export interface OnboardingScene {
   src: string;
+  darkSrc: string;
   alt: string;
   width?: number;
   height?: number;
@@ -50,15 +51,18 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
       '장르, 주인공, 주변 인물까지. 원하는 키워드를 고르면 나머지는 AI가 채워요.',
     scenes: [
       {
-        src: '/onboarding/keyword-genre.webp',
+        src: '/onboarding/keyword-genre-light.webp',
+        darkSrc: '/onboarding/keyword-genre-dark.webp',
         alt: '장르 키워드를 선택하는 화면',
       },
       {
-        src: '/onboarding/keyword-protagonist.webp',
+        src: '/onboarding/keyword-protagonist-light.webp',
+        darkSrc: '/onboarding/keyword-protagonist-dark.webp',
         alt: '주인공 키워드를 선택하는 화면',
       },
       {
-        src: '/onboarding/keyword-characters.webp',
+        src: '/onboarding/keyword-characters-light.webp',
+        darkSrc: '/onboarding/keyword-characters-dark.webp',
         alt: '주변 인물 키워드를 선택하는 화면',
       },
     ],
@@ -71,11 +75,13 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
       'AI가 제안한 스토리라인 중 하나를 고르고, 더하고 싶은 정보를 자유롭게 적어 완성해요.',
     scenes: [
       {
-        src: '/onboarding/storyline-select.webp',
+        src: '/onboarding/storyline-select-light.webp',
+        darkSrc: '/onboarding/storyline-select-dark.webp',
         alt: '스토리라인을 선택하는 화면',
       },
       {
-        src: '/onboarding/storyline-detail.webp',
+        src: '/onboarding/storyline-detail-light.webp',
+        darkSrc: '/onboarding/storyline-detail-dark.webp',
         alt: '스토리라인에 추가 정보를 입력하는 화면',
       },
     ],
@@ -88,12 +94,33 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
       '완성한 스토리에서 바로 대화가 시작돼요. 내가 보내는 말에 따라 다음 장면이 흘러가요.',
     scenes: [
       {
-        src: '/onboarding/chat-first-input.webp',
+        src: '/onboarding/chat-first-input-light.webp',
+        darkSrc: '/onboarding/chat-first-input-dark.webp',
         alt: '채팅에서 상황과 대사를 입력하는 화면',
       },
       {
-        src: '/onboarding/chat-response.webp',
+        src: '/onboarding/chat-response-light.webp',
+        darkSrc: '/onboarding/chat-response-dark.webp',
         alt: '인물 이미지와 함께 응답이 도착한 채팅 화면',
+      },
+    ],
+  },
+  {
+    key: 'image-generation',
+    eyebrow: '채팅',
+    title: '장면이 바뀌면, 이미지도 함께',
+    description:
+      '대화의 흐름에 맞춰 AI가 이미지를 새로 만들어요. 달라지는 표정과 배경으로 이야기에 더 몰입해보세요.',
+    scenes: [
+      {
+        src: '/onboarding/chat-image-generation-1-light.webp',
+        darkSrc: '/onboarding/chat-image-generation-1-dark.webp',
+        alt: '대화 중 장면에 맞는 인물 이미지가 생성된 화면',
+      },
+      {
+        src: '/onboarding/chat-image-generation-2-light.webp',
+        darkSrc: '/onboarding/chat-image-generation-2-dark.webp',
+        alt: '다음 장면에 맞춰 인물의 표정과 구도가 달라진 화면',
       },
     ],
   },
@@ -105,27 +132,9 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
       'AI가 지금 상황에 어울리는 입력을 추천해요. 탭 한 번이면 바로 전송돼요.',
     scenes: [
       {
-        src: '/onboarding/chat-suggestion.webp',
+        src: '/onboarding/chat-suggestion-light.webp',
+        darkSrc: '/onboarding/chat-suggestion-dark.webp',
         alt: 'AI가 추천한 입력을 보여주는 채팅 화면',
-      },
-    ],
-  },
-  {
-    key: 'input-mode',
-    eyebrow: '채팅',
-    title: '쓰는 방식도 내 마음대로',
-    description:
-      '자유롭게 이어 쓰거나, 상황과 대사를 나눠 더 섬세하게 연출할 수 있어요.',
-    scenes: [
-      {
-        src: '/onboarding/chat-input-free.webp',
-        alt: '한 줄로 자유롭게 입력하는 채팅 화면',
-        height: 1799,
-      },
-      {
-        src: '/onboarding/chat-input-block.webp',
-        alt: '상황과 대사를 나눠 입력하는 채팅 화면',
-        height: 1799,
       },
     ],
   },
@@ -137,7 +146,8 @@ export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
       '링크 하나면 내가 이어온 채팅을 친구에게 그대로 보여줄 수 있어요.',
     scenes: [
       {
-        src: '/onboarding/share-view.webp',
+        src: '/onboarding/share-view-light.webp',
+        darkSrc: '/onboarding/share-view-dark.webp',
         alt: '친구가 공유한 채팅을 보는 화면',
       },
     ],

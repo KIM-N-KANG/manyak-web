@@ -141,6 +141,107 @@ test.describe('온보딩', () => {
       .toBe(0);
   });
 
+  for (const theme of ['light', 'dark'] as const) {
+    test(`저장한 ${theme} 테마에 맞는 온보딩 이미지가 순서대로 표시된다`, async ({
+      page,
+    }) => {
+      // 테마·원본 자산 검증을 CI의 이미지 최적화 대기와 분리한다.
+      // 최적화된 화면은 별도의 비주얼 회귀 검사에서 검증한다.
+      await page.route('**/_next/image**', async (route) => {
+        const url = new URL(route.request().url());
+        const source = url.searchParams.get('url');
+
+        if (source?.startsWith('/onboarding/')) {
+          await route.continue({ url: new URL(source, url.origin).href });
+        } else {
+          await route.continue();
+        }
+      });
+      await page.emulateMedia({
+        colorScheme: theme === 'light' ? 'dark' : 'light',
+      });
+      await page.addInitScript(
+        (value) => localStorage.setItem('theme', value),
+        theme,
+      );
+      await page.goto(APP_PATH.ONBOARDING);
+
+      const sections = page.getByRole('main').locator('section');
+
+      await expect(sections).toHaveCount(6);
+      expect(ONBOARDING_SECTIONS.map((section) => section.key)).toEqual([
+        'keywords',
+        'storyline',
+        'chat',
+        'image-generation',
+        'suggestion',
+        'share',
+      ]);
+
+      for (const [index, section] of ONBOARDING_SECTIONS.entries()) {
+        const container = sections.nth(index);
+
+        await expect(container.getByRole('heading')).toHaveText(section.title);
+        await expect(
+          container.getByText(section.description, { exact: true }),
+        ).toBeAttached();
+        await expect(container.getByRole('img')).toHaveCount(
+          section.scenes.length,
+        );
+
+        for (const scene of section.scenes) {
+          const image = container.getByRole('img', {
+            name: scene.alt,
+            exact: true,
+          });
+
+          await image.scrollIntoViewIfNeeded();
+          await expect(image).toBeVisible();
+          await expect
+            .poll(
+              () =>
+                image.evaluate((element) => {
+                  const img = element as HTMLImageElement;
+
+                  return img.complete && img.naturalWidth > 0;
+                }),
+              { timeout: 15_000, message: `${theme}: ${scene.src}` },
+            )
+            .toBe(true);
+
+          const src = await image.getAttribute('src');
+
+          expect(new URL(src!, page.url()).searchParams.get('url')).toBe(
+            theme === 'dark' ? scene.darkSrc : scene.src,
+          );
+        }
+      }
+    });
+  }
+
+  test('시스템 테마가 바뀌면 온보딩 이미지도 즉시 바뀐다', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(APP_PATH.ONBOARDING);
+
+    const scene = ONBOARDING_SECTIONS[0].scenes[0];
+    const image = page.getByRole('img', { name: scene.alt, exact: true });
+
+    await expect(image).toHaveAttribute(
+      'src',
+      new RegExp(encodeURIComponent(scene.src)),
+    );
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await expect(image).toHaveAttribute(
+      'src',
+      new RegExp(encodeURIComponent(scene.darkSrc)),
+    );
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expect(image).toHaveAttribute(
+      'src',
+      new RegExp(encodeURIComponent(scene.src)),
+    );
+  });
+
   test('채팅·제작 탭으로 진입해도 온보딩 페이지로 이동한다', async ({
     page,
   }) => {
