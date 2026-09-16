@@ -11,7 +11,8 @@ import { useSession } from 'next-auth/react';
 import { useMainScroll } from '@/components/layout/main-scroll-context';
 import { APP_PATH } from '@/constants/app-path';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
-import { isGuestOverLimit } from '@/features/auth/_shared/utils/guest-usage-storage';
+import { isGuestTrialExhausted } from '@/features/auth/_shared/utils/guest-trial';
+import { useTrials } from '@/hooks/use-trials';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 
 import { CREATE_STORY_FAB_COPY } from '../constants';
@@ -23,11 +24,12 @@ type CreateStoryFabProps = {
 export function CreateStoryFab({ onCreate }: CreateStoryFabProps) {
   const { hasScrolled } = useMainScroll();
   const { status } = useSession();
+  const trials = useTrials();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (isGuestOverLimit(status, 'storyCreate')) {
+    if (isGuestTrialExhausted(status, trials, 'storyCreation')) {
       event.preventDefault();
       setGuestLimitTrigger('story_create');
 

@@ -1,9 +1,5 @@
 import type { Page } from '@playwright/test';
 
-import {
-  GUEST_USAGE_STORAGE_KEY,
-  type GuestUsage,
-} from '@/features/auth/_shared/utils/guest-usage-storage';
 import { PENDING_HANDOFF_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-handoff-storage';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
@@ -59,23 +55,6 @@ export async function seedStoryIds(
       window.localStorage.setItem(key, value);
     },
     [CREATED_STORY_IDS_STORAGE_KEY, JSON.stringify(storyIds)] as const,
-  );
-}
-
-/**
- * 로컬스토리지에 게스트 누적 사용량 카운터를 심는다.
- * 한도 도달 상태(스토리 생성 1회·채팅 5회 등)의 클라이언트 선차단을 재현할 때 쓴다.
- * 누락된 액션 카운터는 앱이 0으로 보정한다.
- */
-export async function seedGuestUsage(
-  page: Page,
-  usage: Partial<GuestUsage>,
-): Promise<void> {
-  await page.addInitScript(
-    ([key, value]) => {
-      window.localStorage.setItem(key, value);
-    },
-    [GUEST_USAGE_STORAGE_KEY, JSON.stringify(usage)] as const,
   );
 }
 

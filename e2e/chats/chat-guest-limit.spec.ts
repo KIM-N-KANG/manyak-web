@@ -4,7 +4,13 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedGuestUsage, skipChatTour, test } from '../fixtures/test';
+import {
+  EXHAUSTED_TRIALS,
+  expect,
+  mockTrials,
+  skipChatTour,
+  test,
+} from '../fixtures/test';
 
 // 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
 test.beforeEach(async ({ page }) => {
@@ -13,8 +19,8 @@ test.beforeEach(async ({ page }) => {
 
 /**
  * 채팅 턴의 게스트 체험 한도(전 채팅방 합산 5회)·이프 게이팅 스펙.
- * 로컬 카운터 선차단, 서버 402 사유별 바텀 시트·토스트 분기를 검증한다(QA CHAT-LIMIT-01~03).
- * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`를 따른다.
+ * 서버 체험 잔여 기반 선차단, 서버 402 사유별 바텀 시트·토스트 분기를 검증한다(QA CHAT-LIMIT-01~03).
+ * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GET /users/me/trials` 잔여를 따른다.
  */
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
@@ -43,13 +49,13 @@ const prepareChatRoom = async (page: Page) => {
 };
 
 test.describe('채팅 게스트 한도·이프 게이팅', () => {
-  test('게스트 로컬 카운터가 한도(5)에 도달하면 요청 없이 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
+  test('게스트 채팅 체험 잔여가 0이면 요청 없이 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
     page,
   }) => {
     let streamRequestCount = 0;
 
     await prepareChatRoom(page);
-    await seedGuestUsage(page, { chat: 5 });
+    await mockTrials(page, { chatTurn: EXHAUSTED_TRIALS.chatTurn });
     await page.route(CHAT_STREAM, async (route) => {
       streamRequestCount += 1;
       await route.abort();
@@ -76,7 +82,7 @@ test.describe('채팅 게스트 한도·이프 게이팅', () => {
   test('게스트가 서버 402(체험 한도)를 받으면 낙관적 버블을 제거하고 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
     page,
   }) => {
-    // 로컬 카운터는 미달이어도 서버 판정이 우선한다(카운터 우회·기기 변경 케이스).
+    // 조회한 잔여가 남아 있어도 서버 판정이 우선한다(조회 직후 다른 탭에서 소진한 경우 등).
     await prepareChatRoom(page);
     await page.route(CHAT_STREAM, async (route) => {
       await route.fulfill({

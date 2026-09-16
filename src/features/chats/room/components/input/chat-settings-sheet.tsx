@@ -28,13 +28,20 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { formatCreditAmount } from '@/constants/credit';
+import {
+  getTrialRemaining,
+  showsTrialRemaining,
+} from '@/features/auth/_shared/utils/guest-trial';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
+import { useTrials } from '@/hooks/use-trials';
 import { cn } from '@/lib/utils';
 
 import {
   buildChatTurnCreditCostLabel,
+  buildTrialRemainingLabel,
   CHAT_SETTINGS_COPY,
+  formatTrialRemaining,
 } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 
@@ -66,8 +73,8 @@ type ChatSettingsSheetProps = {
   onChoicesEnabledChange: (enabled: boolean) => void;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
-  /** 회원이면 실시간 이미지 제목 옆에 이미지 추가 소모 이프와 환불 안내를 보인다 */
-  showCreditCost: boolean;
+  /** 회원 여부. 이미지 체험을 다 쓴 회원에게만 이미지 소모 이프와 환불 안내를 보인다 */
+  isMember: boolean;
 };
 
 /** 채팅 기능·입력 모드 스위치를 담은 채팅 설정 바텀 시트. */
@@ -80,11 +87,12 @@ export function ChatSettingsSheet({
   onChoicesEnabledChange,
   mode,
   onModeChange,
-  showCreditCost,
+  isMember,
 }: ChatSettingsSheetProps) {
   const container = useAppFrameContainer();
   const sheetRef = useRef<HTMLDivElement>(null);
   const chatImageCost = useCreditPolicy()?.chatImageCost;
+  const imageRemaining = getTrialRemaining(useTrials(), 'chatImage');
 
   return (
     // 채팅 입력창에 포커스가 있는 채로 열리므로 키보드가 닫히며 visualViewport가 바뀐다.
@@ -115,7 +123,18 @@ export function ChatSettingsSheet({
               icon={AiImageIcon}
               copy={CHAT_SETTINGS_COPY.realtimeImage}
               titleAddon={
-                showCreditCost ? (
+                showsTrialRemaining(isMember, imageRemaining) ? (
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      'text-foreground-secondary',
+                      imageRemaining === undefined && 'animate-pulse',
+                    )}>
+                    {buildTrialRemainingLabel(
+                      formatTrialRemaining(imageRemaining),
+                    )}
+                  </Badge>
+                ) : (
                   <>
                     {/* 팝오버는 시트 안으로 포탈한다. body로 나가면 vaul이 바깥 탭으로 보고 시트를 닫는다. */}
                     <Popover>
@@ -157,7 +176,7 @@ export function ChatSettingsSheet({
                       )}
                     </Badge>
                   </>
-                ) : null
+                )
               }
               checked={realtimeImageEnabled}
               onCheckedChange={onRealtimeImageEnabledChange}

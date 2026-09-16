@@ -4,13 +4,19 @@ import { APP_PATH } from '@/constants/app-path';
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
 import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
 
-import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
+import {
+  EXHAUSTED_TRIALS,
+  expect,
+  mockTrials,
+  seedStoryIds,
+  test,
+} from '../fixtures/test';
 
 /**
  * 스토리 생성(게스트 1회)·채팅 시작(게스트 5회) 한도 게이팅 스펙.
  * 제작 탭 FAB와 상세 CTA의 클라이언트 선차단, 채팅 생성 402 사유별 분기를 검증한다
  * (QA STORY-LIMIT-01·07·08).
- * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`를 따른다.
+ * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GET /users/me/trials` 잔여를 따른다.
  */
 const STORIES_BATCH = '**/api/v1/stories/batch';
 const STORY_DETAIL = '**/api/v1/stories/s1';
@@ -50,9 +56,8 @@ test.describe('스토리 게스트 한도 게이팅', () => {
   test('스토리 생성 한도(1)에 도달한 게스트가 제작 FAB를 누르면 이동 없이 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
     page,
   }) => {
-    // 저장된 스토리 ID 1개가 storyCreate 카운터 시드로도 작용한다(guest-usage-storage).
     await seedStoryIds(page, ['s1']);
-    await seedGuestUsage(page, { storyCreate: 1 });
+    await mockTrials(page, { storyCreation: EXHAUSTED_TRIALS.storyCreation });
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
         status: 200,
@@ -83,7 +88,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
   }) => {
     let createChatCount = 0;
 
-    await seedGuestUsage(page, { chat: 5 });
+    await mockTrials(page, { chatTurn: EXHAUSTED_TRIALS.chatTurn });
     await mockStoryDetail(page);
     await page.route(CREATE_CHAT, async (route) => {
       createChatCount += 1;

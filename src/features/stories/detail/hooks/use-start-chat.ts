@@ -15,8 +15,9 @@ import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
-import { isGuestOverLimit } from '@/features/auth/_shared/utils/guest-usage-storage';
+import { isGuestTrialExhausted } from '@/features/auth/_shared/utils/guest-trial';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { useTrials } from '@/hooks/use-trials';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
@@ -33,6 +34,7 @@ export function useStartChat(storyId: string, startSettingId?: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status } = useSession();
+  const trials = useTrials();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
   const createChat = useCreateChat({
@@ -73,7 +75,7 @@ export function useStartChat(storyId: string, startSettingId?: string) {
   });
 
   const startChat = () => {
-    if (isGuestOverLimit(status, 'chat')) {
+    if (isGuestTrialExhausted(status, trials, 'chatTurn')) {
       setGuestLimitTrigger('chat_start');
 
       return;

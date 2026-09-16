@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import type {
   CreditPolicyResponse,
   CreditProductResponse,
+  TrialsResponse,
 } from '@/api/generated/models';
 
 /**
@@ -34,7 +35,53 @@ export async function mockApi(page: Page): Promise<void> {
   // 이프 수치 문구는 공개 정책 조회를 따라간다. 목이 없으면 catch-all의 `[]`가 내려가
   // 모든 수치가 자리표시(000)로 그려지므로, 픽스처 수치를 응답해 문구를 결정적으로 만든다.
   await mockCreditPolicies(page);
+
+  // 체험 잔여 문구·게스트 선차단은 서버 체험 조회를 따라간다. 목이 없으면 catch-all의 `[]`가
+  // 내려가 잔여가 자리표시로 남고 선차단이 꺼지므로, 모든 체험이 남은 상태를 기본으로 응답한다.
+  await mockTrials(page);
 }
+
+/** 체험 사용량·한도 조회(GET /api/v1/users/me/trials) 라우트 글롭. */
+const TRIALS_ROUTE = '**/api/v1/users/me/trials';
+
+/**
+ * E2E가 응답할 체험 사용량·한도. 모든 항목이 하나도 쓰이지 않은 상태이며, 한도 수치는
+ * 백엔드 정책(스토리라인 5·스토리 1·채팅 5·이미지 5)을 따른다.
+ */
+export const TRIALS_FIXTURE = {
+  chatTurn: { used: 0, limit: 5 },
+  chatImage: { used: 0, limit: 5 },
+  storyCreation: { used: 0, limit: 1 },
+  storylineGeneration: { used: 0, limit: 5 },
+} as const satisfies Required<TrialsResponse>;
+
+/**
+ * 체험 사용량·한도 조회를 목킹한다. 항목별 사용량을 덮어써 한도 도달 상태의 선차단이나
+ * 회원의 체험 소진 후 이프 비용 표시를 재현한다.
+ *
+ * @param page 대상 페이지
+ * @param overrides 기본 픽스처 위에 덮어쓸 항목
+ */
+export async function mockTrials(
+  page: Page,
+  overrides: Partial<TrialsResponse> = {},
+): Promise<void> {
+  await page.route(TRIALS_ROUTE, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ...TRIALS_FIXTURE, ...overrides }),
+    });
+  });
+}
+
+/** 모든 체험 항목을 소진한 응답. 회원의 이프 비용 표시 검증에 쓴다. */
+export const EXHAUSTED_TRIALS: Required<TrialsResponse> = {
+  chatTurn: { used: 5, limit: 5 },
+  chatImage: { used: 5, limit: 5 },
+  storyCreation: { used: 1, limit: 1 },
+  storylineGeneration: { used: 5, limit: 5 },
+};
 
 /** 이프 정책 조회(GET /api/v1/credits/policies) 라우트 글롭. */
 const CREDIT_POLICIES_ROUTE = '**/api/v1/credits/policies';
