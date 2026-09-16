@@ -6,6 +6,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
   buildChatTurnCreditCostLabel,
+  buildTrialRemainingLabel,
   CHAT_SETTINGS_COPY,
 } from '@/features/chats/room/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
@@ -13,11 +14,14 @@ import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-re
 import { mockMemberSession } from '../fixtures/auth';
 import {
   CREDIT_POLICY_FIXTURE,
+  EXHAUSTED_TRIALS,
   expect,
+  mockTrials,
   seedChatIds,
   skipChatTour,
   skipOnboarding,
   test,
+  TRIALS_FIXTURE,
 } from '../fixtures/test';
 
 // 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
@@ -83,10 +87,87 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
-  test('회원 전송 버튼 왼쪽에 턴+실시간 이미지 합산 이프 비용을 작고 회색으로 표시한다', async ({
+  test('게스트는 전송 버튼 왼쪽과 설정 시트 배지에 잔여 체험 횟수를 표시한다 (CHAT-LIMIT-07)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await mockTrials(page, {
+      chatTurn: { used: 2, limit: 5 },
+      chatImage: { used: 5, limit: 5 },
+    });
+
+    await page.goto('/chats/c1');
+
+    const turnRemaining = page.getByText(buildTrialRemainingLabel('3'), {
+      exact: true,
+    });
+
+    await expect(turnRemaining).toBeVisible();
+    await expect(turnRemaining).toHaveClass(/text-foreground-secondary/);
+    await expect(
+      turnRemaining.locator('xpath=following-sibling::*[1]'),
+    ).toHaveAttribute('data-tour', 'send');
+    await expect(page.getByText(/이프$/)).toHaveCount(0);
+
+    // 게스트는 이미지 체험을 다 써도 이프 배지 대신 잔여 0을 보인다.
+    await openChatSettings(page);
+    await expect(
+      page.getByText(buildTrialRemainingLabel('0'), { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      }),
+    ).toHaveCount(0);
+  });
+
+  test('회원은 체험이 남아 있으면 잔여 횟수를, 이미지 체험을 다 쓰면 시트에 이프 배지를 표시한다 (CHAT-LIMIT-08)', async ({
     page,
   }) => {
     await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await mockTrials(page, {
+      chatTurn: TRIALS_FIXTURE.chatTurn,
+      chatImage: EXHAUSTED_TRIALS.chatImage,
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(
+      page.getByText(
+        buildTrialRemainingLabel(String(TRIALS_FIXTURE.chatTurn.limit)),
+        { exact: true },
+      ),
+    ).toBeVisible();
+
+    await openChatSettings(page);
+    await expect(
+      page.getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
+  });
+
+  test('회원이 체험을 다 쓰면 전송 버튼 왼쪽에 턴+실시간 이미지 합산 이프 비용을 작고 회색으로 표시한다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, EXHAUSTED_TRIALS);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,

@@ -2,9 +2,10 @@ import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-
 import { CHAT_SETTINGS_COPY } from '@/features/chats/room/constants';
 
 import {
+  EXHAUSTED_TRIALS,
   expect,
+  mockTrials,
   seedChatIds,
-  seedGuestUsage,
   skipChatChoicesHint,
   skipChatTour,
   skipOnboarding,
@@ -256,7 +257,7 @@ test.describe('채팅 오버레이 비주얼', () => {
   test('게스트 한도 로그인 유도 바텀 시트 (CHAT-LIMIT-01)', async ({
     page,
   }) => {
-    await seedGuestUsage(page, { chat: 5 });
+    await mockTrials(page, { chatTurn: EXHAUSTED_TRIALS.chatTurn });
     await page.goto('/chats/c1');
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 

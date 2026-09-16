@@ -28,10 +28,9 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
-  type GuestUsageAction,
-  isGuestOverLimit,
-  isGuestUsageLimitReached,
-} from '@/features/auth/_shared/utils/guest-usage-storage';
+  isGuestTrialExhausted,
+  type TrialKind,
+} from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
@@ -56,6 +55,7 @@ import {
   applyStoryCompletedEffects,
   applyStorylinesGeneratedEffects,
 } from '@/features/stories/_shared/utils/creation-side-effects';
+import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
 import type { GuestLimitTrigger } from '@/observability/analytics';
@@ -95,6 +95,7 @@ export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
+  const trials = useTrials();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -176,17 +177,14 @@ export function useStoryCreateFunnel() {
     leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
 
   // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
-  // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. localStorage는 마운트
-  // 시 한 번만 읽고(lazy 초기화), 차단 여부는 렌더 중 파생값으로 계산해 effect
-  // 내 setState를 피한다. 세션이 확정된 미로그인 상태에서만 판정해 로딩 중 회원을
-  // 오차단하지 않으며, 다이얼로그를 닫으면 재노출하지 않는다.
-  const [storyCreateAtLimitOnMount] = useState(() =>
-    isGuestUsageLimitReached('storyCreate'),
-  );
+  // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. 서버 체험 잔여가
+  // 도착하면 렌더 중 파생값으로 계산해 effect 내 setState를 피한다. 세션이 확정된
+  // 미로그인 상태의 키워드 단계에서만 판정해 로딩 중 회원을 오차단하지 않고, 이 퍼널에서
+  // 완성해 잔여가 0이 된 뒤에는 다시 띄우지 않으며, 다이얼로그를 닫으면 재노출하지 않는다.
   const [isBackstopDismissed, setIsBackstopDismissed] = useState(false);
   const isStoryCreateBackstopActive =
-    sessionStatus === 'unauthenticated' &&
-    storyCreateAtLimitOnMount &&
+    step === 'keyword' &&
+    isGuestTrialExhausted(sessionStatus, trials, 'storyCreation') &&
     !isBackstopDismissed;
 
   const failToAdditionalInfo = (stage: 'story' | 'chat') => {
@@ -219,10 +217,10 @@ export function useStoryCreateFunnel() {
   // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 바텀 시트를 열고 true를 반환한다.
   // 각 진입점(생성·재생성·완료)의 사전 차단을 한 곳으로 모은다.
   const guardGuestLimit = (
-    action: GuestUsageAction,
+    kind: TrialKind,
     trigger: GuestLimitTrigger,
   ): boolean => {
-    if (!isGuestOverLimit(sessionStatus, action)) {
+    if (!isGuestTrialExhausted(sessionStatus, trials, kind)) {
       return false;
     }
 
@@ -265,7 +263,7 @@ export function useStoryCreateFunnel() {
         }
 
         draftAutosave.markCurrentAsSaved(true);
-        applyStorylinesGeneratedEffects(sessionStatus);
+        applyStorylinesGeneratedEffects(queryClient);
 
         setGenerationRequest(variables.data);
         setGenerationResult(response.data);
@@ -537,8 +535,8 @@ export function useStoryCreateFunnel() {
 
       draftAutosave.markCurrentAsSaved(saved);
 
-      // 원 onSuccess가 실행되지 못했으므로 성공 부수효과(카운터·픽셀)를 여기서 수행한다.
-      applyStorylinesGeneratedEffects(sessionStatus);
+      // 원 onSuccess가 실행되지 못했으므로 성공 부수효과(체험 잔여·픽셀)를 여기서 수행한다.
+      applyStorylinesGeneratedEffects(queryClient);
 
       setGenerationRequest(record.generationRequest);
       setGenerationResult(result);
@@ -775,7 +773,7 @@ export function useStoryCreateFunnel() {
   function handleGenerateStorylines(
     request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
   ) {
-    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
+    if (guardGuestLimit('storylineGeneration', 'storyline_generate')) {
       return;
     }
 
@@ -798,7 +796,7 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
+    if (guardGuestLimit('storylineGeneration', 'storyline_generate')) {
       return;
     }
 
@@ -893,7 +891,7 @@ export function useStoryCreateFunnel() {
     setIsGuestLimitReached(false);
 
     if (createdStoryId !== null) {
-      if (guardGuestLimit('chat', 'chat_start')) {
+      if (guardGuestLimit('chatTurn', 'chat_start')) {
         return;
       }
 
@@ -916,7 +914,7 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (guardGuestLimit('storyCreate', 'story_create')) {
+    if (guardGuestLimit('storyCreation', 'story_create')) {
       return;
     }
 

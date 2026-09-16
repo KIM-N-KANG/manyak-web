@@ -17,7 +17,7 @@ type ChatInputProps = {
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
   choicesEnabled: boolean;
   onChoicesEnabledChange: (enabled: boolean) => void;
-  showCreditCost: boolean;
+  isMember: boolean;
 };
 
 export function ChatInput({
@@ -29,7 +29,7 @@ export function ChatInput({
   onRealtimeImageEnabledChange,
   choicesEnabled,
   onChoicesEnabledChange,
-  showCreditCost,
+  isMember,
 }: ChatInputProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const openSettings = () => setSettingsOpen(true);
@@ -44,7 +44,7 @@ export function ChatInput({
       onChoicesEnabledChange={onChoicesEnabledChange}
       mode={mode}
       onModeChange={onModeChange}
-      showCreditCost={showCreditCost}
+      isMember={isMember}
     />
   );
 
@@ -63,7 +63,7 @@ export function ChatInput({
           isStreaming={isStreaming}
           choicesEnabled={choicesEnabled}
           onOpenSettings={openSettings}
-          showCreditCost={showCreditCost}
+          isMember={isMember}
           realtimeImageEnabled={realtimeImageEnabled}
         />
         {settingsSheet}
@@ -84,7 +84,7 @@ export function ChatInput({
         textareaRef={composer.textareaRef}
         choicesEnabled={choicesEnabled}
         onOpenSettings={openSettings}
-        showCreditCost={showCreditCost}
+        isMember={isMember}
         realtimeImageEnabled={realtimeImageEnabled}
       />
       {settingsSheet}

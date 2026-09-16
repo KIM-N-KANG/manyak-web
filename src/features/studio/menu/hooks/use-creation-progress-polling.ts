@@ -85,7 +85,7 @@ export function useCreationProgressPolling(
 
       // 원 응답이 먼저 승격했으면 부수효과를 다시 적용하지 않는다.
       if (promoted) {
-        applyStorylinesGeneratedEffects(sessionStatus);
+        applyStorylinesGeneratedEffects(queryClient);
       }
 
       return;

@@ -3,6 +3,7 @@ import { expect, test as base } from '@playwright/test';
 import {
   CREDIT_POLICY_FIXTURE,
   CREDIT_PRODUCTS_FIXTURE,
+  EXHAUSTED_TRIALS,
   mockApi,
   mockChatShareCreate,
   mockChatShareView,
@@ -11,6 +12,8 @@ import {
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
+  mockTrials,
+  TRIALS_FIXTURE,
 } from './api-mock';
 
 // 모든 테스트에 API 안전망을 자동 적용한다.
@@ -25,7 +28,6 @@ export { expect };
 export {
   seedCampaignCookie,
   seedChatIds,
-  seedGuestUsage,
   seedPendingCreditOrder,
   seedPendingHandoff,
   seedStoryIds,
@@ -37,6 +39,7 @@ export { mockMemberSession } from './auth';
 export {
   CREDIT_POLICY_FIXTURE,
   CREDIT_PRODUCTS_FIXTURE,
+  EXHAUSTED_TRIALS,
   mockChatShareCreate,
   mockChatShareView,
   mockCreditPolicies,
@@ -44,4 +47,6 @@ export {
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
+  mockTrials,
+  TRIALS_FIXTURE,
 };

@@ -12,7 +12,6 @@ export interface JsonNode {
   floatingPointNumber?: boolean;
   missingNode?: boolean;
   integralNumber?: boolean;
-  number?: boolean;
   nodeType?: JsonNodeNodeType;
   int?: boolean;
   long?: boolean;
@@ -27,6 +26,7 @@ export interface JsonNode {
   textual?: boolean;
   boolean?: boolean;
   binary?: boolean;
+  number?: boolean;
   container?: boolean;
   array?: boolean;
   empty?: boolean;
