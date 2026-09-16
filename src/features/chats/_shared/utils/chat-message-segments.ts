@@ -9,6 +9,8 @@ const CHARACTER_IMAGE_HOSTNAMES = new Set([
 const CHARACTER_IMAGE_PATH_PREFIXES = [
   '/characters/generated/',
   '/characters/originals/',
+  // 실시간 이미지(KNK-1299). 백엔드가 `chat-images/{chatId}/{turn}-{uuid}.webp` 키로 발급한다.
+  '/chat-images/',
 ] as const;
 const CHARACTER_IMAGE_MARKER_LINE = /^\[\[(https:\/\/[^\r\n]+)\]\]$/;
 const LEADING_HORIZONTAL_WHITESPACE = /^[ \t]*/;
