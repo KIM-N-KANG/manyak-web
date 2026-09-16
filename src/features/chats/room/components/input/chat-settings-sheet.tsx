@@ -215,8 +215,8 @@ function SettingRow({
   onCheckedChange,
 }: SettingRowProps) {
   return (
-    <div className="flex min-h-12 items-center gap-4 px-4 py-2">
-      <HugeiconsIcon icon={icon} className="size-6" aria-hidden="true" />
+    <div className="flex min-h-12 items-center gap-3 px-4 py-2">
+      <HugeiconsIcon icon={icon} className="size-5" aria-hidden="true" />
       <span className="flex flex-1 flex-col text-left text-base">
         <span className="flex items-center gap-2">
           {copy.label}
