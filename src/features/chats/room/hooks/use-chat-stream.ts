@@ -35,6 +35,7 @@ import {
  * @param onCompleted 스트림 완료 시 호출되는 콜백
  * @param onPaymentRequired 402(체험 한도·이프 부족) 발생 시 호출되는 콜백
  * @param onIndeterminate 서버 확정 상태가 불명(EOF·409)일 때 호출되는 콜백
+ * @param realtimeImage 실시간 이미지 생성 여부. 전송·재생성 요청 본문에 그대로 싣는다
  * @returns 진행 중인 턴·스트리밍 여부와 전송·재생성 동작
  */
 export function useChatStream(
@@ -43,6 +44,7 @@ export function useChatStream(
   onCompleted: () => Promise<unknown> | unknown,
   onPaymentRequired?: (error: unknown) => void,
   onIndeterminate?: () => Promise<unknown> | unknown,
+  realtimeImage = true,
 ) {
   const [streamingTurn, setStreamingTurn] = useState<StreamingTurn | null>(
     null,
@@ -59,7 +61,12 @@ export function useChatStream(
     userSource?: ContinueChatRequestUserSource,
     selection?: ChatChoiceSelection,
   ) => {
-    setStreamingTurn({ userInput, segments: [], baseTurnCount: turnCount });
+    setStreamingTurn({
+      userInput,
+      segments: [],
+      baseTurnCount: turnCount,
+      realtimeImage,
+    });
 
     const controller = new AbortController();
 
@@ -70,7 +77,7 @@ export function useChatStream(
     try {
       const stream = await streamChatTurnRaw(
         chatId,
-        { userInput, userSource, ...selection },
+        { userInput, userSource, realtimeImage, ...selection },
         controller.signal,
       );
 
@@ -169,7 +176,11 @@ export function useChatStream(
     }
 
     setRegeneratingTurnId(turn.id);
-    setStreamingTurn({ userInput: turn.userInput ?? '', segments: [] });
+    setStreamingTurn({
+      userInput: turn.userInput ?? '',
+      segments: [],
+      realtimeImage,
+    });
 
     const controller = new AbortController();
 
@@ -180,7 +191,7 @@ export function useChatStream(
     try {
       const stream = await streamRegenerateChatTurnRaw(
         chatId,
-        { turnId: turn.id },
+        { turnId: turn.id, realtimeImage },
         controller.signal,
       );
 

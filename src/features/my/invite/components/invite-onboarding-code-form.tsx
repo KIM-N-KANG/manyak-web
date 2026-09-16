@@ -47,7 +47,7 @@ export function InviteOnboardingCodeForm({
 
   return (
     <form
-      className="flex flex-col gap-8 px-4 pt-8 pb-4"
+      className="flex min-h-0 flex-col gap-8 overflow-y-auto overscroll-contain px-4 pt-8 pb-4"
       aria-busy={isBusy}
       onSubmit={handleSubmit}>
       <FieldGroup>

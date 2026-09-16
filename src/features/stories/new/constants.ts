@@ -38,6 +38,10 @@ export const CHARACTER_BASIC_INFO_LABEL = '기본 정보';
 
 export const CHARACTER_BASIC_INFO_DESCRIPTION = '비워두면 랜덤으로 설정해요';
 
+/** 주변 인물을 모두 지운 상태에서 "인물 추가" 위에 두는 안내 */
+export const SUPPORTING_CHARACTER_EMPTY_DESCRIPTION =
+  '주변 인물이 랜덤으로 생성돼요';
+
 export const CHARACTER_FEATURE_LABEL = `특징 (최대 ${CHARACTER_FEATURE_MAX_COUNT}개)`;
 
 /** 특징이 선택 항목인 인물(주변 인물)에만 붙이는 설명 */

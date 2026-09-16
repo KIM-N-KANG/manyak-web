@@ -4,7 +4,10 @@ import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
-import { buildChatTurnCreditCostLabel } from '@/features/chats/room/constants';
+import {
+  buildChatTurnCreditCostLabel,
+  CHAT_SETTINGS_COPY,
+} from '@/features/chats/room/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -42,6 +45,24 @@ const setPlainInputMode = async (page: Page) => {
   });
 };
 
+// 채팅 설정 시트(설정 아이콘 → 바텀 시트)를 열고 닫는다. 닫기는 오버레이 바깥 탭 대신 Escape로 한다.
+const openChatSettings = async (page: Page) => {
+  await page.getByRole('button', { name: CHAT_SETTINGS_COPY.trigger }).click();
+  await expect(
+    page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+  ).toBeVisible();
+};
+
+const closeChatSettings = async (page: Page) => {
+  await page.keyboard.press('Escape');
+  await expect(
+    page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+  ).toBeHidden();
+};
+
+const choicesSwitch = (page: Page) =>
+  page.getByRole('switch', { name: CHAT_SETTINGS_COPY.choices.label });
+
 const chatDetail = (
   turns: unknown[] = [],
   suggestedInputs: string[] = ['던전에 진입한다', '주변을 둘러본다'],
@@ -62,7 +83,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
-  test('회원 전송 버튼 왼쪽에 20 이프 비용을 작고 회색으로 표시한다', async ({
+  test('회원 전송 버튼 왼쪽에 턴+실시간 이미지 합산 이프 비용을 작고 회색으로 표시한다', async ({
     page,
   }) => {
     await mockMemberSession(page);
@@ -78,7 +99,10 @@ test.describe('채팅 스트리밍', () => {
 
     const creditCost = page.getByText(
       buildChatTurnCreditCostLabel(
-        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatTurnCost),
+        formatCreditAmount(
+          CREDIT_POLICY_FIXTURE.chatTurnCost +
+            CREDIT_POLICY_FIXTURE.chatImageCost,
+        ),
       ),
       { exact: true },
     );
@@ -92,6 +116,48 @@ test.describe('채팅 스트리밍', () => {
       creditCost.locator('xpath=following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
+
+    // 시트 배지는 이미지 비용만 보이고, 안내 버튼은 실패 시 환불을 알린다.
+    await openChatSettings(page);
+    await expect(
+      page.getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await page
+      .getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      })
+      .click();
+    await expect(
+      page.getByText(CHAT_SETTINGS_COPY.realtimeImage.notice),
+    ).toBeVisible();
+    // Escape는 시트까지 닫으므로 안내 버튼을 다시 눌러 팝오버만 닫는다.
+    await page
+      .getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      })
+      .click();
+    await expect(
+      page.getByText(CHAT_SETTINGS_COPY.realtimeImage.notice),
+    ).toBeHidden();
+
+    // 실시간 이미지를 끄면 툴바 비용은 턴 비용만 남는다.
+    await page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
+      .click();
+    await closeChatSettings(page);
+    await expect(
+      page.getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatTurnCost),
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
   });
 
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {
@@ -848,8 +914,10 @@ test.describe('블럭 입력 모드 (기본)', () => {
 
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '입력 모드 변경' }).click();
-    await page.getByRole('menuitemradio', { name: /일반 입력/ }).click();
+    await openChatSettings(page);
+    await page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.blockInput.label })
+      .click();
 
     await expect(
       page.getByPlaceholder('이야기를 어떻게 이어갈까요?'),
@@ -906,6 +974,7 @@ test.describe('블럭 입력 모드 (기본)', () => {
     expect(JSON.parse(streamRequestBody)).toEqual({
       userInput: '*비가 온다*\n\n우산 챙겼어?',
       userSource: 'typed',
+      realtimeImage: true,
     });
   });
 
@@ -1036,7 +1105,11 @@ test.describe('입력 출처(userSource) 전달', () => {
       page.getByRole('button', { name: SUGGESTION }).click(),
     );
 
-    expect(body).toEqual({ userInput: SUGGESTION, userSource: 'choice' });
+    expect(body).toEqual({
+      userInput: SUGGESTION,
+      userSource: 'choice',
+      realtimeImage: true,
+    });
   });
 
   test('턴 선택지를 탭해 보내면 턴 ID와 1-based 순번을 함께 보낸다', async ({
@@ -1052,6 +1125,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: SUGGESTION,
       userSource: 'choice',
+      realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
     });
@@ -1100,6 +1174,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: SUGGESTION,
       userSource: 'choice',
+      realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
     });
@@ -1131,6 +1206,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: edited,
       userSource: 'edited_choice',
+      realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
     });
@@ -1150,6 +1226,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: '횃불을 켜고 안쪽을 살핀다',
       userSource: 'typed',
+      realtimeImage: true,
     });
   });
 });
@@ -1182,7 +1259,10 @@ test.describe('응답 재생성', () => {
       });
     });
     await page.route(CHAT_REGENERATE, async (route) => {
-      expect(route.request().postDataJSON()).toEqual({ turnId: 7 });
+      expect(route.request().postDataJSON()).toEqual({
+        turnId: 7,
+        realtimeImage: true,
+      });
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -1372,7 +1452,8 @@ test.describe('추천 입력 토글', () => {
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('진입한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    // 목 상세가 같은 문장의 기존 턴을 돌려주므로 스트리밍 중에는 잠시 두 개가 보인다. 마지막 것만 본다.
+    await expect(page.getByText('문이 서서히 열린다.').last()).toBeVisible();
     expect(choicesCalled).toBe(0);
   });
 
@@ -1405,8 +1486,9 @@ test.describe('추천 입력 토글', () => {
     await setChoicesDisabled(page);
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '추천 입력 설정' }).click();
-    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
+    await openChatSettings(page);
+    await choicesSwitch(page).click();
+    await closeChatSettings(page);
 
     await expect(
       page.getByRole('button', { name: '안으로 들어간다' }),
@@ -1441,12 +1523,16 @@ test.describe('추천 입력 토글', () => {
 
     await expect(firstChoice).toBeVisible();
 
-    await page.getByRole('button', { name: '추천 입력 설정' }).click();
-    await page.getByRole('menuitemradio', { name: /추천 입력 끔/ }).click();
+    await openChatSettings(page);
+    await choicesSwitch(page).click();
+    await expect(choicesSwitch(page)).toHaveAttribute('aria-checked', 'false');
+    await closeChatSettings(page);
     await expect(firstChoice).toBeHidden();
 
-    await page.getByRole('button', { name: '추천 입력 설정' }).click();
-    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
+    await openChatSettings(page);
+    await choicesSwitch(page).click();
+    await expect(choicesSwitch(page)).toHaveAttribute('aria-checked', 'true');
+    await closeChatSettings(page);
     await expect(firstChoice).toBeVisible();
 
     expect(choicesCalled).toBe(0);

@@ -35,7 +35,7 @@ export interface ReasoningTextProps {
   interval?: number;
   /** Seconds taken for one shimmer pass. */
   shimmerDuration?: number;
-  /** Optional leading visual. Defaults to a terminal-style ASCII loader. */
+  /** Optional leading visual. Defaults to a dots loader; pass `null` to omit it. */
   indicator?: ReactNode;
   className?: string;
   /** Overrides the phrase-derived accessible name. */
@@ -189,18 +189,13 @@ export function ReasoningText({
           'inline-flex items-center gap-2 text-sm font-medium text-muted-foreground',
           className,
         )}>
-        <span
-          aria-hidden="true"
-          className="inline-flex size-3 shrink-0 items-center justify-center">
-          {indicator ?? (
-            <Loader
-              variant="ascii-line"
-              size={14}
-              speed={0.8}
-              label="Reasoning"
-            />
-          )}
-        </span>
+        {indicator === null ? null : (
+          <span
+            aria-hidden="true"
+            className="inline-flex size-3 shrink-0 items-center justify-center">
+            {indicator ?? <Loader variant="dots" size={14} label="로딩 중" />}
+          </span>
+        )}
 
         <span aria-hidden="true" className="grid overflow-hidden text-left">
           <span className="invisible col-start-1 row-start-1 whitespace-nowrap">

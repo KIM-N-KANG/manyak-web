@@ -32,6 +32,10 @@ import { useDocumentTitle } from '@/hooks/use-document-title';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
+import {
+  CHAT_CHOICES_ENABLED_STORAGE_KEY,
+  CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
+} from '../constants';
 import { useChatChoices } from '../hooks/use-chat-choices';
 import { useChatChoicesHint } from '../hooks/use-chat-choices-hint';
 import { useChatComposer } from '../hooks/use-chat-composer';
@@ -42,7 +46,7 @@ import {
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
-import { useChoicesToggle } from '../hooks/use-choices-toggle';
+import { useStoredToggle } from '../hooks/use-stored-toggle';
 import type { ChatChoiceSelection } from '../types';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
@@ -91,7 +95,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   useDocumentTitle(storyTitle);
 
   const { enabled: choicesEnabled, setEnabled: setChoicesEnabled } =
-    useChoicesToggle();
+    useStoredToggle(CHAT_CHOICES_ENABLED_STORAGE_KEY, true);
+  const { enabled: realtimeImageEnabled, setEnabled: setRealtimeImageEnabled } =
+    useStoredToggle(CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY, true);
   const { choicesStatus, generate: generateChoicesForTurn } = useChatChoices(
     chatId,
     refetch,
@@ -128,6 +134,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       handleStreamCompleted,
       handlePaymentRequired,
       refetch,
+      realtimeImageEnabled,
     );
 
   const tour = useChatTour({
@@ -339,6 +346,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           onModeChange={handleModeChange}
           composer={composer}
           isStreaming={isStreaming}
+          realtimeImageEnabled={realtimeImageEnabled}
+          onRealtimeImageEnabledChange={setRealtimeImageEnabled}
           choicesEnabled={choicesEnabled}
           onChoicesEnabledChange={handleChoicesEnabledChange}
           showCreditCost={sessionStatus === 'authenticated'}
