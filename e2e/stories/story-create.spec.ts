@@ -16,6 +16,8 @@ import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
+  mockMemberSession,
+  mockTrials,
   skipChatTour,
   skipOnboarding,
   test,
@@ -650,9 +652,29 @@ test.describe('스토리 생성', () => {
     await expect(page.getByRole('button', { name: '더보기' })).toBeVisible();
   });
 
-  test('추가 정보 하단에 스토리 완성 비용과 200 이프를 표시한다', async ({
+  test('체험이 남아 있으면 추가 정보 하단에 스토리 완성 비용을 취소선 정가와 0 이프로 표시한다', async ({
     page,
   }) => {
+    await reachAdditionalInfo(page);
+
+    const creditCost = page.getByLabel(STORY_COMPLETION_CREDIT_COST_LABEL);
+    const amount = creditCost.getByText(
+      buildStoryCompletionCreditCostLabel(formatCreditAmount(0)),
+      { exact: true },
+    );
+
+    await expect(creditCost).toBeVisible();
+    await expect(creditCost.locator('s')).toHaveText(
+      formatCreditAmount(CREDIT_POLICY_FIXTURE.storyCreationCost),
+    );
+    await expect(amount).toHaveCSS('font-weight', '700');
+  });
+
+  test('체험을 다 쓰면 추가 정보 하단에 스토리 완성 비용과 200 이프를 표시한다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, { storyCreation: { used: 1, limit: 1 } });
     await reachAdditionalInfo(page);
 
     const creditCost = page.getByLabel(STORY_COMPLETION_CREDIT_COST_LABEL);
@@ -664,6 +686,7 @@ test.describe('스토리 생성', () => {
     );
 
     await expect(creditCost).toBeVisible();
+    await expect(creditCost.locator('s')).toHaveCount(0);
     await expect(amount).toHaveCSS('font-weight', '700');
   });
 

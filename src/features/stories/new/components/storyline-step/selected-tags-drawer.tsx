@@ -44,7 +44,8 @@ export function SelectedTagsDrawer({
           <Button
             type="button"
             variant="secondary"
-            className="h-10 w-full rounded-none px-0 text-foreground-secondary"
+            // 전체 폭 바 형태라 일반 버튼의 눌림 축소 효과를 끈다.
+            className="h-10 w-full rounded-none px-0 text-foreground-secondary active:scale-100"
           />
         }>
         {SELECTED_TAGS_TRIGGER_LABEL}

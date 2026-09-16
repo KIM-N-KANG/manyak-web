@@ -112,9 +112,9 @@ export function ChatMenuDrawer({
               {CHAT_MENU_COPY.title}
             </DrawerTitle>
           </DrawerHeader>
-          <CreditBalanceCard className="m-0 p-4" />
-          {/* 항목은 카드 옵션 시트와 같은 버튼이다. 위 여백은 이프 카드의 p-4가 맡는다. */}
-          <div className="flex flex-col px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <CreditBalanceCard className="m-0 p-4 pb-0" />
+          {/* 항목은 카드 옵션 시트와 같은 버튼이다. 위 여백은 목록이 맡아 게스트(이프 카드 없음)에도 유지된다. */}
+          <div className="flex flex-col px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {storyId !== null && (
               <OptionMenuButton
                 icon={BubbleChatAddIcon}

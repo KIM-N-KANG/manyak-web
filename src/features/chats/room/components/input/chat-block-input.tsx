@@ -33,7 +33,6 @@ type ChatBlockInputProps = {
   isStreaming: boolean;
   choicesEnabled: boolean;
   onOpenSettings: () => void;
-  isMember: boolean;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
   realtimeImageEnabled: boolean;
 };
@@ -50,7 +49,6 @@ export function ChatBlockInput({
   isStreaming,
   choicesEnabled,
   onOpenSettings,
-  isMember,
   realtimeImageEnabled,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -164,10 +162,7 @@ export function ChatBlockInput({
         </Button>
         <ChatSettingsButton onClick={onOpenSettings} />
         <div className="ml-auto flex items-center gap-2">
-          <ChatTurnCreditCost
-            withRealtimeImage={realtimeImageEnabled}
-            isMember={isMember}
-          />
+          <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
           <Button
             type="button"
             size="icon-sm"

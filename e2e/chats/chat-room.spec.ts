@@ -7,7 +7,6 @@ import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
   buildChatTurnCreditCostLabel,
-  buildTrialRemainingLabel,
   CHAT_MENU_COPY,
   CHAT_SETTINGS_COPY,
 } from '@/features/chats/room/constants';
@@ -90,7 +89,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
-  test('게스트는 전송 버튼 왼쪽과 설정 시트 배지에 잔여 체험 횟수를 표시한다 (CHAT-LIMIT-07)', async ({
+  test('게스트는 전송 버튼 왼쪽에 정가 취소선과 체험 적용가를, 이미지 체험을 다 쓰면 시트 배지에 이미지 정가만 표시한다 (CHAT-LIMIT-07)', async ({
     page,
   }) => {
     await page.route(CHAT_DETAIL, async (route) => {
@@ -107,22 +106,89 @@ test.describe('채팅 스트리밍', () => {
 
     await page.goto('/chats/c1');
 
-    const turnRemaining = page.getByText(buildTrialRemainingLabel('3'), {
-      exact: true,
-    });
+    const { chatTurnCost, chatImageCost } = CREDIT_POLICY_FIXTURE;
+    // 턴 체험만 남고 실시간 이미지가 켜져 있으면 정가(턴+이미지)에 취소선, 적용가는 이미지 비용만.
+    const cost = page.getByText(
+      buildChatTurnCreditCostLabel(formatCreditAmount(chatImageCost)),
+      { exact: true },
+    );
 
-    await expect(turnRemaining).toBeVisible();
-    await expect(turnRemaining).toHaveClass(/text-foreground-secondary/);
+    const badge = cost.locator('xpath=..');
+
+    await expect(cost).toBeVisible();
+    await expect(badge).toHaveClass(/text-foreground-secondary/);
+    await expect(badge.locator('s')).toHaveText(
+      formatCreditAmount(chatTurnCost + chatImageCost),
+    );
     await expect(
-      turnRemaining.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
-    await expect(page.getByText(/이프$/)).toHaveCount(0);
+    await expect(page.getByText(/잔여 체험 횟수/)).toHaveCount(0);
 
-    // 게스트는 이미지 체험을 다 써도 이프 배지 대신 잔여 0을 보인다.
+    // 시트 배지는 게스트가 이미지 체험을 다 쓰면 취소선 없이 이미지 정가만 보이고 안내 버튼은 없다.
     await openChatSettings(page);
+
+    const imageBadge = page
+      .getByText(
+        buildChatTurnCreditCostLabel(formatCreditAmount(chatImageCost)),
+        { exact: true },
+      )
+      .last()
+      .locator('xpath=..');
+
+    await expect(imageBadge).toBeVisible();
+    await expect(imageBadge.locator('s')).toHaveCount(0);
     await expect(
-      page.getByText(buildTrialRemainingLabel('0'), { exact: true }),
-    ).toBeVisible();
+      page.getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      }),
+    ).toHaveCount(0);
+
+    // 실시간 이미지를 끄면 정가 20에 취소선, 적용가 0이 된다.
+    await page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
+      .click();
+    await closeChatSettings(page);
+
+    const freeCost = page.getByText(
+      buildChatTurnCreditCostLabel(formatCreditAmount(0)),
+      { exact: true },
+    );
+
+    await expect(freeCost).toBeVisible();
+    await expect(freeCost.locator('xpath=..').locator('s')).toHaveText(
+      formatCreditAmount(chatTurnCost),
+    );
+  });
+
+  test('게스트는 이미지 체험이 남아 있으면 설정 시트 배지에 이미지 정가 취소선과 0 이프를 표시한다 (CHAT-LIMIT-07)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await mockTrials(page, TRIALS_FIXTURE);
+
+    await page.goto('/chats/c1');
+    await openChatSettings(page);
+
+    const imageBadge = page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
+      .locator('xpath=ancestor::*[.//s][1]')
+      .locator('s')
+      .first()
+      .locator('xpath=..');
+
+    await expect(imageBadge.locator('s')).toHaveText(
+      formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+    );
+    await expect(imageBadge).toContainText(
+      buildChatTurnCreditCostLabel(formatCreditAmount(0)),
+    );
     await expect(
       page.getByRole('button', {
         name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
@@ -130,7 +196,7 @@ test.describe('채팅 스트리밍', () => {
     ).toHaveCount(0);
   });
 
-  test('회원은 체험이 남아 있으면 잔여 횟수를, 이미지 체험을 다 쓰면 시트에 이프 배지를 표시한다 (CHAT-LIMIT-08)', async ({
+  test('회원도 턴 체험이 남아 있으면 정가 취소선과 적용가를, 이미지 체험을 다 쓰면 시트에 안내 버튼과 이프 배지를 표시한다 (CHAT-LIMIT-08)', async ({
     page,
   }) => {
     await mockMemberSession(page);
@@ -148,21 +214,42 @@ test.describe('채팅 스트리밍', () => {
 
     await page.goto('/chats/c1');
 
-    await expect(
-      page.getByText(
-        buildTrialRemainingLabel(String(TRIALS_FIXTURE.chatTurn.limit)),
-        { exact: true },
+    // 턴 체험만 남고 실시간 이미지가 켜져 있으면 정가(턴+이미지)에 취소선, 적용가는 이미지 비용만.
+    const cost = page.getByText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
       ),
-    ).toBeVisible();
+      { exact: true },
+    );
 
+    await expect(cost).toBeVisible();
+    await expect(cost.locator('xpath=..').locator('s')).toHaveText(
+      formatCreditAmount(
+        CREDIT_POLICY_FIXTURE.chatTurnCost +
+          CREDIT_POLICY_FIXTURE.chatImageCost,
+      ),
+    );
+    await expect(page.getByText(/잔여 체험 횟수/)).toHaveCount(0);
+
+    // 회원은 이미지 체험을 다 쓰면 환불 안내 버튼과 취소선 없는 이미지 정가 배지를 보인다.
     await openChatSettings(page);
-    await expect(
-      page.getByText(
+
+    const imageBadge = page
+      .getByText(
         buildChatTurnCreditCostLabel(
           formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
         ),
         { exact: true },
-      ),
+      )
+      .last()
+      .locator('xpath=..');
+
+    await expect(imageBadge).toBeVisible();
+    await expect(imageBadge.locator('s')).toHaveCount(0);
+    await expect(
+      page.getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      }),
     ).toBeVisible();
   });
 
@@ -190,14 +277,16 @@ test.describe('채팅 스트리밍', () => {
       ),
       { exact: true },
     );
+    const badge = creditCost.locator('xpath=..');
     const sendButton = page.locator('[data-tour="send"]');
 
     await expect(creditCost).toBeVisible();
-    await expect(creditCost).toHaveCSS('font-size', '12px');
-    await expect(creditCost).toHaveClass(/text-foreground-secondary/);
-    await expect(creditCost.locator('xpath=..')).toHaveCSS('column-gap', '8px');
+    await expect(badge).toHaveCSS('font-size', '12px');
+    await expect(badge).toHaveClass(/text-foreground-secondary/);
+    await expect(badge.locator('s')).toHaveCount(0);
+    await expect(badge.locator('xpath=..')).toHaveCSS('column-gap', '8px');
     await expect(
-      creditCost.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
 

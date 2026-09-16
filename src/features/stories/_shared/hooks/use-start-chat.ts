@@ -15,9 +15,7 @@ import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
-import { isGuestTrialExhausted } from '@/features/auth/_shared/utils/guest-trial';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
-import { useTrials } from '@/hooks/use-trials';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 
 type UseStartChatOptions = {
@@ -42,7 +40,6 @@ export function useStartChat(
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status } = useSession();
-  const trials = useTrials();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
   const createChat = useCreateChat({
@@ -82,13 +79,9 @@ export function useStartChat(
     },
   });
 
+  // 채팅 생성은 턴 체험을 쓰지 않으므로 게스트가 체험을 다 썼어도 선차단하지 않는다.
+  // 채팅방에 들어간 뒤 전송 시점에 턴 한도를 판정한다.
   const startChat = () => {
-    if (isGuestTrialExhausted(status, trials, 'chatTurn')) {
-      setGuestLimitTrigger('chat_start');
-
-      return;
-    }
-
     onStart?.();
     createChat.mutate({ data: { storyId, startSettingId } });
   };

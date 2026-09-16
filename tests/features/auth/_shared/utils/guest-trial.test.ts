@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   getTrialRemaining,
   isGuestTrialExhausted,
-  showsTrialRemaining,
   toTrialRemaining,
 } from '@/features/auth/_shared/utils/guest-trial';
 
@@ -66,19 +65,5 @@ describe('isGuestTrialExhausted', () => {
         'chatTurn',
       ),
     ).toBe(false);
-  });
-});
-
-describe('showsTrialRemaining', () => {
-  it('게스트는 응답 전·소진 후에도 잔여를 보인다', () => {
-    expect(showsTrialRemaining(false, undefined)).toBe(true);
-    expect(showsTrialRemaining(false, 0)).toBe(true);
-  });
-
-  it('회원은 체험이 남아 있을 때만 잔여를 보인다', () => {
-    expect(showsTrialRemaining(true, 3)).toBe(true);
-    expect(showsTrialRemaining(true, 0)).toBe(false);
-    expect(showsTrialRemaining(true, undefined)).toBe(false);
-    expect(showsTrialRemaining(true, null)).toBe(false);
   });
 });

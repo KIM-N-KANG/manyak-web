@@ -83,7 +83,7 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('채팅 한도(5)에 도달한 게스트가 상세에서 채팅을 시작하면 요청 없이 로그인 유도 바텀 시트를 띄운다 (US-10-5)', async ({
+  test('채팅 한도(5)에 도달한 게스트도 상세에서 채팅을 시작하면 선차단 없이 채팅방이 만들어진다 (STORY-LIMIT-07)', async ({
     page,
   }) => {
     let createChatCount = 0;
@@ -92,19 +92,21 @@ test.describe('스토리 게스트 한도 게이팅', () => {
     await mockStoryDetail(page);
     await page.route(CREATE_CHAT, async (route) => {
       createChatCount += 1;
-      await route.abort();
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'c-new' }),
+      });
     });
 
     await page.goto('/stories/s1');
     await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
 
-    const dialog = page.getByRole('dialog');
-
+    await expect(page).toHaveURL(/\/chats\/c-new$/);
+    expect(createChatCount).toBe(1);
     await expect(
-      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
-    ).toBeVisible();
-    await expect(page).toHaveURL(/\/stories\/s1$/);
-    expect(createChatCount).toBe(0);
+      page.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
+    ).toHaveCount(0);
   });
 
   test('게스트 채팅 생성이 402(체험 한도)로 거절되면 실패 토스트가 아닌 로그인 바텀 시트를 띄운다 (STORY-LIMIT-08)', async ({
