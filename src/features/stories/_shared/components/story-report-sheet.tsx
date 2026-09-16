@@ -208,8 +208,8 @@ function StoryReportForm({
         <Button
           type="button"
           variant="ghost"
-          size="xs"
-          className="w-fit self-center text-foreground-secondary"
+          size="lg"
+          className="w-full text-foreground-secondary"
           disabled={isSubmitting}
           onClick={onClose}>
           {STORY_REPORT_COPY.close}
