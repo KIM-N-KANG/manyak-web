@@ -135,7 +135,15 @@ test.describe('채팅 스트리밍', () => {
     await expect(
       page.getByText(CHAT_SETTINGS_COPY.realtimeImage.notice),
     ).toBeVisible();
-    await page.keyboard.press('Escape');
+    // Escape는 시트까지 닫으므로 안내 버튼을 다시 눌러 팝오버만 닫는다.
+    await page
+      .getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      })
+      .click();
+    await expect(
+      page.getByText(CHAT_SETTINGS_COPY.realtimeImage.notice),
+    ).toBeHidden();
 
     // 실시간 이미지를 끄면 툴바 비용은 턴 비용만 남는다.
     await page
@@ -1444,7 +1452,8 @@ test.describe('추천 입력 토글', () => {
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('진입한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    // 목 상세가 같은 문장의 기존 턴을 돌려주므로 스트리밍 중에는 잠시 두 개가 보인다. 마지막 것만 본다.
+    await expect(page.getByText('문이 서서히 열린다.').last()).toBeVisible();
     expect(choicesCalled).toBe(0);
   });
 
