@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/message-scroller';
 import { AiMessageBubble } from '@/features/chats/_shared/components/chat-message-bubble';
 import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
+import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { cn } from '@/lib/utils';
 
 import type { ChoicesStatus } from '../../hooks/use-chat-choices';
@@ -111,6 +112,11 @@ export function ChatMessages({
             regeneratingTurnId != null && '[overflow-anchor:none]',
           )}>
           <MessageScrollerContent className="gap-0">
+            <MessageScrollerItem>
+              <p className="px-4 text-center text-xs text-foreground-secondary">
+                {CHAT_AI_NOTICE}
+              </p>
+            </MessageScrollerItem>
             {prologue ? (
               <MessageScrollerItem>
                 <AiMessageBubble>

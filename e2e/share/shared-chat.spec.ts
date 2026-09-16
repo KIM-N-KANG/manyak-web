@@ -1,4 +1,5 @@
 import { APP_PATH } from '@/constants/app-path';
+import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 
 import { expect, mockChatShareView, test } from '../fixtures/test';
 
@@ -37,9 +38,7 @@ test.describe('공유된 채팅 열람', () => {
     await expect(
       page.getByRole('banner').getByText('별빛 도서관'),
     ).toBeVisible();
-    await expect(
-      page.getByText('친구가 공유한 채팅을 보고 있어요'),
-    ).toBeVisible();
+    await expect(page.getByText(CHAT_AI_NOTICE)).toBeVisible();
     await expect(page.getByText('오래된 도서관의 문이 열렸다')).toBeVisible();
     await expect(page.getByText('책장을 살펴본다')).toBeVisible();
     await expect(

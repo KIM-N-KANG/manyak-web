@@ -53,7 +53,7 @@ export const CHAT_SETTINGS_COPY = {
   },
 } as const;
 
-/** 채팅방 헤더 메뉴(우측 드로어)의 문구. 항목 순서는 화면 순서 그대로다. */
+/** 채팅방 헤더 메뉴 시트의 문구. 항목 순서는 화면 순서 그대로다. */
 export const CHAT_MENU_COPY = {
   trigger: '채팅 메뉴',
   title: '채팅 메뉴',

@@ -12,6 +12,7 @@ import {
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
 import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
+import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { track, useTrackOnView } from '@/observability/analytics';
 
@@ -58,8 +59,8 @@ export function SharedChatView({
       </header>
 
       <div className="min-h-0 flex-1 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain pb-2">
-        <p className="p-4 text-center text-sm text-foreground-secondary">
-          친구가 공유한 채팅을 보고 있어요
+        <p className="px-4 text-center text-xs text-foreground-secondary">
+          {CHAT_AI_NOTICE}
         </p>
         {prologue ? (
           <AiMessageBubble>

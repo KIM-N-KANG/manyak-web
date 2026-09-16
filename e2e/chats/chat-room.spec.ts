@@ -3,6 +3,7 @@ import { type Page } from '@playwright/test';
 import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
   buildChatTurnCreditCostLabel,
@@ -263,6 +264,14 @@ test.describe('채팅 스트리밍', () => {
 
     await expect(prologue).toBeVisible();
     await expect(firstChoice).toBeVisible();
+
+    // AI 생성 안내 문구가 프롤로그보다 위에 놓인다.
+    const notice = page.getByText(CHAT_AI_NOTICE);
+
+    await expect(notice).toBeVisible();
+    expect((await notice.boundingBox())!.y).toBeLessThan(
+      (await prologue.boundingBox())!.y,
+    );
     await expect(prologue.locator('xpath=ancestor::p')).toHaveCSS(
       'line-height',
       '28px',
