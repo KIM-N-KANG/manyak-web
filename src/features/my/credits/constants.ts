@@ -101,7 +101,10 @@ export const CREDIT_REASON_LABEL: Partial<
   REFUND: '사용 취소',
   STORY_CREATION: '스토리 완성',
   CHAT_TURN: '채팅 전송',
+  CHAT_IMAGE: '채팅 이미지 생성',
   EXPIRE: '기간 만료',
+  PURCHASE: '이프 구매',
+  PURCHASE_REVERSAL: '구매 환불',
 };
 
 /** 서버가 사유를 늘려도 그 줄만 일반 문구로 그리기 위한 기본 라벨이다. */

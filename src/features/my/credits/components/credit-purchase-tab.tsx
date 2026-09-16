@@ -28,7 +28,7 @@ export function CreditPurchaseTab() {
   const products = data?.status === 200 ? (data.data.items ?? []) : [];
 
   return (
-    <div className="flex h-full scroll-fade-b flex-col overflow-y-auto overscroll-contain py-4">
+    <div className="flex h-full scroll-fade-b flex-col overflow-y-auto overscroll-contain pt-2 pb-4">
       {isPending ? (
         <div
           className={LIST_CLASS}
