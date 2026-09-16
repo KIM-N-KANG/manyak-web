@@ -24,7 +24,7 @@ export interface CreditTransactionResponse {
    */
   title?: string | null;
   /**
-   * 획득 행은 그 적립분의 만료 예정일, 소멸 행은 실제 만료일. 소모 행은 null
+   * 획득 행은 그 적립분의 만료 예정일, EXPIRE 행은 실제 만료일. 소모·구매 환불 회수는 null
    * @nullable
    */
   expiresAt?: string | null;

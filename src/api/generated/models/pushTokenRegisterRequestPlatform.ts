@@ -7,11 +7,12 @@
  */
 
 /**
- * 기기 플랫폼
+ * 기기 플랫폼: ANDROID(안드로이드 앱), WEB(웹 PWA)
  */
 export type PushTokenRegisterRequestPlatform =
   (typeof PushTokenRegisterRequestPlatform)[keyof typeof PushTokenRegisterRequestPlatform];
 
 export const PushTokenRegisterRequestPlatform = {
   ANDROID: 'ANDROID',
+  WEB: 'WEB',
 } as const;

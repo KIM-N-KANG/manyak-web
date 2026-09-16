@@ -12,11 +12,11 @@ import type { PushTokenRegisterRequestPlatform } from './pushTokenRegisterReques
  */
 export interface PushTokenRegisterRequest {
   /**
-   * 앱이 FCM에서 발급받은 등록 토큰. 같은 값을 다시 보내면 갱신(멱등)이고, 토큰이 바뀌면(onNewToken) 새 값으로 다시 등록한다.
+   * 안드로이드 앱 또는 웹 PWA가 FCM에서 발급받은 등록 토큰. 같은 값을 다시 보내면 갱신(멱등)이고, 토큰이 바뀌면(onNewToken) 새 값으로 다시 등록한다.
    * @minLength 0
    * @maxLength 512
    */
   token: string;
-  /** 기기 플랫폼 */
+  /** 기기 플랫폼: ANDROID(안드로이드 앱), WEB(웹 PWA) */
   platform?: PushTokenRegisterRequestPlatform;
 }

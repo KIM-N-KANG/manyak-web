@@ -47,6 +47,7 @@ export const CREDIT_POLICY_FIXTURE = {
   attendanceReward: 700,
   storyCreationCost: 200,
   chatTurnCost: 20,
+  chatImageCost: 0,
 } as const satisfies Required<CreditPolicyResponse>;
 
 /**
