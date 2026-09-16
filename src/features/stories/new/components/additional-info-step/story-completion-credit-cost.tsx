@@ -1,5 +1,6 @@
 'use client';
 
+import { CreditMark } from '@/components/common/credit-mark';
 import { formatCreditAmount } from '@/constants/credit';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
 import { cn } from '@/lib/utils';
@@ -24,9 +25,10 @@ export function StoryCompletionCreditCost() {
       <dt>{STORY_COMPLETION_CREDIT_COST_LABEL}</dt>
       <dd
         className={cn(
-          'font-bold text-foreground',
+          'flex items-center gap-1 font-bold text-foreground',
           storyCreationCost === undefined && 'animate-pulse',
         )}>
+        <CreditMark className="size-3.5" />
         {buildStoryCompletionCreditCostLabel(
           formatCreditAmount(storyCreationCost),
         )}

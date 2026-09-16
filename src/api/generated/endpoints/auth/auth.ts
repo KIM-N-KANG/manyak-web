@@ -1008,26 +1008,26 @@ export function useConfirm<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type createResponse201 = {
+export type create1Response201 = {
   data: LoginHandoffCreateResponse;
   status: 201;
 };
 
-export type createResponse400 = {
+export type create1Response400 = {
   data: void;
   status: 400;
 };
 
-export type createResponseSuccess = createResponse201 & {
+export type create1ResponseSuccess = create1Response201 & {
   headers: Headers;
 };
-export type createResponseError = createResponse400 & {
+export type create1ResponseError = create1Response400 & {
   headers: Headers;
 };
 
-export type createResponse = createResponseSuccess | createResponseError;
+export type create1Response = create1ResponseSuccess | create1ResponseError;
 
-export const getCreateUrl = () => {
+export const getCreate1Url = () => {
   return `/api/v1/auth/handoffs`;
 };
 
@@ -1035,11 +1035,11 @@ export const getCreateUrl = () => {
  * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
  * @summary 로그인 핸드오프 생성
  */
-export const create = async (
+export const create1 = async (
   loginHandoffCreateRequest: LoginHandoffCreateRequest,
   options?: RequestInit,
-): Promise<createResponse> => {
-  return customInstance<createResponse>(getCreateUrl(), {
+): Promise<create1Response> => {
+  return customInstance<create1Response>(getCreate1Url(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1047,24 +1047,24 @@ export const create = async (
   });
 };
 
-export const getCreateMutationOptions = <
+export const getCreate1MutationOptions = <
   TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof create1>>,
     TError,
     { data: BodyType<LoginHandoffCreateRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof create1>>,
   TError,
   { data: BodyType<LoginHandoffCreateRequest> },
   TContext
 > => {
-  const mutationKey = ['create'];
+  const mutationKey = ['create1'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -1074,30 +1074,30 @@ export const getCreateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof create1>>,
     { data: BodyType<LoginHandoffCreateRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return create(data, requestOptions);
+    return create1(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof create>>
+export type Create1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof create1>>
 >;
-export type CreateMutationBody = BodyType<LoginHandoffCreateRequest>;
-export type CreateMutationError = ErrorType<void>;
+export type Create1MutationBody = BodyType<LoginHandoffCreateRequest>;
+export type Create1MutationError = ErrorType<void>;
 
 /**
  * @summary 로그인 핸드오프 생성
  */
-export const useCreate = <TError = ErrorType<void>, TContext = unknown>(
+export const useCreate1 = <TError = ErrorType<void>, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof create>>,
+      Awaited<ReturnType<typeof create1>>,
       TError,
       { data: BodyType<LoginHandoffCreateRequest> },
       TContext
@@ -1106,12 +1106,12 @@ export const useCreate = <TError = ErrorType<void>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof create1>>,
   TError,
   { data: BodyType<LoginHandoffCreateRequest> },
   TContext
 > => {
-  return useMutation(getCreateMutationOptions(options), queryClient);
+  return useMutation(getCreate1MutationOptions(options), queryClient);
 };
 export type meResponse200 = {
   data: MeResponse;

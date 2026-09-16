@@ -2,10 +2,12 @@ import { expect, test as base } from '@playwright/test';
 
 import {
   CREDIT_POLICY_FIXTURE,
+  CREDIT_PRODUCTS_FIXTURE,
   mockApi,
   mockChatShareCreate,
   mockChatShareView,
   mockCreditPolicies,
+  mockCreditProducts,
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
@@ -24,6 +26,7 @@ export {
   seedCampaignCookie,
   seedChatIds,
   seedGuestUsage,
+  seedPendingCreditOrder,
   seedPendingHandoff,
   seedStoryIds,
   skipChatChoicesHint,
@@ -33,9 +36,11 @@ export {
 export { mockMemberSession } from './auth';
 export {
   CREDIT_POLICY_FIXTURE,
+  CREDIT_PRODUCTS_FIXTURE,
   mockChatShareCreate,
   mockChatShareView,
   mockCreditPolicies,
+  mockCreditProducts,
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,

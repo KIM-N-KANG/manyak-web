@@ -12,6 +12,7 @@ import {
   CHAT_TOUR_SEEN_STORAGE_KEY,
   CHAT_TOUR_SEEN_VALUE,
 } from '@/features/chats/room/constants';
+import { PENDING_CREDIT_ORDER_STORAGE_KEY } from '@/features/my/credits/utils/pending-credit-order-storage';
 import {
   ONBOARDING_SEEN_COOKIE,
   ONBOARDING_SEEN_STORAGE_KEY,
@@ -135,6 +136,25 @@ export async function seedPendingHandoff(
       window.localStorage.setItem(key, value);
     },
     [PENDING_HANDOFF_STORAGE_KEY, JSON.stringify(pending)] as const,
+  );
+}
+
+/**
+ * 결제창으로 나가기 직전 남긴 이프 충전 대기 주문을 심는다.
+ * 그로블에서 `/my/credits`로 돌아와 주문 확인 카드가 폴링을 시작하는 상태를 재현한다.
+ */
+export async function seedPendingCreditOrder(
+  page: Page,
+  orderId: string,
+): Promise<void> {
+  await page.addInitScript(
+    ([key, id]) => {
+      window.localStorage.setItem(
+        key,
+        JSON.stringify({ orderId: id, savedAt: Date.now() }),
+      );
+    },
+    [PENDING_CREDIT_ORDER_STORAGE_KEY, orderId] as const,
   );
 }
 

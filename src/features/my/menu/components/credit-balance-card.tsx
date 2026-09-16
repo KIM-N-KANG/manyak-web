@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
 import { useMe } from '@/api/generated/endpoints/auth/auth';
+import { CreditMark } from '@/components/common/credit-mark';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
@@ -35,14 +36,15 @@ export function CreditBalanceCard() {
   return (
     <section className="-mt-4 mb-4 p-4 pt-0">
       <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="text-foreground-secondary">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-sm text-foreground-secondary">
             {CREDIT_CHARGE_COPY.balanceLabel}
           </span>
           {isLoading || balance === undefined ? (
             <Skeleton className="h-7 w-12 bg-foreground/5" />
           ) : (
-            <span className="text-lg font-semibold tabular-nums">
+            <span className="flex items-center gap-1 text-lg font-semibold tabular-nums">
+              <CreditMark className="size-5" />
               {balance.toLocaleString()}
             </span>
           )}

@@ -33,6 +33,7 @@ import type {
   ImagePresignRequest,
   ImagePresignResponse,
   LorebookListItemResponse,
+  SearchStoriesParams,
   SimpleStoryCreateResponse,
   StoryDetailResponse,
   StoryEditFormResponse,
@@ -1711,6 +1712,191 @@ export function useGetEditForm<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetEditFormQueryOptions(storyId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type searchStoriesResponse200 = {
+  data: StoryPageResponse;
+  status: 200;
+};
+
+export type searchStoriesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type searchStoriesResponse503 = {
+  data: void;
+  status: 503;
+};
+
+export type searchStoriesResponseSuccess = searchStoriesResponse200 & {
+  headers: Headers;
+};
+export type searchStoriesResponseError = (
+  | searchStoriesResponse400
+  | searchStoriesResponse503
+) & {
+  headers: Headers;
+};
+
+export type searchStoriesResponse =
+  | searchStoriesResponseSuccess
+  | searchStoriesResponseError;
+
+export const getSearchStoriesUrl = (params: SearchStoriesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/stories/search?${stringifiedParams}`
+    : `/api/v1/stories/search`;
+};
+
+/**
+ * 검색어는 trim 후 2~100자이며 관련도순으로 반환합니다. 다음 페이지는 같은 q와 nextCursor를 사용합니다.
+ * @summary 공개 스토리 검색
+ */
+export const searchStories = async (
+  params: SearchStoriesParams,
+  options?: RequestInit,
+): Promise<searchStoriesResponse> => {
+  return customInstance<searchStoriesResponse>(getSearchStoriesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchStoriesQueryKey = (params?: SearchStoriesParams) => {
+  return [`/api/v1/stories/search`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchStoriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchStories>>,
+  TError = ErrorType<void>,
+>(
+  params: SearchStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchStories>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchStoriesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchStories>>> = ({
+    signal,
+  }) => searchStories(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchStories>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchStoriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof searchStories>>
+>;
+export type SearchStoriesQueryError = ErrorType<void>;
+
+export function useSearchStories<
+  TData = Awaited<ReturnType<typeof searchStories>>,
+  TError = ErrorType<void>,
+>(
+  params: SearchStoriesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchStories>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchStories>>,
+          TError,
+          Awaited<ReturnType<typeof searchStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSearchStories<
+  TData = Awaited<ReturnType<typeof searchStories>>,
+  TError = ErrorType<void>,
+>(
+  params: SearchStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchStories>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchStories>>,
+          TError,
+          Awaited<ReturnType<typeof searchStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSearchStories<
+  TData = Awaited<ReturnType<typeof searchStories>>,
+  TError = ErrorType<void>,
+>(
+  params: SearchStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchStories>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 공개 스토리 검색
+ */
+
+export function useSearchStories<
+  TData = Awaited<ReturnType<typeof searchStories>>,
+  TError = ErrorType<void>,
+>(
+  params: SearchStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchStories>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSearchStoriesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
