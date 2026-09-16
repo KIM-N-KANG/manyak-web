@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import {
   CHARACTER_FEATURE_RANDOM_DESCRIPTION,
   CHARACTER_NAME_DUPLICATE_ERROR,
+  SUPPORTING_CHARACTER_EMPTY_DESCRIPTION,
   SUPPORTING_CHARACTER_MAX_COUNT,
   SUPPORTING_CHARACTER_NAME_PLACEHOLDERS,
 } from '../../constants';
@@ -141,9 +142,14 @@ export function SupportingCharacterList({
 
       <div
         className={cn(
-          'flex justify-center',
+          'flex flex-col items-center gap-4',
           characters.length === 0 && 'pt-4',
         )}>
+        {characters.length === 0 && (
+          <p className="text-sm text-foreground-secondary">
+            {SUPPORTING_CHARACTER_EMPTY_DESCRIPTION}
+          </p>
+        )}
         <Button
           type="button"
           variant="secondary"
