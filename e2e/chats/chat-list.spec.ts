@@ -282,25 +282,17 @@ test.describe('채팅 카드 옵션 (KNK-1186)', () => {
 
     await optionsButton.click();
 
-    const dialog = page.getByRole('dialog', { name: '채팅 옵션' });
+    // 시트 머리글에는 카드 종류("채팅")와 그 카드의 제목만 둔다.
+    const dialog = page.getByRole('dialog', { name: '용의 계곡' });
 
-    await expect(dialog.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(dialog.getByText('채팅', { exact: true })).toBeVisible();
     await expect(dialog.getByText('별빛 항해')).toHaveCount(0);
-
-    const [dialogBox, previewBox] = await Promise.all([
-      dialog.boundingBox(),
-      dialog.getByText('용의 계곡', { exact: true }).boundingBox(),
-    ]);
-
-    expect(previewBox!.x + previewBox!.width).toBeLessThanOrEqual(
-      dialogBox!.x + dialogBox!.width,
-    );
     // 게스트라 신고하기는 없고 삭제하기만 있다.
     await expect(dialog.getByRole('menuitem')).toHaveText(['삭제하기']);
 
     await dialog.getByRole('menuitem', { name: '삭제하기' }).click();
 
-    // 같은 창이 확인 화면으로 바뀌므로 접근 가능한 이름도 확인 질문으로 바뀐다.
+    // 같은 시트가 확인 화면으로 바뀌므로 접근 가능한 이름도 확인 질문으로 바뀐다.
     const confirmDialog = page.getByRole('dialog', {
       name: '채팅을 삭제할까요?',
     });
@@ -336,7 +328,7 @@ test.describe('채팅 카드 옵션 (KNK-1186)', () => {
     await page.goto('/chats');
     await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
 
-    const dialog = page.getByRole('dialog', { name: '채팅 옵션' });
+    const dialog = page.getByRole('dialog', { name: '용의 계곡' });
 
     await expect(dialog.getByRole('menuitem')).toHaveText([
       STORY_REPORT_COPY.action,

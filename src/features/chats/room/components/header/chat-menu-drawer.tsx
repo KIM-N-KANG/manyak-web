@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
+import { OptionMenuButton } from '@/components/common/option-menu-button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +35,6 @@ import {
 import { APP_PATH } from '@/constants/app-path';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { useDeleteCreatedChat } from '@/features/chats/_shared/hooks/use-delete-created-chat';
-import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
 import { CreditBalanceCard } from '@/features/my/menu/components/credit-balance-card';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
@@ -110,41 +110,44 @@ export function ChatMenuDrawer({
         <DrawerContent container={container} className="pt-4 text-base">
           <DrawerTitle className="sr-only">{CHAT_MENU_COPY.title}</DrawerTitle>
           <CreditBalanceCard className="m-0 p-4" />
-          {storyId !== null && (
-            <MyMenuItem
-              icon={BubbleChatAddIcon}
-              label={CHAT_MENU_COPY.newChat}
-              onClick={startChat}
-              loading={isStarting}
+          {/* 항목은 채팅 목록 카드 옵션 다이얼로그와 같은 버튼이다. 본문 여백은 shadcn 데모처럼 p-4다. */}
+          <div className="flex flex-col p-4">
+            {storyId !== null && (
+              <OptionMenuButton
+                icon={BubbleChatAddIcon}
+                label={CHAT_MENU_COPY.newChat}
+                onClick={startChat}
+                loading={isStarting}
+              />
+            )}
+            <OptionMenuButton
+              icon={Share03Icon}
+              label={CHAT_MENU_COPY.share}
+              onClick={() => void handleShare()}
+              loading={isSharing}
             />
-          )}
-          <MyMenuItem
-            icon={Share03Icon}
-            label={CHAT_MENU_COPY.share}
-            onClick={() => void handleShare()}
-            loading={isSharing}
-          />
-          {/* 신고 시트·삭제 확인은 드로어와 별개의 모달이라 드로어를 먼저 닫고 연다.
-              드로어 위에 다른 모달을 겹치면 바깥 탭 판정이 서로 얽힌다. */}
-          {canReport && (
-            <MyMenuItem
-              icon={Alert02Icon}
-              label={CHAT_MENU_COPY.report}
+            {/* 신고 시트·삭제 확인은 드로어와 별개의 모달이라 드로어를 먼저 닫고 연다.
+                드로어 위에 다른 모달을 겹치면 바깥 탭 판정이 서로 얽힌다. */}
+            {canReport && (
+              <OptionMenuButton
+                icon={Alert02Icon}
+                label={CHAT_MENU_COPY.report}
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsReportOpen(true);
+                }}
+              />
+            )}
+            <OptionMenuButton
+              icon={Delete02Icon}
+              label={CHAT_MENU_COPY.delete}
+              variant="destructive"
               onClick={() => {
                 setIsOpen(false);
-                setIsReportOpen(true);
+                setIsDeleteOpen(true);
               }}
             />
-          )}
-          <MyMenuItem
-            icon={Delete02Icon}
-            label={CHAT_MENU_COPY.delete}
-            destructive
-            onClick={() => {
-              setIsOpen(false);
-              setIsDeleteOpen(true);
-            }}
-          />
+          </div>
         </DrawerContent>
       </Drawer>
 

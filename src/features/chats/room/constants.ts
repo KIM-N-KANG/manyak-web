@@ -1,4 +1,5 @@
 import { CREDIT_AMOUNT_PLACEHOLDER } from '@/constants/credit';
+import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import type { ChatInputMode } from './utils/chat-input-config';
 import type { InputBlockType } from './utils/input-blocks';
@@ -56,10 +57,10 @@ export const CHAT_SETTINGS_COPY = {
 export const CHAT_MENU_COPY = {
   trigger: '채팅 메뉴',
   title: '채팅 메뉴',
-  newChat: '새로운 채팅',
-  share: '채팅 공유',
-  report: '신고',
-  delete: '채팅 삭제',
+  newChat: '새 채팅 시작하기',
+  share: '공유하기',
+  report: STORY_REPORT_COPY.action,
+  delete: '삭제하기',
   deleteConfirm: {
     title: '채팅을 삭제할까요?',
     description: '삭제하면 목록에서 사라지며 되돌릴 수 없어요',

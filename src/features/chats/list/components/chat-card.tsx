@@ -15,9 +15,9 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
 import {
-  CardOptionsDialog,
-  type CardOptionsDialogItem,
-} from '@/components/common/card-options-dialog';
+  CardOptionsSheet,
+  type CardOptionsSheetItem,
+} from '@/components/common/card-options-sheet';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
@@ -91,7 +91,7 @@ function ChatCardOptions({ chat }: ChatCardOptionsProps) {
   const canReport =
     status === 'authenticated' && Boolean(chat.storyTitle?.trim());
 
-  const items: CardOptionsDialogItem[] = [];
+  const items: CardOptionsSheetItem[] = [];
 
   if (canReport) {
     items.push({
@@ -115,11 +115,11 @@ function ChatCardOptions({ chat }: ChatCardOptionsProps) {
 
   return (
     <>
-      <CardOptionsDialog
-        title="채팅 옵션"
+      <CardOptionsSheet
+        kind="채팅"
+        title={chatDisplayTitle(chat)}
         triggerAriaLabel="채팅 옵션 더보기"
         items={items}
-        preview={<ChatCardBody chat={chat} compact />}
       />
       {canReport && (
         <StoryReportSheet
@@ -135,37 +135,31 @@ function ChatCardOptions({ chat }: ChatCardOptionsProps) {
 
 /**
  * 카드 본체의 props. 목록 카드와 옵션 다이얼로그의 축소판이 같은 마크업을 쓰되, 축소판은
- * `compact`로 표지·서체를 한 단계씩 줄이고 링크·노출 추적·옵션 버튼을 두지 않는다.
  */
 type ChatCardBodyProps = {
   chat: ChatListItem;
-  compact?: boolean;
   /** 제목 줄 오른쪽 끝에 놓는 요소(옵션 버튼) */
   action?: React.ReactNode;
 };
 
-function ChatCardBody({ chat, compact = false, action }: ChatCardBodyProps) {
+function ChatCardBody({ chat, action }: ChatCardBodyProps) {
   const thumbnailUrl = chat.thumbnailUrlSm ?? null;
   const isStoryDeleted = !chat.storyTitle?.trim();
 
   return (
-    <div
-      className={cn(
-        'flex min-w-0 flex-1 items-center',
-        compact ? 'gap-3' : 'gap-4',
-      )}>
+    <div className={cn('flex min-w-0 flex-1 items-center', 'gap-4')}>
       <AspectRatio
         ratio={3 / 4}
         className={cn(
           'shrink-0 overflow-hidden rounded-sm border border-border bg-muted',
-          compact ? 'w-10' : 'w-12',
+          'w-12',
         )}>
         {thumbnailUrl ? (
           <Image
             src={thumbnailUrl}
             alt=""
             fill
-            sizes={compact ? '40px' : '48px'}
+            sizes={'48px'}
             className="object-cover"
           />
         ) : (
@@ -174,10 +168,7 @@ function ChatCardBody({ chat, compact = false, action }: ChatCardBodyProps) {
             className="flex size-full items-center justify-center">
             <HugeiconsIcon
               icon={Image01Icon}
-              className={cn(
-                'text-foreground-tertiary',
-                compact ? 'size-4' : 'size-5',
-              )}
+              className={cn('text-foreground-tertiary', 'size-5')}
             />
           </div>
         )}
@@ -188,7 +179,7 @@ function ChatCardBody({ chat, compact = false, action }: ChatCardBodyProps) {
             <p
               className={cn(
                 'line-clamp-1 min-w-0 flex-1 font-semibold',
-                compact ? 'text-sm leading-5' : 'leading-6',
+                'leading-6',
                 isStoryDeleted && 'text-foreground-tertiary',
               )}>
               {chatDisplayTitle(chat)}
@@ -200,7 +191,7 @@ function ChatCardBody({ chat, compact = false, action }: ChatCardBodyProps) {
           <p
             className={cn(
               'line-clamp-1',
-              compact ? 'text-xs leading-3' : 'text-sm leading-3.5',
+              'text-sm leading-3.5',
               chat.lastStoryPreview
                 ? 'text-foreground-secondary'
                 : 'text-foreground-tertiary',
@@ -211,12 +202,12 @@ function ChatCardBody({ chat, compact = false, action }: ChatCardBodyProps) {
         <div
           className={cn(
             'flex items-center justify-end gap-2 text-foreground-secondary',
-            compact ? 'text-xs' : 'text-sm',
+            'text-sm',
           )}>
           <div className="flex items-center gap-1">
             <HugeiconsIcon
               icon={BubbleChatIcon}
-              className={compact ? 'size-3' : 'size-3.5'}
+              className={'size-3.5'}
               aria-hidden="true"
             />
             <p>{chat.turnCount}</p>
@@ -224,7 +215,7 @@ function ChatCardBody({ chat, compact = false, action }: ChatCardBodyProps) {
           <div className="flex items-center gap-1">
             <HugeiconsIcon
               icon={Calendar04Icon}
-              className={compact ? 'size-3' : 'size-3.5'}
+              className={'size-3.5'}
               aria-hidden="true"
             />
             <time
