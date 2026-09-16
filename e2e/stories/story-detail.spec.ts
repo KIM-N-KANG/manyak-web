@@ -513,8 +513,8 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
       name: STORY_REPORT_COPY.close,
     });
 
-    await expect(closeButton).toHaveCSS('height', '24px');
-    await expect(closeButton).toHaveCSS('align-self', 'center');
+    // 닫기는 ghost lg 전체 폭이다(KNK-1306).
+    await expect(closeButton).toHaveCSS('height', '48px');
     await expect(closeButton.locator('..')).toHaveCSS('row-gap', '4px');
 
     await sheet.getByRole('radio', { name: '부적절한 내용' }).check();

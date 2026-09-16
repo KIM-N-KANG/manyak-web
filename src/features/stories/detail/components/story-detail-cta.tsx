@@ -10,11 +10,12 @@ import { LoadingButtonContent } from '@/components/common/loading-button-content
 // import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { Button } from '@/components/ui/button';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
+import { track } from '@/observability/analytics';
 
 // import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 // import { useStoryLike } from '@/features/stories/detail/hooks/use-story-like';
 // import { cn } from '@/lib/utils';
-import { useStartChat } from '../hooks/use-start-chat';
 
 type StoryDetailCtaProps = {
   storyId: string;
@@ -36,7 +37,13 @@ export function StoryDetailCta({
   // const { status } = useSession();
   // const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
   const { startChat, isStarting, guestLimitTrigger, closeGuestLimitDialog } =
-    useStartChat(storyId, startSettingId);
+    useStartChat(storyId, {
+      startSettingId,
+      onStart: () =>
+        track('client_storyDetail_chatStartButton_clicked', {
+          story_id: storyId,
+        }),
+    });
 
   return (
     <>

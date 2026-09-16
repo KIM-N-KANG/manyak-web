@@ -91,8 +91,8 @@ export function InviteOnboardingCodeForm({
         <Button
           type="button"
           variant="ghost"
-          size="xs"
-          className="w-fit self-center text-foreground-secondary"
+          size="lg"
+          className="w-full text-foreground-secondary"
           disabled={isBusy}
           onClick={onSkip}>
           닫기

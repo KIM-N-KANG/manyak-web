@@ -4,7 +4,7 @@ import { Delete02Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
 
 import { ImageGeneration } from '@/components/agents/image-generation';
-import { CardOptionsDialog } from '@/components/common/card-options-dialog';
+import { CardOptionsSheet } from '@/components/common/card-options-sheet';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { TextShimmer } from '@/components/motion/text-shimmer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -96,8 +96,9 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
     <CreationProgressCardBody
       isCompleting={false}
       action={
-        <CardOptionsDialog
-          title={CREATION_PROGRESS_CARD_COPY.optionsTitle}
+        <CardOptionsSheet
+          kind={CREATION_PROGRESS_CARD_COPY.optionsKind}
+          title={CREATION_PROGRESS_CARD_COPY.draftTitle}
           triggerAriaLabel={CREATION_PROGRESS_CARD_COPY.optionsTrigger}
           items={[
             {
@@ -114,7 +115,6 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
               },
             },
           ]}
-          preview={<CreationProgressCardBody isCompleting={false} compact />}
         />
       }>
       <Button className="w-full" onClick={handleResume}>
@@ -126,7 +126,6 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
 
 type CreationProgressCardBodyProps = {
   isCompleting: boolean;
-  compact?: boolean;
   /** 제목 줄 오른쪽 끝에 놓는 요소(옵션 버튼) */
   action?: React.ReactNode;
   /** 본문 하단에 놓는 요소(주 동작 버튼) */
@@ -135,7 +134,6 @@ type CreationProgressCardBodyProps = {
 
 function CreationProgressCardBody({
   isCompleting,
-  compact = false,
   action,
   children,
 }: CreationProgressCardBodyProps) {
@@ -147,12 +145,12 @@ function CreationProgressCardBody({
     : CREATION_PROGRESS_CARD_COPY.draftDescription;
 
   return (
-    <div className={cn('flex min-w-0 flex-1', compact ? 'gap-3' : 'gap-4')}>
+    <div className={cn('flex min-w-0 flex-1', 'gap-4')}>
       <AspectRatio
         ratio={3 / 4}
         className={cn(
           'shrink-0 overflow-hidden rounded-lg border border-border bg-muted',
-          compact ? 'w-20' : 'w-32',
+          'w-32',
         )}>
         {isCompleting ? (
           <ImageGeneration
@@ -166,24 +164,21 @@ function CreationProgressCardBody({
           />
         ) : (
           <div className="flex size-full items-center justify-center text-foreground-tertiary">
-            <ManyakSymbolIcon
-              aria-hidden="true"
-              className={compact ? 'size-6' : 'size-8'}
-            />
+            <ManyakSymbolIcon aria-hidden="true" className={'size-8'} />
           </div>
         )}
       </AspectRatio>
       <div
         className={cn(
           'flex min-w-0 flex-1 flex-col justify-between py-0.5',
-          compact ? 'min-h-[6.6667rem]' : 'min-h-[10.6667rem]',
+          'min-h-[10.6667rem]',
         )}>
         <div>
           <div className="flex items-start gap-2">
             <p
               className={cn(
                 'line-clamp-2 min-w-0 flex-1 font-semibold break-keep text-foreground-secondary',
-                compact ? 'text-sm leading-5' : 'leading-6',
+                'leading-6',
               )}>
               {isCompleting ? (
                 <TextShimmer duration={4}>{title}</TextShimmer>
@@ -193,11 +188,9 @@ function CreationProgressCardBody({
             </p>
             {action ? <div className="shrink-0">{action}</div> : null}
           </div>
-          {compact ? null : (
-            <p className="mt-1 text-sm leading-5 break-keep text-foreground-secondary">
-              {description}
-            </p>
-          )}
+          <p className="mt-1 text-sm leading-5 break-keep text-foreground-secondary">
+            {description}
+          </p>
         </div>
         {children}
       </div>

@@ -1,4 +1,5 @@
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { CHAT_MENU_COPY } from '@/features/chats/room/constants';
 
 import {
   expect,
@@ -24,7 +25,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 공유 발급', () => {
-  test('헤더 공유 버튼 → 확인 다이얼로그를 거쳐 발급 후 링크가 클립보드에 복사된다', async ({
+  test('헤더 메뉴 드로어의 채팅 공유를 누르면 바로 발급 후 링크가 클립보드에 복사된다', async ({
     page,
   }) => {
     // 헤드리스 환경의 클립보드 권한 문제를 피하려고 writeText를 스텁해 복사된 값을 검사한다.
@@ -59,22 +60,14 @@ test.describe('채팅 공유 발급', () => {
     await page.goto('/chats/c1');
     await page
       .getByRole('banner')
-      .getByRole('button', { name: '채팅 공유하기 버튼' })
+      .getByRole('button', { name: CHAT_MENU_COPY.trigger })
       .click();
 
-    const dialog = page.getByRole('dialog');
+    const drawer = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
 
-    await expect(
-      dialog.getByRole('heading', { name: '이 채팅을 공유할까요?' }),
-    ).toBeVisible();
-    await expect(dialog).toContainText(
-      '이 링크가 있으면 누구든지 내가 지금까지 이어온 채팅을 볼 수 있어요',
-    );
-
-    await dialog.getByRole('button', { name: '링크 복사하기' }).click();
+    await drawer.getByRole('button', { name: CHAT_MENU_COPY.share }).click();
 
     await createRequest;
-    await expect(dialog).toHaveCount(0);
     await expect
       .poll(() =>
         page.evaluate(
@@ -85,9 +78,10 @@ test.describe('채팅 공유 발급', () => {
     await expect(
       page.getByText(TOAST_MESSAGE.CHAT_SHARE_LINK_COPIED),
     ).toBeVisible();
+    await expect(drawer).toBeHidden();
   });
 
-  test('나중에 하기를 누르면 발급 없이 다이얼로그만 닫힌다', async ({
+  test('발급이 실패하면 실패 토스트를 띄우고 드로어는 유지한다', async ({
     page,
   }) => {
     await page.route(CHAT_DETAIL, async (route) => {
@@ -97,28 +91,21 @@ test.describe('채팅 공유 발급', () => {
         body: JSON.stringify(chatDetail),
       });
     });
-
-    let createRequested = false;
-
-    await page.route('**/api/v1/chats/c1/shares', (route) => {
-      createRequested = true;
-
-      return route.fulfill({ json: { shareId: 'share-1' }, status: 201 });
-    });
+    await page.route('**/api/v1/chats/c1/shares', (route) =>
+      route.fulfill({ status: 500, body: '' }),
+    );
 
     await page.goto('/chats/c1');
     await page
       .getByRole('banner')
-      .getByRole('button', { name: '채팅 공유하기 버튼' })
+      .getByRole('button', { name: CHAT_MENU_COPY.trigger })
       .click();
 
-    const dialog = page.getByRole('dialog');
+    const drawer = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
 
-    await expect(dialog).toBeVisible();
+    await drawer.getByRole('button', { name: CHAT_MENU_COPY.share }).click();
 
-    await dialog.getByRole('button', { name: '나중에 하기' }).click();
-
-    await expect(dialog).toHaveCount(0);
-    expect(createRequested).toBe(false);
+    await expect(page.getByText(TOAST_MESSAGE.CHAT_SHARE_FAILED)).toBeVisible();
+    await expect(drawer).toBeVisible();
   });
 });

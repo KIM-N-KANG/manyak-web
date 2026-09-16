@@ -1,4 +1,5 @@
 import { CREDIT_AMOUNT_PLACEHOLDER } from '@/constants/credit';
+import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import type { ChatInputMode } from './utils/chat-input-config';
 import type { InputBlockType } from './utils/input-blocks';
@@ -49,6 +50,23 @@ export const CHAT_SETTINGS_COPY = {
   blockInput: {
     label: '블럭 입력',
     description: '상황과 대사를 나눠서 입력해요',
+  },
+} as const;
+
+/** 채팅방 헤더 메뉴 시트의 문구. 항목 순서는 화면 순서 그대로다. */
+export const CHAT_MENU_COPY = {
+  trigger: '채팅 메뉴',
+  title: '채팅 메뉴',
+  newChat: '새 채팅 시작하기',
+  share: '공유하기',
+  report: STORY_REPORT_COPY.action,
+  delete: '삭제하기',
+  deleteConfirm: {
+    title: '채팅을 삭제할까요?',
+    description: '삭제하면 목록에서 사라지며 되돌릴 수 없어요',
+    cancel: '남겨두기',
+    confirm: '삭제하기',
+    pending: '삭제 중',
   },
 } as const;
 

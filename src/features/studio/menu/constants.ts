@@ -12,7 +12,7 @@ export const CREATION_PROGRESS_CARD_COPY = {
   completingDescription: '조금만 기다리면 완성된 스토리를 볼 수 있어요',
   completingState: '스토리 완성 중',
   resume: '이어서 만들기',
-  optionsTitle: '만들던 스토리 옵션',
+  optionsKind: '만들던 스토리',
   optionsTrigger: '만들던 스토리 옵션 더보기',
   delete: '삭제하기',
   deleteConfirmTitle: '만들던 스토리를 삭제할까요?',

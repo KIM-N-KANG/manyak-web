@@ -129,6 +129,7 @@ export function StoryDetailHeader({
 
       <StoryOptionsMenu
         storyId={storyId}
+        title={title}
         source="storyDetail"
         canReport={canReport}
         canDelete={canDelete}

@@ -455,7 +455,7 @@ test.describe('스토리 오버레이 비주얼', () => {
     await expect(page).toHaveScreenshot('thumbnail-viewer.png');
   });
 
-  test('제작 카드 옵션 다이얼로그 (STORY-LIST)', async ({ page }) => {
+  test('제작 카드 옵션 시트 (STORY-LIST)', async ({ page }) => {
     await skipOnboarding(page);
     await seedStoryIds(page, ['s1']);
     await page.route(STORIES_BATCH, async (route) => {
@@ -469,14 +469,14 @@ test.describe('스토리 오버레이 비주얼', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
 
-    // 상단 축소판 + 항목 목록 대표 스냅샷이다(채팅 카드 옵션도 같은 컴포넌트).
-    const dialog = page.getByRole('dialog', { name: '스토리 옵션' });
+    // 머리글(종류·제목) + 항목 목록 대표 스냅샷이다(채팅 카드 옵션도 같은 컴포넌트).
+    const dialog = page.getByRole('dialog', { name: '용의 계곡' });
 
     await expect(
       dialog.getByRole('menuitem', { name: '삭제하기' }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('card-options-dialog.png');
+    await expect(page).toHaveScreenshot('card-options-sheet.png');
   });
 
   test('스토리 신고 시트 (STORY-DETAIL)', async ({ page }) => {

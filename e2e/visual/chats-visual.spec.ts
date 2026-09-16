@@ -1,5 +1,8 @@
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
-import { CHAT_SETTINGS_COPY } from '@/features/chats/room/constants';
+import {
+  CHAT_MENU_COPY,
+  CHAT_SETTINGS_COPY,
+} from '@/features/chats/room/constants';
 
 import {
   EXHAUSTED_TRIALS,
@@ -215,16 +218,18 @@ test.describe('채팅 오버레이 비주얼', () => {
     });
   });
 
-  test('채팅 옵션 메뉴 (CHAT-SET-01)', async ({ page }) => {
+  test('채팅 메뉴 드로어 (CHAT-SET-01)', async ({ page }) => {
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
 
-    // 드랍다운 메뉴(destructive 항목) 대표 스냅샷이다(스토리 옵션 메뉴도 같은 컴포넌트).
+    // 게스트 기준 우측 드로어 대표 스냅샷이다(이프 카드 없음, 하단 destructive 채팅 삭제).
+    const drawer = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
+
     await expect(
-      page.getByRole('menuitem', { name: '삭제하기' }),
+      drawer.getByRole('button', { name: CHAT_MENU_COPY.delete }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('chat-options-menu.png');
+    await expect(page).toHaveScreenshot('chat-menu-drawer.png');
   });
 
   test('채팅 설정 시트 (CHAT-BLOCK-07)', async ({ page }) => {
@@ -243,8 +248,11 @@ test.describe('채팅 오버레이 비주얼', () => {
 
   test('삭제 확인 다이얼로그 (CHAT-SET-02)', async ({ page }) => {
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '삭제하기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CHAT_MENU_COPY.delete })
+      .click();
 
     // ConfirmAlertDialog 공용 컴포넌트의 대표 스냅샷이다(스토리 삭제·퍼널 이탈도 같은 컴포넌트).
     await expect(

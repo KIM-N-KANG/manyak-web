@@ -3,12 +3,15 @@ import { type Page } from '@playwright/test';
 import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
   buildChatTurnCreditCostLabel,
   buildTrialRemainingLabel,
+  CHAT_MENU_COPY,
   CHAT_SETTINGS_COPY,
 } from '@/features/chats/room/constants';
+import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -261,6 +264,14 @@ test.describe('채팅 스트리밍', () => {
 
     await expect(prologue).toBeVisible();
     await expect(firstChoice).toBeVisible();
+
+    // AI 생성 안내 문구가 프롤로그보다 위에 놓인다.
+    const notice = page.getByText(CHAT_AI_NOTICE);
+
+    await expect(notice).toBeVisible();
+    expect((await notice.boundingBox())!.y).toBeLessThan(
+      (await prologue.boundingBox())!.y,
+    );
     await expect(prologue.locator('xpath=ancestor::p')).toHaveCSS(
       'line-height',
       '28px',
@@ -864,16 +875,19 @@ test.describe('채팅 헤더', () => {
 });
 
 test.describe('채팅 삭제', () => {
-  // 삭제 항목은 헤더 우측 옵션 드랍다운 메뉴 안에 있다.
+  // 삭제 항목은 헤더 우측 메뉴 드로어 최하단에 있다.
   // 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
   const openDeleteDialog = async (page: Page) => {
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '삭제하기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CHAT_MENU_COPY.delete })
+      .click();
 
     return page.getByRole('alertdialog');
   };
 
-  test('옵션 메뉴에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
+  test('메뉴 드로어에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -1728,13 +1742,20 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     });
 
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
 
-    // 신고하기는 파괴적 항목인 삭제하기 위에 놓인다.
-    const menuItems = page.getByRole('menuitem');
+    // 회원 드로어는 이프 카드(충전) 아래 새로운 채팅 → 채팅 공유 → 신고 → 파괴적 항목인 채팅 삭제 순서다.
+    const drawer = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
+    const menuItems = drawer.getByRole('button');
 
-    await expect(menuItems).toHaveText([STORY_REPORT_COPY.action, '삭제하기']);
-    await menuItems.first().click();
+    await expect(menuItems).toHaveText([
+      CREDIT_CHARGE_COPY.entryButton,
+      CHAT_MENU_COPY.newChat,
+      CHAT_MENU_COPY.share,
+      CHAT_MENU_COPY.report,
+      CHAT_MENU_COPY.delete,
+    ]);
+    await drawer.getByRole('button', { name: CHAT_MENU_COPY.report }).click();
 
     const sheet = page.getByRole('dialog', { name: STORY_REPORT_COPY.title });
 
@@ -1746,7 +1767,7 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     expect(reportBody).toEqual({ reason: 'SPAM', detail: null });
   });
 
-  test('게스트의 옵션 메뉴에는 신고하기가 없다', async ({ page }) => {
+  test('게스트의 메뉴 드로어에는 신고하기가 없다', async ({ page }) => {
     await skipOnboarding(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
@@ -1757,9 +1778,17 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     });
 
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
 
-    await expect(page.getByRole('menuitem')).toHaveText(['삭제하기']);
+    await expect(
+      page
+        .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+        .getByRole('button'),
+    ).toHaveText([
+      CHAT_MENU_COPY.newChat,
+      CHAT_MENU_COPY.share,
+      CHAT_MENU_COPY.delete,
+    ]);
   });
 
   test('참조 스토리가 삭제된 채팅은 헤더에 삭제된 스토리를 보여주고 신고할 수 없다', async ({
@@ -1780,7 +1809,16 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: DELETED_STORY_LABEL }),
     ).toBeVisible();
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await expect(page.getByRole('menuitem')).toHaveText(['삭제하기']);
+    // 참조 스토리가 없으면 새로운 채팅·신고도 둘 수 없다(회원이라 이프 카드의 충전은 남는다).
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await expect(
+      page
+        .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+        .getByRole('button'),
+    ).toHaveText([
+      CREDIT_CHARGE_COPY.entryButton,
+      CHAT_MENU_COPY.share,
+      CHAT_MENU_COPY.delete,
+    ]);
   });
 });
