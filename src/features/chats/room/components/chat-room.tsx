@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
+import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type {
   ChatTurnResponse,
@@ -22,16 +23,18 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
-import {
-  incrementGuestUsage,
-  isGuestOverLimit,
-} from '@/features/auth/_shared/utils/guest-usage-storage';
+import { isGuestTrialExhausted } from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { useTrials } from '@/hooks/use-trials';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
+import {
+  CHAT_CHOICES_ENABLED_STORAGE_KEY,
+  CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
+} from '../constants';
 import { useChatChoices } from '../hooks/use-chat-choices';
 import { useChatChoicesHint } from '../hooks/use-chat-choices-hint';
 import { useChatComposer } from '../hooks/use-chat-composer';
@@ -42,7 +45,7 @@ import {
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
-import { useChoicesToggle } from '../hooks/use-choices-toggle';
+import { useStoredToggle } from '../hooks/use-stored-toggle';
 import type { ChatChoiceSelection } from '../types';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
@@ -57,6 +60,7 @@ type ChatRoomProps = {
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
+  const trials = useTrials();
   const [guestLimitTrigger, setGuestLimitTrigger] =
     useState<GuestLimitTrigger | null>(null);
   const handlePaymentRequired = (error: unknown) => {
@@ -91,15 +95,16 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   useDocumentTitle(storyTitle);
 
   const { enabled: choicesEnabled, setEnabled: setChoicesEnabled } =
-    useChoicesToggle();
+    useStoredToggle(CHAT_CHOICES_ENABLED_STORAGE_KEY, true);
+  const { enabled: realtimeImageEnabled, setEnabled: setRealtimeImageEnabled } =
+    useStoredToggle(CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY, true);
   const { choicesStatus, generate: generateChoicesForTurn } = useChatChoices(
     chatId,
     refetch,
   );
   const handleStreamCompleted = async () => {
-    if (sessionStatus !== 'authenticated') {
-      incrementGuestUsage('chat');
-    }
+    // 턴 완료(`completed`)로 체험 카운터가 소모되므로 잔여를 다시 조회한다(실패 턴은 서버가 복원).
+    void queryClient.invalidateQueries({ queryKey: getGetTrialsQueryKey() });
 
     const result = await refetch();
 
@@ -128,6 +133,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       handleStreamCompleted,
       handlePaymentRequired,
       refetch,
+      realtimeImageEnabled,
     );
 
   const tour = useChatTour({
@@ -147,7 +153,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     userSource: ContinueChatRequestUserSource,
     selection?: ChatChoiceSelection,
   ): Promise<void> => {
-    if (isGuestOverLimit(sessionStatus, 'chat')) {
+    if (isGuestTrialExhausted(sessionStatus, trials, 'chatTurn')) {
       setGuestLimitTrigger('chat_turn');
 
       return Promise.resolve();
@@ -162,7 +168,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       turn_number: turns.length,
     });
 
-    if (isGuestOverLimit(sessionStatus, 'chat')) {
+    if (isGuestTrialExhausted(sessionStatus, trials, 'chatTurn')) {
       setGuestLimitTrigger('chat_turn');
 
       return Promise.resolve();
@@ -329,6 +335,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             onFillChoice={handleFillChoice}
             onRegenerate={guardedRegenerate}
             onRetryChoices={handleRetryChoices}
+            onCharacterImageZoom={() =>
+              track('client_chat_characterImage_clicked', { chat_id: chatId })
+            }
           />
         </div>
         <ChatInput
@@ -336,9 +345,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           onModeChange={handleModeChange}
           composer={composer}
           isStreaming={isStreaming}
+          realtimeImageEnabled={realtimeImageEnabled}
+          onRealtimeImageEnabledChange={setRealtimeImageEnabled}
           choicesEnabled={choicesEnabled}
           onChoicesEnabledChange={handleChoicesEnabledChange}
-          showCreditCost={sessionStatus === 'authenticated'}
+          isMember={sessionStatus === 'authenticated'}
         />
         <ConfirmAlertDialog
           open={pendingFill !== null}

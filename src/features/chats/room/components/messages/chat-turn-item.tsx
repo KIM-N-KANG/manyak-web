@@ -20,6 +20,7 @@ type ChatTurnItemProps = {
   onFillChoice: (text: string, position: number, sourceTurnId?: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
   onRetryChoices: () => void;
+  onCharacterImageZoom: () => void;
 };
 
 export function ChatTurnItem({
@@ -31,6 +32,7 @@ export function ChatTurnItem({
   onFillChoice,
   onRegenerate,
   onRetryChoices,
+  onCharacterImageZoom,
 }: ChatTurnItemProps) {
   return (
     <div>
@@ -39,7 +41,10 @@ export function ChatTurnItem({
       ) : null}
       {turn.aiOutput ? (
         <AiMessageBubble endingName={turn.reachedEnding}>
-          <ChatAiMessageContent content={turn.aiOutput} />
+          <ChatAiMessageContent
+            content={turn.aiOutput}
+            onCharacterImageZoom={onCharacterImageZoom}
+          />
         </AiMessageBubble>
       ) : null}
       {isLast && canRegenerate(turn) ? (

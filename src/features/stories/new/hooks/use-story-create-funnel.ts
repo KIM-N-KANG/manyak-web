@@ -16,10 +16,7 @@ import {
   useGenerateSimpleStorylines,
   useGetSimpleStoryTags,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import {
-  getGetMyChatsQueryKey,
-  getGetMyStoriesQueryKey,
-} from '@/api/generated/endpoints/users/users';
+import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type {
   CreateSimpleStoryRequest,
   GenerateSimpleStorylinesRequest,
@@ -28,41 +25,44 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
-  type GuestUsageAction,
-  incrementGuestUsage,
-  isGuestOverLimit,
-  isGuestUsageLimitReached,
-} from '@/features/auth/_shared/utils/guest-usage-storage';
+  isGuestTrialExhausted,
+  type TrialKind,
+} from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import {
+  resolveErrorSettlement,
+  resolveSuccessSettlement,
+} from '@/features/stories/_shared/utils/creation-request-recovery';
 import type {
   DraftCreationRecord,
   PendingCreationRequest,
   StoryDraftRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  buildStorylineDraftRecord,
+  demotePendingCompletionToDraft,
   loadPendingCreationRequest,
-  markPendingStoryCreated,
   replacePendingCreationRequest,
   saveDraftCreationRecord,
   savePendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
-import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
+import {
+  applyStoryCompletedEffects,
+  applyStorylinesGeneratedEffects,
+} from '@/features/stories/_shared/utils/creation-side-effects';
+import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
 import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
-import { trackMetaPixelOnce } from '@/observability/marketing/pixel';
 
 import type { StoryCreateBackDialogVariant } from '../components/header/story-create-back-dialog';
 import type { StoryCreateStep } from '../types';
-import {
-  resolveErrorSettlement,
-  resolveSuccessSettlement,
-} from '../utils/creation-request-recovery';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedKeywordGroups } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
@@ -95,6 +95,7 @@ export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
+  const trials = useTrials();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -154,6 +155,13 @@ export function useStoryCreateFunnel() {
     };
   }, []);
 
+  // 완성 제출 뒤 제작 탭으로 나가기로 한 뒤에는 언마운트 전에 도착한 응답도 이탈 후
+  // 도착으로 다룬다. 목·빠른 응답이 라우터 전환보다 먼저 오면 채팅 화면으로 끌려간다.
+  const hasLeftForCreateRef = useRef(false);
+  const [hasLeftForCreate, setHasLeftForCreate] = useState(false);
+  const isFunnelActive = () =>
+    isMountedRef.current && !hasLeftForCreateRef.current;
+
   const simpleStoryTags = useGetSimpleStoryTags();
 
   const shouldConfirmBack = step !== 'keyword';
@@ -169,17 +177,14 @@ export function useStoryCreateFunnel() {
     leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
 
   // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
-  // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. localStorage는 마운트
-  // 시 한 번만 읽고(lazy 초기화), 차단 여부는 렌더 중 파생값으로 계산해 effect
-  // 내 setState를 피한다. 세션이 확정된 미로그인 상태에서만 판정해 로딩 중 회원을
-  // 오차단하지 않으며, 다이얼로그를 닫으면 재노출하지 않는다.
-  const [storyCreateAtLimitOnMount] = useState(() =>
-    isGuestUsageLimitReached('storyCreate'),
-  );
+  // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. 서버 체험 잔여가
+  // 도착하면 렌더 중 파생값으로 계산해 effect 내 setState를 피한다. 세션이 확정된
+  // 미로그인 상태의 키워드 단계에서만 판정해 로딩 중 회원을 오차단하지 않고, 이 퍼널에서
+  // 완성해 잔여가 0이 된 뒤에는 다시 띄우지 않으며, 다이얼로그를 닫으면 재노출하지 않는다.
   const [isBackstopDismissed, setIsBackstopDismissed] = useState(false);
   const isStoryCreateBackstopActive =
-    sessionStatus === 'unauthenticated' &&
-    storyCreateAtLimitOnMount &&
+    step === 'keyword' &&
+    isGuestTrialExhausted(sessionStatus, trials, 'storyCreation') &&
     !isBackstopDismissed;
 
   const failToAdditionalInfo = (stage: 'story' | 'chat') => {
@@ -212,10 +217,10 @@ export function useStoryCreateFunnel() {
   // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 바텀 시트를 열고 true를 반환한다.
   // 각 진입점(생성·재생성·완료)의 사전 차단을 한 곳으로 모은다.
   const guardGuestLimit = (
-    action: GuestUsageAction,
+    kind: TrialKind,
     trigger: GuestLimitTrigger,
   ): boolean => {
-    if (!isGuestOverLimit(sessionStatus, action)) {
+    if (!isGuestTrialExhausted(sessionStatus, trials, kind)) {
       return false;
     }
 
@@ -243,19 +248,11 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        const draftRecord: StoryDraftRecord = {
-          stage: 'STORY_DRAFT',
-          requestId: variables.data.requestId,
-          step: 'storyline-select',
-          generationRequest: variables.data,
-          generationResult: response.data,
-          activeStorylineIndex: 0,
-          selectedStoryline: null,
-          additionalInfos: [],
-          selectedRecommendations: [],
-          createdStoryId: null,
-          completionRequest: null,
-        };
+        const draftRecord = buildStorylineDraftRecord(
+          variables.data.requestId,
+          variables.data,
+          response.data,
+        );
 
         // 복구 조회가 결과를 선점 반영했으면 이중 적용을 건너뛴다. 성공 결과는
         // 즉시 draft로 승격해 다음 편집 자동 저장의 기준점으로 남긴다.
@@ -266,13 +263,7 @@ export function useStoryCreateFunnel() {
         }
 
         draftAutosave.markCurrentAsSaved(true);
-
-        if (sessionStatus !== 'authenticated') {
-          incrementGuestUsage('storylineCreate');
-        }
-
-        // 스토리라인 생성 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회, 재생성 제외).
-        trackMetaPixelOnce('StorylinesGenerated');
+        applyStorylinesGeneratedEffects(queryClient);
 
         setGenerationRequest(variables.data);
         setGenerationResult(response.data);
@@ -287,6 +278,11 @@ export function useStoryCreateFunnel() {
         const settlement = resolveErrorSettlement(isMountedRef.current, error);
 
         if (settlement === 'defer-to-recovery') {
+          return;
+        }
+
+        // 스토리라인 레코드는 초안으로 강등할 대상이 아니므로 재진입 복구에 맡긴다.
+        if (settlement === 'downgrade-to-draft') {
           return;
         }
 
@@ -386,7 +382,7 @@ export function useStoryCreateFunnel() {
       onSuccess: (response, variables) => {
         // 이탈 후 도착한 응답은 레코드를 남겨 재진입 복구 조회가 완성 결과와
         // 채팅 생성까지 이어가게 한다(언마운트 상태의 강제 이동·토스트 방지).
-        if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
+        if (resolveSuccessSettlement(isFunnelActive()) !== 'apply') {
           return;
         }
 
@@ -407,33 +403,41 @@ export function useStoryCreateFunnel() {
         const storyId = response.data.id;
 
         if (typeof storyId === 'string') {
-          // 채팅 생성 전에 새로고침돼도 복구가 스토리 성공 부수효과를 다시
-          // 적용하지 않도록 완성 레코드에 생성된 ID를 먼저 확정한다.
-          markPendingStoryCreated(variables.data.requestId, storyId);
-
-          if (sessionStatus === 'authenticated') {
-            void queryClient.invalidateQueries({
-              queryKey: getGetMyStoriesQueryKey(),
-            });
-          } else {
-            saveCreatedStoryId(storyId);
-            incrementGuestUsage('storyCreate');
-          }
+          applyStoryCompletedEffects(
+            variables.data.requestId,
+            storyId,
+            sessionStatus,
+            queryClient,
+          );
 
           setCreatedStoryId(storyId);
           completedStoryRef.current = { storyId, genres: response.data.genres };
-
-          // 최종 스토리 컴파일 성공 = Meta 광고 퍼널 중간 신호(브라우저당 최초 1회).
-          trackMetaPixelOnce('StoryCompiled');
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
       },
       onError: (error, variables) => {
         // 이탈 후 도착한 오류는 레코드를 남겨 재진입 복구 조회에 맡긴다.
-        const settlement = resolveErrorSettlement(isMountedRef.current, error);
+        const settlement = resolveErrorSettlement(isFunnelActive(), error);
 
         if (settlement === 'defer-to-recovery') {
+          return;
+        }
+
+        // 제작 탭으로 돌아간 뒤 확정된 실패는 카드를 초안으로 되돌리고 토스트로만 알린다.
+        if (settlement === 'downgrade-to-draft') {
+          demotePendingCompletionToDraft(variables.data.requestId);
+
+          const reason = resolvePaymentRequiredReason(error, sessionStatus);
+
+          if (reason === 'guest-trial-limit') {
+            toast.error(GUEST_LIMIT_SHEET_COPY.title);
+          } else if (reason === 'insufficient-credit') {
+            showCreditShortageToast('story_create');
+          } else {
+            toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+          }
+
           return;
         }
 
@@ -491,6 +495,7 @@ export function useStoryCreateFunnel() {
     // 원 생성 요청이 진행 중이면 원 응답을 우선하고, 끝난 뒤에도 레코드가 남아
     // 있을 때(재진입·응답 유실)만 복구 조회를 시작한다.
     suspended:
+      hasLeftForCreate ||
       generateStorylines.isPending ||
       createStory.isPending ||
       createChat.isPending ||
@@ -520,28 +525,18 @@ export function useStoryCreateFunnel() {
         generateStorylines.reset();
       }
 
-      const saved = saveDraftCreationRecord({
-        stage: 'STORY_DRAFT',
-        requestId: record.requestId,
-        step: 'storyline-select',
-        generationRequest: record.generationRequest,
-        generationResult: result,
-        activeStorylineIndex: 0,
-        selectedStoryline: null,
-        additionalInfos: [],
-        selectedRecommendations: [],
-        createdStoryId: null,
-        completionRequest: null,
-      });
+      const saved = saveDraftCreationRecord(
+        buildStorylineDraftRecord(
+          record.requestId,
+          record.generationRequest,
+          result,
+        ),
+      );
 
       draftAutosave.markCurrentAsSaved(saved);
 
-      // 원 onSuccess가 실행되지 못했으므로 성공 부수효과(카운터·픽셀)를 여기서 수행한다.
-      if (sessionStatus !== 'authenticated') {
-        incrementGuestUsage('storylineCreate');
-      }
-
-      trackMetaPixelOnce('StorylinesGenerated');
+      // 원 onSuccess가 실행되지 못했으므로 성공 부수효과(체험 잔여·픽셀)를 여기서 수행한다.
+      applyStorylinesGeneratedEffects(queryClient);
 
       setGenerationRequest(record.generationRequest);
       setGenerationResult(result);
@@ -568,18 +563,12 @@ export function useStoryCreateFunnel() {
       // 원 응답에서 이미 storyId를 확정한 레코드는 채팅 실패 후 재진입한
       // 경우다. 이때 게스트 카운터·로컬 ID를 다시 적용하지 않고 채팅만 잇는다.
       if (record.createdStoryId !== storyId) {
-        markPendingStoryCreated(record.requestId, storyId);
-
-        if (sessionStatus === 'authenticated') {
-          void queryClient.invalidateQueries({
-            queryKey: getGetMyStoriesQueryKey(),
-          });
-        } else {
-          saveCreatedStoryId(storyId);
-          incrementGuestUsage('storyCreate');
-        }
-
-        trackMetaPixelOnce('StoryCompiled');
+        applyStoryCompletedEffects(
+          record.requestId,
+          storyId,
+          sessionStatus,
+          queryClient,
+        );
       }
 
       setCreatedStoryId(storyId);
@@ -784,7 +773,7 @@ export function useStoryCreateFunnel() {
   function handleGenerateStorylines(
     request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
   ) {
-    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
+    if (guardGuestLimit('storylineGeneration', 'storyline_generate')) {
       return;
     }
 
@@ -807,7 +796,7 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (guardGuestLimit('storylineCreate', 'storyline_generate')) {
+    if (guardGuestLimit('storylineGeneration', 'storyline_generate')) {
       return;
     }
 
@@ -902,7 +891,7 @@ export function useStoryCreateFunnel() {
     setIsGuestLimitReached(false);
 
     if (createdStoryId !== null) {
-      if (guardGuestLimit('chat', 'chat_start')) {
+      if (guardGuestLimit('chatTurn', 'chat_start')) {
         return;
       }
 
@@ -925,14 +914,13 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    if (guardGuestLimit('storyCreate', 'story_create')) {
+    if (guardGuestLimit('storyCreation', 'story_create')) {
       return;
     }
 
     track('client_storyCreate_storyCompletion_requested', {
       creation_id: String(simpleCreationId),
     });
-    setStep('complete');
 
     const payload = {
       simpleCreationId: simpleCreationId,
@@ -963,10 +951,12 @@ export function useStoryCreateFunnel() {
 
     // 재진입 복원에 필요한 퍼널 컨텍스트가 온전할 때만 복구 레코드를 저장한다.
     // (완료 조건상 이 시점에 항상 존재하지만 타입 좁히기를 겸한다.)
+    let saved = false;
+
     if (generationRequest !== null && generationResult !== null) {
       draftAutosave.cancel();
 
-      const saved = savePendingCreationRequest({
+      saved = savePendingCreationRequest({
         stage: 'STORY_COMPLETION',
         requestId: request.requestId,
         generationRequest,
@@ -983,6 +973,18 @@ export function useStoryCreateFunnel() {
     }
 
     createStory.mutate({ data: request });
+
+    // 복구 레코드가 있으면 응답을 기다리지 않고 제작 탭으로 돌아간다(앱 패리티).
+    // 결과는 제작 탭의 완성 중 카드에서 재진입해 복구 조회로 되찾는다. 레코드를
+    // 저장하지 못했으면 되찾을 길이 없으므로 퍼널의 완성 로딩에서 응답을 기다린다.
+    // 제작 탭으로 나가는 경로에서는 완성 로딩 화면을 한 프레임도 그리지 않는다.
+    if (saved) {
+      hasLeftForCreateRef.current = true;
+      setHasLeftForCreate(true);
+      exitToCreate();
+    } else {
+      setStep('complete');
+    }
   };
 
   /** 예약된 편집을 즉시 저장한 뒤 제작 탭으로 나간다. */

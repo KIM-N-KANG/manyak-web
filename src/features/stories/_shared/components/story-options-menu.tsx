@@ -6,9 +6,9 @@ import { Alert02Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import type { VariantProps } from 'class-variance-authority';
 
 import {
-  OptionsMenu,
-  type OptionsMenuItem,
-} from '@/components/common/options-menu';
+  CardOptionsSheet,
+  type CardOptionsSheetItem,
+} from '@/components/common/card-options-sheet';
 import type { buttonVariants } from '@/components/ui/button';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
@@ -18,11 +18,13 @@ import type { ReportSource } from '@/observability/analytics';
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
 /**
- * 스토리 헤더 더보기 메뉴의 props. 신고하기(회원만)와 삭제하기(내가 만든 스토리만)를 담고,
- * 둘 다 없으면 트리거도 그리지 않는다. 신고 항목은 파괴적 항목인 삭제하기 위에 둔다.
+ * 스토리 더보기 메뉴(옵션 바텀 시트)의 props. 신고하기(회원만)와 삭제하기(내가 만든 스토리만)를
+ * 담고, 둘 다 없으면 트리거도 그리지 않는다. 신고 항목은 파괴적 항목인 삭제하기 위에 둔다.
  */
 type StoryOptionsMenuProps = {
   storyId: string;
+  /** 시트 머리글에 보일 스토리 제목 */
+  title: string;
   source: ReportSource;
   canReport: boolean;
   canDelete: boolean;
@@ -33,6 +35,7 @@ type StoryOptionsMenuProps = {
 
 export function StoryOptionsMenu({
   storyId,
+  title,
   source,
   canReport,
   canDelete,
@@ -46,7 +49,7 @@ export function StoryOptionsMenu({
     onDeleteSuccess,
   );
 
-  const items: OptionsMenuItem[] = [];
+  const items: CardOptionsSheetItem[] = [];
 
   if (canReport) {
     items.push({
@@ -72,9 +75,11 @@ export function StoryOptionsMenu({
 
   return (
     <>
-      <OptionsMenu
+      <CardOptionsSheet
+        kind={canDelete ? '내가 만든 스토리' : '스토리'}
+        title={title}
         triggerAriaLabel="스토리 옵션 더보기"
-        size={size}
+        triggerSize={size}
         triggerClassName={triggerClassName}
         items={items}
       />

@@ -2,9 +2,9 @@
 
 import { m } from 'motion/react';
 
+import { ReasoningText } from '@/components/agents/loading-states/reasoning-text';
 import { Marker, MarkerContent } from '@/components/ui/marker';
 import { type RevealHint, useRevealedHints } from '@/hooks/use-revealed-hints';
-import { useTypewriter } from '@/hooks/use-typewriter';
 
 const NO_HINTS: ReadonlyArray<RevealHint> = [];
 
@@ -19,16 +19,16 @@ export function StoryGeneratingLoading({
   label,
   hints = NO_HINTS,
 }: StoryGeneratingLoadingProps) {
-  const text = useTypewriter(phrases);
   const revealedHints = useRevealedHints(hints);
 
   return (
     <div className="flex flex-col">
-      <Marker role="status">
-        <MarkerContent className="min-h-lh" aria-label={label}>
-          {text}
-        </MarkerContent>
-      </Marker>
+      <ReasoningText
+        phrases={phrases}
+        interval={4000}
+        shimmerDuration={4}
+        aria-label={label}
+      />
 
       <div aria-live="polite" className="flex flex-col">
         {revealedHints.map(({ hint, isTextRevealed }) => (

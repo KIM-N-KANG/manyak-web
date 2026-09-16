@@ -31,7 +31,11 @@ describe('resolveCreditReasonLabel', () => {
   });
 
   it('라벨이 없는 사유는 기본 라벨로 대체한다', () => {
-    expect(resolveCreditReasonLabel('PURCHASE')).toBe('이프 변동');
+    expect(
+      resolveCreditReasonLabel(
+        'UNKNOWN_REASON' as CreditTransactionResponse['reason'],
+      ),
+    ).toBe('이프 변동');
     expect(resolveCreditReasonLabel(undefined)).toBe('이프 변동');
   });
 });

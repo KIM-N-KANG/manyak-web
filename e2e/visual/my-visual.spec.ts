@@ -1,7 +1,10 @@
 import type { Page } from '@playwright/test';
 
 import { ACCOUNT_DELETION_CTA_LABEL } from '@/features/my/account-deletion/constants';
-import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
+import {
+  CREDIT_CHARGE_COPY,
+  formatKrwPrice,
+} from '@/features/my/credits/constants';
 import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
 import {
   LINK_RESULT_COOKIE,
@@ -9,7 +12,9 @@ import {
 } from '@/lib/auth/link-account';
 
 import {
+  CREDIT_PRODUCTS_FIXTURE,
   expect,
+  mockCreditProducts,
   mockMemberSession,
   skipOnboarding,
   test,
@@ -69,12 +74,32 @@ test.describe('마이 비주얼', () => {
     await expect(page).toHaveScreenshot('my-member.png');
   });
 
+  test('이프 충전 구매 탭 (MY-CREDITS)', async ({ page }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    await mockCreditProducts(page);
+
+    await page.goto('/my/credits');
+
+    await expect(
+      page.getByRole('button', {
+        name: formatKrwPrice(CREDIT_PRODUCTS_FIXTURE[0].webPriceKrw),
+      }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('credit-charge-purchase.png');
+  });
+
   test('이프 충전 무료 충전 탭 (MY-CREDITS)', async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
 
     await page.goto('/my/credits');
+    await page
+      .getByRole('tab', { name: CREDIT_CHARGE_COPY.freeChargeTab })
+      .click();
 
     await expect(
       page.getByRole('button', { name: CREDIT_CHARGE_COPY.attendanceButton }),

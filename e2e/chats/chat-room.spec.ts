@@ -3,18 +3,27 @@ import { type Page } from '@playwright/test';
 import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
-import { buildChatTurnCreditCostLabel } from '@/features/chats/room/constants';
+import {
+  buildChatTurnCreditCostLabel,
+  CHAT_MENU_COPY,
+  CHAT_SETTINGS_COPY,
+} from '@/features/chats/room/constants';
+import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
   CREDIT_POLICY_FIXTURE,
+  EXHAUSTED_TRIALS,
   expect,
+  mockTrials,
   seedChatIds,
   skipChatTour,
   skipOnboarding,
   test,
+  TRIALS_FIXTURE,
 } from '../fixtures/test';
 
 // 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
@@ -42,6 +51,24 @@ const setPlainInputMode = async (page: Page) => {
   });
 };
 
+// 채팅 설정 시트(설정 아이콘 → 바텀 시트)를 열고 닫는다. 닫기는 오버레이 바깥 탭 대신 Escape로 한다.
+const openChatSettings = async (page: Page) => {
+  await page.getByRole('button', { name: CHAT_SETTINGS_COPY.trigger }).click();
+  await expect(
+    page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+  ).toBeVisible();
+};
+
+const closeChatSettings = async (page: Page) => {
+  await page.keyboard.press('Escape');
+  await expect(
+    page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+  ).toBeHidden();
+};
+
+const choicesSwitch = (page: Page) =>
+  page.getByRole('switch', { name: CHAT_SETTINGS_COPY.choices.label });
+
 const chatDetail = (
   turns: unknown[] = [],
   suggestedInputs: string[] = ['던전에 진입한다', '주변을 둘러본다'],
@@ -62,10 +89,175 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
-  test('회원 전송 버튼 왼쪽에 20 이프 비용을 작고 회색으로 표시한다', async ({
+  test('게스트는 전송 버튼 왼쪽에 정가 취소선과 체험 적용가를, 이미지 체험을 다 쓰면 시트 배지에 이미지 정가만 표시한다 (CHAT-LIMIT-07)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await mockTrials(page, {
+      chatTurn: { used: 2, limit: 5 },
+      chatImage: { used: 5, limit: 5 },
+    });
+
+    await page.goto('/chats/c1');
+
+    const { chatTurnCost, chatImageCost } = CREDIT_POLICY_FIXTURE;
+    // 턴 체험만 남고 실시간 이미지가 켜져 있으면 정가(턴+이미지)에 취소선, 적용가는 이미지 비용만.
+    const cost = page.getByText(
+      buildChatTurnCreditCostLabel(formatCreditAmount(chatImageCost)),
+      { exact: true },
+    );
+
+    const badge = cost.locator('xpath=..');
+
+    await expect(cost).toBeVisible();
+    await expect(badge).toHaveClass(/text-foreground-secondary/);
+    await expect(badge.locator('s')).toHaveText(
+      formatCreditAmount(chatTurnCost + chatImageCost),
+    );
+    await expect(
+      badge.locator('xpath=following-sibling::*[1]'),
+    ).toHaveAttribute('data-tour', 'send');
+    await expect(page.getByText(/잔여 체험 횟수/)).toHaveCount(0);
+
+    // 시트 배지는 게스트가 이미지 체험을 다 쓰면 취소선 없이 이미지 정가만 보이고 안내 버튼은 없다.
+    await openChatSettings(page);
+
+    const imageBadge = page
+      .getByText(
+        buildChatTurnCreditCostLabel(formatCreditAmount(chatImageCost)),
+        { exact: true },
+      )
+      .last()
+      .locator('xpath=..');
+
+    await expect(imageBadge).toBeVisible();
+    await expect(imageBadge.locator('s')).toHaveCount(0);
+    await expect(
+      page.getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      }),
+    ).toHaveCount(0);
+
+    // 실시간 이미지를 끄면 정가 20에 취소선, 적용가 0이 된다.
+    await page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
+      .click();
+    await closeChatSettings(page);
+
+    const freeCost = page.getByText(
+      buildChatTurnCreditCostLabel(formatCreditAmount(0)),
+      { exact: true },
+    );
+
+    await expect(freeCost).toBeVisible();
+    await expect(freeCost.locator('xpath=..').locator('s')).toHaveText(
+      formatCreditAmount(chatTurnCost),
+    );
+  });
+
+  test('게스트는 이미지 체험이 남아 있으면 설정 시트 배지에 이미지 정가 취소선과 0 이프를 표시한다 (CHAT-LIMIT-07)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await mockTrials(page, TRIALS_FIXTURE);
+
+    await page.goto('/chats/c1');
+    await openChatSettings(page);
+
+    const imageBadge = page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
+      .locator('xpath=ancestor::*[.//s][1]')
+      .locator('s')
+      .first()
+      .locator('xpath=..');
+
+    await expect(imageBadge.locator('s')).toHaveText(
+      formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+    );
+    await expect(imageBadge).toContainText(
+      buildChatTurnCreditCostLabel(formatCreditAmount(0)),
+    );
+    await expect(
+      page.getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      }),
+    ).toHaveCount(0);
+  });
+
+  test('회원도 턴 체험이 남아 있으면 정가 취소선과 적용가를, 이미지 체험을 다 쓰면 시트에 안내 버튼과 이프 배지를 표시한다 (CHAT-LIMIT-08)', async ({
     page,
   }) => {
     await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await mockTrials(page, {
+      chatTurn: TRIALS_FIXTURE.chatTurn,
+      chatImage: EXHAUSTED_TRIALS.chatImage,
+    });
+
+    await page.goto('/chats/c1');
+
+    // 턴 체험만 남고 실시간 이미지가 켜져 있으면 정가(턴+이미지)에 취소선, 적용가는 이미지 비용만.
+    const cost = page.getByText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+      ),
+      { exact: true },
+    );
+
+    await expect(cost).toBeVisible();
+    await expect(cost.locator('xpath=..').locator('s')).toHaveText(
+      formatCreditAmount(
+        CREDIT_POLICY_FIXTURE.chatTurnCost +
+          CREDIT_POLICY_FIXTURE.chatImageCost,
+      ),
+    );
+    await expect(page.getByText(/잔여 체험 횟수/)).toHaveCount(0);
+
+    // 회원은 이미지 체험을 다 쓰면 환불 안내 버튼과 취소선 없는 이미지 정가 배지를 보인다.
+    await openChatSettings(page);
+
+    const imageBadge = page
+      .getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+        ),
+        { exact: true },
+      )
+      .last()
+      .locator('xpath=..');
+
+    await expect(imageBadge).toBeVisible();
+    await expect(imageBadge.locator('s')).toHaveCount(0);
+    await expect(
+      page.getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      }),
+    ).toBeVisible();
+  });
+
+  test('회원이 체험을 다 쓰면 전송 버튼 왼쪽에 턴+실시간 이미지 합산 이프 비용을 작고 회색으로 표시한다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, EXHAUSTED_TRIALS);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -78,20 +270,67 @@ test.describe('채팅 스트리밍', () => {
 
     const creditCost = page.getByText(
       buildChatTurnCreditCostLabel(
-        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatTurnCost),
+        formatCreditAmount(
+          CREDIT_POLICY_FIXTURE.chatTurnCost +
+            CREDIT_POLICY_FIXTURE.chatImageCost,
+        ),
       ),
       { exact: true },
     );
+    const badge = creditCost.locator('xpath=..');
     const sendButton = page.locator('[data-tour="send"]');
 
     await expect(creditCost).toBeVisible();
-    await expect(creditCost).toHaveCSS('font-size', '12px');
-    await expect(creditCost).toHaveClass(/text-foreground-secondary/);
-    await expect(creditCost.locator('xpath=..')).toHaveCSS('column-gap', '8px');
+    await expect(badge).toHaveCSS('font-size', '12px');
+    await expect(badge).toHaveClass(/text-foreground-secondary/);
+    await expect(badge.locator('s')).toHaveCount(0);
+    await expect(badge.locator('xpath=..')).toHaveCSS('column-gap', '8px');
     await expect(
-      creditCost.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
+
+    // 시트 배지는 이미지 비용만 보이고, 안내 버튼은 실패 시 환불을 알린다.
+    await openChatSettings(page);
+    await expect(
+      page.getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await page
+      .getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      })
+      .click();
+    await expect(
+      page.getByText(CHAT_SETTINGS_COPY.realtimeImage.notice),
+    ).toBeVisible();
+    // Escape는 시트까지 닫으므로 안내 버튼을 다시 눌러 팝오버만 닫는다.
+    await page
+      .getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      })
+      .click();
+    await expect(
+      page.getByText(CHAT_SETTINGS_COPY.realtimeImage.notice),
+    ).toBeHidden();
+
+    // 실시간 이미지를 끄면 툴바 비용은 턴 비용만 남는다.
+    await page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
+      .click();
+    await closeChatSettings(page);
+    await expect(
+      page.getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatTurnCost),
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
   });
 
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {
@@ -114,6 +353,14 @@ test.describe('채팅 스트리밍', () => {
 
     await expect(prologue).toBeVisible();
     await expect(firstChoice).toBeVisible();
+
+    // AI 생성 안내 문구가 프롤로그보다 위에 놓인다.
+    const notice = page.getByText(CHAT_AI_NOTICE);
+
+    await expect(notice).toBeVisible();
+    expect((await notice.boundingBox())!.y).toBeLessThan(
+      (await prologue.boundingBox())!.y,
+    );
     await expect(prologue.locator('xpath=ancestor::p')).toHaveCSS(
       'line-height',
       '28px',
@@ -428,7 +675,8 @@ test.describe('채팅 스트리밍', () => {
 
     const image = page.getByRole('img', { name: '세린 인물 이미지' });
     const imageBlock = page.locator('[data-slot="chat-character-image"]');
-    const aiMessageContent = imageBlock.locator('..');
+    // 이미지 블록은 크게 보기 버튼으로 감싸므로 본문 컨테이너는 두 단계 위다.
+    const aiMessageContent = imageBlock.locator('../..');
     const aiMessage = imageBlock.locator(
       'xpath=ancestor::*[@data-slot="message-content"]',
     );
@@ -496,6 +744,19 @@ test.describe('채팅 스트리밍', () => {
     await expect(page.locator('body')).not.toContainText(
       `[[${CHARACTER_IMAGE_URL}]]`,
     );
+
+    // 확정된 이미지를 탭하면 풀스크린 뷰어가 열리고 닫아도 채팅방에 머문다
+    const viewer = page.getByRole('dialog', {
+      name: '세린 인물 이미지 크게 보기',
+    });
+
+    await page
+      .getByRole('button', { name: '세린 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+    await viewer.getByRole('button', { name: '닫기' }).click();
+    await expect(viewer).not.toBeVisible();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
   });
 
   test('추천 입력의 수정 버튼을 누르면 입력창에 채워진다 (US-6-4)', async ({
@@ -703,16 +964,19 @@ test.describe('채팅 헤더', () => {
 });
 
 test.describe('채팅 삭제', () => {
-  // 삭제 항목은 헤더 우측 옵션 드랍다운 메뉴 안에 있다.
+  // 삭제 항목은 헤더 우측 메뉴 드로어 최하단에 있다.
   // 같은 URL을 GET(상세 조회)/DELETE(삭제)로 함께 쓰므로 메서드로 분기해 모킹한다.
   const openDeleteDialog = async (page: Page) => {
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await page.getByRole('menuitem', { name: '삭제하기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CHAT_MENU_COPY.delete })
+      .click();
 
     return page.getByRole('alertdialog');
   };
 
-  test('옵션 메뉴에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
+  test('메뉴 드로어에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -834,8 +1098,10 @@ test.describe('블럭 입력 모드 (기본)', () => {
 
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '입력 모드 변경' }).click();
-    await page.getByRole('menuitemradio', { name: /일반 입력/ }).click();
+    await openChatSettings(page);
+    await page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.blockInput.label })
+      .click();
 
     await expect(
       page.getByPlaceholder('이야기를 어떻게 이어갈까요?'),
@@ -892,6 +1158,7 @@ test.describe('블럭 입력 모드 (기본)', () => {
     expect(JSON.parse(streamRequestBody)).toEqual({
       userInput: '*비가 온다*\n\n우산 챙겼어?',
       userSource: 'typed',
+      realtimeImage: true,
     });
   });
 
@@ -1022,7 +1289,11 @@ test.describe('입력 출처(userSource) 전달', () => {
       page.getByRole('button', { name: SUGGESTION }).click(),
     );
 
-    expect(body).toEqual({ userInput: SUGGESTION, userSource: 'choice' });
+    expect(body).toEqual({
+      userInput: SUGGESTION,
+      userSource: 'choice',
+      realtimeImage: true,
+    });
   });
 
   test('턴 선택지를 탭해 보내면 턴 ID와 1-based 순번을 함께 보낸다', async ({
@@ -1038,6 +1309,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: SUGGESTION,
       userSource: 'choice',
+      realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
     });
@@ -1086,6 +1358,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: SUGGESTION,
       userSource: 'choice',
+      realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
     });
@@ -1117,6 +1390,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: edited,
       userSource: 'edited_choice',
+      realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
     });
@@ -1136,6 +1410,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toEqual({
       userInput: '횃불을 켜고 안쪽을 살핀다',
       userSource: 'typed',
+      realtimeImage: true,
     });
   });
 });
@@ -1168,7 +1443,10 @@ test.describe('응답 재생성', () => {
       });
     });
     await page.route(CHAT_REGENERATE, async (route) => {
-      expect(route.request().postDataJSON()).toEqual({ turnId: 7 });
+      expect(route.request().postDataJSON()).toEqual({
+        turnId: 7,
+        realtimeImage: true,
+      });
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
@@ -1358,7 +1636,8 @@ test.describe('추천 입력 토글', () => {
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('진입한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    // 목 상세가 같은 문장의 기존 턴을 돌려주므로 스트리밍 중에는 잠시 두 개가 보인다. 마지막 것만 본다.
+    await expect(page.getByText('문이 서서히 열린다.').last()).toBeVisible();
     expect(choicesCalled).toBe(0);
   });
 
@@ -1391,8 +1670,9 @@ test.describe('추천 입력 토글', () => {
     await setChoicesDisabled(page);
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '추천 입력 설정' }).click();
-    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
+    await openChatSettings(page);
+    await choicesSwitch(page).click();
+    await closeChatSettings(page);
 
     await expect(
       page.getByRole('button', { name: '안으로 들어간다' }),
@@ -1427,12 +1707,16 @@ test.describe('추천 입력 토글', () => {
 
     await expect(firstChoice).toBeVisible();
 
-    await page.getByRole('button', { name: '추천 입력 설정' }).click();
-    await page.getByRole('menuitemradio', { name: /추천 입력 끔/ }).click();
+    await openChatSettings(page);
+    await choicesSwitch(page).click();
+    await expect(choicesSwitch(page)).toHaveAttribute('aria-checked', 'false');
+    await closeChatSettings(page);
     await expect(firstChoice).toBeHidden();
 
-    await page.getByRole('button', { name: '추천 입력 설정' }).click();
-    await page.getByRole('menuitemradio', { name: /추천 입력 켬/ }).click();
+    await openChatSettings(page);
+    await choicesSwitch(page).click();
+    await expect(choicesSwitch(page)).toHaveAttribute('aria-checked', 'true');
+    await closeChatSettings(page);
     await expect(firstChoice).toBeVisible();
 
     expect(choicesCalled).toBe(0);
@@ -1547,13 +1831,20 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     });
 
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
 
-    // 신고하기는 파괴적 항목인 삭제하기 위에 놓인다.
-    const menuItems = page.getByRole('menuitem');
+    // 회원 드로어는 이프 카드(충전) 아래 새로운 채팅 → 채팅 공유 → 신고 → 파괴적 항목인 채팅 삭제 순서다.
+    const drawer = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
+    const menuItems = drawer.getByRole('button');
 
-    await expect(menuItems).toHaveText([STORY_REPORT_COPY.action, '삭제하기']);
-    await menuItems.first().click();
+    await expect(menuItems).toHaveText([
+      CREDIT_CHARGE_COPY.entryButton,
+      CHAT_MENU_COPY.newChat,
+      CHAT_MENU_COPY.share,
+      CHAT_MENU_COPY.report,
+      CHAT_MENU_COPY.delete,
+    ]);
+    await drawer.getByRole('button', { name: CHAT_MENU_COPY.report }).click();
 
     const sheet = page.getByRole('dialog', { name: STORY_REPORT_COPY.title });
 
@@ -1565,7 +1856,7 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     expect(reportBody).toEqual({ reason: 'SPAM', detail: null });
   });
 
-  test('게스트의 옵션 메뉴에는 신고하기가 없다', async ({ page }) => {
+  test('게스트의 메뉴 드로어에는 신고하기가 없다', async ({ page }) => {
     await skipOnboarding(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
@@ -1576,9 +1867,17 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     });
 
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
 
-    await expect(page.getByRole('menuitem')).toHaveText(['삭제하기']);
+    await expect(
+      page
+        .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+        .getByRole('button'),
+    ).toHaveText([
+      CHAT_MENU_COPY.newChat,
+      CHAT_MENU_COPY.share,
+      CHAT_MENU_COPY.delete,
+    ]);
   });
 
   test('참조 스토리가 삭제된 채팅은 헤더에 삭제된 스토리를 보여주고 신고할 수 없다', async ({
@@ -1599,7 +1898,16 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: DELETED_STORY_LABEL }),
     ).toBeVisible();
-    await page.getByRole('button', { name: '채팅 옵션 더보기' }).click();
-    await expect(page.getByRole('menuitem')).toHaveText(['삭제하기']);
+    // 참조 스토리가 없으면 새로운 채팅·신고도 둘 수 없다(회원이라 이프 카드의 충전은 남는다).
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await expect(
+      page
+        .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+        .getByRole('button'),
+    ).toHaveText([
+      CREDIT_CHARGE_COPY.entryButton,
+      CHAT_MENU_COPY.share,
+      CHAT_MENU_COPY.delete,
+    ]);
   });
 });

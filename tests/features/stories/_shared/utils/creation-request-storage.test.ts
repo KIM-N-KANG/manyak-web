@@ -12,6 +12,7 @@ import type {
   StoryDraftRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  demotePendingCompletionToDraft,
   loadPendingCreationRequest,
   markPendingStoryCreated,
   parsePendingCreationRequest,
@@ -280,5 +281,50 @@ describe('parsePendingCreationRequest — STORY_DRAFT', () => {
     const record = { ...draftRecord, createdStoryId: 7 };
 
     expect(parsePendingCreationRequest(JSON.stringify(record))).toBeNull();
+  });
+});
+
+describe('demotePendingCompletionToDraft', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const stubStorage = () => {
+    const values = new Map<string, string>();
+
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    });
+    vi.stubGlobal('window', { dispatchEvent: vi.fn() });
+  };
+
+  it('같은 requestId의 완성 레코드를 추가 정보 단계 초안으로 바꾼다', () => {
+    stubStorage();
+    savePendingCreationRequest(completionRecord);
+
+    expect(demotePendingCompletionToDraft(completionRecord.requestId)).toBe(
+      true,
+    );
+    expect(loadPendingCreationRequest()).toMatchObject({
+      stage: 'STORY_DRAFT',
+      step: 'additional-info',
+      requestId: completionRecord.requestId,
+      selectedStoryline,
+      completionRequest,
+      createdStoryId: null,
+    });
+  });
+
+  it('다른 requestId이거나 완성 레코드가 아니면 바꾸지 않는다', () => {
+    stubStorage();
+    savePendingCreationRequest(storylineRecord);
+
+    expect(demotePendingCompletionToDraft(storylineRecord.requestId)).toBe(
+      false,
+    );
+    expect(demotePendingCompletionToDraft('other')).toBe(false);
+    expect(loadPendingCreationRequest()).toEqual(storylineRecord);
   });
 });

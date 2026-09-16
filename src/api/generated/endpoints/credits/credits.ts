@@ -21,18 +21,287 @@ import type {
 } from '@tanstack/react-query';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import type { ErrorType } from '../../../mutator/custom-instance';
+import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
+  ApiErrorResponse,
+  CreateCreditOrderRequest,
+  CreateCreditOrderResponse,
   CreditAttendanceResponse,
   CreditBalanceResponse,
+  CreditOrderResponse,
   CreditPolicyResponse,
+  CreditProductsResponse,
   CreditTransactionPageResponse,
   GetMyCreditTransactionsParams,
+  GooglePlayPurchaseRequest,
+  GooglePlayPurchaseResponse,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export type purchaseResponse200 = {
+  data: GooglePlayPurchaseResponse;
+  status: 200;
+};
+
+export type purchaseResponse400 = {
+  data: GooglePlayPurchaseResponse;
+  status: 400;
+};
+
+export type purchaseResponse401 = {
+  data: GooglePlayPurchaseResponse;
+  status: 401;
+};
+
+export type purchaseResponse403 = {
+  data: GooglePlayPurchaseResponse;
+  status: 403;
+};
+
+export type purchaseResponse502 = {
+  data: GooglePlayPurchaseResponse;
+  status: 502;
+};
+
+export type purchaseResponse503 = {
+  data: GooglePlayPurchaseResponse;
+  status: 503;
+};
+
+export type purchaseResponseSuccess = purchaseResponse200 & {
+  headers: Headers;
+};
+export type purchaseResponseError = (
+  | purchaseResponse400
+  | purchaseResponse401
+  | purchaseResponse403
+  | purchaseResponse502
+  | purchaseResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchaseResponse = purchaseResponseSuccess | purchaseResponseError;
+
+export const getPurchaseUrl = () => {
+  return `/api/v1/users/me/credits/purchases/google`;
+};
+
+/**
+ * 구매 토큰을 검증해 이프를 적립합니다. 같은 토큰은 본인에게만 멱등 응답하며 consume은 앱에서 수행합니다.
+ * @summary Google Play 이프 구매 검증
+ */
+export const purchase = async (
+  googlePlayPurchaseRequest: GooglePlayPurchaseRequest,
+  options?: RequestInit,
+): Promise<purchaseResponse> => {
+  return customInstance<purchaseResponse>(getPurchaseUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(googlePlayPurchaseRequest),
+  });
+};
+
+export const getPurchaseMutationOptions = <
+  TError = ErrorType<GooglePlayPurchaseResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof purchase>>,
+    TError,
+    { data: BodyType<GooglePlayPurchaseRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof purchase>>,
+  TError,
+  { data: BodyType<GooglePlayPurchaseRequest> },
+  TContext
+> => {
+  const mutationKey = ['purchase'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof purchase>>,
+    { data: BodyType<GooglePlayPurchaseRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return purchase(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PurchaseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof purchase>>
+>;
+export type PurchaseMutationBody = BodyType<GooglePlayPurchaseRequest>;
+export type PurchaseMutationError = ErrorType<GooglePlayPurchaseResponse>;
+
+/**
+ * @summary Google Play 이프 구매 검증
+ */
+export const usePurchase = <
+  TError = ErrorType<GooglePlayPurchaseResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof purchase>>,
+      TError,
+      { data: BodyType<GooglePlayPurchaseRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof purchase>>,
+  TError,
+  { data: BodyType<GooglePlayPurchaseRequest> },
+  TContext
+> => {
+  return useMutation(getPurchaseMutationOptions(options), queryClient);
+};
+export type createResponse201 = {
+  data: CreateCreditOrderResponse;
+  status: 201;
+};
+
+export type createResponse400 = {
+  data: ApiErrorResponse;
+  status: 400;
+};
+
+export type createResponse401 = {
+  data: ApiErrorResponse;
+  status: 401;
+};
+
+export type createResponse403 = {
+  data: ApiErrorResponse;
+  status: 403;
+};
+
+export type createResponse503 = {
+  data: ApiErrorResponse;
+  status: 503;
+};
+
+export type createResponseSuccess = createResponse201 & {
+  headers: Headers;
+};
+export type createResponseError = (
+  | createResponse400
+  | createResponse401
+  | createResponse403
+  | createResponse503
+) & {
+  headers: Headers;
+};
+
+export type createResponse = createResponseSuccess | createResponseError;
+
+export const getCreateUrl = () => {
+  return `/api/v1/users/me/credits/orders`;
+};
+
+/**
+ * PENDING 주문과 그로블 결제창 URL을 반환합니다. 주문 생성만으로 이프를 적립하지 않습니다.
+ * @summary 웹 이프 충전 주문 생성
+ */
+export const create = async (
+  createCreditOrderRequest: CreateCreditOrderRequest,
+  options?: RequestInit,
+): Promise<createResponse> => {
+  return customInstance<createResponse>(getCreateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createCreditOrderRequest),
+  });
+};
+
+export const getCreateMutationOptions = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof create>>,
+    TError,
+    { data: BodyType<CreateCreditOrderRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof create>>,
+  TError,
+  { data: BodyType<CreateCreditOrderRequest> },
+  TContext
+> => {
+  const mutationKey = ['create'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof create>>,
+    { data: BodyType<CreateCreditOrderRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return create(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof create>>
+>;
+export type CreateMutationBody = BodyType<CreateCreditOrderRequest>;
+export type CreateMutationError = ErrorType<ApiErrorResponse>;
+
+/**
+ * @summary 웹 이프 충전 주문 생성
+ */
+export const useCreate = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof create>>,
+      TError,
+      { data: BodyType<CreateCreditOrderRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof create>>,
+  TError,
+  { data: BodyType<CreateCreditOrderRequest> },
+  TContext
+> => {
+  return useMutation(getCreateMutationOptions(options), queryClient);
+};
 export type claimAttendanceResponse200 = {
   data: CreditAttendanceResponse;
   status: 200;
@@ -348,11 +617,11 @@ export const getGetMyCreditTransactionsUrl = (
  *             요청자의 크레딧 증감 내역을 최신순으로 반환합니다. 인증 필수입니다.
  *
  *             - `type`: 화면 필터 칩과 같은 값(`ALL`·`SPEND`·`EARN`·`EXPIRE`). 환불(REFUND)은 획득으로 분류하고,
- *               구매(PURCHASE)는 구매내역 탭 몫이라 `ALL`에서도 제외합니다.
+ *               구매(PURCHASE)는 EARN, 구매 환불 회수(PURCHASE_REVERSAL)는 EXPIRE로 표시합니다.
  *             - `limit`: 1~100으로 보정합니다(기본 50).
  *             - `cursor`: 이전 응답의 `nextCursor`를 그대로 넘기면 다음 페이지입니다. 다음이 없으면 `nextCursor`는 null입니다.
  *             - `title`은 관련 스토리 제목이며, 보상·소멸 행이거나 스토리가 삭제됐으면 null입니다.
- *             - 소멸 행의 `createdAt`은 회수가 기록된 시각이라 실제 만료일과 다릅니다. 날짜 표시는 `expiresAt`을 쓰세요.
+ *             - 만료(EXPIRE) 행의 `createdAt`은 회수 기록 시각이고 실제 만료일은 `expiresAt`입니다. 구매 환불 회수의 `expiresAt`은 null입니다.
  * @summary 이프 이용내역 조회
  */
 export const getMyCreditTransactions = async (
@@ -512,6 +781,321 @@ export function useGetMyCreditTransactions<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetMyCreditTransactionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type getResponse200 = {
+  data: CreditOrderResponse;
+  status: 200;
+};
+
+export type getResponse401 = {
+  data: ApiErrorResponse;
+  status: 401;
+};
+
+export type getResponse404 = {
+  data: ApiErrorResponse;
+  status: 404;
+};
+
+export type getResponseSuccess = getResponse200 & {
+  headers: Headers;
+};
+export type getResponseError = (getResponse401 | getResponse404) & {
+  headers: Headers;
+};
+
+export type getResponse = getResponseSuccess | getResponseError;
+
+export const getGetUrl = (orderId: string) => {
+  return `/api/v1/users/me/credits/orders/${orderId}`;
+};
+
+/**
+ * 결제 복귀 후 완료 여부 확인용입니다. 없는 주문과 타인 주문은 모두 404입니다.
+ * @summary 본인 이프 충전 주문 조회
+ */
+export const get = async (
+  orderId: string,
+  options?: RequestInit,
+): Promise<getResponse> => {
+  return customInstance<getResponse>(getGetUrl(orderId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetQueryKey = (orderId: string) => {
+  return [`/api/v1/users/me/credits/orders/${orderId}`] as const;
+};
+
+export const getGetQueryOptions = <
+  TData = Awaited<ReturnType<typeof get>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  orderId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetQueryKey(orderId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof get>>> = ({
+    signal,
+  }) => get(orderId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: orderId !== null && orderId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>;
+export type GetQueryError = ErrorType<ApiErrorResponse>;
+
+export function useGet<
+  TData = Awaited<ReturnType<typeof get>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  orderId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof get>>,
+          TError,
+          Awaited<ReturnType<typeof get>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGet<
+  TData = Awaited<ReturnType<typeof get>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  orderId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof get>>,
+          TError,
+          Awaited<ReturnType<typeof get>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGet<
+  TData = Awaited<ReturnType<typeof get>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  orderId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 본인 이프 충전 주문 조회
+ */
+
+export function useGet<
+  TData = Awaited<ReturnType<typeof get>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  orderId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetQueryOptions(orderId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type productsResponse200 = {
+  data: CreditProductsResponse;
+  status: 200;
+};
+
+export type productsResponseSuccess = productsResponse200 & {
+  headers: Headers;
+};
+export type productsResponse = productsResponseSuccess;
+
+export const getProductsUrl = () => {
+  return `/api/v1/credits/products`;
+};
+
+/**
+ * 인증 없이 설정 순서대로 상품 6종의 총량과 웹·앱 가격을 조회합니다.
+ * @summary 이프 충전 상품 목록
+ */
+export const products = async (
+  options?: RequestInit,
+): Promise<productsResponse> => {
+  return customInstance<productsResponse>(getProductsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getProductsQueryKey = () => {
+  return [`/api/v1/credits/products`] as const;
+};
+
+export const getProductsQueryOptions = <
+  TData = Awaited<ReturnType<typeof products>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof products>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getProductsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof products>>> = ({
+    signal,
+  }) => products({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof products>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ProductsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof products>>
+>;
+export type ProductsQueryError = ErrorType<unknown>;
+
+export function useProducts<
+  TData = Awaited<ReturnType<typeof products>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof products>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof products>>,
+          TError,
+          Awaited<ReturnType<typeof products>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useProducts<
+  TData = Awaited<ReturnType<typeof products>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof products>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof products>>,
+          TError,
+          Awaited<ReturnType<typeof products>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useProducts<
+  TData = Awaited<ReturnType<typeof products>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof products>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 이프 충전 상품 목록
+ */
+
+export function useProducts<
+  TData = Awaited<ReturnType<typeof products>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof products>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getProductsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

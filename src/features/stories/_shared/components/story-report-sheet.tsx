@@ -102,13 +102,10 @@ export function StoryReportSheet({
   return (
     <Drawer
       open={open && container !== null}
-      dismissible={!isPending}
+      disablePointerDismissal={isPending}
       onOpenChange={handleOpenChange}>
-      <DrawerContent
-        container={container}
-        className="absolute overflow-y-auto overscroll-contain"
-        overlayClassName="absolute">
-        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
+      <DrawerContent container={container}>
+        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
           <DrawerTitle className="text-xl leading-snug font-bold">
             {STORY_REPORT_COPY.title}
           </DrawerTitle>
@@ -150,7 +147,7 @@ function StoryReportForm({
 
   return (
     <form
-      className="flex w-full flex-col px-4 pt-8 pb-4"
+      className="flex min-h-0 w-full flex-col overflow-y-auto overscroll-contain px-4 pt-8 pb-4"
       onSubmit={handleSubmit}>
       <fieldset disabled={isSubmitting} className="flex flex-col">
         <legend className="sr-only">신고 사유</legend>
@@ -211,8 +208,8 @@ function StoryReportForm({
         <Button
           type="button"
           variant="ghost"
-          size="xs"
-          className="w-fit self-center text-foreground-secondary"
+          size="lg"
+          className="w-full text-foreground-secondary"
           disabled={isSubmitting}
           onClick={onClose}>
           {STORY_REPORT_COPY.close}

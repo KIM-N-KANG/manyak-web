@@ -48,13 +48,13 @@ export function MyMenuItem({
   newTab,
 }: MyMenuItemProps) {
   const className = cn(
-    'flex min-h-12 items-center gap-4 px-4 py-2',
+    'flex min-h-12 items-center gap-3 px-4 py-2',
     destructive && 'text-destructive',
   );
 
   const content = (
     <>
-      <HugeiconsIcon icon={icon} className="size-6" aria-hidden="true" />
+      <HugeiconsIcon icon={icon} className="size-5" aria-hidden="true" />
       <span className="flex flex-1 flex-col text-left">
         {label}
         {subLabel && (
@@ -76,7 +76,7 @@ export function MyMenuItem({
       {href && (
         <HugeiconsIcon
           icon={newTab ? LinkSquare01Icon : ArrowRight01Icon}
-          className="size-5 text-foreground-tertiary"
+          className="size-4 text-foreground-tertiary"
           aria-hidden="true"
         />
       )}

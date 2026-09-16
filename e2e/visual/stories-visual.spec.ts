@@ -3,8 +3,10 @@ import { LOGIN_REQUIRED_SHEET_COPY } from '@/features/auth/_shared/constants/log
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { seedPendingCreationRequest } from '../fixtures/storage';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
@@ -84,7 +86,8 @@ const tags = [
   { id: 4, name: '든든한', category: 'SUPPORTING_CHARACTER' },
 ];
 
-test.describe('스토리 좋아요 비주얼', () => {
+// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. UI를 되살릴 때 skip을 제거한다.
+test.describe.skip('스토리 좋아요 비주얼', () => {
   test('좋아요 로그인 바텀 시트', async ({ page }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
     await page.route(STORY_DETAIL, (route) =>
@@ -190,6 +193,62 @@ test.describe('스토리 비주얼', () => {
   test.beforeEach(async ({ page }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
   });
+
+  for (const hasExistingStory of [false, true]) {
+    test(`제작 목록 완성 대기 (${hasExistingStory ? '기존 목록' : '첫 스토리'})`, async ({
+      page,
+    }) => {
+      await skipOnboarding(page);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await seedStoryIds(page, hasExistingStory ? ['s1'] : []);
+      await seedPendingCreationRequest(page, {
+        stage: 'STORY_COMPLETION',
+        requestId: 'completion-visual',
+        generationRequest: {
+          requestId: 'generation-visual',
+          genreTagIds: [1],
+          protagonist: { featureTagIds: [2] },
+        },
+        generationResult: { simpleCreationId: 1001, storylines: [] },
+        selectedStoryline: { id: 101 },
+        completionRequest: {
+          requestId: 'completion-visual',
+          simpleCreationId: 1001,
+          storylineId: 101,
+        },
+      });
+      await page.route(
+        '**/api/v1/stories/simple/creation-requests/*',
+        (route) =>
+          route.fulfill({
+            json: {
+              stage: 'STORY_COMPLETION',
+              status: 'PENDING',
+              result: null,
+            },
+          }),
+      );
+      await page.route(STORIES_BATCH, (route) =>
+        route.fulfill({ json: [story('s1', '용의 계곡')] }),
+      );
+      await page.goto(APP_PATH.MAIN.STUDIO);
+      await expect(
+        page.getByRole('article', {
+          name: CREATION_PROGRESS_CARD_COPY.completingTitle,
+        }),
+      ).toBeVisible();
+
+      if (hasExistingStory)
+        await expect(
+          page.getByText('용의 계곡', { exact: true }),
+        ).toBeVisible();
+
+      await waitForFonts(page);
+      await expect(page).toHaveScreenshot(
+        `story-list-completing-${hasExistingStory ? 'existing' : 'first'}.png`,
+      );
+    });
+  }
 
   test('제작 목록 기본 상태 (STORY-LIST)', async ({ page }) => {
     await seedStoryIds(page, ['s1', 's2']);
@@ -396,7 +455,7 @@ test.describe('스토리 오버레이 비주얼', () => {
     await expect(page).toHaveScreenshot('thumbnail-viewer.png');
   });
 
-  test('제작 카드 옵션 다이얼로그 (STORY-LIST)', async ({ page }) => {
+  test('제작 카드 옵션 시트 (STORY-LIST)', async ({ page }) => {
     await skipOnboarding(page);
     await seedStoryIds(page, ['s1']);
     await page.route(STORIES_BATCH, async (route) => {
@@ -410,14 +469,14 @@ test.describe('스토리 오버레이 비주얼', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
 
-    // 상단 축소판 + 항목 목록 대표 스냅샷이다(채팅 카드 옵션도 같은 컴포넌트).
-    const dialog = page.getByRole('dialog', { name: '스토리 옵션' });
+    // 머리글(종류·제목) + 항목 목록 대표 스냅샷이다(채팅 카드 옵션도 같은 컴포넌트).
+    const dialog = page.getByRole('dialog', { name: '용의 계곡' });
 
     await expect(
       dialog.getByRole('menuitem', { name: '삭제하기' }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('card-options-dialog.png');
+    await expect(page).toHaveScreenshot('card-options-sheet.png');
   });
 
   test('스토리 신고 시트 (STORY-DETAIL)', async ({ page }) => {

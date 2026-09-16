@@ -1,44 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-
-import { useSession } from 'next-auth/react';
+// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
+// import { useState } from 'react';
+//
+// import { useSession } from 'next-auth/react';
 
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
-import { HeartFilledIcon } from '@/components/icons/heart-filled-icon';
-import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
+// import { HeartFilledIcon } from '@/components/icons/heart-filled-icon';
+// import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { Button } from '@/components/ui/button';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
-import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
-import { useStoryLike } from '@/features/stories/detail/hooks/use-story-like';
-import { cn } from '@/lib/utils';
+import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
+import { track } from '@/observability/analytics';
 
-import { useStartChat } from '../hooks/use-start-chat';
+// import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+// import { useStoryLike } from '@/features/stories/detail/hooks/use-story-like';
+// import { cn } from '@/lib/utils';
 
 type StoryDetailCtaProps = {
   storyId: string;
-  canLike: boolean;
-  isLiked: boolean;
+  // KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
+  // canLike: boolean;
+  // isLiked: boolean;
   /** 선택한 시작 설정 ID. 없으면 백엔드가 첫 시작 설정을 사용한다. */
   startSettingId?: string;
 };
 
 export function StoryDetailCta({
   storyId,
-  canLike,
-  isLiked,
+  // canLike,
+  // isLiked,
   startSettingId,
 }: StoryDetailCtaProps) {
-  const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
-  const { status } = useSession();
-  const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
+  // KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
+  // const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
+  // const { status } = useSession();
+  // const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
   const { startChat, isStarting, guestLimitTrigger, closeGuestLimitDialog } =
-    useStartChat(storyId, startSettingId);
+    useStartChat(storyId, {
+      startSettingId,
+      onStart: () =>
+        track('client_storyDetail_chatStartButton_clicked', {
+          story_id: storyId,
+        }),
+    });
 
   return (
     <>
       <nav className="shrink-0 bg-inherit px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex w-full items-center gap-4">
+          {/* KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
           {canLike && (
             <Button
               type="button"
@@ -70,6 +81,7 @@ export function StoryDetailCta({
               )}
             </Button>
           )}
+          */}
           <Button
             type="button"
             size="lg"
@@ -86,14 +98,16 @@ export function StoryDetailCta({
         </div>
       </nav>
       <LoginRequiredSheet
-        open={
-          (isLikeLoginOpen && status === 'unauthenticated') ||
-          guestLimitTrigger !== null
-        }
+        // KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
+        // open={
+        //   (isLikeLoginOpen && status === 'unauthenticated') ||
+        //   guestLimitTrigger !== null
+        // }
+        open={guestLimitTrigger !== null}
         trigger={guestLimitTrigger}
         onOpenChange={(open) => {
           if (!open) {
-            setIsLikeLoginOpen(false);
+            // setIsLikeLoginOpen(false);
             closeGuestLimitDialog();
           }
         }}

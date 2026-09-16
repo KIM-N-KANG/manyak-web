@@ -3,14 +3,21 @@ import { type Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedGuestUsage, seedStoryIds, test } from '../fixtures/test';
+import {
+  EXHAUSTED_TRIALS,
+  expect,
+  mockTrials,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 
 /**
  * 스토리 생성 퍼널의 게스트 한도·이프 게이팅 스펙(QA STORY-LIMIT-02~06·09).
- * 로컬 카운터 선차단, 서버 402 사유별 다이얼로그 분기, 카운터 증가 규칙을 검증한다.
- * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GUEST_LIMITS`
+ * 서버 체험 잔여 기반 선차단, 서버 402 사유별 다이얼로그 분기, 성공 후 잔여 재조회 규칙을 검증한다.
+ * 한도 수치의 정본은 백엔드 정책이며, 클라이언트 선차단은 `GET /users/me/trials` 잔여
  * (스토리라인 5·스토리 1)를 따른다.
  */
 const TAGS = '**/api/v1/stories/simple/tags';
@@ -90,7 +97,7 @@ test.describe('생성 퍼널 진입 백스톱', () => {
     page,
   }) => {
     await mockTags(page);
-    await seedGuestUsage(page, { storyCreate: 1 });
+    await mockTrials(page, { storyCreation: EXHAUSTED_TRIALS.storyCreation });
 
     // 제작 목록 CTA를 우회한 딥링크 진입을 재현한다.
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
@@ -117,13 +124,15 @@ test.describe('생성 퍼널 진입 백스톱', () => {
 });
 
 test.describe('스토리라인 생성 한도', () => {
-  test('스토리라인 카운터가 한도(5)에 도달하면 요청 없이 로그인 바텀 시트를 띄우고 키워드 단계에 머문다 (STORY-LIMIT-03)', async ({
+  test('스토리라인 체험 잔여가 0이면 요청 없이 로그인 바텀 시트를 띄우고 키워드 단계에 머문다 (STORY-LIMIT-03)', async ({
     page,
   }) => {
     let storylineRequestCount = 0;
 
     await mockTags(page);
-    await seedGuestUsage(page, { storylineCreate: 5 });
+    await mockTrials(page, {
+      storylineGeneration: EXHAUSTED_TRIALS.storylineGeneration,
+    });
     await page.route(STORYLINES, async (route) => {
       storylineRequestCount += 1;
       await route.abort();
@@ -178,15 +187,19 @@ test.describe('스토리라인 생성 한도', () => {
     ).toBeVisible();
   });
 
-  test('스토리라인 카운터는 201 성공 시에만 증가해 다음 재생성을 선차단한다 (STORY-LIMIT-09)', async ({
+  test('스토리라인 201 성공 후 잔여를 다시 조회해 소진되면 다음 재생성을 선차단한다 (STORY-LIMIT-09)', async ({
     page,
   }) => {
     let storylineRequestCount = 0;
 
     await mockTags(page);
-    await seedGuestUsage(page, { storylineCreate: 4 });
+    // 생성 성공 전에는 1회가 남아 있고, 성공 뒤 재조회에서 서버가 소진을 알린다.
+    await mockTrials(page, { storylineGeneration: { used: 4, limit: 5 } });
     await page.route(STORYLINES, async (route) => {
       storylineRequestCount += 1;
+      await mockTrials(page, {
+        storylineGeneration: EXHAUSTED_TRIALS.storylineGeneration,
+      });
       await route.fulfill({
         status: 201,
         contentType: 'application/json',
@@ -198,7 +211,7 @@ test.describe('스토리라인 생성 한도', () => {
     await fillKeywordStep(page);
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
 
-    // 4 → 5로 증가해 한도에 도달한다.
+    // 재조회한 잔여가 0이 되어 한도에 도달한다.
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
     expect(storylineRequestCount).toBe(1);
 
@@ -214,7 +227,12 @@ test.describe('스토리라인 생성 한도', () => {
 });
 
 test.describe('스토리 완성 한도·이프', () => {
-  test('게스트 완성 요청이 402(체험 한도)면 추가 정보 단계로 복귀하고 입력을 유지한다 (STORY-LIMIT-05)', async ({
+  // 완성 제출 뒤 돌아오는 제작 탭의 온보딩 게이트를 건너뛴다.
+  test.beforeEach(async ({ page }) => {
+    await skipOnboarding(page);
+  });
+
+  test('게스트 완성 요청이 402(체험 한도)면 제작 탭에서 토스트로 알리고 초안 카드로 되돌아가 입력을 유지한다 (STORY-LIMIT-05)', async ({
     page,
   }) => {
     await mockTags(page);
@@ -243,27 +261,23 @@ test.describe('스토리 완성 한도·이프', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
-    const dialog = page.getByRole('dialog');
-
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByText(GUEST_LIMIT_SHEET_COPY.title)).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(
-      dialog.getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
 
-    // 바텀 시트가 배경을 aria-hidden 처리하므로, 바깥 터치로 닫은 뒤에
-    // 인라인 문구와 입력 유지를 확인한다.
-    await page.mouse.click(10, 10);
-    await expect(dialog).toBeHidden();
-
-    await expect(
-      page.getByText('게스트 체험 횟수를 모두 사용했어요', { exact: true }),
-    ).toBeVisible();
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
     await expect(recommendation).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('회원 완성 요청이 402(이프 부족)면 현재 화면에서 토스트만 띄우고 입력을 유지한다 (STORY-LIMIT-06)', async ({
+  test('회원 완성 요청이 402(이프 부족)면 제작 탭에서 토스트만 띄우고 초안 카드로 되돌아가 입력을 유지한다 (STORY-LIMIT-06)', async ({
     page,
   }) => {
     await mockTags(page);
@@ -289,28 +303,18 @@ test.describe('스토리 완성 한도·이프', () => {
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
-  });
-});
-
-test.describe('게스트 카운터 시드', () => {
-  test('저장된 스토리 ID가 있으면 카운터 없이도 스토리 생성 한도로 판정한다 (STORY-LIMIT-09)', async ({
-    page,
-  }) => {
-    // guest-usage 카운터를 심지 않아도 저장된 스토리 ID 수가 storyCreate 시드로 작동한다.
-    await mockTags(page);
-    await seedStoryIds(page, ['s1']);
-
-    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
-
-    await expect(
-      page
-        .getByRole('dialog')
-        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
-    ).toBeVisible();
   });
 });

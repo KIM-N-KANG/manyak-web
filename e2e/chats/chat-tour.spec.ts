@@ -1,9 +1,12 @@
 import { type Page } from '@playwright/test';
 
+import { getChatTourSteps } from '@/features/chats/room/components/tour/tour-steps';
+
 import { expect, skipChatTour, test } from '../fixtures/test';
 
 // 채팅 화면 안내 투어(KNK-694): 턴 0개 첫 진입 시 자동 노출, 헤더 메뉴로 재열람.
 const CHAT_DETAIL = '**/api/v1/chats/c1';
+const SETTINGS_STEP_TITLE = getChatTourSteps('block')[1].title;
 
 // 기본 모드가 블럭 입력이므로, 일반 모드 검증은 저장된 모드를 미리 심는다.
 const setPlainInputMode = async (page: Page) => {
@@ -43,7 +46,7 @@ test.describe('채팅 화면 안내 투어', () => {
     await expect(tour.getByText('상황 · 대사 추가')).toBeVisible();
 
     await tour.getByRole('button', { name: '다음' }).click();
-    await expect(tour.getByText('입력 설정')).toBeVisible();
+    await expect(tour.getByText(SETTINGS_STEP_TITLE)).toBeVisible();
 
     await tour.getByRole('button', { name: '다음' }).click();
     await expect(tour.getByText('랜덤 전송')).toBeVisible();
@@ -65,7 +68,7 @@ test.describe('채팅 화면 안내 투어', () => {
     await expect(tour.getByText('상황 · 대사 추가')).toBeHidden();
 
     await tour.getByRole('button', { name: '다음' }).click();
-    await expect(tour.getByText('입력 설정')).toBeVisible();
+    await expect(tour.getByText(SETTINGS_STEP_TITLE)).toBeVisible();
   });
 
   test('넓은 화면에서도 안내 카드가 앱 프레임을 벗어나지 않는다', async ({

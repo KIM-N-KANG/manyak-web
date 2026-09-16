@@ -38,6 +38,10 @@ export const CHARACTER_BASIC_INFO_LABEL = '기본 정보';
 
 export const CHARACTER_BASIC_INFO_DESCRIPTION = '비워두면 랜덤으로 설정해요';
 
+/** 주변 인물을 모두 지운 상태에서 "인물 추가" 위에 두는 안내 */
+export const SUPPORTING_CHARACTER_EMPTY_DESCRIPTION =
+  '주변 인물이 랜덤으로 생성돼요';
+
 export const CHARACTER_FEATURE_LABEL = `특징 (최대 ${CHARACTER_FEATURE_MAX_COUNT}개)`;
 
 /** 특징이 선택 항목인 인물(주변 인물)에만 붙이는 설명 */
@@ -196,15 +200,15 @@ export const buildStoryCompletionCreditCostLabel = (amount: string) =>
   `${amount} 이프`;
 
 export const STORYLINE_GENERATING_LOADING_PHRASES = [
-  '선택한 키워드 살펴보는 중...',
-  '이야기의 뼈대 잡는 중...',
-  '장면 순서 엮는 중...',
+  '선택한 키워드 살펴보는 중',
+  '이야기의 뼈대 잡는 중',
+  '장면 순서 엮는 중',
 ];
 
 export const STORY_COMPLETION_LOADING_PHRASES = [
-  '입력한 정보 정리하는 중...',
-  '이야기를 문장으로 풀어내는 중...',
-  '표현을 자연스럽게 다듬는 중...',
+  '입력한 정보 정리하는 중',
+  '이야기를 문장으로 풀어내는 중',
+  '표현을 자연스럽게 다듬는 중',
 ];
 
 export const STORYLINE_GENERATING_LOADING_HINTS = [

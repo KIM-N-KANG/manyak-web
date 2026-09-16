@@ -11,7 +11,7 @@
  */
 export interface PushTokenDeleteRequest {
   /**
-   * 지울 등록 토큰. 요청자 소유가 아니면 아무 일도 하지 않는다(멱등).
+   * 지울 안드로이드 또는 웹 등록 토큰. platform은 필요하지 않다. 요청자 소유가 아니면 아무 일도 하지 않는다(멱등).
    * @minLength 0
    * @maxLength 512
    */

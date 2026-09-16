@@ -3,7 +3,7 @@
 import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
 
-import { create as createLoginHandoff } from '@/api/generated/endpoints/auth/auth';
+import { create1 as createLoginHandoff } from '@/api/generated/endpoints/auth/auth';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {

@@ -472,6 +472,72 @@ export function markPendingStoryCreated(
 }
 
 /**
+ * 스토리라인 생성 결과를 스토리라인 선택 단계의 편집 초안 레코드로 만든다.
+ * 원 응답·재진입 복구·제작 탭 폴링이 같은 형태로 승격하도록 한 곳에서 조립한다.
+ *
+ * @param requestId 생성 요청 ID
+ * @param generationRequest 원 생성 요청
+ * @param generationResult 생성된 스토리라인 결과
+ * @returns 스토리라인 선택 단계의 STORY_DRAFT 레코드
+ */
+export function buildStorylineDraftRecord(
+  requestId: string,
+  generationRequest: GenerateSimpleStorylinesRequest,
+  generationResult: GenerateSimpleStorylinesResponse,
+): StoryDraftRecord {
+  return {
+    stage: 'STORY_DRAFT',
+    requestId,
+    step: 'storyline-select',
+    generationRequest,
+    generationResult,
+    activeStorylineIndex: 0,
+    selectedStoryline: null,
+    additionalInfos: [],
+    selectedRecommendations: [],
+    createdStoryId: null,
+    completionRequest: null,
+  };
+}
+
+/**
+ * 완성 요청 레코드를 추가 정보 단계의 편집 초안으로 강등한다.
+ * 퍼널을 떠난 뒤 서버가 실패를 확정하면 완성 중 카드를 유지할 수 없으므로,
+ * 같은 입력으로 다시 완성할 수 있게 컨텍스트를 STORY_DRAFT로 되돌린다.
+ *
+ * @param requestId 강등할 완성 요청 ID
+ * @returns 같은 완성 레코드를 초안으로 바꿨으면 true
+ */
+export function demotePendingCompletionToDraft(requestId: string): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const current = loadPendingCreationRequest();
+
+  if (
+    current?.stage !== 'STORY_COMPLETION' ||
+    current.requestId !== requestId
+  ) {
+    return false;
+  }
+
+  return writePendingCreationRequest({
+    stage: 'STORY_DRAFT',
+    requestId: current.requestId,
+    step: 'additional-info',
+    generationRequest: current.generationRequest,
+    generationResult: current.generationResult,
+    activeStorylineIndex: current.activeStorylineIndex ?? 0,
+    selectedStoryline: current.selectedStoryline,
+    additionalInfos: current.additionalInfos ?? [],
+    selectedRecommendations: current.selectedRecommendations ?? [],
+    createdStoryId: null,
+    completionRequest: current.completionRequest,
+  });
+}
+
+/**
  * 지정한 requestId의 복구 레코드를 제거하고 제거 여부를 반환한다.
  * 원 응답과 복구 조회가 경합할 때 true를 받은 쪽만 성공 부수효과를 수행해
  * 채팅 중복 생성·카운터 이중 증가를 막는다(제거 선점 가드).

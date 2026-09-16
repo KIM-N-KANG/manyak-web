@@ -1,5 +1,6 @@
 export const TOAST_MESSAGE = {
   STORY_COMPLETED: '스토리가 완성되었어요',
+  STORY_COMPLETE_FAILED: '스토리를 완성하지 못했어요',
   STORY_DELETED: '스토리가 삭제되었어요',
   CHAT_DELETED: '채팅이 삭제되었어요',
   STORY_DELETE_FAILED: '스토리 삭제에 실패했어요',
@@ -29,6 +30,7 @@ export const TOAST_MESSAGE = {
     `출석 체크 보상으로 ${amount} 이프를 받았어요`,
   ATTENDANCE_ALREADY: '오늘은 이미 출석 체크했어요',
   ATTENDANCE_FAILED: '출석 체크에 실패했어요',
+  CREDIT_ORDER_FAILED: '결제를 시작하지 못했어요',
   INVITE_CODE_COPIED: '초대 코드를 복사했어요',
   INVITE_CODE_COPY_FAILED: '초대 코드 복사에 실패했어요',
   INVITE_ONBOARDING_SAVE_FAILED: '창을 닫지 못했어요',

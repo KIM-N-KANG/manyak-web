@@ -47,7 +47,7 @@ export function InviteOnboardingCodeForm({
 
   return (
     <form
-      className="flex flex-col gap-8 px-4 pt-8 pb-4"
+      className="flex min-h-0 flex-col gap-8 overflow-y-auto overscroll-contain px-4 pt-8 pb-4"
       aria-busy={isBusy}
       onSubmit={handleSubmit}>
       <FieldGroup>
@@ -91,8 +91,8 @@ export function InviteOnboardingCodeForm({
         <Button
           type="button"
           variant="ghost"
-          size="xs"
-          className="w-fit self-center text-foreground-secondary"
+          size="lg"
+          className="w-full text-foreground-secondary"
           disabled={isBusy}
           onClick={onSkip}>
           닫기

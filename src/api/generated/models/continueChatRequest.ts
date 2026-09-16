@@ -33,4 +33,6 @@ export interface ContinueChatRequest {
    * @nullable
    */
   choiceOrder?: number | null;
+  /** 실시간 이미지 생성 여부. 기본 true */
+  realtimeImage?: boolean;
 }

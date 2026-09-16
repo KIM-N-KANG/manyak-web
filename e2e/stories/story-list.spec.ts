@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
-import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+// import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
 import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
@@ -93,21 +93,25 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
-    await expect(
-      page.getByText(`${STORY_LIKE_COPY.count} 1,234`, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(`${STORY_LIKE_COPY.count} 0`, { exact: true }),
-    ).toBeVisible();
+    // KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
+    // await expect(
+    //   page.getByText(`${STORY_LIKE_COPY.count} 1,234`, { exact: true }),
+    // ).toBeVisible();
+    // await expect(
+    //   page.getByText(`${STORY_LIKE_COPY.count} 0`, { exact: true }),
+    // ).toBeVisible();
     await page
       .getByRole('button', { name: '스토리 옵션 더보기' })
       .first()
       .click();
     await expect(
-      page
-        .getByRole('dialog')
-        .getByText(`${STORY_LIKE_COPY.count} 1,234`, { exact: true }),
+      page.getByRole('dialog').getByText('용의 계곡', { exact: true }),
     ).toBeVisible();
+    // await expect(
+    //   page
+    //     .getByRole('dialog')
+    //     .getByText(`${STORY_LIKE_COPY.count} 1,234`, { exact: true }),
+    // ).toBeVisible();
   });
 
   test('오리지널과 내가 만든 스토리를 홈·제작 화면에 나눠 보여준다 (KNK-988)', async ({
@@ -173,7 +177,7 @@ test.describe('홈·제작 스토리 목록', () => {
     const createdStoryCover = createdStoryCard.locator(
       '[data-slot="aspect-ratio"]',
     );
-    // 표지·본문 간격은 옵션 다이얼로그 축소판과 공유하는 본체 컨테이너가 가진다(KNK-1186).
+    // 표지·본문 간격은 본체 컨테이너가 가진다(KNK-1186).
     const createdStoryBody = createdStoryCover.locator('..');
     const createdStoryTitle = createdStoryCard.getByText('용의 계곡', {
       exact: true,
@@ -499,18 +503,24 @@ test.describe('홈·제작 스토리 목록', () => {
     await optionsButton.click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
-    // 카드 옵션 다이얼로그는 상단에 그 카드의 축소판을 보여준 뒤 같은 창에서 확인으로 바뀐다.
-    const dialog = page.getByRole('dialog');
+    // 카드 옵션 시트는 머리글에 카드 종류와 제목을 보여주고, 삭제는 시트를 닫은 뒤 확인 다이얼로그로 확정한다.
+    const dialog = page.getByRole('dialog', { name: '용의 계곡' });
 
-    await expect(dialog.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(
+      dialog.getByText('내가 만든 스토리', { exact: true }),
+    ).toBeVisible();
     await dialog.getByRole('menuitem', { name: '삭제하기' }).click();
-    await expect(dialog.getByText('스토리를 삭제할까요?')).toBeVisible();
-    await dialog.getByRole('button', { name: '삭제하기' }).click();
+
+    const confirmDialog = page.getByRole('alertdialog');
+
+    await expect(confirmDialog.getByText('스토리를 삭제할까요?')).toBeVisible();
+    await confirmDialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    // 옵션 시트 머리글에도 같은 제목이 있으므로 카드(article) 안으로 좁힌다.
     await expect(
-      page.getByText('용의 계곡', { exact: true }),
+      page.getByRole('article').getByText('용의 계곡', { exact: true }),
     ).not.toBeVisible();
   });
 
@@ -562,14 +572,14 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
     await page.getByRole('menuitem', { name: '삭제하기' }).click();
     await page
-      .getByRole('dialog')
+      .getByRole('alertdialog')
       .getByRole('button', { name: '삭제하기' })
       .click();
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
-      page.getByText('회원의 서재', { exact: true }),
+      page.getByRole('article').getByText('회원의 서재', { exact: true }),
     ).not.toBeVisible();
   });
 });

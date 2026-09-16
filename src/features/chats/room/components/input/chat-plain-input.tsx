@@ -9,10 +9,8 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 
-import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
-import { ChatChoicesMenu } from './chat-choices-menu';
-import { ChatInputModeMenu } from './chat-input-mode-menu';
+import { ChatSettingsButton } from './chat-settings-sheet';
 import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 import { SendButtonIcon } from './send-button-icon';
 
@@ -25,11 +23,10 @@ type ChatPlainInputProps = {
   onInsertEmphasis: () => void;
   isStreaming: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  mode: ChatInputMode;
-  onModeChange: (mode: ChatInputMode) => void;
   choicesEnabled: boolean;
-  onChoicesEnabledChange: (enabled: boolean) => void;
-  showCreditCost: boolean;
+  onOpenSettings: () => void;
+  /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
+  realtimeImageEnabled: boolean;
 };
 
 export function ChatPlainInput({
@@ -41,11 +38,9 @@ export function ChatPlainInput({
   onInsertEmphasis,
   isStreaming,
   textareaRef,
-  mode,
-  onModeChange,
   choicesEnabled,
-  onChoicesEnabledChange,
-  showCreditCost,
+  onOpenSettings,
+  realtimeImageEnabled,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
   const canSend =
@@ -95,13 +90,9 @@ export function ChatPlainInput({
               onClick={onInsertEmphasis}>
               상황 추가
             </Button>
-            <ChatChoicesMenu
-              enabled={choicesEnabled}
-              onEnabledChange={onChoicesEnabledChange}
-            />
-            <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
+            <ChatSettingsButton onClick={onOpenSettings} />
             <div className="ml-auto flex items-center gap-2">
-              {showCreditCost ? <ChatTurnCreditCost /> : null}
+              <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
               <Button
                 type="submit"
                 variant="default"

@@ -35,10 +35,10 @@ const ADD_EMPHASIS_STEP: ChatTourStep = {
 const COMMON_STEPS: ChatTourStep[] = [
   {
     id: 'settings',
-    title: '입력 설정',
+    title: '채팅 설정',
     description:
-      '추천 입력을 켜고 끄거나, 블럭 · 일반 입력 모드로 바꿀 수 있어요.',
-    selectors: ['[data-tour="choices-menu"]', '[data-tour="input-mode-menu"]'],
+      '실시간 이미지와 추천 입력을 켜고 끄거나, 블럭 입력 모드를 바꿀 수 있어요.',
+    selectors: ['[data-tour="chat-settings"]'],
   },
   {
     id: 'random-send',

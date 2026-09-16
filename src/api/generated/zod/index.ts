@@ -21,9 +21,12 @@ export const RegisterBody = zod
       .min(registerBodyTokenMin)
       .max(registerBodyTokenMax)
       .describe(
-        '앱이 FCM에서 발급받은 등록 토큰. 같은 값을 다시 보내면 갱신(멱등)이고, 토큰이 바뀌면(onNewToken) 새 값으로 다시 등록한다.',
+        '안드로이드 앱 또는 웹 PWA가 FCM에서 발급받은 등록 토큰. 같은 값을 다시 보내면 갱신(멱등)이고, 토큰이 바뀌면(onNewToken) 새 값으로 다시 등록한다.',
       ),
-    platform: zod.enum(['ANDROID']).optional().describe('기기 플랫폼'),
+    platform: zod
+      .enum(['ANDROID', 'WEB'])
+      .optional()
+      .describe('기기 플랫폼: ANDROID(안드로이드 앱), WEB(웹 PWA)'),
   })
   .describe('디바이스 푸시 토큰 등록 요청(KNK-1131)');
 
@@ -43,7 +46,7 @@ export const UnregisterBody = zod
       .min(unregisterBodyTokenMin)
       .max(unregisterBodyTokenMax)
       .describe(
-        '지울 등록 토큰. 요청자 소유가 아니면 아무 일도 하지 않는다(멱등).',
+        '지울 안드로이드 또는 웹 등록 토큰. platform은 필요하지 않다. 요청자 소유가 아니면 아무 일도 하지 않는다(멱등).',
       ),
   })
   .describe('디바이스 푸시 토큰 삭제 요청(KNK-1131)');
@@ -105,6 +108,21 @@ export const CancelStorylineRatingParams = zod.object({
 export const CancelStorylineRatingResponse = zod.void();
 
 /**
+ * raw body HMAC 검증 후 결제 적립·환불 회수를 처리합니다. 타임스탬프·서명 오류 401, JSON 오류 400, 시크릿 미설정 503.
+ * @summary 그로블 결제 웹훅 수신
+ */
+export const ReceiveHeader = zod.object({
+  'X-Groble-Timestamp': zod.string().optional(),
+  'X-Groble-Signature': zod.string().optional(),
+  'X-Groble-Signature-Previous': zod.string().optional(),
+  'X-Groble-Idempotency-Key': zod.string().optional(),
+});
+
+export const ReceiveBody = zod.string();
+
+export const ReceiveResponse = zod.unknown();
+
+/**
  * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 초대 보상 이프를 적립합니다(스펙 §4-3-7, KNK-567). 적립액과 월 상한은 **운영 중 조정 가능한 정책값**이라 이 문서가 계약이 아닙니다 — 적립액은 응답 amount로, 월 상한은 GET /users/me/invite의 monthlyRewardLimit으로 확인하세요(KNK-1056). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
  * @summary 초대 코드 입력·보상 적립
  */
@@ -121,6 +139,45 @@ export const RedeemInviteCodeBody = zod
   .describe('초대 코드 입력 요청(스펙 §4-3-7, KNK-567)');
 
 export const RedeemInviteCodeResponse = zod.unknown();
+
+/**
+ * 구매 토큰을 검증해 이프를 적립합니다. 같은 토큰은 본인에게만 멱등 응답하며 consume은 앱에서 수행합니다.
+ * @summary Google Play 이프 구매 검증
+ */
+export const purchaseBodyProductIdMin = 0;
+export const purchaseBodyProductIdMax = 32;
+
+export const purchaseBodyPurchaseTokenMin = 0;
+export const purchaseBodyPurchaseTokenMax = 4096;
+
+export const PurchaseBody = zod.object({
+  productId: zod
+    .string()
+    .min(purchaseBodyProductIdMin)
+    .max(purchaseBodyProductIdMax),
+  purchaseToken: zod
+    .string()
+    .min(purchaseBodyPurchaseTokenMin)
+    .max(purchaseBodyPurchaseTokenMax),
+});
+
+export const PurchaseResponse = zod.unknown();
+
+/**
+ * PENDING 주문과 그로블 결제창 URL을 반환합니다. 주문 생성만으로 이프를 적립하지 않습니다.
+ * @summary 웹 이프 충전 주문 생성
+ */
+export const createBodyProductIdMin = 0;
+export const createBodyProductIdMax = 32;
+
+export const CreateBody = zod.object({
+  productId: zod
+    .string()
+    .min(createBodyProductIdMin)
+    .max(createBodyProductIdMax),
+});
+
+export const CreateResponse = zod.void();
 
 /**
  * 출석 보상 이프를 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
@@ -758,6 +815,10 @@ export const StreamChatTurnBody = zod
       .describe(
         '고른 선택지의 순번. DB와 같은 1부터 시작하는 값이며, 채팅 상세 turns[].choices 배열의 인덱스 + 1입니다. 범위 밖 값은 400이 아니라 기록 생략으로 처리합니다.',
       ),
+    realtimeImage: zod
+      .boolean()
+      .optional()
+      .describe('실시간 이미지 생성 여부. 기본 true'),
   })
   .describe('채팅 이어쓰기 요청');
 
@@ -783,6 +844,10 @@ export const RegenerateChatTurnBody = zod
       .describe(
         '재생성할 마지막 턴 ID(공개 채팅 상세의 turns[].id). 서버가 보는 마지막 턴과 다르면 409로 거절합니다. 재생성은 이 마지막 턴의 AI 출력과 선택지만 같은 사용자 입력으로 다시 생성해 교체하며, 이전 출력·선택지는 버전 이력(V37)에 보존됩니다.',
       ),
+    realtimeImage: zod
+      .boolean()
+      .optional()
+      .describe('실시간 이미지 생성 여부. 기본 true'),
   })
   .describe('AI 응답 재생성 요청');
 
@@ -1004,44 +1069,44 @@ export const ConfirmResponse = zod.unknown();
  * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
  * @summary 로그인 핸드오프 생성
  */
-export const CreateHeader = zod.object({
+export const Create1Header = zod.object({
   'X-Manyak-Device-Id': zod.string().optional(),
 });
 
-export const createBodyStoryIdsMin = 0;
-export const createBodyStoryIdsMax = 100;
+export const create1BodyStoryIdsMin = 0;
+export const create1BodyStoryIdsMax = 100;
 
-export const createBodyChatIdsMin = 0;
-export const createBodyChatIdsMax = 100;
+export const create1BodyChatIdsMin = 0;
+export const create1BodyChatIdsMax = 100;
 
-export const createBodyCallbackPathMin = 0;
-export const createBodyCallbackPathMax = 512;
+export const create1BodyCallbackPathMin = 0;
+export const create1BodyCallbackPathMax = 512;
 
-export const createBodyCallbackPathRegExp = new RegExp(
+export const create1BodyCallbackPathRegExp = new RegExp(
   '^/(?![/\\\\])[^\\x00-\\x1F]*$',
 );
 
-export const CreateBody = zod
+export const Create1Body = zod
   .object({
     storyIds: zod
       .array(zod.string())
-      .min(createBodyStoryIdsMin)
-      .max(createBodyStoryIdsMax)
+      .min(create1BodyStoryIdsMin)
+      .max(create1BodyStoryIdsMax)
       .optional()
       .describe(
         '이관 대상 스토리 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용',
       ),
     chatIds: zod
       .array(zod.string())
-      .min(createBodyChatIdsMin)
-      .max(createBodyChatIdsMax)
+      .min(create1BodyChatIdsMin)
+      .max(create1BodyChatIdsMax)
       .optional()
       .describe('이관 대상 채팅 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용'),
     callbackPath: zod
       .string()
-      .min(createBodyCallbackPathMin)
-      .max(createBodyCallbackPathMax)
-      .regex(createBodyCallbackPathRegExp)
+      .min(create1BodyCallbackPathMin)
+      .max(create1BodyCallbackPathMax)
+      .regex(create1BodyCallbackPathRegExp)
       .describe('로그인 후 복귀할 앱 내 상대 경로'),
     sourceApp: zod
       .enum(['kakaotalk', 'instagram', 'threads'])
@@ -1050,7 +1115,7 @@ export const CreateBody = zod
   })
   .describe('로그인 핸드오프 생성 요청');
 
-export const CreateResponse = zod.void();
+export const Create1Response = zod.void();
 
 /**
  * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
@@ -1059,7 +1124,7 @@ export const CreateResponse = zod.void();
 export const WithdrawResponse = zod.void();
 
 /**
- * 닉네임과 프로필 이미지를 바꿉니다(KNK-1147). **보낸 필드만 반영**하며 둘 다 없으면 400입니다. 닉네임은 앞뒤 공백을 지운 뒤 2~20자이고 한글·영문·숫자·공백만 쓸 수 있습니다(연속 공백·자모 단독·특수문자·이모지는 400). 유일성은 대소문자와 공백을 무시한 정규화 기준이라 `Story Teller`와 `storyteller`는 같은 닉네임으로 보고 409입니다 — 다만 자기 닉네임의 대소문자·공백만 바꾸는 것은 허용합니다. 프로필 이미지는 프리셋 선택만 지원하며(업로드 없음) 닉네임 변경과 독립입니다. 응답은 `GET /auth/me`와 같은 스키마입니다.
+ * 닉네임과 프로필 이미지를 바꿉니다(KNK-1147). **보낸 필드만 반영**하며 둘 다 없으면 400입니다. 닉네임은 입력값 그대로 2~20자이고 한글·영문·숫자만 쓸 수 있습니다(공백·자모 단독·특수문자·이모지는 400). 유일성은 대소문자와 공백을 무시한 정규화 기준이라 `StoryTeller`와 `storyteller`는 같은 닉네임으로 보고 409입니다. 다만 자기 닉네임의 대소문자만 바꾸는 것은 허용합니다. 프로필 이미지는 프리셋 선택만 지원하며(업로드 없음) 닉네임 변경과 독립입니다. 응답은 `GET /auth/me`와 같은 스키마입니다.
  * @summary 프로필 수정
  */
 export const UpdateProfileBody = zod
@@ -1068,7 +1133,7 @@ export const UpdateProfileBody = zod
       .string()
       .nullish()
       .describe(
-        '새 닉네임. 앞뒤 공백을 지운 뒤 2~20자이며 한글·영문·숫자·공백만 쓸 수 있다. 대소문자·공백만 다른 닉네임은 이미 쓰는 것으로 본다(409).',
+        '새 닉네임. 입력값 그대로 2~20자이며 한글·영문·숫자만 쓸 수 있다. 공백은 거부한다. 대소문자만 다른 닉네임은 이미 쓰는 것으로 본다(409).',
       ),
     profileImagePreset: zod
       .string()
@@ -1285,6 +1350,16 @@ export const UpdateStoryBody = zod
 export const UpdateStoryResponse = zod.unknown();
 
 /**
+ * 인증 선택. 게스트는 X-Manyak-Device-Id 필수. 회원 스토리라인 limit은 null(무제한).
+ * @summary 체험 사용량·한도 조회
+ */
+export const GetTrialsHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
+export const GetTrialsResponse = zod.unknown();
+
+/**
  * 요청자가 소유한 스토리 카드를 생성 최신순으로 반환합니다. 소프트 삭제는 제외하며, limit(기본 100, 최대 100)으로 상한을 둡니다.
  * @summary 내 스토리 목록 조회
  */
@@ -1316,11 +1391,11 @@ export const GetMyCreditsResponse = zod.unknown();
  *             요청자의 크레딧 증감 내역을 최신순으로 반환합니다. 인증 필수입니다.
  *
  *             - `type`: 화면 필터 칩과 같은 값(`ALL`·`SPEND`·`EARN`·`EXPIRE`). 환불(REFUND)은 획득으로 분류하고,
- *               구매(PURCHASE)는 구매내역 탭 몫이라 `ALL`에서도 제외합니다.
+ *               구매(PURCHASE)는 EARN, 구매 환불 회수(PURCHASE_REVERSAL)는 EXPIRE로 표시합니다.
  *             - `limit`: 1~100으로 보정합니다(기본 50).
  *             - `cursor`: 이전 응답의 `nextCursor`를 그대로 넘기면 다음 페이지입니다. 다음이 없으면 `nextCursor`는 null입니다.
  *             - `title`은 관련 스토리 제목이며, 보상·소멸 행이거나 스토리가 삭제됐으면 null입니다.
- *             - 소멸 행의 `createdAt`은 회수가 기록된 시각이라 실제 만료일과 다릅니다. 날짜 표시는 `expiresAt`을 쓰세요.
+ *             - 만료(EXPIRE) 행의 `createdAt`은 회수 기록 시각이고 실제 만료일은 `expiresAt`입니다. 구매 환불 회수의 `expiresAt`은 null입니다.
  * @summary 이프 이용내역 조회
  */
 export const getMyCreditTransactionsQueryTypeDefault = `ALL`;
@@ -1333,6 +1408,16 @@ export const GetMyCreditTransactionsQueryParams = zod.object({
 });
 
 export const GetMyCreditTransactionsResponse = zod.unknown();
+
+/**
+ * 결제 복귀 후 완료 여부 확인용입니다. 없는 주문과 타인 주문은 모두 404입니다.
+ * @summary 본인 이프 충전 주문 조회
+ */
+export const GetParams = zod.object({
+  orderId: zod.uuid(),
+});
+
+export const GetResponse = zod.unknown();
 
 /**
  * 요청자가 소유한 채팅 카드를 최근 활동순으로 반환합니다. 소프트 삭제는 제외하며, limit(기본 100, 최대 100)으로 상한을 둡니다.
@@ -1404,6 +1489,20 @@ export const GetCreationRequestHeader = zod.object({
 export const GetCreationRequestResponse = zod.unknown();
 
 /**
+ * 검색어는 trim 후 2~100자이며 관련도순으로 반환합니다. 다음 페이지는 같은 q와 nextCursor를 사용합니다.
+ * @summary 공개 스토리 검색
+ */
+export const searchStoriesQueryLimitDefault = 20;
+
+export const SearchStoriesQueryParams = zod.object({
+  q: zod.string().describe('검색어(trim 후 2~100자)'),
+  limit: zod.number().default(searchStoriesQueryLimitDefault),
+  cursor: zod.string().optional(),
+});
+
+export const SearchStoriesResponse = zod.unknown();
+
+/**
  * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 피드·검색이 나오기 전까지 홈의 오리지널 섹션이 사용하며, 인증은 필요 없습니다. 공식 계정 미설정 환경은 빈 목록입니다.
  * @summary 오리지널 스토리 목록 조회
  */
@@ -1437,6 +1536,12 @@ export const GetChatShareResponse = zod.unknown();
  * @summary 프로필 이미지 프리셋 목록
  */
 export const ListPresetsResponse = zod.unknown();
+
+/**
+ * 인증 없이 설정 순서대로 상품 6종의 총량과 웹·앱 가격을 조회합니다.
+ * @summary 이프 충전 상품 목록
+ */
+export const ProductsResponse = zod.unknown();
 
 /**
  *
