@@ -449,8 +449,11 @@ test.describe('스토리 임시 저장·재개', () => {
       .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.delete })
       .click();
 
+    // 옵션 시트 머리글에도 같은 제목이 있으므로 카드(article) 안으로 좁힌다.
     await expect(
-      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+      page
+        .getByRole('article')
+        .getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeHidden();
     await expect
       .poll(() =>

@@ -518,8 +518,9 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    // 옵션 시트 머리글에도 같은 제목이 있으므로 카드(article) 안으로 좁힌다.
     await expect(
-      page.getByText('용의 계곡', { exact: true }),
+      page.getByRole('article').getByText('용의 계곡', { exact: true }),
     ).not.toBeVisible();
   });
 
@@ -578,7 +579,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('스토리가 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
-      page.getByText('회원의 서재', { exact: true }),
+      page.getByRole('article').getByText('회원의 서재', { exact: true }),
     ).not.toBeVisible();
   });
 });

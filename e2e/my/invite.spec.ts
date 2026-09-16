@@ -543,8 +543,8 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
 
     const closeButton = dialog.getByRole('button', { name: '닫기' });
 
-    await expect(closeButton).toHaveCSS('height', '24px');
-    await expect(closeButton).toHaveCSS('align-self', 'center');
+    // 닫기는 ghost lg 전체 폭이다(KNK-1306).
+    await expect(closeButton).toHaveCSS('height', '48px');
     await expect(closeButton.locator('..')).toHaveCSS('row-gap', '8px');
 
     await expect(
@@ -679,11 +679,7 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
     await expect(page.getByRole('button', { name: '닫기' })).toBeVisible();
     await expect(page.getByRole('button', { name: '닫기' })).toHaveCSS(
       'height',
-      '24px',
-    );
-    await expect(page.getByRole('button', { name: '닫기' })).toHaveCSS(
-      'align-self',
-      'center',
+      '48px',
     );
 
     await expect(page.getByText('창을 닫지 못했어요')).toHaveCount(0);
