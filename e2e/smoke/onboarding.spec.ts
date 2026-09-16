@@ -145,6 +145,18 @@ test.describe('온보딩', () => {
     test(`저장한 ${theme} 테마에 맞는 온보딩 이미지가 순서대로 표시된다`, async ({
       page,
     }) => {
+      // 테마·원본 자산 검증을 CI의 이미지 최적화 대기와 분리한다.
+      // 최적화된 화면은 별도의 비주얼 회귀 검사에서 검증한다.
+      await page.route('**/_next/image**', async (route) => {
+        const url = new URL(route.request().url());
+        const source = url.searchParams.get('url');
+
+        if (source?.startsWith('/onboarding/')) {
+          await route.continue({ url: new URL(source, url.origin).href });
+        } else {
+          await route.continue();
+        }
+      });
       await page.emulateMedia({
         colorScheme: theme === 'light' ? 'dark' : 'light',
       });
