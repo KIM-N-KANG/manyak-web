@@ -4,14 +4,20 @@ import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
   buildAttendanceTitleLines,
+  buildCreditBonusLabel,
+  buildCreditProductLabel,
   CREDIT_CHARGE_COPY,
   CREDIT_HISTORY_COPY,
+  CREDIT_PURCHASE_COPY,
+  formatKrwPrice,
 } from '@/features/my/credits/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
+  CREDIT_PRODUCTS_FIXTURE,
   expect,
   mockCreditPolicies,
+  mockCreditProducts,
   mockMemberSession,
   skipOnboarding,
   test,
@@ -20,6 +26,10 @@ import {
 const ME_API = '**/api/v1/auth/me';
 const TRANSACTIONS_API = '**/api/v1/users/me/credits/transactions*';
 const ATTENDANCE_API = '**/api/v1/users/me/credits/attendance';
+const PRODUCTS_API = '**/api/v1/credits/products';
+const ORDERS_API = '**/api/v1/users/me/credits/orders';
+/** 그로블 결제창을 대신하는 외부 주소. 이동만 확인하면 되므로 빈 문서를 응답한다. */
+const PAYMENT_URL = 'https://pay.example.test/checkout?ref=order-1';
 
 type Transaction = {
   type: 'EARN' | 'SPEND' | 'EXPIRE';
@@ -110,9 +120,16 @@ async function prepareMember(
   await skipOnboarding(page);
   await mockMemberSession(page);
   await mockMe(page, options);
+  await mockCreditProducts(page);
 }
 
-/** 진입 직후에는 무료 충전 탭이라, 내역 케이스는 내역 탭으로 옮겨 놓고 검증한다. */
+/** 진입 직후에는 구매 탭이라, 무료 충전·내역 케이스는 해당 탭으로 옮겨 놓고 검증한다. */
+async function openFreeChargeTab(page: Page): Promise<void> {
+  await page
+    .getByRole('tab', { name: CREDIT_CHARGE_COPY.freeChargeTab })
+    .click();
+}
+
 async function openHistoryTab(page: Page): Promise<void> {
   await page.getByRole('tab', { name: CREDIT_CHARGE_COPY.historyTab }).click();
 }
@@ -145,10 +162,132 @@ test.describe('이프 충전 (/my/credits)', () => {
     await expect(
       page.getByRole('banner').getByText(CREDIT_CHARGE_COPY.title),
     ).toBeVisible();
-    // 진입 기본 탭은 무료 충전이다.
+    // 진입 기본 탭은 구매다.
     await expect(
-      page.getByRole('button', { name: CREDIT_CHARGE_COPY.attendanceButton }),
+      page.getByRole('tab', { name: CREDIT_CHARGE_COPY.purchaseTab }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(
+      page.getByRole('button', {
+        name: formatKrwPrice(CREDIT_PRODUCTS_FIXTURE[0].webPriceKrw),
+      }),
     ).toBeVisible();
+  });
+
+  test('구매 탭에 상품 목록과 웹 가격을 표시한다', async ({ page }) => {
+    await prepareMember(page);
+    await page.goto('/my/credits');
+
+    const [plain, withBonus] = CREDIT_PRODUCTS_FIXTURE;
+    const rows = page.getByRole('listitem');
+
+    await expect(rows).toHaveCount(CREDIT_PRODUCTS_FIXTURE.length);
+    await expect(
+      rows.nth(0).getByText(buildCreditProductLabel(plain.baseCredits)),
+    ).toBeVisible();
+    await expect(
+      rows.nth(0).getByRole('button', {
+        name: formatKrwPrice(plain.webPriceKrw),
+      }),
+    ).toBeVisible();
+    // 보너스가 없는 상품은 보조 문구를 그리지 않는다.
+    await expect(rows.nth(0).getByText(/^\+/)).toHaveCount(0);
+    await expect(
+      rows.nth(1).getByText(buildCreditProductLabel(withBonus.baseCredits)),
+    ).toBeVisible();
+    await expect(
+      rows.nth(1).getByText(buildCreditBonusLabel(withBonus.bonusCredits)),
+    ).toBeVisible();
+    // 앱 가격은 웹에 노출하지 않는다.
+    await expect(page.getByText(formatKrwPrice(plain.appPriceKrw))).toHaveCount(
+      0,
+    );
+    await expect(page.getByText(CREDIT_PURCHASE_COPY.note)).toBeVisible();
+  });
+
+  test('상품을 고르면 주문을 만들고 결제창으로 이동한다', async ({ page }) => {
+    await prepareMember(page);
+
+    const orderBodies: unknown[] = [];
+
+    await page.route(ORDERS_API, (route) => {
+      orderBodies.push(route.request().postDataJSON());
+
+      return route.fulfill({
+        status: 201,
+        json: { orderId: 'order-1', paymentUrl: PAYMENT_URL },
+      });
+    });
+    await page.route(PAYMENT_URL, (route) =>
+      route.fulfill({ contentType: 'text/html', body: '<title>pay</title>' }),
+    );
+
+    await page.goto('/my/credits');
+
+    const [, withBonus] = CREDIT_PRODUCTS_FIXTURE;
+
+    await page
+      .getByRole('button', { name: formatKrwPrice(withBonus.webPriceKrw) })
+      .click();
+
+    await expect(page).toHaveURL(PAYMENT_URL);
+    expect(orderBodies).toEqual([{ productId: withBonus.productId }]);
+  });
+
+  test('주문 생성이 실패하면 안내 토스트를 띄우고 다시 누를 수 있다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+    await page.route(ORDERS_API, (route) =>
+      route.fulfill({ status: 503, json: { code: 'PAYMENT_UNAVAILABLE' } }),
+    );
+
+    await page.goto('/my/credits');
+
+    const [plain] = CREDIT_PRODUCTS_FIXTURE;
+    const button = page.getByRole('button', {
+      name: formatKrwPrice(plain.webPriceKrw),
+    });
+
+    await button.click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.CREDIT_ORDER_FAILED),
+    ).toBeVisible();
+    await expect(button).toBeEnabled();
+    await expect(page).toHaveURL(/\/my\/credits$/);
+  });
+
+  test('상품 조회 실패는 목록 자리에서 다시 시도할 수 있다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+
+    let requestCount = 0;
+
+    await page.route(PRODUCTS_API, (route) => {
+      requestCount += 1;
+
+      if (requestCount === 1) {
+        return route.fulfill({ status: 500, json: { code: 'INTERNAL_ERROR' } });
+      }
+
+      return route.fulfill({ json: { items: CREDIT_PRODUCTS_FIXTURE } });
+    });
+
+    await page.goto('/my/credits');
+
+    await expect(page.getByText(CREDIT_PURCHASE_COPY.loadFailed)).toBeVisible();
+
+    await page
+      .getByRole('button', { name: CREDIT_PURCHASE_COPY.retry })
+      .click();
+
+    await expect(
+      page.getByRole('button', {
+        name: formatKrwPrice(CREDIT_PRODUCTS_FIXTURE[0].webPriceKrw),
+      }),
+    ).toBeVisible();
+    expect(requestCount).toBe(2);
   });
 
   test('다시 진입하면 첫 페이지부터 새로 조회한다', async ({ page }) => {
@@ -304,6 +443,7 @@ test.describe('이프 충전 (/my/credits)', () => {
     );
 
     await page.goto('/my/credits');
+    await openFreeChargeTab(page);
 
     await page
       .getByRole('button', { name: CREDIT_CHARGE_COPY.attendanceButton })
@@ -331,6 +471,7 @@ test.describe('이프 충전 (/my/credits)', () => {
     });
 
     await page.goto('/my/credits');
+    await openFreeChargeTab(page);
 
     const [, rewardLine] = buildAttendanceTitleLines(formatCreditAmount(350));
 
@@ -346,6 +487,7 @@ test.describe('이프 충전 (/my/credits)', () => {
     );
 
     await page.goto('/my/credits');
+    await openFreeChargeTab(page);
 
     const [, rewardLine] = buildAttendanceTitleLines(
       formatCreditAmount(undefined),
@@ -359,6 +501,7 @@ test.describe('이프 충전 (/my/credits)', () => {
   test('이미 출석한 날에는 출석 버튼이 비활성이다', async ({ page }) => {
     await prepareMember(page, { attendedToday: true });
     await page.goto('/my/credits');
+    await openFreeChargeTab(page);
 
     await expect(
       page.getByRole('button', {
@@ -370,6 +513,7 @@ test.describe('이프 충전 (/my/credits)', () => {
   test('무료 충전 탭의 친구 초대로 이동한다', async ({ page }) => {
     await prepareMember(page);
     await page.goto('/my/credits');
+    await openFreeChargeTab(page);
 
     await page.getByRole('link', { name: /친구 초대/ }).click();
 

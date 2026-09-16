@@ -5,6 +5,7 @@ export const CREDIT_CHARGE_COPY = {
   title: '이프 충전',
   entryButton: '충전',
   balanceLabel: '내 이프',
+  purchaseTab: '구매',
   freeChargeTab: '무료 충전',
   historyTab: '내역',
   attendanceButton: '출석 하기',
@@ -24,6 +25,43 @@ export const CREDIT_CHARGE_COPY = {
  */
 export const buildAttendanceTitleLines = (amount: string) =>
   ['매일 출석하고', `매일 ${amount} 이프 받으세요`] as const;
+
+/** 이프 충전의 구매 탭 문구 정본. */
+export const CREDIT_PURCHASE_COPY = {
+  note: '구매한 이프는 적립일로부터 5년 동안 사용할 수 있어요',
+  loading: '충전 상품을 불러오는 중',
+  loadFailed: '충전 상품을 불러오지 못했어요',
+  retry: '다시 시도하기',
+  retrying: '다시 시도 중...',
+  ordering: '결제 준비 중',
+} as const;
+
+/**
+ * 상품 줄의 기본 이프 라벨을 만든다.
+ *
+ * @param baseCredits 보너스를 뺀 기본 이프
+ * @returns `1,000 이프` 형태의 라벨
+ */
+export const buildCreditProductLabel = (baseCredits: number) =>
+  `${baseCredits.toLocaleString('ko-KR')} 이프`;
+
+/**
+ * 보너스가 있는 상품의 보조 문구를 만든다.
+ *
+ * @param bonusCredits 보너스 이프
+ * @returns `+100 이프` 형태의 문구
+ */
+export const buildCreditBonusLabel = (bonusCredits: number) =>
+  `+${bonusCredits.toLocaleString('ko-KR')} 이프`;
+
+/**
+ * 결제 버튼의 원화 가격 라벨을 만든다.
+ *
+ * @param priceKrw 원화 가격
+ * @returns `10,000원` 형태의 라벨
+ */
+export const formatKrwPrice = (priceKrw: number) =>
+  `${priceKrw.toLocaleString('ko-KR')}원`;
 
 /** 이프 충전의 내역 탭 문구 정본. */
 export const CREDIT_HISTORY_COPY = {

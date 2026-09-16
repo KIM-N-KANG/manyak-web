@@ -1,6 +1,9 @@
 import type { Page } from '@playwright/test';
 
-import type { CreditPolicyResponse } from '@/api/generated/models';
+import type {
+  CreditPolicyResponse,
+  CreditProductResponse,
+} from '@/api/generated/models';
 
 /**
  * 모든 백엔드 호출은 /api/[...path] 프록시를 거친다.
@@ -65,6 +68,48 @@ export async function mockCreditPolicies(
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(policy),
+    });
+  });
+}
+
+/** 이프 충전 상품 목록(GET /api/v1/credits/products) 라우트 글롭. */
+const CREDIT_PRODUCTS_ROUTE = '**/api/v1/credits/products';
+
+/** E2E가 응답할 이프 충전 상품. 두 번째 상품만 보너스를 둬 보조 문구 유무를 함께 검증한다. */
+export const CREDIT_PRODUCTS_FIXTURE = [
+  {
+    productId: 'credit_200',
+    baseCredits: 200,
+    bonusCredits: 0,
+    totalCredits: 200,
+    webPriceKrw: 2_000,
+    appPriceKrw: 2_500,
+  },
+  {
+    productId: 'credit_1000',
+    baseCredits: 1_000,
+    bonusCredits: 100,
+    totalCredits: 1_100,
+    webPriceKrw: 10_000,
+    appPriceKrw: 12_000,
+  },
+] as const satisfies readonly Required<CreditProductResponse>[];
+
+/**
+ * 이프 충전 상품 목록 조회를 목킹한다.
+ *
+ * @param page 대상 페이지
+ * @param items 응답할 상품 목록
+ */
+export async function mockCreditProducts(
+  page: Page,
+  items: readonly CreditProductResponse[] = CREDIT_PRODUCTS_FIXTURE,
+): Promise<void> {
+  await page.route(CREDIT_PRODUCTS_ROUTE, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ items }),
     });
   });
 }

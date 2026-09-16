@@ -13,7 +13,9 @@ import { APP_PATH } from '@/constants/app-path';
 import { CREDIT_CHARGE_COPY } from '../constants';
 import { CreditFreeChargeTab } from './credit-free-charge-tab';
 import { CreditHistoryTab } from './credit-history-tab';
+import { CreditPurchaseTab } from './credit-purchase-tab';
 
+const PURCHASE_TAB = 'PURCHASE';
 const FREE_CHARGE_TAB = 'FREE_CHARGE';
 const HISTORY_TAB = 'HISTORY';
 
@@ -30,7 +32,7 @@ const TAB_PANEL_CLASS = 'min-h-0 flex-1 overflow-hidden text-base';
 export function CreditChargeScreen() {
   const router = useRouter();
   const { status } = useSession();
-  const [activeTab, setActiveTab] = useState<string>(FREE_CHARGE_TAB);
+  const [activeTab, setActiveTab] = useState<string>(PURCHASE_TAB);
 
   const isAuthenticated = status === 'authenticated';
 
@@ -69,6 +71,11 @@ export function CreditChargeScreen() {
         className="mt-4 flex min-h-0 flex-1 flex-col gap-0">
         <TabsList variant="line" className="w-full gap-0 border-b p-0">
           <TabsTrigger
+            value={PURCHASE_TAB}
+            className="h-full rounded-none border-0 px-2 py-0 after:-bottom-px!">
+            {CREDIT_CHARGE_COPY.purchaseTab}
+          </TabsTrigger>
+          <TabsTrigger
             value={FREE_CHARGE_TAB}
             className="h-full rounded-none border-0 px-2 py-0 after:-bottom-px!">
             {CREDIT_CHARGE_COPY.freeChargeTab}
@@ -79,6 +86,10 @@ export function CreditChargeScreen() {
             {CREDIT_CHARGE_COPY.historyTab}
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value={PURCHASE_TAB} className={TAB_PANEL_CLASS}>
+          <CreditPurchaseTab />
+        </TabsContent>
 
         <TabsContent value={FREE_CHARGE_TAB} className={TAB_PANEL_CLASS}>
           <CreditFreeChargeTab
