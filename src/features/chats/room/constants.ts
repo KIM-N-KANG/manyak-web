@@ -1,4 +1,3 @@
-import { CREDIT_AMOUNT_PLACEHOLDER } from '@/constants/credit';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import type { ChatInputMode } from './utils/chat-input-config';
@@ -97,22 +96,3 @@ export const CHAT_CHOICES_HINT_SEEN_VALUE = 'true';
  */
 export const buildChatTurnCreditCostLabel = (amount: string) =>
   `${amount} 이프`;
-
-/**
- * 이프 비용 자리에 대신 보이는 무료 체험 잔여 문구를 만든다. 전송 버튼 옆(채팅 턴)과
- * 채팅 설정 시트의 실시간 이미지 배지(이미지)가 같은 문구를 쓴다.
- *
- * @param count 잔여 횟수의 표시 문자열
- * @returns 잔여 체험 횟수 문구
- */
-export const buildTrialRemainingLabel = (count: string) =>
-  `잔여 체험 횟수: ${count}`;
-
-/**
- * 잔여 체험 횟수를 표시 문자열로 바꾼다. 아직 받지 못했으면 이프 금액과 같은 자리표시를 쓴다.
- *
- * @param remaining 잔여 횟수(응답 전이면 undefined)
- * @returns 표시 문자열
- */
-export const formatTrialRemaining = (remaining: number | null | undefined) =>
-  typeof remaining === 'number' ? String(remaining) : CREDIT_AMOUNT_PLACEHOLDER;

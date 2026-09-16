@@ -56,18 +56,3 @@ export function isGuestTrialExhausted(
 ): boolean {
   return status === 'unauthenticated' && getTrialRemaining(trials, kind) === 0;
 }
-
-/**
- * 이프 비용 대신 "잔여 체험 횟수"를 보일지 판정한다. 게스트는 항상 잔여를 보이고,
- * 회원은 체험이 남아 있을 때만 보인 뒤 소진되면 이프 비용으로 돌아간다.
- *
- * @param isMember 회원 여부
- * @param remaining 해당 체험의 잔여 횟수
- * @returns 잔여 체험 횟수를 보이면 true
- */
-export function showsTrialRemaining(
-  isMember: boolean,
-  remaining: number | null | undefined,
-): boolean {
-  return !isMember || (typeof remaining === 'number' && remaining > 0);
-}
