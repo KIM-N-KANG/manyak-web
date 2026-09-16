@@ -25,7 +25,6 @@ type ChatPlainInputProps = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   choicesEnabled: boolean;
   onOpenSettings: () => void;
-  isMember: boolean;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
   realtimeImageEnabled: boolean;
 };
@@ -41,7 +40,6 @@ export function ChatPlainInput({
   textareaRef,
   choicesEnabled,
   onOpenSettings,
-  isMember,
   realtimeImageEnabled,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
@@ -94,10 +92,7 @@ export function ChatPlainInput({
             </Button>
             <ChatSettingsButton onClick={onOpenSettings} />
             <div className="ml-auto flex items-center gap-2">
-              <ChatTurnCreditCost
-                withRealtimeImage={realtimeImageEnabled}
-                isMember={isMember}
-              />
+              <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
               <Button
                 type="submit"
                 variant="default"

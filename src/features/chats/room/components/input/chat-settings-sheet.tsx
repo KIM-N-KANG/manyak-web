@@ -28,10 +28,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { formatCreditAmount } from '@/constants/credit';
-import {
-  getTrialRemaining,
-  showsTrialRemaining,
-} from '@/features/auth/_shared/utils/guest-trial';
+import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
 import { useTrials } from '@/hooks/use-trials';
@@ -39,9 +36,7 @@ import { cn } from '@/lib/utils';
 
 import {
   buildChatTurnCreditCostLabel,
-  buildTrialRemainingLabel,
   CHAT_SETTINGS_COPY,
-  formatTrialRemaining,
 } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { isTrialFree } from '../../utils/chat-turn-cost';
@@ -94,8 +89,8 @@ export function ChatSettingsSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const chatImageCost = useCreditPolicy()?.chatImageCost;
   const imageRemaining = getTrialRemaining(useTrials(), 'chatImage');
-  // 게스트는 이미지 체험이 남아 있으면 정가에 취소선을 긋고 적용가 0을 보인다.
-  const showsImageStrike = !isMember && isTrialFree(imageRemaining);
+  // 이미지 체험이 남아 있으면 정가에 취소선을 긋고 적용가 0을 보인다.
+  const showsImageStrike = isTrialFree(imageRemaining);
 
   return (
     <Drawer open={open && container !== null} onOpenChange={onOpenChange}>
@@ -116,71 +111,58 @@ export function ChatSettingsSheet({
               icon={AiImageIcon}
               copy={CHAT_SETTINGS_COPY.realtimeImage}
               titleAddon={
-                isMember && showsTrialRemaining(isMember, imageRemaining) ? (
+                <>
+                  {/* 팝오버는 시트 안으로 포탈한다. body로 나가면 드로어가 바깥 탭으로 보고 시트를 닫는다. */}
+                  {isMember && (
+                    <Popover>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            aria-label={
+                              CHAT_SETTINGS_COPY.realtimeImage.noticeLabel
+                            }
+                            className="-ml-1.5 text-foreground-secondary"
+                          />
+                        }>
+                        <HugeiconsIcon
+                          icon={InformationCircleIcon}
+                          className="size-4"
+                          aria-hidden="true"
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent
+                        container={sheetRef}
+                        side="bottom"
+                        align="start"
+                        className="w-auto max-w-64 gap-0 border border-border bg-input px-3 py-2 shadow-xs ring-0">
+                        {CHAT_SETTINGS_COPY.realtimeImage.notice}
+                      </PopoverContent>
+                    </Popover>
+                  )}
                   <Badge
                     variant="secondary"
                     className={cn(
-                      'text-foreground-secondary',
-                      imageRemaining === undefined && 'animate-pulse',
+                      'gap-1 text-foreground-secondary',
+                      (chatImageCost === undefined ||
+                        imageRemaining === undefined) &&
+                        'animate-pulse',
                     )}>
-                    {buildTrialRemainingLabel(
-                      formatTrialRemaining(imageRemaining),
+                    <CreditMark className="size-3" />
+                    {showsImageStrike && (
+                      <s>{formatCreditAmount(chatImageCost)}</s>
                     )}
-                  </Badge>
-                ) : (
-                  <>
-                    {/* 팝오버는 시트 안으로 포탈한다. body로 나가면 드로어가 바깥 탭으로 보고 시트를 닫는다. */}
-                    {isMember && (
-                      <Popover>
-                        <PopoverTrigger
-                          render={
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={
-                                CHAT_SETTINGS_COPY.realtimeImage.noticeLabel
-                              }
-                              className="-ml-1.5 text-foreground-secondary"
-                            />
-                          }>
-                          <HugeiconsIcon
-                            icon={InformationCircleIcon}
-                            className="size-4"
-                            aria-hidden="true"
-                          />
-                        </PopoverTrigger>
-                        <PopoverContent
-                          container={sheetRef}
-                          side="bottom"
-                          align="start"
-                          className="w-auto max-w-64 gap-0 border border-border bg-input px-3 py-2 shadow-xs ring-0">
-                          {CHAT_SETTINGS_COPY.realtimeImage.notice}
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        'gap-1 text-foreground-secondary',
-                        (chatImageCost === undefined ||
-                          (!isMember && imageRemaining === undefined)) &&
-                          'animate-pulse',
-                      )}>
-                      <CreditMark className="size-3" />
-                      {showsImageStrike && (
-                        <s>{formatCreditAmount(chatImageCost)}</s>
+                    <span>
+                      {buildChatTurnCreditCostLabel(
+                        formatCreditAmount(
+                          showsImageStrike ? 0 : chatImageCost,
+                        ),
                       )}
-                      <span>
-                        {buildChatTurnCreditCostLabel(
-                          formatCreditAmount(
-                            showsImageStrike ? 0 : chatImageCost,
-                          ),
-                        )}
-                      </span>
-                    </Badge>
-                  </>
-                )
+                    </span>
+                  </Badge>
+                </>
               }
               checked={realtimeImageEnabled}
               onCheckedChange={onRealtimeImageEnabledChange}

@@ -63,7 +63,6 @@ export function ChatInput({
           isStreaming={isStreaming}
           choicesEnabled={choicesEnabled}
           onOpenSettings={openSettings}
-          isMember={isMember}
           realtimeImageEnabled={realtimeImageEnabled}
         />
         {settingsSheet}
@@ -84,7 +83,6 @@ export function ChatInput({
         textareaRef={composer.textareaRef}
         choicesEnabled={choicesEnabled}
         onOpenSettings={openSettings}
-        isMember={isMember}
         realtimeImageEnabled={realtimeImageEnabled}
       />
       {settingsSheet}
