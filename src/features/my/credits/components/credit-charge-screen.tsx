@@ -14,6 +14,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { CREDIT_CHARGE_COPY } from '../constants';
 import { CreditFreeChargeTab } from './credit-free-charge-tab';
 import { CreditHistoryTab } from './credit-history-tab';
+import { CreditOrderStatusCard } from './credit-order-status-card';
 import { CreditPurchaseTab } from './credit-purchase-tab';
 
 const PURCHASE_TAB = 'PURCHASE';
@@ -66,6 +67,8 @@ export function CreditChargeScreen() {
           </span>
         )}
       </section>
+
+      {isAuthenticated && <CreditOrderStatusCard />}
 
       <Tabs
         value={activeTab}

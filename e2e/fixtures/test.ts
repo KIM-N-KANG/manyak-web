@@ -26,6 +26,7 @@ export {
   seedCampaignCookie,
   seedChatIds,
   seedGuestUsage,
+  seedPendingCreditOrder,
   seedPendingHandoff,
   seedStoryIds,
   skipChatChoicesHint,

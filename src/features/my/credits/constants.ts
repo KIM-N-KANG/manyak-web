@@ -63,6 +63,21 @@ export const buildCreditBonusLabel = (bonusCredits: number) =>
 export const formatKrwPrice = (priceKrw: number) =>
   `${priceKrw.toLocaleString('ko-KR')}원`;
 
+/** 결제창에서 돌아온 뒤 주문 확인 카드의 문구 정본. */
+export const CREDIT_ORDER_COPY = {
+  title: '결제 확인',
+  checking: '결제를 확인하고 있어요',
+  checkingHint: '잠시만 기다려 주세요',
+  completed: (amount: string) => `${amount} 이프가 충전됐어요`,
+  refunded: '환불된 주문이에요',
+  notFound: '확인할 수 없는 주문이에요',
+  timeout: '아직 결제 확인이 안 됐어요',
+  failed: '결제 확인에 실패했어요',
+  retryHint: '결제를 마쳤다면 잠시 후 다시 확인해 주세요',
+  retry: '다시 확인',
+  dismiss: '닫기',
+} as const;
+
 /** 이프 충전의 내역 탭 문구 정본. */
 export const CREDIT_HISTORY_COPY = {
   empty: '아직 이프 내역이 없어요',
