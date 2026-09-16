@@ -127,7 +127,7 @@ export function InviteOnboardingSheet() {
       onOpenChange={handleOpenChange}>
       <DrawerContent
         container={container}
-        className="absolute overflow-y-auto overscroll-contain"
+        className="absolute"
         overlayClassName="absolute">
         <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
           <InviteOnboardingTitle />
@@ -138,7 +138,7 @@ export function InviteOnboardingSheet() {
 
         {hasCloseFailed ? (
           <div
-            className="flex flex-col gap-8 px-4 pt-8 pb-4"
+            className="flex min-h-0 flex-col gap-8 overflow-y-auto overscroll-contain px-4 pt-8 pb-4"
             role="status"
             aria-busy={isCompleting}>
             <p className="rounded-lg bg-muted p-4 text-sm">

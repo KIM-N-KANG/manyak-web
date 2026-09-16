@@ -15,11 +15,9 @@ import {
 import { cn } from '@/lib/utils';
 
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
-import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
-import { ChatChoicesMenu } from './chat-choices-menu';
-import { ChatInputModeMenu } from './chat-input-mode-menu';
+import { ChatSettingsButton } from './chat-settings-sheet';
 import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 import { SendButtonIcon } from './send-button-icon';
 
@@ -33,10 +31,8 @@ type ChatBlockInputProps = {
   hasSuggestions: boolean;
   onSendRandomSuggestion: () => void;
   isStreaming: boolean;
-  mode: ChatInputMode;
-  onModeChange: (mode: ChatInputMode) => void;
   choicesEnabled: boolean;
-  onChoicesEnabledChange: (enabled: boolean) => void;
+  onOpenSettings: () => void;
   showCreditCost: boolean;
 };
 
@@ -50,10 +46,8 @@ export function ChatBlockInput({
   hasSuggestions,
   onSendRandomSuggestion,
   isStreaming,
-  mode,
-  onModeChange,
   choicesEnabled,
-  onChoicesEnabledChange,
+  onOpenSettings,
   showCreditCost,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -165,11 +159,7 @@ export function ChatBlockInput({
           onClick={() => onAddBlock('dialogue')}>
           대사 추가
         </Button>
-        <ChatChoicesMenu
-          enabled={choicesEnabled}
-          onEnabledChange={onChoicesEnabledChange}
-        />
-        <ChatInputModeMenu mode={mode} onModeChange={onModeChange} />
+        <ChatSettingsButton onClick={onOpenSettings} />
         <div className="ml-auto flex items-center gap-2">
           {showCreditCost ? <ChatTurnCreditCost /> : null}
           <Button

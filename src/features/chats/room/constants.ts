@@ -7,39 +7,30 @@ export const CHAT_CHOICES_ENABLED_STORAGE_KEY = 'manyak:chat-choices-enabled';
 
 export const DEFAULT_CHAT_INPUT_MODE: ChatInputMode = 'block';
 
-export const CHAT_INPUT_MODE_OPTIONS: {
-  value: ChatInputMode;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: 'block',
+export const CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY =
+  'manyak:chat-realtime-image-enabled';
+
+/** 채팅 설정 시트의 문구. 그룹 순서와 항목 순서는 화면 순서 그대로다. */
+export const CHAT_SETTINGS_COPY = {
+  trigger: '채팅 설정',
+  title: '채팅 설정',
+  groups: {
+    features: '채팅 기능',
+    inputMode: '입력 모드',
+  },
+  realtimeImage: {
+    label: '실시간 이미지',
+    description: '대화에 따라 인물의 표정과 모습이 달라져요',
+  },
+  choices: {
+    label: 'AI 추천 입력',
+    description: 'AI가 다음 전개를 추천해줘요',
+  },
+  blockInput: {
     label: '블럭 입력',
     description: '상황과 대사를 나눠서 입력해요',
   },
-  {
-    value: 'plain',
-    label: '일반 입력',
-    description: '한 입력창에 자유롭게 입력해요',
-  },
-];
-
-export const CHAT_CHOICES_TOGGLE_OPTIONS: {
-  value: 'on' | 'off';
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: 'on',
-    label: '추천 입력 켬',
-    description: 'AI가 다음 전개를 추천해줘요',
-  },
-  {
-    value: 'off',
-    label: '추천 입력 끔',
-    description: '추천 없이 직접 입력해요',
-  },
-];
+} as const;
 
 export const INPUT_BLOCK_PLACEHOLDERS: Record<InputBlockType, string> = {
   situation: '어떤 상황을 묘사할까요?',

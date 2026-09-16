@@ -1,4 +1,5 @@
 import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+import { CHAT_SETTINGS_COPY } from '@/features/chats/room/constants';
 
 import {
   expect,
@@ -225,16 +226,18 @@ test.describe('채팅 오버레이 비주얼', () => {
     await expect(page).toHaveScreenshot('chat-options-menu.png');
   });
 
-  test('입력 모드 메뉴 (CHAT-BLOCK-07)', async ({ page }) => {
+  test('채팅 설정 시트 (CHAT-BLOCK-07)', async ({ page }) => {
     await page.goto('/chats/c1');
-    await page.getByRole('button', { name: '입력 모드 변경' }).click();
+    await page
+      .getByRole('button', { name: CHAT_SETTINGS_COPY.trigger })
+      .click();
 
-    // 드랍다운 라디오 항목 대표 스냅샷이다.
+    // 스위치 3개가 모두 기본값(켬)인 대표 스냅샷이다.
     await expect(
-      page.getByRole('menuitemradio', { name: /블럭 입력/ }),
+      page.getByRole('switch', { name: CHAT_SETTINGS_COPY.blockInput.label }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('chat-input-mode-menu.png');
+    await expect(page).toHaveScreenshot('chat-settings-sheet.png');
   });
 
   test('삭제 확인 다이얼로그 (CHAT-SET-02)', async ({ page }) => {
