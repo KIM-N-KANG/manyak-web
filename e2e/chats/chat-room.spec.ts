@@ -83,7 +83,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('채팅 스트리밍', () => {
-  test('회원 전송 버튼 왼쪽에 20 이프 비용을 작고 회색으로 표시한다', async ({
+  test('회원 전송 버튼 왼쪽에 턴+실시간 이미지 합산 이프 비용을 작고 회색으로 표시한다', async ({
     page,
   }) => {
     await mockMemberSession(page);
@@ -99,7 +99,10 @@ test.describe('채팅 스트리밍', () => {
 
     const creditCost = page.getByText(
       buildChatTurnCreditCostLabel(
-        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatTurnCost),
+        formatCreditAmount(
+          CREDIT_POLICY_FIXTURE.chatTurnCost +
+            CREDIT_POLICY_FIXTURE.chatImageCost,
+        ),
       ),
       { exact: true },
     );
@@ -113,6 +116,21 @@ test.describe('채팅 스트리밍', () => {
       creditCost.locator('xpath=following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
+
+    // 실시간 이미지를 끄면 툴바 비용은 턴 비용만 남는다.
+    await openChatSettings(page);
+    await page
+      .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
+      .click();
+    await closeChatSettings(page);
+    await expect(
+      page.getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatTurnCost),
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
   });
 
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {

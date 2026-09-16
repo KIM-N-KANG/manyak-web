@@ -26,6 +26,8 @@ type ChatPlainInputProps = {
   choicesEnabled: boolean;
   onOpenSettings: () => void;
   showCreditCost: boolean;
+  /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
+  realtimeImageEnabled: boolean;
 };
 
 export function ChatPlainInput({
@@ -40,6 +42,7 @@ export function ChatPlainInput({
   choicesEnabled,
   onOpenSettings,
   showCreditCost,
+  realtimeImageEnabled,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
   const canSend =
@@ -91,7 +94,9 @@ export function ChatPlainInput({
             </Button>
             <ChatSettingsButton onClick={onOpenSettings} />
             <div className="ml-auto flex items-center gap-2">
-              {showCreditCost ? <ChatTurnCreditCost /> : null}
+              {showCreditCost ? (
+                <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
+              ) : null}
               <Button
                 type="submit"
                 variant="default"

@@ -34,6 +34,8 @@ type ChatBlockInputProps = {
   choicesEnabled: boolean;
   onOpenSettings: () => void;
   showCreditCost: boolean;
+  /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
+  realtimeImageEnabled: boolean;
 };
 
 export function ChatBlockInput({
@@ -49,6 +51,7 @@ export function ChatBlockInput({
   choicesEnabled,
   onOpenSettings,
   showCreditCost,
+  realtimeImageEnabled,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -161,7 +164,9 @@ export function ChatBlockInput({
         </Button>
         <ChatSettingsButton onClick={onOpenSettings} />
         <div className="ml-auto flex items-center gap-2">
-          {showCreditCost ? <ChatTurnCreditCost /> : null}
+          {showCreditCost ? (
+            <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
+          ) : null}
           <Button
             type="button"
             size="icon-sm"

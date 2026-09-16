@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import {
   AiChat02Icon,
   AiImageIcon,
@@ -9,6 +11,7 @@ import {
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 
 import { Switch } from '@/components/motion/switch';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -21,6 +24,7 @@ import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 
 import { CHAT_SETTINGS_COPY } from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
+import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 
 type ChatSettingsButtonProps = {
   onClick: () => void;
@@ -50,6 +54,8 @@ type ChatSettingsSheetProps = {
   onChoicesEnabledChange: (enabled: boolean) => void;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
+  /** 회원이면 실시간 이미지 제목 옆에 턴+이미지 합산 이프 비용을 보인다 */
+  showCreditCost: boolean;
 };
 
 /** 채팅 기능·입력 모드 스위치를 담은 채팅 설정 바텀 시트. */
@@ -62,6 +68,7 @@ export function ChatSettingsSheet({
   onChoicesEnabledChange,
   mode,
   onModeChange,
+  showCreditCost,
 }: ChatSettingsSheetProps) {
   const container = useAppFrameContainer();
 
@@ -92,6 +99,13 @@ export function ChatSettingsSheet({
             <SettingRow
               icon={AiImageIcon}
               copy={CHAT_SETTINGS_COPY.realtimeImage}
+              titleAddon={
+                showCreditCost ? (
+                  <Badge variant="secondary">
+                    <ChatTurnCreditCost withRealtimeImage />
+                  </Badge>
+                ) : null
+              }
               checked={realtimeImageEnabled}
               onCheckedChange={onRealtimeImageEnabledChange}
             />
@@ -124,17 +138,28 @@ export function ChatSettingsSheet({
 type SettingRowProps = {
   icon: IconSvgElement;
   copy: { label: string; description: string };
+  /** 라벨 오른쪽에 붙는 보조 표시(비용 배지 등) */
+  titleAddon?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 };
 
 /** 마이 페이지 메뉴 항목과 같은 배치(아이콘·라벨·설명)에 오른쪽 스위치를 둔 설정 행. */
-function SettingRow({ icon, copy, checked, onCheckedChange }: SettingRowProps) {
+function SettingRow({
+  icon,
+  copy,
+  titleAddon,
+  checked,
+  onCheckedChange,
+}: SettingRowProps) {
   return (
     <div className="flex min-h-12 items-center gap-4 px-4 py-2">
       <HugeiconsIcon icon={icon} className="size-6" aria-hidden="true" />
       <span className="flex flex-1 flex-col text-left text-base">
-        {copy.label}
+        <span className="flex items-center gap-2">
+          {copy.label}
+          {titleAddon}
+        </span>
         <span className="text-xs text-foreground-secondary">
           {copy.description}
         </span>

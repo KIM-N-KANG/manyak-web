@@ -44,6 +44,7 @@ export function ChatInput({
       onChoicesEnabledChange={onChoicesEnabledChange}
       mode={mode}
       onModeChange={onModeChange}
+      showCreditCost={showCreditCost}
     />
   );
 
@@ -63,6 +64,7 @@ export function ChatInput({
           choicesEnabled={choicesEnabled}
           onOpenSettings={openSettings}
           showCreditCost={showCreditCost}
+          realtimeImageEnabled={realtimeImageEnabled}
         />
         {settingsSheet}
       </>
@@ -83,6 +85,7 @@ export function ChatInput({
         choicesEnabled={choicesEnabled}
         onOpenSettings={openSettings}
         showCreditCost={showCreditCost}
+        realtimeImageEnabled={realtimeImageEnabled}
       />
       {settingsSheet}
     </>

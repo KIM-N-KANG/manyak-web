@@ -33,13 +33,24 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
   }
 
   return (
-    // 썸네일 자리가 먼저 살짝 커지며 떠오르고, 문구가 한 박자 늦게 따라 올라온다.
+    // 문구가 먼저 올라오고, 썸네일 자리가 한 박자 늦게 살짝 커지며 떠오른다.
     // 문구는 제작 퍼널 로딩과 같은 순환 표현(4초 전환·4초 쉬머)을 쓴다.
     <div role="status" className="flex flex-col gap-5">
       <m.div
+        initial={reduce ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: EASE_OUT }}>
+        <ReasoningText
+          phrases={[...CHAT_STREAM_LOADING_COPY.scenePhrases]}
+          interval={4000}
+          shimmerDuration={4}
+          aria-label={CHAT_STREAM_LOADING_COPY.sceneLabel}
+        />
+      </m.div>
+      <m.div
         initial={reduce ? false : { opacity: 0, y: 16, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: EASE_OUT }}>
+        transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.15 }}>
         <ImageGeneration
           status="generating"
           label={CHAT_STREAM_LOADING_COPY.sceneLabel}
@@ -48,17 +59,6 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
           showStatus={false}
           resolution=""
           className="overflow-hidden rounded-xl border border-border bg-muted"
-        />
-      </m.div>
-      <m.div
-        initial={reduce ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.15 }}>
-        <ReasoningText
-          phrases={[...CHAT_STREAM_LOADING_COPY.scenePhrases]}
-          interval={4000}
-          shimmerDuration={4}
-          aria-label={CHAT_STREAM_LOADING_COPY.sceneLabel}
         />
       </m.div>
     </div>

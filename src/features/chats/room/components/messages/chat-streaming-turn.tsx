@@ -20,6 +20,11 @@ export function ChatStreamingTurn({
   onCharacterImageZoom,
 }: ChatStreamingTurnProps) {
   const reduce = useReducedMotion();
+  // 실시간 이미지 턴은 본문 첫 조각이 이미지보다 먼저 온다. 이미지 자리를 본문 아래에
+  // 계속 두어 로딩 블록이 빠지며 앵커 아이템이 줄어드는 스크롤 점프를 막는다.
+  const awaitingImage =
+    turn.realtimeImage === true &&
+    !turn.segments.some((segment) => segment.type === 'character-image');
 
   return (
     <div>
@@ -37,12 +42,18 @@ export function ChatStreamingTurn({
                 imageLoading="eager"
                 onCharacterImageZoom={onCharacterImageZoom}
               />
+              {awaitingImage ? (
+                <div className="px-4 pt-5">
+                  <ChatStreamLoading realtimeImage />
+                </div>
+              ) : null}
             </AiMessageBubble>
           </m.div>
         ) : (
           <m.div
             key="loading"
-            className="p-4"
+            // 이미지 자리 로딩은 버블(py-5)과 같은 위·아래 20px, 문구만일 때는 기존 16px.
+            className={turn.realtimeImage ? 'px-4 py-5' : 'p-4'}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
