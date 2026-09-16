@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import {
   Drawer,
   DrawerContent,
+  DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
@@ -106,7 +107,11 @@ export function ChatMenuDrawer({
           <HugeiconsIcon icon={MoreVerticalIcon} aria-hidden="true" />
         </DrawerTrigger>
         <DrawerContent container={container} className="text-base">
-          <DrawerTitle className="sr-only">{CHAT_MENU_COPY.title}</DrawerTitle>
+          <DrawerHeader className="px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
+            <DrawerTitle className="text-xl leading-snug font-bold">
+              {CHAT_MENU_COPY.title}
+            </DrawerTitle>
+          </DrawerHeader>
           <CreditBalanceCard className="m-0 p-4" />
           {/* 항목은 카드 옵션 시트와 같은 버튼이다. 위 여백은 이프 카드의 p-4가 맡는다. */}
           <div className="flex flex-col px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
