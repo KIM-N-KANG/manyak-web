@@ -16,10 +16,9 @@ import {
   type OnboardingScene,
 } from '../constants';
 
-// 원본 스크린샷(1082×2402)을 810px 폭으로 줄인 비율을 유지한 크기.
-// 실제 렌더 폭(카드 82% ≈ 340px, DPR 3 기준 ≈ 1020px)을 웃돌지 않게 810으로 맞춘다.
-const SCENE_WIDTH = 810;
-const SCENE_HEIGHT = 1798;
+// 원본 스크린샷의 비율을 유지한다.
+const SCENE_WIDTH = 1082;
+const SCENE_HEIGHT = 2402;
 
 const SCENE_IMAGE_CLASS = 'w-full rounded-2xl border border-border';
 const SCENE_IMAGE_SIZES = '(max-width: 448px) 82vw, 340px';
@@ -34,14 +33,24 @@ const FIRST_SECTION_DELAY = 0.8;
 
 function SceneCard({ scene }: { scene: OnboardingScene }) {
   return (
-    <Image
-      src={scene.src}
-      alt={scene.alt}
-      width={scene.width ?? SCENE_WIDTH}
-      height={scene.height ?? SCENE_HEIGHT}
-      sizes={SCENE_IMAGE_SIZES}
-      className={SCENE_IMAGE_CLASS}
-    />
+    <>
+      <Image
+        src={scene.src}
+        alt={scene.alt}
+        width={scene.width ?? SCENE_WIDTH}
+        height={scene.height ?? SCENE_HEIGHT}
+        sizes={SCENE_IMAGE_SIZES}
+        className={cn(SCENE_IMAGE_CLASS, 'dark:hidden')}
+      />
+      <Image
+        src={scene.darkSrc}
+        alt={scene.alt}
+        width={scene.width ?? SCENE_WIDTH}
+        height={scene.height ?? SCENE_HEIGHT}
+        sizes={SCENE_IMAGE_SIZES}
+        className={cn(SCENE_IMAGE_CLASS, 'hidden dark:block')}
+      />
+    </>
   );
 }
 
