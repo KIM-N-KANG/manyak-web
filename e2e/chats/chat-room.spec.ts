@@ -117,8 +117,27 @@ test.describe('채팅 스트리밍', () => {
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
 
-    // 실시간 이미지를 끄면 툴바 비용은 턴 비용만 남는다.
+    // 시트 배지는 이미지 비용만 보이고, 안내 버튼은 실패 시 환불을 알린다.
     await openChatSettings(page);
+    await expect(
+      page.getByText(
+        buildChatTurnCreditCostLabel(
+          formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await page
+      .getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.noticeLabel,
+      })
+      .click();
+    await expect(
+      page.getByText(CHAT_SETTINGS_COPY.realtimeImage.notice),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    // 실시간 이미지를 끄면 툴바 비용은 턴 비용만 남는다.
     await page
       .getByRole('switch', { name: CHAT_SETTINGS_COPY.realtimeImage.label })
       .click();

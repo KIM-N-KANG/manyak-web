@@ -1,15 +1,17 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 
 import {
   AiChat02Icon,
   AiImageIcon,
   FormIcon,
+  InformationCircleIcon,
   Settings01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 
+import { CreditMark } from '@/components/common/credit-mark';
 import { Switch } from '@/components/motion/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,11 +22,21 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { formatCreditAmount } from '@/constants/credit';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
+import { useCreditPolicy } from '@/hooks/use-credit-policy';
+import { cn } from '@/lib/utils';
 
-import { CHAT_SETTINGS_COPY } from '../../constants';
+import {
+  buildChatTurnCreditCostLabel,
+  CHAT_SETTINGS_COPY,
+} from '../../constants';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
-import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 
 type ChatSettingsButtonProps = {
   onClick: () => void;
@@ -54,7 +66,7 @@ type ChatSettingsSheetProps = {
   onChoicesEnabledChange: (enabled: boolean) => void;
   mode: ChatInputMode;
   onModeChange: (mode: ChatInputMode) => void;
-  /** 회원이면 실시간 이미지 제목 옆에 턴+이미지 합산 이프 비용을 보인다 */
+  /** 회원이면 실시간 이미지 제목 옆에 이미지 추가 소모 이프와 환불 안내를 보인다 */
   showCreditCost: boolean;
 };
 
@@ -71,6 +83,8 @@ export function ChatSettingsSheet({
   showCreditCost,
 }: ChatSettingsSheetProps) {
   const container = useAppFrameContainer();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const chatImageCost = useCreditPolicy()?.chatImageCost;
 
   return (
     // 채팅 입력창에 포커스가 있는 채로 열리므로 키보드가 닫히며 visualViewport가 바뀐다.
@@ -83,6 +97,7 @@ export function ChatSettingsSheet({
       {/* 스크롤은 본문 래퍼가 맡는다. DrawerContent에 overflow를 주면 vaul이 러버밴드
           틈을 메우려고 아래에 깔아 둔 ::after(높이 200%)까지 스크롤 영역에 잡힌다. */}
       <DrawerContent
+        ref={sheetRef}
         container={container}
         className="absolute"
         overlayClassName="absolute">
@@ -101,9 +116,47 @@ export function ChatSettingsSheet({
               copy={CHAT_SETTINGS_COPY.realtimeImage}
               titleAddon={
                 showCreditCost ? (
-                  <Badge variant="secondary">
-                    <ChatTurnCreditCost withRealtimeImage />
-                  </Badge>
+                  <>
+                    {/* 팝오버는 시트 안으로 포탈한다. body로 나가면 vaul이 바깥 탭으로 보고 시트를 닫는다. */}
+                    <Popover>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            aria-label={
+                              CHAT_SETTINGS_COPY.realtimeImage.noticeLabel
+                            }
+                            className="-ml-1.5 text-foreground-secondary"
+                          />
+                        }>
+                        <HugeiconsIcon
+                          icon={InformationCircleIcon}
+                          className="size-4"
+                          aria-hidden="true"
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent
+                        container={sheetRef}
+                        side="bottom"
+                        align="start"
+                        className="w-auto max-w-64 gap-0 border border-border bg-input px-3 py-2 shadow-xs ring-0">
+                        {CHAT_SETTINGS_COPY.realtimeImage.notice}
+                      </PopoverContent>
+                    </Popover>
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        'gap-1 text-foreground-secondary',
+                        chatImageCost === undefined && 'animate-pulse',
+                      )}>
+                      <CreditMark className="size-3" />
+                      {buildChatTurnCreditCostLabel(
+                        formatCreditAmount(chatImageCost),
+                      )}
+                    </Badge>
+                  </>
                 ) : null
               }
               checked={realtimeImageEnabled}

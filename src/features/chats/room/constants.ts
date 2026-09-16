@@ -37,6 +37,8 @@ export const CHAT_SETTINGS_COPY = {
   realtimeImage: {
     label: '실시간 이미지',
     description: '대화에 따라 인물 한 명의 표정과 모습이 달라져요',
+    noticeLabel: '실시간 이미지 안내',
+    notice: '이미지를 만들지 못한 경우 사용된 이프가 자동으로 취소돼요',
   },
   choices: {
     label: 'AI 추천 입력',
