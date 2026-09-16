@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import { useMe } from '@/api/generated/endpoints/auth/auth';
+import { CreditMark } from '@/components/common/credit-mark';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { APP_PATH } from '@/constants/app-path';
@@ -59,7 +60,8 @@ export function CreditChargeScreen() {
         {balance === undefined ? (
           <Skeleton className="h-8 w-24 self-end bg-foreground/5" />
         ) : (
-          <span className="self-end text-2xl font-bold tabular-nums">
+          <span className="flex items-center gap-1 self-end text-2xl font-bold tabular-nums">
+            <CreditMark className="size-6" />
             {balance.toLocaleString()}
           </span>
         )}

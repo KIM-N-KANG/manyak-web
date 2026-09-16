@@ -1,6 +1,7 @@
 'use client';
 
 import { useProducts } from '@/api/generated/endpoints/credits/credits';
+import { CreditMark } from '@/components/common/credit-mark';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
@@ -75,9 +76,13 @@ export function CreditPurchaseTab() {
                 return (
                   <li key={productId} className={ROW_CLASS}>
                     <span className="flex flex-1 flex-col">
-                      {buildCreditProductLabel(baseCredits)}
+                      <span className="flex items-center gap-1">
+                        <CreditMark />
+                        {buildCreditProductLabel(baseCredits)}
+                      </span>
                       {bonusCredits > 0 && (
-                        <span className="text-sm font-bold text-primary">
+                        // 마크(16px)+간격(4px)만큼 들여 기본 수치의 글자 시작선에 맞춘다.
+                        <span className="pl-5 text-sm font-bold text-primary">
                           {buildCreditBonusLabel(bonusCredits)}
                         </span>
                       )}
