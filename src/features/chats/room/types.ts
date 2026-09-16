@@ -10,4 +10,6 @@ export type StreamingTurn = {
   segments: ChatMessageSegment[];
   /** 전송 시점의 확정 턴 개수. refetch로 턴이 늘어나면 스트리밍 블록을 숨기는 기준(재생성은 미사용) */
   baseTurnCount?: number;
+  /** 전송 시점의 실시간 이미지 설정. 첫 이벤트 전 로딩에 장면 썸네일 자리를 보일지 정한다 */
+  realtimeImage?: boolean;
 };

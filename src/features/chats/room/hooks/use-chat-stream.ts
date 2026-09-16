@@ -61,7 +61,12 @@ export function useChatStream(
     userSource?: ContinueChatRequestUserSource,
     selection?: ChatChoiceSelection,
   ) => {
-    setStreamingTurn({ userInput, segments: [], baseTurnCount: turnCount });
+    setStreamingTurn({
+      userInput,
+      segments: [],
+      baseTurnCount: turnCount,
+      realtimeImage,
+    });
 
     const controller = new AbortController();
 
@@ -171,7 +176,11 @@ export function useChatStream(
     }
 
     setRegeneratingTurnId(turn.id);
-    setStreamingTurn({ userInput: turn.userInput ?? '', segments: [] });
+    setStreamingTurn({
+      userInput: turn.userInput ?? '',
+      segments: [],
+      realtimeImage,
+    });
 
     const controller = new AbortController();
 

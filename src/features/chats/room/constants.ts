@@ -7,6 +7,22 @@ export const CHAT_CHOICES_ENABLED_STORAGE_KEY = 'manyak:chat-choices-enabled';
 
 export const DEFAULT_CHAT_INPUT_MODE: ChatInputMode = 'block';
 
+/**
+ * 첫 스트림 이벤트 전 로딩 문구. 실시간 이미지가 켜져 있으면 장면 썸네일 자리와 함께
+ * 제작 퍼널 로딩처럼 문구를 순환하고, 꺼져 있으면 한 문구만 쉬머로 보인다.
+ */
+export const CHAT_STREAM_LOADING_COPY = {
+  writing: '다음 내용 준비 중',
+  writingLabel: '답변을 작성하고 있어요',
+  scenePhrases: [
+    '어울리는 표정 찾는 중',
+    '다음 내용 준비 중',
+    '장면 완성 중',
+    '다음 대사 고민 중',
+  ],
+  sceneLabel: '다음 장면을 만들고 있어요',
+} as const;
+
 export const CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY =
   'manyak:chat-realtime-image-enabled';
 
@@ -20,7 +36,7 @@ export const CHAT_SETTINGS_COPY = {
   },
   realtimeImage: {
     label: '실시간 이미지',
-    description: '대화에 따라 인물의 표정과 모습이 달라져요',
+    description: '대화에 따라 인물 한 명의 표정과 모습이 달라져요',
   },
   choices: {
     label: 'AI 추천 입력',
