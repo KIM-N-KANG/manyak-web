@@ -39,17 +39,19 @@ import {
 } from '@/features/stories/_shared/utils/creation-request-recovery';
 import type {
   DraftCreationRecord,
-  PendingCreationRequest,
   StoryDraftRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  addStoryCompletionRequest,
   buildStorylineDraftRecord,
   demotePendingCompletionToDraft,
+  hasStoryCompletionRequest,
   loadPendingCreationRequest,
   replacePendingCreationRequest,
   saveDraftCreationRecord,
   savePendingCreationRequest,
   takePendingCreationRequest,
+  takeStoryCompletionRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   applyStoryCompletedEffects,
@@ -326,13 +328,15 @@ export function useStoryCreateFunnel() {
           return;
         }
 
+        // 퍼널 안에서 완성→채팅까지 이어진 경우(저장 실패 대기 경로)의 편집 초안·완성 레코드를 정리한다.
         const pendingRecord = loadPendingCreationRequest();
 
-        if (
-          pendingRecord?.stage === 'STORY_COMPLETION' ||
-          pendingRecord?.stage === 'STORY_DRAFT'
-        ) {
+        if (pendingRecord?.stage === 'STORY_DRAFT') {
           takePendingCreationRequest(pendingRecord.requestId);
+        }
+
+        if (lastCompletionRequest !== null) {
+          takeStoryCompletionRequest(lastCompletionRequest.requestId);
         }
 
         // 회원 서재는 서버가 정본 — 로그인 상태에서는 로컬에 ID를 남기지 않는다.
@@ -380,17 +384,10 @@ export function useStoryCreateFunnel() {
   const createStory = useCreateSimpleStory({
     mutation: {
       onSuccess: (response, variables) => {
-        // 이탈 후 도착한 응답은 레코드를 남겨 재진입 복구 조회가 완성 결과와
-        // 채팅 생성까지 이어가게 한다(언마운트 상태의 강제 이동·토스트 방지).
+        // 제작 탭으로 나간 뒤 도착한 응답은 레코드를 남겨 진행 카드 폴링이 결과를
+        // 반영하게 한다(언마운트 상태의 강제 이동·토스트 방지). 퍼널에 남은 경우는
+        // 레코드 저장에 실패한 대기 경로뿐이므로 여기서 채팅까지 잇는다.
         if (resolveSuccessSettlement(isFunnelActive()) !== 'apply') {
-          return;
-        }
-
-        // 채팅이 성공하기 전까지 완성 레코드를 유지해야 새로고침 후에도 같은
-        // requestId의 완료 결과를 되찾아 스토리를 중복 생성하지 않는다.
-        if (
-          loadPendingCreationRequest()?.requestId !== variables.data.requestId
-        ) {
           return;
         }
 
@@ -447,16 +444,16 @@ export function useStoryCreateFunnel() {
           error instanceof FetchError &&
           error.status === 409 &&
           reusedCompletionRequestIdRef.current === variables.data.requestId &&
-          loadPendingCreationRequest()?.requestId === variables.data.requestId
+          hasStoryCompletionRequest(variables.data.requestId)
         ) {
-          // 레코드를 남겨 두면 뮤테이션 종료와 함께 복구 폴링이 자동 활성화된다.
+          // 레코드를 남겨 두면 뮤테이션 종료와 함께 진행 카드 폴링이 자동 활성화된다.
           draftAutosave.setPersistedStatus(true);
 
           return;
         }
 
         if (settlement === 'discard-record') {
-          takePendingCreationRequest(variables.data.requestId);
+          takeStoryCompletionRequest(variables.data.requestId);
           draftAutosave.markCurrentAsSaved(
             storyDraftCandidate !== null &&
               saveDraftCreationRecord(storyDraftCandidate),
@@ -471,26 +468,6 @@ export function useStoryCreateFunnel() {
     },
   });
 
-  // 완성 단계 복구 레코드의 퍼널 컨텍스트를 복원한다. 메모리 상태가 살아 있는
-  // 같은 마운트에서는 입력을 덮어쓰지 않도록 재진입(컨텍스트 소실)일 때만 통째로 복원한다.
-  const restoreCompletionContext = (
-    record: Extract<PendingCreationRequest, { stage: 'STORY_COMPLETION' }>,
-  ) => {
-    if (generationResult !== null) {
-      return;
-    }
-
-    setGenerationRequest(record.generationRequest);
-    setGenerationResult(record.generationResult);
-    setActiveStorylineIndex(record.activeStorylineIndex ?? 0);
-    setSelectedStoryline(record.selectedStoryline);
-    setSelectedRecommendations(new Set(record.selectedRecommendations ?? []));
-    restoreAdditionalInfos(
-      record.additionalInfos ?? record.completionRequest.additionalInfos ?? [],
-    );
-    setLastCompletionRequest(record.completionRequest);
-  };
-
   const recovery = useCreationRequestRecovery({
     // 원 생성 요청이 진행 중이면 원 응답을 우선하고, 끝난 뒤에도 레코드가 남아
     // 있을 때(재진입·응답 유실)만 복구 조회를 시작한다.
@@ -503,22 +480,14 @@ export function useStoryCreateFunnel() {
     onRestorePending: (record) => {
       draftAutosave.setPersistedStatus(true);
 
-      if (record.stage === 'STORYLINE_GENERATION') {
-        // 네트워크 오류로 남은 뮤테이션 오류 상태가 복구 로딩과 겹쳐 보이지 않게 지운다.
-        if (generateStorylines.isError) {
-          generateStorylines.reset();
-        }
-
-        setGenerationRequest(record.generationRequest);
-        setHasRecoveredGenerateError(false);
-        setStep('storyline-select');
-
-        return;
+      // 네트워크 오류로 남은 뮤테이션 오류 상태가 복구 로딩과 겹쳐 보이지 않게 지운다.
+      if (generateStorylines.isError) {
+        generateStorylines.reset();
       }
 
-      restoreCompletionContext(record);
-      setHasCompleteStoryError(false);
-      setStep('complete');
+      setGenerationRequest(record.generationRequest);
+      setHasRecoveredGenerateError(false);
+      setStep('storyline-select');
     },
     onStorylinesCompleted: (record, result) => {
       if (generateStorylines.isError) {
@@ -545,66 +514,10 @@ export function useStoryCreateFunnel() {
       setHasRecoveredGenerateError(false);
       setStep('storyline-select');
     },
-    onStoryCompleted: (record, result) => {
-      if (record.stage !== 'STORY_COMPLETION') {
-        return;
-      }
-
-      restoreCompletionContext(record);
-
-      const storyId = result.id;
-
-      if (typeof storyId !== 'string') {
-        failToAdditionalInfo('story');
-
-        return;
-      }
-
-      // 원 응답에서 이미 storyId를 확정한 레코드는 채팅 실패 후 재진입한
-      // 경우다. 이때 게스트 카운터·로컬 ID를 다시 적용하지 않고 채팅만 잇는다.
-      if (record.createdStoryId !== storyId) {
-        applyStoryCompletedEffects(
-          record.requestId,
-          storyId,
-          sessionStatus,
-          queryClient,
-        );
-      }
-
-      setCreatedStoryId(storyId);
-      completedStoryRef.current = { storyId, genres: result.genres };
-      setStep('complete');
-      createChat.mutate({ data: { storyId } });
-    },
     onFailed: (record) => {
-      if (record.stage === 'STORYLINE_GENERATION') {
-        setGenerationRequest(record.generationRequest);
-        setHasRecoveredGenerateError(true);
-        setStep('storyline-select');
-
-        return;
-      }
-
-      restoreCompletionContext(record);
-      draftAutosave.markCurrentAsSaved(
-        saveDraftCreationRecord({
-          stage: 'STORY_DRAFT',
-          requestId: record.requestId,
-          step: 'additional-info',
-          generationRequest: record.generationRequest,
-          generationResult: record.generationResult,
-          activeStorylineIndex: record.activeStorylineIndex ?? 0,
-          selectedStoryline: record.selectedStoryline,
-          additionalInfos:
-            record.additionalInfos ??
-            record.completionRequest.additionalInfos ??
-            [],
-          selectedRecommendations: record.selectedRecommendations ?? [],
-          createdStoryId: null,
-          completionRequest: record.completionRequest,
-        }),
-      );
-      failToAdditionalInfo('story');
+      setGenerationRequest(record.generationRequest);
+      setHasRecoveredGenerateError(true);
+      setStep('storyline-select');
     },
   });
 
@@ -621,8 +534,7 @@ export function useStoryCreateFunnel() {
     typeof selectedStoryline?.id === 'number';
 
   const isGeneratingStorylines =
-    generateStorylines.isPending ||
-    recovery.recoveringStage === 'STORYLINE_GENERATION';
+    generateStorylines.isPending || recovery.isRecovering;
   const tagStep = useStoryTagStep({
     isGeneratingStorylines,
     onGenerateStorylines: handleGenerateStorylines,
@@ -699,7 +611,7 @@ export function useStoryCreateFunnel() {
     !createStory.isPending &&
     !createChat.isPending &&
     createdStoryId === null &&
-    recovery.recoveringStage === null &&
+    !recovery.isRecovering &&
     step !== 'complete';
 
   const persistDraftCandidate = (record: DraftCreationRecord | null) => {
@@ -949,14 +861,15 @@ export function useStoryCreateFunnel() {
       ? request.requestId
       : null;
 
-    // 재진입 복원에 필요한 퍼널 컨텍스트가 온전할 때만 복구 레코드를 저장한다.
-    // (완료 조건상 이 시점에 항상 존재하지만 타입 좁히기를 겸한다.)
+    // 실패 시 초안 복원에 필요한 퍼널 컨텍스트가 온전할 때만 완성 레코드를 저장한다.
+    // (완료 조건상 이 시점에 항상 존재하지만 타입 좁히기를 겸한다.) 저장 성공 시
+    // 편집 슬롯이 함께 비워져 다음 제작을 바로 시작할 수 있다.
     let saved = false;
 
     if (generationRequest !== null && generationResult !== null) {
       draftAutosave.cancel();
 
-      saved = savePendingCreationRequest({
+      saved = addStoryCompletionRequest({
         stage: 'STORY_COMPLETION',
         requestId: request.requestId,
         generationRequest,
@@ -975,7 +888,7 @@ export function useStoryCreateFunnel() {
     createStory.mutate({ data: request });
 
     // 복구 레코드가 있으면 응답을 기다리지 않고 제작 탭으로 돌아간다(앱 패리티).
-    // 결과는 제작 탭의 완성 중 카드에서 재진입해 복구 조회로 되찾는다. 레코드를
+    // 결과는 제작 탭의 완성 중 카드가 폴링으로 되찾는다. 레코드를
     // 저장하지 못했으면 되찾을 길이 없으므로 퍼널의 완성 로딩에서 응답을 기다린다.
     // 제작 탭으로 나가는 경로에서는 완성 로딩 화면을 한 프레임도 그리지 않는다.
     if (saved) {
@@ -1011,11 +924,9 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    const slotRecord = loadPendingCreationRequest();
     const hasPreservedContent =
       generationResult !== null ||
-      slotRecord?.stage === 'STORYLINE_GENERATION' ||
-      slotRecord?.stage === 'STORY_COMPLETION';
+      loadPendingCreationRequest()?.stage === 'STORYLINE_GENERATION';
 
     setBackDialog(hasPreservedContent ? 'saved' : 'lost');
   };
@@ -1065,10 +976,7 @@ export function useStoryCreateFunnel() {
     isGeneratingStorylines,
     hasGenerateStorylinesError:
       generateStorylines.isError || hasRecoveredGenerateError,
-    isCompletingStory:
-      createStory.isPending ||
-      createChat.isPending ||
-      recovery.recoveringStage === 'STORY_COMPLETION',
+    isCompletingStory: createStory.isPending || createChat.isPending,
     hasCompleteStoryError,
     guestLimitTrigger:
       guestLimitTrigger ??

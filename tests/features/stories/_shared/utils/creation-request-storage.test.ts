@@ -9,15 +9,20 @@ import type {
 import type {
   KeywordDraftRecord,
   PendingCreationRequest,
+  StoryCompletionRecord,
   StoryDraftRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  addStoryCompletionRequest,
   demotePendingCompletionToDraft,
   loadPendingCreationRequest,
+  loadStoryCompletionRequests,
   markPendingStoryCreated,
   parsePendingCreationRequest,
+  parseStoryCompletionRequests,
   saveDraftCreationRecord,
   savePendingCreationRequest,
+  takeStoryCompletionRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 
 const generationRequest: GenerateSimpleStorylinesRequest = {
@@ -56,7 +61,7 @@ const completionRequest: CreateSimpleStoryRequest = {
   additionalInfos: ['추가 정보'],
 };
 
-const completionRecord: PendingCreationRequest = {
+const completionRecord: StoryCompletionRecord = {
   stage: 'STORY_COMPLETION',
   requestId: completionRequest.requestId,
   generationRequest,
@@ -93,12 +98,6 @@ describe('parsePendingCreationRequest', () => {
     expect(
       parsePendingCreationRequest(JSON.stringify(storylineRecord)),
     ).toEqual(storylineRecord);
-  });
-
-  it('스토리 완성 레코드를 직렬화-역직렬화로 복원한다', () => {
-    expect(
-      parsePendingCreationRequest(JSON.stringify(completionRecord)),
-    ).toEqual(completionRecord);
   });
 
   it('키워드 draft를 직렬화-역직렬화로 복원한다', () => {
@@ -148,28 +147,44 @@ describe('parsePendingCreationRequest', () => {
     ).toBeNull();
   });
 
-  it('완성 레코드에 복원 컨텍스트가 하나라도 없으면 null로 처리한다', () => {
+  it('완성 레코드는 편집 슬롯 파서가 거부한다', () => {
+    expect(
+      parsePendingCreationRequest(JSON.stringify(completionRecord)),
+    ).toBeNull();
+  });
+});
+
+describe('parseStoryCompletionRequests', () => {
+  it('완성 레코드 목록을 직렬화-역직렬화로 복원한다', () => {
+    expect(
+      parseStoryCompletionRequests(JSON.stringify([completionRecord])),
+    ).toEqual([completionRecord]);
+  });
+
+  it('저장값이 없거나 배열이 아니면 빈 목록을 반환한다', () => {
+    expect(parseStoryCompletionRequests(null)).toEqual([]);
+    expect(parseStoryCompletionRequests('{invalid')).toEqual([]);
+    expect(
+      parseStoryCompletionRequests(JSON.stringify(completionRecord)),
+    ).toEqual([]);
+  });
+
+  it('복원 컨텍스트가 빠지거나 스토리 ID 형태가 어긋난 항목만 걸러낸다', () => {
     const { completionRequest: _dropped, ...withoutCompletionRequest } =
       completionRecord;
-
-    expect(
-      parsePendingCreationRequest(JSON.stringify(withoutCompletionRequest)),
-    ).toBeNull();
-
     const { selectedStoryline: _droppedStoryline, ...withoutStoryline } =
       completionRecord;
 
     expect(
-      parsePendingCreationRequest(JSON.stringify(withoutStoryline)),
-    ).toBeNull();
-  });
-
-  it('완성 레코드의 생성된 스토리 ID가 문자열·null이 아니면 거부한다', () => {
-    expect(
-      parsePendingCreationRequest(
-        JSON.stringify({ ...completionRecord, createdStoryId: 7 }),
+      parseStoryCompletionRequests(
+        JSON.stringify([
+          withoutCompletionRequest,
+          withoutStoryline,
+          { ...completionRecord, createdStoryId: 7 },
+          completionRecord,
+        ]),
       ),
-    ).toBeNull();
+    ).toEqual([completionRecord]);
   });
 });
 
@@ -214,17 +229,43 @@ describe('saveDraftCreationRecord 우선순위', () => {
     expect(loadPendingCreationRequest()).toEqual(draftRecord);
   });
 
-  it('완성 레코드에 생성된 storyId를 확정해 채팅 재시도에 남긴다', () => {
+  it('완성 제출은 목록에 추가하고 편집 슬롯을 비운다', () => {
     stubStorage();
-    savePendingCreationRequest(completionRecord);
+    savePendingCreationRequest(draftRecord);
+
+    expect(addStoryCompletionRequest(completionRecord)).toBe(true);
+    expect(loadPendingCreationRequest()).toBeNull();
+    expect(loadStoryCompletionRequests()).toEqual([completionRecord]);
+  });
+
+  it('완성 요청은 여러 건이 공존하고 requestId별로만 제거한다', () => {
+    stubStorage();
+
+    const second: StoryCompletionRecord = {
+      ...completionRecord,
+      requestId: 'second-completion',
+    };
+
+    addStoryCompletionRequest(completionRecord);
+    addStoryCompletionRequest(second);
+
+    expect(loadStoryCompletionRequests()).toEqual([completionRecord, second]);
+    expect(takeStoryCompletionRequest(completionRecord.requestId)).toBe(true);
+    expect(takeStoryCompletionRequest(completionRecord.requestId)).toBe(false);
+    expect(loadStoryCompletionRequests()).toEqual([second]);
+  });
+
+  it('완성 레코드에 생성된 storyId를 확정해 폴링 재적용을 막는다', () => {
+    stubStorage();
+    addStoryCompletionRequest(completionRecord);
 
     expect(
       markPendingStoryCreated(completionRecord.requestId, 'story-created'),
     ).toBe(true);
-    expect(loadPendingCreationRequest()).toEqual({
-      ...completionRecord,
-      createdStoryId: 'story-created',
-    });
+    expect(markPendingStoryCreated('other', 'story-created')).toBe(false);
+    expect(loadStoryCompletionRequests()).toEqual([
+      { ...completionRecord, createdStoryId: 'story-created' },
+    ]);
   });
 });
 
@@ -302,11 +343,12 @@ describe('demotePendingCompletionToDraft', () => {
 
   it('같은 requestId의 완성 레코드를 추가 정보 단계 초안으로 바꾼다', () => {
     stubStorage();
-    savePendingCreationRequest(completionRecord);
+    addStoryCompletionRequest(completionRecord);
 
     expect(demotePendingCompletionToDraft(completionRecord.requestId)).toBe(
       true,
     );
+    expect(loadStoryCompletionRequests()).toEqual([]);
     expect(loadPendingCreationRequest()).toMatchObject({
       stage: 'STORY_DRAFT',
       step: 'additional-info',
@@ -326,5 +368,17 @@ describe('demotePendingCompletionToDraft', () => {
     );
     expect(demotePendingCompletionToDraft('other')).toBe(false);
     expect(loadPendingCreationRequest()).toEqual(storylineRecord);
+  });
+
+  it('편집 슬롯에 다른 초안이 있으면 덮지 않고 실패 요청만 제거한다', () => {
+    stubStorage();
+    addStoryCompletionRequest(completionRecord);
+    savePendingCreationRequest(keywordDraftRecord);
+
+    expect(demotePendingCompletionToDraft(completionRecord.requestId)).toBe(
+      true,
+    );
+    expect(loadStoryCompletionRequests()).toEqual([]);
+    expect(loadPendingCreationRequest()).toEqual(keywordDraftRecord);
   });
 });

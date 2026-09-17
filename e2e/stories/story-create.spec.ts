@@ -3,7 +3,10 @@ import { type Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  PENDING_CREATION_REQUEST_STORAGE_KEY,
+  STORY_COMPLETION_REQUESTS_STORAGE_KEY,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   buildStoryCompletionCreditCostLabel,
   GENRE_CATEGORY,
@@ -11,8 +14,12 @@ import {
   STORY_COMPLETION_CREDIT_COST_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
-import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATION_PROGRESS_CARD_COPY,
+} from '@/features/studio/menu/constants';
 
+import { seedStoryCompletionRequests } from '../fixtures/storage';
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
@@ -417,11 +424,14 @@ test.describe('스토리 생성', () => {
     await expect
       .poll(() =>
         page.evaluate(
-          (key) => localStorage.getItem(key),
-          PENDING_CREATION_REQUEST_STORAGE_KEY,
+          (keys) => keys.map((key) => localStorage.getItem(key)),
+          [
+            PENDING_CREATION_REQUEST_STORAGE_KEY,
+            STORY_COMPLETION_REQUESTS_STORAGE_KEY,
+          ],
         ),
       )
-      .toBeNull();
+      .toEqual([null, null]);
     expect(batchRequestCount).toBeGreaterThan(0);
     expect(chatRequestCount).toBe(0);
   });
@@ -508,13 +518,75 @@ test.describe('스토리 생성', () => {
       await expect
         .poll(() =>
           page.evaluate(
-            (key) => localStorage.getItem(key),
-            PENDING_CREATION_REQUEST_STORAGE_KEY,
+            (keys) => keys.map((key) => localStorage.getItem(key)),
+            [
+              PENDING_CREATION_REQUEST_STORAGE_KEY,
+              STORY_COMPLETION_REQUESTS_STORAGE_KEY,
+            ],
           ),
         )
-        .toBeNull();
+        .toEqual([null, null]);
     });
   }
+
+  test('완성 중에도 새 스토리를 만들 수 있고 완성 중 카드가 요청 수만큼 표시된다', async ({
+    page,
+  }) => {
+    await seedStoryCompletionRequests(page, [
+      {
+        stage: 'STORY_COMPLETION',
+        requestId: 'completion-first',
+        generationRequest: {
+          requestId: 'generation-first',
+          genreTagIds: [1],
+          protagonist: { featureTagIds: [2] },
+        },
+        generationResult: { simpleCreationId: 2001, storylines: [] },
+        selectedStoryline: { id: 201 },
+        completionRequest: {
+          requestId: 'completion-first',
+          simpleCreationId: 2001,
+          storylineId: 201,
+        },
+      },
+    ]);
+    await page.route(CREATION_REQUEST, async (route) => {
+      await route.fulfill({
+        json: { stage: 'STORY_COMPLETION', status: 'PENDING', result: null },
+      });
+    });
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({ json: [] });
+    });
+    await page.route(CREATE_STORY, async (route) => {
+      await route.fulfill({
+        status: 201,
+        json: { id: 'story-second', title: '두 번째 스토리', genres: [] },
+      });
+    });
+
+    await reachAdditionalInfo(page);
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    const completingCards = page.getByRole('article', {
+      name: CREATION_PROGRESS_CARD_COPY.completingTitle,
+    });
+
+    await expect(completingCards).toHaveCount(2);
+    await expect(
+      page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeHidden();
+    expect(
+      await page.evaluate(
+        (key) => localStorage.getItem(key),
+        PENDING_CREATION_REQUEST_STORAGE_KEY,
+      ),
+    ).toBeNull();
+  });
 
   test('스토리 완성 실패는 제작 탭에서 토스트로 알리고 초안 카드로 되돌아가 입력을 유지한다', async ({
     page,
