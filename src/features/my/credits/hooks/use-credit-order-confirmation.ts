@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -40,8 +40,9 @@ export function usePendingCreditOrderId(): string | null {
 /**
  * 복귀한 주문을 완료될 때까지 폴링하고 결과를 화면 상태로 돌려주는 훅.
  *
- * 완료되면 잔액 정본(me)을 무효화한다. 대기 주문 기록은 카드를 닫거나 화면을 떠날 때
- * 지운다 — 폴링이 끝나자마자 지우면 결과 문구를 보여 줄 새가 없다.
+ * 완료되면 잔액 정본(me)을 무효화한다. 결과가 확정된 주문은 기록을 바로 지운다 —
+ * 기록은 "아직 확인이 필요한 주문"만 뜻하며, 결과 문구 유지는 카드 컴포넌트 상태가 맡는다.
+ * 새로고침·탭 닫기처럼 언마운트 없이 떠나도 재진입에서 다시 묻지 않는다.
  *
  * @param orderId 확인할 주문 ID
  * @returns 확인 상태, 다시 확인, 닫기
@@ -84,21 +85,11 @@ export function useCreditOrderConfirmation(orderId: string) {
     }
   }, [confirmation.kind, queryClient]);
 
-  // 결과가 난 주문은 화면을 떠날 때 기록을 지워 다음 진입에서 다시 묻지 않는다.
-  const isSettledRef = useRef(false);
-
   useEffect(() => {
-    isSettledRef.current = isSettled;
+    if (isSettled) {
+      clearPendingCreditOrder();
+    }
   }, [isSettled]);
-
-  useEffect(
-    () => () => {
-      if (isSettledRef.current) {
-        clearPendingCreditOrder();
-      }
-    },
-    [],
-  );
 
   return {
     confirmation,
