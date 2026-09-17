@@ -44,17 +44,21 @@ test.describe('온보딩 비주얼', () => {
       .toBe('1');
     // 첫 화면에 걸치는 첫 섹션은 CTA보다 늦게(히어로 핸드오프 후) 정착하므로,
     // 스크린샷이 실제 픽셀까지 내려오고 등장 애니메이션까지 끝난 뒤에 찍는다.
+    // CI는 4 워커가 서버를 공유해 섹션 이미지 8장의 최초 최적화가 5초를 넘길 수 있어
+    // 기본 poll 타임아웃보다 길게 기다린다(KNK-1326).
     await expect
-      .poll(() =>
-        page
-          .getByRole('img', { name: ONBOARDING_SECTIONS[0].scenes[0].alt })
-          .evaluate(
-            (image) =>
-              (image as HTMLImageElement).complete &&
-              (image as HTMLImageElement).naturalWidth > 0 &&
-              getComputedStyle(image.parentElement as HTMLElement).opacity ===
-                '1',
-          ),
+      .poll(
+        () =>
+          page
+            .getByRole('img', { name: ONBOARDING_SECTIONS[0].scenes[0].alt })
+            .evaluate(
+              (image) =>
+                (image as HTMLImageElement).complete &&
+                (image as HTMLImageElement).naturalWidth > 0 &&
+                getComputedStyle(image.parentElement as HTMLElement).opacity ===
+                  '1',
+            ),
+        { timeout: 30_000 },
       )
       .toBe(true);
     await waitForFonts(page);
