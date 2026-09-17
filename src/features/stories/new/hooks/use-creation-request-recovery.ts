@@ -3,13 +3,10 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { useGetCreationRequest } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import type {
-  GenerateSimpleStorylinesResponse,
-  SimpleStoryCreateResponse,
-} from '@/api/generated/models';
+import type { GenerateSimpleStorylinesResponse } from '@/api/generated/models';
 import { useIsCreationRequestPending } from '@/features/stories/_shared/hooks/use-is-creation-request-pending';
 import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
-import type { InFlightCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type { StorylineGenerationRecord } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   getPendingCreationRequestSnapshot,
   getServerPendingCreationRequestSnapshot,
@@ -55,34 +52,29 @@ function getServerPageVisibilitySnapshot(): boolean {
 type UseCreationRequestRecoveryArgs = {
   /** 원 생성 요청이 진행 중인 동안 true — 복구 조회를 보류하고 원 응답을 기다린다. */
   suspended: boolean;
-  /** 미정리 레코드로 복구를 시작할 때 해당 단계 로딩 화면을 복원한다. */
-  onRestorePending: (record: InFlightCreationRequest) => void;
+  /** 미정리 레코드로 복구를 시작할 때 스토리라인 로딩 화면을 복원한다. */
+  onRestorePending: (record: StorylineGenerationRecord) => void;
   /** 스토리라인 생성이 완료돼 있던 경우 결과 화면을 복원한다. */
   onStorylinesCompleted: (
-    record: InFlightCreationRequest,
+    record: StorylineGenerationRecord,
     result: GenerateSimpleStorylinesResponse,
   ) => void;
-  /** 스토리 완성이 완료돼 있던 경우 후속 흐름(채팅 생성)으로 잇는다. */
-  onStoryCompleted: (
-    record: InFlightCreationRequest,
-    result: SimpleStoryCreateResponse,
-  ) => void;
   /** 생성이 실패했거나(FAILED) 더 이상 되찾을 수 없는(404) 경우 기존 실패 처리로 합류한다. */
-  onFailed: (record: InFlightCreationRequest) => void;
+  onFailed: (record: StorylineGenerationRecord) => void;
 };
 
 /**
- * 백그라운드 전환으로 응답을 못 받은 생성 요청을 되찾는 훅(스펙 §3-5 백그라운드 생성 복귀).
+ * 백그라운드 전환으로 응답을 못 받은 스토리라인 생성 요청을 되찾는 훅(스펙 §3-5 백그라운드 생성 복귀).
  *
- * 로컬스토리지의 미정리 복구 레코드를 구독해, 원 요청이 진행 중이지 않은데 레코드가
+ * 편집 슬롯의 스토리라인 생성 레코드를 구독해, 원 요청이 진행 중이지 않은데 레코드가
  * 남아 있으면(재진입·네트워크 유실 복귀) 복구 조회를 폴링하고 상태별 콜백으로 화면
- * 복원을 위임한다. 원 응답과 복구 조회가 경합해도 레코드 제거 선점
- * (takePendingCreationRequest)을 통과한 쪽만 결과를 반영하므로 부수효과가 이중
- * 실행되지 않는다. 폴링은 문서 가시성 구독으로 백그라운드에서 명시적으로
- * 멈췄다가 복귀 시 재개된다.
+ * 복원을 위임한다. 완성 요청은 슬롯 밖 목록에서 제작 탭 카드가 폴링하므로 퍼널은 다루지 않는다.
+ * 원 응답과 복구 조회가 경합해도 레코드 제거 선점(takePendingCreationRequest)을 통과한
+ * 쪽만 결과를 반영하므로 부수효과가 이중 실행되지 않는다. 폴링은 문서 가시성 구독으로
+ * 백그라운드에서 명시적으로 멈췄다가 복귀 시 재개된다.
  *
- * @param args 보류 조건과 단계·상태별 화면 복원 콜백
- * @returns 복구 진행 중 단계(recoveringStage — 없으면 null)
+ * @param args 보류 조건과 상태별 화면 복원 콜백
+ * @returns 복구 진행 중 여부(isRecovering)
  */
 export function useCreationRequestRecovery({
   suspended,
@@ -101,22 +93,18 @@ export function useCreationRequestRecovery({
   );
   // 편집 draft 레코드는 서버에 조회할 것이 없으므로 복구 대상에서 제외한다.
   const inFlightRecord =
-    storedRecord?.stage === 'STORYLINE_GENERATION' ||
-    storedRecord?.stage === 'STORY_COMPLETION'
-      ? storedRecord
-      : null;
+    storedRecord?.stage === 'STORYLINE_GENERATION' ? storedRecord : null;
   const activeRecord = suspended || !isPageVisible ? null : inFlightRecord;
   const isOriginalRequestPending = useIsCreationRequestPending(inFlightRecord);
 
   const callbacksRef = useRef(callbacks);
   const restoredRequestIdRef = useRef<string | null>(null);
-  const handledCompletedStoryRequestIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     callbacksRef.current = callbacks;
   });
 
-  // 새 레코드로 복구가 시작되면 해당 단계 로딩 화면을 한 번만 복원한다.
+  // 새 레코드로 복구가 시작되면 로딩 화면을 한 번만 복원한다.
   const activeRequestId = activeRecord?.requestId ?? null;
 
   useEffect(() => {
@@ -136,8 +124,7 @@ export function useCreationRequestRecovery({
 
     if (
       record?.requestId === activeRequestId &&
-      (record.stage === 'STORYLINE_GENERATION' ||
-        record.stage === 'STORY_COMPLETION')
+      record.stage === 'STORYLINE_GENERATION'
     ) {
       callbacksRef.current.onRestorePending(record);
     }
@@ -176,29 +163,14 @@ export function useCreationRequestRecovery({
       return;
     }
 
+    // 원 응답이 먼저 레코드를 교체했으면 결과 반영을 건너뛴다.
+    if (!takePendingCreationRequest(activeRecord.requestId)) {
+      return;
+    }
+
     if (action.type === 'storylines-completed') {
-      // 원 응답이 먼저 레코드를 교체했으면 결과 반영을 건너뛴다.
-      if (!takePendingCreationRequest(activeRecord.requestId)) {
-        return;
-      }
-
       callbacksRef.current.onStorylinesCompleted(activeRecord, action.result);
-    } else if (action.type === 'story-completed') {
-      // 채팅 생성에 실패하면 같은 완성 레코드로 새로고침 복구를 이어야 하므로
-      // 채팅 성공 전에는 슬롯을 소비하지 않는다. 같은 마운트의 중복 실행만 막는다.
-      if (
-        handledCompletedStoryRequestIdRef.current === activeRecord.requestId
-      ) {
-        return;
-      }
-
-      handledCompletedStoryRequestIdRef.current = activeRecord.requestId;
-      callbacksRef.current.onStoryCompleted(activeRecord, action.result);
     } else {
-      if (!takePendingCreationRequest(activeRecord.requestId)) {
-        return;
-      }
-
       callbacksRef.current.onFailed(activeRecord);
     }
   }, [activeRecord, isOriginalRequestPending, recoveryData]);
@@ -218,6 +190,6 @@ export function useCreationRequestRecovery({
   }, [activeRecord, isOriginalRequestPending, recoveryError]);
 
   return {
-    recoveringStage: activeRecord?.stage ?? null,
+    isRecovering: activeRecord !== null,
   };
 }

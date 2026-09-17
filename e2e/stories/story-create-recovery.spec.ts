@@ -1,6 +1,10 @@
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  type PendingCreationRequest,
+  STORY_COMPLETION_REQUESTS_STORAGE_KEY,
+  type StoryCompletionRecord,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
 import { STORYLINE_SELECT_LOADING_LABEL } from '@/features/stories/new/constants';
 import {
@@ -8,7 +12,10 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
-import { seedPendingCreationRequest } from '../fixtures/storage';
+import {
+  seedPendingCreationRequest,
+  seedStoryCompletionRequests,
+} from '../fixtures/storage';
 import {
   expect,
   mockMemberSession,
@@ -22,7 +29,6 @@ import {
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 const CREATION_REQUEST = '**/api/v1/stories/simple/creation-requests/*';
-const CREATE_CHAT = '**/api/v1/chats';
 
 const STORYLINE_REQUEST_ID = '11111111-1111-4111-8111-111111111111';
 const COMPLETION_REQUEST_ID = '22222222-2222-4222-8222-222222222222';
@@ -72,7 +78,7 @@ const storylineRecord: PendingCreationRequest = {
   generationRequest,
 };
 
-const completionRecord: PendingCreationRequest = {
+const completionRecord: StoryCompletionRecord = {
   stage: 'STORY_COMPLETION',
   requestId: COMPLETION_REQUEST_ID,
   generationRequest,
@@ -211,7 +217,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     page,
   }) => {
     await skipOnboarding(page);
-    await seedPendingCreationRequest(page, completionRecord);
+    await seedStoryCompletionRequests(page, [completionRecord]);
     await page.route(CREATION_REQUEST, async (route) => {
       await route.fulfill({
         status: 404,
@@ -279,7 +285,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         page,
         existingStories.map(({ id }) => id),
       );
-      await seedPendingCreationRequest(page, completionRecord);
+      await seedStoryCompletionRequests(page, [completionRecord]);
 
       let completed = false;
       let refreshing = false;
@@ -505,41 +511,32 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     expect(requestIds[1]).toBe(requestIds[0]);
   });
 
-  test('스토리 완성이 COMPLETED면 채팅 생성으로 이어 채팅 화면으로 이동한다', async ({
+  test('완성 중에 퍼널로 진입하면 완성 요청을 유지한 채 새 키워드 입력을 시작한다', async ({
     page,
   }) => {
+    let lookupCount = 0;
+
     await page.route(CREATION_REQUEST, async (route) => {
+      lookupCount += 1;
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          stage: 'STORY_COMPLETION',
-          status: 'COMPLETED',
-          result: {
-            id: 'story-recovered',
-            title: '되찾은 스토리',
-            genres: ['판타지'],
-          },
-        }),
+        json: { stage: 'STORY_COMPLETION', status: 'PENDING', result: null },
       });
     });
-    await page.route(CREATE_CHAT, async (route) => {
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'chat-recovered',
-          storyId: 'story-recovered',
-        }),
-      });
-    });
-    await seedPendingCreationRequest(page, completionRecord);
+    await seedStoryCompletionRequests(page, [completionRecord]);
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
-    await expect(page).toHaveURL(/\/chats\/chat-recovered$/, {
-      timeout: 10000,
-    });
+    await expect(page.getByRole('button', { name: '판타지' })).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.completingTitle),
+    ).toBeHidden();
+    expect(lookupCount).toBe(0);
+    expect(
+      await page.evaluate(
+        (key) => localStorage.getItem(key),
+        STORY_COMPLETION_REQUESTS_STORAGE_KEY,
+      ),
+    ).toContain(COMPLETION_REQUEST_ID);
   });
 
   test('스토리라인 생성이 FAILED면 실패 문구와 다시 만들기를 표시한다', async ({

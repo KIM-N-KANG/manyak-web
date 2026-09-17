@@ -6,7 +6,7 @@ import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { seedPendingCreationRequest } from '../fixtures/storage';
+import { seedStoryCompletionRequests } from '../fixtures/storage';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
@@ -201,22 +201,24 @@ test.describe('스토리 비주얼', () => {
       await skipOnboarding(page);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await seedStoryIds(page, hasExistingStory ? ['s1'] : []);
-      await seedPendingCreationRequest(page, {
-        stage: 'STORY_COMPLETION',
-        requestId: 'completion-visual',
-        generationRequest: {
-          requestId: 'generation-visual',
-          genreTagIds: [1],
-          protagonist: { featureTagIds: [2] },
-        },
-        generationResult: { simpleCreationId: 1001, storylines: [] },
-        selectedStoryline: { id: 101 },
-        completionRequest: {
+      await seedStoryCompletionRequests(page, [
+        {
+          stage: 'STORY_COMPLETION',
           requestId: 'completion-visual',
-          simpleCreationId: 1001,
-          storylineId: 101,
+          generationRequest: {
+            requestId: 'generation-visual',
+            genreTagIds: [1],
+            protagonist: { featureTagIds: [2] },
+          },
+          generationResult: { simpleCreationId: 1001, storylines: [] },
+          selectedStoryline: { id: 101 },
+          completionRequest: {
+            requestId: 'completion-visual',
+            simpleCreationId: 1001,
+            storylineId: 101,
+          },
         },
-      });
+      ]);
       await page.route(
         '**/api/v1/stories/simple/creation-requests/*',
         (route) =>

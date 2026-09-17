@@ -10,7 +10,11 @@ import { TextShimmer } from '@/components/motion/text-shimmer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type {
+  CreationProgressRecord,
+  PendingCreationRequest,
+  StoryCompletionRecord,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { takePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { markDraftResumeIntent } from '@/features/stories/_shared/utils/draft-resume-intent';
 import { cn } from '@/lib/utils';
@@ -20,7 +24,7 @@ import { CREATION_PROGRESS_CARD_COPY } from '../constants';
 import { useCreationProgressPolling } from '../hooks/use-creation-progress-polling';
 
 type CreationProgressCardProps = {
-  record: PendingCreationRequest;
+  record: CreationProgressRecord;
 };
 
 export function CreationProgressCard({ record }: CreationProgressCardProps) {
@@ -56,7 +60,7 @@ export function CreationProgressCard({ record }: CreationProgressCardProps) {
 }
 
 type CompletingCardBodyProps = {
-  record: Extract<PendingCreationRequest, { stage: 'STORY_COMPLETION' }>;
+  record: StoryCompletionRecord;
 };
 
 function CompletingCardBody({ record }: CompletingCardBodyProps) {
@@ -76,7 +80,7 @@ function GeneratingCardBody({ record }: GeneratingCardBodyProps) {
 }
 
 type DraftCardBodyProps = {
-  record: Exclude<PendingCreationRequest, { stage: 'STORY_COMPLETION' }>;
+  record: PendingCreationRequest;
 };
 
 function DraftCardBody({ record }: DraftCardBodyProps) {
