@@ -128,6 +128,15 @@ export async function seedPendingCreditOrder(
 ): Promise<void> {
   await page.addInitScript(
     ([key, id]) => {
+      // 결제창으로 나가기 전 한 번 남긴 기록을 흉내 낸다. 새로고침·리다이렉트마다 다시
+      // 심으면 앱이 지운 기록이 되살아나므로 탭 단위로 한 번만 심는다.
+      const seededKey = `${key}:seeded`;
+
+      if (window.sessionStorage.getItem(seededKey)) {
+        return;
+      }
+
+      window.sessionStorage.setItem(seededKey, '1');
       window.localStorage.setItem(
         key,
         JSON.stringify({ orderId: id, savedAt: Date.now() }),

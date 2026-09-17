@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { toast } from 'sonner';
 
 import { useCreate } from '@/api/generated/endpoints/credits/credits';
@@ -10,6 +12,8 @@ import { savePendingCreditOrder } from '../utils/pending-credit-order-storage';
 /**
  * 웹 이프 충전 주문을 만들고 그로블 결제창으로 이동하는 훅.
  * 주문 생성만으로는 이프가 적립되지 않으며, 적립은 결제 완료 웹훅이 처리한다.
+ * 결제창에서 뒤로가기로 돌아오면 bfcache가 성공 상태까지 복원해 버튼이 영영 잠기므로,
+ * pageshow(persisted)에서 mutation을 리셋한다.
  *
  * @returns 주문 생성 함수와 진행 중인 상품 ID
  */
@@ -36,6 +40,20 @@ export function useCreateCreditOrder() {
       },
     },
   });
+
+  const { reset } = mutation;
+
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        reset();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [reset]);
 
   return {
     createOrder: (productId: string) =>

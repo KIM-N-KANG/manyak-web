@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/motion/checkbox';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { clearPendingCreditOrder } from '@/features/my/credits/utils/pending-credit-order-storage';
 import { clearPendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { resetAnalyticsUser } from '@/observability/analytics';
 
@@ -42,6 +43,7 @@ export function AccountDeletionScreen() {
 
         resetAnalyticsUser();
         clearPendingCreationRequest();
+        clearPendingCreditOrder();
         queryClient.clear();
         void signOut({ redirectTo: APP_PATH.MAIN.MY });
       },
