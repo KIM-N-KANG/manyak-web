@@ -247,6 +247,46 @@ test.describe('이프 충전 (/my/credits)', () => {
     ).toBeVisible();
   });
 
+  test('결제창에서 뒤로가기로 복원되면 가격 버튼 잠금을 푼다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+
+    await page.route(ORDERS_API, (route) =>
+      route.fulfill({
+        status: 201,
+        json: { orderId: 'order-1', paymentUrl: PAYMENT_URL },
+      }),
+    );
+    // 204 응답은 이동을 조용히 취소해 문서를 그대로 둔다 — 성공 후 잠긴 상태를 재현한다.
+    await page.route(PAYMENT_URL, (route) => route.fulfill({ status: 204 }));
+
+    await page.goto('/my/credits');
+
+    const [first] = CREDIT_PRODUCTS_FIXTURE;
+    // 주문 중에는 가격이 숨고 스피너 라벨이 접근성 이름이 되므로 줄 단위로 버튼을 잡는다.
+    const priceButton = page
+      .getByRole('listitem')
+      .filter({ hasText: buildCreditProductLabel(first.baseCredits) })
+      .getByRole('button');
+
+    await priceButton.click();
+    await expect(priceButton).toBeDisabled();
+    await expect(
+      priceButton.getByLabel(CREDIT_PURCHASE_COPY.ordering),
+    ).toBeVisible();
+
+    // 헤드리스 크로미움은 bfcache를 쓰지 않으므로 복원 이벤트를 직접 발생시킨다.
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new PageTransitionEvent('pageshow', { persisted: true }),
+      ),
+    );
+
+    await expect(priceButton).toBeEnabled();
+    await expect(priceButton).toHaveText(formatKrwPrice(first.webPriceKrw));
+  });
+
   test('주문 생성이 실패하면 안내 토스트를 띄우고 다시 누를 수 있다', async ({
     page,
   }) => {
@@ -392,6 +432,36 @@ test.describe('이프 충전 (/my/credits)', () => {
         PENDING_CREDIT_ORDER_STORAGE_KEY,
       ),
     ).toBeNull();
+  });
+
+  test('결과가 확정된 주문은 새로고침해도 다시 묻지 않는다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+    await seedPendingCreditOrder(page, 'order-1');
+
+    const orderCalls = await mockOrder(page, [{ status: 'REFUNDED' }]);
+
+    await page.goto('/my/credits');
+
+    const card = page.getByRole('status', { name: CREDIT_ORDER_COPY.title });
+
+    await expect(card.getByText(CREDIT_ORDER_COPY.refunded)).toBeVisible();
+    // 결과가 나면 닫기 전에도 기록은 지워지고, 카드만 남는다.
+    expect(
+      await page.evaluate(
+        (key) => window.localStorage.getItem(key),
+        PENDING_CREDIT_ORDER_STORAGE_KEY,
+      ),
+    ).toBeNull();
+
+    await page.reload();
+
+    await expect(
+      page.getByRole('banner').getByText(CREDIT_CHARGE_COPY.title),
+    ).toBeVisible();
+    await expect(card).toBeHidden();
+    expect(orderCalls()).toBe(1);
   });
 
   test('돌아온 주문이 없는 주문이면 확인 불가를 알린다', async ({ page }) => {

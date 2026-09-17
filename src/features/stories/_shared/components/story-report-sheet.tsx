@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useReportStory } from '@/api/generated/endpoints/stories/stories';
 import type { StoryReportRequestReason } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
+import { RadioGroup, RadioGroupItem } from '@/components/motion/radio';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -30,7 +31,6 @@ import {
 } from '@/features/stories/_shared/constants/story-report';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { FetchError } from '@/lib/custom-fetch';
-import { cn } from '@/lib/utils';
 import { type ReportSource, track } from '@/observability/analytics';
 
 /**
@@ -151,24 +151,22 @@ function StoryReportForm({
       onSubmit={handleSubmit}>
       <fieldset disabled={isSubmitting} className="flex flex-col">
         <legend className="sr-only">신고 사유</legend>
-        {STORY_REPORT_REASONS.map((option) => (
-          <Label
-            key={option.value}
-            className={cn(
-              'h-10 cursor-pointer gap-2 text-base font-normal',
-              isSubmitting && 'cursor-default',
-            )}>
-            <input
-              type="radio"
-              name="reason"
+        <RadioGroup
+          value={reason ?? ''}
+          onValueChange={(value) =>
+            setReason(value as StoryReportRequestReason)
+          }
+          className="gap-0">
+          {STORY_REPORT_REASONS.map((option) => (
+            <RadioGroupItem
+              key={option.value}
               value={option.value}
-              checked={reason === option.value}
-              onChange={() => setReason(option.value)}
-              className="size-5 shrink-0 accent-primary"
+              label={option.label}
+              disabled={isSubmitting}
+              className="h-10"
             />
-            {option.label}
-          </Label>
-        ))}
+          ))}
+        </RadioGroup>
       </fieldset>
 
       <div className="mt-6 flex flex-col gap-2">

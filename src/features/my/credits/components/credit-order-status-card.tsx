@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -13,15 +15,36 @@ import {
   usePendingCreditOrderId,
 } from '../hooks/use-credit-order-confirmation';
 
-/** 결제창에서 돌아왔을 때 잔액 아래에 붙는 확인 카드. 대기 주문이 없으면 아무것도 그리지 않는다. */
+/**
+ * 결제창에서 돌아왔을 때 잔액 아래에 붙는 확인 카드. 대기 주문이 없으면 아무것도 그리지 않는다.
+ * 결과가 확정되면 훅이 기록을 지우지만, 카드는 닫거나 화면을 떠날 때까지 붙잡은 주문으로 유지한다.
+ */
 export function CreditOrderStatusCard() {
-  const orderId = usePendingCreditOrderId();
+  const pendingId = usePendingCreditOrderId();
+  const [activeId, setActiveId] = useState(pendingId);
+
+  // 새 대기 주문이 생기면 그 주문으로 바꾼다(이전 렌더 정보를 갱신하는 렌더 중 setState).
+  if (pendingId !== null && pendingId !== activeId) {
+    setActiveId(pendingId);
+  }
 
   // 주문이 바뀌면 폴링 상태도 처음부터 시작하도록 주문 단위로 마운트한다.
-  return orderId ? <CreditOrderStatus key={orderId} orderId={orderId} /> : null;
+  return activeId ? (
+    <CreditOrderStatus
+      key={activeId}
+      orderId={activeId}
+      onDismiss={() => setActiveId(null)}
+    />
+  ) : null;
 }
 
-function CreditOrderStatus({ orderId }: { orderId: string }) {
+function CreditOrderStatus({
+  orderId,
+  onDismiss,
+}: {
+  orderId: string;
+  onDismiss: () => void;
+}) {
   const { confirmation, retry, dismiss } = useCreditOrderConfirmation(orderId);
 
   const isChecking = confirmation.kind === 'checking';
@@ -79,7 +102,10 @@ function CreditOrderStatus({ orderId }: { orderId: string }) {
             size="icon-sm"
             variant="ghost"
             aria-label={CREDIT_ORDER_COPY.dismiss}
-            onClick={dismiss}>
+            onClick={() => {
+              dismiss();
+              onDismiss();
+            }}>
             <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
           </Button>
         </div>

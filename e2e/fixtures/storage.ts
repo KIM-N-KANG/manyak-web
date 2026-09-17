@@ -17,6 +17,8 @@ import {
 import {
   PENDING_CREATION_REQUEST_STORAGE_KEY,
   type PendingCreationRequest,
+  STORY_COMPLETION_REQUESTS_STORAGE_KEY,
+  type StoryCompletionRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 import { AMP_MKTG_COOKIE_PREFIX } from '@/observability/analytics/amplitude-identity';
@@ -128,6 +130,15 @@ export async function seedPendingCreditOrder(
 ): Promise<void> {
   await page.addInitScript(
     ([key, id]) => {
+      // 결제창으로 나가기 전 한 번 남긴 기록을 흉내 낸다. 새로고침·리다이렉트마다 다시
+      // 심으면 앱이 지운 기록이 되살아나므로 탭 단위로 한 번만 심는다.
+      const seededKey = `${key}:seeded`;
+
+      if (window.sessionStorage.getItem(seededKey)) {
+        return;
+      }
+
+      window.sessionStorage.setItem(seededKey, '1');
       window.localStorage.setItem(
         key,
         JSON.stringify({ orderId: id, savedAt: Date.now() }),
@@ -157,7 +168,7 @@ export async function seedCampaignCookie(
 }
 
 /**
- * 로컬스토리지에 백그라운드 복구 대상 생성 요청 레코드를 심는다.
+ * 로컬스토리지의 편집 슬롯에 초안·스토리라인 생성 레코드를 심는다.
  * 스토리 생성 퍼널 재진입 시 복구 조회 폴링이 시작되는 상태를 재현할 때 쓴다.
  */
 export async function seedPendingCreationRequest(
@@ -169,5 +180,21 @@ export async function seedPendingCreationRequest(
       window.localStorage.setItem(key, value);
     },
     [PENDING_CREATION_REQUEST_STORAGE_KEY, JSON.stringify(record)] as const,
+  );
+}
+
+/**
+ * 로컬스토리지의 완성 요청 목록에 레코드를 심는다.
+ * 제작 탭의 완성 중 카드 폴링이 시작되는 상태를 재현할 때 쓴다.
+ */
+export async function seedStoryCompletionRequests(
+  page: Page,
+  records: StoryCompletionRecord[],
+): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      window.localStorage.setItem(key, value);
+    },
+    [STORY_COMPLETION_REQUESTS_STORAGE_KEY, JSON.stringify(records)] as const,
   );
 }

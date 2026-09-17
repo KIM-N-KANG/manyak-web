@@ -9,11 +9,15 @@ import { toast } from 'sonner';
 
 import { useWithdraw } from '@/api/generated/endpoints/users/users';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
+import { Checkbox } from '@/components/motion/checkbox';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { clearPendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import { clearPendingCreditOrder } from '@/features/my/credits/utils/pending-credit-order-storage';
+import {
+  clearPendingCreationRequest,
+  clearStoryCompletionRequests,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { resetAnalyticsUser } from '@/observability/analytics';
 
 import {
@@ -42,6 +46,8 @@ export function AccountDeletionScreen() {
 
         resetAnalyticsUser();
         clearPendingCreationRequest();
+        clearStoryCompletionRequests();
+        clearPendingCreditOrder();
         queryClient.clear();
         void signOut({ redirectTo: APP_PATH.MAIN.MY });
       },
@@ -110,28 +116,26 @@ export function AccountDeletionScreen() {
             const descriptionId = `${checkboxId}-description`;
 
             return (
-              <label
+              <Checkbox
                 key={id}
-                htmlFor={checkboxId}
-                className="flex cursor-pointer items-start gap-4">
-                <Checkbox
-                  id={checkboxId}
-                  className="mt-0.5 size-5 border-foreground-tertiary bg-background shadow-none"
-                  checked={checkedConfirmationIds.has(id)}
-                  aria-describedby={descriptionId}
-                  onCheckedChange={(checked) =>
-                    handleCheckedChange(id, checked)
-                  }
-                />
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="leading-snug font-semibold">{title}</span>
-                  <span
-                    id={descriptionId}
-                    className="text-sm leading-relaxed text-foreground-secondary">
-                    {description}
+                id={checkboxId}
+                className="items-start gap-4"
+                checked={checkedConfirmationIds.has(id)}
+                aria-describedby={descriptionId}
+                onCheckedChange={(checked) => handleCheckedChange(id, checked)}
+                label={
+                  <span className="flex flex-col gap-1">
+                    <span className="text-base leading-5 font-semibold">
+                      {title}
+                    </span>
+                    <span
+                      id={descriptionId}
+                      className="text-sm leading-relaxed text-foreground-secondary">
+                      {description}
+                    </span>
                   </span>
-                </span>
-              </label>
+                }
+              />
             );
           })}
         </fieldset>

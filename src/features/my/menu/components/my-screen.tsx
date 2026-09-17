@@ -14,7 +14,11 @@ import { Label } from '@/components/ui/label';
 import { APP_PATH } from '@/constants/app-path';
 import { InviteMenuItem } from '@/features/my/_shared/components/invite-menu-item';
 import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
-import { clearPendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import { clearPendingCreditOrder } from '@/features/my/credits/utils/pending-credit-order-storage';
+import {
+  clearPendingCreationRequest,
+  clearStoryCompletionRequests,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import { resetAnalyticsUser, track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
@@ -36,6 +40,8 @@ export function MyScreen() {
     track('client_account_logoutButton_clicked');
     resetAnalyticsUser();
     clearPendingCreationRequest();
+    clearStoryCompletionRequests();
+    clearPendingCreditOrder();
     void signOut({ redirectTo: APP_PATH.MAIN.MY });
   };
 

@@ -19,13 +19,17 @@ import type { DraftCreationRecord } from '@/features/stories/_shared/utils/creat
 import {
   loadPendingCreationRequest,
   takePendingCreationRequest,
+  takeStoryCompletionRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { markDraftResumeIntent } from '@/features/stories/_shared/utils/draft-resume-intent';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
 
 import { useCreatedStories } from '../hooks/use-created-stories';
-import { usePendingCreationRequest } from '../hooks/use-pending-creation-request';
+import {
+  usePendingCreationRequest,
+  useStoryCompletionRequests,
+} from '../hooks/use-pending-creation-request';
 import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryCard } from './created-story-card';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
@@ -35,29 +39,29 @@ export function CreatedStoryList() {
   const router = useRouter();
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const pendingCreationRecord = usePendingCreationRequest();
+  const completionRecords = useStoryCompletionRequests();
   const showSkeleton = useDelayedLoading(isLoading);
   const shouldReduceMotion = useReducedMotion();
   const [resumeDialogRecord, setResumeDialogRecord] =
     useState<DraftCreationRecord | null>(null);
-  const completedStoryId =
-    pendingCreationRecord?.stage === 'STORY_COMPLETION'
-      ? pendingCreationRecord.createdStoryId
-      : null;
-  const isCompletedStoryVisible =
-    typeof completedStoryId === 'string' &&
+  const isStoryListed = (storyId: string | null | undefined) =>
+    typeof storyId === 'string' &&
     !isLoading &&
     !isError &&
-    stories.some((story) => story.id === completedStoryId);
-  const visiblePendingRecord = isCompletedStoryVisible
-    ? null
-    : pendingCreationRecord;
-  const completedRequestId = isCompletedStoryVisible
-    ? pendingCreationRecord?.requestId
-    : null;
+    stories.some((story) => story.id === storyId);
+  const visibleCompletionRecords = completionRecords.filter(
+    (record) => !isStoryListed(record.createdStoryId),
+  );
+  const completedRequestIds = completionRecords
+    .filter((record) => isStoryListed(record.createdStoryId))
+    .map((record) => record.requestId)
+    .join(',');
 
   useEffect(() => {
-    if (completedRequestId) takePendingCreationRequest(completedRequestId);
-  }, [completedRequestId]);
+    for (const requestId of completedRequestIds.split(',')) {
+      if (requestId) takeStoryCompletionRequest(requestId);
+    }
+  }, [completedRequestIds]);
 
   const rowMotion = {
     initial: shouldReduceMotion ? false : { opacity: 0 },
@@ -119,13 +123,11 @@ export function CreatedStoryList() {
   let stateKey: string;
   let content: ReactNode;
 
-  if (
-    visiblePendingRecord?.stage === 'STORY_COMPLETION' &&
-    stories.length === 0 &&
-    !isError
-  ) {
+  if (visibleCompletionRecords.length > 0 && stories.length === 0 && !isError) {
     stateKey = 'completing';
-    content = null;
+    content = (
+      <CreateStoryFab onCreate={(event) => handleCreateClick(event, 'fab')} />
+    );
   } else if (showSkeleton) {
     stateKey = 'skeleton';
     content = <CreatedStoryListSkeleton />;
@@ -171,13 +173,21 @@ export function CreatedStoryList() {
     <>
       <ul className="relative flex shrink-0 flex-col">
         <AnimatePresence mode="popLayout" initial={false}>
-          {visiblePendingRecord ? (
+          {pendingCreationRecord ? (
             <m.li
-              key={`creation-${visiblePendingRecord.requestId}`}
+              key={`creation-${pendingCreationRecord.requestId}`}
               {...rowMotion}>
-              <CreationProgressCard record={visiblePendingRecord} />
+              <CreationProgressCard record={pendingCreationRecord} />
             </m.li>
           ) : null}
+          {visibleCompletionRecords.map((record) => (
+            <m.li
+              key={`creation-${record.requestId}`}
+              layout={shouldReduceMotion ? false : 'position'}
+              {...rowMotion}>
+              <CreationProgressCard record={record} />
+            </m.li>
+          ))}
           {!isLoading && !isError
             ? stories.map((story, index) => (
                 <m.li
