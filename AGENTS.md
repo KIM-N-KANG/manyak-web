@@ -8,7 +8,8 @@
 pnpm typecheck        # 타입 검사
 pnpm lint             # ESLint
 pnpm test             # Vitest 단위 테스트
-pnpm test:e2e         # Playwright E2E
+pnpm test:e2e         # Playwright E2E (프로덕션 빌드·3100 포트라 켜 둔 pnpm dev와 공존)
+E2E_DEV=1 pnpm test:e2e  # 개발 서버로 E2E. 스펙 몇 개 반복할 때만. 켜 둔 pnpm dev는 꺼야 함(Next 16 단일 dev 제한)
 pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 필요)
 ```
 
