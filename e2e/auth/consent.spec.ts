@@ -283,6 +283,36 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     ).toBe(true);
   });
 
+  test('동의 시트가 열린 채 뒤로가기를 누르면 동의하지 않은 것으로 보고 새로고침 없이 로그아웃한다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await seedPendingLogin(page);
+    await page.route(CONSENTS, (route) =>
+      route.fulfill({ json: PENDING_CONSENTS }),
+    );
+
+    const signOut = await mockSignOut(page);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await expect(consentDialog(page)).toBeVisible();
+    await page.evaluate(() => {
+      (window as { keepAlive?: boolean }).keepAlive = true;
+    });
+
+    await page.goBack();
+
+    await expect.poll(() => signOut.count).toBe(1);
+    await expect(consentDialog(page)).toBeHidden();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: '로그인' }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() => (window as { keepAlive?: boolean }).keepAlive),
+    ).toBe(true);
+  });
+
   test('버전 불일치면 자동 재전송 없이 최신 버전을 다시 표시하고 체크를 초기화한다', async ({
     page,
   }) => {

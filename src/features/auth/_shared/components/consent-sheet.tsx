@@ -29,6 +29,7 @@ import {
 } from '@/features/auth/_shared/utils/consent-status';
 import { signOutBeforeConsent } from '@/features/auth/_shared/utils/sign-out-before-consent';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
+import { useCloseOnBack } from '@/hooks/use-close-on-back';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
 import { FetchError, getApiErrorCode } from '@/lib/custom-fetch';
 
@@ -54,7 +55,8 @@ const DOCUMENT_LINKS: Partial<
  * 필수 동의 시트의 체크·제출·로그아웃 상태를 관리하는 훅.
  * 체크 상태는 서버가 요구하는 버전 묶음에 매여 있어, 버전 불일치로 다시 조회해 요구
  * 버전이 바뀌면 체크가 저절로 초기화된다(자동 재전송 없음). 기록 응답에서 필수 항목의
- * `needsConsent`가 모두 false일 때만 완료로 반영한다.
+ * `needsConsent`가 모두 false일 때만 완료로 반영한다. 시트가 열린 동안 뒤로가기는 동의하지 않은
+ * 것으로 보고 `logout`으로 이어진다(제출 중에는 무시).
  *
  * @param options 필요 항목, 기록 성공 반영 콜백, 최신 상태 재조회 콜백
  * @returns 체크 상태·토글·제출·로그아웃 핸들러와 진행·오류 상태
@@ -187,6 +189,9 @@ export function ConsentSheet({
   const form = useConsentForm({ required, onRecorded, onReload });
   const isOpen =
     phase === 'required' || phase === 'load-error' || phase === 'forbidden';
+
+  useCloseOnBack({ open: isOpen && container !== null, onClose: form.logout });
+
   const errorHeader =
     phase === 'load-error'
       ? CONSENT_SHEET_COPY.loadError
