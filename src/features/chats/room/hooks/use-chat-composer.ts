@@ -23,6 +23,11 @@ type UseChatComposerParams = {
   suggestionSourceTurnId?: number;
   /** 전송 직전 추가 차단 조건. false면 입력을 유지한 채 전송하지 않는다. */
   canSend?: () => boolean;
+  /**
+   * 마운트 시 되살릴 입력 본문(로그인 복귀 초안). 입력 모드는 마운트 뒤 저장값으로 바뀌므로
+   * 두 컴포저 모두에 채워 두고, 활성 모드의 컴포저가 그 값을 보여 준다.
+   */
+  initialDraft?: string | null;
   onSend: (
     text: string,
     userSource: ContinueChatRequestUserSource,
@@ -41,6 +46,7 @@ type UseChatComposerParams = {
  * @param suggestions 추천 입력 문구 목록
  * @param suggestionSourceTurnId 추천 문구가 달린 원본 턴 ID
  * @param canSend 전송 직전 추가 차단 조건(생략 시 항상 허용)
+ * @param initialDraft 마운트 시 되살릴 입력 본문
  * @param onSend 완성된 텍스트와 그 출처를 전송하는 콜백
  * @returns 입력 값·블럭 상태와 전송·채우기·모드 전환 등의 동작
  */
@@ -52,6 +58,7 @@ export function useChatComposer({
   suggestions,
   suggestionSourceTurnId,
   canSend,
+  initialDraft,
   onSend,
 }: UseChatComposerParams) {
   const { submitText, submitChoice, trackChoiceFill, rememberFilledChoice } =
@@ -63,8 +70,14 @@ export function useChatComposer({
       canSend,
       onSend,
     });
-  const plainComposer = useChatPlainComposer({ submitText });
-  const blockComposer = useChatBlockComposer({ submitText });
+  const plainComposer = useChatPlainComposer({
+    submitText,
+    initialValue: initialDraft ?? '',
+  });
+  const blockComposer = useChatBlockComposer({
+    submitText,
+    initialBlocks: initialDraft ? parseInputBlocks(initialDraft) : undefined,
+  });
 
   /** 작성 중인 입력이 있는지 여부. 추천 문구 덮어쓰기 확인에 사용한다. */
   const hasDraft =
@@ -151,9 +164,16 @@ export function useChatComposer({
     }
   };
 
+  /** 현재 입력을 전송 본문과 같은 형식의 문자열로 만든다(로그인 복귀 초안 저장용). */
+  const serializeDraft = () =>
+    inputMode === 'block'
+      ? serializeInputBlocks(blockComposer.blocks, '\n\n')
+      : plainComposer.value;
+
   return {
     value: plainComposer.value,
     setValue: plainComposer.setValue,
+    serializeDraft,
     textareaRef: plainComposer.textareaRef,
     blocks: blockComposer.blocks,
     hasDraft,

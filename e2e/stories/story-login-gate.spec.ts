@@ -2,6 +2,8 @@ import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
+import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
+import { GUEST_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/guest-chat-storage';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   CREATE_STORY_FAB_COPY,
@@ -31,11 +33,6 @@ const story = {
 };
 
 const storyLoginSheet = (page: Page) =>
-  page
-    .getByRole('dialog')
-    .getByRole('heading', { name: oneLine(LOGIN_COPY.title) });
-
-const chatLoginSheet = (page: Page) =>
   page
     .getByRole('dialog')
     .getByRole('heading', { name: oneLine(LOGIN_COPY.title) });
@@ -116,7 +113,7 @@ test.describe('스토리 제작 로그인 게이트', () => {
     expect(tagsRequestCount).toBe(0);
   });
 
-  test('게스트가 상세에서 새 채팅 시작하기를 누르면 생성 요청 없이 로그인 필요 시트를 띄운다 (STORY-GATE-04)', async ({
+  test('게스트도 상세에서 새 채팅을 시작해 채팅방에 들어가되, 그 채팅은 채팅 목록 서재에 남지 않는다 (STORY-GATE-04)', async ({
     page,
   }) => {
     let createChatCount = 0;
@@ -126,15 +123,27 @@ test.describe('스토리 제작 로그인 게이트', () => {
     });
     await page.route(CREATE_CHAT, async (route) => {
       createChatCount += 1;
-      await route.abort();
+      await route.fulfill({
+        status: 201,
+        json: { id: 'c-guest', storyId: 's1' },
+      });
     });
 
     await page.goto('/stories/s1');
     await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
 
-    await expect(chatLoginSheet(page)).toBeVisible();
-    await expect(page).toHaveURL(/\/stories\/s1$/);
-    expect(createChatCount).toBe(0);
+    await expect(page).toHaveURL(/\/chats\/c-guest$/);
+    expect(createChatCount).toBe(1);
+    // 목록 서재(localStorage)에는 넣지 않고, 로그인 후 이관을 위해 이 탭에만 기억한다.
+    expect(
+      await page.evaluate(
+        ([listKey, tabKey]) => [
+          window.localStorage.getItem(listKey),
+          window.sessionStorage.getItem(tabKey),
+        ],
+        [CREATED_CHAT_IDS_STORAGE_KEY, GUEST_CHAT_IDS_STORAGE_KEY] as const,
+      ),
+    ).toEqual([null, JSON.stringify(['c-guest'])]);
   });
 
   test('게스트가 빈 채팅 목록의 스토리 만들기를 눌러도 로그인 필요 시트를 띄운다 (STORY-GATE-05)', async ({

@@ -10,6 +10,7 @@ import {
   getCreatedChatIdsSnapshot,
   parseCreatedChatIds,
 } from '@/features/chats/_shared/utils/chat-id-storage';
+import { readGuestChatIds } from '@/features/chats/_shared/utils/guest-chat-storage';
 import {
   getCreatedStoryIdsSnapshot,
   parseCreatedStoryIds,
@@ -100,7 +101,10 @@ export async function startInAppHandoffLogin({
   inAppBrowser,
 }: StartInAppHandoffLoginOptions): Promise<SocialLoginOutcome> {
   const storyIds = parseCreatedStoryIds(getCreatedStoryIdsSnapshot());
-  const chatIds = parseCreatedChatIds(getCreatedChatIdsSnapshot());
+  const chatIds = [
+    ...parseCreatedChatIds(getCreatedChatIdsSnapshot()),
+    ...readGuestChatIds(),
+  ];
 
   try {
     const response = await createLoginHandoff({

@@ -41,6 +41,11 @@ import {
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
 import { useStoredToggle } from '../hooks/use-stored-toggle';
+import {
+  clearChatLoginDraft,
+  readChatLoginDraft,
+  saveChatLoginDraft,
+} from '../utils/chat-login-draft-storage';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
@@ -149,6 +154,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   };
 
   const { mode, changeMode } = useChatInputMode();
+  // 게스트가 로그인 시트를 열며 남긴 입력을 같은 탭 복귀 때 되살린다. 읽기만 초기값으로 쓰고
+  // 지우기는 effect에서 해 StrictMode 이중 초기화에도 초안을 잃지 않는다.
+  const [initialDraft] = useState(() => readChatLoginDraft(chatId));
+
+  useEffect(() => {
+    clearChatLoginDraft(chatId);
+  }, [chatId]);
+
   const suggestions =
     turns.length === 0
       ? suggestedInputs
@@ -165,8 +178,17 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     inputMode: mode,
     suggestions,
     suggestionSourceTurnId,
-    // 비로그인이면 요청 없이 로그인 시트를 열고 입력은 그대로 둔다.
-    canSend: () => !requireLogin(),
+    // 비로그인이면 요청 없이 로그인 시트를 열고 입력은 그대로 둔 채 초안을 탭에 남긴다.
+    canSend: () => {
+      if (!requireLogin()) {
+        return true;
+      }
+
+      saveChatLoginDraft(chatId, composer.serializeDraft());
+
+      return false;
+    },
+    initialDraft,
     onSend: send,
   });
 

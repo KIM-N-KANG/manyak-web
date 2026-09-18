@@ -4,18 +4,22 @@ import { insertEmphasisMarkers } from '../utils/insert-emphasis-markers';
 
 type UseChatPlainComposerParams = {
   submitText: (text: string) => boolean;
+  /** 마운트 시 되살릴 입력 본문(로그인 복귀 초안). */
+  initialValue?: string;
 };
 
 /**
  * 일반(자유 텍스트) 입력 모드의 텍스트 상태와 전송·채우기·강조 삽입 동작을 관리하는 훅
  *
  * @param submitText 완성된 텍스트를 전송하고 성공 여부를 반환하는 함수
+ * @param initialValue 마운트 시 되살릴 입력 본문
  * @returns 입력 값과 전송·채우기·초기화·강조 삽입 동작
  */
 export function useChatPlainComposer({
   submitText,
+  initialValue = '',
 }: UseChatPlainComposerParams) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(initialValue);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const focusTextEnd = (text: string) => {

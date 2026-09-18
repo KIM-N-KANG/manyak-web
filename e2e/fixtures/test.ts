@@ -30,6 +30,7 @@ export { expect };
 export {
   seedCampaignCookie,
   seedChatIds,
+  seedGuestChatIds,
   seedPendingCreditOrder,
   seedPendingHandoff,
   seedPendingLogin,

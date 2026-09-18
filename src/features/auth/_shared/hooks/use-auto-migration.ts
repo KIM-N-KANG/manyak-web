@@ -23,6 +23,10 @@ import {
   writeCreatedChatIds,
 } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
+  clearGuestChatIds,
+  readGuestChatIds,
+} from '@/features/chats/_shared/utils/guest-chat-storage';
+import {
   CREATED_STORY_IDS_STORAGE_KEY,
   parseCreatedStoryIds,
   writeCreatedStoryIds,
@@ -63,9 +67,13 @@ export function useAutoMigration(): void {
     const storyIds = parseCreatedStoryIds(
       window.localStorage.getItem(CREATED_STORY_IDS_STORAGE_KEY),
     );
-    const chatIds = parseCreatedChatIds(
-      window.localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY),
-    );
+    // 목록에 없는 이 탭의 게스트 채팅(상세에서 시작한 채팅)도 함께 옮긴다.
+    const chatIds = [
+      ...parseCreatedChatIds(
+        window.localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY),
+      ),
+      ...readGuestChatIds(),
+    ];
 
     if (storyIds.length === 0 && chatIds.length === 0) {
       return;
@@ -106,6 +114,7 @@ export function useAutoMigration(): void {
             // CONFLICT·NOT_FOUND는 게스트로도 접근 불가라 남길 가치가 없다.
             writeCreatedStoryIds([]);
             writeCreatedChatIds([]);
+            clearGuestChatIds();
 
             // 이관된 항목이 이미 마운트된 목록 화면에 바로 보이도록 회원 목록을 새로 조회한다.
             void queryClient.invalidateQueries({

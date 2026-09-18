@@ -9,7 +9,6 @@ import { LoadingButtonContent } from '@/components/common/loading-button-content
 // import { HeartFilledIcon } from '@/components/icons/heart-filled-icon';
 // import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { Button } from '@/components/ui/button';
-import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
 import { track } from '@/observability/analytics';
 
@@ -36,7 +35,7 @@ export function StoryDetailCta({
   // const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
   // const { status } = useSession();
   // const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
-  const { startChat, isStarting, loginSheetProps } = useStartChat(storyId, {
+  const { startChat, isStarting } = useStartChat(storyId, {
     startSettingId,
     onStart: () =>
       track('client_storyDetail_chatStartButton_clicked', {
@@ -96,7 +95,6 @@ export function StoryDetailCta({
           </Button>
         </div>
       </nav>
-      <LoginRequiredSheet {...loginSheetProps} />
     </>
   );
 }

@@ -34,7 +34,6 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { APP_PATH } from '@/constants/app-path';
-import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { useDeleteCreatedChat } from '@/features/chats/_shared/hooks/use-delete-created-chat';
 import { CreditBalanceCard } from '@/features/my/menu/components/credit-balance-card';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
@@ -71,9 +70,7 @@ export function ChatMenuDrawer({
     chatId,
     () => router.replace(APP_PATH.MAIN.CHATS),
   );
-  const { startChat, isStarting, loginSheetProps } = useStartChat(
-    storyId ?? '',
-  );
+  const { startChat, isStarting } = useStartChat(storyId ?? '');
 
   const canReport = status === 'authenticated' && storyId !== null;
 
@@ -92,10 +89,7 @@ export function ChatMenuDrawer({
 
   return (
     <>
-      {/* 로그인 필요 시트가 뜨면 드로어는 닫는다. 두 드로어를 겹치지 않는다. */}
-      <Drawer
-        open={isOpen && !loginSheetProps.open && container !== null}
-        onOpenChange={setIsOpen}>
+      <Drawer open={isOpen && container !== null} onOpenChange={setIsOpen}>
         <DrawerTrigger
           render={
             <Button
@@ -202,8 +196,6 @@ export function ChatMenuDrawer({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <LoginRequiredSheet {...loginSheetProps} />
     </>
   );
 }

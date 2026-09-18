@@ -9,8 +9,10 @@ import {
   mockHandoffStatus,
   seedCampaignCookie,
   seedChatIds,
+  seedGuestChatIds,
   seedPendingHandoff,
   seedStoryIds,
+  skipChatTour,
   skipOnboarding,
   test,
 } from '../fixtures/test';
@@ -115,7 +117,7 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
       });
     });
 
-    let handoffBody: { callbackPath?: string } | undefined;
+    let handoffBody: { callbackPath?: string; chatIds?: string[] } | undefined;
 
     await page.route('**/api/v1/auth/handoffs', async (route) => {
       handoffBody = route.request().postDataJSON();
@@ -129,8 +131,23 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
       });
     });
 
-    await page.goto('/stories/s1?setting=ss2#endings');
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await skipChatTour(page);
+    await seedGuestChatIds(page, ['c-guest']);
+    await page.route('**/api/v1/chats/c-guest', async (route) => {
+      await route.fulfill({
+        json: {
+          id: 'c-guest',
+          storyId: 's1',
+          storyTitle: '용의 계곡',
+          prologue: '안개 낀 계곡 앞에 한 용사가 섰다.',
+          turns: [],
+          suggestedInputs: ['던전에 진입한다'],
+        },
+      });
+    });
+
+    await page.goto('/chats/c-guest?setting=ss2#endings');
+    await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
     await page
       .getByRole('dialog')
       .getByRole('button', { name: /Google로 시작하기/ })
@@ -138,7 +155,11 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
 
     await expect(page).toHaveURL(/\/login\/continue\?handoff=handoff-code-1/);
     // 외부 브라우저 로그인 뒤 같은 화면·같은 상태로 돌아오려면 pathname만으로는 부족하다.
-    expect(handoffBody?.callbackPath).toBe('/stories/s1?setting=ss2#endings');
+    expect(handoffBody?.callbackPath).toBe(
+      '/chats/c-guest?setting=ss2#endings',
+    );
+    // 목록에 없는 이 탭의 게스트 채팅도 핸드오프에 실어 계정으로 옮긴다.
+    expect(handoffBody?.chatIds).toEqual(['c-guest']);
   });
 
   test('전환 URL에 유입 출처(UTM)를 함께 실어 보낸다', async ({ page }) => {

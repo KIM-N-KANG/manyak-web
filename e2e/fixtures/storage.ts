@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { PENDING_HANDOFF_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-handoff-storage';
 import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
+import { GUEST_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/guest-chat-storage';
 import {
   CHAT_CHOICES_HINT_SEEN_STORAGE_KEY,
   CHAT_CHOICES_HINT_SEEN_VALUE,
@@ -209,4 +210,20 @@ export async function seedPendingLogin(page: Page): Promise<void> {
   await page.addInitScript((key) => {
     window.sessionStorage.setItem(key, '1');
   }, PENDING_LOGIN_STORAGE_KEY);
+}
+
+/**
+ * 이 탭에서 게스트로 시작한 채팅 ID(sessionStorage)를 심는다.
+ * 채팅 목록에는 없지만 로그인 후 이관·핸드오프에 실려야 하는 상태를 재현한다.
+ */
+export async function seedGuestChatIds(
+  page: Page,
+  chatIds: string[],
+): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      window.sessionStorage.setItem(key, value);
+    },
+    [GUEST_CHAT_IDS_STORAGE_KEY, JSON.stringify(chatIds)] as const,
+  );
 }
