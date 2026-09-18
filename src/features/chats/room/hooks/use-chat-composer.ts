@@ -21,6 +21,8 @@ type UseChatComposerParams = {
   inputMode: ChatInputMode;
   suggestions: string[];
   suggestionSourceTurnId?: number;
+  /** 전송 직전 추가 차단 조건. false면 입력을 유지한 채 전송하지 않는다. */
+  canSend?: () => boolean;
   onSend: (
     text: string,
     userSource: ContinueChatRequestUserSource,
@@ -38,6 +40,7 @@ type UseChatComposerParams = {
  * @param inputMode 현재 입력 모드(일반/블럭)
  * @param suggestions 추천 입력 문구 목록
  * @param suggestionSourceTurnId 추천 문구가 달린 원본 턴 ID
+ * @param canSend 전송 직전 추가 차단 조건(생략 시 항상 허용)
  * @param onSend 완성된 텍스트와 그 출처를 전송하는 콜백
  * @returns 입력 값·블럭 상태와 전송·채우기·모드 전환 등의 동작
  */
@@ -48,6 +51,7 @@ export function useChatComposer({
   inputMode,
   suggestions,
   suggestionSourceTurnId,
+  canSend,
   onSend,
 }: UseChatComposerParams) {
   const { submitText, submitChoice, trackChoiceFill, rememberFilledChoice } =
@@ -56,6 +60,7 @@ export function useChatComposer({
       turnCount,
       isStreaming,
       inputMode,
+      canSend,
       onSend,
     });
   const plainComposer = useChatPlainComposer({ submitText });

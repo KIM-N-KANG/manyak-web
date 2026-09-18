@@ -13,6 +13,8 @@ import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { useLoginRequired } from '@/features/auth/_shared/hooks/use-login-required';
 import { StoryCreateResumeDialog } from '@/features/stories/_shared/components/story-create-resume-dialog';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import type { DraftCreationRecord } from '@/features/stories/_shared/utils/creation-request-storage';
@@ -37,6 +39,7 @@ import { CreationProgressCard } from './creation-progress-card';
 
 export function CreatedStoryList() {
   const router = useRouter();
+  const { requireLogin, sheetProps } = useLoginRequired();
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const pendingCreationRecord = usePendingCreationRequest();
   const completionRecords = useStoryCompletionRequests();
@@ -75,6 +78,10 @@ export function CreatedStoryList() {
     source: 'fab' | 'emptyState',
   ) => {
     track('client_storyList_createButton_clicked', { source });
+
+    if (requireLogin(event)) {
+      return;
+    }
 
     if (
       pendingCreationRecord?.stage !== 'KEYWORD_DRAFT' &&
@@ -218,6 +225,7 @@ export function CreatedStoryList() {
         onDiscard={handleResumeDiscard}
         dismissible
       />
+      <LoginRequiredSheet {...sheetProps} />
     </>
   );
 }

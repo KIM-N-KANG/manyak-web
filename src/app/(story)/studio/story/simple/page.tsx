@@ -1,5 +1,5 @@
-import { StoryCreateFunnel } from '@/features/stories/new/components/story-create-funnel';
+import { StoryCreateGate } from '@/features/stories/new/components/story-create-gate';
 
 export default function SimpleStoryStudioPage() {
-  return <StoryCreateFunnel />;
+  return <StoryCreateGate />;
 }

@@ -98,6 +98,49 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
     ).toBeVisible();
   });
 
+  test('보호 기능에서 시작한 핸드오프는 현재 URL의 경로·쿼리·해시를 복귀 경로로 보낸다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.route('**/api/v1/stories/s1', async (route) => {
+      await route.fulfill({
+        json: {
+          id: 's1',
+          title: '용의 계곡',
+          oneLineIntro: '한 줄 소개입니다',
+          genres: ['판타지'],
+          createdAt: '2026-06-01T00:00:00Z',
+          startSettings: [],
+        },
+      });
+    });
+
+    let handoffBody: { callbackPath?: string } | undefined;
+
+    await page.route('**/api/v1/auth/handoffs', async (route) => {
+      handoffBody = route.request().postDataJSON();
+      await route.fulfill({
+        status: 201,
+        json: {
+          handoffCode: 'handoff-code-1',
+          handoffId: 'handoff-id-1',
+          expiresAt: '2099-01-01T00:00:00.000Z',
+        },
+      });
+    });
+
+    await page.goto('/stories/s1?setting=ss2#endings');
+    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: /Google로 시작하기/ })
+      .click();
+
+    await expect(page).toHaveURL(/\/login\/continue\?handoff=handoff-code-1/);
+    // 외부 브라우저 로그인 뒤 같은 화면·같은 상태로 돌아오려면 pathname만으로는 부족하다.
+    expect(handoffBody?.callbackPath).toBe('/stories/s1?setting=ss2#endings');
+  });
+
   test('전환 URL에 유입 출처(UTM)를 함께 실어 보낸다', async ({ page }) => {
     await skipOnboarding(page);
     await seedCampaignCookie(page, {
@@ -280,10 +323,10 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     await expect(
       page.getByRole('button', { name: /Google로 시작하기/ }),
     ).toBeVisible();
-    // 로그인 페이지와 동일하게 약관 동의 고지를 상시 표시한다.
+    // 약관 동의 고지는 두지 않는다. 동의는 로그인 직후 동의 시트가 받는다.
     await expect(
       page.getByRole('link', { name: '서비스 이용약관', exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 
   test('쿼리 제거는 핸드오프 코드에만 적용하고 유입 출처는 남긴다', async ({

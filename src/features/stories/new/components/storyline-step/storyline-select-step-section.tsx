@@ -27,7 +27,6 @@ export function StorylineSelectStepSection({
   activeStorylineIndex,
   isGeneratingStorylines,
   hasGenerateStorylinesError,
-  isGuestLimitReached,
   onActiveStorylineIndexChange,
   onRegenerateStorylines,
   onSelectStoryline,
@@ -159,7 +158,6 @@ export function StorylineSelectStepSection({
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4 pb-6">
           {getGenerateStorylinesErrorMessage({
-            isGuestLimitReached,
             isRegeneration: storylines.length > 0,
           })}
         </StoryCreateErrorMessage>

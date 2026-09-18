@@ -16,13 +16,6 @@ export type StepName =
   | 'additionalInfo'
   | 'complete';
 
-/** 게스트 체험 한도 초과(402) 다이어로그를 연 발생 지점. */
-export type GuestLimitTrigger =
-  | 'storyline_generate'
-  | 'story_create'
-  | 'chat_start'
-  | 'chat_turn';
-
 /** 회원 이프 부족(402·INSUFFICIENT_CREDIT) 토스트를 띄운 유료 동작 지점. */
 export type CreditShortageTrigger = 'story_create' | 'chat_turn';
 
@@ -58,13 +51,6 @@ export type AnalyticsEventProps = {
   };
   client_loginContinue_viewed: void;
   client_loginContinue_loginButton_clicked: { provider: SocialLoginProvider };
-  // guest limit (게스트 체험 한도 초과 → 로그인 유도)
-  client_guestLimitDialog_shown: { trigger: GuestLimitTrigger };
-  client_guestLimitDialog_loginButton_clicked: {
-    trigger: GuestLimitTrigger;
-    provider: SocialLoginProvider;
-  };
-  client_guestLimitDialog_dismissed: { trigger: GuestLimitTrigger };
   // credit shortage (회원 이프 부족 → 토스트 안내, 이벤트 이름은 하위 호환 유지)
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
   // report (스토리 신고 시트 — 채팅에서 열어도 대상은 참조 스토리라 target_type은 story 고정)

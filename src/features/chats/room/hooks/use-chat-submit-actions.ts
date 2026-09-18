@@ -20,6 +20,8 @@ type UseChatSubmitActionsParams = {
   turnCount: number;
   isStreaming: boolean;
   inputMode: ChatInputMode;
+  /** 전송 직전 추가 차단 조건. false를 돌려주면 입력을 비우지 않고 전송하지 않는다. */
+  canSend?: () => boolean;
   onSend: (
     text: string,
     userSource: ContinueChatRequestUserSource,
@@ -30,11 +32,13 @@ type UseChatSubmitActionsParams = {
 /**
  * 채팅 입력 전송 동작을 제공하는 훅.
  * 공백/스트리밍 중 전송을 막고 분석 이벤트를 기록한 뒤 `onSend`를 호출한다.
+ * `canSend`가 false면(비로그인 등) 전송하지 않고 false를 돌려줘 컴포저가 입력을 유지한다.
  *
  * @param chatId 대상 채팅 ID
  * @param turnCount 현재까지의 턴 개수
  * @param isStreaming 응답 스트리밍 진행 여부
  * @param inputMode 현재 입력 모드(일반/블럭)
+ * @param canSend 전송 직전 추가 차단 조건(생략 시 항상 허용)
  * @param onSend 완성된 텍스트와 그 출처를 전송하는 콜백
  * @returns 텍스트·선택지 전송과 채우기 트래킹 동작
  */
@@ -43,6 +47,7 @@ export function useChatSubmitActions({
   turnCount,
   isStreaming,
   inputMode,
+  canSend,
   onSend,
 }: UseChatSubmitActionsParams) {
   // 채우기로 입력창에 넣어둔 선택지 원문·위치·턴 ID다. 전송 시점에 현재 텍스트와
@@ -62,7 +67,7 @@ export function useChatSubmitActions({
   ) => {
     const trimmed = text.trim();
 
-    if (!trimmed || isStreaming) {
+    if (!trimmed || isStreaming || canSend?.() === false) {
       return false;
     }
 

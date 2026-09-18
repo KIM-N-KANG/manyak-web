@@ -6,6 +6,8 @@ import type { ChatShareTurnResponse } from '@/api/generated/models';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { useLoginRequired } from '@/features/auth/_shared/hooks/use-login-required';
 import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
 import {
   AiMessageBubble,
@@ -44,6 +46,8 @@ export function SharedChatView({
   prologue,
   turns,
 }: SharedChatViewProps) {
+  const { requireLogin, sheetProps } = useLoginRequired();
+
   useTrackOnView('client_chatShare_viewed', { story_id: storyId });
 
   return (
@@ -94,12 +98,18 @@ export function SharedChatView({
           size="lg"
           className="w-full"
           render={<Link href={APP_PATH.STUDIO.STORY.SIMPLE} />}
-          onClick={() => {
+          onClick={(event) => {
             track('client_chatShare_ctaButton_clicked', { story_id: storyId });
+
+            if (requireLogin(event)) {
+              return;
+            }
+
             markOnboardingSeen();
           }}>
           나만의 스토리 만들고 채팅하기
         </Button>
+        <LoginRequiredSheet {...sheetProps} />
       </footer>
     </div>
   );

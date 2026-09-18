@@ -1,9 +1,10 @@
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { LOGIN_REQUIRED_SHEET_COPY } from '@/features/auth/_shared/constants/login-required';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { SOCIAL_LOGIN_PENDING_LABEL } from '@/features/auth/_shared/hooks/use-social-login';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 
+import { oneLine } from '../fixtures/copy';
 import {
   expect,
   mockMemberSession,
@@ -160,13 +161,11 @@ test('게스트는 좋아요 요청 없이 로그인 시트를 열고 닫아도 
     .click();
 
   const sheet = page.getByRole('dialog', {
-    name: LOGIN_REQUIRED_SHEET_COPY.title,
+    name: oneLine(LOGIN_COPY.title),
   });
 
   await expect(sheet).toBeVisible();
-  await expect(
-    sheet.getByText(LOGIN_REQUIRED_SHEET_COPY.description),
-  ).toBeVisible();
+  await expect(sheet.getByText(oneLine(LOGIN_COPY.linkNotice))).toBeVisible();
   await expect(
     sheet.getByRole('button', { name: '카카오로 시작하기' }),
   ).toBeVisible();
@@ -233,7 +232,7 @@ for (const provider of ['kakao', 'google'] as const) {
       .click();
 
     const sheet = page.getByRole('dialog', {
-      name: LOGIN_REQUIRED_SHEET_COPY.title,
+      name: oneLine(LOGIN_COPY.title),
     });
 
     await sheet

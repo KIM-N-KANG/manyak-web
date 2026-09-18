@@ -9,10 +9,7 @@ import { toast } from 'sonner';
 
 import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
-import type {
-  ChatTurnResponse,
-  ContinueChatRequestUserSource,
-} from '@/api/generated/models';
+import type { ChatTurnResponse } from '@/api/generated/models';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { ListStatus } from '@/components/common/list-status';
@@ -22,13 +19,11 @@ import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { useLoginRequired } from '@/features/auth/_shared/hooks/use-login-required';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
-import { isGuestTrialExhausted } from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import { useDocumentTitle } from '@/hooks/use-document-title';
-import { useTrials } from '@/hooks/use-trials';
-import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import {
@@ -46,7 +41,6 @@ import {
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
 import { useStoredToggle } from '../hooks/use-stored-toggle';
-import type { ChatChoiceSelection } from '../types';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
@@ -60,19 +54,12 @@ type ChatRoomProps = {
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
-  const trials = useTrials();
-  const [guestLimitTrigger, setGuestLimitTrigger] =
-    useState<GuestLimitTrigger | null>(null);
+  const { requireLogin, sheetProps: loginSheetProps } = useLoginRequired();
   const handlePaymentRequired = (error: unknown) => {
-    const reason = resolvePaymentRequiredReason(error, sessionStatus);
-
-    if (reason === 'guest-trial-limit') {
-      setGuestLimitTrigger('chat_turn');
-
-      return;
-    }
-
-    if (reason === 'insufficient-credit') {
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) ===
+      'insufficient-credit'
+    ) {
       showCreditShortageToast('chat_turn');
 
       return;
@@ -148,29 +135,13 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnCount: turns.length,
   });
 
-  const guardedSend = (
-    userInput: string,
-    userSource: ContinueChatRequestUserSource,
-    selection?: ChatChoiceSelection,
-  ): Promise<void> => {
-    if (isGuestTrialExhausted(sessionStatus, trials, 'chatTurn')) {
-      setGuestLimitTrigger('chat_turn');
-
-      return Promise.resolve();
-    }
-
-    return send(userInput, userSource, selection);
-  };
-
   const guardedRegenerate = (turn: ChatTurnResponse): Promise<void> => {
     track('client_chat_regenerateButton_clicked', {
       chat_id: chatId,
       turn_number: turns.length,
     });
 
-    if (isGuestTrialExhausted(sessionStatus, trials, 'chatTurn')) {
-      setGuestLimitTrigger('chat_turn');
-
+    if (requireLogin()) {
       return Promise.resolve();
     }
 
@@ -194,7 +165,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     inputMode: mode,
     suggestions,
     suggestionSourceTurnId,
-    onSend: guardedSend,
+    // 비로그인이면 요청 없이 로그인 시트를 열고 입력은 그대로 둔다.
+    canSend: () => !requireLogin(),
+    onSend: send,
   });
 
   const [pendingFill, setPendingFill] = useState<{
@@ -364,14 +337,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           cancelLabel="그대로 두기"
           confirmLabel="바꾸기"
         />
-        <LoginRequiredSheet
-          trigger={guestLimitTrigger}
-          onOpenChange={(open) => {
-            if (!open) {
-              setGuestLimitTrigger(null);
-            }
-          }}
-        />
+        <LoginRequiredSheet {...loginSheetProps} />
         {tour.isOpen && (
           <ChatTour
             inputMode={mode}

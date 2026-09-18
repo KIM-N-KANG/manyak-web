@@ -335,6 +335,8 @@ test.describe('스토리 상세', () => {
   test('"채팅 시작하기"를 누르면 선택한 시작 설정으로 채팅 화면에 이동한다 (US-4-2)', async ({
     page,
   }) => {
+    await mockMemberSession(page);
+
     let createChatBody: Record<string, unknown> | undefined;
 
     await page.route(STORY_DETAIL, fulfillStoryDetail);
@@ -362,6 +364,8 @@ test.describe('스토리 상세', () => {
   });
 
   test('새 채팅 시작 중 버튼 문구 대신 스피너를 표시한다', async ({ page }) => {
+    await mockMemberSession(page);
+
     let releaseResponse!: () => void;
     const responseGate = new Promise<void>((resolve) => {
       releaseResponse = resolve;

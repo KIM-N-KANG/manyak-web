@@ -4,7 +4,10 @@ import type { MouseEvent } from 'react';
 
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
-import { resolveLoginCallbackUrl } from './login-callback-url';
+import {
+  readCurrentAppPath,
+  resolveLoginCallbackUrl,
+} from './login-callback-url';
 import { startInAppHandoffLogin } from './start-social-login';
 
 /**
@@ -13,7 +16,8 @@ import { startInAppHandoffLogin } from './start-social-login';
  * 곧장 전환 안내로 튕기는 중간 단계일 뿐이기 때문이다. 카카오톡 인앱은 제외한다 —
  * 카카오 로그인이 인앱에서 그대로 완료되므로 /login이 방식 선택 화면으로 동작해야
  * 한다(스펙 §3-10). 일반 브라우저에서도 아무것도 하지 않아 기본 내비게이션이 유지된다.
- * 복귀 경로는 현재 화면으로 잡아, 로그인 완료 후 버튼을 눌렀던 화면으로 돌아오게 한다.
+ * 복귀 경로는 현재 화면(쿼리·해시 포함)으로 잡아, 로그인 완료 후 버튼을 눌렀던 화면으로
+ * 돌아오게 한다.
  *
  * @param event 로그인 링크의 클릭 이벤트(직행 대상 인앱이면 기본 이동을 막는다)
  */
@@ -29,7 +33,7 @@ export function startInAppLoginShortcut(
   event.preventDefault();
 
   void startInAppHandoffLogin({
-    redirectTo: resolveLoginCallbackUrl(window.location.pathname),
+    redirectTo: resolveLoginCallbackUrl(readCurrentAppPath()),
     inAppBrowser,
   });
 }

@@ -8,6 +8,8 @@ import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { useLoginRequired } from '@/features/auth/_shared/hooks/use-login-required';
 import { useHasCreatedStories } from '@/features/stories/_shared/hooks/use-has-created-stories';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useTrackOnView } from '@/observability/analytics';
@@ -21,6 +23,7 @@ export function ChatList() {
 
   const { chats, isLoading, isError, isEmpty, refetch } = useCreatedChats();
   const hasStories = useHasCreatedStories();
+  const { requireLogin, sheetProps } = useLoginRequired();
   const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) {
@@ -57,13 +60,21 @@ export function ChatList() {
             스토리 목록으로 가기
           </Button>
         ) : (
-          <Button
-            nativeButton={false}
-            render={<Link href={APP_PATH.STUDIO.STORY.SIMPLE} />}
-            size="lg">
-            <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-            <span>스토리 만들기</span>
-          </Button>
+          <>
+            <Button
+              nativeButton={false}
+              render={
+                <Link
+                  href={APP_PATH.STUDIO.STORY.SIMPLE}
+                  onClick={(event) => requireLogin(event)}
+                />
+              }
+              size="lg">
+              <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
+              <span>스토리 만들기</span>
+            </Button>
+            <LoginRequiredSheet {...sheetProps} />
+          </>
         )}
       </ListStatus>
     );

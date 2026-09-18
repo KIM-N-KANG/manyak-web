@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -14,9 +12,8 @@ import {
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
+import { useLoginRequired } from '@/features/auth/_shared/hooks/use-login-required';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
-import type { GuestLimitTrigger } from '@/observability/analytics';
 
 type UseStartChatOptions = {
   /** 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용) */
@@ -27,11 +24,12 @@ type UseStartChatOptions = {
 
 /**
  * 스토리로 새 채팅을 시작하는 훅. 스토리 상세 CTA와 채팅방 메뉴가 함께 쓴다.
- * 채팅 생성 후 ID를 로컬에 저장하고 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
+ * 채팅은 회원 전용이라 생성 요청 전에 회원 여부를 확인하고, 게스트에게는 요청 없이 로그인
+ * 시트를 연다. 채팅 생성 후 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
  *
  * @param storyId 채팅을 시작할 스토리 id
  * @param options 시작 설정 id와 요청 직전 콜백
- * @returns 채팅 시작 함수와 진행/에러 상태, 게스트 한도 바텀 시트 제어값
+ * @returns 채팅 시작 함수와 진행/에러 상태, 로그인 필요 시트 props
  */
 export function useStartChat(
   storyId: string,
@@ -40,8 +38,7 @@ export function useStartChat(
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status } = useSession();
-  const [guestLimitTrigger, setGuestLimitTrigger] =
-    useState<GuestLimitTrigger | null>(null);
+  const { requireLogin, sheetProps } = useLoginRequired();
   const createChat = useCreateChat({
     mutation: {
       onSuccess: async (response) => {
@@ -63,25 +60,18 @@ export function useStartChat(
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
-      onError: (error) => {
-        // 게스트 체험 한도면 로그인 유도, 그 외는 실패 토스트를 띄운다.
-        // 채팅 생성은 이프를 소모하지 않으므로 회원 이프 부족을 처리하지 않는다.
-        const reason = resolvePaymentRequiredReason(error, status);
-
-        if (reason === 'guest-trial-limit') {
-          setGuestLimitTrigger('chat_start');
-
-          return;
-        }
-
+      onError: () => {
+        // 채팅 생성은 이프를 소모하지 않으므로 사유 구분 없이 실패 토스트를 띄운다.
         toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
       },
     },
   });
 
-  // 채팅 생성은 턴 체험을 쓰지 않으므로 게스트가 체험을 다 썼어도 선차단하지 않는다.
-  // 채팅방에 들어간 뒤 전송 시점에 턴 한도를 판정한다.
   const startChat = () => {
+    if (requireLogin()) {
+      return;
+    }
+
     onStart?.();
     createChat.mutate({ data: { storyId, startSettingId } });
   };
@@ -90,7 +80,6 @@ export function useStartChat(
     startChat,
     isStarting: createChat.isPending || createChat.isSuccess,
     isError: createChat.isError,
-    guestLimitTrigger,
-    closeGuestLimitDialog: () => setGuestLimitTrigger(null),
+    loginSheetProps: sheetProps,
   };
 }

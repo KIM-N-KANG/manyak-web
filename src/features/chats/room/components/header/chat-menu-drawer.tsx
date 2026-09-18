@@ -71,8 +71,9 @@ export function ChatMenuDrawer({
     chatId,
     () => router.replace(APP_PATH.MAIN.CHATS),
   );
-  const { startChat, isStarting, guestLimitTrigger, closeGuestLimitDialog } =
-    useStartChat(storyId ?? '');
+  const { startChat, isStarting, loginSheetProps } = useStartChat(
+    storyId ?? '',
+  );
 
   const canReport = status === 'authenticated' && storyId !== null;
 
@@ -91,9 +92,9 @@ export function ChatMenuDrawer({
 
   return (
     <>
-      {/* 게스트 한도 시트가 뜨면 드로어는 닫는다. 두 드로어를 겹치지 않는다. */}
+      {/* 로그인 필요 시트가 뜨면 드로어는 닫는다. 두 드로어를 겹치지 않는다. */}
       <Drawer
-        open={isOpen && guestLimitTrigger === null && container !== null}
+        open={isOpen && !loginSheetProps.open && container !== null}
         onOpenChange={setIsOpen}>
         <DrawerTrigger
           render={
@@ -202,15 +203,7 @@ export function ChatMenuDrawer({
         </AlertDialogContent>
       </AlertDialog>
 
-      <LoginRequiredSheet
-        open={guestLimitTrigger !== null}
-        trigger={guestLimitTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeGuestLimitDialog();
-          }
-        }}
-      />
+      <LoginRequiredSheet {...loginSheetProps} />
     </>
   );
 }

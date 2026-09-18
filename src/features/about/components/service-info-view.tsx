@@ -6,7 +6,6 @@ import Link from 'next/link';
 
 import { HomeLogoHeader } from '@/components/layout/home-logo-header';
 import { APP_PATH } from '@/constants/app-path';
-import { GUEST_LIMITS } from '@/features/onboarding/constants';
 import { useTrackOnView } from '@/observability/analytics';
 
 import { SERVICE_INFO_TITLE } from '../constants';
@@ -26,13 +25,14 @@ export function ServiceInfoView() {
             <h2 className="text-lg font-bold">게스트 이용 안내</h2>
             <ul className="flex list-disc flex-col pl-5">
               <li>
-                로그인 없이도 스토리라인 생성 {GUEST_LIMITS.storylineCreate}회,
-                스토리 생성 {GUEST_LIMITS.storyCreate}회, 채팅{' '}
-                {GUEST_LIMITS.chat}회까지 체험할 수 있어요.
+                로그인 없이는 오리지널 스토리와 공개된 내용을 둘러볼 수 있어요.
+                스토리 만들기와 채팅은 로그인 후 필수 약관에 동의하면 이용할 수
+                있어요.
               </li>
               <li>
-                게스트로 만든 스토리와 채팅은 지금 쓰는 브라우저에만 연결돼요.
-                브라우저 데이터를 지우거나 기기를 바꾸면 다시 불러올 수 없어요.
+                예전에 게스트로 만든 스토리와 채팅은 그때 쓰던 브라우저에만
+                연결돼요. 브라우저 데이터를 지우거나 기기를 바꾸면 다시 불러올
+                수 없어요.
               </li>
               <li>
                 처음 로그인할 때 만들어져 있는 스토리·채팅이 있다면 한 번에 한해

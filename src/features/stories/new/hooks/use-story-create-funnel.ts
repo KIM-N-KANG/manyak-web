@@ -25,12 +25,7 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
-import {
-  isGuestTrialExhausted,
-  type TrialKind,
-} from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
@@ -57,10 +52,8 @@ import {
   applyStoryCompletedEffects,
   applyStorylinesGeneratedEffects,
 } from '@/features/stories/_shared/utils/creation-side-effects';
-import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
-import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track } from '@/observability/analytics';
 
 import type { StoryCreateBackDialogVariant } from '../components/header/story-create-back-dialog';
@@ -97,7 +90,6 @@ export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
-  const trials = useTrials();
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -108,9 +100,6 @@ export function useStoryCreateFunnel() {
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const [hasCompleteStoryError, setHasCompleteStoryError] = useState(false);
-  const [guestLimitTrigger, setGuestLimitTrigger] =
-    useState<GuestLimitTrigger | null>(null);
-  const [isGuestLimitReached, setIsGuestLimitReached] = useState(false);
   const [backDialog, setBackDialog] =
     useState<StoryCreateBackDialogVariant | null>(null);
   const [isReselectDialogOpen, setIsReselectDialogOpen] = useState(false);
@@ -178,58 +167,22 @@ export function useStoryCreateFunnel() {
   const exitToCreate = () =>
     leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
 
-  // 진입 버튼(FAB)을 우회한 접근(딥링크·뒤로가기) 백스톱: 이미 스토리를 만든
-  // 게스트가 생성 페이지에 도달하면 곧바로 로그인을 유도한다. 서버 체험 잔여가
-  // 도착하면 렌더 중 파생값으로 계산해 effect 내 setState를 피한다. 세션이 확정된
-  // 미로그인 상태의 키워드 단계에서만 판정해 로딩 중 회원을 오차단하지 않고, 이 퍼널에서
-  // 완성해 잔여가 0이 된 뒤에는 다시 띄우지 않으며, 다이얼로그를 닫으면 재노출하지 않는다.
-  const [isBackstopDismissed, setIsBackstopDismissed] = useState(false);
-  const isStoryCreateBackstopActive =
-    step === 'keyword' &&
-    isGuestTrialExhausted(sessionStatus, trials, 'storyCreation') &&
-    !isBackstopDismissed;
-
   const failToAdditionalInfo = (stage: 'story' | 'chat') => {
     track('client_storyCreate_completeError_shown', { stage });
     setStep('additional-info');
     setHasCompleteStoryError(true);
   };
 
-  // 402 처리: 게스트 체험 한도면 로그인 유도, 회원 이프 부족이면 토스트를 띄운다.
-  // 사유는 응답 바디 code로 구분하고(백엔드 KNK-524), code가 없으면 세션 상태로 폴백한다.
-  // 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행되고, 이 핸들러는 안내 UI만 띄운다.
-  const handlePaymentRequiredError = (
-    error: unknown,
-    trigger: GuestLimitTrigger,
-  ) => {
-    const reason = resolvePaymentRequiredReason(error, sessionStatus);
-
-    if (reason === 'guest-trial-limit') {
-      setIsGuestLimitReached(true);
-      setGuestLimitTrigger(trigger);
-
-      return;
+  // 완성 402 처리: 회원 이프 부족이면 토스트를 띄운다. 사유는 응답 바디 code로 구분하고
+  // (백엔드 KNK-524), 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행된다.
+  // 제작은 회원 전용이라 게스트 체험 한도 402는 이 경로에 오지 않는다.
+  const showCreditShortageIfNeeded = (error: unknown) => {
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) ===
+      'insufficient-credit'
+    ) {
+      showCreditShortageToast('story_create');
     }
-
-    if (reason === 'insufficient-credit' && trigger === 'story_create') {
-      showCreditShortageToast(trigger);
-    }
-  };
-
-  // 확정된 게스트가 해당 액션 한도에 도달했으면 로그인 유도 바텀 시트를 열고 true를 반환한다.
-  // 각 진입점(생성·재생성·완료)의 사전 차단을 한 곳으로 모은다.
-  const guardGuestLimit = (
-    kind: TrialKind,
-    trigger: GuestLimitTrigger,
-  ): boolean => {
-    if (!isGuestTrialExhausted(sessionStatus, trials, kind)) {
-      return false;
-    }
-
-    setIsGuestLimitReached(true);
-    setGuestLimitTrigger(trigger);
-
-    return true;
   };
 
   const resetAdditionalInfoStep = () => {
@@ -307,8 +260,6 @@ export function useStoryCreateFunnel() {
         } else {
           draftAutosave.setPersistedStatus(true);
         }
-
-        handlePaymentRequiredError(error, 'storyline_generate');
       },
     },
   });
@@ -363,19 +314,12 @@ export function useStoryCreateFunnel() {
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
-      onError: (error) => {
+      onError: () => {
         if (!isMountedRef.current) {
           return;
         }
 
-        // 채팅 생성은 이프를 소모하지 않는다. 게스트 한도 응답만 로그인 유도로 처리한다.
-        if (
-          resolvePaymentRequiredReason(error, sessionStatus) ===
-          'guest-trial-limit'
-        ) {
-          setGuestLimitTrigger('chat_start');
-        }
-
+        // 채팅 생성은 이프를 소모하지 않으므로 사유 구분 없이 완성 실패로 되돌린다.
         failToAdditionalInfo('chat');
       },
     },
@@ -425,11 +369,10 @@ export function useStoryCreateFunnel() {
         if (settlement === 'downgrade-to-draft') {
           demotePendingCompletionToDraft(variables.data.requestId);
 
-          const reason = resolvePaymentRequiredReason(error, sessionStatus);
-
-          if (reason === 'guest-trial-limit') {
-            toast.error(GUEST_LIMIT_SHEET_COPY.title);
-          } else if (reason === 'insufficient-credit') {
+          if (
+            resolvePaymentRequiredReason(error, sessionStatus) ===
+            'insufficient-credit'
+          ) {
             showCreditShortageToast('story_create');
           } else {
             toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
@@ -462,7 +405,7 @@ export function useStoryCreateFunnel() {
           draftAutosave.setPersistedStatus(true);
         }
 
-        handlePaymentRequiredError(error, 'story_create');
+        showCreditShortageIfNeeded(error);
         failToAdditionalInfo('story');
       },
     },
@@ -685,10 +628,6 @@ export function useStoryCreateFunnel() {
   function handleGenerateStorylines(
     request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
   ) {
-    if (guardGuestLimit('storylineGeneration', 'storyline_generate')) {
-      return;
-    }
-
     setGenerationResult(null);
     setActiveStorylineIndex(0);
     setSelectedStoryline(null);
@@ -696,7 +635,6 @@ export function useStoryCreateFunnel() {
     setLastCompletionRequest(null);
     completedStoryRef.current = null;
     reusedCompletionRequestIdRef.current = null;
-    setIsGuestLimitReached(false);
     resetAdditionalInfoStep();
     setStep('storyline-select');
     track('client_storyCreate_storyGeneration_requested');
@@ -705,10 +643,6 @@ export function useStoryCreateFunnel() {
 
   const handleRegenerateStorylines = () => {
     if (!generationRequest) {
-      return;
-    }
-
-    if (guardGuestLimit('storylineGeneration', 'storyline_generate')) {
       return;
     }
 
@@ -721,7 +655,6 @@ export function useStoryCreateFunnel() {
     const isFailureRetry =
       generateStorylines.isError || hasRecoveredGenerateError;
 
-    setIsGuestLimitReached(false);
     requestGenerateStorylines(
       generationRequest,
       generationRequest.requestId,
@@ -800,13 +733,8 @@ export function useStoryCreateFunnel() {
 
   const handleCompleteStory = () => {
     setHasCompleteStoryError(false);
-    setIsGuestLimitReached(false);
 
     if (createdStoryId !== null) {
-      if (guardGuestLimit('chatTurn', 'chat_start')) {
-        return;
-      }
-
       if (typeof simpleCreationId === 'number') {
         track('client_storyCreate_storyCompletion_requested', {
           creation_id: String(simpleCreationId),
@@ -823,10 +751,6 @@ export function useStoryCreateFunnel() {
       typeof simpleCreationId !== 'number' ||
       typeof selectedStoryline?.id !== 'number'
     ) {
-      return;
-    }
-
-    if (guardGuestLimit('storyCreation', 'story_create')) {
       return;
     }
 
@@ -978,14 +902,6 @@ export function useStoryCreateFunnel() {
       generateStorylines.isError || hasRecoveredGenerateError,
     isCompletingStory: createStory.isPending || createChat.isPending,
     hasCompleteStoryError,
-    guestLimitTrigger:
-      guestLimitTrigger ??
-      (isStoryCreateBackstopActive ? 'story_create' : null),
-    isGuestLimitReached: isGuestLimitReached || isStoryCreateBackstopActive,
-    closeGuestLimitDialog: () => {
-      setGuestLimitTrigger(null);
-      setIsBackstopDismissed(true);
-    },
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,

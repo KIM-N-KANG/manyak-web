@@ -1,13 +1,12 @@
-import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import {
   CHAT_MENU_COPY,
   CHAT_SETTINGS_COPY,
 } from '@/features/chats/room/constants';
 
+import { oneLine } from '../fixtures/copy';
 import {
-  EXHAUSTED_TRIALS,
   expect,
-  mockTrials,
   seedChatIds,
   skipChatChoicesHint,
   skipChatTour,
@@ -262,17 +261,16 @@ test.describe('채팅 오버레이 비주얼', () => {
     await expect(page).toHaveScreenshot('confirm-alert-dialog.png');
   });
 
-  test('게스트 한도 로그인 유도 바텀 시트 (CHAT-LIMIT-01)', async ({
+  test('게스트 전송 시 로그인 필요 바텀 시트 (CHAT-GATE-01)', async ({
     page,
   }) => {
-    await mockTrials(page, { chatTurn: EXHAUSTED_TRIALS.chatTurn });
     await page.goto('/chats/c1');
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 
     await expect(
       page
         .getByRole('dialog')
-        .getByRole('heading', { name: GUEST_LIMIT_SHEET_COPY.title }),
+        .getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('login-required-sheet.png');

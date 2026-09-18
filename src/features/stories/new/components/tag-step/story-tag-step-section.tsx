@@ -27,14 +27,12 @@ import { TagChipGrid } from './tag-chip-grid';
 type StoryTagStepSectionProps = {
   controller: StoryTagStepController;
   hasGenerateStorylinesError: boolean;
-  isGuestLimitReached: boolean;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryTagStepSection({
   controller,
   hasGenerateStorylinesError,
-  isGuestLimitReached,
   onScroll,
 }: StoryTagStepSectionProps) {
   const {
@@ -266,10 +264,7 @@ export function StoryTagStepSection({
       </Tabs>
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
-          {getGenerateStorylinesErrorMessage({
-            isGuestLimitReached,
-            isRegeneration: false,
-          })}
+          {getGenerateStorylinesErrorMessage({ isRegeneration: false })}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>

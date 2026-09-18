@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 
-import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { StoryCreateResumeDialog } from '@/features/stories/_shared/components/story-create-resume-dialog';
 import { track } from '@/observability/analytics';
 
@@ -33,9 +32,6 @@ export function StoryCreateFunnel() {
     hasGenerateStorylinesError,
     isCompletingStory,
     hasCompleteStoryError,
-    guestLimitTrigger,
-    isGuestLimitReached,
-    closeGuestLimitDialog,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
@@ -82,7 +78,6 @@ export function StoryCreateFunnel() {
         <StoryTagStepSection
           controller={tagStep}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
-          isGuestLimitReached={isGuestLimitReached}
         />
       )}
 
@@ -94,7 +89,6 @@ export function StoryCreateFunnel() {
           activeStorylineIndex={activeStorylineIndex}
           isGeneratingStorylines={isGeneratingStorylines}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
-          isGuestLimitReached={isGuestLimitReached}
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}
           onSelectStoryline={handleSelectStoryline}
@@ -106,7 +100,6 @@ export function StoryCreateFunnel() {
           storylineItem={selectedStoryline}
           isCompletingStory={isCompletingStory}
           hasCompleteStoryError={hasCompleteStoryError}
-          isGuestLimitReached={isGuestLimitReached}
           canCompleteStory={canCompleteStory}
           selectedRecommendations={selectedRecommendations}
           additionalInfos={additionalInfos}
@@ -138,14 +131,6 @@ export function StoryCreateFunnel() {
         }}
         onContinue={handleResumeContinue}
         onDiscard={handleResumeDiscard}
-      />
-      <LoginRequiredSheet
-        trigger={guestLimitTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeGuestLimitDialog();
-          }
-        }}
       />
     </div>
   );
