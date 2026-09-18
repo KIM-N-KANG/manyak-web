@@ -111,14 +111,22 @@ export async function writeBackendSessionTokens(
  * NextAuth 세션 쿠키가 존재하는지 확인한다. BFF 토큰이 없는데도 이 쿠키가 남아 있으면
  * "화면은 회원인데 서버엔 열쇠 없음"인 불일치 상태로, 능동 로그아웃 대상이다.
  *
- * @returns NextAuth 세션 쿠키가 존재하면 true
+ * 값이 빈 쿠키는 없는 것으로 본다. Auth.js signOut은 세션 쿠키를 `Max-Age=0`으로 지우는데,
+ * 같은 요청에서 `cookies().set()`(clearBackendSession)이 호출되면 Next가 핸들러 응답의
+ * Set-Cookie를 재직렬화하며 `Max-Age=0`을 잃어 브라우저에 빈 값 세션 쿠키가 남는다. 이를
+ * 회원으로 판정하면 로그아웃 직후 첫 프록시 요청이 401(세션 만료)로 실패한다.
+ *
+ * @returns 값이 있는 NextAuth 세션 쿠키가 존재하면 true
  */
 export async function hasNextAuthSessionCookie(): Promise<boolean> {
   const store = await cookies();
 
   return store
     .getAll()
-    .some((cookie) => isNextAuthSessionCookieName(cookie.name));
+    .some(
+      (cookie) =>
+        isNextAuthSessionCookieName(cookie.name) && cookie.value !== '',
+    );
 }
 
 /**

@@ -124,6 +124,15 @@ describe('proxy', () => {
     expect(response.headers.get('location')).toBeNull();
   });
 
+  it('redirects when the member session cookie is present but empty', () => {
+    // 로그아웃 뒤 남는 빈 값 세션 쿠키는 회원이 아니다.
+    const response = proxy(
+      request('http://localhost:3000/', { 'authjs.session-token': '' }),
+    );
+
+    expect(response.headers.get('location')).not.toBeNull();
+  });
+
   it('passes through a search crawler without cookies on every gated tab', () => {
     const googlebot =
       'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
