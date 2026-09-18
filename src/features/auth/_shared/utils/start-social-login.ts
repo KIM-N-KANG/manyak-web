@@ -24,6 +24,7 @@ import {
 } from '@/observability/analytics/campaign-params';
 
 import { savePendingHandoff } from './pending-handoff-storage';
+import { markPendingLogin } from './pending-login-storage';
 
 type StartSocialLoginOptions = {
   /** 로그인에 사용할 소셜 provider. */
@@ -45,6 +46,9 @@ export type SocialLoginOutcome = 'redirected' | 'failed';
  * 카카오 로그인은 카카오가 자사 인앱에서 로그인을 지원하고 저장소 격리도 없으므로
  * 핸드오프 없이 그 자리에서 signIn을 태운다(스펙 §3-10 분기 표).
  *
+ * OAuth로 떠나기 전에 이 탭의 로그인 진행 표시를 남겨, 돌아온 뒤 필수 동의 시트가 이 탭에서
+ * 시작한 로그인임을 알 수 있게 한다(동의 게이트의 fail-closed 판정 근거).
+ *
  * @param options.provider 로그인에 사용할 소셜 provider
  * @param options.redirectTo 로그인 완료 후 복귀할 앱 내 상대 경로
  * @returns 페이지 이탈 시작 여부를 담은 결과
@@ -54,6 +58,8 @@ export async function startSocialLogin({
   redirectTo,
 }: StartSocialLoginOptions): Promise<SocialLoginOutcome> {
   const inAppBrowser = detectInAppBrowser(navigator.userAgent);
+
+  markPendingLogin();
 
   if (!inAppBrowser || (provider === 'kakao' && inAppBrowser === 'kakaotalk')) {
     try {

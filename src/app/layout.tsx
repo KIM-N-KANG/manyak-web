@@ -25,6 +25,7 @@ import {
   TITLE_TEMPLATE,
 } from '@/constants/site';
 import { AutoMigration } from '@/features/auth/_shared/components/auto-migration';
+import { ConsentGate } from '@/features/auth/_shared/components/consent-gate';
 import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
 import { InviteOnboardingSheet } from '@/features/my/invite/components/invite-onboarding-sheet';
 
@@ -101,18 +102,20 @@ export default function RootLayout({
               <QueryProvider>
                 <ThemeProvider>
                   <MotionProvider>
-                    <div
-                      id={APP_FRAME_ID}
-                      className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
-                      {children}
-                      <InAppBrowserObserver />
-                    </div>
-                    <Toaster />
-                    <AnalyticsUserSync />
-                    <SessionExpiryWatcher />
-                    <AutoMigration />
-                    <HandoffCleanup />
-                    <InviteOnboardingSheet />
+                    <ConsentGate>
+                      <div
+                        id={APP_FRAME_ID}
+                        className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                        {children}
+                        <InAppBrowserObserver />
+                      </div>
+                      <Toaster />
+                      <AnalyticsUserSync />
+                      <SessionExpiryWatcher />
+                      <AutoMigration />
+                      <HandoffCleanup />
+                      <InviteOnboardingSheet />
+                    </ConsentGate>
                   </MotionProvider>
                 </ThemeProvider>
               </QueryProvider>

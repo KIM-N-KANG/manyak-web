@@ -4,6 +4,7 @@ import type {
   CreditPolicyResponse,
   CreditProductResponse,
   TrialsResponse,
+  UserConsentResponse,
 } from '@/api/generated/models';
 
 /**
@@ -36,9 +37,43 @@ export async function mockApi(page: Page): Promise<void> {
   // 모든 수치가 자리표시(000)로 그려지므로, 픽스처 수치를 응답해 문구를 결정적으로 만든다.
   await mockCreditPolicies(page);
 
-  // 체험 잔여 문구·게스트 선차단은 서버 체험 조회를 따라간다. 목이 없으면 catch-all의 `[]`가
-  // 내려가 잔여가 자리표시로 남고 선차단이 꺼지므로, 모든 체험이 남은 상태를 기본으로 응답한다.
+  // 체험 잔여 문구는 서버 체험 조회를 따라간다. 목이 없으면 catch-all의 `[]`가
+  // 내려가 잔여가 자리표시로 남으므로, 모든 체험이 남은 상태를 기본으로 응답한다.
   await mockTrials(page);
+
+  // 회원 기능은 필수 동의 조회가 끝나야 열린다. 기본은 모두 동의한 상태로 응답해
+  // 회원 시나리오가 동의 시트 없이 진행되게 한다. 동의 시나리오는 이 목을 override한다.
+  await mockConsents(page);
+}
+
+/** 필수 동의 조회·기록(GET/POST /api/v1/users/me/consents) 라우트 글롭. */
+const CONSENTS_ROUTE = '**/api/v1/users/me/consents';
+
+/** E2E가 응답할 동의 상태. 세 항목 모두 현행 버전에 동의한 상태다. */
+export const CONSENTS_FIXTURE = {
+  terms: { requiredVersion: 'v1.2', needsConsent: false },
+  privacy: { requiredVersion: 'v1.4', needsConsent: false },
+  age14: { requiredVersion: '1', needsConsent: false },
+} as const satisfies Required<UserConsentResponse>;
+
+/**
+ * 필수 동의 조회를 목킹한다. 항목별 `needsConsent`를 덮어써 동의 시트가 뜨는 상태를 재현한다.
+ * 기록(POST)은 별도로 목킹하지 않으면 같은 응답을 돌려준다.
+ *
+ * @param page 대상 페이지
+ * @param overrides 기본 픽스처 위에 덮어쓸 항목
+ */
+export async function mockConsents(
+  page: Page,
+  overrides: Partial<UserConsentResponse> = {},
+): Promise<void> {
+  await page.route(CONSENTS_ROUTE, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ...CONSENTS_FIXTURE, ...overrides }),
+    });
+  });
 }
 
 /** 체험 사용량·한도 조회(GET /api/v1/users/me/trials) 라우트 글롭. */

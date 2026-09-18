@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 
 import { useGetMyStories } from '@/api/generated/endpoints/users/users';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 
 import { useCreatedStoryIds } from './use-created-story-ids';
 
@@ -15,10 +16,11 @@ import { useCreatedStoryIds } from './use-created-story-ids';
  */
 export function useHasCreatedStories(): boolean {
   const { status } = useSession();
+  const { isMember } = useMemberAccess();
   const storyIds = useCreatedStoryIds();
 
   const myStoriesQuery = useGetMyStories(undefined, {
-    query: { enabled: status === 'authenticated' },
+    query: { enabled: isMember },
   });
 
   if (status === 'authenticated') {

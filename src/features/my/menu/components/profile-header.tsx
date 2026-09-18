@@ -10,6 +10,7 @@ import { useMe } from '@/api/generated/endpoints/auth/auth';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { startInAppLoginShortcut } from '@/features/auth/_shared/utils/in-app-login-shortcut';
 import { track } from '@/observability/analytics';
 
@@ -17,13 +18,14 @@ import { LinkedAccountSection } from './linked-account-section';
 
 export function ProfileHeader() {
   const { data: session, status } = useSession();
+  const { isMember } = useMemberAccess();
   const [imageError, setImageError] = useState(false);
 
   const isAuthenticated = status === 'authenticated';
   const isSessionLoading = status === 'loading';
 
   const { data: meData } = useMe({
-    query: { enabled: isAuthenticated, refetchOnMount: 'always' },
+    query: { enabled: isMember, refetchOnMount: 'always' },
   });
   const me = meData?.status === 200 ? meData.data : undefined;
   const nickname = me?.nickname ?? session?.user?.name ?? '';
@@ -58,7 +60,7 @@ export function ProfileHeader() {
           <span className="truncate text-lg font-semibold">
             {isAuthenticated ? nickname : '게스트'}
           </span>
-          {isAuthenticated && <LinkedAccountSection />}
+          {isMember && <LinkedAccountSection />}
         </div>
       )}
       {status === 'unauthenticated' && (

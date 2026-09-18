@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { track } from '@/observability/analytics';
 
 import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
@@ -29,6 +30,7 @@ const INVITE_GUIDE_LINES = [
 
 export function InviteScreen() {
   const { data: session, status } = useSession();
+  const { isMember } = useMemberAccess();
   const viewedUserIdRef = useRef<string | null>(null);
   const router = useRouter();
   const {
@@ -39,7 +41,7 @@ export function InviteScreen() {
   const { data, isPending, isFetching, refetch } = useGetMyInvite({
     query: {
       refetchOnMount: 'always',
-      enabled: status === 'authenticated',
+      enabled: isMember,
     },
   });
   const invite = data?.status === 200 ? data.data : undefined;
