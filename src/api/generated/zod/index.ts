@@ -186,6 +186,28 @@ export const CreateResponse = zod.void();
 export const ClaimAttendanceResponse = zod.unknown();
 
 /**
+ * 현행 문서 버전별 동의 필요 여부를 반환합니다. 만 14세 이상 확인 버전은 1입니다. 미동의 회원의 다른 API를 차단하지 않으며 정지 계정은 조회도 403입니다.
+ * @summary 약관·개인정보 처리방침 동의 조회
+ */
+export const GetConsentsResponse = zod.unknown();
+
+/**
+ * 명시적으로 수락한 현행 버전만 기록합니다. 최소 한 항목이 필요하며 누락·null은 미제출입니다. 전부 검증한 뒤 저장하고 같은 버전의 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
+ * @summary 약관·개인정보 처리방침 동의 기록
+ */
+export const RecordConsentsBody = zod
+  .object({
+    terms: zod.string().nullish().describe('수락한 이용약관 버전'),
+    privacy: zod.string().nullish().describe('수락한 개인정보 처리방침 버전'),
+    age14: zod.string().nullish().describe('만 14세 이상 확인 버전(1 고정)'),
+  })
+  .describe(
+    '명시적으로 수락한 버전만 제출. 최소 한 항목 필수이며 누락·null은 미제출',
+  );
+
+export const RecordConsentsResponse = zod.unknown();
+
+/**
  * 스토리를 신고합니다. 인증 필수이며(게스트 불가) 같은 스토리를 다시 신고해도 같은 201로 응답합니다(멱등 — 행이 늘거나 알림이 중복 발송되지 않습니다). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
  * @summary 스토리 신고 등록
  */
