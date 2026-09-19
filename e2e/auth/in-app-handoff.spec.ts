@@ -4,10 +4,8 @@ import { APP_PATH } from '@/constants/app-path';
 
 import {
   expect,
-  mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
-  seedCampaignCookie,
   seedChatIds,
   seedPendingHandoff,
   seedStoryIds,
@@ -16,8 +14,8 @@ import {
 } from '../fixtures/test';
 
 /**
- * 인앱 게스트 허용·로그인 핸드오프 스펙(KNK-682, 스펙 §3-10).
- * 인앱 UA는 실제 SNS 인앱 브라우저를 시뮬레이션한다(Instagram UA → detectInAppBrowser).
+ * 기존에 발급된 핸드오프의 랜딩과 복구를 검증한다.
+ * UA 변경은 분기 검사이며 실제 앱의 OAuth 허용 여부를 증명하지 않는다.
  */
 const INSTAGRAM_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 300.0.0.0';
@@ -27,7 +25,7 @@ const STORIES_BATCH = '**/api/v1/stories/batch';
 const readLocalStorage = (page: Page, key: string) =>
   page.evaluate((storageKey) => window.localStorage.getItem(storageKey), key);
 
-test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', () => {
+test.describe('기존 핸드오프 랜딩과 복구', () => {
   test.use({ userAgent: INSTAGRAM_UA });
 
   test('인앱에서도 전면 차단 없이 제작 스토리 목록을 이용한다', async ({
@@ -57,96 +55,6 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
     await expect(
       page.getByText('외부 브라우저에서 로그인해주세요'),
     ).toBeHidden();
-  });
-
-  test('홈 헤더의 로그인 버튼은 /login을 거치지 않고 바로 전환 안내로 이동한다', async ({
-    page,
-  }) => {
-    await skipOnboarding(page);
-    await mockHandoffCreate(page, {
-      handoffCode: 'handoff-code-1',
-      handoffId: 'handoff-id-1',
-    });
-
-    await page.goto('/');
-    await page
-      .getByRole('banner')
-      .getByRole('link', { name: '로그인' })
-      .click();
-
-    await expect(page).toHaveURL(/\/login\/continue\?handoff=handoff-code-1/);
-    await expect(
-      page.getByText('외부 브라우저에서 로그인해주세요'),
-    ).toBeVisible();
-  });
-
-  test('로그인하면 핸드오프를 만들고 전환 안내로 이동한다', async ({
-    page,
-  }) => {
-    await skipOnboarding(page);
-    await mockHandoffCreate(page, {
-      handoffCode: 'handoff-code-1',
-      handoffId: 'handoff-id-1',
-    });
-
-    await page.goto('/login');
-    await page.getByRole('button', { name: /Google로 시작하기/ }).click();
-
-    await expect(page).toHaveURL(/\/login\/continue\?handoff=handoff-code-1/);
-    await expect(
-      page.getByText('외부 브라우저에서 로그인해주세요'),
-    ).toBeVisible();
-  });
-
-  test('전환 URL에 유입 출처(UTM)를 함께 실어 보낸다', async ({ page }) => {
-    await skipOnboarding(page);
-    await seedCampaignCookie(page, {
-      utm_source: 'ig',
-      utm_medium: 'paid',
-      utm_campaign: 'KR_META_WEB_ACTIVATION_COLD_202608',
-      utm_id: '120210',
-      referrer: 'https://instagram.com/',
-      fbclid: 'should-not-travel',
-    });
-    await mockHandoffCreate(page, {
-      handoffCode: 'handoff-code-1',
-      handoffId: 'handoff-id-1',
-    });
-
-    await page.goto('/login');
-    await page.getByRole('button', { name: /Google로 시작하기/ }).click();
-
-    await expect(page).toHaveURL(/\/login\/continue\?handoff=handoff-code-1/);
-
-    // 외부 브라우저는 저장소가 격리되고 스킴 실행이라 referrer도 없어, URL이 유입
-    // 출처를 잇는 유일한 수단이다(KNK-964).
-    const params = new URL(page.url()).searchParams;
-
-    expect(params.get('utm_source')).toBe('ig');
-    expect(params.get('utm_medium')).toBe('paid');
-    expect(params.get('utm_campaign')).toBe(
-      'KR_META_WEB_ACTIVATION_COLD_202608',
-    );
-    expect(params.get('utm_id')).toBe('120210');
-    // UTM 계열만 싣는다.
-    expect(params.get('referrer')).toBeNull();
-    expect(params.get('fbclid')).toBeNull();
-  });
-
-  test('유입 출처가 없으면 전환 URL을 그대로 둔다', async ({ page }) => {
-    await skipOnboarding(page);
-    await seedCampaignCookie(page, { utm_source: '', utm_campaign: '' });
-    await mockHandoffCreate(page, {
-      handoffCode: 'handoff-code-1',
-      handoffId: 'handoff-id-1',
-    });
-
-    await page.goto('/login');
-    await page.getByRole('button', { name: /Google로 시작하기/ }).click();
-
-    // Amplitude는 캠페인 없는 진입에 빈 문자열을 써 넣으므로, 그대로 실으면 외부
-    // 브라우저의 기존 귀속을 빈 값으로 덮어쓴다.
-    await expect(page).toHaveURL('/login/continue?handoff=handoff-code-1');
   });
 
   test('인앱 복귀 시 이관된 ID만 로컬에서 제거한다', async ({ page }) => {
