@@ -95,11 +95,14 @@ beforeEach(() => {
   authMocks.restoreSessionClaims.mockReset();
 });
 
-it('Google 로그인은 PKCE, state, nonce를 모두 검증한다', () => {
-  expect(
-    getAuthConfig().providers.find(({ id }) => id === 'google')?.checks,
-  ).toEqual(['pkce', 'state', 'nonce']);
-});
+it.each(['google', 'link-google'])(
+  '%s는 PKCE, state, nonce를 모두 검증한다',
+  (provider) => {
+    expect(
+      getAuthConfig().providers.find(({ id }) => id === provider)?.checks,
+    ).toEqual(['pkce', 'state', 'nonce']);
+  },
+);
 
 describe('NextAuth 계정 연동 콜백', () => {
   it('연동 콜백은 새 토큰 대신 세션 쿠키에서 복원한 기존 클레임을 반환한다', async () => {

@@ -6,8 +6,9 @@ import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
 /**
- * 인앱 브라우저에서 연동을 시작할 수 없는지 판별한다. 연동은 재인증·연동 두 단계가
- * 모두 OAuth라 Google 인증이 반드시 끼는데, Google은 인앱 WebView의 인증을 막는다.
+ * 현재 구현에서 인앱 계정 연동을 지원하지 않는지 판별한다. 연동은 같은 탭에서
+ * 재인증과 대상 계정 인증을 이어가며, 로그인용 팝업의 세션 확인만으로 완료할 수 없다.
+ * 기존 회원 세션을 보존하는 연동 전용 팝업을 지원하기 전까지 인앱 진입을 제한한다.
  *
  * @returns 인앱 브라우저라 연동을 시작할 수 없으면 true
  */

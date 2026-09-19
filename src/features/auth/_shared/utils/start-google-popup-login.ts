@@ -13,6 +13,8 @@ const POPUP_TIMEOUT_MS = 5 * 60 * 1_000;
 // ponytail: Auth.js의 Google 트랜잭션 쿠키는 병렬 로그인을 지원하지 않아 문서당 한 번만 연다.
 // 여러 로그인을 동시에 지원할 때는 공급자 트랜잭션부터 분리해야 한다.
 let popupLoginPending = false;
+let authorizationPending = false;
+let previousPopup: Window | null = null;
 
 /**
  * 사용자 클릭 중 빈 팝업을 먼저 열고 기존 Auth.js Google 인증을 그 창에서 진행한다.
@@ -23,7 +25,7 @@ let popupLoginPending = false;
 export function startGooglePopupLogin(
   redirectTo: string,
 ): Promise<'redirected' | 'failed'> {
-  if (popupLoginPending) {
+  if (popupLoginPending || authorizationPending) {
     return Promise.resolve('failed');
   }
 
@@ -31,6 +33,9 @@ export function startGooglePopupLogin(
   let popup: Window | null;
 
   try {
+    // 만료 자체로 인증창을 닫지 않는다. 사용자가 재시도할 때 이전 창을 정리한다.
+    previousPopup?.close();
+    previousPopup = null;
     popup = window.open('about:blank', '_blank', 'popup,width=500,height=700');
   } catch {
     return Promise.resolve('failed');
@@ -41,6 +46,7 @@ export function startGooglePopupLogin(
   }
 
   popupLoginPending = true;
+  previousPopup = popup;
 
   const origin = window.location.origin;
   const callbackUrl = new URL(APP_PATH.LOGIN_POPUP_COMPLETE, origin);
@@ -52,7 +58,7 @@ export function startGooglePopupLogin(
     let checkingSession = false;
     let authorizationStarted = false;
 
-    const finish = (outcome: 'redirected' | 'failed') => {
+    const finish = (outcome: 'redirected' | 'failed', closePopup = true) => {
       if (settled) {
         return;
       }
@@ -65,10 +71,14 @@ export function startGooglePopupLogin(
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibilityChange);
 
-      try {
-        popup.close();
-      } catch {
-        // 앱이 창 제어를 차단해도 원래 탭의 진행 잠금은 해제한다.
+      if (closePopup) {
+        try {
+          popup.close();
+        } catch {
+          // COOP로 참조가 끊기면 창을 닫을 수 없다. 서버의 OAuth 검증은 유지한다.
+        }
+
+        previousPopup = null;
       }
 
       resolve(outcome);
@@ -95,6 +105,10 @@ export function startGooglePopupLogin(
 
         if (session?.user?.id) {
           const member = await me();
+
+          if (settled) {
+            return;
+          }
 
           if (member.status === 200 && member.data.id === session.user.id) {
             finish('redirected');
@@ -131,7 +145,8 @@ export function startGooglePopupLogin(
       void checkSession(true);
     };
 
-    const onFocus = () => void checkSession(popup.closed);
+    // closed는 COOP 참조 단절도 뜻하므로 미인증 상태를 취소로 확정하지 않는다.
+    const onFocus = () => void checkSession(false);
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         onFocus();
@@ -140,10 +155,10 @@ export function startGooglePopupLogin(
 
     const interval = window.setInterval(() => {
       if (popup.closed) {
-        // COOP로 창 참조만 끊어질 수 있으므로 원래 문서가 다시 활성화될 때 판정한다.
+        // 참조가 끊겨도 원래 창에서 완료된 세션을 확인할 때까지 기다린다.
         if (document.hasFocus()) {
           if (authorizationStarted) {
-            void checkSession(true);
+            void checkSession(false);
           } else {
             finish('failed');
           }
@@ -166,12 +181,17 @@ export function startGooglePopupLogin(
         // Google 인증 중에는 동일 출처 정책으로 팝업의 주소를 읽을 수 없다.
       }
     }, 500);
-    const timeout = window.setTimeout(() => finish('failed'), POPUP_TIMEOUT_MS);
+    const timeout = window.setTimeout(
+      () => finish('failed', false),
+      POPUP_TIMEOUT_MS,
+    );
 
     window.addEventListener('message', onMessage);
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisibilityChange);
 
+    // 만료 후에도 진행 중인 시작 응답이 새 PKCE 쿠키를 덮어쓰지 않도록 직렬화한다.
+    authorizationPending = true;
     void signIn('google', { redirect: false, redirectTo: callbackUrl.href })
       .then((result) => {
         if (settled) {
@@ -198,6 +218,9 @@ export function startGooglePopupLogin(
         authorizationStarted = true;
         popup.location.replace(authorizationUrl.href);
       })
-      .catch(() => finish('failed'));
+      .catch(() => finish('failed'))
+      .finally(() => {
+        authorizationPending = false;
+      });
   });
 }

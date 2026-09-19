@@ -46,22 +46,6 @@ function isPendingHandoff(value: unknown): value is PendingHandoff {
 }
 
 /**
- * 진행 중인 핸드오프를 localStorage에 저장한다(외부 전환 직전).
- *
- * @param pending 저장할 핸드오프 상태
- */
-export function savePendingHandoff(pending: PendingHandoff): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.setItem(
-    PENDING_HANDOFF_STORAGE_KEY,
-    JSON.stringify(pending),
-  );
-}
-
-/**
  * 저장된 진행 중 핸드오프를 읽는다. 없거나 손상·형태 불일치면 null을 반환한다.
  *
  * @returns 저장된 핸드오프 또는 null

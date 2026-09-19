@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
-import { TOAST_MESSAGE } from '@/constants/toast-message';
 
 import {
   expect,
@@ -15,7 +14,7 @@ import {
 } from '../fixtures/test';
 
 /**
- * 인앱 로그인 진입과 기존 핸드오프 복구를 검증한다.
+ * 기존에 발급된 핸드오프의 랜딩과 복구를 검증한다.
  * UA 변경은 분기 검사이며 실제 앱의 OAuth 허용 여부를 증명하지 않는다.
  */
 const INSTAGRAM_UA =
@@ -26,60 +25,7 @@ const STORIES_BATCH = '**/api/v1/stories/batch';
 const readLocalStorage = (page: Page, key: string) =>
   page.evaluate((storageKey) => window.localStorage.getItem(storageKey), key);
 
-for (const userAgent of [
-  'Android Instagram',
-  'iPhone Instagram',
-  'Android KAKAOTALK',
-  'iPhone KAKAOTALK',
-  'Android Barcelona',
-  'iPhone Barcelona',
-]) {
-  test.describe(`${userAgent} 로그인 진입`, () => {
-    test.use({ userAgent });
-
-    for (const path of [APP_PATH.MAIN.STORIES, APP_PATH.MAIN.MY]) {
-      test(`${path}에서 로그인 화면을 열고 팝업 차단 시 재시도할 수 있다`, async ({
-        page,
-      }) => {
-        await skipOnboarding(page);
-        await page.addInitScript(() => {
-          window.open = () => null;
-        });
-
-        const handoffRequests: string[] = [];
-
-        page.on('request', (request) => {
-          if (request.url().endsWith('/api/v1/auth/handoffs')) {
-            handoffRequests.push(request.url());
-          }
-        });
-        await page.goto(path);
-        await page.getByRole('link', { name: '로그인', exact: true }).click();
-
-        await expect(page).toHaveURL(APP_PATH.LOGIN);
-
-        const google = page.getByRole('button', { name: /Google로 시작하기/ });
-        const kakao = page.getByRole('button', { name: /카카오로 시작하기/ });
-
-        await expect(kakao).toBeEnabled();
-
-        for (let attempt = 0; attempt < 2; attempt++) {
-          await google.click();
-          await expect(
-            page.getByText(TOAST_MESSAGE.LOGIN_FAILED).first(),
-          ).toBeVisible();
-          await expect(google).toBeEnabled();
-          await expect(kakao).toBeEnabled();
-          await expect(page).toHaveURL(APP_PATH.LOGIN);
-        }
-
-        expect(handoffRequests).toEqual([]);
-      });
-    }
-  });
-}
-
-test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', () => {
+test.describe('기존 핸드오프 랜딩과 복구', () => {
   test.use({ userAgent: INSTAGRAM_UA });
 
   test('인앱에서도 전면 차단 없이 제작 스토리 목록을 이용한다', async ({
@@ -109,46 +55,6 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
     await expect(
       page.getByText('외부 브라우저에서 로그인해주세요'),
     ).toBeHidden();
-  });
-
-  test('Kakao 로그인은 인앱의 같은 탭에서 기존 callbackUrl로 시작한다', async ({
-    page,
-  }) => {
-    await skipOnboarding(page);
-    await page.route('**/api/auth/providers', (route) =>
-      route.fulfill({
-        json: { kakao: { id: 'kakao', name: 'Kakao', type: 'oidc' } },
-      }),
-    );
-    await page.route('**/api/auth/csrf', (route) =>
-      route.fulfill({
-        json: { csrfToken: 'test-csrf' },
-      }),
-    );
-    await page.route(/\/api\/auth\/signin\/kakao(?:\?.*)?$/, (route) =>
-      route.fulfill({
-        json: { url: page.url() },
-      }),
-    );
-
-    const callbackUrl = '/stories/s1?setting=ss2#detail';
-
-    await page.goto(
-      `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`,
-    );
-
-    const signInRequest = page.waitForRequest(
-      /\/api\/auth\/signin\/kakao(?:\?.*)?$/,
-    );
-
-    await page.getByRole('button', { name: /카카오로 시작하기/ }).click();
-
-    const body = new URLSearchParams((await signInRequest).postData() ?? '');
-
-    expect(body.get('callbackUrl')).toBe(callbackUrl);
-    await expect(page).toHaveURL(
-      `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`,
-    );
   });
 
   test('인앱 복귀 시 이관된 ID만 로컬에서 제거한다', async ({ page }) => {
