@@ -95,6 +95,23 @@ describe('hasNextAuthSessionCookie', () => {
     await expect(hasNextAuthSessionCookie()).resolves.toBe(false);
   });
 
+  it('로그아웃 후 빈 쿠키와 청크만 남으면 세션으로 보지 않지만 값이 있는 청크는 감지한다', async () => {
+    for (const base of [
+      'authjs.session-token',
+      '__Secure-authjs.session-token',
+    ]) {
+      cookieStore.set(base, '');
+      cookieStore.set(`${base}.0`, '');
+      cookieStore.set(`${base}.1`, '');
+    }
+
+    await expect(hasNextAuthSessionCookie()).resolves.toBe(false);
+
+    cookieStore.set('__Secure-authjs.session-token.1', 'remaining-chunk');
+
+    await expect(hasNextAuthSessionCookie()).resolves.toBe(true);
+  });
+
   it('일반 NextAuth 세션 쿠키가 있으면 true를 반환한다', async () => {
     cookieStore.set('authjs.session-token', 'jwt-value');
 

@@ -108,17 +108,19 @@ export async function writeBackendSessionTokens(
 }
 
 /**
- * NextAuth 세션 쿠키가 존재하는지 확인한다. BFF 토큰이 없는데도 이 쿠키가 남아 있으면
- * "화면은 회원인데 서버엔 열쇠 없음"인 불일치 상태로, 능동 로그아웃 대상이다.
+ * 값이 있는 NextAuth 세션 쿠키가 존재하는지 확인한다. BFF 토큰 없이 값이 남으면
+ * 세션 불일치로 능동 로그아웃 대상이다. 로그아웃 후 남은 빈 쿠키는 세션이 아니다.
  *
- * @returns NextAuth 세션 쿠키가 존재하면 true
+ * @returns 값이 있는 NextAuth 세션 쿠키가 존재하면 true
  */
 export async function hasNextAuthSessionCookie(): Promise<boolean> {
   const store = await cookies();
 
   return store
     .getAll()
-    .some((cookie) => isNextAuthSessionCookieName(cookie.name));
+    .some(
+      (cookie) => isNextAuthSessionCookieName(cookie.name) && !!cookie.value,
+    );
 }
 
 /**
