@@ -125,7 +125,7 @@ export async function hasNextAuthSessionCookie(): Promise<boolean> {
  * BFF 토큰 쿠키와 NextAuth 세션 쿠키를 모두 폐기해 게스트 모드로 되돌린다.
  *
  * `store.delete(name)`는 Set-Cookie에 secure 속성을 붙이지 않는다. 그런데
- * 프로덕션의 NextAuth 세션 쿠키는 `__Secure-` 접두사를 쓰고, 이 접두사 쿠키는
+ * HTTPS의 NextAuth 세션 쿠키는 개발 모드에서도 `__Secure-` 접두사를 쓰고, 이 쿠키는
  * secure 없는 Set-Cookie를 브라우저가 통째로 거부한다 → 삭제가 무시돼 "화면은
  * 회원, 서버엔 열쇠 없음" 불일치가 지속된다. 그래서 delete 대신 쓰기와 동일한
  * 속성(secure·path·httpOnly·sameSite)으로 빈 값·과거 만료를 명시해 확실히 지운다.
@@ -154,6 +154,9 @@ export async function clearBackendSession(): Promise<void> {
   ]);
 
   for (const name of names) {
-    store.set(name, '', expireOptions);
+    store.set(name, '', {
+      ...expireOptions,
+      secure: expireOptions.secure || name.startsWith('__Secure-'),
+    });
   }
 }

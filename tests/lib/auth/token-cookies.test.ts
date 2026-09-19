@@ -171,4 +171,32 @@ describe('clearBackendSession', () => {
     expect(expiredNames).toContain('__Secure-authjs.session-token.0');
     expect(expiredNames).toContain('__Secure-authjs.session-token.1');
   });
+
+  it('개발 모드에서도 __Secure- 쿠키와 청크는 secure로 삭제하고 HTTP 쿠키는 그대로 정리한다', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+
+    const secureNames = [
+      '__Secure-authjs.session-token',
+      '__Secure-authjs.session-token.0',
+      '__Secure-authjs.session-token.1',
+    ];
+
+    for (const name of secureNames) {
+      cookieStore.set(name, 'stale-session');
+    }
+
+    await clearBackendSession();
+
+    for (const name of [...secureNames, 'authjs.session-token']) {
+      expect(setCalls).toContainEqual({
+        name,
+        value: '',
+        options: expect.objectContaining({
+          secure: secureNames.includes(name),
+          path: '/',
+          expires: new Date(0),
+        }),
+      });
+    }
+  });
 });
