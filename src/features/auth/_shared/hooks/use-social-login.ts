@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
@@ -27,10 +27,12 @@ type StartLoginOptions = {
 export function useSocialLogin() {
   const [pendingProvider, setPendingProvider] =
     useState<SocialLoginProvider | null>(null);
+  const pendingRef = useRef(false);
 
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
+        pendingRef.current = false;
         setPendingProvider(null);
       }
     };
@@ -44,15 +46,17 @@ export function useSocialLogin() {
     provider,
     redirectTo,
   }: StartLoginOptions): Promise<void> => {
-    if (pendingProvider !== null) {
+    if (pendingRef.current) {
       return;
     }
 
+    pendingRef.current = true;
     setPendingProvider(provider);
 
     const outcome = await startSocialLogin({ provider, redirectTo });
 
     if (outcome === 'failed') {
+      pendingRef.current = false;
       setPendingProvider(null);
     }
   };
