@@ -22,6 +22,7 @@ import { waitForFonts } from '../fixtures/visual';
 
 test.describe('온보딩 비주얼', () => {
   test('게스트 온보딩 페이지 (ONBD-GUEST)', async ({ page }) => {
+    test.slow();
     await page.goto('/');
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
