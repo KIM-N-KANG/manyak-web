@@ -95,6 +95,23 @@ describe('hasNextAuthSessionCookie', () => {
     await expect(hasNextAuthSessionCookie()).resolves.toBe(false);
   });
 
+  it('로그아웃 후 빈 쿠키와 청크만 남으면 세션으로 보지 않지만 값이 있는 청크는 감지한다', async () => {
+    for (const base of [
+      'authjs.session-token',
+      '__Secure-authjs.session-token',
+    ]) {
+      cookieStore.set(base, '');
+      cookieStore.set(`${base}.0`, '');
+      cookieStore.set(`${base}.1`, '');
+    }
+
+    await expect(hasNextAuthSessionCookie()).resolves.toBe(false);
+
+    cookieStore.set('__Secure-authjs.session-token.1', 'remaining-chunk');
+
+    await expect(hasNextAuthSessionCookie()).resolves.toBe(true);
+  });
+
   it('일반 NextAuth 세션 쿠키가 있으면 true를 반환한다', async () => {
     cookieStore.set('authjs.session-token', 'jwt-value');
 
@@ -170,5 +187,33 @@ describe('clearBackendSession', () => {
 
     expect(expiredNames).toContain('__Secure-authjs.session-token.0');
     expect(expiredNames).toContain('__Secure-authjs.session-token.1');
+  });
+
+  it('개발 모드에서도 __Secure- 쿠키와 청크는 secure로 삭제하고 HTTP 쿠키는 그대로 정리한다', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+
+    const secureNames = [
+      '__Secure-authjs.session-token',
+      '__Secure-authjs.session-token.0',
+      '__Secure-authjs.session-token.1',
+    ];
+
+    for (const name of secureNames) {
+      cookieStore.set(name, 'stale-session');
+    }
+
+    await clearBackendSession();
+
+    for (const name of [...secureNames, 'authjs.session-token']) {
+      expect(setCalls).toContainEqual({
+        name,
+        value: '',
+        options: expect.objectContaining({
+          secure: secureNames.includes(name),
+          path: '/',
+          expires: new Date(0),
+        }),
+      });
+    }
   });
 });

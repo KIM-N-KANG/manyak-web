@@ -21,7 +21,6 @@ import {
   PENDING_HANDOFF_STORAGE_KEY,
   type PendingHandoff,
   readPendingHandoff,
-  savePendingHandoff,
 } from '@/features/auth/_shared/utils/pending-handoff-storage';
 
 const SAMPLE: PendingHandoff = {
@@ -32,8 +31,8 @@ const SAMPLE: PendingHandoff = {
 };
 
 describe('pending-handoff-storage', () => {
-  it('저장한 핸드오프를 그대로 읽어온다', () => {
-    savePendingHandoff(SAMPLE);
+  it('기존에 저장된 핸드오프를 그대로 읽어온다', () => {
+    store.set(PENDING_HANDOFF_STORAGE_KEY, JSON.stringify(SAMPLE));
     expect(readPendingHandoff()).toEqual(SAMPLE);
   });
 
@@ -42,7 +41,7 @@ describe('pending-handoff-storage', () => {
   });
 
   it('clearPendingHandoff 후에는 null을 반환한다', () => {
-    savePendingHandoff(SAMPLE);
+    store.set(PENDING_HANDOFF_STORAGE_KEY, JSON.stringify(SAMPLE));
     clearPendingHandoff();
     expect(readPendingHandoff()).toBeNull();
   });

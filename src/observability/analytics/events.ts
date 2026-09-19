@@ -49,13 +49,7 @@ export type AnalyticsEventProps = {
   client_inappBrowser_detected: { app: InAppBrowser };
   client_inappBrowser_escapeAttempted: { app: 'kakaotalk' };
   client_inappBrowser_bannerShown: { app: InAppBrowser };
-  // login handoff (인앱 로그인 핸드오프 퍼널 — 스펙 §6-4-2-12)
-  // 생성 시점(인앱)에는 handoff_id를 확보하지만, 외부 랜딩은 확인 응답에 id가 없어
-  // handoff_id 없이 발화한다(비밀 코드는 어떤 이벤트에도 싣지 않는다).
-  client_inappBrowser_loginHandoffCreated: {
-    app: InAppBrowser;
-    handoff_id: string;
-  };
+  // 기존 발급 핸드오프 링크의 랜딩과 복구 이벤트다. 신규 생성은 종료됐다.
   client_loginContinue_viewed: void;
   client_loginContinue_loginButton_clicked: { provider: SocialLoginProvider };
   // guest limit (게스트 체험 한도 초과 → 로그인 유도)

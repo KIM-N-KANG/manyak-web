@@ -7,6 +7,7 @@ export const APP_PATH = {
   },
   LOGIN: '/login',
   LOGIN_CONTINUE: '/login/continue',
+  LOGIN_POPUP_COMPLETE: '/api/auth/popup-complete',
   ONBOARDING: '/onboarding',
   TERMS: '/terms',
   PRIVACY: '/privacy',

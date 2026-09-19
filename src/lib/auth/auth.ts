@@ -40,12 +40,20 @@ const LinkGoogle = Google({
   id: 'link-google',
   clientId: process.env.AUTH_GOOGLE_ID,
   clientSecret: process.env.AUTH_GOOGLE_SECRET,
+  // 로그인과 동일하게 인가 코드, 요청 상태와 ID 토큰의 재사용을 검증한다.
+  checks: ['pkce', 'state', 'nonce'],
 });
 
 const LinkKakao: OIDCConfig<{ sub: string }> = { ...Kakao, id: 'link-kakao' };
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google, Kakao, LinkGoogle, LinkKakao],
+  providers: [
+    // 팝업 여부와 무관한 보안 정책이다. PKCE와 state에 OIDC nonce 검증을 더한다.
+    Google({ checks: ['pkce', 'state', 'nonce'] }),
+    Kakao,
+    LinkGoogle,
+    LinkKakao,
+  ],
   // BFF 토큰 쿠키 수명(14일)과 정렬 — 불일치 창 제거. 기본 30일이면 14~30일
   // 사이 재방문 사용자가 회원 UI를 보면서 API 호출은 전부 익명 처리된다.
   session: { strategy: 'jwt', maxAge: SESSION_COOKIE_MAX_AGE_SECONDS },

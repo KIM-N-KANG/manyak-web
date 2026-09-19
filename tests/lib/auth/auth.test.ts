@@ -17,7 +17,10 @@ const authMocks = vi.hoisted(() => ({
 
 vi.mock('next-auth', () => ({ default: authMocks.nextAuth }));
 vi.mock('next-auth/providers/google', () => ({
-  default: () => ({ id: 'google' }),
+  default: (options: Record<string, unknown> = {}) => ({
+    id: 'google',
+    ...options,
+  }),
 }));
 vi.mock('@/lib/auth/backend-client', () => ({
   logoutOnServer: authMocks.logoutOnServer,
@@ -69,6 +72,7 @@ type SessionCallback = (args: {
 }) => TestSession;
 
 type CapturedAuthConfig = {
+  providers: Array<{ id: string; checks?: string[] }>;
   callbacks: {
     jwt: JwtCallback;
     session: SessionCallback;
@@ -90,6 +94,15 @@ beforeEach(() => {
   authMocks.processLinkCallback.mockReset();
   authMocks.restoreSessionClaims.mockReset();
 });
+
+it.each(['google', 'link-google'])(
+  '%s는 PKCE, state, nonce를 모두 검증한다',
+  (provider) => {
+    expect(
+      getAuthConfig().providers.find(({ id }) => id === provider)?.checks,
+    ).toEqual(['pkce', 'state', 'nonce']);
+  },
+);
 
 describe('NextAuth 계정 연동 콜백', () => {
   it('연동 콜백은 새 토큰 대신 세션 쿠키에서 복원한 기존 클레임을 반환한다', async () => {
