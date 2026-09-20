@@ -8,8 +8,7 @@ const AMP_COOKIE_PREFIX = 'AMP_';
 
 /**
  * Amplitude SDK가 캠페인 정보를 저장하는 쿠키의 접두사.
- * 식별자 쿠키에서 이 쿠키를 걸러내는 데 쓰고, campaign-params가 반대로 이 쿠키만
- * 고르는 데 함께 쓴다.
+ * 식별자 쿠키를 읽을 때 마케팅 쿠키를 제외하는 데 쓴다.
  */
 export const AMP_MKTG_COOKIE_PREFIX = 'AMP_MKTG_';
 

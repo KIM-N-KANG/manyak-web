@@ -263,35 +263,10 @@ export async function mockCreditProducts(
   });
 }
 
-/** 핸드오프 생성(POST /api/v1/auth/handoffs) 라우트 글롭. 상태 조회(/status)와 경로가 갈린다. */
-const HANDOFF_CREATE_ROUTE = '**/api/v1/auth/handoffs';
 /** 핸드오프 상태 조회(GET /api/v1/auth/handoffs/status) 라우트 글롭. */
 const HANDOFF_STATUS_ROUTE = '**/api/v1/auth/handoffs/status';
 /** 외부 랜딩의 쿠키 이전 BFF(POST /api/auth/handoff-session) 라우트 글롭. */
 const HANDOFF_SESSION_ROUTE = '**/api/auth/handoff-session';
-
-/**
- * 핸드오프 생성 API를 201로 목킹한다(인앱 로그인 분기가 소비).
- * mockApi 뒤에 등록해야 catch-all보다 우선 적용된다.
- *
- * @param page 대상 페이지
- * @param body 반환할 생성 결과(핸드오프 코드·id)
- */
-export async function mockHandoffCreate(
-  page: Page,
-  body: { handoffCode: string; handoffId: string } = {
-    handoffCode: 'handoff-code-1',
-    handoffId: 'handoff-id-1',
-  },
-): Promise<void> {
-  await page.route(HANDOFF_CREATE_ROUTE, async (route) => {
-    await route.fulfill({
-      status: 201,
-      contentType: 'application/json',
-      body: JSON.stringify({ ...body, expiresAt: '2099-01-01T00:00:00Z' }),
-    });
-  });
-}
 
 /**
  * 외부 랜딩의 쿠키 이전 BFF를 목킹한다. 200이면 안내 요약을, 404면 만료를 재현한다.

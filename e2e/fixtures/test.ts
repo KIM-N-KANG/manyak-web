@@ -13,7 +13,6 @@ import {
   mockCreditPolicies,
   mockCreditProducts,
   mockGuestConsents,
-  mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
   mockTrials,
@@ -30,7 +29,6 @@ export const test = base.extend({
 
 export { expect };
 export {
-  seedCampaignCookie,
   seedChatIds,
   seedGuestChatIds,
   seedPendingCreditOrder,
@@ -54,7 +52,6 @@ export {
   mockGuestConsents,
   mockCreditPolicies,
   mockCreditProducts,
-  mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
   mockTrials,
