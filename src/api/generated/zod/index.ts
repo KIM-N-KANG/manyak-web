@@ -713,6 +713,32 @@ export const GetStoriesByIdsBody = zod
 export const GetStoriesByIdsResponse = zod.unknown();
 
 /**
+ * 인증 없이 디바이스별 현행 문서의 동의 필요 여부를 반환합니다. 미동의 게스트의 다른 API를 차단하지 않으며 회원 동의로 이관하지 않습니다.
+ * @summary 게스트 개인정보 수집 동의 조회
+ */
+export const GetConsents1Header = zod.object({
+  'X-Manyak-Device-Id': zod.string().describe('체험 한도와 같은 디바이스 ID'),
+});
+
+export const GetConsents1Response = zod.unknown();
+
+/**
+ * guestPrivacy의 현행 버전만 기록하며 같은 버전 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
+ * @summary 게스트 개인정보 수집 동의 기록
+ */
+export const RecordConsents1Header = zod.object({
+  'X-Manyak-Device-Id': zod.string().describe('체험 한도와 같은 디바이스 ID'),
+});
+
+export const RecordConsents1Body = zod
+  .object({
+    guestPrivacy: zod.string().nullish().describe('수락한 현행 문서 버전'),
+  })
+  .describe('명시적으로 수락한 게스트 개인정보 수집 및 이용 동의 버전');
+
+export const RecordConsents1Response = zod.unknown();
+
+/**
  * 사용자 피드백을 등록합니다. 본문만 필수이며, 답변용 이메일은 선택입니다. platform/appVersion 은 앱이 자동으로 채워 보내는 메타이며, 로그인 상태면 서버가 user_id 를 채웁니다(인증 도입 후).
  * @summary 피드백 등록
  */

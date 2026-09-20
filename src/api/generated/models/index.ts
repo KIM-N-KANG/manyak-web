@@ -57,6 +57,8 @@ export * from './getMyStoriesParams';
 export * from './getPublicStoriesParams';
 export * from './googlePlayPurchaseRequest';
 export * from './googlePlayPurchaseResponse';
+export * from './guestConsentRequest';
+export * from './guestConsentResponse';
 export * from './imagePresignRequest';
 export * from './imagePresignRequestKind';
 export * from './imagePresignResponse';
