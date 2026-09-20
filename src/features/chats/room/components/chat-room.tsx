@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -18,12 +18,14 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
-import { useLoginRequired } from '@/features/auth/_shared/hooks/use-login-required';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
+import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { useTrials } from '@/hooks/use-trials';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import {
@@ -59,8 +61,22 @@ type ChatRoomProps = {
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
-  const { requireLogin, sheetProps: loginSheetProps } = useLoginRequired();
+  const requestConsent = useGuestConsent();
+  const trials = useTrials();
+  const [loginOpen, setLoginOpen] = useState(false);
+  const lastSubmitted = useRef<string | null>(null);
   const handlePaymentRequired = (error: unknown) => {
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) === 'guest-trial-limit'
+    ) {
+      if (lastSubmitted.current !== null)
+        saveChatLoginDraft(chatId, lastSubmitted.current);
+
+      setLoginOpen(true);
+
+      return;
+    }
+
     if (
       resolvePaymentRequiredReason(error, sessionStatus) ===
       'insufficient-credit'
@@ -95,7 +111,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     refetch,
   );
   const handleStreamCompleted = async () => {
-    // 턴 완료(`completed`)로 체험 카운터가 소모되므로 잔여를 다시 조회한다(실패 턴은 서버가 복원).
+    lastSubmitted.current = null;
+    clearChatLoginDraft(chatId);
     void queryClient.invalidateQueries({ queryKey: getGetTrialsQueryKey() });
 
     const result = await refetch();
@@ -140,22 +157,36 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnCount: turns.length,
   });
 
-  const guardedRegenerate = (turn: ChatTurnResponse): Promise<void> => {
+  const canUseChat = async (onLimit?: () => void) => {
+    if (!(await requestConsent())) return false;
+
+    if (
+      sessionStatus === 'unauthenticated' &&
+      getTrialRemaining(trials, 'chatTurn') === 0
+    ) {
+      onLimit?.();
+      setLoginOpen(true);
+
+      return false;
+    }
+
+    return true;
+  };
+
+  const guardedRegenerate = async (turn: ChatTurnResponse): Promise<void> => {
     track('client_chat_regenerateButton_clicked', {
       chat_id: chatId,
       turn_number: turns.length,
     });
 
-    if (requireLogin()) {
-      return Promise.resolve();
+    if (!(await canUseChat())) {
+      return;
     }
 
     return regenerate(turn);
   };
 
   const { mode, changeMode } = useChatInputMode();
-  // 게스트가 로그인 시트를 열며 남긴 입력을 같은 탭 복귀 때 되살린다. 읽기만 초기값으로 쓰고
-  // 지우기는 effect에서 해 StrictMode 이중 초기화에도 초안을 잃지 않는다.
   const [initialDraft] = useState(() => readChatLoginDraft(chatId));
 
   useEffect(() => {
@@ -178,18 +209,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     inputMode: mode,
     suggestions,
     suggestionSourceTurnId,
-    // 비로그인이면 요청 없이 로그인 시트를 열고 입력은 그대로 둔 채 초안을 탭에 남긴다.
-    canSend: () => {
-      if (!requireLogin()) {
-        return true;
-      }
-
-      saveChatLoginDraft(chatId, composer.serializeDraft());
-
-      return false;
-    },
+    canSend: () =>
+      canUseChat(() => saveChatLoginDraft(chatId, composer.serializeDraft())),
     initialDraft,
-    onSend: send,
+    onSend: (text, source, selection) => {
+      lastSubmitted.current = text;
+
+      void send(text, source, selection);
+    },
   });
 
   const [pendingFill, setPendingFill] = useState<{
@@ -359,7 +386,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           cancelLabel="그대로 두기"
           confirmLabel="바꾸기"
         />
-        <LoginRequiredSheet {...loginSheetProps} />
+        <LoginRequiredSheet open={loginOpen} onOpenChange={setLoginOpen} />
         {tour.isOpen && (
           <ChatTour
             inputMode={mode}

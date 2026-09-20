@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { insertEmphasisMarkers } from '../utils/insert-emphasis-markers';
 
 type UseChatPlainComposerParams = {
-  submitText: (text: string) => boolean;
+  submitText: (text: string) => Promise<boolean>;
   /** 마운트 시 되살릴 입력 본문(로그인 복귀 초안). */
   initialValue?: string;
 };
@@ -33,9 +33,9 @@ export function useChatPlainComposer({
     });
   };
 
-  const send = () => {
-    if (submitText(value)) {
-      setValue('');
+  const send = async () => {
+    if (await submitText(value)) {
+      setValue((current) => (current === value ? '' : current));
     }
   };
 

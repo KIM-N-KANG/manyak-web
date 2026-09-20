@@ -22,7 +22,7 @@ type UseChatComposerParams = {
   suggestions: string[];
   suggestionSourceTurnId?: number;
   /** 전송 직전 추가 차단 조건. false면 입력을 유지한 채 전송하지 않는다. */
-  canSend?: () => boolean;
+  canSend?: () => boolean | Promise<boolean>;
   /**
    * 마운트 시 되살릴 입력 본문(로그인 복귀 초안). 입력 모드는 마운트 뒤 저장값으로 바뀌므로
    * 두 컴포저 모두에 채워 두고, 활성 모드의 컴포저가 그 값을 보여 준다.
@@ -111,12 +111,12 @@ export function useChatComposer({
     plainComposer.insertEmphasis();
   };
 
-  const sendChoice = (
+  const sendChoice = async (
     text: string,
     position: number,
     sourceTurnId?: number,
   ) => {
-    if (submitChoice(text, position, sourceTurnId)) {
+    if (await submitChoice(text, position, sourceTurnId)) {
       plainComposer.clear();
       blockComposer.reset();
     }

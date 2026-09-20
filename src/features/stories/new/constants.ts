@@ -7,6 +7,7 @@ import type {
 } from './types';
 
 export const ADD_TAG_MAX_LENGTH = 15;
+export const STORYLINE_GENERATE_LABEL = '스토리라인 만들기';
 
 /** 인물 이름 입력의 클라이언트 상한. 서버 스키마도 30자다. */
 export const CHARACTER_NAME_MAX_LENGTH = 30;

@@ -10,6 +10,7 @@ import {
   GENRE_CATEGORY,
   GENRE_SECTION_LABEL,
   PROTAGONIST_CATEGORY,
+  STORYLINE_GENERATE_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
   TAG_CATEGORIES,
 } from '../../constants';
@@ -113,7 +114,7 @@ export function StoryTagStepSection({
               <LoadingButtonContent
                 isLoading={isGeneratingStorylines}
                 loadingLabel="스토리라인 생성 중">
-                스토리라인 만들기
+                {STORYLINE_GENERATE_LABEL}
               </LoadingButtonContent>
             ) : (
               '다음'

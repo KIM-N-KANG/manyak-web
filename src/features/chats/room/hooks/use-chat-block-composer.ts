@@ -11,7 +11,7 @@ import {
 } from '../utils/input-blocks';
 
 type UseChatBlockComposerParams = {
-  submitText: (text: string) => boolean;
+  submitText: (text: string) => Promise<boolean>;
   /** 마운트 시 되살릴 블럭 목록(로그인 복귀 초안). */
   initialBlocks?: InputBlock[];
 };
@@ -52,11 +52,13 @@ export function useChatBlockComposer({
     );
   };
 
-  const send = () => {
+  const send = async () => {
     const text = serializeInputBlocks(blocks, '\n\n');
 
-    if (submitText(text)) {
-      setBlocks(createDefaultInputBlocks());
+    if (await submitText(text)) {
+      setBlocks((current) =>
+        current === blocks ? createDefaultInputBlocks() : current,
+      );
     }
   };
 

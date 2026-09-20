@@ -1,7 +1,7 @@
 import { type Page } from '@playwright/test';
 
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
+import { GUEST_CONSENT_COPY } from '@/features/auth/_shared/constants/guest-consent';
 import { CHAT_MENU_COPY } from '@/features/chats/room/constants';
 
 import { oneLine } from '../fixtures/copy';
@@ -19,9 +19,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * 채팅 전송·재생성·새 채팅 시작의 회원 전용 게이팅과 회원 이프 게이팅 스펙
+ * 채팅 전송·재생성·새 채팅 시작의 게스트 동의 게이팅과 회원 이프 게이팅 스펙
  * (웹 사용자 모델, §3-1-5 예외 처리 — QA CHAT-GATE-01~03·CHAT-LIMIT-03).
- * 게스트는 요청 없이 로그인 필요 시트를 보고, 회원의 402는 이프 부족 토스트로 안내한다.
+ * 게스트는 요청 없이 게스트 동의 시트를 보고, 회원의 402는 이프 부족 토스트로 안내한다.
  */
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
@@ -59,10 +59,10 @@ const prepareChatRoom = async (page: Page, turns: unknown[] = []) => {
 const chatLoginSheet = (page: Page) =>
   page
     .getByRole('dialog')
-    .getByRole('heading', { name: oneLine(LOGIN_COPY.title) });
+    .getByRole('heading', { name: oneLine(GUEST_CONSENT_COPY.title) });
 
-test.describe('채팅 로그인 게이트', () => {
-  test('게스트가 전송하면 요청 없이 로그인 필요 시트를 띄우고 입력은 유지한다 (CHAT-GATE-01)', async ({
+test.describe('채팅 게스트 동의 게이트', () => {
+  test('게스트가 전송하면 요청 없이 게스트 동의 시트를 띄우고 입력은 유지한다 (CHAT-GATE-01)', async ({
     page,
   }) => {
     let streamRequestCount = 0;
@@ -84,28 +84,29 @@ test.describe('채팅 로그인 게이트', () => {
 
     await expect(chatLoginSheet(page)).toBeVisible();
     await expect(
-      dialog.getByText(oneLine(LOGIN_COPY.linkNotice)),
+      dialog
+        .locator('section')
+        .getByText(oneLine(GUEST_CONSENT_COPY.consentDescription)),
     ).toBeVisible();
     await expect(
-      dialog.getByRole('button', { name: /카카오로 시작하기/ }),
+      dialog.getByRole('button', { name: GUEST_CONSENT_COPY.agree }),
     ).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: /Google로 시작하기/ }),
-    ).toBeVisible();
+    await expect(dialog.getByRole('checkbox')).toHaveCount(0);
     expect(streamRequestCount).toBe(0);
 
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
     await expect(input).toHaveValue('계속한다');
 
-    // 같은 탭으로 로그인을 다녀온 뒤(새로 그려진 채팅방)에도 입력이 그대로 남는다.
-    await page.reload();
-    await expect(
-      page.getByPlaceholder('이야기를 어떻게 이어갈까요?'),
-    ).toHaveValue('계속한다');
+    // 동의를 취소한 입력을 브라우저 저장소에 추가하지 않는다.
+    expect(
+      await page.evaluate(() =>
+        sessionStorage.getItem('manyak:chat-login-draft:c1'),
+      ),
+    ).toBeNull();
   });
 
-  test('게스트가 추천 입력을 눌러도 요청 없이 로그인 필요 시트를 띄운다 (CHAT-GATE-01)', async ({
+  test('게스트가 추천 입력을 눌러도 요청 없이 게스트 동의 시트를 띄운다 (CHAT-GATE-01)', async ({
     page,
   }) => {
     let streamRequestCount = 0;
@@ -130,7 +131,7 @@ test.describe('채팅 로그인 게이트', () => {
     expect(streamRequestCount).toBe(0);
   });
 
-  test('게스트가 다시 생성하면 요청 없이 로그인 필요 시트를 띄우고 본문을 유지한다 (CHAT-GATE-02)', async ({
+  test('게스트가 다시 생성하면 요청 없이 게스트 동의 시트를 띄우고 본문을 유지한다 (CHAT-GATE-02)', async ({
     page,
   }) => {
     let regenerateRequestCount = 0;

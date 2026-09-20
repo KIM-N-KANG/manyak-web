@@ -1,7 +1,4 @@
-import { type Page } from '@playwright/test';
-
 import { APP_PATH } from '@/constants/app-path';
-import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
 import { GUEST_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/guest-chat-storage';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
@@ -10,13 +7,12 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
-import { oneLine } from '../fixtures/copy';
 import { seedPendingCreationRequest } from '../fixtures/storage';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 /**
- * 스토리 제작·채팅 시작의 회원 전용 게이팅 스펙(FE-SCREEN-010 동의 모델·웹 사용자 모델).
- * 게스트가 보호 기능을 시도하면 이동·요청 없이 현재 화면에서 로그인 필요 시트를 띄운다
+ * 스토리 제작·채팅 시작의 게스트 동의 게이팅 스펙(FE-SCREEN-010 동의 모델·웹 사용자 모델).
+ * 게스트는 제작 화면에 바로 진입하고 생성 요청 직전에 별도로 동의한다
  * (QA STORY-GATE-01~06).
  */
 const STORIES_BATCH = '**/api/v1/stories/batch';
@@ -32,13 +28,8 @@ const story = {
   createdAt: '2026-06-01T00:00:00Z',
 };
 
-const storyLoginSheet = (page: Page) =>
-  page
-    .getByRole('dialog')
-    .getByRole('heading', { name: oneLine(LOGIN_COPY.title) });
-
-test.describe('스토리 제작 로그인 게이트', () => {
-  test('게스트가 제작 FAB를 누르면 이동 없이 로그인 필요 시트를 띄우고 닫으면 화면에 남는다 (STORY-GATE-01)', async ({
+test.describe('스토리 제작 게스트 동의 게이트', () => {
+  test('게스트가 제작 FAB를 누르면 동의 없이 제작 화면에 진입한다 (STORY-GATE-01)', async ({
     page,
   }) => {
     await seedStoryIds(page, ['s1']);
@@ -51,39 +42,28 @@ test.describe('스토리 제작 로그인 게이트', () => {
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
       .click();
 
-    const sheet = storyLoginSheet(page);
-    const dialog = page.getByRole('dialog');
-
-    await expect(sheet).toBeVisible();
-    await expect(
-      dialog.getByText(oneLine(LOGIN_COPY.linkNotice)),
-    ).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: /카카오로 시작하기/ }),
-    ).toBeVisible();
-    await expect(
-      dialog.getByRole('button', { name: /Google로 시작하기/ }),
-    ).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-
-    await page.keyboard.press('Escape');
-
-    await expect(dialog).toHaveCount(0);
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('게스트가 빈 제작 목록의 스토리 만들기를 눌러도 로그인 필요 시트를 띄운다 (STORY-GATE-02)', async ({
+  test('게스트가 빈 제작 목록에서 동의 없이 제작 화면에 진입한다 (STORY-GATE-02)', async ({
     page,
   }) => {
     await skipOnboarding(page);
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page.getByRole('button', { name: '스토리 만들기' }).click();
 
-    await expect(storyLoginSheet(page)).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('게스트가 /studio/story/simple에 직접 진입하면 퍼널 대신 로그인 게이트 화면과 시트를 보고 태그 조회도 하지 않는다 (STORY-GATE-03)', async ({
+  test('게스트가 제작 URL에 직접 진입하면 동의 없이 태그를 조회하고 입력 화면을 표시한다 (STORY-GATE-03)', async ({
     page,
   }) => {
     let tagsRequestCount = 0;
@@ -95,25 +75,12 @@ test.describe('스토리 제작 로그인 게이트', () => {
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
-    const dialog = page.getByRole('dialog');
-
-    await expect(storyLoginSheet(page)).toBeVisible();
-    await expect(page.getByText('키워드를 선택해주세요')).toHaveCount(0);
-
-    // 시트를 닫아도 퍼널은 열리지 않고, 게이트 화면의 로그인 버튼으로 다시 열 수 있다.
-    await page.keyboard.press('Escape');
-    await expect(dialog).toHaveCount(0);
-    await expect(
-      page.getByRole('heading', {
-        name: oneLine(LOGIN_COPY.title),
-      }),
-    ).toBeVisible();
-    await page.getByRole('button', { name: LOGIN_COPY.loginButton }).click();
-    await expect(storyLoginSheet(page)).toBeVisible();
-    expect(tagsRequestCount).toBe(0);
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect.poll(() => tagsRequestCount).toBeGreaterThan(0);
   });
 
-  test('게스트도 상세에서 새 채팅을 시작해 채팅방에 들어가되, 그 채팅은 채팅 목록 서재에 남지 않는다 (STORY-GATE-04)', async ({
+  test('게스트도 상세에서 새 채팅을 시작해 채팅방에 들어가되, 그 채팅은 채팅 목록 서재에 남는다 (STORY-GATE-04)', async ({
     page,
   }) => {
     let createChatCount = 0;
@@ -134,7 +101,7 @@ test.describe('스토리 제작 로그인 게이트', () => {
 
     await expect(page).toHaveURL(/\/chats\/c-guest$/);
     expect(createChatCount).toBe(1);
-    // 목록 서재(localStorage)에는 넣지 않고, 로그인 후 이관을 위해 이 탭에만 기억한다.
+    // 게스트 목록은 지속 저장소의 식별자로 복원한다.
     expect(
       await page.evaluate(
         ([listKey, tabKey]) => [
@@ -143,21 +110,24 @@ test.describe('스토리 제작 로그인 게이트', () => {
         ],
         [CREATED_CHAT_IDS_STORAGE_KEY, GUEST_CHAT_IDS_STORAGE_KEY] as const,
       ),
-    ).toEqual([null, JSON.stringify(['c-guest'])]);
+    ).toEqual([JSON.stringify(['c-guest']), null]);
   });
 
-  test('게스트가 빈 채팅 목록의 스토리 만들기를 눌러도 로그인 필요 시트를 띄운다 (STORY-GATE-05)', async ({
+  test('게스트가 빈 채팅 목록에서 동의 없이 제작 화면에 진입한다 (STORY-GATE-05)', async ({
     page,
   }) => {
     await skipOnboarding(page);
     await page.goto(APP_PATH.MAIN.CHATS);
     await page.getByRole('button', { name: '스토리 만들기' }).click();
 
-    await expect(storyLoginSheet(page)).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CHATS}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('게스트의 예전 초안 카드에서 이어서 만들기를 눌러도 이동 없이 로그인 필요 시트를 띄운다 (STORY-GATE-06)', async ({
+  test('게스트가 초안 카드에서 이어서 만들기를 누르면 동의 없이 제작을 재개한다 (STORY-GATE-06)', async ({
     page,
   }) => {
     const draft: PendingCreationRequest = {
@@ -187,7 +157,10 @@ test.describe('스토리 제작 로그인 게이트', () => {
       .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
       .click();
 
-    await expect(storyLoginSheet(page)).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 });

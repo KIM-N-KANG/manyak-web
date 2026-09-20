@@ -3,13 +3,16 @@ import type { Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 
 import {
+  EXHAUSTED_TRIALS,
   expect,
   mockHandoffCreate,
   mockHandoffSession,
   mockHandoffStatus,
+  mockTrials,
   seedCampaignCookie,
   seedChatIds,
   seedGuestChatIds,
+  seedGuestConsent,
   seedPendingHandoff,
   seedStoryIds,
   skipChatTour,
@@ -133,6 +136,8 @@ test.describe('인앱 브라우저 게스트 허용·로그인 핸드오프', ()
 
     await skipChatTour(page);
     await seedGuestChatIds(page, ['c-guest']);
+    await seedGuestConsent(page);
+    await mockTrials(page, EXHAUSTED_TRIALS);
     await page.route('**/api/v1/chats/c-guest', async (route) => {
       await route.fulfill({
         json: {

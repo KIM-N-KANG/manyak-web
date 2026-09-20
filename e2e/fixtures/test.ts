@@ -31,6 +31,7 @@ export {
   seedCampaignCookie,
   seedChatIds,
   seedGuestChatIds,
+  seedGuestConsent,
   seedPendingCreditOrder,
   seedPendingHandoff,
   seedPendingLogin,

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { StoryCreateResumeDialog } from '@/features/stories/_shared/components/story-create-resume-dialog';
 import { track } from '@/observability/analytics';
 
@@ -16,6 +17,8 @@ import { StoryTagStepSection } from './tag-step/story-tag-step-section';
 
 export function StoryCreateFunnel() {
   const {
+    guestLimitOpen,
+    setGuestLimitOpen,
     step,
     tagStep,
     draftSaveStatus,
@@ -65,6 +68,10 @@ export function StoryCreateFunnel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <LoginRequiredSheet
+        open={guestLimitOpen}
+        onOpenChange={setGuestLimitOpen}
+      />
       <StoryCreateHeader
         step={step}
         draftSaveStatus={draftSaveStatus}

@@ -6,8 +6,11 @@ import {
 
 import { oneLine } from '../fixtures/copy';
 import {
+  EXHAUSTED_TRIALS,
   expect,
+  mockTrials,
   seedChatIds,
+  seedGuestConsent,
   skipChatChoicesHint,
   skipChatTour,
   skipOnboarding,
@@ -261,9 +264,9 @@ test.describe('채팅 오버레이 비주얼', () => {
     await expect(page).toHaveScreenshot('confirm-alert-dialog.png');
   });
 
-  test('게스트 전송 시 로그인 필요 바텀 시트 (CHAT-GATE-01)', async ({
-    page,
-  }) => {
+  test('게스트 체험 한도 초과 시 로그인 필요 바텀 시트', async ({ page }) => {
+    await seedGuestConsent(page);
+    await mockTrials(page, EXHAUSTED_TRIALS);
     await page.goto('/chats/c1');
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
 

@@ -2,14 +2,12 @@ import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
 import { SITE_CONTACT_EMAIL } from '@/constants/site';
-import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import {
   ONBOARDING_BROWSE_LABEL,
   ONBOARDING_SECTIONS,
   ONBOARDING_START_LABEL,
 } from '@/features/onboarding/constants';
 
-import { oneLine } from '../fixtures/copy';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 /** 1×1 투명 PNG. 브라우저는 요청한 확장자와 무관하게 실제 응답 형식을 따른다. */
@@ -290,7 +288,7 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('헤더 "바로 시작하기"를 누르면 제작 화면으로 이동하고 게스트에게는 로그인 시트를 띄운다', async ({
+  test('헤더 "바로 시작하기"를 누르면 게스트도 동의 없이 제작 입력 화면으로 이동한다', async ({
     page,
   }) => {
     await stubOptimizedImages(page);
@@ -305,13 +303,8 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
-    // 온보딩 사용자는 게스트이므로 제작은 로그인 게이트에서 멈추고 퍼널 1단계는 그리지 않는다.
-    await expect(
-      page
-        .getByRole('dialog')
-        .getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
-    ).toBeVisible();
-    await expect(page.getByText('키워드를 선택해주세요')).toHaveCount(0);
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('본문 끝 "바로 시작하기"를 눌러도 스토리 생성으로 이동한다', async ({

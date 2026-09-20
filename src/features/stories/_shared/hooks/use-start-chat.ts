@@ -12,7 +12,7 @@ import {
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import { saveGuestChatId } from '@/features/chats/_shared/utils/guest-chat-storage';
+import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 
 type UseStartChatOptions = {
   /** 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용) */
@@ -23,8 +23,7 @@ type UseStartChatOptions = {
 
 /**
  * 스토리로 새 채팅을 시작하는 훅. 스토리 상세 CTA와 채팅방 메뉴가 함께 쓴다.
- * 게스트도 채팅방까지는 만들어 들어갈 수 있되 전송은 채팅방이 로그인으로 막는다. 게스트
- * 채팅은 목록(로컬 서재)에 남기지 않고 이 탭에만 기억해 로그인 후 이관에 싣는다.
+ * 게스트 채팅은 브라우저 서재에 저장하며 전송 직전에 게스트 동의를 확인한다.
  * 채팅 생성 후 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
  *
  * @param storyId 채팅을 시작할 스토리 id
@@ -48,13 +47,12 @@ export function useStartChat(
         }
 
         // 회원 서재는 서버가 정본 — 로그인 상태에서는 로컬에 ID를 남기지 않는다.
-        // 게스트 채팅은 목록에 넣지 않고 탭에만 기억한다.
         if (status === 'authenticated') {
           void queryClient.invalidateQueries({
             queryKey: getGetMyChatsQueryKey(),
           });
         } else {
-          saveGuestChatId(chatId);
+          saveCreatedChatId(chatId);
         }
 
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));

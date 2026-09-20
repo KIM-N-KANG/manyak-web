@@ -10,8 +10,6 @@ import { TextShimmer } from '@/components/motion/text-shimmer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
-import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
-import { useLoginRequired } from '@/features/auth/_shared/hooks/use-login-required';
 import type {
   CreationProgressRecord,
   PendingCreationRequest,
@@ -87,14 +85,9 @@ type DraftCardBodyProps = {
 
 function DraftCardBody({ record }: DraftCardBodyProps) {
   const router = useRouter();
-  const { requireLogin, sheetProps } = useLoginRequired();
 
   const handleResume = () => {
     track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
-
-    if (requireLogin()) {
-      return;
-    }
 
     if (record.stage === 'KEYWORD_DRAFT' || record.stage === 'STORY_DRAFT') {
       markDraftResumeIntent(record.requestId);
@@ -131,7 +124,6 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
       <Button className="w-full" onClick={handleResume}>
         {CREATION_PROGRESS_CARD_COPY.resume}
       </Button>
-      <LoginRequiredSheet {...sheetProps} />
     </CreationProgressCardBody>
   );
 }

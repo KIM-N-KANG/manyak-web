@@ -25,7 +25,15 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import {
+  useGuestConsent,
+  useGuestConsentOpen,
+} from '@/features/auth/_shared/components/guest-consent-provider';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
+import {
+  getTrialRemaining,
+  type TrialKind,
+} from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
@@ -52,6 +60,7 @@ import {
   applyStoryCompletedEffects,
   applyStorylinesGeneratedEffects,
 } from '@/features/stories/_shared/utils/creation-side-effects';
+import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
 import { track } from '@/observability/analytics';
@@ -90,6 +99,11 @@ export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
+  const requestConsent = useGuestConsent();
+  const guestConsentOpen = useGuestConsentOpen();
+  const trials = useTrials();
+  const [guestLimitOpen, setGuestLimitOpen] = useState(false);
+  const awaitingAccess = useRef(false);
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
@@ -153,6 +167,30 @@ export function useStoryCreateFunnel() {
   const isFunnelActive = () =>
     isMountedRef.current && !hasLeftForCreateRef.current;
 
+  const canGenerate = async (kind: TrialKind | null) => {
+    if (awaitingAccess.current) return false;
+
+    awaitingAccess.current = true;
+
+    try {
+      if (!(await requestConsent()) || !isFunnelActive()) return false;
+
+      if (
+        kind !== null &&
+        sessionStatus === 'unauthenticated' &&
+        getTrialRemaining(trials, kind) === 0
+      ) {
+        setGuestLimitOpen(true);
+
+        return false;
+      }
+
+      return true;
+    } finally {
+      awaitingAccess.current = false;
+    }
+  };
+
   const simpleStoryTags = useGetSimpleStoryTags();
 
   const shouldConfirmBack = step !== 'keyword';
@@ -160,6 +198,7 @@ export function useStoryCreateFunnel() {
   const { leaveAfterCleanup } = usePreventPageLeave({
     warnOnUnload: shouldConfirmBack,
     interceptBack: true,
+    ignoreBack: guestConsentOpen,
     onBackAttempt: () => handleBackAttempt(),
   });
 
@@ -175,8 +214,15 @@ export function useStoryCreateFunnel() {
 
   // 완성 402 처리: 회원 이프 부족이면 토스트를 띄운다. 사유는 응답 바디 code로 구분하고
   // (백엔드 KNK-524), 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행된다.
-  // 제작은 회원 전용이라 게스트 체험 한도 402는 이 경로에 오지 않는다.
   const showCreditShortageIfNeeded = (error: unknown) => {
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) === 'guest-trial-limit'
+    ) {
+      setGuestLimitOpen(true);
+
+      return;
+    }
+
     if (
       resolvePaymentRequiredReason(error, sessionStatus) ===
       'insufficient-credit'
@@ -260,6 +306,8 @@ export function useStoryCreateFunnel() {
         } else {
           draftAutosave.setPersistedStatus(true);
         }
+
+        showCreditShortageIfNeeded(error);
       },
     },
   });
@@ -374,6 +422,11 @@ export function useStoryCreateFunnel() {
             'insufficient-credit'
           ) {
             showCreditShortageToast('story_create');
+          } else if (
+            resolvePaymentRequiredReason(error, sessionStatus) ===
+            'guest-trial-limit'
+          ) {
+            toast.error(TOAST_MESSAGE.GUEST_TRIAL_LIMIT);
           } else {
             toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
           }
@@ -625,9 +678,11 @@ export function useStoryCreateFunnel() {
     generateStorylines.mutate({ data: request });
   };
 
-  function handleGenerateStorylines(
+  async function handleGenerateStorylines(
     request: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
   ) {
+    if (!(await canGenerate('storylineGeneration'))) return;
+
     setGenerationResult(null);
     setActiveStorylineIndex(0);
     setSelectedStoryline(null);
@@ -641,10 +696,12 @@ export function useStoryCreateFunnel() {
     requestGenerateStorylines(request);
   }
 
-  const handleRegenerateStorylines = () => {
+  const handleRegenerateStorylines = async () => {
     if (!generationRequest) {
       return;
     }
+
+    if (!(await canGenerate('storylineGeneration'))) return;
 
     if (typeof simpleCreationId === 'number') {
       track('client_storyCreate_regenerateButton_clicked', {
@@ -731,7 +788,10 @@ export function useStoryCreateFunnel() {
     });
   };
 
-  const handleCompleteStory = () => {
+  const handleCompleteStory = async () => {
+    if (!(await canGenerate(createdStoryId === null ? 'storyCreation' : null)))
+      return;
+
     setHasCompleteStoryError(false);
 
     if (createdStoryId !== null) {
@@ -882,6 +942,8 @@ export function useStoryCreateFunnel() {
   };
 
   return {
+    guestLimitOpen,
+    setGuestLimitOpen,
     step,
     tagStep,
     draftSaveStatus: draftAutosave.status,

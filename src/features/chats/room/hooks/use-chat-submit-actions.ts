@@ -21,7 +21,7 @@ type UseChatSubmitActionsParams = {
   isStreaming: boolean;
   inputMode: ChatInputMode;
   /** 전송 직전 추가 차단 조건. false를 돌려주면 입력을 비우지 않고 전송하지 않는다. */
-  canSend?: () => boolean;
+  canSend?: () => boolean | Promise<boolean>;
   onSend: (
     text: string,
     userSource: ContinueChatRequestUserSource,
@@ -54,49 +54,58 @@ export function useChatSubmitActions({
   // 대조해 출처를 가르고, 서버가 선택 결과를 기록할 메타데이터를 함께 만든다.
   // 화면에 그리는 값이 아니라 다음 전송까지 들고만 있으면 되므로 ref로 둔다.
   const filledChoiceRef = useRef<FilledChoice | null>(null);
+  const submittingRef = useRef(false);
 
   const createEventProps = () => ({
     chat_id: chatId,
     turn_number: turnCount + 1,
   });
 
-  const submitText = (
+  const submitText = async (
     text: string,
     source: 'block' | 'plain' | 'choice' = inputMode,
     selectedChoice?: FilledChoice,
   ) => {
     const trimmed = text.trim();
 
-    if (!trimmed || isStreaming || canSend?.() === false) {
+    if (!trimmed || isStreaming || submittingRef.current) {
       return false;
     }
 
-    // 선택지를 눌러 바로 보낸 경로는 대조할 것도 없이 choice다.
-    const userSource =
-      source === 'choice'
-        ? 'choice'
-        : resolveUserSource({
-            filledChoiceText: filledChoiceRef.current?.text ?? null,
-            submittedText: trimmed,
-          });
-    const choice = selectedChoice ?? filledChoiceRef.current;
-    const selection = choice
-      ? createChoiceSelection(choice.sourceTurnId, choice.position)
-      : undefined;
+    submittingRef.current = true;
 
-    track('client_chat_messageInput_submitted', {
-      ...createEventProps(),
-      input_mode: source,
-    });
-    onSend(trimmed, userSource, selection);
+    try {
+      if ((await canSend?.()) === false) return false;
 
-    // 다음 입력이 앞 턴에서 채운 선택지와 대조되지 않도록 전송에 성공하면 비운다.
-    filledChoiceRef.current = null;
+      // 선택지를 눌러 바로 보낸 경로는 대조할 것도 없이 choice다.
+      const userSource =
+        source === 'choice'
+          ? 'choice'
+          : resolveUserSource({
+              filledChoiceText: filledChoiceRef.current?.text ?? null,
+              submittedText: trimmed,
+            });
+      const choice = selectedChoice ?? filledChoiceRef.current;
+      const selection = choice
+        ? createChoiceSelection(choice.sourceTurnId, choice.position)
+        : undefined;
 
-    return true;
+      track('client_chat_messageInput_submitted', {
+        ...createEventProps(),
+        input_mode: source,
+      });
+      onSend(trimmed, userSource, selection);
+
+      // 다음 입력이 앞 턴에서 채운 선택지와 대조되지 않도록 전송에 성공하면 비운다.
+      filledChoiceRef.current = null;
+
+      return true;
+    } finally {
+      submittingRef.current = false;
+    }
   };
 
-  const submitChoice = (
+  const submitChoice = async (
     text: string,
     position: number,
     sourceTurnId?: number,

@@ -5,6 +5,8 @@ type UsePreventPageLeaveOptions = {
   warnOnUnload: boolean;
   /** 브라우저·모바일 뒤로가기를 더미 히스토리 항목으로 흡수할지 */
   interceptBack: boolean;
+  /** 상위 오버레이가 뒤로가기를 처리하는 동안 화면 이탈 처리를 건너뛴다. */
+  ignoreBack?: boolean;
   onBackAttempt: () => void;
 };
 
@@ -24,20 +26,24 @@ type UsePreventPageLeaveOptions = {
  *
  * @param warnOnUnload 새로고침·탭 닫기 경고를 띄울지 여부
  * @param interceptBack 뒤로가기를 흡수할지 여부
+ * @param ignoreBack 상위 오버레이에 뒤로가기 처리를 맡길지 여부
  * @param onBackAttempt 뒤로가기를 흡수했을 때 호출되는 콜백
  * @returns 이탈 확정(`confirmLeave`)과 정리 후 이동(`leaveAfterCleanup`) 함수
  */
 export function usePreventPageLeave({
   warnOnUnload,
   interceptBack,
+  ignoreBack = false,
   onBackAttempt,
 }: UsePreventPageLeaveOptions) {
   const onBackAttemptRef = useRef(onBackAttempt);
+  const ignoreBackRef = useRef(ignoreBack);
   const teardownRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     onBackAttemptRef.current = onBackAttempt;
-  }, [onBackAttempt]);
+    ignoreBackRef.current = ignoreBack;
+  }, [onBackAttempt, ignoreBack]);
 
   useEffect(() => {
     if (!warnOnUnload) {
@@ -62,6 +68,8 @@ export function usePreventPageLeave({
     }
 
     const handlePopState = () => {
+      if (ignoreBackRef.current) return;
+
       // 뒤로가기로 더미 항목을 빠져나왔으므로 다시 쌓아 현재 위치를 유지한다.
       window.history.pushState(null, '', window.location.href);
       onBackAttemptRef.current();

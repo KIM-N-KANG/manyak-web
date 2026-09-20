@@ -1,8 +1,6 @@
 import { APP_PATH } from '@/constants/app-path';
-import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 
-import { oneLine } from '../fixtures/copy';
 import {
   expect,
   mockChatShareView,
@@ -138,7 +136,7 @@ test.describe('공유된 채팅 열람', () => {
     );
   });
 
-  test('게스트가 CTA를 누르면 이동 없이 로그인 시트를 띄우고 온보딩도 열람 처리하지 않는다', async ({
+  test('게스트가 CTA를 누르면 동의 없이 제작에 진입하고 온보딩을 열람 처리한다', async ({
     page,
   }) => {
     await mockChatShareView(page, SHARE_BODY);
@@ -146,17 +144,15 @@ test.describe('공유된 채팅 열람', () => {
 
     await page.getByRole('button', { name: CTA_NAME }).click();
 
-    await expect(
-      page
-        .getByRole('dialog')
-        .getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
-    ).toBeVisible();
-    await expect(page).toHaveURL(/\/share\/share-1$/);
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
-    // 제작에 들어가지 못했으므로 온보딩 열람도 남지 않아 홈은 온보딩으로 보낸다.
     const response = await page.goto('/');
 
-    expect(new URL(response!.url()).pathname).toBe(APP_PATH.ONBOARDING);
+    expect(new URL(response!.url()).pathname).toBe(APP_PATH.MAIN.STORIES);
   });
 
   test('회원이 CTA로 스토리 생성에 들어가면 이후 홈에서 온보딩이 뜨지 않는다', async ({
