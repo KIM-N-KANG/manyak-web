@@ -21,6 +21,7 @@ import {
   useTransform,
 } from 'motion/react';
 
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { EASE_IN_OUT, EASE_OUT, SPRING_PANEL, SPRING_SWAP } from '@/lib/ease';
 import { capturePointer, TOUCH_GESTURE_CONTENT_CLASS } from '@/lib/touch';
 import { cn } from '@/lib/utils';
@@ -95,7 +96,8 @@ function resistedDistance(distance: number, maxPull: number) {
   return maxPull * (1 - Math.exp(-Math.max(0, distance) / maxPull));
 }
 
-function RefreshBuddy({
+/** 당김 진행에 맞춰 살아나고 새로고침 중에는 까딱이는 마냑 심볼. */
+function RefreshSymbol({
   progress,
   status,
   reduce,
@@ -113,17 +115,14 @@ function RefreshBuddy({
   return (
     <m.span
       style={reduce ? undefined : { y: lift, rotate: tilt, scaleY: stretch }}
-      className="block h-9 w-9 origin-bottom">
-      <m.svg
-        aria-hidden="true"
-        viewBox="0 0 36 36"
-        style={{ opacity: 1 }}
-        className="h-full w-full overflow-visible"
+      className="block size-9 origin-bottom text-primary">
+      <m.span
+        className="block h-full w-full"
         animate={
           refreshing
             ? reduce
               ? { opacity: [0.55, 1, 0.55] }
-              : { y: [0, -2, 0], rotate: [-3, 3, -3] }
+              : { y: [0, -2, 0], rotate: [-8, 8, -8] }
             : reduce
               ? { opacity: 1 }
               : { y: 0, rotate: 0, scale: ready ? 1.08 : 1 }
@@ -131,88 +130,8 @@ function RefreshBuddy({
         transition={
           refreshing ? (reduce ? CALM_PULSE : CHARACTER_LOOP) : SPRING_SWAP
         }>
-        <m.g
-          style={{ transformOrigin: '18px 18px' }}
-          animate={
-            refreshing && !reduce
-              ? { rotate: [0, 360] }
-              : reduce
-                ? undefined
-                : { rotate: ready ? 0 : -35 }
-          }
-          transition={
-            refreshing ? (reduce ? CALM_PULSE : CHARACTER_LOOP) : SPRING_SWAP
-          }
-          className={cn(
-            'transition-opacity duration-150',
-            ready || refreshing ? 'opacity-100' : 'opacity-0',
-          )}>
-          <path
-            d="M18 2.5a15.5 15.5 0 0 1 12.7 6.6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className="text-muted-foreground"
-          />
-          <circle cx="31.3" cy="10.2" r="2.2" className="fill-foreground" />
-        </m.g>
-
-        <rect
-          x="7"
-          y="7"
-          width="22"
-          height="22"
-          rx="9"
-          className="fill-foreground"
-        />
-
-        <m.g
-          style={{ opacity: 1, transformOrigin: '18px 16px' }}
-          animate={
-            refreshing && !reduce
-              ? { scaleY: [1, 1, 0.15, 1, 1] }
-              : reduce
-                ? { opacity: 1 }
-                : { scaleY: ready ? 1.18 : 1 }
-          }
-          transition={refreshing && !reduce ? CHARACTER_LOOP : SPRING_SWAP}>
-          <circle cx="14.2" cy="16" r="1.45" className="fill-background" />
-          <circle cx="21.8" cy="16" r="1.45" className="fill-background" />
-        </m.g>
-
-        <path
-          d="M14.5 21h7"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          className={cn(
-            'text-background transition-opacity duration-150',
-            ready || refreshing ? 'opacity-0' : 'opacity-100',
-          )}
-        />
-        <path
-          d="M14 20.5c1 2.4 7 2.4 8 0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          className={cn(
-            'text-background transition-opacity duration-150',
-            ready ? 'opacity-100' : 'opacity-0',
-          )}
-        />
-        <circle
-          cx="18"
-          cy="21"
-          r="1.6"
-          className={cn(
-            'fill-background transition-opacity duration-150',
-            refreshing ? 'opacity-100' : 'opacity-0',
-          )}
-        />
-      </m.svg>
+        <ManyakSymbolIcon aria-hidden="true" className="h-full w-full" />
+      </m.span>
     </m.span>
   );
 }
@@ -521,7 +440,7 @@ export function PullToRefresh({
           'pointer-events-none absolute inset-x-0 top-0 z-20 flex h-[4.25rem] flex-col items-center justify-center gap-0.5 bg-gradient-to-b from-background via-background/95 to-transparent text-[11px] font-medium text-muted-foreground',
           indicatorClassName,
         )}>
-        <RefreshBuddy
+        <RefreshSymbol
           progress={progress}
           status={status}
           reduce={Boolean(reduce)}
