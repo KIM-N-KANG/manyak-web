@@ -66,17 +66,9 @@ function CascadePhrase({ phrase, reduce, shimmerDuration }: PhraseProps) {
 
   return (
     <AnimatePresence initial={false}>
-      {/* 쉬머는 문장 span에 한 번만 건다. 글자마다 걸면 그라데이션이 글자 단위로 끊겨
-          한 줄을 훑는 TextShimmer와 다르게 보인다. background-clip: text는 자식 글자에도
-          적용되지만, 글자 span이 will-change로 별도 레이어가 되면 클립이 닿지 않아 글자가
-          투명해지므로 글자 span에는 will-change를 두지 않는다. */}
       <m.span
         key={phrase}
-        className={cn(
-          'col-start-1 row-start-1 inline-block justify-self-start whitespace-pre',
-          TEXT_SHIMMER_CLASS_NAME,
-        )}
-        style={textShimmerStyle(shimmerDuration)}
+        className="col-start-1 row-start-1 inline-block justify-self-start whitespace-pre"
         initial="initial"
         animate="animate"
         exit="exit">
@@ -102,7 +94,11 @@ function CascadePhrase({ phrase, reduce, shimmerDuration }: PhraseProps) {
                 },
               }),
             }}
-            className="inline-block whitespace-pre">
+            className={cn(
+              'inline-block whitespace-pre will-change-[opacity,transform]',
+              TEXT_SHIMMER_CLASS_NAME,
+            )}
+            style={textShimmerStyle(shimmerDuration)}>
             {character}
           </m.span>
         ))}
