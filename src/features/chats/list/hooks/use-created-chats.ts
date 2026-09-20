@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { getChatsByIds } from '@/api/generated/endpoints/chats/chats';
 import { useGetMyChats } from '@/api/generated/endpoints/users/users';
 import type { ChatSummaryResponse } from '@/api/generated/models';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { useCreatedChatIds } from '@/features/chats/_shared/hooks/use-created-chat-ids';
 
 import type { ChatListItem } from '../types';
@@ -51,10 +52,11 @@ export const toChatListItems = (
  */
 export function useCreatedChats() {
   const { status } = useSession();
+  const { isMember } = useMemberAccess();
   const chatIds = useCreatedChatIds();
 
   const myChatsQuery = useGetMyChats(undefined, {
-    query: { enabled: status === 'authenticated' },
+    query: { enabled: isMember },
   });
 
   const hasChatIds = chatIds != null && chatIds.length > 0;

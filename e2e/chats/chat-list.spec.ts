@@ -1,6 +1,7 @@
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
+import { CHAT_LIST_COPY } from '@/features/chats/list/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -140,7 +141,7 @@ test.describe('채팅 목록', () => {
     await expect(page).toHaveURL(/\/chats\/c1$/);
   });
 
-  test('진행 중인 채팅도 스토리도 없으면 스토리 만들기를 안내한다 (US-5-4)', async ({
+  test('진행 중인 채팅이 없으면 앱과 같이 한 줄 안내만 표시한다 (US-5-4·KNK-1355)', async ({
     page,
   }) => {
     // 채팅 ID를 심지 않으면 목록이 비어 있고, 온보딩을 건너뛰어 다이얼로그가 뜨지 않게 한다.
@@ -148,30 +149,20 @@ test.describe('채팅 목록', () => {
 
     await page.goto('/chats');
 
-    await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
-
-    // base-ui Button(render=Link)은 role="button"인 앵커라 button 역할로 잡힌다.
-    const link = page.getByRole('button', { name: '스토리 만들기' });
-
-    await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', APP_PATH.STUDIO.STORY.SIMPLE);
+    await expect(page.getByText(CHAT_LIST_COPY.emptyTitle)).toBeVisible();
+    await expect(page.getByRole('main').getByRole('button')).toHaveCount(0);
   });
 
-  test('진행 중인 채팅은 없지만 스토리가 있으면 스토리 목록으로 안내한다 (US-5-4)', async ({
+  test('진행 중인 채팅은 없지만 스토리가 있어도 같은 한 줄 안내만 표시한다 (US-5-4·KNK-1355)', async ({
     page,
   }) => {
-    // 스토리 ID를 심으면 채팅이 없어도 온보딩 게이팅을 통과하고, 안내가 스토리 목록 이동으로 분기된다.
+    // 스토리 ID를 심으면 채팅이 없어도 온보딩 게이팅을 통과한다.
     await seedStoryIds(page, ['s1']);
 
     await page.goto('/chats');
 
-    await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
-
-    // base-ui Button(render=Link)은 role="button"인 앵커라 button 역할로 잡힌다.
-    const link = page.getByRole('button', { name: '스토리 목록으로 가기' });
-
-    await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', APP_PATH.MAIN.STUDIO);
+    await expect(page.getByText(CHAT_LIST_COPY.emptyTitle)).toBeVisible();
+    await expect(page.getByRole('main').getByRole('button')).toHaveCount(0);
   });
 
   test('로그인 상태에서는 서버의 내 채팅 목록을 보여준다', async ({ page }) => {
@@ -191,7 +182,7 @@ test.describe('채팅 목록', () => {
     await expect(page.getByText('회원의 채팅', { exact: true })).toBeVisible();
   });
 
-  test('로그인 상태에서 채팅은 없지만 서버에 스토리가 있으면 스토리 목록으로 안내한다', async ({
+  test('로그인 상태에서 채팅은 없지만 서버에 스토리가 있어도 한 줄 안내만 표시한다', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -221,10 +212,8 @@ test.describe('채팅 목록', () => {
 
     await page.goto('/chats');
 
-    await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: '스토리 목록으로 가기' }),
-    ).toBeVisible();
+    await expect(page.getByText(CHAT_LIST_COPY.emptyTitle)).toBeVisible();
+    await expect(page.getByRole('main').getByRole('button')).toHaveCount(0);
   });
 });
 

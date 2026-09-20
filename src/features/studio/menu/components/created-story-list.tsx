@@ -2,16 +2,12 @@
 
 import { type MouseEvent, type ReactNode, useEffect, useState } from 'react';
 
-import { PlusSignIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
-import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
-import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryCreateResumeDialog } from '@/features/stories/_shared/components/story-create-resume-dialog';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
@@ -25,6 +21,7 @@ import { markDraftResumeIntent } from '@/features/stories/_shared/utils/draft-re
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
 
+import { CREATED_STORY_LIST_COPY } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
 import {
   usePendingCreationRequest,
@@ -70,20 +67,20 @@ export function CreatedStoryList() {
     transition: { duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' },
   } as const;
 
-  const handleCreateClick = (
-    event: MouseEvent<HTMLAnchorElement>,
-    source: 'fab' | 'emptyState',
-  ) => {
-    track('client_storyList_createButton_clicked', { source });
+  const handleCreateClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    // 앱과 같이 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab이다.
+    track('client_storyList_createButton_clicked', { source: 'fab' });
 
     if (
       pendingCreationRecord?.stage !== 'KEYWORD_DRAFT' &&
       pendingCreationRecord?.stage !== 'STORY_DRAFT'
     ) {
+      router.push(APP_PATH.STUDIO.STORY.SIMPLE);
+
       return;
     }
 
-    event.preventDefault();
     track('client_storyCreate_resumeDialog_shown');
     setResumeDialogRecord(pendingCreationRecord);
   };
@@ -120,18 +117,19 @@ export function CreatedStoryList() {
     router.push(APP_PATH.STUDIO.STORY.SIMPLE);
   };
 
+  // 진행 카드(초안·완성 중)가 하나라도 있으면 목록이 비어 있어도 빈 안내를 두지 않는다.
+  const showsEmptyNotice =
+    isEmpty &&
+    pendingCreationRecord === null &&
+    visibleCompletionRecords.length === 0;
+
   let stateKey: string;
   let content: ReactNode;
 
-  if (visibleCompletionRecords.length > 0 && stories.length === 0 && !isError) {
-    stateKey = 'completing';
-    content = (
-      <CreateStoryFab onCreate={(event) => handleCreateClick(event, 'fab')} />
-    );
-  } else if (showSkeleton) {
+  if (showSkeleton && visibleCompletionRecords.length === 0) {
     stateKey = 'skeleton';
     content = <CreatedStoryListSkeleton />;
-  } else if (isLoading) {
+  } else if (isLoading && visibleCompletionRecords.length === 0) {
     stateKey = 'pending';
     content = null;
   } else if (isError) {
@@ -142,30 +140,18 @@ export function CreatedStoryList() {
         onRetry={() => refetch()}
       />
     );
-  } else if (isEmpty) {
-    stateKey = 'empty';
-    content = (
-      <ListStatus
-        title="아직 만든 스토리가 없어요"
-        description="3단계로 간단하게 스토리를 만들어보세요">
-        <Button
-          nativeButton={false}
-          render={
-            <Link
-              href={APP_PATH.STUDIO.STORY.SIMPLE}
-              onClick={(event) => handleCreateClick(event, 'emptyState')}
-            />
-          }
-          size="lg">
-          <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-          <span>스토리 만들기</span>
-        </Button>
-      </ListStatus>
-    );
   } else {
+    // 앱과 같이 빈 목록에도 FAB만 둔다. 만들기 진입은 FAB이 맡는다.
     stateKey = 'list';
     content = (
-      <CreateStoryFab onCreate={(event) => handleCreateClick(event, 'fab')} />
+      <>
+        {showsEmptyNotice ? (
+          <EmptyListNotice>
+            {CREATED_STORY_LIST_COPY.emptyTitle}
+          </EmptyListNotice>
+        ) : null}
+        <CreateStoryFab onCreate={handleCreateClick} />
+      </>
     );
   }
 

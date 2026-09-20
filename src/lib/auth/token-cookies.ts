@@ -111,6 +111,11 @@ export async function writeBackendSessionTokens(
  * 값이 있는 NextAuth 세션 쿠키가 존재하는지 확인한다. BFF 토큰 없이 값이 남으면
  * 세션 불일치로 능동 로그아웃 대상이다. 로그아웃 후 남은 빈 쿠키는 세션이 아니다.
  *
+ * 값이 빈 쿠키는 없는 것으로 본다. Auth.js signOut은 세션 쿠키를 `Max-Age=0`으로 지우는데,
+ * 같은 요청에서 `cookies().set()`(clearBackendSession)이 호출되면 Next가 핸들러 응답의
+ * Set-Cookie를 재직렬화하며 `Max-Age=0`을 잃어 브라우저에 빈 값 세션 쿠키가 남는다. 이를
+ * 회원으로 판정하면 로그아웃 직후 첫 프록시 요청이 401(세션 만료)로 실패한다.
+ *
  * @returns 값이 있는 NextAuth 세션 쿠키가 존재하면 true
  */
 export async function hasNextAuthSessionCookie(): Promise<boolean> {

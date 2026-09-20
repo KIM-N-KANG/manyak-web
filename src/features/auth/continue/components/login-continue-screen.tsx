@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
-import { LoginConsentNotice } from '@/features/auth/_shared/components/login-consent-notice';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
   useSocialLogin,
@@ -264,10 +264,8 @@ function ExternalHandoffLanding() {
       <main className="flex flex-1 flex-col items-center justify-center gap-8 p-4 pt-0">
         <div className="flex flex-col items-center gap-4">
           <ManyakLogo className="h-6 w-auto text-primary" />
-          <p className="text-center text-lg font-semibold">
-            로그인하고 나만의 스토리를
-            <br />
-            어디서든 이어서 즐겨보세요
+          <p className="text-center text-lg font-semibold whitespace-pre-line">
+            {LOGIN_COPY.title}
           </p>
         </div>
         <div className="flex w-full flex-col items-center gap-4">
@@ -304,7 +302,6 @@ function ExternalHandoffLanding() {
               </LoadingButtonContent>
             </Button>
           </div>
-          <LoginConsentNotice />
         </div>
       </main>
     </div>

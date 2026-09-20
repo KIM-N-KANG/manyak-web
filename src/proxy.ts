@@ -16,7 +16,8 @@ const NEXTAUTH_SESSION_COOKIE_PREFIXES = [
 /**
  * 요청에 NextAuth 세션 쿠키가 있는지 이름만으로 낙관적으로 판별한다.
  * 토큰 검증은 하지 않는다 — 위조 쿠키는 온보딩을 건너뛸 뿐이고,
- * 실제 인증은 각 API 경로가 담당한다.
+ * 실제 인증은 각 API 경로가 담당한다. 로그아웃 뒤 남을 수 있는 빈 값 쿠키는
+ * 회원으로 보지 않는다(token-cookies의 hasNextAuthSessionCookie와 같은 기준).
  *
  * @param request 판별할 요청
  * @returns 세션 쿠키가 있으면 true
@@ -24,10 +25,12 @@ const NEXTAUTH_SESSION_COOKIE_PREFIXES = [
 function hasMemberSessionCookie(request: NextRequest): boolean {
   return request.cookies
     .getAll()
-    .some(({ name }) =>
-      NEXTAUTH_SESSION_COOKIE_PREFIXES.some(
-        (base) => name === base || name.startsWith(`${base}.`),
-      ),
+    .some(
+      ({ name, value }) =>
+        value !== '' &&
+        NEXTAUTH_SESSION_COOKIE_PREFIXES.some(
+          (base) => name === base || name.startsWith(`${base}.`),
+        ),
     );
 }
 

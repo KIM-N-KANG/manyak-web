@@ -188,10 +188,10 @@ test.describe('외부 브라우저 핸드오프 랜딩', () => {
     await expect(
       page.getByRole('button', { name: /Google로 시작하기/ }),
     ).toBeVisible();
-    // 로그인 페이지와 동일하게 약관 동의 고지를 상시 표시한다.
+    // 동의는 로그인 직후 동의 시트에서 받는다.
     await expect(
       page.getByRole('link', { name: '서비스 이용약관', exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 
   test('쿼리 제거는 핸드오프 코드에만 적용하고 유입 출처는 남긴다', async ({

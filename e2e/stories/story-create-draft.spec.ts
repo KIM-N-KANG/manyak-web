@@ -2,10 +2,18 @@ import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
 import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
-import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATION_PROGRESS_CARD_COPY,
+} from '@/features/studio/menu/constants';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import {
+  expect,
+  mockMemberSession,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 
 // 편집 자동 저장(draft): 마지막 변경 300ms 뒤 제작 상태를 저장하고
 // 제작 탭 진행 카드·재개 다이얼로그로 이어 만드는 흐름.
@@ -58,8 +66,10 @@ const draftRecord: PendingCreationRequest = {
 };
 
 test.describe('스토리 임시 저장·재개', () => {
+  // 제작은 회원 전용이라 회원 세션으로 진행한다.
   test.beforeEach(async ({ page }) => {
     await skipOnboarding(page);
+    await mockMemberSession(page);
     await page.route(TAGS, async (route) => {
       await route.fulfill({
         status: 200,
@@ -173,7 +183,9 @@ test.describe('스토리 임시 저장·재개', () => {
     });
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
@@ -276,7 +288,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await seedPendingCreationRequest(page, draftRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
 
     const resumeDialog = page.getByRole('alertdialog');
 
@@ -313,7 +327,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await seedPendingCreationRequest(page, draftRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
     await page
       .getByRole('alertdialog')
       .getByRole('button', { name: '새로 만들기' })
@@ -336,7 +352,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await seedPendingCreationRequest(page, draftRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
 
     const resumeDialog = page.getByRole('alertdialog');
 

@@ -34,7 +34,6 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { APP_PATH } from '@/constants/app-path';
-import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { useDeleteCreatedChat } from '@/features/chats/_shared/hooks/use-delete-created-chat';
 import { CreditBalanceCard } from '@/features/my/menu/components/credit-balance-card';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
@@ -71,8 +70,7 @@ export function ChatMenuDrawer({
     chatId,
     () => router.replace(APP_PATH.MAIN.CHATS),
   );
-  const { startChat, isStarting, guestLimitTrigger, closeGuestLimitDialog } =
-    useStartChat(storyId ?? '');
+  const { startChat, isStarting } = useStartChat(storyId ?? '');
 
   const canReport = status === 'authenticated' && storyId !== null;
 
@@ -91,10 +89,7 @@ export function ChatMenuDrawer({
 
   return (
     <>
-      {/* 게스트 한도 시트가 뜨면 드로어는 닫는다. 두 드로어를 겹치지 않는다. */}
-      <Drawer
-        open={isOpen && guestLimitTrigger === null && container !== null}
-        onOpenChange={setIsOpen}>
+      <Drawer open={isOpen && container !== null} onOpenChange={setIsOpen}>
         <DrawerTrigger
           render={
             <Button
@@ -201,16 +196,6 @@ export function ChatMenuDrawer({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <LoginRequiredSheet
-        open={guestLimitTrigger !== null}
-        trigger={guestLimitTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeGuestLimitDialog();
-          }
-        }}
-      />
     </>
   );
 }

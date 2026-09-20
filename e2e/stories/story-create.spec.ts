@@ -31,9 +31,11 @@ import {
 } from '../fixtures/test';
 
 // 완성 제출 뒤 돌아오는 제작 탭의 온보딩 게이트와 채팅 화면의 안내 투어가 뜨지 않게 한다.
+// 제작은 회원 전용이라 회원 세션으로 진행하고, 제작 탭 목록은 회원 목록(/users/me/stories)을 쓴다.
 test.beforeEach(async ({ page }) => {
   await skipOnboarding(page);
   await skipChatTour(page);
+  await mockMemberSession(page);
 });
 
 // 스토리 생성 4단계 funnel(/studio/story/simple, (story) 레이아웃이라 온보딩 게이팅 없음).
@@ -46,7 +48,7 @@ const STORYLINES = '**/api/v1/stories/simple/storylines';
 const CREATE_STORY = '**/api/v1/stories/simple';
 const CREATION_REQUEST = '**/api/v1/stories/simple/creation-requests/*';
 const CREATE_CHAT = '**/api/v1/chats';
-const STORIES_BATCH = '**/api/v1/stories/batch';
+const MY_STORIES = '**/api/v1/users/me/stories*';
 const LEGACY_STORY_CREATE_PATH = '/stories/new';
 
 const tags = [
@@ -319,7 +321,7 @@ test.describe('스토리 생성', () => {
   test('키워드 → 스토리라인 → 추가정보 → 완성하면 제작 탭으로 돌아오고 완성 중 카드가 목록 카드로 바뀐다 (US-3)', async ({
     page,
   }) => {
-    let batchRequestCount = 0;
+    let listRequestCount = 0;
 
     await page.route(CREATION_REQUEST, async (route) => {
       await route.fulfill({
@@ -332,26 +334,22 @@ test.describe('스토리 생성', () => {
         }),
       });
     });
-    await page.route(STORIES_BATCH, async (route) => {
-      batchRequestCount += 1;
-
-      const { storyIds } = route.request().postDataJSON() as {
-        storyIds: string[];
-      };
+    await page.route(MY_STORIES, async (route) => {
+      listRequestCount += 1;
 
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          storyIds.map((id) => ({
-            id,
+        body: JSON.stringify([
+          {
+            id: 'story-new',
             title: '새 스토리',
             oneLineIntro: '완성된 스토리',
             genres: ['판타지'],
             turnCount: 0,
             createdAt: new Date().toISOString(),
-          })),
-        ),
+          },
+        ]),
       });
     });
     await page.route(TAGS, async (route) => {
@@ -413,7 +411,7 @@ test.describe('스토리 생성', () => {
     await page.getByRole('button', { name: '스토리 완성하기' }).click();
 
     // Step 4: 제출 직후 제작 탭으로 복귀. 완성 조회가 끝나면 완성 중 카드가 사라지고
-    // 게스트 서재에 실린 새 스토리 카드가 같은 자리에 나타난다. 채팅은 만들지 않는다.
+    // 회원 목록에 실린 새 스토리 카드가 같은 자리에 나타난다. 채팅은 만들지 않는다.
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
       page.getByRole('link', { name: '새 스토리 상세 보기' }),
@@ -432,7 +430,7 @@ test.describe('스토리 생성', () => {
         ),
       )
       .toEqual([null, null]);
-    expect(batchRequestCount).toBeGreaterThan(0);
+    expect(listRequestCount).toBeGreaterThan(0);
     expect(chatRequestCount).toBe(0);
   });
 
@@ -474,16 +472,19 @@ test.describe('스토리 생성', () => {
             : { message: '생성 요청을 찾을 수 없습니다.' },
         });
       });
-      await page.route(STORIES_BATCH, async (route) => {
+      // 회원 목록은 서버가 정본이라 완성이 확정된 뒤에만 새 스토리를 돌려준다.
+      await page.route(MY_STORIES, async (route) => {
         await route.fulfill({
-          json: [
-            {
-              ...story,
-              oneLineIntro: '',
-              turnCount: 0,
-              createdAt: new Date().toISOString(),
-            },
-          ],
+          json: completed
+            ? [
+                {
+                  ...story,
+                  oneLineIntro: '',
+                  turnCount: 0,
+                  createdAt: new Date().toISOString(),
+                },
+              ]
+            : [],
         });
       });
       await page.route(CREATE_CHAT, async (route) => {
@@ -555,7 +556,7 @@ test.describe('스토리 생성', () => {
         json: { stage: 'STORY_COMPLETION', status: 'PENDING', result: null },
       });
     });
-    await page.route(STORIES_BATCH, async (route) => {
+    await page.route(MY_STORIES, async (route) => {
       await route.fulfill({ json: [] });
     });
     await page.route(CREATE_STORY, async (route) => {
@@ -810,24 +811,20 @@ test.describe('스토리 생성', () => {
         }),
       });
     });
-    await page.route(STORIES_BATCH, async (route) => {
-      const { storyIds } = route.request().postDataJSON() as {
-        storyIds: string[];
-      };
-
+    await page.route(MY_STORIES, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          storyIds.map((id) => ({
-            id,
+        body: JSON.stringify([
+          {
+            id: 'story-conflict-recovered',
             title: '409 복구 스토리',
             oneLineIntro: '',
             genres: ['판타지'],
             turnCount: 0,
             createdAt: new Date().toISOString(),
-          })),
-        ),
+          },
+        ]),
       });
     });
     await reachAdditionalInfo(page);

@@ -18,8 +18,8 @@ function collectText(doc: LegalDocument): string {
 describe('법적 문서 콘텐츠', () => {
   it('약관은 확정된 시행일·버전과 주요 조항을 갖는다', () => {
     expect(termsContent.title).toBe('서비스 이용약관');
-    expect(termsContent.effectiveDate).toBe('2026-09-01');
-    expect(termsContent.version).toBe('v1.2');
+    expect(termsContent.effectiveDate).toBe('2026-09-20');
+    expect(termsContent.version).toBe('v1.4');
 
     const headings = termsContent.sections.map((section) => section.heading);
 
@@ -68,8 +68,8 @@ describe('법적 문서 콘텐츠', () => {
 
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
-    expect(privacyContent.effectiveDate).toBe('2026-09-18');
-    expect(privacyContent.version).toBe('v1.4');
+    expect(privacyContent.effectiveDate).toBe('2026-09-20');
+    expect(privacyContent.version).toBe('v1.6');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 

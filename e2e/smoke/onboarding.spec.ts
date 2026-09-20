@@ -146,7 +146,7 @@ test.describe('온보딩', () => {
       page,
     }) => {
       // 테마·원본 자산 검증을 CI의 이미지 최적화 대기와 분리한다.
-      // 최적화된 화면은 별도의 비주얼 회귀 검사에서 검증한다.
+      // 비주얼 회귀도 원본 WebP를 사용하며 이미지 최적화 자체는 검증하지 않는다.
       await page.route('**/_next/image**', async (route) => {
         const url = new URL(route.request().url());
         const source = url.searchParams.get('url');
@@ -288,7 +288,7 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('헤더 "바로 시작하기"를 누르면 스토리 생성으로 이동하고 뒤로가기로 온보딩에 돌아오지 않는다', async ({
+  test('헤더 "바로 시작하기"를 누르면 게스트도 동의 없이 제작 입력 화면으로 이동한다', async ({
     page,
   }) => {
     await stubOptimizedImages(page);
@@ -303,12 +303,8 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
-    // 퍼널이 마운트돼야 뒤로가기 가드가 걸리므로 첫 스텝 렌더를 기다린다.
     await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
-
-    await page.goBack();
-
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('본문 끝 "바로 시작하기"를 눌러도 스토리 생성으로 이동한다', async ({

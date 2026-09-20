@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 
 import { useGenerateChoices } from '@/api/generated/endpoints/chats/chats';
+import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
 
 export type ChoicesStatus = {
   turnId: number;
@@ -29,8 +30,11 @@ export function useChatChoices(
   // 재시도·연속 호출이 겹칠 때 낡은 완료가 최신 상태를 덮지 않도록 최신 요청을 추적한다.
   const latestTurnIdRef = useRef<number | null>(null);
   const { mutateAsync } = useGenerateChoices();
+  const requestConsent = useGuestConsent();
 
   const generate = async (turnId: number) => {
+    if (!(await requestConsent())) return;
+
     latestTurnIdRef.current = turnId;
     setChoicesStatus({ turnId, status: 'loading' });
 

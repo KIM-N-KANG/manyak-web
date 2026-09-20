@@ -8,6 +8,9 @@ import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
  */
 const SERVER_FETCH_TIMEOUT_MS = 5 * 1000;
 
+/** 서버 데이터 캐시에 오리지널 목록을 재사용하는 시간. */
+const SERVER_FETCH_REVALIDATE_SECONDS = 60;
+
 /**
  * 서버(BFF)에서 오리지널 스토리 목록을 백엔드에 직접 읽는다.
  *
@@ -32,7 +35,11 @@ export async function fetchOriginalStoriesOnServer(): Promise<
   try {
     const response = await fetchWithTimeout(
       `${baseUrl}${getGetOriginalStoriesUrl()}`,
-      { cache: 'no-store' },
+      // 오리지널 목록은 자주 바뀌지 않아 서버 데이터 캐시로 60초 재사용한다. `no-store`였을 때는
+      // 홈이 요청마다 서버 렌더돼 탭 이동마다 백엔드를 기다렸고, 재검증 fetch로 바꾸면 동적
+      // API가 없는 홈은 60초 ISR 정적 페이지가 돼 CDN·라우터 캐시에서 즉시 열린다.
+      // 사이트맵(force-dynamic)·상세 메타데이터도 같은 캐시를 써 최대 60초 늦은 목록을 본다.
+      { next: { revalidate: SERVER_FETCH_REVALIDATE_SECONDS } },
       SERVER_FETCH_TIMEOUT_MS,
     );
 

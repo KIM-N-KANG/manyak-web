@@ -1,5 +1,8 @@
 import { formatDocumentTitle } from '@/constants/site';
-import { SERVICE_INFO_TITLE } from '@/features/about/constants';
+import {
+  SERVICE_GUEST_INFO,
+  SERVICE_INFO_TITLE,
+} from '@/features/about/constants';
 
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
@@ -60,6 +63,10 @@ test.describe('서비스 안내', () => {
   test('약관 및 정책 링크가 각 문서를 새 탭에서 연다', async ({ page }) => {
     await skipOnboarding(page);
     await page.goto('/about');
+
+    for (const item of SERVICE_GUEST_INFO) {
+      await expect(page.getByText(item)).toBeVisible();
+    }
 
     const termsPopupPromise = page.waitForEvent('popup');
 

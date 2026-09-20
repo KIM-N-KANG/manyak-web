@@ -23,6 +23,10 @@ import {
   writeCreatedChatIds,
 } from '@/features/chats/_shared/utils/chat-id-storage';
 import {
+  clearGuestChatIds,
+  readGuestChatIds,
+} from '@/features/chats/_shared/utils/guest-chat-storage';
+import {
   CREATED_STORY_IDS_STORAGE_KEY,
   parseCreatedStoryIds,
   writeCreatedStoryIds,
@@ -31,13 +35,15 @@ import { FetchError } from '@/lib/custom-fetch';
 
 import { countMigrated } from '../utils/migration-result';
 import { filterValidUuids } from '../utils/uuid';
+import { useMemberAccess } from './use-member-access';
 
 type MigrationIds = { storyIds: string[]; chatIds: string[] };
 
 /**
  * 로그인 직후 게스트 서재(localStorage ID 배열)를 계정으로 자동 이관한다(FE-SCREEN-008).
- * 회원 모드는 로컬에 ID를 쓰지 않으므로 "인증됨 ∧ 로컬 ID 존재"는 곧 미이관 데이터 존재와
- * 동치다 — 별도 플래그 없이 실패 후 재방문 시에도 자연 재시도된다.
+ * 회원 모드는 로컬에 ID를 쓰지 않으므로 "회원 확정 ∧ 로컬 ID 존재"는 곧 미이관 데이터 존재와
+ * 동치다 — 별도 플래그 없이 실패 후 재방문 시에도 자연 재시도된다. 회원 확정은 필수 동의까지
+ * 마친 뒤(`useMemberAccess().isMember`)라 동의 전에는 시작하지 않는다.
  *
  * 로컬 ID는 서버가 항목을 실제로 평가한 경우에만 지운다. 이관 잠금(`migrationClosed`)
  * 응답은 어떤 항목도 평가하지 않았고 리소스는 `user_id` NULL로 살아 있는데, 서버에
@@ -46,23 +52,28 @@ type MigrationIds = { storyIds: string[]; chatIds: string[] };
  * 재호출·재안내하지 않는다.
  */
 export function useAutoMigration(): void {
-  const { status, data: session } = useSession();
+  const { data: session } = useSession();
+  const { isMember } = useMemberAccess();
   const userId = session?.user.id;
   const queryClient = useQueryClient();
   const { mutate } = useMigrate();
   const hasStartedRef = useRef(false);
 
   useEffect(() => {
-    if (status !== 'authenticated' || hasStartedRef.current) {
+    if (!isMember || hasStartedRef.current) {
       return;
     }
 
     const storyIds = parseCreatedStoryIds(
       window.localStorage.getItem(CREATED_STORY_IDS_STORAGE_KEY),
     );
-    const chatIds = parseCreatedChatIds(
-      window.localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY),
-    );
+    // 목록에 없는 이 탭의 게스트 채팅(상세에서 시작한 채팅)도 함께 옮긴다.
+    const chatIds = [
+      ...parseCreatedChatIds(
+        window.localStorage.getItem(CREATED_CHAT_IDS_STORAGE_KEY),
+      ),
+      ...readGuestChatIds(),
+    ];
 
     if (storyIds.length === 0 && chatIds.length === 0) {
       return;
@@ -103,6 +114,7 @@ export function useAutoMigration(): void {
             // CONFLICT·NOT_FOUND는 게스트로도 접근 불가라 남길 가치가 없다.
             writeCreatedStoryIds([]);
             writeCreatedChatIds([]);
+            clearGuestChatIds();
 
             // 이관된 항목이 이미 마운트된 목록 화면에 바로 보이도록 회원 목록을 새로 조회한다.
             void queryClient.invalidateQueries({
@@ -167,5 +179,5 @@ export function useAutoMigration(): void {
     };
 
     submit({ storyIds, chatIds }, false);
-  }, [status, userId, mutate, queryClient]);
+  }, [isMember, userId, mutate, queryClient]);
 }

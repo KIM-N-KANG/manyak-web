@@ -159,13 +159,3 @@ export const ONBOARDING_BROWSE_LABEL = '둘러보기';
 
 /** 헤더 오른쪽·본문 끝 주 CTA. 스토리 생성 퍼널로 바로 이동한다. */
 export const ONBOARDING_START_LABEL = '바로 시작하기';
-
-/**
- * 게스트(비로그인) 체험 한도. 안내 문구 표시용이며 실제 강제는 백엔드가 한다.
- * 정책 변경 시 이 값과 백엔드를 함께 맞춰야 한다.
- */
-export const GUEST_LIMITS = {
-  storylineCreate: 5,
-  storyCreate: 1,
-  chat: 5,
-} as const;

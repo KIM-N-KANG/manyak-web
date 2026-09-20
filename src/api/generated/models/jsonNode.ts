@@ -8,10 +8,11 @@
 import type { JsonNodeNodeType } from './jsonNodeNodeType';
 
 export interface JsonNode {
+  container?: boolean;
   string?: boolean;
-  floatingPointNumber?: boolean;
   missingNode?: boolean;
   integralNumber?: boolean;
+  floatingPointNumber?: boolean;
   nodeType?: JsonNodeNodeType;
   int?: boolean;
   long?: boolean;
@@ -27,7 +28,6 @@ export interface JsonNode {
   boolean?: boolean;
   binary?: boolean;
   number?: boolean;
-  container?: boolean;
   array?: boolean;
   empty?: boolean;
   null?: boolean;

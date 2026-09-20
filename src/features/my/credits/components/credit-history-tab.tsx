@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 
+import { PullToRefresh } from '@/components/motion/pull-to-refresh';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useInView } from '@/hooks/use-in-view';
+import { useRefreshActiveQueries } from '@/hooks/use-refresh-active-queries';
 
 import { CREDIT_HISTORY_COPY } from '../constants';
 import { useCreditTransactions } from '../hooks/use-credit-transactions';
@@ -24,9 +26,8 @@ type CreditHistoryTabProps = {
  */
 export function CreditHistoryTab({ enabled }: CreditHistoryTabProps) {
   // 잔액 상자·탭 줄은 셸에 고정돼 있어 이 탭이 자기 스크롤러를 소유한다.
-  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
-    null,
-  );
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
+  const refreshActiveQueries = useRefreshActiveQueries();
   const [sentinelElement, setSentinelElement] = useState<HTMLDivElement | null>(
     null,
   );
@@ -73,9 +74,12 @@ export function CreditHistoryTab({ enabled }: CreditHistoryTabProps) {
   ]);
 
   return (
-    <div
+    // 당기면 첫 페이지부터 다시 읽는다. 무한 목록 재조회는 받아 둔 페이지를 순서대로 다시 받는다.
+    <PullToRefresh
       ref={setScrollElement}
-      className="flex h-full scroll-fade-b flex-col overflow-y-auto overscroll-contain px-4 py-2">
+      onRefresh={refreshActiveQueries}
+      className="h-full scroll-fade-b"
+      contentClassName="flex min-h-full flex-col px-4 py-2">
       {isPending ? <CreditHistorySkeleton /> : null}
 
       {/* 다음 페이지 실패도 쿼리 전체를 error로 만들므로, 첫 조회 실패는 목록이 비었을 때로 좁힌다. */}
@@ -134,6 +138,6 @@ export function CreditHistoryTab({ enabled }: CreditHistoryTabProps) {
       ) : null}
 
       {hasNextPage ? <div ref={setSentinelElement} aria-hidden="true" /> : null}
-    </div>
+    </PullToRefresh>
   );
 }

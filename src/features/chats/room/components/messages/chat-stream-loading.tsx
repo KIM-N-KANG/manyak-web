@@ -10,6 +10,9 @@ import { EASE_OUT } from '@/lib/ease';
 
 import { CHAT_STREAM_LOADING_COPY } from '../../constants';
 
+/** 로딩 문구는 채팅 버블 본문과 같은 글꼴·크기·행간으로 그린다. */
+const BUBBLE_TEXT_CLASS_NAME = 'font-maruburi text-base leading-7 font-normal';
+
 type ChatStreamLoadingProps = {
   /** 실시간 이미지가 켜진 턴이면 4:3 장면 썸네일 자리를 문구 위에 함께 보인다 */
   realtimeImage?: boolean;
@@ -24,7 +27,7 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
         <MarkerContent
           className="min-h-lh"
           aria-label={CHAT_STREAM_LOADING_COPY.writingLabel}>
-          <TextShimmer duration={1.8} className="font-maruburi">
+          <TextShimmer duration={1.8} className={BUBBLE_TEXT_CLASS_NAME}>
             {CHAT_STREAM_LOADING_COPY.writing}
           </TextShimmer>
         </MarkerContent>
@@ -44,6 +47,7 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
           phrases={[...CHAT_STREAM_LOADING_COPY.scenePhrases]}
           interval={4000}
           shimmerDuration={4}
+          className={BUBBLE_TEXT_CLASS_NAME}
           aria-label={CHAT_STREAM_LOADING_COPY.sceneLabel}
         />
       </m.div>

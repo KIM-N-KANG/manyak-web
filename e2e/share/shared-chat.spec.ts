@@ -1,7 +1,12 @@
 import { APP_PATH } from '@/constants/app-path';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 
-import { expect, mockChatShareView, test } from '../fixtures/test';
+import {
+  expect,
+  mockChatShareView,
+  mockMemberSession,
+  test,
+} from '../fixtures/test';
 
 // 공유 열람(/share/[shareId])은 온보딩 게이트 매처(/, /chats, /studio, /my) 밖이라 게이팅이 없다.
 // 열람: GET /api/v1/shares/{shareId} (무인증).
@@ -131,9 +136,29 @@ test.describe('공유된 채팅 열람', () => {
     );
   });
 
-  test('CTA로 스토리 생성에 들어가면 이후 홈에서 온보딩이 뜨지 않는다', async ({
+  test('게스트가 CTA를 누르면 동의 없이 제작에 진입하고 온보딩을 열람 처리한다', async ({
     page,
   }) => {
+    await mockChatShareView(page, SHARE_BODY);
+    await page.goto('/share/share-1');
+
+    await page.getByRole('button', { name: CTA_NAME }).click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    const response = await page.goto('/');
+
+    expect(new URL(response!.url()).pathname).toBe(APP_PATH.MAIN.STORIES);
+  });
+
+  test('회원이 CTA로 스토리 생성에 들어가면 이후 홈에서 온보딩이 뜨지 않는다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
     await mockChatShareView(page, SHARE_BODY);
     await page.goto('/share/share-1');
 

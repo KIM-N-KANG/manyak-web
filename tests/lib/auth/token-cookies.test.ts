@@ -132,6 +132,14 @@ describe('hasNextAuthSessionCookie', () => {
     await expect(hasNextAuthSessionCookie()).resolves.toBe(true);
   });
 
+  it('값이 빈 NextAuth 세션 쿠키는 세션으로 감지하지 않는다', async () => {
+    // Auth.js signOut의 Max-Age=0 삭제가 Next의 cookies() 병합 재직렬화에서 유실되면
+    // 브라우저에 빈 값 세션 쿠키가 남는다. 이를 회원으로 보면 로그아웃 직후 첫 요청이 401이 된다.
+    cookieStore.set('authjs.session-token', '');
+
+    await expect(hasNextAuthSessionCookie()).resolves.toBe(false);
+  });
+
   it('세션 토큰이 아닌 authjs 쿠키(csrf 등)는 세션으로 감지하지 않는다', async () => {
     cookieStore.set('authjs.csrf-token', 'csrf-value');
     cookieStore.set('authjs.callback-url', 'http://localhost:3000');

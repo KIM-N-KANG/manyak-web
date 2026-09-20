@@ -7,6 +7,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
+import { markPendingLogin } from './pending-login-storage';
 import { startGooglePopupLogin } from './start-google-popup-login';
 
 type StartSocialLoginOptions = {
@@ -36,6 +37,9 @@ export async function startSocialLogin({
   redirectTo,
 }: StartSocialLoginOptions): Promise<SocialLoginOutcome> {
   const inAppBrowser = detectInAppBrowser(navigator.userAgent);
+
+  // 팝업도 원래 탭의 동의 게이트에서 이어가므로 인증 시작 전에 표시한다.
+  markPendingLogin();
 
   if (provider === 'google' && inAppBrowser) {
     const outcome = await startGooglePopupLogin(redirectTo);

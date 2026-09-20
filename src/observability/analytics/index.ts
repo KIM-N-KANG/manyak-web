@@ -7,7 +7,6 @@ export type {
   AnalyticsEventName,
   AnalyticsEventProps,
   CreditShortageTrigger,
-  GuestLimitTrigger,
   ReportSource,
   StepName,
   StoryCardSection,

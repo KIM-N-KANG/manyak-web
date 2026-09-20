@@ -9,6 +9,8 @@ export const API_ERROR_CODE = {
   INSUFFICIENT_CREDIT: 'INSUFFICIENT_CREDIT',
   /** 게스트 체험 한도 소진(402). 이프 부족과 구분한다. */
   GUEST_TRIAL_LIMIT_EXCEEDED: 'GUEST_TRIAL_LIMIT_EXCEEDED',
+  /** 동의 기록의 버전이 서버 요구 버전과 다름(400). 최신 상태를 다시 조회해 재동의받는다. */
+  CONSENT_VERSION_MISMATCH: 'CONSENT_VERSION_MISMATCH',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODE)[keyof typeof API_ERROR_CODE];

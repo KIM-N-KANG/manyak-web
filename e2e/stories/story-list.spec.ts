@@ -1,10 +1,14 @@
 import type { Page } from '@playwright/test';
 
+import { PULL_TO_REFRESH_COPY } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
 // import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
-import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATED_STORY_LIST_COPY,
+} from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -210,6 +214,63 @@ test.describe('홈·제작 스토리 목록', () => {
     expect(linkBox).toEqual(cardBox);
   });
 
+  test('홈을 위에서 당기면 오리지널 목록을 다시 읽고 그동안 기존 카드를 유지한다 (STORY-LIST-30)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+
+    let originalsRequestCount = 0;
+    let releaseRefetch: () => void = () => {};
+
+    await page.route(STORIES_ORIGINALS, async (route) => {
+      originalsRequestCount += 1;
+
+      // 두 번째(당김) 조회는 붙잡아 새로고침 중 표시자를 관찰한다.
+      if (originalsRequestCount > 1) {
+        await new Promise<void>((resolve) => {
+          releaseRefetch = resolve;
+        });
+      }
+
+      await route.fulfill({
+        json: [originalStory('o1', '마냑의 첫 이야기')],
+      });
+    });
+
+    await page.goto('/');
+
+    const card = page.getByRole('link', { name: '마냑의 첫 이야기 상세 보기' });
+
+    await expect(card).toBeVisible();
+
+    // 마우스 드래그 경로로 당긴다(터치 리스너와 같은 임계값을 쓴다).
+    const box = await page.getByRole('main').boundingBox();
+
+    if (!box) throw new Error('main 영역을 찾지 못했다');
+
+    const x = box.x + box.width / 2;
+
+    await page.mouse.move(x, box.y + 8);
+    await page.mouse.down();
+
+    for (let step = 1; step <= 10; step += 1) {
+      await page.mouse.move(x, box.y + 8 + step * 20);
+    }
+
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.release)).toBeVisible();
+    await page.mouse.up();
+
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.refreshing)).toBeVisible();
+    await expect.poll(() => originalsRequestCount).toBe(2);
+    // 응답을 기다리는 동안 기존 카드가 사라지지 않는다.
+    await expect(card).toBeVisible();
+
+    releaseRefetch();
+
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.refreshing)).toBeHidden();
+    await expect(card).toBeVisible();
+  });
+
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
     page,
   }) => {
@@ -224,14 +285,18 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('link', { name: '마냑의 첫 이야기 상세 보기' }),
     ).toBeVisible();
-    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeHidden();
+    await expect(
+      page.getByText(CREATED_STORY_LIST_COPY.emptyTitle),
+    ).toBeHidden();
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
-    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATED_STORY_LIST_COPY.emptyTitle),
+    ).toBeVisible();
   });
 
-  test('만든 스토리가 없는 제작 화면은 기존 빈 상태만 표시한다 (KNK-988)', async ({
+  test('만든 스토리가 없는 제작 화면은 한 줄 안내와 FAB만 표시한다 (KNK-988·KNK-1355)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -241,14 +306,16 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('main').getByRole('heading', { level: 2 }),
     ).toHaveCount(0);
-    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATED_STORY_LIST_COPY.emptyTitle),
+    ).toBeVisible();
+    // 앱과 같이 빈 상태에도 별도 CTA 없이 FAB 하나만 둔다.
     await expect(
       page.getByRole('button', { name: '스토리 만들기' }),
-    ).toBeVisible();
-    // FAB는 목록 상태 전용이라 빈 상태에는 없다.
+    ).toHaveCount(0);
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
-    ).toHaveCount(0);
+    ).toBeVisible();
   });
 
   test('오리지널 카드는 ORIGINAL 태그와 제작자를 보여준다 (KNK-983)', async ({

@@ -4,6 +4,11 @@ export const CREATE_STORY_FAB_COPY = {
   label: '만들기',
 } as const;
 
+/** 제작 화면의 빈 목록 안내 정본 문구다. 앱 `studio_stories_empty`와 같다. */
+export const CREATED_STORY_LIST_COPY = {
+  emptyTitle: '아직 만든 스토리가 없어요',
+} as const;
+
 /** 제작 화면의 진행 카드(초안·완성 중) 정본 문구다. 앱 `studio_progress_*` 문자열과 같다. */
 export const CREATION_PROGRESS_CARD_COPY = {
   draftTitle: '만들고 있는 스토리',

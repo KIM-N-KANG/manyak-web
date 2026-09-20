@@ -1,10 +1,17 @@
 import { type Page } from '@playwright/test';
 
-import { expect, skipChatTour, test } from '../fixtures/test';
+import {
+  expect,
+  mockMemberSession,
+  skipChatTour,
+  test,
+} from '../fixtures/test';
 
 // 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
+// 전송은 회원 전용이라 회원 세션으로 진행한다.
 test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
+  await mockMemberSession(page);
 });
 
 // 채팅 스크롤 앵커 UX 회귀 스펙.

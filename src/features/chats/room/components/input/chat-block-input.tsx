@@ -19,6 +19,7 @@ import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatSettingsButton } from './chat-settings-sheet';
 import { ChatTurnCreditCost } from './chat-turn-credit-cost';
+import { LockedInputOverlay } from './locked-input-overlay';
 import { SendButtonIcon } from './send-button-icon';
 
 type ChatBlockInputProps = {
@@ -35,6 +36,8 @@ type ChatBlockInputProps = {
   onOpenSettings: () => void;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
   realtimeImageEnabled: boolean;
+  /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
+  onLockedTap: () => void;
 };
 
 export function ChatBlockInput({
@@ -50,6 +53,7 @@ export function ChatBlockInput({
   choicesEnabled,
   onOpenSettings,
   realtimeImageEnabled,
+  onLockedTap,
 }: ChatBlockInputProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -93,6 +97,7 @@ export function ChatBlockInput({
           {blocks.map((block) => (
             <div key={block.id} className="flex items-center gap-1">
               <InputGroup>
+                <LockedInputOverlay locked={isStreaming} onTap={onLockedTap} />
                 <InputGroupAddon>
                   <span
                     className={cn(

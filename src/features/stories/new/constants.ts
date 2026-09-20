@@ -7,6 +7,7 @@ import type {
 } from './types';
 
 export const ADD_TAG_MAX_LENGTH = 15;
+export const STORYLINE_GENERATE_LABEL = '스토리라인 만들기';
 
 /** 인물 이름 입력의 클라이언트 상한. 서버 스키마도 30자다. */
 export const CHARACTER_NAME_MAX_LENGTH = 30;
@@ -230,3 +231,9 @@ export const STORY_COMPLETION_LOADING_HINTS = [
     text: '거의 다 완성됐어요',
   },
 ] as const satisfies readonly RevealHint[];
+
+/** 회원 확인 전·게스트에게 보이는 제작 진입 게이트 문구. 퍼널 헤더 제목과 같은 화면 이름을 쓴다. */
+export const STORY_CREATE_GATE_COPY = {
+  title: '스토리 만들기',
+  checking: '로그인 상태를 확인하는 중',
+} as const;
