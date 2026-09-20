@@ -49,7 +49,7 @@ type PhraseProps = {
 };
 
 function CascadePhrase({ phrase, reduce, shimmerDuration }: PhraseProps) {
-  const text = `${phrase}…`;
+  const text = `${phrase}...`;
 
   if (reduce) {
     return (
@@ -124,14 +124,14 @@ function SwapPhrase({ phrase, reduce, shimmerDuration }: PhraseProps) {
           duration: reduce ? 0.12 : 0.2,
           ease: EASE_OUT,
         }}>
-        {phrase}…
+        {phrase}...
       </m.span>
     </AnimatePresence>
   );
 }
 
 function ScramblePhrase({ phrase, shimmerDuration }: PhraseProps) {
-  const target = `${phrase}…`;
+  const target = `${phrase}...`;
 
   return (
     <TextScramble
@@ -199,7 +199,7 @@ export function ReasoningText({
 
         <span aria-hidden="true" className="grid overflow-hidden text-left">
           <span className="invisible col-start-1 row-start-1 whitespace-nowrap">
-            {longestPhrase}…
+            {longestPhrase}...
           </span>
           {variant === 'cascade' ? (
             <CascadePhrase {...phraseProps} />

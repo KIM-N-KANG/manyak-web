@@ -2,7 +2,10 @@ import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
 import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
-import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATION_PROGRESS_CARD_COPY,
+} from '@/features/studio/menu/constants';
 
 import { seedPendingCreationRequest } from '../fixtures/storage';
 import {
@@ -180,7 +183,9 @@ test.describe('스토리 임시 저장·재개', () => {
     });
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
@@ -283,7 +288,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await seedPendingCreationRequest(page, draftRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
 
     const resumeDialog = page.getByRole('alertdialog');
 
@@ -320,7 +327,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await seedPendingCreationRequest(page, draftRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
     await page
       .getByRole('alertdialog')
       .getByRole('button', { name: '새로 만들기' })
@@ -343,7 +352,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await seedPendingCreationRequest(page, draftRecord);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
 
     const resumeDialog = page.getByRole('alertdialog');
 

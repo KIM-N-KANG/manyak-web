@@ -6,8 +6,10 @@ import { CHAT_MENU_COPY } from '@/features/chats/room/constants';
 
 import { oneLine } from '../fixtures/copy';
 import {
+  EXHAUSTED_TRIALS,
   expect,
   mockMemberSession,
+  mockTrials,
   seedGuestChatIds,
   skipChatTour,
   test,
@@ -227,5 +229,45 @@ test.describe('채팅 게스트 동의 게이트', () => {
     await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page).toHaveURL(/\/chats\/c1$/);
+  });
+
+  test('회원의 아는 잔액이 턴 비용에 못 미치면 요청 없이 토스트만 띄우고 입력을 유지한다 (CHAT-LIMIT-10)', async ({
+    page,
+  }) => {
+    await prepareChatRoom(page);
+    await mockMemberSession(page);
+    await mockTrials(page, EXHAUSTED_TRIALS);
+    await page.route('**/api/v1/auth/me', async (route) => {
+      await route.fulfill({
+        json: { id: 'user-1', nickname: '배고픈 송아지', creditBalance: 0 },
+      });
+    });
+
+    let streamRequested = false;
+
+    await page.route(CHAT_STREAM, async (route) => {
+      streamRequested = true;
+      await route.fulfill({
+        status: 402,
+        json: { code: 'INSUFFICIENT_CREDIT' },
+      });
+    });
+
+    // 잔액을 알아야 선검사가 걸리므로 프로필 응답을 받은 뒤 보낸다.
+    const meLoaded = page.waitForResponse('**/api/v1/auth/me');
+
+    await page.goto('/chats/c1');
+    await meLoaded;
+
+    const input = page.getByPlaceholder('이야기를 어떻게 이어갈까요?');
+
+    await input.fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();
+    // 전송 모습(낙관적 버블)이 보였다 사라지지 않고 입력이 그대로 남는다.
+    await expect(input).toHaveValue('계속한다');
+    await expect(page.getByRole('log').getByText('계속한다')).toHaveCount(0);
+    expect(streamRequested).toBe(false);
   });
 });

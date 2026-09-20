@@ -63,8 +63,8 @@ export function ChatStreamingTurn({
             <m.div
               key="loading"
               ref={loadingRef}
-              // 이미지 자리 로딩은 버블(py-5)과 같은 위·아래 20px, 문구만일 때는 기존 16px.
-              className={turn.realtimeImage ? 'px-4 py-5' : 'p-4'}
+              // 문구만이든 이미지 자리든 버블(py-5)과 같은 위·아래 20px로 두어 본문 전환 시 높이가 이어진다.
+              className="px-4 py-5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: { duration: 0.15 } }}

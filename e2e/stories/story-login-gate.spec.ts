@@ -54,7 +54,10 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
   }) => {
     await skipOnboarding(page);
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
+    // 빈 목록에도 별도 CTA 없이 FAB 하나만 둔다(KNK-1355).
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
 
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
@@ -111,20 +114,6 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
         [CREATED_CHAT_IDS_STORAGE_KEY, GUEST_CHAT_IDS_STORAGE_KEY] as const,
       ),
     ).toEqual([JSON.stringify(['c-guest']), null]);
-  });
-
-  test('게스트가 빈 채팅 목록에서 동의 없이 제작 화면에 진입한다 (STORY-GATE-05)', async ({
-    page,
-  }) => {
-    await skipOnboarding(page);
-    await page.goto(APP_PATH.MAIN.CHATS);
-    await page.getByRole('button', { name: '스토리 만들기' }).click();
-
-    await expect(page).toHaveURL(
-      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
-    );
-    await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('게스트가 초안 카드에서 이어서 만들기를 누르면 동의 없이 제작을 재개한다 (STORY-GATE-06)', async ({

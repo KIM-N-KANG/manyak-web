@@ -12,6 +12,7 @@ import {
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatSettingsButton } from './chat-settings-sheet';
 import { ChatTurnCreditCost } from './chat-turn-credit-cost';
+import { LockedInputOverlay } from './locked-input-overlay';
 import { SendButtonIcon } from './send-button-icon';
 
 type ChatPlainInputProps = {
@@ -27,6 +28,8 @@ type ChatPlainInputProps = {
   onOpenSettings: () => void;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
   realtimeImageEnabled: boolean;
+  /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
+  onLockedTap: () => void;
 };
 
 export function ChatPlainInput({
@@ -41,6 +44,7 @@ export function ChatPlainInput({
   choicesEnabled,
   onOpenSettings,
   realtimeImageEnabled,
+  onLockedTap,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
   const canSend =
@@ -69,6 +73,7 @@ export function ChatPlainInput({
     <section className="px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
       <form onSubmit={handleSubmit}>
         <InputGroup className="rounded-lg">
+          <LockedInputOverlay locked={isStreaming} onTap={onLockedTap} />
           <InputGroupTextarea
             ref={textareaRef}
             value={value}
@@ -79,7 +84,10 @@ export function ChatPlainInput({
             onKeyDown={(event) => submitOnShortcut(event, canSend, handleSend)}
             className="max-h-[20dvh] pb-0"
           />
-          <InputGroupAddon align="block-end" className="gap-1 pt-2.5">
+          {/* 잠금 층보다 위에 두어 설정 버튼은 응답 중에도 누를 수 있게 한다. */}
+          <InputGroupAddon
+            align="block-end"
+            className="relative z-20 gap-1 pt-2.5">
             <Button
               type="button"
               variant="secondary"

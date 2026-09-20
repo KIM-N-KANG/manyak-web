@@ -27,6 +27,7 @@ export function StoryGeneratingLoading({
         phrases={phrases}
         interval={4000}
         shimmerDuration={4}
+        className="text-base"
         aria-label={label}
       />
 
