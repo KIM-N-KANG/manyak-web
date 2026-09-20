@@ -1,9 +1,6 @@
 import { formatCreditAmount } from '@/constants/credit';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
-import {
-  ONBOARDING_SECTIONS,
-  ONBOARDING_START_LABEL,
-} from '@/features/onboarding/constants';
+import { ONBOARDING_START_LABEL } from '@/features/onboarding/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
@@ -22,7 +19,17 @@ import { waitForFonts } from '../fixtures/visual';
 
 test.describe('온보딩 비주얼', () => {
   test('게스트 온보딩 페이지 (ONBD-GUEST)', async ({ page }) => {
-    test.slow();
+    // 원본 WebP로 화면만 비교하고 Next.js 이미지 최적화의 로딩 검사는 하지 않는다.
+    await page.route('**/_next/image**', async (route) => {
+      const url = new URL(route.request().url());
+      const source = url.searchParams.get('url');
+
+      if (source?.startsWith('/onboarding/')) {
+        await route.continue({ url: new URL(source, url.origin).href });
+      } else {
+        await route.continue();
+      }
+    });
     await page.goto('/');
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
@@ -43,25 +50,6 @@ test.describe('온보딩 비주얼', () => {
           ),
       )
       .toBe('1');
-    // 첫 화면에 걸치는 첫 섹션은 CTA보다 늦게(히어로 핸드오프 후) 정착하므로,
-    // 스크린샷이 실제 픽셀까지 내려오고 등장 애니메이션까지 끝난 뒤에 찍는다.
-    // CI는 4 워커가 서버를 공유해 섹션 이미지 8장의 최초 최적화가 5초를 넘길 수 있어
-    // 기본 poll 타임아웃보다 길게 기다린다(KNK-1326).
-    await expect
-      .poll(
-        () =>
-          page
-            .getByRole('img', { name: ONBOARDING_SECTIONS[0].scenes[0].alt })
-            .evaluate(
-              (image) =>
-                (image as HTMLImageElement).complete &&
-                (image as HTMLImageElement).naturalWidth > 0 &&
-                getComputedStyle(image.parentElement as HTMLElement).opacity ===
-                  '1',
-            ),
-        { timeout: 30_000 },
-      )
-      .toBe(true);
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('onboarding-guest-page.png');
   });

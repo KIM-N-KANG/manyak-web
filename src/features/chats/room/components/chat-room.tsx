@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -9,10 +9,7 @@ import { toast } from 'sonner';
 
 import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
-import type {
-  ChatTurnResponse,
-  ContinueChatRequestUserSource,
-} from '@/api/generated/models';
+import type { ChatTurnResponse } from '@/api/generated/models';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { ListStatus } from '@/components/common/list-status';
@@ -21,14 +18,14 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
-import { isGuestTrialExhausted } from '@/features/auth/_shared/utils/guest-trial';
+import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useTrials } from '@/hooks/use-trials';
-import type { GuestLimitTrigger } from '@/observability/analytics';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import {
@@ -46,7 +43,11 @@ import {
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
 import { useStoredToggle } from '../hooks/use-stored-toggle';
-import type { ChatChoiceSelection } from '../types';
+import {
+  clearChatLoginDraft,
+  readChatLoginDraft,
+  saveChatLoginDraft,
+} from '../utils/chat-login-draft-storage';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
@@ -60,19 +61,26 @@ type ChatRoomProps = {
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
+  const requestConsent = useGuestConsent();
   const trials = useTrials();
-  const [guestLimitTrigger, setGuestLimitTrigger] =
-    useState<GuestLimitTrigger | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const lastSubmitted = useRef<string | null>(null);
   const handlePaymentRequired = (error: unknown) => {
-    const reason = resolvePaymentRequiredReason(error, sessionStatus);
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) === 'guest-trial-limit'
+    ) {
+      if (lastSubmitted.current !== null)
+        saveChatLoginDraft(chatId, lastSubmitted.current);
 
-    if (reason === 'guest-trial-limit') {
-      setGuestLimitTrigger('chat_turn');
+      setLoginOpen(true);
 
       return;
     }
 
-    if (reason === 'insufficient-credit') {
+    if (
+      resolvePaymentRequiredReason(error, sessionStatus) ===
+      'insufficient-credit'
+    ) {
       showCreditShortageToast('chat_turn');
 
       return;
@@ -103,7 +111,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     refetch,
   );
   const handleStreamCompleted = async () => {
-    // 턴 완료(`completed`)로 체험 카운터가 소모되므로 잔여를 다시 조회한다(실패 턴은 서버가 복원).
+    lastSubmitted.current = null;
+    clearChatLoginDraft(chatId);
     void queryClient.invalidateQueries({ queryKey: getGetTrialsQueryKey() });
 
     const result = await refetch();
@@ -148,36 +157,42 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnCount: turns.length,
   });
 
-  const guardedSend = (
-    userInput: string,
-    userSource: ContinueChatRequestUserSource,
-    selection?: ChatChoiceSelection,
-  ): Promise<void> => {
-    if (isGuestTrialExhausted(sessionStatus, trials, 'chatTurn')) {
-      setGuestLimitTrigger('chat_turn');
+  const canUseChat = async (onLimit?: () => void) => {
+    if (!(await requestConsent())) return false;
 
-      return Promise.resolve();
+    if (
+      sessionStatus === 'unauthenticated' &&
+      getTrialRemaining(trials, 'chatTurn') === 0
+    ) {
+      onLimit?.();
+      setLoginOpen(true);
+
+      return false;
     }
 
-    return send(userInput, userSource, selection);
+    return true;
   };
 
-  const guardedRegenerate = (turn: ChatTurnResponse): Promise<void> => {
+  const guardedRegenerate = async (turn: ChatTurnResponse): Promise<void> => {
     track('client_chat_regenerateButton_clicked', {
       chat_id: chatId,
       turn_number: turns.length,
     });
 
-    if (isGuestTrialExhausted(sessionStatus, trials, 'chatTurn')) {
-      setGuestLimitTrigger('chat_turn');
-
-      return Promise.resolve();
+    if (!(await canUseChat())) {
+      return;
     }
 
     return regenerate(turn);
   };
 
   const { mode, changeMode } = useChatInputMode();
+  const [initialDraft] = useState(() => readChatLoginDraft(chatId));
+
+  useEffect(() => {
+    clearChatLoginDraft(chatId);
+  }, [chatId]);
+
   const suggestions =
     turns.length === 0
       ? suggestedInputs
@@ -194,7 +209,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     inputMode: mode,
     suggestions,
     suggestionSourceTurnId,
-    onSend: guardedSend,
+    canSend: () =>
+      canUseChat(() => saveChatLoginDraft(chatId, composer.serializeDraft())),
+    initialDraft,
+    onSend: (text, source, selection) => {
+      lastSubmitted.current = text;
+
+      void send(text, source, selection);
+    },
   });
 
   const [pendingFill, setPendingFill] = useState<{
@@ -364,14 +386,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           cancelLabel="그대로 두기"
           confirmLabel="바꾸기"
         />
-        <LoginRequiredSheet
-          trigger={guestLimitTrigger}
-          onOpenChange={(open) => {
-            if (!open) {
-              setGuestLimitTrigger(null);
-            }
-          }}
-        />
+        <LoginRequiredSheet open={loginOpen} onOpenChange={setLoginOpen} />
         {tour.isOpen && (
           <ChatTour
             inputMode={mode}

@@ -74,16 +74,18 @@ export function CreatedStoryList() {
     event: MouseEvent<HTMLAnchorElement>,
     source: 'fab' | 'emptyState',
   ) => {
+    event.preventDefault();
     track('client_storyList_createButton_clicked', { source });
 
     if (
       pendingCreationRecord?.stage !== 'KEYWORD_DRAFT' &&
       pendingCreationRecord?.stage !== 'STORY_DRAFT'
     ) {
+      router.push(APP_PATH.STUDIO.STORY.SIMPLE);
+
       return;
     }
 
-    event.preventDefault();
     track('client_storyCreate_resumeDialog_shown');
     setResumeDialogRecord(pendingCreationRecord);
   };

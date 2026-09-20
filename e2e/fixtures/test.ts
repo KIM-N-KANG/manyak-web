@@ -1,14 +1,18 @@
 import { expect, test as base } from '@playwright/test';
 
 import {
+  CONSENTS_FIXTURE,
   CREDIT_POLICY_FIXTURE,
   CREDIT_PRODUCTS_FIXTURE,
   EXHAUSTED_TRIALS,
+  GUEST_CONSENT_VERSION_FIXTURE,
   mockApi,
   mockChatShareCreate,
   mockChatShareView,
+  mockConsents,
   mockCreditPolicies,
   mockCreditProducts,
+  mockGuestConsents,
   mockHandoffSession,
   mockHandoffStatus,
   mockTrials,
@@ -26,20 +30,26 @@ export const test = base.extend({
 export { expect };
 export {
   seedChatIds,
+  seedGuestChatIds,
   seedPendingCreditOrder,
   seedPendingHandoff,
+  seedPendingLogin,
   seedStoryIds,
   skipChatChoicesHint,
   skipChatTour,
   skipOnboarding,
 } from './storage';
-export { mockMemberSession } from './auth';
+export { mockGuestSession, mockMemberSession } from './auth';
 export {
+  CONSENTS_FIXTURE,
   CREDIT_POLICY_FIXTURE,
   CREDIT_PRODUCTS_FIXTURE,
   EXHAUSTED_TRIALS,
+  GUEST_CONSENT_VERSION_FIXTURE,
   mockChatShareCreate,
   mockChatShareView,
+  mockConsents,
+  mockGuestConsents,
   mockCreditPolicies,
   mockCreditProducts,
   mockHandoffSession,

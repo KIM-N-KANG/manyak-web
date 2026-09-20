@@ -393,6 +393,8 @@ test.describe('채팅 스트리밍', () => {
   });
 
   test('빈 입력의 Play 버튼이 추천 입력을 랜덤 전송한다', async ({ page }) => {
+    await mockMemberSession(page);
+
     const completedTurn = {
       id: 1,
       userInput: '던전에 진입한다',
@@ -472,6 +474,8 @@ test.describe('채팅 스트리밍', () => {
   });
 
   test('응답을 받는 동안 전송 버튼에 스피너가 보인다', async ({ page }) => {
+    await mockMemberSession(page);
+
     const completedTurn = {
       id: 1,
       userInput: '앞으로 나아간다',
@@ -531,6 +535,8 @@ test.describe('채팅 스트리밍', () => {
   test('메시지를 전송하면 응답이 스트리밍되어 누적된다 (US-6-2·6-3)', async ({
     page,
   }) => {
+    await mockMemberSession(page);
+
     const completedTurn = {
       id: 1,
       userInput: '앞으로 나아간다',
@@ -593,6 +599,8 @@ test.describe('채팅 스트리밍', () => {
   test('인물 이미지를 completed 전에 표시하고 확정 마커로 이어서 복원한다 (US-6-11)', async ({
     page,
   }) => {
+    await mockMemberSession(page);
+
     const confirmedOutput =
       `*문이 열린다.*\n[[${CHARACTER_IMAGE_URL}]]\n\n` + '세린: 기다렸어?';
     const completedTurn = {
@@ -784,6 +792,8 @@ test.describe('채팅 스트리밍', () => {
   });
 
   test('추천 입력 본문을 누르면 바로 전송된다 (US-6-4)', async ({ page }) => {
+    await mockMemberSession(page);
+
     const completedTurn = {
       id: 1,
       userInput: '던전에 진입한다',
@@ -827,6 +837,7 @@ test.describe('채팅 스트리밍', () => {
   });
 
   test('스트리밍이 실패하면 오류 안내가 뜬다 (US-6-8)', async ({ page }) => {
+    await mockMemberSession(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -873,6 +884,8 @@ test.describe('채팅 스트리밍', () => {
   test('completed·error 없이 스트림이 끝나면 실패로 처리하고 저장된 턴을 반영한다', async ({
     page,
   }) => {
+    await mockMemberSession(page);
+
     // 백엔드 SSE 전체 상한(120초) 초과는 error 이벤트 없이 스트림을 닫는다. 그때 서버는 턴을
     // 저장했을 수 있으므로, 프론트는 상태를 풀고 상세를 다시 조회해 확정본을 보여줘야 한다.
     const persistedTurn = {
@@ -1112,6 +1125,8 @@ test.describe('블럭 입력 모드 (기본)', () => {
   test('기본 상황·대사 블럭을 채워 전송하면 하나의 메시지로 직렬화된다', async ({
     page,
   }) => {
+    await mockMemberSession(page);
+
     const completedTurn = {
       id: 1,
       userInput: '*비가 온다* 우산 챙겼어?',
@@ -1210,6 +1225,11 @@ test.describe('블럭 입력 모드 (기본)', () => {
 // 서버는 문자열만으로 "추천 선택지와 같은 문장을 직접 입력한 경우"를 구분할 수 없어
 // 입력 방식을 아는 프론트가 userSource를 명시한다(스펙 §3-8).
 test.describe('입력 출처(userSource) 전달', () => {
+  // 전송·재생성은 회원 전용이라 회원 세션으로 진행한다.
+  test.beforeEach(async ({ page }) => {
+    await mockMemberSession(page);
+  });
+
   const SUGGESTION = '던전에 진입한다';
   const OTHER_CHOICE = '문 앞에서 잠시 기다린다';
   const SOURCE_TURN_ID = 42;
@@ -1416,6 +1436,11 @@ test.describe('입력 출처(userSource) 전달', () => {
 });
 
 test.describe('응답 재생성', () => {
+  // 전송·재생성은 회원 전용이라 회원 세션으로 진행한다.
+  test.beforeEach(async ({ page }) => {
+    await mockMemberSession(page);
+  });
+
   const lastTurn = {
     id: 7,
     userInput: '문을 연다',
@@ -1539,6 +1564,11 @@ test.describe('응답 재생성', () => {
 });
 
 test.describe('추천 입력 토글', () => {
+  // 전송·재생성은 회원 전용이라 회원 세션으로 진행한다.
+  test.beforeEach(async ({ page }) => {
+    await mockMemberSession(page);
+  });
+
   const CHOICES = ['안으로 들어간다', '주변을 살핀다', '소리를 지른다'];
   const baseTurn = {
     id: 1,

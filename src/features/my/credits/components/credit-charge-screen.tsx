@@ -10,6 +10,7 @@ import { CreditMark } from '@/components/common/credit-mark';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { APP_PATH } from '@/constants/app-path';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 
 import { CREDIT_CHARGE_COPY } from '../constants';
 import { CreditFreeChargeTab } from './credit-free-charge-tab';
@@ -34,12 +35,13 @@ const TAB_PANEL_CLASS = 'min-h-0 flex-1 overflow-hidden text-base';
 export function CreditChargeScreen() {
   const router = useRouter();
   const { status } = useSession();
+  const { isMember } = useMemberAccess();
   const [activeTab, setActiveTab] = useState<string>(PURCHASE_TAB);
 
   const isAuthenticated = status === 'authenticated';
 
   const { data } = useMe({
-    query: { refetchOnMount: 'always', enabled: isAuthenticated },
+    query: { refetchOnMount: 'always', enabled: isMember },
   });
   const me = data?.status === 200 ? data.data : undefined;
   const balance = me?.creditBalance;

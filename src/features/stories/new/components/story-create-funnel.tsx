@@ -17,6 +17,8 @@ import { StoryTagStepSection } from './tag-step/story-tag-step-section';
 
 export function StoryCreateFunnel() {
   const {
+    guestLimitOpen,
+    setGuestLimitOpen,
     step,
     tagStep,
     draftSaveStatus,
@@ -33,9 +35,6 @@ export function StoryCreateFunnel() {
     hasGenerateStorylinesError,
     isCompletingStory,
     hasCompleteStoryError,
-    guestLimitTrigger,
-    isGuestLimitReached,
-    closeGuestLimitDialog,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,
     handleSelectStoryline,
@@ -69,6 +68,10 @@ export function StoryCreateFunnel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <LoginRequiredSheet
+        open={guestLimitOpen}
+        onOpenChange={setGuestLimitOpen}
+      />
       <StoryCreateHeader
         step={step}
         draftSaveStatus={draftSaveStatus}
@@ -82,7 +85,6 @@ export function StoryCreateFunnel() {
         <StoryTagStepSection
           controller={tagStep}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
-          isGuestLimitReached={isGuestLimitReached}
         />
       )}
 
@@ -94,7 +96,6 @@ export function StoryCreateFunnel() {
           activeStorylineIndex={activeStorylineIndex}
           isGeneratingStorylines={isGeneratingStorylines}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
-          isGuestLimitReached={isGuestLimitReached}
           onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
           onRegenerateStorylines={handleRegenerateStorylines}
           onSelectStoryline={handleSelectStoryline}
@@ -106,7 +107,6 @@ export function StoryCreateFunnel() {
           storylineItem={selectedStoryline}
           isCompletingStory={isCompletingStory}
           hasCompleteStoryError={hasCompleteStoryError}
-          isGuestLimitReached={isGuestLimitReached}
           canCompleteStory={canCompleteStory}
           selectedRecommendations={selectedRecommendations}
           additionalInfos={additionalInfos}
@@ -138,14 +138,6 @@ export function StoryCreateFunnel() {
         }}
         onContinue={handleResumeContinue}
         onDiscard={handleResumeDiscard}
-      />
-      <LoginRequiredSheet
-        trigger={guestLimitTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeGuestLimitDialog();
-          }
-        }}
       />
     </div>
   );

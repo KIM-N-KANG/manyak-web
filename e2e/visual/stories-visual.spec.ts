@@ -1,11 +1,12 @@
 import { APP_PATH } from '@/constants/app-path';
-import { LOGIN_REQUIRED_SHEET_COPY } from '@/features/auth/_shared/constants/login-required';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { oneLine } from '../fixtures/copy';
 import { seedStoryCompletionRequests } from '../fixtures/storage';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 import {
@@ -98,7 +99,9 @@ test.describe.skip('스토리 좋아요 비주얼', () => {
       .getByRole('button', { name: STORY_LIKE_COPY.like, exact: true })
       .click();
     await expect(
-      page.getByRole('dialog', { name: LOGIN_REQUIRED_SHEET_COPY.title }),
+      page.getByRole('dialog', {
+        name: oneLine(LOGIN_COPY.title),
+      }),
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-like-login-sheet.png');
@@ -349,6 +352,7 @@ test.describe('스토리 비주얼', () => {
   test('생성 퍼널 1단계: 키워드 선택 초기 상태 (STORY-KEYWORD)', async ({
     page,
   }) => {
+    await mockMemberSession(page);
     await page.route(TAGS, async (route) => {
       await route.fulfill({
         status: 200,
@@ -393,6 +397,8 @@ test.describe('스토리 오버레이 비주얼', () => {
   });
 
   test('키워드 추가 다이얼로그 (STORY-KEYWORD)', async ({ page }) => {
+    // 퍼널 오버레이는 회원 전용 제작 화면 안에 있다.
+    await mockMemberSession(page);
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
@@ -404,6 +410,8 @@ test.describe('스토리 오버레이 비주얼', () => {
   });
 
   test('선택한 키워드 드로어 (STORY-LINE)', async ({ page }) => {
+    // 퍼널 오버레이는 회원 전용 제작 화면 안에 있다.
+    await mockMemberSession(page);
     await page.route(STORYLINES, async (route) => {
       await route.fulfill({
         status: 201,

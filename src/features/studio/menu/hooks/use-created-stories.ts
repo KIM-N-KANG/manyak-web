@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 
 import { getStoriesByIds } from '@/api/generated/endpoints/stories/stories';
 import { useGetMyStories } from '@/api/generated/endpoints/users/users';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 import {
   toOrderedStoryListItems,
@@ -17,16 +18,18 @@ export const STORIES_BATCH_QUERY_KEY = 'stories-batch';
 /**
  * 사용자가 생성한 스토리 목록을 조회하는 훅.
  * 회원은 서버 회원 목록(/users/me/stories), 게스트는 로컬 ID 배치 조회를 사용하며
- * 두 모드 모두 동일한 형태(목록·로딩·에러·빈 상태)를 반환한다.
+ * 두 모드 모두 동일한 형태(목록·로딩·에러·빈 상태)를 반환한다. 회원 목록은 필수 동의까지
+ * 마친 회원(`isMember`)만 조회하고, 그 전에는 회원 분기의 로딩으로 둔다.
  *
  * @returns 스토리 목록과 로딩·에러·빈 상태, refetch 함수
  */
 export function useCreatedStories() {
   const { status } = useSession();
+  const { isMember } = useMemberAccess();
   const storyIds = useCreatedStoryIds();
 
   const myStoriesQuery = useGetMyStories(undefined, {
-    query: { enabled: status === 'authenticated' },
+    query: { enabled: isMember },
   });
 
   const hasStoryIds = storyIds != null && storyIds.length > 0;

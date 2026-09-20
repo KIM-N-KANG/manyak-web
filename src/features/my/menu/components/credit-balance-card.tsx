@@ -8,6 +8,7 @@ import { CreditMark } from '@/components/common/credit-mark';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { cn } from '@/lib/utils';
 
@@ -18,10 +19,11 @@ type CreditBalanceCardProps = {
 
 export function CreditBalanceCard({ className }: CreditBalanceCardProps) {
   const { status } = useSession();
+  const { isMember } = useMemberAccess();
   const isAuthenticated = status === 'authenticated';
 
   const { data, isLoading } = useMe({
-    query: { refetchOnMount: 'always', enabled: isAuthenticated },
+    query: { refetchOnMount: 'always', enabled: isMember },
   });
 
   const me = data?.status === 200 ? data.data : undefined;

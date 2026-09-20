@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/drawer';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { useCreditPolicySnapshot } from '@/hooks/use-credit-policy';
 import { track } from '@/observability/analytics';
@@ -24,7 +25,8 @@ import { InviteOnboardingCodeForm } from './invite-onboarding-code-form';
 import { InviteOnboardingTitle } from './invite-onboarding-title';
 
 export function InviteOnboardingSheet() {
-  const { data: session, status, update } = useSession();
+  const { data: session, update } = useSession();
+  const { isMember } = useMemberAccess();
   const container = useAppFrameContainer();
   const readCreditPolicy = useCreditPolicySnapshot();
   const [dismissedUserId, setDismissedUserId] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export function InviteOnboardingSheet() {
   const hasCloseFailed = userId !== null && closeFailedUserId === userId;
   const isOpen =
     container !== null &&
-    (status === 'authenticated' || isCompleting) &&
+    (isMember || isCompleting) &&
     userId !== null &&
     session?.inviteOnboardingPending === true &&
     dismissedUserId !== userId;

@@ -13,7 +13,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
-import { LoginConsentNotice } from '@/features/auth/_shared/components/login-consent-notice';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
   useSocialLogin,
@@ -80,17 +80,11 @@ export function LoginScreen() {
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-8">
           <div className="flex flex-col items-center gap-4">
             <ManyakLogo className="h-6 w-auto text-primary" />
-            <p className="text-center text-lg font-semibold">
-              로그인하고 나만의 스토리를
-              <br />
-              어디서든 이어서 즐겨보세요
+            <p className="text-center text-lg font-semibold whitespace-pre-line">
+              {LOGIN_COPY.title}
             </p>
           </div>
           <div className="flex w-full flex-col items-center gap-4">
-            <p className="text-center text-sm leading-relaxed text-foreground-secondary">
-              계정마다 처음 로그인할 때
-              <br />한 번만 이 기기의 스토리와 채팅을 그 계정에 저장해요
-            </p>
             <div className="flex w-full flex-col gap-2">
               <Button
                 type="button"
@@ -120,14 +114,11 @@ export function LoginScreen() {
                 </LoadingButtonContent>
               </Button>
             </div>
-            <p className="text-center text-sm leading-relaxed text-foreground-secondary">
-              소셜 계정 하나로 먼저 로그인한 뒤 다른 계정을 연동하면,
-              <br />
-              어느 계정으로 로그인해도 똑같이 이용할 수 있어요
+            <p className="text-center text-sm leading-relaxed whitespace-pre-line text-foreground-secondary">
+              {LOGIN_COPY.linkNotice}
             </p>
           </div>
         </div>
-        <LoginConsentNotice />
       </main>
     </div>
   );

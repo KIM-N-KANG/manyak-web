@@ -69,3 +69,18 @@ export async function mockMemberSession(
     });
   });
 }
+
+/**
+ * 회원 목 뒤에 등록해 다시 게스트로 되돌린다. 파일·describe 단위 `beforeEach`가 회원을
+ * 기본으로 잡은 스펙에서 게스트 시나리오만 골라낼 때 쓴다(나중에 등록한 라우트가 우선).
+ */
+export async function mockGuestSession(page: Page): Promise<void> {
+  await page.context().clearCookies({ name: 'authjs.session-token' });
+  await page.route('**/api/auth/session', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: 'null',
+    });
+  });
+}

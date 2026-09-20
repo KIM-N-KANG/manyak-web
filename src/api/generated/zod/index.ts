@@ -186,6 +186,28 @@ export const CreateResponse = zod.void();
 export const ClaimAttendanceResponse = zod.unknown();
 
 /**
+ * 현행 문서 버전별 동의 필요 여부를 반환합니다. 만 14세 이상 확인 버전은 1입니다. 미동의 회원의 다른 API를 차단하지 않으며 정지 계정은 조회도 403입니다.
+ * @summary 약관·개인정보 처리방침 동의 조회
+ */
+export const GetConsentsResponse = zod.unknown();
+
+/**
+ * 명시적으로 수락한 현행 버전만 기록합니다. 최소 한 항목이 필요하며 누락·null은 미제출입니다. 전부 검증한 뒤 저장하고 같은 버전의 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
+ * @summary 약관·개인정보 처리방침 동의 기록
+ */
+export const RecordConsentsBody = zod
+  .object({
+    terms: zod.string().nullish().describe('수락한 이용약관 버전'),
+    privacy: zod.string().nullish().describe('수락한 개인정보 처리방침 버전'),
+    age14: zod.string().nullish().describe('만 14세 이상 확인 버전(1 고정)'),
+  })
+  .describe(
+    '명시적으로 수락한 버전만 제출. 최소 한 항목 필수이며 누락·null은 미제출',
+  );
+
+export const RecordConsentsResponse = zod.unknown();
+
+/**
  * 스토리를 신고합니다. 인증 필수이며(게스트 불가) 같은 스토리를 다시 신고해도 같은 201로 응답합니다(멱등 — 행이 늘거나 알림이 중복 발송되지 않습니다). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
  * @summary 스토리 신고 등록
  */
@@ -689,6 +711,32 @@ export const GetStoriesByIdsBody = zod
   .describe('스토리 ID 목록 조회 요청');
 
 export const GetStoriesByIdsResponse = zod.unknown();
+
+/**
+ * 인증 없이 디바이스별 현행 문서의 동의 필요 여부를 반환합니다. 미동의 게스트의 다른 API를 차단하지 않으며 회원 동의로 이관하지 않습니다.
+ * @summary 게스트 개인정보 수집 동의 조회
+ */
+export const GetConsents1Header = zod.object({
+  'X-Manyak-Device-Id': zod.string().describe('체험 한도와 같은 디바이스 ID'),
+});
+
+export const GetConsents1Response = zod.unknown();
+
+/**
+ * guestPrivacy의 현행 버전만 기록하며 같은 버전 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
+ * @summary 게스트 개인정보 수집 동의 기록
+ */
+export const RecordConsents1Header = zod.object({
+  'X-Manyak-Device-Id': zod.string().describe('체험 한도와 같은 디바이스 ID'),
+});
+
+export const RecordConsents1Body = zod
+  .object({
+    guestPrivacy: zod.string().nullish().describe('수락한 현행 문서 버전'),
+  })
+  .describe('명시적으로 수락한 게스트 개인정보 수집 및 이용 동의 버전');
+
+export const RecordConsents1Response = zod.unknown();
 
 /**
  * 사용자 피드백을 등록합니다. 본문만 필수이며, 답변용 이메일은 선택입니다. platform/appVersion 은 앱이 자동으로 채워 보내는 메타이며, 로그인 상태면 서버가 user_id 를 채웁니다(인증 도입 후).

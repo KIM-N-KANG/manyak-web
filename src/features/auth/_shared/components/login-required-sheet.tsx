@@ -1,9 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-
-import { usePathname } from 'next/navigation';
-
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,61 +11,40 @@ import {
 } from '@/components/ui/drawer';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
-import { LoginConsentNotice } from '@/features/auth/_shared/components/login-consent-notice';
-import { GUEST_LIMIT_SHEET_COPY } from '@/features/auth/_shared/constants/guest-limit';
-import { LOGIN_REQUIRED_SHEET_COPY } from '@/features/auth/_shared/constants/login-required';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
   useSocialLogin,
 } from '@/features/auth/_shared/hooks/use-social-login';
-import { resolveLoginCallbackUrl } from '@/features/auth/_shared/utils/login-callback-url';
+import {
+  readCurrentAppPath,
+  resolveLoginCallbackUrl,
+} from '@/features/auth/_shared/utils/login-callback-url';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
-import { type GuestLimitTrigger, track } from '@/observability/analytics';
 
 type LoginRequiredSheetProps = {
-  trigger?: GuestLimitTrigger | null;
-  open?: boolean;
+  open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
 export function LoginRequiredSheet({
-  trigger = null,
-  open = trigger !== null,
+  open,
   onOpenChange,
 }: LoginRequiredSheetProps) {
-  const pathname = usePathname();
   const container = useAppFrameContainer();
   const { pendingProvider, startLogin } = useSocialLogin();
-  const copy = trigger ? GUEST_LIMIT_SHEET_COPY : LOGIN_REQUIRED_SHEET_COPY;
-
-  useEffect(() => {
-    if (trigger) {
-      track('client_guestLimitDialog_shown', { trigger });
-    }
-  }, [trigger]);
 
   const handleSocialLogin = (provider: SocialLoginProvider) => {
-    if (trigger) {
-      track('client_guestLimitDialog_loginButton_clicked', {
-        trigger,
-        provider,
-      });
-    }
-
     void startLogin({
       provider,
-      redirectTo: resolveLoginCallbackUrl(pathname),
+      redirectTo: resolveLoginCallbackUrl(readCurrentAppPath()),
     });
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open && pendingProvider !== null) {
       return;
-    }
-
-    if (!open && trigger) {
-      track('client_guestLimitDialog_dismissed', { trigger });
     }
 
     onOpenChange(open);
@@ -82,15 +57,12 @@ export function LoginRequiredSheet({
       onOpenChange={handleOpenChange}>
       <DrawerContent container={container}>
         <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
-          <DrawerTitle className="text-xl leading-snug font-bold whitespace-nowrap">
-            {copy.title}
+          <DrawerTitle className="text-xl leading-snug font-bold whitespace-pre-line">
+            {LOGIN_COPY.title}
           </DrawerTitle>
-          <DrawerDescription className="text-base leading-relaxed">
-            {copy.description}
-          </DrawerDescription>
         </DrawerHeader>
 
-        <div className="flex min-h-0 w-full flex-col gap-4 overflow-y-auto overscroll-contain px-4 pt-8 pb-4">
+        <div className="flex min-h-0 w-full flex-col gap-4 overflow-y-auto overscroll-contain px-4 pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="flex flex-col gap-2">
             <Button
               type="button"
@@ -120,7 +92,9 @@ export function LoginRequiredSheet({
               </LoadingButtonContent>
             </Button>
           </div>
-          <LoginConsentNotice />
+          <DrawerDescription className="text-center text-sm leading-relaxed break-keep whitespace-pre-line text-foreground-secondary">
+            {LOGIN_COPY.linkNotice}
+          </DrawerDescription>
         </div>
       </DrawerContent>
     </Drawer>

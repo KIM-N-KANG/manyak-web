@@ -9,7 +9,6 @@ import { LoadingButtonContent } from '@/components/common/loading-button-content
 // import { HeartFilledIcon } from '@/components/icons/heart-filled-icon';
 // import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { Button } from '@/components/ui/button';
-import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
 import { track } from '@/observability/analytics';
 
@@ -36,14 +35,13 @@ export function StoryDetailCta({
   // const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
   // const { status } = useSession();
   // const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
-  const { startChat, isStarting, guestLimitTrigger, closeGuestLimitDialog } =
-    useStartChat(storyId, {
-      startSettingId,
-      onStart: () =>
-        track('client_storyDetail_chatStartButton_clicked', {
-          story_id: storyId,
-        }),
-    });
+  const { startChat, isStarting } = useStartChat(storyId, {
+    startSettingId,
+    onStart: () =>
+      track('client_storyDetail_chatStartButton_clicked', {
+        story_id: storyId,
+      }),
+  });
 
   return (
     <>
@@ -97,21 +95,6 @@ export function StoryDetailCta({
           </Button>
         </div>
       </nav>
-      <LoginRequiredSheet
-        // KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
-        // open={
-        //   (isLikeLoginOpen && status === 'unauthenticated') ||
-        //   guestLimitTrigger !== null
-        // }
-        open={guestLimitTrigger !== null}
-        trigger={guestLimitTrigger}
-        onOpenChange={(open) => {
-          if (!open) {
-            // setIsLikeLoginOpen(false);
-            closeGuestLimitDialog();
-          }
-        }}
-      />
     </>
   );
 }

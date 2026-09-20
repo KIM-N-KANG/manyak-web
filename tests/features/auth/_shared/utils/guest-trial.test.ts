@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getTrialRemaining,
-  isGuestTrialExhausted,
   toTrialRemaining,
 } from '@/features/auth/_shared/utils/guest-trial';
 
@@ -38,32 +37,5 @@ describe('getTrialRemaining', () => {
         'chatImage',
       ),
     ).toBe(4);
-  });
-});
-
-describe('isGuestTrialExhausted', () => {
-  const exhausted = { chatTurn: { used: 5, limit: 5 } };
-
-  it('확정된 게스트가 소진했을 때만 true다', () => {
-    expect(
-      isGuestTrialExhausted('unauthenticated', exhausted, 'chatTurn'),
-    ).toBe(true);
-    expect(isGuestTrialExhausted('authenticated', exhausted, 'chatTurn')).toBe(
-      false,
-    );
-    expect(isGuestTrialExhausted('loading', exhausted, 'chatTurn')).toBe(false);
-  });
-
-  it('응답 전이나 잔여가 있으면 false다', () => {
-    expect(
-      isGuestTrialExhausted('unauthenticated', undefined, 'chatTurn'),
-    ).toBe(false);
-    expect(
-      isGuestTrialExhausted(
-        'unauthenticated',
-        { chatTurn: { used: 4, limit: 5 } },
-        'chatTurn',
-      ),
-    ).toBe(false);
   });
 });

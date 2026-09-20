@@ -18,6 +18,7 @@ import {
 } from '../fixtures/storage';
 import {
   expect,
+  mockGuestSession,
   mockMemberSession,
   seedStoryIds,
   skipOnboarding,
@@ -93,7 +94,9 @@ const completionRecord: StoryCompletionRecord = {
 };
 
 test.describe('스토리 생성 백그라운드 복귀', () => {
+  // 제작은 회원 전용이라 회원 세션을 기본으로 잡고, 게스트 목록 시나리오만 되돌린다.
   test.beforeEach(async ({ page }) => {
+    await mockMemberSession(page);
     await page.route(TAGS, async (route) => {
       await route.fulfill({
         status: 200,
@@ -270,7 +273,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         reducedMotion: scenario.reducedMotion ? 'reduce' : 'no-preference',
       });
 
-      if (scenario.member) await mockMemberSession(page);
+      if (!scenario.member) await mockGuestSession(page);
 
       const oldStory = {
         id: 'old-story',
@@ -567,6 +570,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
 test.describe('이어서 만들기 진행 카드', () => {
   test.beforeEach(async ({ page }) => {
     await skipOnboarding(page);
+    await mockMemberSession(page);
   });
 
   test('제작 탭에서 미정리 레코드가 있으면 진행 카드를 표시하고 탭하면 복구로 진입한다', async ({

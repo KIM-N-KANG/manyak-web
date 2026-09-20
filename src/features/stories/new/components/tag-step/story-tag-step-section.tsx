@@ -10,6 +10,7 @@ import {
   GENRE_CATEGORY,
   GENRE_SECTION_LABEL,
   PROTAGONIST_CATEGORY,
+  STORYLINE_GENERATE_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
   TAG_CATEGORIES,
 } from '../../constants';
@@ -27,14 +28,12 @@ import { TagChipGrid } from './tag-chip-grid';
 type StoryTagStepSectionProps = {
   controller: StoryTagStepController;
   hasGenerateStorylinesError: boolean;
-  isGuestLimitReached: boolean;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryTagStepSection({
   controller,
   hasGenerateStorylinesError,
-  isGuestLimitReached,
   onScroll,
 }: StoryTagStepSectionProps) {
   const {
@@ -115,7 +114,7 @@ export function StoryTagStepSection({
               <LoadingButtonContent
                 isLoading={isGeneratingStorylines}
                 loadingLabel="스토리라인 생성 중">
-                스토리라인 만들기
+                {STORYLINE_GENERATE_LABEL}
               </LoadingButtonContent>
             ) : (
               '다음'
@@ -266,10 +265,7 @@ export function StoryTagStepSection({
       </Tabs>
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
-          {getGenerateStorylinesErrorMessage({
-            isGuestLimitReached,
-            isRegeneration: false,
-          })}
+          {getGenerateStorylinesErrorMessage({ isRegeneration: false })}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>

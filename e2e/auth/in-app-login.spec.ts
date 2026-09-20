@@ -1,12 +1,21 @@
 import type { Page } from '@playwright/test';
 
-import { getMeUrl } from '@/api/generated/endpoints/auth/auth';
+import { getMeUrl, getMigrateUrl } from '@/api/generated/endpoints/auth/auth';
+import { getGetConsentsUrl } from '@/api/generated/endpoints/user/user';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
 import { SOCIAL_LOGIN_PENDING_LABEL } from '@/features/auth/_shared/hooks/use-social-login';
+import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
 import { POPUP_LOGIN_MESSAGE_TYPE } from '@/lib/auth/popup-login';
 
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import {
+  CONSENTS_FIXTURE,
+  expect,
+  seedStoryIds,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 
 /** 공급자 인증만 목킹하고 앱의 팝업, 메시지 수신과 세션 재확인을 실행한다. */
 async function mockGooglePopup(page: Page, coop = false) {
@@ -170,6 +179,96 @@ test.describe('인앱 소셜 로그인', () => {
     });
 
     expect(session.user.id).toBe('user-1');
+  });
+
+  test('팝업 로그인 후 원래 탭에서 필수 동의를 마쳐야 게스트 데이터를 이관한다', async ({
+    page,
+    context,
+  }) => {
+    await skipOnboarding(page);
+    await seedStoryIds(page, ['11111111-1111-4111-8111-111111111111']);
+    await mockGooglePopup(page);
+
+    let recorded = false;
+    let migrationCount = 0;
+    let earlyMigrationCount = 0;
+
+    await page.route(`**${getGetConsentsUrl()}`, async (route) => {
+      if (route.request().method() === 'POST') {
+        expect(route.request().postDataJSON()).toEqual({
+          terms: CONSENTS_FIXTURE.terms.requiredVersion,
+        });
+        recorded = true;
+      }
+
+      await route.fulfill({
+        json: {
+          ...CONSENTS_FIXTURE,
+          terms: { ...CONSENTS_FIXTURE.terms, needsConsent: !recorded },
+        },
+      });
+    });
+    await page.route(`**${getMigrateUrl()}`, async (route) => {
+      migrationCount++;
+
+      if (!recorded) earlyMigrationCount++;
+
+      await route.fulfill({
+        json: { stories: [], chats: [], migrationClosed: false },
+      });
+    });
+
+    const callbackUrl = `${APP_PATH.MAIN.STUDIO}?login=complete#return`;
+
+    await page.goto(
+      `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+    );
+
+    const opened = context.waitForEvent('page');
+
+    await page.getByRole('button', { name: /Google로 시작하기/ }).click();
+
+    const popup = await opened;
+
+    await popup.getByRole('link', { name: '인증 완료' }).click();
+    await expect(page).toHaveURL(callbackUrl);
+
+    const dialog = page.getByRole('dialog', { name: CONSENT_SHEET_COPY.title });
+
+    await expect(dialog).toBeVisible();
+    expect(migrationCount).toBe(0);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => sessionStorage.getItem(key),
+          PENDING_LOGIN_STORAGE_KEY,
+        ),
+      )
+      .toBe('1');
+
+    // 같은 탭의 새로고침에서도 동의와 이관 순서를 유지한다.
+    await page.reload();
+    await expect(dialog).toBeVisible();
+    expect(migrationCount).toBe(0);
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .check();
+    await dialog
+      .getByRole('button', { name: CONSENT_SHEET_COPY.submit })
+      .click();
+
+    await expect(dialog).toBeHidden();
+    await expect.poll(() => migrationCount).toBe(1);
+    expect(earlyMigrationCount).toBe(0);
+    await expect(page).toHaveURL(callbackUrl);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => sessionStorage.getItem(key),
+          PENDING_LOGIN_STORAGE_KEY,
+        ),
+      )
+      .toBeNull();
   });
 
   test('COOP가 창 참조를 끊어도 취소하지 않고 복귀 시 세션을 재확인한다', async ({
