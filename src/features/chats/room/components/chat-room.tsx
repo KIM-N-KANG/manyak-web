@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
+import { getMeQueryKey, useMe } from '@/api/generated/endpoints/auth/auth';
 import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type { ChatTurnResponse } from '@/api/generated/models';
@@ -20,10 +21,12 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
+import { useCreditPolicy } from '@/hooks/use-credit-policy';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useTrials } from '@/hooks/use-trials';
 import { track, useTrackOnView } from '@/observability/analytics';
@@ -48,6 +51,7 @@ import {
   readChatLoginDraft,
   saveChatLoginDraft,
 } from '../utils/chat-login-draft-storage';
+import { calcChatTurnCost } from '../utils/chat-turn-cost';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
@@ -63,6 +67,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const { status: sessionStatus } = useSession();
   const requestConsent = useGuestConsent();
   const trials = useTrials();
+  const policy = useCreditPolicy();
+  const { isMember } = useMemberAccess();
+  const { data: meData } = useMe({ query: { enabled: isMember } });
+  const creditBalance =
+    meData?.status === 200 ? meData.data.creditBalance : undefined;
   const [loginOpen, setLoginOpen] = useState(false);
   const lastSubmitted = useRef<string | null>(null);
   const handlePaymentRequired = (error: unknown) => {
@@ -114,6 +123,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     lastSubmitted.current = null;
     clearChatLoginDraft(chatId);
     void queryClient.invalidateQueries({ queryKey: getGetTrialsQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
 
     const result = await refetch();
 
@@ -157,6 +167,25 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnCount: turns.length,
   });
 
+  /**
+   * 아는 잔액이 이번 턴 비용에 못 미치는지. 잔액·정책·체험 중 하나라도 모르면 막지 않는다.
+   * 판단은 서버(402) 몫이고, 여기서 막는 것은 확실히 모자랄 때 왕복을 줄이는 것뿐이다.
+   */
+  const isCreditShort = () => {
+    if (creditBalance === undefined) return false;
+
+    const cost = calcChatTurnCost({
+      chatTurnCost: policy?.chatTurnCost,
+      chatImageCost: policy?.chatImageCost,
+      withRealtimeImage: realtimeImageEnabled,
+      turnRemaining: getTrialRemaining(trials, 'chatTurn'),
+      imageRemaining: getTrialRemaining(trials, 'chatImage'),
+    });
+    const required = cost.discounted ?? cost.full;
+
+    return required !== undefined && creditBalance < required;
+  };
+
   const canUseChat = async (onLimit?: () => void) => {
     if (!(await requestConsent())) return false;
 
@@ -166,6 +195,15 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     ) {
       onLimit?.();
       setLoginOpen(true);
+
+      return false;
+    }
+
+    // 서버도 402로 막지만, 그 뒤에 되돌리면 보낸 모습이 잠깐 보였다 사라진다. 아는 잔액으로
+    // 먼저 걸러 컴포저를 건드리지 않는다. 잔액은 화면이 서버와 어긋났을 수 있어 다시 읽는다.
+    if (isCreditShort()) {
+      showCreditShortageToast('chat_turn');
+      void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
 
       return false;
     }

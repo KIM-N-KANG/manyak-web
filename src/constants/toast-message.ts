@@ -16,6 +16,7 @@ export const TOAST_MESSAGE = {
   STORYLINE_EVALUATE_FAILED: '평가 저장에 실패했어요',
   RESPONSE_STREAM_FAILED: '응답 생성에 실패했어요',
   CREDIT_SHORTAGE: '이프가 부족해요',
+  CHAT_COMPOSER_LOCKED: '응답을 만드는 중이에요. 끝나면 입력할 수 있어요',
   GUEST_TRIAL_LIMIT: '게스트 체험 한도를 모두 사용했어요',
   FEEDBACK_SUBMITTED: '소중한 피드백을 보내주셔서 감사해요',
   FEEDBACK_SUBMIT_FAILED: '피드백 전송에 실패했어요',

@@ -596,6 +596,42 @@ test.describe('채팅 스트리밍', () => {
       .toBe(1);
   });
 
+  test('응답 생성 중 잠긴 입력창을 누르면 안내 토스트를 띄우고 연타는 직전 토스트를 교체한다 (CHAT-SEND-19)', async ({
+    page,
+  }) => {
+    // 게스트는 전송 직전 동의 시트가 열리므로 회원으로 보낸다.
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    // 스트림을 끝내지 않아 응답 생성 중(잠금) 상태를 유지한다.
+    await page.route(CHAT_STREAM, () => new Promise<void>(() => {}));
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    const input = page.getByPlaceholder('이야기를 어떻게 이어갈까요?');
+
+    await input.fill('앞으로 나아간다');
+    await page.getByRole('button', { name: '전송' }).click();
+    await expect(input).toBeDisabled();
+
+    // disabled 입력창은 클릭을 삼키므로 그 위의 잠금 층이 탭을 받는다. 좌표로 강제 클릭한다.
+    await input.click({ force: true });
+    await expect(
+      page.getByText(TOAST_MESSAGE.CHAT_COMPOSER_LOCKED),
+    ).toBeVisible();
+
+    await input.click({ force: true });
+    await expect(
+      page.getByText(TOAST_MESSAGE.CHAT_COMPOSER_LOCKED),
+    ).toHaveCount(1);
+  });
+
   test('인물 이미지를 completed 전에 표시하고 확정 마커로 이어서 복원한다 (US-6-11)', async ({
     page,
   }) => {

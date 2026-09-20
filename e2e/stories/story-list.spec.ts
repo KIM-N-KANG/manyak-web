@@ -4,7 +4,10 @@ import { APP_PATH } from '@/constants/app-path';
 // import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { STORY_SECTION_TITLE } from '@/features/stories/list/constants';
-import { CREATE_STORY_FAB_COPY } from '@/features/studio/menu/constants';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATED_STORY_LIST_COPY,
+} from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -224,14 +227,18 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('link', { name: '마냑의 첫 이야기 상세 보기' }),
     ).toBeVisible();
-    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeHidden();
+    await expect(
+      page.getByText(CREATED_STORY_LIST_COPY.emptyTitle),
+    ).toBeHidden();
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
-    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATED_STORY_LIST_COPY.emptyTitle),
+    ).toBeVisible();
   });
 
-  test('만든 스토리가 없는 제작 화면은 기존 빈 상태만 표시한다 (KNK-988)', async ({
+  test('만든 스토리가 없는 제작 화면은 한 줄 안내와 FAB만 표시한다 (KNK-988·KNK-1355)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -241,14 +248,16 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('main').getByRole('heading', { level: 2 }),
     ).toHaveCount(0);
-    await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
+    await expect(
+      page.getByText(CREATED_STORY_LIST_COPY.emptyTitle),
+    ).toBeVisible();
+    // 앱과 같이 빈 상태에도 별도 CTA 없이 FAB 하나만 둔다.
     await expect(
       page.getByRole('button', { name: '스토리 만들기' }),
-    ).toBeVisible();
-    // FAB는 목록 상태 전용이라 빈 상태에는 없다.
+    ).toHaveCount(0);
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
-    ).toHaveCount(0);
+    ).toBeVisible();
   });
 
   test('오리지널 카드는 ORIGINAL 태그와 제작자를 보여준다 (KNK-983)', async ({
