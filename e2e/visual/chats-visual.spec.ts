@@ -8,9 +8,9 @@ import { oneLine } from '../fixtures/copy';
 import {
   EXHAUSTED_TRIALS,
   expect,
+  mockGuestConsents,
   mockTrials,
   seedChatIds,
-  seedGuestConsent,
   skipChatChoicesHint,
   skipChatTour,
   skipOnboarding,
@@ -265,7 +265,7 @@ test.describe('채팅 오버레이 비주얼', () => {
   });
 
   test('게스트 체험 한도 초과 시 로그인 필요 바텀 시트', async ({ page }) => {
-    await seedGuestConsent(page);
+    await mockGuestConsents(page, false);
     await mockTrials(page, EXHAUSTED_TRIALS);
     await page.goto('/chats/c1');
     await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();

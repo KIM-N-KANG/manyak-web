@@ -1,10 +1,15 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
+import {
+  useGetConsents1,
+  useRecordConsents1,
+} from '@/api/generated/endpoints/guest/guest';
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -14,10 +19,14 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import { API_ERROR_CODE } from '@/constants/api-error-code';
 import { APP_PATH } from '@/constants/app-path';
+import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
 import { GUEST_CONSENT_COPY as COPY } from '@/features/auth/_shared/constants/guest-consent';
+import { parseGuestConsent } from '@/features/auth/_shared/utils/guest-consent-status';
 import { guestConsentSections } from '@/features/legal/content/guest-consent-content';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
+import { getApiErrorCode } from '@/lib/custom-fetch';
 import { cn } from '@/lib/utils';
 
 export function GuestConsentSheet({
@@ -28,12 +37,94 @@ export function GuestConsentSheet({
   const container = useAppFrameContainer();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [detail, setDetail] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const active = useRef(true);
+  const submitting = useRef(false);
+  const consent = useGetConsents1({
+    query: {
+      staleTime: 0,
+      gcTime: 0,
+      retry: false,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+  });
+  const record = useRecordConsents1({ mutation: { retry: false } });
+  const status =
+    consent.isSuccess && consent.data.status === 200
+      ? parseGuestConsent(consent.data.data)
+      : null;
+  const loadError = !consent.isFetching && !status;
+
+  useEffect(() => {
+    active.current = true;
+
+    return () => {
+      active.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!consent.isFetching && status?.needsConsent === false && !notice) {
+      active.current = false;
+      onFinish(true);
+    }
+  }, [consent.isFetching, status?.needsConsent, notice, onFinish]);
+
+  const submit = async () => {
+    if (!active.current || !status || consent.isFetching || submitting.current)
+      return;
+
+    submitting.current = true;
+    setNotice(null);
+
+    try {
+      const response = await record.mutateAsync({
+        data: { guestPrivacy: status.requiredVersion },
+      });
+
+      if (!active.current) return;
+
+      const saved =
+        response.status === 200 ? parseGuestConsent(response.data) : null;
+
+      if (
+        saved?.needsConsent !== false ||
+        saved.requiredVersion !== status.requiredVersion
+      ) {
+        throw new Error('Guest consent was not confirmed');
+      }
+
+      active.current = false;
+      onFinish(true);
+    } catch (error) {
+      if (!active.current) return;
+
+      if (getApiErrorCode(error) === API_ERROR_CODE.CONSENT_VERSION_MISMATCH) {
+        setNotice(CONSENT_SHEET_COPY.error.versionMismatch);
+        setDetail(true);
+        await consent.refetch();
+      } else {
+        setNotice(CONSENT_SHEET_COPY.error.retryable);
+      }
+    } finally {
+      submitting.current = false;
+    }
+  };
 
   return (
     <Drawer
-      open={container !== null}
+      open={
+        container !== null &&
+        consent.isFetched &&
+        (status?.needsConsent !== false || notice !== null)
+      }
       onOpenChange={(open) => {
-        if (!open) onFinish(false);
+        if (!open) {
+          active.current = false;
+          onFinish(false);
+        }
       }}>
       <DrawerContent
         container={container}
@@ -132,8 +223,21 @@ export function GuestConsentSheet({
           )}
         </div>
         <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <Button size="lg" onClick={() => onFinish(true)}>
-            {COPY.agree}
+          {(loadError || notice) && (
+            <p role="alert" className="text-sm text-destructive">
+              {loadError ? CONSENT_SHEET_COPY.loadError.title : notice}
+            </p>
+          )}
+          <Button
+            size="lg"
+            className="relative"
+            disabled={consent.isFetching || record.isPending}
+            onClick={loadError ? () => void consent.refetch() : submit}>
+            <LoadingButtonContent
+              isLoading={consent.isFetching || record.isPending}
+              loadingLabel={CONSENT_SHEET_COPY.submitPending}>
+              {loadError ? CONSENT_SHEET_COPY.retry : COPY.agree}
+            </LoadingButtonContent>
           </Button>
         </DrawerFooter>
       </DrawerContent>

@@ -13,10 +13,6 @@ import { usePathname } from 'next/navigation';
 
 import { GuestConsentSheet } from '@/features/auth/_shared/components/guest-consent-sheet';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
-import {
-  hasGuestConsent,
-  recordGuestConsent,
-} from '@/features/auth/_shared/utils/guest-consent-storage';
 
 const GuestConsentContext = createContext({
   requestConsent: async (): Promise<boolean> => false,
@@ -69,8 +65,6 @@ export function GuestConsentProvider({ children }: { children: ReactNode }) {
 
       const valid = accepted && isGuest && window.location.href === href;
 
-      if (valid) recordGuestConsent();
-
       settle(valid);
     };
 
@@ -122,8 +116,6 @@ export function GuestConsentProvider({ children }: { children: ReactNode }) {
     if (isMember) return true;
 
     if (!isGuest || pending.current) return false;
-
-    if (hasGuestConsent()) return true;
 
     return new Promise<boolean>((resolve) => {
       pending.current = resolve;

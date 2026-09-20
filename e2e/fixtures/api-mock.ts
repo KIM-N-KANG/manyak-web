@@ -44,6 +44,73 @@ export async function mockApi(page: Page): Promise<void> {
   // 회원 기능은 필수 동의 조회가 끝나야 열린다. 기본은 모두 동의한 상태로 응답해
   // 회원 시나리오가 동의 시트 없이 진행되게 한다. 동의 시나리오는 이 목을 override한다.
   await mockConsents(page);
+  await mockGuestConsents(page);
+}
+
+export const GUEST_CONSENT_VERSION_FIXTURE = 'guest-v1';
+
+/**
+ * 기기별 게스트 동의 조회와 저장을 목킹한다.
+ * @param page 대상 페이지
+ * @param needsConsent 처음 조회 시 동의 필요 여부
+ */
+export async function mockGuestConsents(
+  page: Page,
+  needsConsent = true,
+): Promise<void> {
+  const cookieName = 'AMP_guest_e2e';
+
+  if (
+    !(await page.context().cookies()).some(({ name }) => name === cookieName)
+  ) {
+    await page.context().addCookies([
+      {
+        name: cookieName,
+        value: btoa(
+          encodeURIComponent(JSON.stringify({ deviceId: crypto.randomUUID() })),
+        ),
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
+  }
+
+  const acceptedDevices = new Set<string>();
+
+  await page.route('**/api/v1/guests/consents', async (route) => {
+    const request = route.request();
+    const deviceId = request.headers()['x-manyak-device-id'];
+
+    if (!deviceId) {
+      await route.fulfill({ status: 400, json: {} });
+
+      return;
+    }
+
+    if (request.method() === 'POST') {
+      if (
+        request.postDataJSON().guestPrivacy !== GUEST_CONSENT_VERSION_FIXTURE
+      ) {
+        await route.fulfill({
+          status: 400,
+          json: { code: 'CONSENT_VERSION_MISMATCH' },
+        });
+
+        return;
+      }
+
+      acceptedDevices.add(deviceId);
+    }
+
+    await route.fulfill({
+      json: {
+        guestPrivacy: {
+          requiredVersion: GUEST_CONSENT_VERSION_FIXTURE,
+          needsConsent: needsConsent && !acceptedDevices.has(deviceId),
+        },
+      },
+    });
+  });
 }
 
 /** 필수 동의 조회·기록(GET/POST /api/v1/users/me/consents) 라우트 글롭. */

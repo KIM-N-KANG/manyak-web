@@ -15,6 +15,3 @@ export const GUEST_CONSENT_COPY = {
   terms: '서비스 이용약관 전체 보기',
   privacy: '개인정보 처리방침 전체 보기',
 } as const;
-
-export const GUEST_CONSENT_VERSION = '2026-09-20-v1';
-export const GUEST_CONSENT_STORAGE_KEY = 'manyak:guest-consent';

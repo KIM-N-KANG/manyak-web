@@ -1,9 +1,5 @@
 import type { Page } from '@playwright/test';
 
-import {
-  GUEST_CONSENT_STORAGE_KEY,
-  GUEST_CONSENT_VERSION,
-} from '@/features/auth/_shared/constants/guest-consent';
 import { PENDING_HANDOFF_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-handoff-storage';
 import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
@@ -28,19 +24,6 @@ import {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 import { AMP_MKTG_COOKIE_PREFIX } from '@/observability/analytics/amplitude-identity';
-
-/** 게스트 동의 후 기능을 검증할 테스트에만 현재 버전의 기록을 심는다. */
-export async function seedGuestConsent(page: Page): Promise<void> {
-  await page.addInitScript(
-    ([key, version]) => {
-      localStorage.setItem(
-        key,
-        JSON.stringify({ version, acceptedAt: '2026-09-20T00:00:00.000Z' }),
-      );
-    },
-    [GUEST_CONSENT_STORAGE_KEY, GUEST_CONSENT_VERSION] as const,
-  );
-}
 
 /**
  * 온보딩을 "이미 봄"으로 표시해 온보딩 페이지로 리다이렉트되지 않게 한다(US-8-3).
