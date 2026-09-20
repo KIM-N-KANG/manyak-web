@@ -115,7 +115,7 @@ function RefreshSymbol({
   return (
     <m.span
       style={reduce ? undefined : { y: lift, rotate: tilt, scaleY: stretch }}
-      className="block size-9 origin-bottom text-primary">
+      className="block size-7 origin-bottom text-primary">
       <m.span
         className="block h-full w-full"
         animate={
