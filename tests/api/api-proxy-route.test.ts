@@ -251,6 +251,163 @@ describe('api proxy route', () => {
     expect(fetchCalled).toBe(false);
   });
 
+  it('백엔드가 access 토큰을 401로 거절하면 강제 재발급 후 새 토큰으로 한 번 재시도한다', async () => {
+    const originalFetch = globalThis.fetch;
+    const previousApiBaseUrl = process.env.API_BASE_URL;
+    const capturedAuthorizations: (string | null)[] = [];
+    const capturedBodies: string[] = [];
+
+    backendSessionMock.ensureFreshAccessToken
+      .mockResolvedValueOnce({
+        status: 'authenticated',
+        accessToken: 'rejected-access',
+      })
+      .mockResolvedValueOnce({
+        status: 'authenticated',
+        accessToken: 'refreshed-access',
+      });
+    process.env.API_BASE_URL = 'http://backend.test';
+    globalThis.fetch = async (_url, init) => {
+      const headers = new Headers(init?.headers);
+
+      capturedAuthorizations.push(headers.get('authorization'));
+      capturedBodies.push(new TextDecoder().decode(init?.body as BufferSource));
+
+      return capturedAuthorizations.length === 1
+        ? new Response('unauthorized', { status: 401 })
+        : new Response('created', { status: 201 });
+    };
+
+    try {
+      const response = await route.POST(
+        new Request('http://localhost:3000/api/v1/stories', {
+          method: 'POST',
+          headers: { host: 'localhost:3000' },
+          body: JSON.stringify({ title: '테스트' }),
+        }),
+        routeContext(['v1', 'stories']),
+      );
+
+      expect(response.status).toBe(201);
+      expect(await response.text()).toBe('created');
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.API_BASE_URL = previousApiBaseUrl;
+    }
+
+    expect(backendSessionMock.ensureFreshAccessToken).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Number),
+      { forceRefresh: true },
+    );
+    expect(capturedAuthorizations).toEqual([
+      'Bearer rejected-access',
+      'Bearer refreshed-access',
+    ]);
+    // 버퍼링한 본문을 재시도에도 그대로 다시 보낸다.
+    expect(capturedBodies).toEqual([
+      '{"title":"테스트"}',
+      '{"title":"테스트"}',
+    ]);
+  });
+
+  it('백엔드 401 후 재발급이 확정 거절되면 재시도 없이 만료 헤더와 401로 응답한다', async () => {
+    const originalFetch = globalThis.fetch;
+    const previousApiBaseUrl = process.env.API_BASE_URL;
+    let fetchCount = 0;
+
+    backendSessionMock.ensureFreshAccessToken
+      .mockResolvedValueOnce({
+        status: 'authenticated',
+        accessToken: 'rejected-access',
+      })
+      .mockResolvedValueOnce({ status: 'expired' });
+    process.env.API_BASE_URL = 'http://backend.test';
+    globalThis.fetch = async () => {
+      fetchCount += 1;
+
+      return new Response('unauthorized', { status: 401 });
+    };
+
+    try {
+      const response = await route.GET(
+        new Request('http://localhost:3000/api/v1/stories', {
+          headers: { host: 'localhost:3000' },
+        }),
+        routeContext(['v1', 'stories']),
+      );
+
+      expect(response.status).toBe(401);
+      expect(response.headers.get('x-manyak-session-expired')).toBe('1');
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.API_BASE_URL = previousApiBaseUrl;
+    }
+
+    expect(fetchCount).toBe(1);
+  });
+
+  it('백엔드 401 후 재발급이 일시 실패해 같은 토큰이 돌아오면 재시도하지 않고 401을 통과시킨다', async () => {
+    const originalFetch = globalThis.fetch;
+    const previousApiBaseUrl = process.env.API_BASE_URL;
+    let fetchCount = 0;
+
+    backendSessionMock.ensureFreshAccessToken.mockResolvedValue({
+      status: 'authenticated',
+      accessToken: 'same-access',
+    });
+    process.env.API_BASE_URL = 'http://backend.test';
+    globalThis.fetch = async () => {
+      fetchCount += 1;
+
+      return new Response('unauthorized', { status: 401 });
+    };
+
+    try {
+      const response = await route.GET(
+        new Request('http://localhost:3000/api/v1/stories', {
+          headers: { host: 'localhost:3000' },
+        }),
+        routeContext(['v1', 'stories']),
+      );
+
+      expect(response.status).toBe(401);
+      expect(await response.text()).toBe('unauthorized');
+      // 세션은 보존된 일시 실패이므로 능동 로그아웃 신호를 보내지 않는다.
+      expect(response.headers.get('x-manyak-session-expired')).toBeNull();
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.API_BASE_URL = previousApiBaseUrl;
+    }
+
+    expect(fetchCount).toBe(1);
+  });
+
+  it('게스트 요청의 백엔드 401은 재발급 없이 그대로 통과시킨다', async () => {
+    const originalFetch = globalThis.fetch;
+    const previousApiBaseUrl = process.env.API_BASE_URL;
+
+    process.env.API_BASE_URL = 'http://backend.test';
+    globalThis.fetch = async () =>
+      new Response('unauthorized', { status: 401 });
+
+    try {
+      const response = await route.GET(
+        new Request('http://localhost:3000/api/v1/users/me', {
+          headers: { host: 'localhost:3000' },
+        }),
+        routeContext(['v1', 'users', 'me']),
+      );
+
+      expect(response.status).toBe(401);
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.API_BASE_URL = previousApiBaseUrl;
+    }
+
+    expect(backendSessionMock.ensureFreshAccessToken).toHaveBeenCalledTimes(1);
+  });
+
   it('returns 500 when API_BASE_URL is missing', async () => {
     const originalFetch = globalThis.fetch;
     const previousApiBaseUrl = process.env.API_BASE_URL;

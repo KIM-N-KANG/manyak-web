@@ -136,6 +136,30 @@ describe('ensureFreshAccessToken', () => {
     });
   });
 
+  it('forceRefresh면 만료가 임박하지 않아도 재발급해 새 토큰을 반환한다', async () => {
+    const { refreshOnServer } = await import('@/lib/auth/backend-client');
+
+    tokenCookiesMock.readBackendSessionTokens.mockResolvedValue({
+      accessToken: 'rejected-by-backend',
+      refreshToken: 'refresh-force',
+      expiresAt: 1_000_000,
+    });
+    vi.mocked(refreshOnServer).mockResolvedValue({
+      accessToken: 'forced-fresh',
+      refreshToken: 'refresh-force-2',
+      expiresIn: 1800,
+    });
+
+    await expect(
+      ensureFreshAccessToken(1_000, { forceRefresh: true }),
+    ).resolves.toEqual({
+      status: 'authenticated',
+      accessToken: 'forced-fresh',
+    });
+    expect(refreshOnServer).toHaveBeenCalledWith('refresh-force');
+    expect(tokenCookiesMock.writeBackendSessionTokens).toHaveBeenCalled();
+  });
+
   it('만료 임박이면 재발급 후 새 토큰을 저장하고 인증 상태를 반환한다', async () => {
     const { refreshOnServer } = await import('@/lib/auth/backend-client');
 

@@ -46,13 +46,13 @@ export function useStartChat(
           return;
         }
 
-        // 회원 서재는 서버가 정본 — 로그인 상태에서는 로컬에 ID를 남기지 않는다.
-        if (status === 'authenticated') {
+        // 회원 서재는 서버가 정본 — 게스트로 확정됐을 때만 로컬에 ID를 남긴다.
+        if (status === 'unauthenticated') {
+          saveCreatedChatId(chatId);
+        } else {
           void queryClient.invalidateQueries({
             queryKey: getGetMyChatsQueryKey(),
           });
-        } else {
-          saveCreatedChatId(chatId);
         }
 
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));

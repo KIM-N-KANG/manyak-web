@@ -12,15 +12,10 @@ import { signOut, useSession } from 'next-auth/react';
 
 import { Label } from '@/components/ui/label';
 import { APP_PATH } from '@/constants/app-path';
-import { clearPendingLogin } from '@/features/auth/_shared/utils/pending-login-storage';
+import { clearLocalMemberState } from '@/features/auth/_shared/utils/clear-local-member-state';
 import { InviteMenuItem } from '@/features/my/_shared/components/invite-menu-item';
 import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
-import { clearPendingCreditOrder } from '@/features/my/credits/utils/pending-credit-order-storage';
-import {
-  clearPendingCreationRequest,
-  clearStoryCompletionRequests,
-} from '@/features/stories/_shared/utils/creation-request-storage';
-import { resetAnalyticsUser, track } from '@/observability/analytics';
+import { track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
 import { ProfileHeader } from './profile-header';
@@ -39,11 +34,7 @@ export function MyScreen() {
   const handleLogout = () => {
     setIsLoggingOut(true);
     track('client_account_logoutButton_clicked');
-    resetAnalyticsUser();
-    clearPendingLogin();
-    clearPendingCreationRequest();
-    clearStoryCompletionRequests();
-    clearPendingCreditOrder();
+    clearLocalMemberState();
     void signOut({ redirectTo: APP_PATH.MAIN.MY });
   };
 

@@ -110,6 +110,19 @@ const createProxyRequestInit = async (request: Request) => {
 };
 
 /**
+ * 세션 만료(리프레시 확정 거절) 응답을 만든다. 만료 헤더로 클라이언트의 능동 로그아웃을
+ * 신호한다. 쿠키 삭제(Set-Cookie)는 ensureFreshAccessToken 내부의 clearBackendSession이
+ * 처리했다.
+ *
+ * @returns 만료 헤더가 붙은 401 응답
+ */
+const createSessionExpiredResponse = () =>
+  Response.json('세션이 만료되었습니다.', {
+    status: 401,
+    headers: { [SESSION_EXPIRED_HEADER]: '1' },
+  });
+
+/**
  * 요청을 백엔드로 프록시하며 회원 세션 토큰 주입과 만료·장애 처리를 수행한다.
  *
  * @param request 원본 요청
@@ -136,13 +149,8 @@ const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
 
   // 리프레시가 확정 거절돼 세션이 폐기된 경우: 백엔드로 전달하지 않고 즉시 차단한다.
   // 익명으로 전달하면 회원의 요청(특히 변경)이 게스트 콘텐츠로 잘못 귀속된다.
-  // 만료 헤더로 클라이언트의 능동 로그아웃을 신호한다. 쿠키 삭제(Set-Cookie)는
-  // ensureFreshAccessToken 내부의 clearBackendSession이 처리했다.
   if (auth.status === 'expired') {
-    return Response.json('세션이 만료되었습니다.', {
-      status: 401,
-      headers: { [SESSION_EXPIRED_HEADER]: '1' },
-    });
+    return createSessionExpiredResponse();
   }
 
   // 회원인데 일시 장애로 토큰을 확보하지 못한 경우: 익명 전달(잘못된 귀속) 대신
@@ -165,7 +173,39 @@ const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
     );
   }
 
-  const response = await fetch(targetUrl, init);
+  let response = await fetch(targetUrl, init);
+
+  // 만료 전 access 토큰을 백엔드가 401로 거절한 경우(다른 기기 탈퇴·로그아웃으로
+  // family 폐기, 서버 키 회전 등)는 시간 기반 선제 재발급이 잡지 못한다. 그대로
+  // 통과시키면 access TTL이 끝날 때까지 회원 요청이 조용히 실패하므로, 재발급을
+  // 한 번 시도해 새 토큰이면 재시도하고 확정 거절이면 능동 로그아웃을 신호한다.
+  // 본문은 이미 버퍼링돼 있어 재전송할 수 있고, 백엔드가 인증 단계에서 거절한
+  // 요청은 처리된 적이 없어 변경 요청도 중복 실행되지 않는다.
+  if (response.status === 401 && auth.status === 'authenticated') {
+    const retried = await ensureFreshAccessToken(Date.now(), {
+      forceRefresh: true,
+    });
+
+    if (retried.status === 'expired') {
+      await response.body?.cancel();
+
+      return createSessionExpiredResponse();
+    }
+
+    // 재발급 일시 실패는 기존 토큰을 그대로 돌려주므로, 실제로 새 토큰을 받았을
+    // 때만 재시도한다. 같은 토큰으로 재시도해도 결과가 같아 무의미하다.
+    if (
+      retried.status === 'authenticated' &&
+      retried.accessToken !== auth.accessToken
+    ) {
+      await response.body?.cancel();
+      (init.headers as Headers).set(
+        'authorization',
+        `Bearer ${retried.accessToken}`,
+      );
+      response = await fetch(targetUrl, init);
+    }
+  }
 
   return new Response(response.body, {
     status: response.status,
