@@ -137,7 +137,6 @@ export type AnalyticsEventProps = {
   };
   client_storyCreate_completed: {
     story_id: string;
-    chat_id: string;
     genres?: string[];
   };
   // storyDetail

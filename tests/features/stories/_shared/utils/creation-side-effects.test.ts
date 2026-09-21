@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const storageMock = vi.hoisted(() => ({
   markPendingStoryCreated: vi.fn(),
   saveCreatedStoryId: vi.fn(),
+  track: vi.fn(),
   trackMetaPixelOnce: vi.fn(),
 }));
 
@@ -12,6 +13,9 @@ vi.mock('@/features/stories/_shared/utils/creation-request-storage', () => ({
 }));
 vi.mock('@/features/stories/_shared/utils/story-id-storage', () => ({
   saveCreatedStoryId: storageMock.saveCreatedStoryId,
+}));
+vi.mock('@/observability/analytics', () => ({
+  track: storageMock.track,
 }));
 vi.mock('@/observability/marketing/pixel', () => ({
   trackMetaPixelOnce: storageMock.trackMetaPixelOnce,
@@ -76,6 +80,21 @@ describe('applyStoryCompletedEffects', () => {
     expect(storageMock.markPendingStoryCreated).toHaveBeenCalledWith(
       'req-1',
       'story-1',
+    );
+  });
+
+  it('채팅 생성과 무관하게 스토리 완성 분석 이벤트를 발화한다', () => {
+    applyStoryCompletedEffects(
+      'req-1',
+      'story-1',
+      'authenticated',
+      createQueryClient(),
+      ['romance'],
+    );
+
+    expect(storageMock.track).toHaveBeenCalledWith(
+      'client_storyCreate_completed',
+      { story_id: 'story-1', genres: ['romance'] },
     );
   });
 });
