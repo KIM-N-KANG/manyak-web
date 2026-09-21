@@ -338,13 +338,13 @@ export function useStoryCreateFunnel() {
           takeStoryCompletionRequest(lastCompletionRequest.requestId);
         }
 
-        // 회원 서재는 서버가 정본 — 로그인 상태에서는 로컬에 ID를 남기지 않는다.
-        if (sessionStatus === 'authenticated') {
+        // 회원 서재는 서버가 정본 — 게스트로 확정됐을 때만 로컬에 ID를 남긴다.
+        if (sessionStatus === 'unauthenticated') {
+          saveCreatedChatId(chatId);
+        } else {
           void queryClient.invalidateQueries({
             queryKey: getGetMyChatsQueryKey(),
           });
-        } else {
-          saveCreatedChatId(chatId);
         }
 
         const completedStoryId =
