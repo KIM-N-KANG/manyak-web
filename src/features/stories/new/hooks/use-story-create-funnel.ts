@@ -122,10 +122,6 @@ export function useStoryCreateFunnel() {
   const [selectedRecommendations, setSelectedRecommendations] = useState<
     Set<string>
   >(() => new Set());
-  const completedStoryRef = useRef<{
-    storyId: string;
-    genres?: string[];
-  } | null>(null);
   // 복구 조회가 실패를 알린 경우의 스토리라인 오류 표시(뮤테이션 isError를 대신한다).
   const [hasRecoveredGenerateError, setHasRecoveredGenerateError] =
     useState(false);
@@ -347,17 +343,6 @@ export function useStoryCreateFunnel() {
           });
         }
 
-        const completedStoryId =
-          completedStoryRef.current?.storyId ?? createdStoryId;
-
-        if (completedStoryId !== null) {
-          track('client_storyCreate_completed', {
-            story_id: completedStoryId,
-            chat_id: chatId,
-            genres: completedStoryRef.current?.genres,
-          });
-        }
-
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         toast.success(TOAST_MESSAGE.STORY_COMPLETED);
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
@@ -397,10 +382,10 @@ export function useStoryCreateFunnel() {
             storyId,
             sessionStatus,
             queryClient,
+            response.data.genres,
           );
 
           setCreatedStoryId(storyId);
-          completedStoryRef.current = { storyId, genres: response.data.genres };
         }
 
         createChat.mutate({ data: { storyId: response.data.id } });
@@ -556,11 +541,6 @@ export function useStoryCreateFunnel() {
     setSelectedRecommendations(new Set(record.selectedRecommendations));
     restoreAdditionalInfos(record.additionalInfos);
     setCreatedStoryId(record.createdStoryId);
-
-    if (record.createdStoryId !== null) {
-      completedStoryRef.current = { storyId: record.createdStoryId };
-    }
-
     setLastCompletionRequest(record.completionRequest);
     setHasCompleteStoryError(false);
     setHasRecoveredGenerateError(false);
@@ -688,7 +668,6 @@ export function useStoryCreateFunnel() {
     setSelectedStoryline(null);
     setCreatedStoryId(null);
     setLastCompletionRequest(null);
-    completedStoryRef.current = null;
     reusedCompletionRequestIdRef.current = null;
     resetAdditionalInfoStep();
     setStep('storyline-select');
