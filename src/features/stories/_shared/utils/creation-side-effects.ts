@@ -41,12 +41,16 @@ export function applyStoryCompletedEffects(
 ): void {
   markPendingStoryCreated(requestId, storyId);
 
-  if (sessionStatus === 'authenticated') {
+  // 게스트로 확정됐을 때만 로컬 서재에 ID를 남긴다. 제작 탭 폴링은 세션 판정을 기다리지
+  // 않아 `loading` 중에도 완성이 도착할 수 있는데, 이를 게스트로 취급하면 회원의 스토리
+  // ID가 로컬에 남아 로그아웃 뒤 게스트 서재에 노출된다. `loading` 중 회원 목록 무효화는
+  // 쿼리가 꺼져 있어 무해하다.
+  if (sessionStatus === 'unauthenticated') {
+    saveCreatedStoryId(storyId);
+  } else {
     void queryClient.invalidateQueries({
       queryKey: getGetMyStoriesQueryKey(),
     });
-  } else {
-    saveCreatedStoryId(storyId);
   }
 
   void queryClient.invalidateQueries({ queryKey: getGetTrialsQueryKey() });

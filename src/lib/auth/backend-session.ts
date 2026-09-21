@@ -58,15 +58,26 @@ function isConfirmedAuthRejection(error: unknown): boolean {
  * - refresh 토큰이 없으면 복구 불가: NextAuth 세션 쿠키가 남아 있으면(불일치) 폐기 후
  *   expired, 아니면 guest
  *
+ * `forceRefresh`는 백엔드가 만료 전 access 토큰을 401로 거절했을 때(다른 기기 탈퇴·
+ * 로그아웃으로 family 폐기, 서버 키 회전 등) 만료 임박 판정을 건너뛰고 바로 재발급한다.
+ * 재발급 중복 방지 캐시가 그대로 적용되므로 직전에 발급된 토큰이 다시 거절돼도
+ * 같은 결과를 돌려줄 뿐 refresh 토큰을 두 번 회전시키지 않는다.
+ *
  * @param nowMs 현재 시각(ms epoch)
+ * @param options 재발급 옵션. `forceRefresh`가 true면 유효해 보이는 access 토큰이 있어도 재발급한다
  * @returns access 토큰 확보 결과(판별 유니온)
  */
 export async function ensureFreshAccessToken(
   nowMs = Date.now(),
+  options: { forceRefresh?: boolean } = {},
 ): Promise<FreshAccessTokenResult> {
   const tokens = await readBackendSessionTokens();
 
-  if (tokens && !shouldRefreshAccessToken(tokens.expiresAt, nowMs)) {
+  if (
+    tokens &&
+    !options.forceRefresh &&
+    !shouldRefreshAccessToken(tokens.expiresAt, nowMs)
+  ) {
     return { status: 'authenticated', accessToken: tokens.accessToken };
   }
 
