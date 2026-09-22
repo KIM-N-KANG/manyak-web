@@ -13,7 +13,8 @@ import {
 } from '@/features/studio/menu/constants';
 
 import {
-  seedPendingCreationRequest,
+  seedDraftResumeIntent,
+  seedPendingCreationRequests,
   seedStoryCompletionRequests,
 } from '../fixtures/storage';
 import {
@@ -82,6 +83,8 @@ const storylineRecord: PendingCreationRequest = {
 const completionRecord: StoryCompletionRecord = {
   stage: 'STORY_COMPLETION',
   requestId: COMPLETION_REQUEST_ID,
+  // 카드에는 KST `2026-09-20 21:05`로 보인다.
+  createdAt: '2026-09-20T12:05:00.000Z',
   generationRequest,
   generationResult: storylinesResult,
   selectedStoryline: storylinesResult.storylines[0],
@@ -127,7 +130,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         ),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
+    await seedDraftResumeIntent(page, storylineRecord.requestId);
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
@@ -329,6 +333,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
       });
 
       await expect(progress).toBeVisible();
+      // 완성 중 카드도 처음 임시 저장한 시각을 표시한다.
+      await expect(progress.getByText('2026-09-20 21:05')).toBeVisible();
 
       const progressBox = await progress.boundingBox();
       const oldCard = page.getByRole('link', {
@@ -408,7 +414,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         ),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
+    await seedDraftResumeIntent(page, storylineRecord.requestId);
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await expect.poll(() => pollCount).toBe(1);
 
@@ -556,7 +563,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         }),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
+    await seedDraftResumeIntent(page, storylineRecord.requestId);
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
@@ -587,7 +595,7 @@ test.describe('이어서 만들기 진행 카드', () => {
         }),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
@@ -621,7 +629,7 @@ test.describe('이어서 만들기 진행 카드', () => {
         }),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
@@ -636,6 +644,12 @@ test.describe('이어서 만들기 진행 카드', () => {
         ),
       )
       .toContain('"stage":"STORY_DRAFT"');
+    // 카드 조회가 초안으로 승격하면 설명도 선택 단계로 바뀐다.
+    await expect(
+      page.getByText(
+        CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
+      ),
+    ).toBeVisible();
 
     const statusRequestsBeforeResume = statusRequestCount;
 
@@ -655,12 +669,15 @@ test.describe('이어서 만들기 진행 카드', () => {
   test('진행 카드에는 닫기 버튼 없이 이어서 만들기와 더보기만 표시한다', async ({
     page,
   }) => {
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(
       page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.generating),
     ).toBeVisible();
     await expect(
       page.getByRole('button', { name: '이어서 만들기 배너 닫기' }),

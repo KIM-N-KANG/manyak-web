@@ -509,6 +509,37 @@ export const GenerateSimpleStorylinesBody = zod
 export const GenerateSimpleStorylinesResponse = zod.void();
 
 /**
+ * 스토리를 만들기 전에 표지·인물 이미지를 올릴 서명 URL을 발급합니다(KNK-1390). 객체 키는 `{thumbnails|characters}/uploaded/drafts/{내 식별자}/{uuid}.{ext}`이며, PUT을 마친 뒤 그 `objectKey`를 `POST /stories/general`의 `thumbnailObjectKey`·`characters[].images[].objectKey`에 넣습니다. 규칙(형식 3종·5MB·만료 10분)은 스토리 스코프 발급과 같고 **인증이 필요**합니다.
+ * @summary 등록 전 이미지 업로드용 presigned URL 발급
+ */
+
+export const presignDraftImageBodyContentLengthMax = 5242880;
+
+export const PresignDraftImageBody = zod
+  .object({
+    kind: zod
+      .enum(['COVER', 'CHARACTER'])
+      .nullable()
+      .describe('업로드 대상. 객체 키 prefix가 갈린다'),
+    contentType: zod
+      .string()
+      .min(1)
+      .nullable()
+      .describe('image\/jpeg · image\/png · image\/webp 중 하나'),
+    contentLength: zod
+      .number()
+      .min(1)
+      .max(presignDraftImageBodyContentLengthMax)
+      .nullable()
+      .describe(
+        '바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다',
+      ),
+  })
+  .describe('이미지 업로드용 presigned URL 발급 요청');
+
+export const PresignDraftImageResponse = zod.void();
+
+/**
  * 폼에 직접 입력한 스토리 구성 항목을 한 번에 등록합니다(단발, 임시저장 없음). 인증은 선택이며 유효 토큰이면 생성자 소유가 됩니다. AI를 호출하지 않아 크레딧 소모·게스트 한도 카운트가 없습니다. 응답은 간편 제작과 동일합니다.
  * @summary 일반 제작 스토리 등록
  */
@@ -546,6 +577,17 @@ export const createGeneralStoryBodyMainEventsMin = 0;
 export const createGeneralStoryBodyMainEventsMax = 10;
 
 export const createGeneralStoryBodyVisibilityDefault = `PRIVATE`;
+export const createGeneralStoryBodyCharactersItemNameMin = 0;
+export const createGeneralStoryBodyCharactersItemNameMax = 100;
+
+export const createGeneralStoryBodyCharactersItemImagesItemImageNameMin = 0;
+export const createGeneralStoryBodyCharactersItemImagesItemImageNameMax = 120;
+
+export const createGeneralStoryBodyCharactersItemImagesMin = 0;
+export const createGeneralStoryBodyCharactersItemImagesMax = 10;
+
+export const createGeneralStoryBodyCharactersMin = 0;
+export const createGeneralStoryBodyCharactersMax = 6;
 
 export const CreateGeneralStoryBody = zod
   .object({
@@ -684,6 +726,71 @@ export const CreateGeneralStoryBody = zod
       .enum(['PUBLIC', 'PRIVATE'])
       .default(createGeneralStoryBodyVisibilityDefault)
       .describe('공개 범위. 생략하면 PRIVATE.'),
+    thumbnailObjectKey: zod
+      .string()
+      .nullish()
+      .describe(
+        '업로드한 표지의 객체 키(presign 응답의 objectKey). 회원만 쓸 수 있다.',
+      ),
+    characters: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .string()
+              .nullish()
+              .describe(
+                '인물 ID(공개 식별자). 수정 시 기존 인물 매칭 키로 쓴다.',
+              ),
+            name: zod
+              .string()
+              .min(createGeneralStoryBodyCharactersItemNameMin)
+              .max(createGeneralStoryBodyCharactersItemNameMax)
+              .describe('인물 이름(스토리 내 유일)'),
+            images: zod
+              .array(
+                zod
+                  .object({
+                    id: zod
+                      .string()
+                      .nullish()
+                      .describe(
+                        '기존 이미지 ID(공개 식별자). 이 이미지를 그대로 유지한다.',
+                      ),
+                    objectKey: zod
+                      .string()
+                      .nullish()
+                      .describe(
+                        'presign으로 받은 객체 키(신규 추가). 내 업로드 prefix 아래여야 한다',
+                      ),
+                    imageName: zod
+                      .string()
+                      .min(
+                        createGeneralStoryBodyCharactersItemImagesItemImageNameMin,
+                      )
+                      .max(
+                        createGeneralStoryBodyCharactersItemImagesItemImageNameMax,
+                      )
+                      .nullish()
+                      .describe(
+                        '`{인물이름}_{접미}` 형식. 접미는 1~20자 한글·영문·숫자이며 같은 인물 안에서 유일하다. 신규 추가에는 필수이고, 기존 유지에서 생략하면 현재 이름을 유지한다(인물 개명 시 접두만 갱신).',
+                      ),
+                  })
+                  .describe('인물 이미지 입력'),
+              )
+              .min(createGeneralStoryBodyCharactersItemImagesMin)
+              .max(createGeneralStoryBodyCharactersItemImagesMax)
+              .nullish()
+              .describe(
+                '이 인물의 이미지 목록(최대 10장). 배열 순서가 표시 순서가 된다. \*\*수정에서 생략하면 기존 이미지를 유지\*\*하고 빈 배열이면 모두 삭제한다.',
+              ),
+          })
+          .describe('인물 입력(제작·수정 공용)'),
+      )
+      .min(createGeneralStoryBodyCharactersMin)
+      .max(createGeneralStoryBodyCharactersMax)
+      .optional()
+      .describe('인물 목록(최대 6명, 선택). 이름은 스토리 안에서 유일하다.'),
   })
   .describe(
     '일반 제작 스토리 등록 요청(단발). 검증 후 그대로 저장하며 AI를 호출하지 않는다.',
@@ -1255,6 +1362,18 @@ export const updateStoryBodyMainEventsItemNameMax = 100;
 export const updateStoryBodyMainEventsMin = 0;
 export const updateStoryBodyMainEventsMax = 10;
 
+export const updateStoryBodyCharactersItemNameMin = 0;
+export const updateStoryBodyCharactersItemNameMax = 100;
+
+export const updateStoryBodyCharactersItemImagesItemImageNameMin = 0;
+export const updateStoryBodyCharactersItemImagesItemImageNameMax = 120;
+
+export const updateStoryBodyCharactersItemImagesMin = 0;
+export const updateStoryBodyCharactersItemImagesMax = 10;
+
+export const updateStoryBodyCharactersMin = 0;
+export const updateStoryBodyCharactersMax = 6;
+
 export const UpdateStoryBody = zod
   .object({
     title: zod
@@ -1392,6 +1511,61 @@ export const UpdateStoryBody = zod
       .describe(
         '업로드한 표지의 객체 키(presign 응답의 objectKey). 생략하면 표지를 바꾸지 않는다.',
       ),
+    characters: zod
+      .array(
+        zod
+          .object({
+            id: zod
+              .string()
+              .nullish()
+              .describe(
+                '인물 ID(공개 식별자). 수정 시 기존 인물 매칭 키로 쓴다.',
+              ),
+            name: zod
+              .string()
+              .min(updateStoryBodyCharactersItemNameMin)
+              .max(updateStoryBodyCharactersItemNameMax)
+              .describe('인물 이름(스토리 내 유일)'),
+            images: zod
+              .array(
+                zod
+                  .object({
+                    id: zod
+                      .string()
+                      .nullish()
+                      .describe(
+                        '기존 이미지 ID(공개 식별자). 이 이미지를 그대로 유지한다.',
+                      ),
+                    objectKey: zod
+                      .string()
+                      .nullish()
+                      .describe(
+                        'presign으로 받은 객체 키(신규 추가). 내 업로드 prefix 아래여야 한다',
+                      ),
+                    imageName: zod
+                      .string()
+                      .min(updateStoryBodyCharactersItemImagesItemImageNameMin)
+                      .max(updateStoryBodyCharactersItemImagesItemImageNameMax)
+                      .nullish()
+                      .describe(
+                        '`{인물이름}_{접미}` 형식. 접미는 1~20자 한글·영문·숫자이며 같은 인물 안에서 유일하다. 신규 추가에는 필수이고, 기존 유지에서 생략하면 현재 이름을 유지한다(인물 개명 시 접두만 갱신).',
+                      ),
+                  })
+                  .describe('인물 이미지 입력'),
+              )
+              .min(updateStoryBodyCharactersItemImagesMin)
+              .max(updateStoryBodyCharactersItemImagesMax)
+              .nullish()
+              .describe(
+                '이 인물의 이미지 목록(최대 10장). 배열 순서가 표시 순서가 된다. \*\*수정에서 생략하면 기존 이미지를 유지\*\*하고 빈 배열이면 모두 삭제한다.',
+              ),
+          })
+          .describe('인물 입력(제작·수정 공용)'),
+      )
+      .min(updateStoryBodyCharactersMin)
+      .max(updateStoryBodyCharactersMax)
+      .nullish()
+      .describe('인물 목록(최대 6명). 생략하면 인물을 바꾸지 않는다.'),
   })
   .describe('스토리 부분 갱신 요청. 보낸 필드만 교체하고 나머지는 유지한다.');
 

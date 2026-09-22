@@ -114,9 +114,6 @@ export type AnalyticsEventProps = {
   client_storyCreate_draftSaved: {
     step: 'keyword' | 'storyline-select' | 'additional-info';
   };
-  client_storyCreate_resumeDialog_shown: void;
-  client_storyCreate_resumeDialog_continued: void;
-  client_storyCreate_resumeDialog_discarded: void;
   client_storyCreate_continueBanner_shown: {
     stage:
       | 'KEYWORD_DRAFT'
@@ -137,7 +134,6 @@ export type AnalyticsEventProps = {
   };
   client_storyCreate_completed: {
     story_id: string;
-    chat_id: string;
     genres?: string[];
   };
   // storyDetail

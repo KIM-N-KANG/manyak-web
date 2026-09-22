@@ -44,6 +44,8 @@ export * from './creditTransactionPageResponse';
 export * from './creditTransactionResponse';
 export * from './creditTransactionResponseReason';
 export * from './creditTransactionResponseType';
+export * from './generalCharacterImageInput';
+export * from './generalCharacterInput';
 export * from './generalEndingItem';
 export * from './generalEndingRequirementInput';
 export * from './generalStartSettingInput';

@@ -1,6 +1,7 @@
 'use client';
 
-import { Delete02Icon } from '@hugeicons/core-free-icons';
+import { Calendar04Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { ImageGeneration } from '@/components/agents/image-generation';
@@ -17,6 +18,7 @@ import type {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { takePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { markDraftResumeIntent } from '@/features/stories/_shared/utils/draft-resume-intent';
+import { formatDateTime } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
@@ -59,6 +61,25 @@ export function CreationProgressCard({ record }: CreationProgressCardProps) {
   );
 }
 
+/** 내 스토리 카드의 날짜 줄과 같은 자리·스타일로 처음 임시 저장한 시각을 보여 준다. */
+function SavedAtRow({ createdAt }: { createdAt: string }) {
+  return (
+    <div className="flex items-center justify-end gap-1 text-sm whitespace-nowrap text-foreground-secondary">
+      <HugeiconsIcon
+        icon={Calendar04Icon}
+        className="size-3.5"
+        aria-hidden="true"
+      />
+      <time dateTime={createdAt}>
+        <span className="sr-only">
+          {CREATION_PROGRESS_CARD_COPY.savedAtLabel}{' '}
+        </span>
+        {formatDateTime(createdAt)}
+      </time>
+    </div>
+  );
+}
+
 type CompletingCardBodyProps = {
   record: StoryCompletionRecord;
 };
@@ -66,7 +87,11 @@ type CompletingCardBodyProps = {
 function CompletingCardBody({ record }: CompletingCardBodyProps) {
   useCreationProgressPolling(record);
 
-  return <CreationProgressCardBody isCompleting />;
+  return (
+    <CreationProgressCardBody isCompleting>
+      {record.createdAt ? <SavedAtRow createdAt={record.createdAt} /> : null}
+    </CreationProgressCardBody>
+  );
 }
 
 type GeneratingCardBodyProps = {
@@ -83,22 +108,37 @@ type DraftCardBodyProps = {
   record: PendingCreationRequest;
 };
 
+/**
+ * 초안 레코드가 멈춘 단계의 설명 문구를 고른다.
+ *
+ * @param record 초안·생성 중 레코드
+ * @returns 단계별 설명
+ */
+function getDraftDescription(record: PendingCreationRequest): string {
+  const { draftDescription } = CREATION_PROGRESS_CARD_COPY;
+
+  if (record.stage === 'KEYWORD_DRAFT') return draftDescription.keyword;
+
+  if (record.stage === 'STORYLINE_GENERATION')
+    return draftDescription.generating;
+
+  return draftDescription[record.step];
+}
+
 function DraftCardBody({ record }: DraftCardBodyProps) {
   const router = useRouter();
 
+  // 초안·생성 중 레코드 모두 재개 의도를 남겨 퍼널이 이 레코드만 복원하게 한다.
   const handleResume = () => {
     track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
-
-    if (record.stage === 'KEYWORD_DRAFT' || record.stage === 'STORY_DRAFT') {
-      markDraftResumeIntent(record.requestId);
-    }
-
+    markDraftResumeIntent(record.requestId);
     router.push(APP_PATH.STUDIO.STORY.SIMPLE);
   };
 
   return (
     <CreationProgressCardBody
       isCompleting={false}
+      description={getDraftDescription(record)}
       action={
         <CardOptionsSheet
           kind={CREATION_PROGRESS_CARD_COPY.optionsKind}
@@ -121,15 +161,20 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
           ]}
         />
       }>
-      <Button className="w-full" onClick={handleResume}>
-        {CREATION_PROGRESS_CARD_COPY.resume}
-      </Button>
+      <div className="flex flex-col gap-2">
+        {record.createdAt ? <SavedAtRow createdAt={record.createdAt} /> : null}
+        <Button className="w-full" onClick={handleResume}>
+          {CREATION_PROGRESS_CARD_COPY.resume}
+        </Button>
+      </div>
     </CreationProgressCardBody>
   );
 }
 
 type CreationProgressCardBodyProps = {
   isCompleting: boolean;
+  /** 초안 카드의 단계별 설명. 완성 중 카드는 고정 문구를 쓴다. */
+  description?: string;
   /** 제목 줄 오른쪽 끝에 놓는 요소(옵션 버튼) */
   action?: React.ReactNode;
   /** 본문 하단에 놓는 요소(주 동작 버튼) */
@@ -138,15 +183,13 @@ type CreationProgressCardBodyProps = {
 
 function CreationProgressCardBody({
   isCompleting,
+  description = CREATION_PROGRESS_CARD_COPY.completingDescription,
   action,
   children,
 }: CreationProgressCardBodyProps) {
   const title = isCompleting
     ? CREATION_PROGRESS_CARD_COPY.completingTitle
     : CREATION_PROGRESS_CARD_COPY.draftTitle;
-  const description = isCompleting
-    ? CREATION_PROGRESS_CARD_COPY.completingDescription
-    : CREATION_PROGRESS_CARD_COPY.draftDescription;
 
   return (
     <div className={cn('flex min-w-0 flex-1', 'gap-4')}>

@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
-import { StoryCreateResumeDialog } from '@/features/stories/_shared/components/story-create-resume-dialog';
 import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
@@ -50,10 +49,6 @@ export function StoryCreateFunnel() {
     reselectDialogOpen,
     onReselectDialogOpenChange,
     handleConfirmReselect,
-    resumeDialogOpen,
-    handleResumeContinue,
-    handleResumeDiscard,
-    closeResumeDialog,
     handleHeaderBack,
     handleConfirmBack,
   } = useStoryCreateFunnel();
@@ -127,17 +122,6 @@ export function StoryCreateFunnel() {
         open={reselectDialogOpen}
         onOpenChange={onReselectDialogOpenChange}
         onConfirm={handleConfirmReselect}
-      />
-
-      <StoryCreateResumeDialog
-        open={resumeDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeResumeDialog();
-          }
-        }}
-        onContinue={handleResumeContinue}
-        onDiscard={handleResumeDiscard}
       />
     </div>
   );

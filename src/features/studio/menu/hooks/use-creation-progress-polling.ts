@@ -95,8 +95,8 @@ export function useCreationProgressPolling(
       return;
     }
 
-    const storyId =
-      action.type === 'story-completed' ? action.result.id : undefined;
+    const result = action.type === 'story-completed' ? action.result : null;
+    const storyId = result?.id;
 
     if (typeof storyId !== 'string') {
       if (demotePendingCompletionToDraft(requestId)) {
@@ -113,6 +113,7 @@ export function useCreationProgressPolling(
         storyId,
         sessionStatus,
         queryClient,
+        result?.genres,
       );
     }
   }, [

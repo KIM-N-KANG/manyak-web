@@ -8,9 +8,10 @@ import { useIsCreationRequestPending } from '@/features/stories/_shared/hooks/us
 import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
 import type { StorylineGenerationRecord } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  findPendingCreationRequest,
   getPendingCreationRequestSnapshot,
   getServerPendingCreationRequestSnapshot,
-  parsePendingCreationRequest,
+  parsePendingCreationRequests,
   subscribePendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
@@ -50,6 +51,8 @@ function getServerPageVisibilitySnapshot(): boolean {
 }
 
 type UseCreationRequestRecoveryArgs = {
+  /** 이 퍼널이 소유한 스토리라인 생성 요청 ID. null이면 되찾을 요청이 없다. */
+  requestId: string | null;
   /** 원 생성 요청이 진행 중인 동안 true — 복구 조회를 보류하고 원 응답을 기다린다. */
   suspended: boolean;
   /** 미정리 레코드로 복구를 시작할 때 스토리라인 로딩 화면을 복원한다. */
@@ -66,9 +69,10 @@ type UseCreationRequestRecoveryArgs = {
 /**
  * 백그라운드 전환으로 응답을 못 받은 스토리라인 생성 요청을 되찾는 훅(스펙 §3-5 백그라운드 생성 복귀).
  *
- * 편집 슬롯의 스토리라인 생성 레코드를 구독해, 원 요청이 진행 중이지 않은데 레코드가
- * 남아 있으면(재진입·네트워크 유실 복귀) 복구 조회를 폴링하고 상태별 콜백으로 화면
- * 복원을 위임한다. 완성 요청은 슬롯 밖 목록에서 제작 탭 카드가 폴링하므로 퍼널은 다루지 않는다.
+ * 편집 초안 목록에서 이 퍼널이 소유한 스토리라인 생성 레코드(`requestId`)를 구독해, 원 요청이
+ * 진행 중이지 않은데 레코드가 남아 있으면(재진입·네트워크 유실 복귀) 복구 조회를 폴링하고
+ * 상태별 콜백으로 화면 복원을 위임한다. 다른 세션의 초안·생성 진행은 제작 탭 카드가 폴링하므로
+ * 퍼널은 다루지 않는다. 완성 요청도 같다.
  * 원 응답과 복구 조회가 경합해도 레코드 제거 선점(takePendingCreationRequest)을 통과한
  * 쪽만 결과를 반영하므로 부수효과가 이중 실행되지 않는다. 폴링은 문서 가시성 구독으로
  * 백그라운드에서 명시적으로 멈췄다가 복귀 시 재개된다.
@@ -77,15 +81,21 @@ type UseCreationRequestRecoveryArgs = {
  * @returns 복구 진행 중 여부(isRecovering)
  */
 export function useCreationRequestRecovery({
+  requestId,
   suspended,
   ...callbacks
 }: UseCreationRequestRecoveryArgs) {
-  const rawRecord = useSyncExternalStore(
+  const rawRecords = useSyncExternalStore(
     subscribePendingCreationRequest,
     getPendingCreationRequestSnapshot,
     getServerPendingCreationRequestSnapshot,
   );
-  const storedRecord = parsePendingCreationRequest(rawRecord);
+  const storedRecord =
+    requestId === null
+      ? null
+      : (parsePendingCreationRequests(rawRecords).find(
+          (record) => record.requestId === requestId,
+        ) ?? null);
   const isPageVisible = useSyncExternalStore(
     subscribePageVisibility,
     getPageVisibilitySnapshot,
@@ -118,14 +128,9 @@ export function useCreationRequestRecovery({
 
     restoredRequestIdRef.current = activeRequestId;
 
-    const record = parsePendingCreationRequest(
-      getPendingCreationRequestSnapshot(),
-    );
+    const record = findPendingCreationRequest(activeRequestId);
 
-    if (
-      record?.requestId === activeRequestId &&
-      record.stage === 'STORYLINE_GENERATION'
-    ) {
+    if (record?.stage === 'STORYLINE_GENERATION') {
       callbacksRef.current.onRestorePending(record);
     }
   }, [activeRequestId]);

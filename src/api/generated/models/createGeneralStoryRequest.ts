@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { CreateGeneralStoryRequestVisibility } from './createGeneralStoryRequestVisibility';
+import type { GeneralCharacterInput } from './generalCharacterInput';
 import type { GeneralStartSettingInput } from './generalStartSettingInput';
 import type { GeneralStorySettingsInput } from './generalStorySettingsInput';
 import type { MainEventItem } from './mainEventItem';
@@ -55,4 +56,15 @@ export interface CreateGeneralStoryRequest {
   mainEvents?: MainEventItem[];
   /** 공개 범위. 생략하면 PRIVATE. */
   visibility?: CreateGeneralStoryRequestVisibility;
+  /**
+   * 업로드한 표지의 객체 키(presign 응답의 objectKey). 회원만 쓸 수 있다.
+   * @nullable
+   */
+  thumbnailObjectKey?: string | null;
+  /**
+   * 인물 목록(최대 6명, 선택). 이름은 스토리 안에서 유일하다.
+   * @minItems 0
+   * @maxItems 6
+   */
+  characters?: GeneralCharacterInput[];
 }

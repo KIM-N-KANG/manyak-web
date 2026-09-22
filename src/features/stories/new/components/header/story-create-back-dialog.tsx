@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +52,14 @@ export function StoryCreateBackDialog({
   onOpenChange,
   onConfirm,
 }: StoryCreateBackDialogProps) {
-  const copy = STORY_CREATE_BACK_DIALOG_COPY[variant ?? 'lost'];
+  // 닫힘 애니메이션 동안 variant가 null이 되어도 마지막 문구를 유지한다(렌더 중 setState).
+  const [shownVariant, setShownVariant] = useState(variant ?? 'lost');
+
+  if (variant !== null && variant !== shownVariant) {
+    setShownVariant(variant);
+  }
+
+  const copy = STORY_CREATE_BACK_DIALOG_COPY[shownVariant];
 
   return (
     <AlertDialog open={variant !== null} onOpenChange={onOpenChange}>

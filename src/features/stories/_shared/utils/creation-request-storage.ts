@@ -6,7 +6,10 @@ import type {
   SimpleStorylineResponse,
 } from '@/api/generated/models';
 
-/** 편집 슬롯(키워드 초안·스토리라인 생성·스토리 초안) 한 건을 보관하는 로컬스토리지 키 */
+/**
+ * 편집 초안 목록(키워드 초안·스토리라인 생성·스토리 초안)을 requestId별로 보관하는
+ * 로컬스토리지 키(JSON 배열). 구 형식의 단일 객체도 1건 목록으로 읽는다.
+ */
 export const PENDING_CREATION_REQUEST_STORAGE_KEY =
   'manyak:pending-creation-request';
 
@@ -23,7 +26,7 @@ function notifyPendingCreationRequestChange(): void {
 }
 
 /**
- * 편집 슬롯·완성 요청 목록의 변경(같은 탭 커스텀 이벤트·다른 탭 storage 이벤트)을 구독한다.
+ * 편집 초안 목록·완성 요청 목록의 변경(같은 탭 커스텀 이벤트·다른 탭 storage 이벤트)을 구독한다.
  * 두 저장소가 같은 이벤트를 공유하므로 어느 쪽 스냅샷과 조합해도 된다.
  *
  * @param onStoreChange 변경 시 호출할 콜백
@@ -118,12 +121,14 @@ export type KeywordDraftSnapshot = {
 };
 
 /**
- * 완성 요청 레코드. 편집 슬롯과 별도 목록에 requestId별로 여러 건 보관해 완성 중에도
+ * 완성 요청 레코드. 편집 초안 목록과 별도 목록에 requestId별로 여러 건 보관해 완성 중에도
  * 새 제작을 시작할 수 있다. 실패 시 추가 정보 초안으로 되돌릴 수 있도록 퍼널 컨텍스트를 함께 담는다.
  */
 export type StoryCompletionRecord = {
   stage: 'STORY_COMPLETION';
   requestId: string;
+  /** 이 제작을 처음 임시 저장한 시각(ISO). 완성 실패로 초안에 되돌릴 때 이어 준다. */
+  createdAt?: string;
   generationRequest: GenerateSimpleStorylinesRequest;
   generationResult: GenerateSimpleStorylinesResponse;
   activeStorylineIndex?: number;
@@ -136,23 +141,28 @@ export type StoryCompletionRecord = {
 };
 
 /**
- * 편집 슬롯 레코드. 슬롯에는 한 건만 있으며 완성 요청은 `StoryCompletionRecord` 목록이 담당한다.
+ * 편집 초안 레코드. 퍼널 한 세션이 한 건을 소유하며 여러 세션의 레코드가 목록에 공존한다.
+ * 완성 요청은 `StoryCompletionRecord` 목록이 담당한다.
  * KEYWORD_DRAFT와 STORY_DRAFT는 편집 자동 저장본으로, 서버 복구 조회 대상이 아니다.
  */
 export type PendingCreationRequest =
   | {
       stage: 'KEYWORD_DRAFT';
       requestId: string;
+      /** 이 제작을 처음 임시 저장한 시각(ISO). 첫 저장 때 찍고 단계 전환에도 유지한다. 구 레코드에는 없다. */
+      createdAt?: string;
       snapshot: KeywordDraftSnapshot;
     }
   | {
       stage: 'STORYLINE_GENERATION';
       requestId: string;
+      createdAt?: string;
       generationRequest: GenerateSimpleStorylinesRequest;
     }
   | {
       stage: 'STORY_DRAFT';
       requestId: string;
+      createdAt?: string;
       step: StoryDraftStep;
       generationRequest: GenerateSimpleStorylinesRequest;
       generationResult: GenerateSimpleStorylinesResponse;
@@ -175,7 +185,7 @@ export type InFlightCreationRequest =
   | StorylineGenerationRecord
   | StoryCompletionRecord;
 
-/** 제작 탭 진행 카드가 표시하는 레코드(편집 슬롯 또는 완성 요청) */
+/** 제작 탭 진행 카드가 표시하는 레코드(편집 초안 또는 완성 요청) */
 export type CreationProgressRecord =
   | PendingCreationRequest
   | StoryCompletionRecord;
@@ -339,7 +349,70 @@ export function parseStoryCompletionRequests(
 }
 
 /**
- * 저장된 원본 문자열을 편집 슬롯 레코드로 파싱한다. 형태가 어긋나면 null로 처리해
+ * 값이 편집 초안 레코드의 형태인지 판별한다.
+ *
+ * @param parsed 검사할 값
+ * @returns 편집 초안 레코드 여부
+ */
+function isPendingCreationRequest(
+  parsed: unknown,
+): parsed is PendingCreationRequest {
+  if (!isPlainObject(parsed)) {
+    return false;
+  }
+
+  if (typeof parsed.requestId !== 'string') {
+    return false;
+  }
+
+  if (parsed.createdAt !== undefined && typeof parsed.createdAt !== 'string') {
+    return false;
+  }
+
+  if (
+    parsed.stage === 'KEYWORD_DRAFT' &&
+    isKeywordDraftSnapshot(parsed.snapshot)
+  ) {
+    return true;
+  }
+
+  if (!isPlainObject(parsed.generationRequest)) {
+    return false;
+  }
+
+  if (parsed.stage === 'STORYLINE_GENERATION') {
+    return true;
+  }
+
+  if (parsed.stage === 'STORY_DRAFT') {
+    const isValidStep =
+      parsed.step === 'storyline-select' || parsed.step === 'additional-info';
+    // additional-info 재개에는 선택된 스토리라인이 필수다.
+    const isValidSelectedStoryline =
+      parsed.step === 'additional-info'
+        ? isPlainObject(parsed.selectedStoryline)
+        : parsed.selectedStoryline === null ||
+          isPlainObject(parsed.selectedStoryline);
+
+    return (
+      isValidStep &&
+      isPlainObject(parsed.generationResult) &&
+      typeof parsed.activeStorylineIndex === 'number' &&
+      isValidSelectedStoryline &&
+      isStringArray(parsed.additionalInfos) &&
+      isStringArray(parsed.selectedRecommendations) &&
+      (parsed.createdStoryId === null ||
+        typeof parsed.createdStoryId === 'string') &&
+      (parsed.completionRequest === null ||
+        isPlainObject(parsed.completionRequest))
+    );
+  }
+
+  return false;
+}
+
+/**
+ * 저장된 원본 문자열을 편집 초안 레코드 한 건으로 파싱한다. 형태가 어긋나면 null로 처리해
  * 손상된 저장값이 복구 흐름을 깨뜨리지 않게 한다.
  *
  * @param raw 로컬스토리지에 저장된 원본 문자열(없으면 null)
@@ -360,89 +433,141 @@ export function parsePendingCreationRequest(
     return null;
   }
 
-  if (!isPlainObject(parsed)) {
-    return null;
-  }
-
-  if (typeof parsed.requestId !== 'string') {
-    return null;
-  }
-
-  if (
-    parsed.stage === 'KEYWORD_DRAFT' &&
-    isKeywordDraftSnapshot(parsed.snapshot)
-  ) {
-    return parsed as unknown as PendingCreationRequest;
-  }
-
-  if (!isPlainObject(parsed.generationRequest)) {
-    return null;
-  }
-
-  if (parsed.stage === 'STORYLINE_GENERATION') {
-    return parsed as unknown as PendingCreationRequest;
-  }
-
-  if (parsed.stage === 'STORY_DRAFT') {
-    const isValidStep =
-      parsed.step === 'storyline-select' || parsed.step === 'additional-info';
-    // additional-info 재개에는 선택된 스토리라인이 필수다.
-    const isValidSelectedStoryline =
-      parsed.step === 'additional-info'
-        ? isPlainObject(parsed.selectedStoryline)
-        : parsed.selectedStoryline === null ||
-          isPlainObject(parsed.selectedStoryline);
-
-    if (
-      isValidStep &&
-      isPlainObject(parsed.generationResult) &&
-      typeof parsed.activeStorylineIndex === 'number' &&
-      isValidSelectedStoryline &&
-      isStringArray(parsed.additionalInfos) &&
-      isStringArray(parsed.selectedRecommendations) &&
-      (parsed.createdStoryId === null ||
-        typeof parsed.createdStoryId === 'string') &&
-      (parsed.completionRequest === null ||
-        isPlainObject(parsed.completionRequest))
-    ) {
-      return parsed as unknown as PendingCreationRequest;
-    }
-  }
-
-  return null;
+  return isPendingCreationRequest(parsed) ? parsed : null;
 }
 
 /**
- * 미정리 복구 레코드를 로컬스토리지에서 읽는다.
+ * 저장된 원본 문자열을 편집 초안 목록으로 파싱한다. 배열이면 형태가 어긋난 항목만 걸러내고,
+ * 구 형식의 단일 객체는 1건 목록으로 읽어 배포 전 저장된 초안을 보존한다.
  *
- * @returns 저장된 복구 레코드. 없거나 유효하지 않으면 null
+ * @param raw 로컬스토리지에 저장된 원본 문자열(없으면 null)
+ * @returns 유효한 편집 초안 레코드 목록
  */
-export function loadPendingCreationRequest(): PendingCreationRequest | null {
-  if (typeof window === 'undefined') {
-    return null;
+export function parsePendingCreationRequests(
+  raw: string | null,
+): PendingCreationRequest[] {
+  if (!raw) {
+    return [];
   }
 
-  return parsePendingCreationRequest(getPendingCreationRequestSnapshot());
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+
+  if (Array.isArray(parsed)) {
+    return parsed.filter(isPendingCreationRequest);
+  }
+
+  return isPendingCreationRequest(parsed) ? [parsed] : [];
 }
 
 /**
- * 복구 슬롯에 레코드를 쓰고 성공 여부를 반환한다.
+ * 진행 레코드를 처음 저장 시각 내림차순(최신이 앞)으로 정렬한다. 시각이 없는 구 레코드는
+ * 저장 순서를 유지한 채 뒤로 보낸다. 제작 탭 카드 순서가 단계 전환(레코드 교체)에 흔들리지 않게 한다.
  *
- * @param record 저장할 레코드
+ * @param records 정렬할 레코드 목록
+ * @returns 정렬된 새 배열
+ */
+export function sortByCreatedAtDesc<Record extends { createdAt?: string }>(
+  records: Record[],
+): Record[] {
+  return [...records].sort((a, b) => {
+    if (a.createdAt === undefined || b.createdAt === undefined) {
+      return (
+        Number(a.createdAt === undefined) - Number(b.createdAt === undefined)
+      );
+    }
+
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+}
+
+/**
+ * 편집 초안 목록을 로컬스토리지에서 읽는다.
+ *
+ * @returns 저장된 편집 초안 목록. 없으면 빈 배열
+ */
+export function loadPendingCreationRequests(): PendingCreationRequest[] {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  return parsePendingCreationRequests(getPendingCreationRequestSnapshot());
+}
+
+/**
+ * 지정한 requestId의 편집 초안 레코드를 찾는다.
+ *
+ * @param requestId 찾을 레코드의 요청 ID
+ * @returns 레코드. 없으면 null
+ */
+export function findPendingCreationRequest(
+  requestId: string,
+): PendingCreationRequest | null {
+  return (
+    loadPendingCreationRequests().find(
+      (record) => record.requestId === requestId,
+    ) ?? null
+  );
+}
+
+/**
+ * 편집 초안 목록을 통째로 쓰고 성공 여부를 반환한다. 빈 목록은 키를 제거한다.
+ *
+ * @param records 저장할 편집 초안 목록
  * @returns 저장에 성공했으면 true
  */
-function writePendingCreationRequest(record: PendingCreationRequest): boolean {
+function writePendingCreationRequests(
+  records: PendingCreationRequest[],
+): boolean {
   try {
-    localStorage.setItem(
-      PENDING_CREATION_REQUEST_STORAGE_KEY,
-      JSON.stringify(record),
-    );
+    if (records.length === 0) {
+      localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
+    } else {
+      localStorage.setItem(
+        PENDING_CREATION_REQUEST_STORAGE_KEY,
+        JSON.stringify(records),
+      );
+    }
+
     notifyPendingCreationRequestChange();
 
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * 편집 초안 목록에 레코드를 upsert한다. 같은 requestId가 있으면 그 자리에서 교체하고
+ * 없으면 끝에 추가한다. 처음 저장 시각은 기존 레코드 → 새 레코드 → 지금 순으로 정해
+ * 갱신이 최초 저장 시각을 덮지 않게 한다.
+ *
+ * @param record 저장할 레코드
+ * @returns 저장에 성공했으면 true
+ */
+function upsertPendingCreationRequest(record: PendingCreationRequest): boolean {
+  const records = loadPendingCreationRequests();
+  const existing = records.find(
+    ({ requestId }) => requestId === record.requestId,
+  );
+  const stamped: PendingCreationRequest = {
+    ...record,
+    createdAt:
+      existing?.createdAt ?? record.createdAt ?? new Date().toISOString(),
+  };
+
+  return writePendingCreationRequests(
+    existing
+      ? records.map((current) =>
+          current.requestId === record.requestId ? stamped : current,
+        )
+      : [...records, stamped],
+  );
 }
 
 /**
@@ -486,8 +611,9 @@ function writeStoryCompletionRequests(
 }
 
 /**
- * 완성 요청 직전에 레코드를 목록에 추가하고 편집 슬롯을 비운다(앱의 삽입+초안 삭제 트랜잭션과 같다).
- * 같은 requestId가 이미 있으면 교체한다. 목록 저장에 실패하면 슬롯을 건드리지 않는다.
+ * 완성 요청 직전에 레코드를 목록에 추가하고 제출 원본인 편집 초안(생성 요청 ID)만 제거한다
+ * (앱의 삽입+초안 삭제 트랜잭션과 같다). 같은 requestId가 이미 있으면 교체한다.
+ * 목록 저장에 실패하면 초안을 건드리지 않는다.
  *
  * @param record 저장할 완성 요청 레코드
  * @returns 목록 저장에 성공했으면 true
@@ -502,12 +628,15 @@ export function addStoryCompletionRequest(
   const others = loadStoryCompletionRequests().filter(
     ({ requestId }) => requestId !== record.requestId,
   );
+  const createdAt =
+    record.createdAt ??
+    findPendingCreationRequest(record.generationRequest.requestId)?.createdAt;
 
-  if (!writeStoryCompletionRequests([...others, record])) {
+  if (!writeStoryCompletionRequests([...others, { ...record, createdAt }])) {
     return false;
   }
 
-  clearPendingCreationRequest();
+  takePendingCreationRequest(record.generationRequest.requestId);
 
   return true;
 }
@@ -556,7 +685,7 @@ export function clearStoryCompletionRequests(): void {
 }
 
 /**
- * 생성 요청 직전에 편집 슬롯에 복구 레코드를 저장한다. 슬롯은 한 건뿐이므로 덮어쓴다.
+ * 생성 요청 직전에 편집 초안 목록에 복구 레코드를 저장한다(같은 requestId는 교체).
  *
  * @param record 저장할 복구 레코드
  * @returns 저장에 성공했으면 true
@@ -568,13 +697,12 @@ export function savePendingCreationRequest(
     return false;
   }
 
-  return writePendingCreationRequest(record);
+  return upsertPendingCreationRequest(record);
 }
 
 /**
- * 편집 임시 저장본을 우선순위에 따라 쓴다.
- * 진행 중 스토리라인 생성은 모든 draft보다 우선하고, 생성 결과가 담긴 STORY_DRAFT는
- * 키워드 draft보다 우선해 지연된 자동 저장이 복구 재료를 덮지 못하게 한다.
+ * 편집 임시 저장본을 쓴다. 같은 requestId로 진행 중인 스토리라인 생성이 있으면
+ * 지연된 자동 저장이 복구 재료를 덮지 못하게 저장하지 않는다.
  *
  * @param record 저장할 편집 임시 저장본
  * @returns 실제로 저장했으면 true
@@ -584,17 +712,14 @@ export function saveDraftCreationRecord(record: DraftCreationRecord): boolean {
     return false;
   }
 
-  const current = loadPendingCreationRequest();
-
-  if (current?.stage === 'STORYLINE_GENERATION') {
+  if (
+    findPendingCreationRequest(record.requestId)?.stage ===
+    'STORYLINE_GENERATION'
+  ) {
     return false;
   }
 
-  if (record.stage === 'KEYWORD_DRAFT' && current?.stage === 'STORY_DRAFT') {
-    return false;
-  }
-
-  return writePendingCreationRequest(record);
+  return upsertPendingCreationRequest(record);
 }
 
 /**
@@ -613,11 +738,24 @@ export function replacePendingCreationRequest(
     return false;
   }
 
-  if (loadPendingCreationRequest()?.requestId !== requestId) {
+  const records = loadPendingCreationRequests();
+
+  const existing = records.find((record) => record.requestId === requestId);
+
+  if (!existing) {
     return false;
   }
 
-  return writePendingCreationRequest(replacement);
+  return writePendingCreationRequests(
+    records.map((record) =>
+      record.requestId === requestId
+        ? {
+            ...replacement,
+            createdAt: replacement.createdAt ?? existing.createdAt,
+          }
+        : record,
+    ),
+  );
 }
 
 /**
@@ -685,7 +823,7 @@ export function buildStorylineDraftRecord(
  * 완성 요청 레코드를 목록에서 빼고 추가 정보 단계의 편집 초안으로 강등한다.
  * 퍼널을 떠난 뒤 서버가 실패를 확정하면 완성 중 카드를 유지할 수 없으므로,
  * 같은 입력으로 다시 완성할 수 있게 컨텍스트를 STORY_DRAFT로 되돌린다.
- * 편집 슬롯에 다른 초안·생성 진행이 있으면 그 편집을 덮지 않고 실패 요청만 제거한다.
+ * 초안 키는 퍼널 자동 저장 후보와 같은 생성 요청 ID를 쓴다.
  *
  * @param requestId 강등할 완성 요청 ID
  * @returns 같은 완성 레코드를 목록에서 제거했으면 true(초안 저장 여부와 무관)
@@ -703,15 +841,10 @@ export function demotePendingCompletionToDraft(requestId: string): boolean {
     return false;
   }
 
-  // ponytail: 슬롯이 비어 있을 때만 초안으로 되돌린다. 실패 카드 정책이 정해지면
-  // 목록에 실패 상태로 남기는 방식으로 바꾼다.
-  if (loadPendingCreationRequest() !== null) {
-    return true;
-  }
-
-  writePendingCreationRequest({
+  upsertPendingCreationRequest({
     stage: 'STORY_DRAFT',
-    requestId: current.requestId,
+    requestId: current.generationRequest.requestId,
+    createdAt: current.createdAt,
     step: 'additional-info',
     generationRequest: current.generationRequest,
     generationResult: current.generationResult,
@@ -739,24 +872,18 @@ export function takePendingCreationRequest(requestId: string): boolean {
     return false;
   }
 
-  const record = loadPendingCreationRequest();
+  const records = loadPendingCreationRequests();
+  const remaining = records.filter((record) => record.requestId !== requestId);
 
-  if (record?.requestId !== requestId) {
+  if (remaining.length === records.length) {
     return false;
   }
 
-  try {
-    localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
-    notifyPendingCreationRequestChange();
-  } catch {
-    return false;
-  }
-
-  return true;
+  return writePendingCreationRequests(remaining);
 }
 
-/** 편집 슬롯 레코드를 조건 없이 제거한다(새로 만들기·완성 제출·로그아웃). */
-export function clearPendingCreationRequest(): void {
+/** 편집 초안 목록을 조건 없이 비운다(로그아웃·세션 만료·탈퇴). */
+export function clearPendingCreationRequests(): void {
   if (typeof window === 'undefined') {
     return;
   }

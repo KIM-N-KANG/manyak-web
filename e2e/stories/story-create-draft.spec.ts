@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { APP_PATH } from '@/constants/app-path';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
@@ -7,7 +9,7 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
-import { seedPendingCreationRequest } from '../fixtures/storage';
+import { seedPendingCreationRequests } from '../fixtures/storage';
 import {
   expect,
   mockMemberSession,
@@ -16,11 +18,22 @@ import {
 } from '../fixtures/test';
 
 // 편집 자동 저장(draft): 마지막 변경 300ms 뒤 제작 상태를 저장하고
-// 제작 탭 진행 카드·재개 다이얼로그로 이어 만드는 흐름.
+// 제작 탭 진행 카드의 "이어서 만들기"로 이어 만드는 흐름. 초안은 여러 건 공존하고
+// 새 제작·딥링크 진입은 묻지 않고 새 세션으로 시작한다.
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 
 const STORAGE_KEY = 'manyak:pending-creation-request';
+
+/** 저장된 편집 초안 목록의 stage 배열을 읽는다. */
+const readDraftStages = (page: Page) =>
+  page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+
+    return raw
+      ? (JSON.parse(raw) as { stage: string }[]).map(({ stage }) => stage)
+      : [];
+  }, STORAGE_KEY);
 
 const tags = [
   { id: 1, name: '판타지', category: 'GENRE' },
@@ -41,9 +54,13 @@ const storylinesResponse = {
   ],
 };
 
+/** 시드 초안의 처음 임시 저장 시각(UTC). 카드에는 KST `2026-09-20 21:05`로 보인다. */
+const DRAFT_CREATED_AT = '2026-09-20T12:05:00.000Z';
+
 const draftRecord: PendingCreationRequest = {
   stage: 'STORY_DRAFT',
   requestId: '33333333-3333-4333-8333-333333333333',
+  createdAt: DRAFT_CREATED_AT,
   step: 'storyline-select',
   generationRequest: {
     requestId: '11111111-1111-4111-8111-111111111111',
@@ -146,11 +163,14 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.getByRole('button', { name: '용감한' }).click();
     await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
 
-    await page.reload();
+    // 새로고침·딥링크는 새 세션이므로 제작 탭 카드로 재개한다.
+    await page.goto(APP_PATH.MAIN.STUDIO);
     await expect(
       page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
-    await page.getByRole('button', { name: '이어서 만들기' }).click();
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
 
     await expect(page.getByRole('tab', { name: /장르/ })).toHaveAttribute(
       'aria-selected',
@@ -181,6 +201,9 @@ test.describe('스토리 임시 저장·재개', () => {
         body: JSON.stringify(storylinesResponse),
       });
     });
+    // 처음 임시 저장 시각(키워드 자동 저장)이 단계 전환 뒤에도 카드 날짜로 남는지 보기 위해
+    // 키워드 저장과 스토리라인 생성 사이에 시계를 옮긴다.
+    await page.clock.setFixedTime(new Date('2026-09-22T04:30:00.000Z'));
 
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
@@ -191,6 +214,8 @@ test.describe('스토리 임시 저장·재개', () => {
     );
 
     await page.getByRole('button', { name: '판타지' }).click();
+    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    await page.clock.setFixedTime(new Date('2026-09-22T05:45:00.000Z'));
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '용감한' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -220,6 +245,7 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(
       page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
+    await expect(page.getByText('2026-09-22 13:30')).toBeVisible();
     await page
       .getByRole('button', { name: '이어서 만들기', exact: true })
       .click();
@@ -266,8 +292,10 @@ test.describe('스토리 임시 저장·재개', () => {
     await recommendation.click();
     await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
 
-    await page.reload();
-    await page.getByRole('button', { name: '이어서 만들기' }).click();
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
 
     await expect(
       page.locator('textarea[aria-label="추가 정보 1"]'),
@@ -282,137 +310,141 @@ test.describe('스토리 임시 저장·재개', () => {
       .toContain('"stage":"STORY_DRAFT"');
   });
 
-  test('draft가 있을 때 제작 탭의 스토리 만들기를 누르면 이동 전에 재개 다이얼로그를 띄운다', async ({
+  test('draft가 있어도 FAB는 묻지 않고 새 세션으로 진입하며 기존 초안을 유지한다', async ({
     page,
   }) => {
-    await seedPendingCreationRequest(page, draftRecord);
+    await seedPendingCreationRequests(page, [draftRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
       .click();
 
-    const resumeDialog = page.getByRole('alertdialog');
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: /장르/ })).toBeVisible();
+    await expect.poll(() => readDraftStages(page)).toEqual(['STORY_DRAFT']);
+  });
 
+  test('draft가 있는 상태로 딥링크 진입하면 키워드부터 시작하고 기존 초안을 유지한다', async ({
+    page,
+  }) => {
+    await seedPendingCreationRequests(page, [draftRecord]);
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+
+    await expect(page.getByRole('tab', { name: /장르/ })).toBeVisible();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toHaveCount(0);
+    await expect.poll(() => readDraftStages(page)).toEqual(['STORY_DRAFT']);
+  });
+
+  test('새 세션에서 키워드를 입력하면 기존 초안 옆에 새 초안이 추가된다', async ({
+    page,
+  }) => {
+    await seedPendingCreationRequests(page, [draftRecord]);
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지' }).click();
+    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+
+    await expect
+      .poll(() => readDraftStages(page))
+      .toEqual(['STORY_DRAFT', 'KEYWORD_DRAFT']);
+
+    // 시드 initScript가 새 문서 로드마다 다시 심으므로 클라이언트 전환으로 제작 탭에 간다.
+    await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+    await page
+      .getByRole('alertdialog', {
+        name: STORY_CREATE_BACK_DIALOG_COPY.saved.title,
+      })
+      .getByRole('button', {
+        name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm,
+      })
+      .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
-      resumeDialog.getByText('만들고 있는 스토리가 있어요'),
+      page.getByRole('article', {
+        name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+      }),
+    ).toHaveCount(2);
+  });
+
+  test('초안이 두 개면 각 카드의 이어서 만들기가 자기 내용을 복원한다', async ({
+    page,
+  }) => {
+    // 저장 순서는 스토리 초안이 먼저지만 처음 저장 시각은 키워드 초안이 더 최신이라 카드는 키워드 초안이 위다.
+    const keywordDraft: PendingCreationRequest = {
+      stage: 'KEYWORD_DRAFT',
+      requestId: '44444444-4444-4444-8444-444444444444',
+      createdAt: '2026-09-21T03:00:00.000Z',
+      snapshot: {
+        selectedGenreTagIds: [1],
+        customGenreTags: [],
+        protagonist: {
+          name: '두 번째 주인공',
+          gender: null,
+          selectedTagIds: [],
+          customTags: [],
+        },
+        supportingCharacters: [],
+      },
+    };
+
+    await seedPendingCreationRequests(page, [draftRecord, keywordDraft]);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const cards = page.getByRole('article', {
+      name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+    });
+
+    await expect(cards).toHaveCount(2);
+    // 카드는 처음 저장 시각 최신순이고 각 초안이 멈춘 단계를 설명한다.
+    await expect(
+      cards
+        .nth(0)
+        .getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.keyword),
+    ).toBeVisible();
+    await expect(
+      cards
+        .nth(1)
+        .getByText(
+          CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
+        ),
     ).toBeVisible();
 
-    const continueButton = resumeDialog.getByRole('button', {
-      name: '이어서 만들기',
-    });
-    const discardButton = resumeDialog.getByRole('button', {
-      name: '새로 만들기',
-    });
-
-    await expect(continueButton).toHaveClass(/bg-primary/);
-    await expect(discardButton).toHaveClass(/bg-muted/);
-    await continueButton.click();
-
+    // 첫 번째 카드(키워드 초안)를 재개하면 키워드 입력이 복원된다.
+    await cards
+      .nth(0)
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
+    await page.getByRole('tab', { name: PROTAGONIST_CATEGORY.label }).click();
+    await expect(
+      page.getByRole('textbox', { name: '주인공 이름' }),
+    ).toHaveValue('두 번째 주인공');
+
+    // 두 번째 카드(스토리 초안)를 재개하면 생성 결과가 복원되고 두 초안 모두 남는다.
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await cards
+      .nth(1)
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
     await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
-      .toContain('"stage":"STORY_DRAFT"');
-  });
-
-  test('제작 탭 재개 다이얼로그에서 새로 만들기를 고르면 이동 전에 draft를 폐기한다', async ({
-    page,
-  }) => {
-    await seedPendingCreationRequest(page, draftRecord);
-
-    await page.goto(APP_PATH.MAIN.STUDIO);
-    await page
-      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
-      .click();
-    await page
-      .getByRole('alertdialog')
-      .getByRole('button', { name: '새로 만들기' })
-      .click();
-
-    await expect(page).toHaveURL(
-      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
-    );
-    await expect(page.getByRole('tab', { name: /장르/ })).toBeVisible();
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
-      .toBeNull();
-  });
-
-  test('제작 탭 재개 다이얼로그는 바깥 영역을 누르면 draft를 유지하고 닫힌다', async ({
-    page,
-  }) => {
-    await seedPendingCreationRequest(page, draftRecord);
-
-    await page.goto(APP_PATH.MAIN.STUDIO);
-    await page
-      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
-      .click();
-
-    const resumeDialog = page.getByRole('alertdialog');
-
-    await expect(resumeDialog).toBeVisible();
-    await page
-      .locator('[data-slot="dialog-overlay"]')
-      .click({ position: { x: 4, y: 4 } });
-
-    await expect(resumeDialog).toBeHidden();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
-      .toContain('"stage":"STORY_DRAFT"');
-  });
-
-  test('draft가 있는 상태로 딥링크 진입하면 퍼널에서 재개 다이얼로그를 띄운다', async ({
-    page,
-  }) => {
-    await seedPendingCreationRequest(page, draftRecord);
-
-    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
-
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
-    await page.getByRole('button', { name: '이어서 만들기' }).click();
-
-    await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
-      .toContain('"stage":"STORY_DRAFT"');
-  });
-
-  test('재개 다이얼로그에서 새로 만들기를 고르면 draft를 버리고 키워드부터 시작한다', async ({
-    page,
-  }) => {
-    await seedPendingCreationRequest(page, draftRecord);
-
-    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
-
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeVisible();
-    await page.getByRole('button', { name: '새로 만들기' }).click();
-
-    await expect(page.getByRole('tab', { name: /장르/ })).toBeVisible();
-    await expect(page.getByText('만들고 있는 스토리가 있어요')).toBeHidden();
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
-      .toBeNull();
+      .poll(() => readDraftStages(page))
+      .toEqual(['STORY_DRAFT', 'KEYWORD_DRAFT']);
   });
 
   test('제작 탭 진행 카드는 닫기 없이 이어서 만들기와 더보기만 표시한다', async ({
     page,
   }) => {
-    await seedPendingCreationRequest(page, draftRecord);
+    await seedPendingCreationRequests(page, [draftRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
@@ -424,8 +456,12 @@ test.describe('스토리 임시 저장·재개', () => {
       card.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
     await expect(
-      card.getByText(CREATION_PROGRESS_CARD_COPY.draftDescription),
+      card.getByText(
+        CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
+      ),
     ).toBeVisible();
+    // 처음 임시 저장한 시각을 KST 분 단위로 버튼 위에 표시한다.
+    await expect(card.getByText('2026-09-20 21:05')).toBeVisible();
     await expect(
       card.getByRole('button', { name: '이어서 만들기 배너 닫기' }),
     ).toHaveCount(0);
@@ -450,7 +486,7 @@ test.describe('스토리 임시 저장·재개', () => {
   test('진행 카드 더보기에서 삭제하면 확인 뒤 저장본을 지우고 카드를 숨긴다', async ({
     page,
   }) => {
-    await seedPendingCreationRequest(page, draftRecord);
+    await seedPendingCreationRequests(page, [draftRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
