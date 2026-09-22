@@ -42,14 +42,16 @@ import {
 } from '@/features/stories/_shared/utils/creation-request-recovery';
 import type {
   DraftCreationRecord,
+  PendingCreationRequest,
   StoryDraftRecord,
+  StorylineGenerationRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   addStoryCompletionRequest,
   buildStorylineDraftRecord,
   demotePendingCompletionToDraft,
+  findPendingCreationRequest,
   hasStoryCompletionRequest,
-  loadPendingCreationRequest,
   replacePendingCreationRequest,
   saveDraftCreationRecord,
   savePendingCreationRequest,
@@ -132,6 +134,36 @@ export function useStoryCreateFunnel() {
   // 직전 완성 시도가 requestId를 재사용했는지 여부(409 응답을 복구 조회로 돌릴 판단 근거).
   const reusedCompletionRequestIdRef = useRef<string | null>(null);
   const reusedGenerationRequestIdRef = useRef<string | null>(null);
+  // 이 퍼널 세션이 편집 초안 목록에 소유한 레코드의 requestId. 세션은 레코드를 최대 한 건만
+  // 갖는다. 단계 전환(키워드 초안→생성 요청, 재생성, 복원 뒤 자동 저장)으로 requestId가
+  // 바뀔 때 이전 레코드를 지워, 단일 슬롯이 덮어쓰기로 해 주던 정리를 명시적으로 대신한다.
+  const ownedRequestIdRef = useRef<string | null>(null);
+
+  /**
+   * 소유 레코드를 쓴다. 다른 requestId를 소유 중이면 그 레코드를 먼저 제거한다.
+   *
+   * @param record 저장할 레코드
+   * @param write 실제 저장 함수(upsert·교체 등)
+   * @returns 저장에 성공했으면 true
+   */
+  const persistOwnRecord = <Record extends PendingCreationRequest>(
+    record: Record,
+    write: (record: Record) => boolean,
+  ) => {
+    const owned = ownedRequestIdRef.current;
+
+    if (owned !== null && owned !== record.requestId) {
+      takePendingCreationRequest(owned);
+    }
+
+    const saved = write(record);
+
+    if (saved) {
+      ownedRequestIdRef.current = record.requestId;
+    }
+
+    return saved;
+  };
   const {
     additionalInfos,
     canAddAdditionalInfo,
@@ -254,7 +286,9 @@ export function useStoryCreateFunnel() {
         // 복구 조회가 결과를 선점 반영했으면 이중 적용을 건너뛴다. 성공 결과는
         // 즉시 draft로 승격해 다음 편집 자동 저장의 기준점으로 남긴다.
         if (
-          !replacePendingCreationRequest(variables.data.requestId, draftRecord)
+          !persistOwnRecord(draftRecord, (record) =>
+            replacePendingCreationRequest(variables.data.requestId, record),
+          )
         ) {
           return;
         }
@@ -289,7 +323,7 @@ export function useStoryCreateFunnel() {
           error instanceof FetchError &&
           error.status === 409 &&
           reusedGenerationRequestIdRef.current === variables.data.requestId &&
-          loadPendingCreationRequest()?.requestId === variables.data.requestId
+          findPendingCreationRequest(variables.data.requestId) !== null
         ) {
           draftAutosave.setPersistedStatus(true);
 
@@ -324,10 +358,9 @@ export function useStoryCreateFunnel() {
         }
 
         // 퍼널 안에서 완성→채팅까지 이어진 경우(저장 실패 대기 경로)의 편집 초안·완성 레코드를 정리한다.
-        const pendingRecord = loadPendingCreationRequest();
-
-        if (pendingRecord?.stage === 'STORY_DRAFT') {
-          takePendingCreationRequest(pendingRecord.requestId);
+        if (ownedRequestIdRef.current !== null) {
+          takePendingCreationRequest(ownedRequestIdRef.current);
+          ownedRequestIdRef.current = null;
         }
 
         if (lastCompletionRequest !== null) {
@@ -437,7 +470,7 @@ export function useStoryCreateFunnel() {
           takeStoryCompletionRequest(variables.data.requestId);
           draftAutosave.markCurrentAsSaved(
             storyDraftCandidate !== null &&
-              saveDraftCreationRecord(storyDraftCandidate),
+              persistOwnRecord(storyDraftCandidate, saveDraftCreationRecord),
           );
         } else {
           draftAutosave.setPersistedStatus(true);
@@ -450,6 +483,7 @@ export function useStoryCreateFunnel() {
   });
 
   const recovery = useCreationRequestRecovery({
+    requestId: generationRequest?.requestId ?? null,
     // 원 생성 요청이 진행 중이면 원 응답을 우선하고, 끝난 뒤에도 레코드가 남아
     // 있을 때(재진입·응답 유실)만 복구 조회를 시작한다.
     suspended:
@@ -459,6 +493,7 @@ export function useStoryCreateFunnel() {
       createChat.isPending ||
       createdStoryId !== null,
     onRestorePending: (record) => {
+      ownedRequestIdRef.current = record.requestId;
       draftAutosave.setPersistedStatus(true);
 
       // 네트워크 오류로 남은 뮤테이션 오류 상태가 복구 로딩과 겹쳐 보이지 않게 지운다.
@@ -475,12 +510,13 @@ export function useStoryCreateFunnel() {
         generateStorylines.reset();
       }
 
-      const saved = saveDraftCreationRecord(
+      const saved = persistOwnRecord(
         buildStorylineDraftRecord(
           record.requestId,
           record.generationRequest,
           result,
         ),
+        saveDraftCreationRecord,
       );
 
       draftAutosave.markCurrentAsSaved(saved);
@@ -524,6 +560,7 @@ export function useStoryCreateFunnel() {
   // 임시 저장 복원: 키워드는 입력만 복원하고 첫 탭에서 시작한다. 스토리 draft는
   // 퍼널 컨텍스트를 통째로 되살려 완성·채팅 재시도 멱등 흐름에 합류시킨다.
   const restoreDraft = (record: DraftCreationRecord) => {
+    ownedRequestIdRef.current = record.requestId;
     setKeywordDraftRequestId(record.requestId);
 
     if (record.stage === 'KEYWORD_DRAFT') {
@@ -548,7 +585,19 @@ export function useStoryCreateFunnel() {
     draftAutosave.markCurrentAsSaved(true);
   };
 
-  const draft = useStoryCreateDraft({ onRestore: restoreDraft });
+  // 진행 카드에서 생성 중 레코드로 재개한 경우: 로딩 화면만 복원하고 조회는 복구 훅이 잇는다.
+  const restorePendingGeneration = (record: StorylineGenerationRecord) => {
+    ownedRequestIdRef.current = record.requestId;
+    draftAutosave.setPersistedStatus(true);
+    setGenerationRequest(record.generationRequest);
+    setHasRecoveredGenerateError(false);
+    setStep('storyline-select');
+  };
+
+  const draft = useStoryCreateDraft({
+    onRestore: restoreDraft,
+    onRestorePending: restorePendingGeneration,
+  });
 
   const storyDraftStep =
     step === 'storyline-select' ? 'storyline-select' : 'additional-info';
@@ -592,7 +641,7 @@ export function useStoryCreateFunnel() {
 
   const persistDraftCandidate = (record: DraftCreationRecord | null) => {
     if (record !== null) {
-      const saved = saveDraftCreationRecord(record);
+      const saved = persistOwnRecord(record, saveDraftCreationRecord);
 
       if (saved) {
         track('client_storyCreate_draftSaved', {
@@ -603,13 +652,16 @@ export function useStoryCreateFunnel() {
       return saved;
     }
 
-    const current = loadPendingCreationRequest();
-
+    // 키워드 입력을 모두 지우면 소유한 키워드 초안을 제거한다.
     if (
-      current?.stage === 'KEYWORD_DRAFT' &&
-      current.requestId === keywordDraftRequestId
+      findPendingCreationRequest(keywordDraftRequestId)?.stage ===
+      'KEYWORD_DRAFT'
     ) {
-      takePendingCreationRequest(current.requestId);
+      takePendingCreationRequest(keywordDraftRequestId);
+
+      if (ownedRequestIdRef.current === keywordDraftRequestId) {
+        ownedRequestIdRef.current = null;
+      }
     }
 
     return false;
@@ -646,11 +698,14 @@ export function useStoryCreateFunnel() {
     reusedGenerationRequestIdRef.current = reusedRequestId;
     draftAutosave.cancel();
 
-    const saved = savePendingCreationRequest({
-      stage: 'STORYLINE_GENERATION',
-      requestId: request.requestId,
-      generationRequest: request,
-    });
+    const saved = persistOwnRecord(
+      {
+        stage: 'STORYLINE_GENERATION',
+        requestId: request.requestId,
+        generationRequest: request,
+      },
+      savePendingCreationRequest,
+    );
 
     draftAutosave.setPersistedStatus(saved);
     setGenerationRequest(request);
@@ -846,6 +901,10 @@ export function useStoryCreateFunnel() {
       });
 
       draftAutosave.setPersistedStatus(saved);
+
+      if (saved) {
+        ownedRequestIdRef.current = null;
+      }
     }
 
     createStory.mutate({ data: request });
@@ -889,7 +948,9 @@ export function useStoryCreateFunnel() {
 
     const hasPreservedContent =
       generationResult !== null ||
-      loadPendingCreationRequest()?.stage === 'STORYLINE_GENERATION';
+      (generationRequest !== null &&
+        findPendingCreationRequest(generationRequest.requestId)?.stage ===
+          'STORYLINE_GENERATION');
 
     setBackDialog(hasPreservedContent ? 'saved' : 'lost');
   };
@@ -912,12 +973,6 @@ export function useStoryCreateFunnel() {
     }
 
     exitToCreate();
-  };
-
-  const handleResumeDiscard = () => {
-    draft.handleResumeDiscard();
-    setKeywordDraftRequestId(createClientId());
-    draftAutosave.setPersistedStatus(false);
   };
 
   return {
@@ -962,10 +1017,6 @@ export function useStoryCreateFunnel() {
     reselectDialogOpen: isReselectDialogOpen,
     onReselectDialogOpenChange: setIsReselectDialogOpen,
     handleConfirmReselect: confirmBackToStorylineSelect,
-    resumeDialogOpen: draft.isResumeDialogOpen,
-    handleResumeContinue: draft.handleResumeContinue,
-    handleResumeDiscard,
-    closeResumeDialog: draft.closeResumeDialog,
     handleHeaderBack,
     handleConfirmBack,
   };

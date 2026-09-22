@@ -1,15 +1,17 @@
 /**
- * 임시 저장본을 "이어서 만들기"로 재개하려는 의도를 보관하는 세션스토리지 키.
- * 제작 탭 배너가 이동 직전에 남기고, 퍼널이 진입 시 읽어 재개 다이얼로그를 건너뛴다.
+ * 편집 초안(초안·생성 중)을 "이어서 만들기"로 재개하려는 의도를 보관하는 세션스토리지 키.
+ * 제작 탭 카드가 이동 직전에 남기고, 퍼널이 진입 시 읽어 그 레코드만 복원한다.
+ * 의도가 없는 진입은 항상 새 세션이다.
  */
-const DRAFT_RESUME_INTENT_STORAGE_KEY = 'manyak:story-draft-resume-intent';
+export const DRAFT_RESUME_INTENT_STORAGE_KEY =
+  'manyak:story-draft-resume-intent';
 
 /**
  * 재개 의도를 남긴다. 이동 URL 대신 스토리지를 쓰는 이유는 클라이언트 전환에서
  * 히스토리 URL 반영과 화면 렌더 순서가 보장되지 않기 때문이다(쿼리 파라미터를
  * 마운트 시점에 읽으면 재진입 경로에서 놓칠 수 있다).
  *
- * @param requestId 재개할 임시 저장본의 요청 ID
+ * @param requestId 재개할 편집 초안 레코드의 요청 ID
  */
 export function markDraftResumeIntent(requestId: string): void {
   if (typeof window === 'undefined') {

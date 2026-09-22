@@ -19,7 +19,10 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
-import { seedStoryCompletionRequests } from '../fixtures/storage';
+import {
+  seedPendingCreationRequests,
+  seedStoryCompletionRequests,
+} from '../fixtures/storage';
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
@@ -530,9 +533,27 @@ test.describe('스토리 생성', () => {
     });
   }
 
-  test('완성 중에도 새 스토리를 만들 수 있고 완성 중 카드가 요청 수만큼 표시된다', async ({
+  test('완성 중에도 새 스토리를 만들 수 있고 완성 중 카드가 요청 수만큼 표시되며 다른 초안은 남는다', async ({
     page,
   }) => {
+    // 다른 세션의 키워드 초안은 완성 제출로 지워지지 않아야 한다.
+    await seedPendingCreationRequests(page, [
+      {
+        stage: 'KEYWORD_DRAFT',
+        requestId: 'keyword-other',
+        snapshot: {
+          selectedGenreTagIds: [1],
+          customGenreTags: [],
+          protagonist: {
+            name: '',
+            gender: null,
+            selectedTagIds: [],
+            customTags: [],
+          },
+          supportingCharacters: [],
+        },
+      },
+    ]);
     await seedStoryCompletionRequests(page, [
       {
         stage: 'STORY_COMPLETION',
@@ -578,15 +599,18 @@ test.describe('스토리 생성', () => {
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toBeVisible();
+    // 제출한 세션의 초안만 사라지고 다른 초안 카드는 그대로 남는다.
     await expect(
-      page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
-    ).toBeHidden();
+      page.getByRole('article', {
+        name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+      }),
+    ).toHaveCount(1);
     expect(
       await page.evaluate(
-        (key) => localStorage.getItem(key),
+        (key) => JSON.parse(localStorage.getItem(key) ?? '[]'),
         PENDING_CREATION_REQUEST_STORAGE_KEY,
       ),
-    ).toBeNull();
+    ).toMatchObject([{ stage: 'KEYWORD_DRAFT', requestId: 'keyword-other' }]);
   });
 
   test('스토리 완성 실패는 제작 탭에서 토스트로 알리고 초안 카드로 되돌아가 입력을 유지한다', async ({

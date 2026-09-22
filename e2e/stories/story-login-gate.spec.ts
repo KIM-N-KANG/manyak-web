@@ -7,7 +7,7 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
-import { seedPendingCreationRequest } from '../fixtures/storage';
+import { seedPendingCreationRequests } from '../fixtures/storage';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 /**
@@ -136,7 +136,7 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
     };
 
     await skipOnboarding(page);
-    await seedPendingCreationRequest(page, draft);
+    await seedPendingCreationRequests(page, [draft]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
     await expect(

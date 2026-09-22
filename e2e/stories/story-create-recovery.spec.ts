@@ -13,7 +13,8 @@ import {
 } from '@/features/studio/menu/constants';
 
 import {
-  seedPendingCreationRequest,
+  seedDraftResumeIntent,
+  seedPendingCreationRequests,
   seedStoryCompletionRequests,
 } from '../fixtures/storage';
 import {
@@ -127,7 +128,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         ),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
+    await seedDraftResumeIntent(page, storylineRecord.requestId);
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
@@ -408,7 +410,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         ),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
+    await seedDraftResumeIntent(page, storylineRecord.requestId);
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await expect.poll(() => pollCount).toBe(1);
 
@@ -556,7 +559,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
         }),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
+    await seedDraftResumeIntent(page, storylineRecord.requestId);
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
@@ -587,7 +591,7 @@ test.describe('이어서 만들기 진행 카드', () => {
         }),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
@@ -621,7 +625,7 @@ test.describe('이어서 만들기 진행 카드', () => {
         }),
       });
     });
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 
@@ -655,7 +659,7 @@ test.describe('이어서 만들기 진행 카드', () => {
   test('진행 카드에는 닫기 버튼 없이 이어서 만들기와 더보기만 표시한다', async ({
     page,
   }) => {
-    await seedPendingCreationRequest(page, storylineRecord);
+    await seedPendingCreationRequests(page, [storylineRecord]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 

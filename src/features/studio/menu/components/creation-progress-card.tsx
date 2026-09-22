@@ -86,13 +86,10 @@ type DraftCardBodyProps = {
 function DraftCardBody({ record }: DraftCardBodyProps) {
   const router = useRouter();
 
+  // 초안·생성 중 레코드 모두 재개 의도를 남겨 퍼널이 이 레코드만 복원하게 한다.
   const handleResume = () => {
     track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
-
-    if (record.stage === 'KEYWORD_DRAFT' || record.stage === 'STORY_DRAFT') {
-      markDraftResumeIntent(record.requestId);
-    }
-
+    markDraftResumeIntent(record.requestId);
     router.push(APP_PATH.STUDIO.STORY.SIMPLE);
   };
 
