@@ -258,7 +258,7 @@ export function ConsentSheet({
         container={container}
         data-base-ui-swipe-ignore=""
         aria-busy={form.isLocked}>
-        <DrawerHeader className="gap-2 px-4 pt-6 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
+        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
           <DrawerTitle className="text-xl leading-snug font-bold">
             {errorHeader?.title ?? CONSENT_SHEET_COPY.title}
           </DrawerTitle>
@@ -271,8 +271,9 @@ export function ConsentSheet({
 
         <div className="flex min-h-0 w-full flex-col gap-8 overflow-y-auto overscroll-contain px-4 pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {phase === 'required' && (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <Checkbox
+                className="min-h-12"
                 checked={form.isAllChecked}
                 disabled={form.isLocked}
                 onCheckedChange={form.toggleAll}
@@ -282,9 +283,10 @@ export function ConsentSheet({
                   </span>
                 }
               />
-              <ul className="flex flex-col gap-3 border-t border-border pt-3">
+              <hr className="border-border" />
+              <ul className="flex flex-col gap-2">
                 {required.map(({ key }) => (
-                  <li key={key} className="flex items-center gap-2">
+                  <li key={key} className="flex min-h-12 items-center gap-2">
                     <Checkbox
                       className="min-w-0 flex-1"
                       checked={form.checked.has(key)}
@@ -304,7 +306,7 @@ export function ConsentSheet({
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={DOCUMENT_LINKS[key].label}
-                        className="shrink-0 text-sm text-foreground-secondary underline">
+                        className="shrink-0 px-2 py-3 text-xs text-foreground-secondary underline">
                         {CONSENT_SHEET_COPY.viewDocument.label}
                       </Link>
                     )}
@@ -312,11 +314,12 @@ export function ConsentSheet({
                 ))}
               </ul>
               <Checkbox
+                className="min-h-12"
                 checked={form.marketingChecked}
                 disabled={form.isLocked}
                 onCheckedChange={form.setMarketingChecked}
                 label={
-                  <span className="flex flex-col gap-0.5">
+                  <span className="flex flex-col gap-1">
                     <span className="text-base">
                       {CONSENT_SHEET_COPY.marketing}
                     </span>
