@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react';
 
+import { LinkSquare01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { useGetPushSettings } from '@/api/generated/endpoints/push/push';
+import { RetryListStatus } from '@/components/common/retry-list-status';
+import { Switch } from '@/components/motion/switch';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
@@ -27,58 +29,76 @@ import {
   normalizePushSettings,
   type PushSettings,
 } from '@/features/my/_shared/utils/push-settings';
+import { cn } from '@/lib/utils';
 
-const PERMISSION_COPY = {
-  prompt: {
-    title: PUSH_SETTINGS_COPY.permissionDefault,
-    description: PUSH_SETTINGS_COPY.permissionDefaultDescription,
-  },
-  granted: { title: PUSH_SETTINGS_COPY.permissionGranted, description: null },
-  denied: {
-    title: PUSH_SETTINGS_COPY.permissionDenied,
-    description: PUSH_SETTINGS_COPY.permissionDeniedDescription,
-  },
-  install: {
-    title: PUSH_SETTINGS_COPY.permissionInstall,
-    description: PUSH_SETTINGS_COPY.permissionInstallDescription,
-  },
-  unsupported: {
-    title: PUSH_SETTINGS_COPY.permissionUnsupported,
-    description: null,
-  },
+const BANNER_COPY = {
+  prompt: PUSH_SETTINGS_COPY.bannerDisabled,
+  denied: PUSH_SETTINGS_COPY.bannerDenied,
+  install: PUSH_SETTINGS_COPY.bannerInstall,
+  unsupported: PUSH_SETTINGS_COPY.bannerUnsupported,
 } as const;
 
 type SettingRowProps = {
-  id: string;
   label: string;
-  description: React.ReactNode;
-  checked: boolean;
-  disabled: boolean;
+  description: string;
+  checked: boolean | null;
+  enabled: boolean;
   onCheckedChange: (checked: boolean) => void;
+  detailHref?: string;
+  detailLabel?: string;
 };
 
 function SettingRow({
-  id,
   label,
   description,
   checked,
-  disabled,
+  enabled,
   onCheckedChange,
+  detailHref,
+  detailLabel,
 }: SettingRowProps) {
   return (
-    <div className="flex items-center gap-4 px-4 py-3">
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <Label htmlFor={id} className="text-base">
+    <div className="flex min-h-12 items-center gap-4 px-4 py-3">
+      <span
+        className={cn(
+          'flex flex-1 flex-col text-left text-base',
+          !enabled && 'text-foreground-tertiary',
+        )}>
+        <span className="flex items-center gap-2">
           {label}
-        </Label>
-        <p className="text-sm text-foreground-secondary">{description}</p>
-      </div>
-      <Switch
-        id={id}
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-      />
+          {detailHref && (
+            <Link
+              href={detailHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={detailLabel}
+              className="inline-flex size-6 items-center justify-center rounded-md text-foreground-tertiary">
+              <HugeiconsIcon
+                icon={LinkSquare01Icon}
+                className="size-4"
+                aria-hidden="true"
+              />
+            </Link>
+          )}
+        </span>
+        <span
+          className={cn(
+            'text-xs text-foreground-secondary',
+            !enabled && 'text-foreground-tertiary',
+          )}>
+          {description}
+        </span>
+      </span>
+      {checked === null ? (
+        <Skeleton className="h-7 w-12 rounded-full" />
+      ) : (
+        <Switch
+          checked={checked}
+          disabled={!enabled}
+          onCheckedChange={onCheckedChange}
+          ariaLabel={label}
+        />
+      )}
     </div>
   );
 }
@@ -106,7 +126,10 @@ export function NotificationSettingsScreen() {
   const loadFailed =
     settingsQuery.isError ||
     (settingsQuery.data !== undefined && settingsQuery.data.status !== 200);
-  const permission = PERMISSION_COPY[promptState];
+  const banner = promptState === 'granted' ? null : BANNER_COPY[promptState];
+  const canEnable = promptState === 'prompt' || promptState === 'denied';
+  const rowsEnabled =
+    (promptState === 'granted' || promptState === 'unsupported') && !isPending;
 
   const enablePermission = async () => {
     setIsRequestingPermission(true);
@@ -130,100 +153,63 @@ export function NotificationSettingsScreen() {
       .catch(() => toast.error(TOAST_MESSAGE.PUSH_SETTINGS_SAVE_FAILED));
   };
 
+  if (loadFailed) {
+    return (
+      <main className="flex flex-1 flex-col">
+        <RetryListStatus
+          title={PUSH_SETTINGS_COPY.loadFailed}
+          onRetry={() => void settingsQuery.refetch()}
+        />
+      </main>
+    );
+  }
+
   return (
-    <main className="flex flex-1 flex-col overflow-y-auto overscroll-contain pb-4">
-      <section className="flex flex-col py-4">
-        <div className="mb-2 px-4">
-          <Label>{PUSH_SETTINGS_COPY.permissionSection}</Label>
-        </div>
-        <div className="flex items-center gap-4 px-4 py-3" role="status">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <p className="text-base">{permission.title}</p>
-            {permission.description && (
-              <p className="text-sm break-keep text-foreground-secondary">
-                {permission.description}
-              </p>
-            )}
-          </div>
-          {promptState === 'prompt' && (
+    <main className="flex flex-1 flex-col overflow-y-auto overscroll-contain pb-2">
+      {banner && (
+        <div
+          role="status"
+          className="mx-4 mb-1 flex items-center gap-2 rounded-lg bg-muted py-2 pr-1 pl-4">
+          <p className="flex-1 text-sm break-keep">{banner}</p>
+          {canEnable && (
             <Button
               type="button"
+              variant="ghost"
               size="sm"
               disabled={isRequestingPermission}
               onClick={() => void enablePermission()}>
-              {PUSH_SETTINGS_COPY.permissionEnable}
+              {PUSH_SETTINGS_COPY.enable}
             </Button>
           )}
         </div>
-      </section>
-
-      <section className="flex flex-col py-4">
-        <div className="mb-2 px-4">
-          <Label>{PUSH_SETTINGS_COPY.typesSection}</Label>
-        </div>
-        {settings ? (
-          <>
-            <SettingRow
-              id="push-service"
-              label={PUSH_SETTINGS_COPY.service}
-              description={PUSH_SETTINGS_COPY.serviceDescription}
-              checked={settings.servicePush}
-              disabled={isPending}
-              onCheckedChange={(servicePush) => change({ servicePush })}
-            />
-            <SettingRow
-              id="push-marketing"
-              label={PUSH_SETTINGS_COPY.marketing}
-              description={
-                <>
-                  {PUSH_SETTINGS_COPY.marketingDescription}{' '}
-                  <Link
-                    href={APP_PATH.PRIVACY}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline">
-                    {PUSH_SETTINGS_COPY.privacyLink}
-                  </Link>
-                </>
-              }
-              checked={settings.marketingPush}
-              disabled={isPending}
-              onCheckedChange={(marketingPush) => change({ marketingPush })}
-            />
-            {settings.marketingPush && (
-              <SettingRow
-                id="push-marketing-night"
-                label={PUSH_SETTINGS_COPY.marketingNight}
-                description={PUSH_SETTINGS_COPY.marketingNightDescription}
-                checked={settings.marketingNightPush}
-                disabled={isPending}
-                onCheckedChange={(marketingNightPush) =>
-                  change({ marketingNightPush })
-                }
-              />
-            )}
-          </>
-        ) : loadFailed ? (
-          <div className="flex flex-col items-start gap-3 px-4 py-3">
-            <p role="alert" className="text-sm text-destructive">
-              {PUSH_SETTINGS_COPY.loadFailed}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void settingsQuery.refetch()}>
-              {PUSH_SETTINGS_COPY.retry}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 px-4 py-3">
-            <Skeleton className="h-12 rounded-lg" />
-            <Skeleton className="h-12 rounded-lg" />
-          </div>
-        )}
-      </section>
-
+      )}
+      <SettingRow
+        label={PUSH_SETTINGS_COPY.service}
+        description={PUSH_SETTINGS_COPY.serviceDescription}
+        checked={settings?.servicePush ?? null}
+        enabled={rowsEnabled}
+        onCheckedChange={(servicePush) => change({ servicePush })}
+      />
+      <SettingRow
+        label={PUSH_SETTINGS_COPY.marketing}
+        description={PUSH_SETTINGS_COPY.marketingDescription}
+        checked={settings?.marketingPush ?? null}
+        enabled={rowsEnabled}
+        onCheckedChange={(marketingPush) => change({ marketingPush })}
+        detailHref={APP_PATH.PRIVACY}
+        detailLabel={PUSH_SETTINGS_COPY.privacyPolicy}
+      />
+      {settings?.marketingPush && (
+        <SettingRow
+          label={PUSH_SETTINGS_COPY.marketingNight}
+          description={PUSH_SETTINGS_COPY.marketingNightDescription}
+          checked={settings.marketingNightPush}
+          enabled={rowsEnabled}
+          onCheckedChange={(marketingNightPush) =>
+            change({ marketingNightPush })
+          }
+        />
+      )}
       <PushConsentNoticeDialog
         notice={notice}
         onClose={() => setNotice(null)}

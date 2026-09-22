@@ -6,7 +6,7 @@ import {
   InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
-  Notification03Icon,
+  Notification01Icon,
   UserRemove01Icon,
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
@@ -80,7 +80,7 @@ export function MyScreen() {
             <Label>계정</Label>
           </div>
           <MyMenuItem
-            icon={Notification03Icon}
+            icon={Notification01Icon}
             label={PUSH_SETTINGS_COPY.menuLabel}
             href={APP_PATH.MY_NOTIFICATIONS}
           />

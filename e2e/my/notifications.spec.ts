@@ -43,7 +43,7 @@ test.describe('알림 설정', () => {
       page.getByRole('banner').getByText(PUSH_SETTINGS_COPY.title),
     ).toBeVisible();
     await expect(
-      page.getByText(PUSH_SETTINGS_COPY.permissionUnsupported),
+      page.getByText(PUSH_SETTINGS_COPY.bannerUnsupported),
     ).toBeVisible();
     await expect(
       page.getByRole('switch', { name: PUSH_SETTINGS_COPY.service }),
@@ -162,14 +162,10 @@ test.describe('알림 설정', () => {
     await mockPushSettings(page, {}, 500);
     await page.goto(APP_PATH.MY_NOTIFICATIONS);
 
-    await expect(
-      page
-        .getByRole('alert')
-        .filter({ hasText: PUSH_SETTINGS_COPY.loadFailed }),
-    ).toBeVisible();
+    await expect(page.getByText(PUSH_SETTINGS_COPY.loadFailed)).toBeVisible();
 
     await mockPushSettings(page);
-    await page.getByRole('button', { name: PUSH_SETTINGS_COPY.retry }).click();
+    await page.getByRole('button', { name: '다시 시도하기' }).click();
 
     await expect(
       page.getByRole('switch', { name: PUSH_SETTINGS_COPY.service }),

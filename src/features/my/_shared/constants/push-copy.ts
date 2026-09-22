@@ -13,32 +13,24 @@ export const PUSH_PROMPT_COPY = {
   installClose: '확인',
 } as const;
 
-/** 알림 설정 화면의 사용자 문구 정본. */
+/** 알림 설정 화면의 사용자 문구 정본. Android 알림 설정 화면과 같은 문구를 쓴다. */
 export const PUSH_SETTINGS_COPY = {
   title: '알림 설정',
   menuLabel: '알림 설정',
-  permissionSection: '브라우저 알림',
-  permissionDefault: '브라우저 알림이 꺼져 있어요',
-  permissionDefaultDescription: '알림을 켜야 완성 소식과 알림을 받을 수 있어요',
-  permissionEnable: '알림 켜기',
-  permissionGranted: '브라우저 알림이 켜져 있어요',
-  permissionDenied: '브라우저 알림이 차단되어 있어요',
-  permissionDeniedDescription:
-    '브라우저 설정에서 마냑의 알림을 허용한 뒤 다시 열어 주세요',
-  permissionInstall: '홈 화면에 추가하면 알림을 받을 수 있어요',
-  permissionInstallDescription:
-    'iOS에서는 홈 화면에 추가한 마냑에서만 알림을 받을 수 있어요. 공유 버튼을 누른 뒤 "홈 화면에 추가"를 선택해 주세요',
-  permissionUnsupported: '이 브라우저에서는 알림을 지원하지 않아요',
-  typesSection: '알림 종류',
+  bannerDisabled: '브라우저 알림 설정이 꺼져 있어요',
+  bannerDenied: '브라우저 알림이 차단되어 있어요',
+  bannerInstall:
+    '홈 화면에 추가한 마냑에서만 알림을 받을 수 있어요. 공유 버튼을 누른 뒤 "홈 화면에 추가"를 선택해 주세요',
+  bannerUnsupported: '이 브라우저에서는 알림을 지원하지 않아요',
+  enable: '알림 켜기',
   service: '서비스 알림',
-  serviceDescription: '스토리 완성 등 요청한 작업의 결과를 알려드려요',
+  serviceDescription: '스토리 완성처럼 내 활동의 결과를 알려드려요',
   marketing: '광고 알림',
   marketingDescription: '이벤트·혜택 소식과 출석 리마인드를 받아요',
   marketingNight: '야간 광고 허용',
   marketingNightDescription: '밤 9시부터 아침 8시 사이에도 광고 알림을 받아요',
-  privacyLink: '개인정보 처리방침',
+  privacyPolicy: '개인정보 처리방침 보기',
   loadFailed: '알림 설정을 불러오지 못했어요',
-  retry: '다시 시도',
 } as const;
 
 /**
