@@ -8,11 +8,11 @@ import { shouldAutoOpenChatTour } from '../utils/chat-tour-gate';
 import { isChatTourSeen, markChatTourSeen } from '../utils/chat-tour-storage';
 
 /**
- * 화면이 준비된 직후 여는 지연(ms). 사용자가 전송을 시도하기 전에 투어가 먼저 떠야 하므로
- * 지연을 두지 않는다. 추천 입력 등장 애니메이션으로 대상이 움직이는 동안은 투어가 열린 채
- * 다시 측정한다(`ChatTour`의 정착 재측정).
+ * 화면이 준비된 뒤 여는 지연(ms). 사용자가 전송을 시도하기 전에 투어가 먼저 떠야 하므로
+ * 짧게 두고, 화면이 그려지자마자 딤이 깔리는 느낌은 피한다. 추천 입력 등장 애니메이션으로
+ * 대상이 움직이는 동안은 투어가 열린 채 다시 측정한다(`ChatTour`의 정착 재측정).
  */
-const AUTO_OPEN_DELAY_MS = 0;
+const AUTO_OPEN_DELAY_MS = 200;
 
 type UseChatTourParams = {
   chatId: string;
