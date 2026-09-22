@@ -6,6 +6,7 @@ import {
   InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
+  Notification03Icon,
   UserRemove01Icon,
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
@@ -15,6 +16,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { clearLocalMemberState } from '@/features/auth/_shared/utils/clear-local-member-state';
 import { InviteMenuItem } from '@/features/my/_shared/components/invite-menu-item';
 import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
+import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
 import { track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
@@ -77,6 +79,11 @@ export function MyScreen() {
           <div className="mb-2 px-4">
             <Label>계정</Label>
           </div>
+          <MyMenuItem
+            icon={Notification03Icon}
+            label={PUSH_SETTINGS_COPY.menuLabel}
+            href={APP_PATH.MY_NOTIFICATIONS}
+          />
           <MyMenuItem
             icon={Logout03Icon}
             label="로그아웃"

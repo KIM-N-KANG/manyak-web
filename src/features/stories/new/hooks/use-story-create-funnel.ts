@@ -36,6 +36,7 @@ import {
 } from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { schedulePushPromptAfterSubmit } from '@/features/my/_shared/utils/schedule-push-prompt';
 import {
   resolveErrorSettlement,
   resolveSuccessSettlement,
@@ -100,7 +101,7 @@ const getGeneratedStorylines = (
 export function useStoryCreateFunnel() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { status: sessionStatus } = useSession();
+  const { status: sessionStatus, data: session } = useSession();
   const requestConsent = useGuestConsent();
   const guestConsentOpen = useGuestConsentOpen();
   const trials = useTrials();
@@ -916,6 +917,12 @@ export function useStoryCreateFunnel() {
     }
 
     createStory.mutate({ data: request });
+
+    // 완성 요청 직후가 알림 권한을 묻는 진입점이다. 회원만 토큰을 등록할 수 있고,
+    // 실제로 물을지(첫 요청·첫 거절 뒤 재질문·닫힘)는 회원별 기록이 정한다.
+    if (sessionStatus === 'authenticated' && session?.user.id) {
+      schedulePushPromptAfterSubmit(session.user.id);
+    }
 
     // 복구 레코드가 있으면 응답을 기다리지 않고 제작 탭으로 돌아간다(앱 패리티).
     // 결과는 제작 탭의 완성 중 카드가 폴링으로 되찾는다. 레코드를

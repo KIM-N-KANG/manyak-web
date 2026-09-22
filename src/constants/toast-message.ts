@@ -41,4 +41,7 @@ export const TOAST_MESSAGE = {
   LINK_ALREADY_LINKED: '이미 연동된 계정이에요',
   LINK_FAILED: '계정 연동에 실패했어요',
   LINK_BLOCKED_IN_APP: '계정 연동은 외부 브라우저에서만 할 수 있어요',
+  PUSH_PERMISSION_DENIED: '브라우저 알림이 차단되어 있어요',
+  PUSH_SETTINGS_LOAD_FAILED: '알림 설정을 불러오지 못했어요',
+  PUSH_SETTINGS_SAVE_FAILED: '알림 설정을 저장하지 못했어요',
 } as const;

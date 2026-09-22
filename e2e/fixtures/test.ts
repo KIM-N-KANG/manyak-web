@@ -15,7 +15,10 @@ import {
   mockGuestConsents,
   mockHandoffSession,
   mockHandoffStatus,
+  mockPushSettings,
+  mockPushTokens,
   mockTrials,
+  PUSH_SETTINGS_FIXTURE,
   TRIALS_FIXTURE,
 } from './api-mock';
 
@@ -54,6 +57,9 @@ export {
   mockCreditProducts,
   mockHandoffSession,
   mockHandoffStatus,
+  mockPushSettings,
+  mockPushTokens,
   mockTrials,
+  PUSH_SETTINGS_FIXTURE,
   TRIALS_FIXTURE,
 };

@@ -28,6 +28,8 @@ import { AutoMigration } from '@/features/auth/_shared/components/auto-migration
 import { ConsentGate } from '@/features/auth/_shared/components/consent-gate';
 import { GuestConsentProvider } from '@/features/auth/_shared/components/guest-consent-provider';
 import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
+import { PushPromptSheet } from '@/features/my/_shared/components/push-prompt-sheet';
+import { PushTokenSync } from '@/features/my/_shared/components/push-token-sync';
 import { InviteOnboardingSheet } from '@/features/my/invite/components/invite-onboarding-sheet';
 
 export const metadata: Metadata = {
@@ -117,6 +119,8 @@ export default function RootLayout({
                         <AutoMigration />
                         <HandoffCleanup />
                         <InviteOnboardingSheet />
+                        <PushTokenSync />
+                        <PushPromptSheet />
                       </GuestConsentProvider>
                     </ConsentGate>
                   </MotionProvider>

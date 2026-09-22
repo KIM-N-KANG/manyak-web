@@ -67,6 +67,9 @@ export default defineConfig({
       NEXT_PUBLIC_AMPLITUDE_API_KEY: '',
       NEXT_PUBLIC_SENTRY_DSN: '',
       NEXT_PUBLIC_SENTRY_FORCE_ENABLE: '',
+      // 웹 푸시는 VAPID 키가 비면 전체가 꺼진다(SW 등록·토큰 발급·프롬프트 없음).
+      // 로컬 .env.local의 Firebase 키가 인라인되면 E2E가 실제 FCM으로 나가므로 CI와 같게 비운다.
+      NEXT_PUBLIC_FIREBASE_VAPID_KEY: '',
     },
   },
 });
