@@ -2,7 +2,6 @@
 // beui.dev/components/motion/pull-to-refresh
 
 import {
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type Ref,
   type UIEvent,
@@ -23,7 +22,7 @@ import {
 
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { EASE_IN_OUT, EASE_OUT, SPRING_PANEL, SPRING_SWAP } from '@/lib/ease';
-import { capturePointer, TOUCH_GESTURE_CONTENT_CLASS } from '@/lib/touch';
+import { TOUCH_GESTURE_CONTENT_CLASS } from '@/lib/touch';
 import { cn } from '@/lib/utils';
 
 export type PullToRefreshStatus = 'idle' | 'pulling' | 'ready' | 'refreshing';
@@ -66,14 +65,12 @@ type Gesture = {
   active: boolean;
   startX: number;
   startY: number;
-  pointerId: number | null;
 };
 
 const EMPTY_GESTURE: Gesture = {
   active: false,
   startX: 0,
   startY: 0,
-  pointerId: null,
 };
 
 // This character needs a compact repeating rhythm rather than a settling
@@ -89,8 +86,6 @@ const CALM_PULSE = {
   repeat: Number.POSITIVE_INFINITY,
 } as const;
 const LABEL_SWAP = { duration: 0.16, ease: EASE_OUT } as const;
-/** 마우스·펜 경로에서 이 거리(px)만큼 아래로 움직여야 당김으로 본다. 그 전에는 클릭이다. */
-const POINTER_PULL_SLOP = 6;
 
 function resistedDistance(distance: number, maxPull: number) {
   return maxPull * (1 - Math.exp(-Math.max(0, distance) / maxPull));
@@ -290,7 +285,6 @@ export function PullToRefresh({
         active: true,
         startX: touch.clientX,
         startY: touch.clientY,
-        pointerId: null,
       };
     };
 
@@ -338,52 +332,6 @@ export function PullToRefresh({
     return () => animationRef.current?.stop();
   }, []);
 
-  const startPointerPull = (event: ReactPointerEvent<HTMLElement>) => {
-    // Everything but touch: a finger is driven by the native listeners above,
-    // which can `preventDefault` the page scroll a passive React handler
-    // cannot. A pen fires no touch events at all, so this is its only route.
-    if (
-      event.pointerType === 'touch' ||
-      event.button !== 0 ||
-      event.currentTarget.scrollTop > 0 ||
-      disabled ||
-      isRefreshing
-    ) {
-      return;
-    }
-
-    // 여기서 포인터를 캡처하지 않는다. pointerdown마다 캡처하면 pointerup·click이 이 요소로
-    // 향해 안의 링크·버튼 클릭이 전부 삼켜진다. 캡처는 아래로 당기는 움직임이 확인된 뒤에 건다.
-    gestureRef.current = {
-      active: true,
-      startX: event.clientX,
-      startY: event.clientY,
-      pointerId: event.pointerId,
-    };
-  };
-
-  const movePointerPull = (event: ReactPointerEvent<HTMLElement>) => {
-    const gesture = gestureRef.current;
-
-    if (!gesture.active || gesture.pointerId !== event.pointerId) return;
-
-    const deltaX = event.clientX - gesture.startX;
-    const deltaY = event.clientY - gesture.startY;
-
-    // 위로·옆으로 움직이면 당김이 아니다. 제스처를 접어 이후 클릭이 방해받지 않게 한다.
-    if (deltaY < 0 || Math.abs(deltaX) > deltaY) {
-      gestureRef.current = { ...EMPTY_GESTURE };
-
-      return;
-    }
-
-    if (deltaY < POINTER_PULL_SLOP) return;
-
-    capturePointer(event.currentTarget, event.pointerId);
-    event.preventDefault();
-    updatePull(deltaY);
-  };
-
   const label =
     status === 'refreshing'
       ? refreshingLabel
@@ -404,16 +352,9 @@ export function PullToRefresh({
       aria-busy={isRefreshing}
       data-state={status}
       data-disabled={disabled || undefined}
-      onPointerDown={startPointerPull}
-      onPointerMove={movePointerPull}
-      onPointerUp={(event) => {
-        if (gestureRef.current.pointerId === event.pointerId) finishPull();
-      }}
-      onPointerCancel={(event) => {
-        if (gestureRef.current.pointerId === event.pointerId) finishPull();
-      }}
       className={cn(
         'relative w-full overflow-y-auto overscroll-contain bg-background',
+        // 당김은 터치 전용이다. 마우스·펜 경로를 두지 않아 커서 모양도 바꾸지 않는다.
         // No `touch-none` here — this element is the scroller, and the pull
         // only takes over once the content is already at the top. The callout
         // has to be off from the first frame though: iOS decides on it while
@@ -422,10 +363,7 @@ export function PullToRefresh({
         // only the pull itself suppresses selection, and only while it runs,
         // so dragging the page down cannot highlight it on the way.
         TOUCH_GESTURE_CONTENT_CLASS,
-        status === 'pulling' || status === 'ready'
-          ? 'cursor-grabbing select-none'
-          : 'cursor-grab',
-        (disabled || isRefreshing) && 'cursor-default',
+        (status === 'pulling' || status === 'ready') && 'select-none',
         className,
       )}>
       <m.div

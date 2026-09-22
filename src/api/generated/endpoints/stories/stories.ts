@@ -707,6 +707,136 @@ export const useAddCharacterImage = <
 > => {
   return useMutation(getAddCharacterImageMutationOptions(options), queryClient);
 };
+export type presignDraftImageResponse201 = {
+  data: ImagePresignResponse;
+  status: 201;
+};
+
+export type presignDraftImageResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type presignDraftImageResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type presignDraftImageResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type presignDraftImageResponse503 = {
+  data: void;
+  status: 503;
+};
+
+export type presignDraftImageResponseSuccess = presignDraftImageResponse201 & {
+  headers: Headers;
+};
+export type presignDraftImageResponseError = (
+  | presignDraftImageResponse400
+  | presignDraftImageResponse401
+  | presignDraftImageResponse403
+  | presignDraftImageResponse503
+) & {
+  headers: Headers;
+};
+
+export type presignDraftImageResponse =
+  | presignDraftImageResponseSuccess
+  | presignDraftImageResponseError;
+
+export const getPresignDraftImageUrl = () => {
+  return `/api/v1/stories/images/presign`;
+};
+
+/**
+ * 스토리를 만들기 전에 표지·인물 이미지를 올릴 서명 URL을 발급합니다(KNK-1390). 객체 키는 `{thumbnails|characters}/uploaded/drafts/{내 식별자}/{uuid}.{ext}`이며, PUT을 마친 뒤 그 `objectKey`를 `POST /stories/general`의 `thumbnailObjectKey`·`characters[].images[].objectKey`에 넣습니다. 규칙(형식 3종·5MB·만료 10분)은 스토리 스코프 발급과 같고 **인증이 필요**합니다.
+ * @summary 등록 전 이미지 업로드용 presigned URL 발급
+ */
+export const presignDraftImage = async (
+  imagePresignRequest: ImagePresignRequest,
+  options?: RequestInit,
+): Promise<presignDraftImageResponse> => {
+  return customInstance<presignDraftImageResponse>(getPresignDraftImageUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(imagePresignRequest),
+  });
+};
+
+export const getPresignDraftImageMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof presignDraftImage>>,
+    TError,
+    { data: BodyType<ImagePresignRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof presignDraftImage>>,
+  TError,
+  { data: BodyType<ImagePresignRequest> },
+  TContext
+> => {
+  const mutationKey = ['presignDraftImage'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof presignDraftImage>>,
+    { data: BodyType<ImagePresignRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return presignDraftImage(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PresignDraftImageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof presignDraftImage>>
+>;
+export type PresignDraftImageMutationBody = BodyType<ImagePresignRequest>;
+export type PresignDraftImageMutationError = ErrorType<void>;
+
+/**
+ * @summary 등록 전 이미지 업로드용 presigned URL 발급
+ */
+export const usePresignDraftImage = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof presignDraftImage>>,
+      TError,
+      { data: BodyType<ImagePresignRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof presignDraftImage>>,
+  TError,
+  { data: BodyType<ImagePresignRequest> },
+  TContext
+> => {
+  return useMutation(getPresignDraftImageMutationOptions(options), queryClient);
+};
 export type createGeneralStoryResponse201 = {
   data: SimpleStoryCreateResponse;
   status: 201;

@@ -44,6 +44,36 @@ export function formatDate(isoDate: string): string {
   return `${partOf('year')}-${partOf('month')}-${partOf('day')}`;
 }
 
+const DISPLAY_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: DISPLAY_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+/**
+ * ISO 시각 문자열을 KST 기준 분 단위 시각(yyyy-MM-dd HH:mm)으로 반환한다.
+ *
+ * @param isoDate ISO 8601 시각 문자열
+ * @returns yyyy-MM-dd HH:mm 형식의 문자열. 해석할 수 없으면 입력의 앞 10자
+ */
+export function formatDateTime(isoDate: string): string {
+  const date = new Date(isoDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return isoDate.slice(0, DATE_PART_LENGTH);
+  }
+
+  const parts = DISPLAY_DATE_TIME_FORMATTER.formatToParts(date);
+  const partOf = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+
+  return `${partOf('year')}-${partOf('month')}-${partOf('day')} ${partOf('hour')}:${partOf('minute')}`;
+}
+
 const HOUR_THRESHOLD = 12;
 const DAY_THRESHOLD = 7;
 

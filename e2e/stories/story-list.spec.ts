@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { PULL_TO_REFRESH_COPY } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
@@ -26,6 +26,34 @@ const story = (id: string, title: string) => ({
   genres: ['판타지'],
   createdAt: '2026-06-01T00:00:00Z',
 });
+
+// 당김 새로고침은 터치 전용이라 스크롤러에 터치 이벤트를 직접 보낸다(Playwright 터치스크린은 탭만 지원).
+const dispatchTouch = (
+  scroller: Locator,
+  type: 'touchstart' | 'touchmove' | 'touchend',
+  x: number,
+  y: number,
+) =>
+  scroller.evaluate(
+    (element, { type, x, y }) => {
+      const touch = new Touch({
+        identifier: 1,
+        target: element,
+        clientX: x,
+        clientY: y,
+      });
+
+      element.dispatchEvent(
+        new TouchEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          touches: type === 'touchend' ? [] : [touch],
+          changedTouches: [touch],
+        }),
+      );
+    },
+    { type, x, y },
+  );
 
 // 제작 카드의 옵션 메뉴에서 호출하는 삭제 API를 목킹한다.
 const mockStoryDelete = async (
@@ -78,6 +106,54 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
+  });
+
+  test('목록이 화면보다 길어도 FAB는 화면 아래에 붙어 있다 (STORY-LIST-11)', async ({
+    page,
+  }) => {
+    const ids = Array.from({ length: 12 }, (_, index) => `s${index + 1}`);
+
+    await seedStoryIds(page, ids);
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({
+        json: ids.map((id) => story(id, `긴 목록 ${id}`)),
+      });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    await expect(page.getByText('긴 목록 s1', { exact: true })).toBeVisible();
+
+    const fab = page.getByRole('link', {
+      name: CREATE_STORY_FAB_COPY.accessibleLabel,
+    });
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    // 스크롤 전에도, 중간까지 내린 뒤에도 FAB는 뷰포트 안에 있다.
+    await expect(fab).toBeInViewport();
+    await scroller.evaluate((element) => element.scrollTo({ top: 400 }));
+    await expect(fab).toBeInViewport();
+
+    // 맨 위에서 당겨도 FAB는 목록과 함께 내려오지 않는다.
+    await scroller.evaluate((element) => element.scrollTo({ top: 0 }));
+
+    const restingBox = await fab.boundingBox();
+    const box = await scroller.boundingBox();
+
+    if (!restingBox || !box)
+      throw new Error('FAB 또는 스크롤 영역을 찾지 못했다');
+
+    const x = box.x + box.width / 2;
+
+    await dispatchTouch(scroller, 'touchstart', x, box.y + 8);
+    await dispatchTouch(scroller, 'touchmove', x, box.y + 208);
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.release)).toBeVisible();
+    // 폭은 스크롤 상태에 따른 라벨 접힘 애니메이션으로 흔들리므로 세로 위치만 비교한다.
+    expect((await fab.boundingBox())?.y).toBe(restingBox.y);
+    await dispatchTouch(scroller, 'touchend', x, box.y + 208);
   });
 
   test('보관한 ID로 스토리 카드 목록을 보여준다 (US-2-1)', async ({ page }) => {
@@ -243,22 +319,24 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(card).toBeVisible();
 
-    // 마우스 드래그 경로로 당긴다(터치 리스너와 같은 임계값을 쓴다).
-    const box = await page.getByRole('main').boundingBox();
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+    const box = await scroller.boundingBox();
 
-    if (!box) throw new Error('main 영역을 찾지 못했다');
+    if (!box) throw new Error('스크롤 영역을 찾지 못했다');
 
     const x = box.x + box.width / 2;
+    const startY = box.y + 8;
 
-    await page.mouse.move(x, box.y + 8);
-    await page.mouse.down();
+    await dispatchTouch(scroller, 'touchstart', x, startY);
 
     for (let step = 1; step <= 10; step += 1) {
-      await page.mouse.move(x, box.y + 8 + step * 20);
+      await dispatchTouch(scroller, 'touchmove', x, startY + step * 20);
     }
 
     await expect(page.getByText(PULL_TO_REFRESH_COPY.release)).toBeVisible();
-    await page.mouse.up();
+    await dispatchTouch(scroller, 'touchend', x, startY + 200);
 
     await expect(page.getByText(PULL_TO_REFRESH_COPY.refreshing)).toBeVisible();
     await expect.poll(() => originalsRequestCount).toBe(2);

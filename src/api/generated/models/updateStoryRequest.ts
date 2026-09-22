@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { GeneralCharacterInput } from './generalCharacterInput';
 import type { GeneralStartSettingInput } from './generalStartSettingInput';
 import type { GeneralStorySettingsInput } from './generalStorySettingsInput';
 import type { MainEventItem } from './mainEventItem';
@@ -59,4 +60,11 @@ export interface UpdateStoryRequest {
    * @nullable
    */
   thumbnailObjectKey?: string | null;
+  /**
+   * 인물 목록(최대 6명). 생략하면 인물을 바꾸지 않는다.
+   * @minItems 0
+   * @maxItems 6
+   * @nullable
+   */
+  characters?: GeneralCharacterInput[] | null;
 }

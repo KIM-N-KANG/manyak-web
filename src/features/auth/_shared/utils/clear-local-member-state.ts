@@ -1,6 +1,6 @@
 import { clearPendingCreditOrder } from '@/features/my/credits/utils/pending-credit-order-storage';
 import {
-  clearPendingCreationRequest,
+  clearPendingCreationRequests,
   clearStoryCompletionRequests,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { resetAnalyticsUser } from '@/observability/analytics';
@@ -19,7 +19,7 @@ import { clearPendingLogin } from './pending-login-storage';
 export function clearLocalMemberState(): void {
   resetAnalyticsUser();
   clearPendingLogin();
-  clearPendingCreationRequest();
+  clearPendingCreationRequests();
   clearStoryCompletionRequests();
   clearPendingCreditOrder();
 }

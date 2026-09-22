@@ -1,6 +1,7 @@
 'use client';
 
 import { type MouseEventHandler } from 'react';
+import { createPortal } from 'react-dom';
 
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -16,10 +17,18 @@ type CreateStoryFabProps = {
   onCreate: MouseEventHandler<HTMLAnchorElement>;
 };
 
+/**
+ * 새 제작 FAB. 스크롤 콘텐츠 밖의 positioned 래퍼에 포털로 붙어 스크롤·당김 새로고침의
+ * 이동을 따라가지 않는다.
+ */
 export function CreateStoryFab({ onCreate }: CreateStoryFabProps) {
-  const { hasScrolled } = useMainScroll();
+  const { hasScrolled, overlayContainer } = useMainScroll();
 
-  return (
+  if (overlayContainer === null) {
+    return null;
+  }
+
+  return createPortal(
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-end px-4">
       <Link
         href={APP_PATH.STUDIO.STORY.SIMPLE}
@@ -44,6 +53,7 @@ export function CreateStoryFab({ onCreate }: CreateStoryFabProps) {
           </span>
         </m.span>
       </Link>
-    </div>
+    </div>,
+    overlayContainer,
   );
 }

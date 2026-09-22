@@ -22,6 +22,7 @@ import {
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
   type StoryCompletionRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
+import { DRAFT_RESUME_INTENT_STORAGE_KEY } from '@/features/stories/_shared/utils/draft-resume-intent';
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 
 /**
@@ -150,18 +151,34 @@ export async function seedPendingCreditOrder(
 }
 
 /**
- * 로컬스토리지의 편집 슬롯에 초안·스토리라인 생성 레코드를 심는다.
- * 스토리 생성 퍼널 재진입 시 복구 조회 폴링이 시작되는 상태를 재현할 때 쓴다.
+ * 로컬스토리지의 편집 초안 목록에 초안·스토리라인 생성 레코드를 심는다.
+ * 제작 탭 카드 표시와 "이어서 만들기" 재개, 복구 조회 폴링이 시작되는 상태를 재현할 때 쓴다.
  */
-export async function seedPendingCreationRequest(
+export async function seedPendingCreationRequests(
   page: Page,
-  record: PendingCreationRequest,
+  records: PendingCreationRequest[],
 ): Promise<void> {
   await page.addInitScript(
     ([key, value]) => {
       window.localStorage.setItem(key, value);
     },
-    [PENDING_CREATION_REQUEST_STORAGE_KEY, JSON.stringify(record)] as const,
+    [PENDING_CREATION_REQUEST_STORAGE_KEY, JSON.stringify(records)] as const,
+  );
+}
+
+/**
+ * 진행 카드 "이어서 만들기"가 남기는 재개 의도(sessionStorage)를 심는다.
+ * 퍼널 직접 진입은 새 세션이므로, 특정 레코드를 복원하는 진입을 재현할 때 쓴다.
+ */
+export async function seedDraftResumeIntent(
+  page: Page,
+  requestId: string,
+): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => {
+      window.sessionStorage.setItem(key, value);
+    },
+    [DRAFT_RESUME_INTENT_STORAGE_KEY, requestId] as const,
   );
 }
 
