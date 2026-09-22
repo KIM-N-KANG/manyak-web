@@ -54,3 +54,6 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 /.playwright-cli/
+
+# update-visual-snapshots.sh가 만드는 env 마스킹 임시 파일
+.env-mask.*
