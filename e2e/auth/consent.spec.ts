@@ -3,11 +3,13 @@ import { type Page } from '@playwright/test';
 import type { UserConsentResponse } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
+import { PUSH_CONSENT_NOTICE_COPY } from '@/features/my/_shared/constants/push-copy';
 
 import {
   CONSENTS_FIXTURE,
   expect,
   mockMemberSession,
+  PUSH_SETTINGS_FIXTURE,
   seedPendingLogin,
   seedStoryIds,
   skipOnboarding,
@@ -495,5 +497,105 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     await expect(dialog).toBeHidden();
     await myStories;
     expect(consentsCount).toBe(2);
+  });
+});
+
+test.describe('필수 동의 시트의 광고성 알림 수신 동의(선택)', () => {
+  test('체크하지 않아도 제출할 수 있고 광고 동의는 저장하지 않는다', async ({
+    page,
+  }) => {
+    let pushSettingsPutCount = 0;
+
+    await mockMemberSession(page);
+    await seedPendingLogin(page);
+    await page.route(CONSENTS, async (route) => {
+      await route.fulfill({
+        json:
+          route.request().method() === 'POST'
+            ? CONSENTS_FIXTURE
+            : PENDING_CONSENTS,
+      });
+    });
+    await page.route('**/api/v1/users/me/push-settings', async (route) => {
+      if (route.request().method() === 'PUT') {
+        pushSettingsPutCount += 1;
+      }
+
+      await route.fulfill({ json: PUSH_SETTINGS_FIXTURE });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const dialog = consentDialog(page);
+    const marketing = dialog.getByRole('checkbox', {
+      name: CONSENT_SHEET_COPY.marketing,
+    });
+
+    await expect(marketing).toBeVisible();
+    await expect(marketing).not.toBeChecked();
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .click();
+    await expect(marketing).not.toBeChecked();
+    await submitButton(page).click();
+
+    await expect(dialog).toBeHidden();
+    await page.waitForTimeout(500);
+    expect(pushSettingsPutCount).toBe(0);
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
+  test('체크한 채 동의하면 필수 동의 저장 뒤 광고만 켠 전체 교체 PUT과 처리 결과 통지가 이어진다', async ({
+    page,
+  }) => {
+    const putBodies: unknown[] = [];
+
+    await mockMemberSession(page);
+    await seedPendingLogin(page);
+    await page.route(CONSENTS, async (route) => {
+      await route.fulfill({
+        json:
+          route.request().method() === 'POST'
+            ? CONSENTS_FIXTURE
+            : PENDING_CONSENTS,
+      });
+    });
+    await page.route('**/api/v1/users/me/push-settings', async (route) => {
+      if (route.request().method() === 'PUT') {
+        putBodies.push(route.request().postDataJSON());
+        await route.fulfill({ body: route.request().postData() ?? '{}' });
+
+        return;
+      }
+
+      await route.fulfill({ json: PUSH_SETTINGS_FIXTURE });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const dialog = consentDialog(page);
+
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .click();
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.marketing })
+      .click();
+    await submitButton(page).click();
+
+    await expect(dialog).toBeHidden();
+    await expect.poll(() => putBodies.length).toBe(1);
+    expect(putBodies[0]).toEqual({
+      servicePush: true,
+      marketingPush: true,
+      marketingNightPush: false,
+    });
+
+    const notice = page.getByRole('alertdialog');
+
+    await expect(notice).toContainText(PUSH_CONSENT_NOTICE_COPY.title);
+    await expect(notice).toContainText(
+      PUSH_CONSENT_NOTICE_COPY.result.marketingOn,
+    );
   });
 });

@@ -28,7 +28,7 @@ import { AutoMigration } from '@/features/auth/_shared/components/auto-migration
 import { ConsentGate } from '@/features/auth/_shared/components/consent-gate';
 import { GuestConsentProvider } from '@/features/auth/_shared/components/guest-consent-provider';
 import { HandoffCleanup } from '@/features/auth/_shared/components/handoff-cleanup';
-import { PushPromptSheet } from '@/features/my/_shared/components/push-prompt-sheet';
+import { MarketingConsentSheet } from '@/features/my/_shared/components/marketing-consent-sheet';
 import { PushTokenSync } from '@/features/my/_shared/components/push-token-sync';
 import { InviteOnboardingSheet } from '@/features/my/invite/components/invite-onboarding-sheet';
 
@@ -120,7 +120,7 @@ export default function RootLayout({
                         <HandoffCleanup />
                         <InviteOnboardingSheet />
                         <PushTokenSync />
-                        <PushPromptSheet />
+                        <MarketingConsentSheet />
                       </GuestConsentProvider>
                     </ConsentGate>
                   </MotionProvider>

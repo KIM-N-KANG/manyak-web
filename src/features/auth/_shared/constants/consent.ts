@@ -9,6 +9,8 @@ export const CONSENT_SHEET_COPY = {
     privacy: '[필수] 개인정보 처리방침 동의',
     age14: '[필수] 만 14세 이상입니다',
   } satisfies Record<ConsentKey, string>,
+  /** 필수 완료 조건에 넣지 않는 선택 항목. 저장·통지 규칙은 웹 PWA 푸시 계약이 소유한다. */
+  marketing: '[선택] 광고성 알림 수신 동의',
   viewDocument: {
     label: '보기',
     terms: '서비스 이용약관 보기',

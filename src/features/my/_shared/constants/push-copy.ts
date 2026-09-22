@@ -1,16 +1,15 @@
-/** 제작 요청 직후 알림 권한 프롬프트 시트의 사용자 문구 정본. */
-export const PUSH_PROMPT_COPY = {
-  title: '완성되면 알림으로 알려드릴까요?',
-  description: '스토리가 완성되면 브라우저 알림으로 바로 알려드려요',
-  marketingConsent: '[선택] 광고성 알림 수신 동의',
-  marketingDescription:
+/**
+ * 광고 알림 동의 재질문 시트와 처리 뒤 안내의 사용자 문구 정본. Android 재질문 시트와 같다.
+ * 첫 질문은 필수 동의 시트의 선택 항목(`CONSENT_SHEET_COPY.marketing`)이다.
+ */
+export const MARKETING_CONSENT_COPY = {
+  title: '이벤트·혜택 소식을 알림으로 받아 볼까요?',
+  description:
     '새로운 이벤트와 혜택 소식, 출석 리마인드를 광고 알림으로 보내드려요',
-  accept: '알림 받기',
-  later: '나중에',
-  installTitle: '홈 화면에 추가하면 알림을 받을 수 있어요',
-  installDescription:
-    'iOS에서는 홈 화면에 추가한 마냑에서만 알림을 받을 수 있어요. 공유 버튼을 누른 뒤 "홈 화면에 추가"를 선택해 주세요',
-  installClose: '확인',
+  accept: '광고 알림 받기',
+  decline: '닫기',
+  deviceDisabledHint:
+    '브라우저 알림이 꺼져 있어 알림 설정에서 켜야 받을 수 있어요',
 } as const;
 
 /** 알림 설정 화면의 사용자 문구 정본. Android 알림 설정 화면과 같은 문구를 쓴다. */

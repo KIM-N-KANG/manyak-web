@@ -28,6 +28,16 @@ import {
   type RequiredConsent,
 } from '@/features/auth/_shared/utils/consent-status';
 import { signOutBeforeConsent } from '@/features/auth/_shared/utils/sign-out-before-consent';
+import {
+  hasAskedPushPermission,
+  markPushPermissionAsked,
+} from '@/features/my/_shared/utils/marketing-consent-storage';
+import {
+  isIosDevice,
+  isStandaloneDisplay,
+  readNotificationPermission,
+  requestNotificationPermission,
+} from '@/features/my/_shared/utils/push-permission';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { useCloseOnBack } from '@/hooks/use-close-on-back';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
@@ -37,9 +47,31 @@ type ConsentNotice = keyof typeof CONSENT_SHEET_COPY.error | null;
 
 type UseConsentFormOptions = {
   required: RequiredConsent[];
-  onRecorded: (recorded: UserConsentResponse) => void;
+  onRecorded: (
+    recorded: UserConsentResponse,
+    marketingAccepted: boolean,
+  ) => void;
   onReload: () => void;
 };
+
+/**
+ * 필수 동의 제출 직전에 브라우저 알림 권한을 요청한다. 제출 버튼 클릭이 사용자 제스처라
+ * 이 시점이 웹에서 권한 팝업을 띄울 수 있는 가장 이른 때다(Android는 앱 시작 때 묻는다).
+ * 권한이 미결정이고 이 기기에서 아직 묻지 않았을 때만 한 번 묻고, iOS 비설치본은 권한을
+ * 받을 수 없어 건너뛴다. 응답과 무관하게 동의 제출은 이어진다.
+ */
+async function askPushPermissionBeforeSubmit(): Promise<void> {
+  if (
+    readNotificationPermission() !== 'default' ||
+    hasAskedPushPermission() ||
+    (isIosDevice() && !isStandaloneDisplay())
+  ) {
+    return;
+  }
+
+  markPushPermissionAsked();
+  await requestNotificationPermission().catch(() => undefined);
+}
 
 const DOCUMENT_LINKS: Partial<
   Record<ConsentKey, { href: string; label: string }>
@@ -75,6 +107,8 @@ function useConsentForm({
   }>({ versionKey, keys: new Set() });
   const [notice, setNotice] = useState<ConsentNotice>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [marketingChecked, setMarketingChecked] = useState(false);
+  const [isAskingPermission, setIsAskingPermission] = useState(false);
   const checked: ReadonlySet<ConsentKey> =
     checkedState.versionKey === versionKey
       ? checkedState.keys
@@ -84,7 +118,7 @@ function useConsentForm({
       onSuccess: (response) => {
         if (response.status === 200 && !hasPendingConsent(response.data)) {
           setNotice(null);
-          onRecorded(response.data);
+          onRecorded(response.data, marketingChecked);
 
           return;
         }
@@ -137,7 +171,7 @@ function useConsentForm({
   const toggleAll = (isChecked: boolean) =>
     setChecked(isChecked ? new Set(required.map(({ key }) => key)) : new Set());
 
-  const isLocked = record.isPending || isLoggingOut;
+  const isLocked = record.isPending || isLoggingOut || isAskingPermission;
 
   const submit = () => {
     if (isLocked || !isEveryRequiredChecked(required, checked)) {
@@ -145,7 +179,11 @@ function useConsentForm({
     }
 
     setNotice(null);
-    record.mutate({ data: buildConsentRequest(required) });
+    setIsAskingPermission(true);
+    void askPushPermissionBeforeSubmit().finally(() => {
+      setIsAskingPermission(false);
+      record.mutate({ data: buildConsentRequest(required) });
+    });
   };
 
   const logout = () => {
@@ -161,9 +199,11 @@ function useConsentForm({
     checked,
     isAllChecked: isEveryRequiredChecked(required, checked),
     notice,
-    isSubmitting: record.isPending,
+    isSubmitting: record.isPending || isAskingPermission,
     isLoggingOut,
     isLocked,
+    marketingChecked,
+    setMarketingChecked,
     toggle,
     toggleAll,
     submit,
@@ -174,7 +214,10 @@ function useConsentForm({
 type ConsentSheetProps = {
   phase: ConsentGatePhase;
   required: RequiredConsent[];
-  onRecorded: (recorded: UserConsentResponse) => void;
+  onRecorded: (
+    recorded: UserConsentResponse,
+    marketingAccepted: boolean,
+  ) => void;
   onReload: () => void;
 };
 
@@ -264,6 +307,17 @@ export function ConsentSheet({
                   </li>
                 ))}
               </ul>
+              <Checkbox
+                className="border-t border-border pt-3"
+                checked={form.marketingChecked}
+                disabled={form.isLocked}
+                onCheckedChange={form.setMarketingChecked}
+                label={
+                  <span className="text-base">
+                    {CONSENT_SHEET_COPY.marketing}
+                  </span>
+                }
+              />
             </div>
           )}
 

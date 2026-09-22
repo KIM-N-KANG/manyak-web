@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -14,10 +14,21 @@ import {
   subscribeForegroundMessages,
 } from '@/lib/push/messaging';
 
+import {
+  advanceMarketingConsentRecord,
+  hasAskedPushPermission,
+  markPushPermissionAsked,
+  readMarketingConsentRecord,
+  writeMarketingConsentRecord,
+} from '../utils/marketing-consent-storage';
+import { requestMarketingConsentReask } from '../utils/marketing-consent-store';
 import { resolvePushLinkPath } from '../utils/push-link';
 import {
+  isIosDevice,
+  isStandaloneDisplay,
   PUSH_PERMISSION_EVENT,
   readNotificationPermission,
+  requestNotificationPermission,
 } from '../utils/push-permission';
 import { isPushForCurrentUser } from '../utils/push-recipient';
 import { writeRegisteredPushToken } from '../utils/push-token-storage';
@@ -38,6 +49,39 @@ export function usePushTokenSync() {
   const userId = session?.user?.id ?? null;
   const shouldSync = IS_PUSH_ENABLED && isMember && userId !== null;
   const { mutate: registerMutate } = registerToken;
+  const enteredUserIdRef = useRef<string | null>(null);
+
+  // 회원 화면이 처음 열릴 때(페이지 로드당 한 번) Android의 앱 시작과 같은 일을 한다.
+  // 권한이 미결정이면 이 기기에서 한 번 자동으로 묻고(제스처 없이는 Safari가 무시하므로
+  // 필수 동의 시트·설정 화면의 버튼이 보조 경로다), 광고 동의 재진입 횟수를 센다.
+  useEffect(() => {
+    if (!shouldSync || enteredUserIdRef.current === userId) {
+      return;
+    }
+
+    enteredUserIdRef.current = userId;
+
+    if (
+      readNotificationPermission() === 'default' &&
+      !hasAskedPushPermission() &&
+      !(isIosDevice() && !isStandaloneDisplay())
+    ) {
+      markPushPermissionAsked();
+      void requestNotificationPermission().catch(() => undefined);
+    }
+
+    const step = advanceMarketingConsentRecord(
+      readMarketingConsentRecord(userId),
+    );
+
+    if (step.record) {
+      writeMarketingConsentRecord(userId, step.record);
+    }
+
+    if (step.shouldReask) {
+      requestMarketingConsentReask(userId);
+    }
+  }, [shouldSync, userId]);
 
   useEffect(() => {
     if (!shouldSync) {
