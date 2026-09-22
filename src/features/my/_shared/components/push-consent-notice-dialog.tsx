@@ -31,17 +31,11 @@ export function PushConsentNoticeDialog({
     setShown(notice);
   }
 
-  const rows = shown
+  const lines = shown
     ? [
-        [
-          PUSH_CONSENT_NOTICE_COPY.resultLabel,
-          PUSH_CONSENT_NOTICE_COPY.result[shown.result],
-        ],
-        [PUSH_CONSENT_NOTICE_COPY.senderLabel, PUSH_CONSENT_NOTICE_COPY.sender],
-        [
-          PUSH_CONSENT_NOTICE_COPY.dateLabel,
-          formatDateTime(shown.at.toISOString()),
-        ],
+        `${PUSH_CONSENT_NOTICE_COPY.senderLabel}: ${PUSH_CONSENT_NOTICE_COPY.sender}`,
+        `${PUSH_CONSENT_NOTICE_COPY.dateLabel}: ${formatDateTime(shown.at.toISOString())}`,
+        `${PUSH_CONSENT_NOTICE_COPY.resultLabel}: ${PUSH_CONSENT_NOTICE_COPY.result[shown.result]}`,
       ]
     : [];
 
@@ -50,19 +44,13 @@ export function PushConsentNoticeDialog({
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogTitle>{PUSH_CONSENT_NOTICE_COPY.title}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {shown ? PUSH_CONSENT_NOTICE_COPY.result[shown.result] : ''}
+          <AlertDialogDescription className="flex flex-col gap-1 text-left">
+            {lines.map((line) => (
+              <span key={line}>{line}</span>
+            ))}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <dl className="flex flex-col gap-2 text-sm">
-          {rows.map(([label, value]) => (
-            <div key={label} className="flex flex-col">
-              <dt className="text-foreground-secondary">{label}</dt>
-              <dd className="text-foreground">{value}</dd>
-            </div>
-          ))}
-        </dl>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="grid-cols-1">
           <AlertDialogAction type="button" onClick={onClose}>
             {PUSH_CONSENT_NOTICE_COPY.close}
           </AlertDialogAction>

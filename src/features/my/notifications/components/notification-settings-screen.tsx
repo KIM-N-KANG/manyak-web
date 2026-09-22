@@ -12,6 +12,15 @@ import { toast } from 'sonner';
 import { useGetPushSettings } from '@/api/generated/endpoints/push/push';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Switch } from '@/components/motion/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
@@ -112,6 +121,7 @@ export function NotificationSettingsScreen() {
   const { update, isPending } = usePushSettingsUpdate();
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [notice, setNotice] = useState<PushConsentNotice | null>(null);
+  const [deniedGuideOpen, setDeniedGuideOpen] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -127,7 +137,6 @@ export function NotificationSettingsScreen() {
     settingsQuery.isError ||
     (settingsQuery.data !== undefined && settingsQuery.data.status !== 200);
   const banner = promptState === 'granted' ? null : BANNER_COPY[promptState];
-  const canEnable = promptState === 'prompt' || promptState === 'denied';
   const rowsEnabled =
     (promptState === 'granted' || promptState === 'unsupported') && !isPending;
 
@@ -171,7 +180,7 @@ export function NotificationSettingsScreen() {
           role="status"
           className="mx-4 mb-1 flex items-center gap-2 rounded-lg bg-muted py-2 pr-1 pl-4">
           <p className="flex-1 text-sm break-keep">{banner}</p>
-          {canEnable && (
+          {promptState === 'prompt' && (
             <Button
               type="button"
               variant="ghost"
@@ -179,6 +188,15 @@ export function NotificationSettingsScreen() {
               disabled={isRequestingPermission}
               onClick={() => void enablePermission()}>
               {PUSH_SETTINGS_COPY.enable}
+            </Button>
+          )}
+          {promptState === 'denied' && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setDeniedGuideOpen(true)}>
+              {PUSH_SETTINGS_COPY.deniedGuide}
             </Button>
           )}
         </div>
@@ -214,6 +232,25 @@ export function NotificationSettingsScreen() {
         notice={notice}
         onClose={() => setNotice(null)}
       />
+      <AlertDialog open={deniedGuideOpen} onOpenChange={setDeniedGuideOpen}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {PUSH_SETTINGS_COPY.deniedGuideTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left break-keep">
+              {PUSH_SETTINGS_COPY.deniedGuideDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="grid-cols-1">
+            <AlertDialogAction
+              type="button"
+              onClick={() => setDeniedGuideOpen(false)}>
+              {PUSH_SETTINGS_COPY.deniedGuideClose}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

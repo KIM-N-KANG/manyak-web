@@ -58,6 +58,18 @@ export function MyScreen() {
         </div>
         <ThemeMenuItem />
       </section>
+      {isAuthenticated && (
+        <section className="flex flex-col py-4">
+          <div className="mb-2 px-4">
+            <Label>알림</Label>
+          </div>
+          <MyMenuItem
+            icon={Notification01Icon}
+            label={PUSH_SETTINGS_COPY.menuLabel}
+            href={APP_PATH.MY_NOTIFICATIONS}
+          />
+        </section>
+      )}
       <section className="flex flex-col py-4">
         <div className="mb-2 px-4">
           <Label>기타</Label>
@@ -79,11 +91,6 @@ export function MyScreen() {
           <div className="mb-2 px-4">
             <Label>계정</Label>
           </div>
-          <MyMenuItem
-            icon={Notification01Icon}
-            label={PUSH_SETTINGS_COPY.menuLabel}
-            href={APP_PATH.MY_NOTIFICATIONS}
-          />
           <MyMenuItem
             icon={Logout03Icon}
             label="로그아웃"

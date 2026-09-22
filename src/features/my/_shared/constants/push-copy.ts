@@ -23,6 +23,11 @@ export const PUSH_SETTINGS_COPY = {
     '홈 화면에 추가한 마냑에서만 알림을 받을 수 있어요. 공유 버튼을 누른 뒤 "홈 화면에 추가"를 선택해 주세요',
   bannerUnsupported: '이 브라우저에서는 알림을 지원하지 않아요',
   enable: '알림 켜기',
+  deniedGuide: '방법 보기',
+  deniedGuideTitle: '브라우저에서 알림을 허용해 주세요',
+  deniedGuideDescription:
+    '한 번 차단한 알림은 브라우저가 다시 묻지 않아요. 주소창의 사이트 설정(자물쇠 아이콘)에서 알림을 "허용"으로 바꾼 뒤 이 화면을 다시 열어 주세요. 홈 화면에 추가한 앱이라면 기기의 앱 알림 설정에서 허용해 주세요',
+  deniedGuideClose: '확인',
   service: '서비스 알림',
   serviceDescription: '스토리 완성처럼 내 활동의 결과를 알려드려요',
   marketing: '광고 알림',
@@ -41,7 +46,7 @@ export const PUSH_CONSENT_NOTICE_COPY = {
   title: '알림 수신 동의 처리 안내',
   sender: '마냑 운영자 강동우(팀명 김앤강)',
   senderLabel: '전송자',
-  dateLabel: '의사 표시 일시',
+  dateLabel: '일시',
   resultLabel: '처리 내용',
   close: '확인',
   result: {
