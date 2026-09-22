@@ -308,13 +308,17 @@ export function ConsentSheet({
                 ))}
               </ul>
               <Checkbox
-                className="border-t border-border pt-3"
                 checked={form.marketingChecked}
                 disabled={form.isLocked}
                 onCheckedChange={form.setMarketingChecked}
                 label={
-                  <span className="text-base">
-                    {CONSENT_SHEET_COPY.marketing}
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-base">
+                      {CONSENT_SHEET_COPY.marketing}
+                    </span>
+                    <span className="text-xs text-foreground-secondary">
+                      {CONSENT_SHEET_COPY.marketingDescription}
+                    </span>
                   </span>
                 }
               />

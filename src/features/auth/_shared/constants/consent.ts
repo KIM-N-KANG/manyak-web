@@ -11,6 +11,7 @@ export const CONSENT_SHEET_COPY = {
   } satisfies Record<ConsentKey, string>,
   /** 필수 완료 조건에 넣지 않는 선택 항목. 저장·통지 규칙은 웹 PWA 푸시 계약이 소유한다. */
   marketing: '[선택] 광고성 알림 수신 동의',
+  marketingDescription: '이벤트·혜택 소식과 출석 리마인드를 알림으로 받아요',
   viewDocument: {
     label: '보기',
     terms: '서비스 이용약관 보기',
