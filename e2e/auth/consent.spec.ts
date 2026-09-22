@@ -247,8 +247,17 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     await submitButton(page).click();
 
     await expect(dialog).toBeHidden();
-    expect(recordBodies).toEqual([{ terms: 'v1.3', age14: '1' }]);
+    expect(recordBodies).toEqual([{ age14: '1', terms: 'v1.3' }]);
     await expect(page).toHaveURL('/stories/s1?setting=ss2#endings');
+
+    // 전체 동의는 광고 동의도 켜므로 처리 결과 다이얼로그가 따라온다. 닫아야 화면을 쓸 수 있다.
+    const notice = page.getByRole('alertdialog');
+
+    await expect(notice).toContainText(PUSH_CONSENT_NOTICE_COPY.title);
+    await notice
+      .getByRole('button', { name: PUSH_CONSENT_NOTICE_COPY.close })
+      .click();
+    await expect(notice).toBeHidden();
 
     // 동의를 마친 뒤에야 회원 기능(채팅 시작)이 실제 요청으로 이어진다. 자동 재실행은 없다.
     expect(createChatCount).toBe(0);
@@ -533,10 +542,17 @@ test.describe('필수 동의 시트의 광고성 알림 수신 동의(선택)', 
 
     await expect(marketing).toBeVisible();
     await expect(marketing).not.toBeChecked();
+    // 전체 동의는 선택 항목까지 켜지만, 선택만 다시 끄면 전체 동의가 풀리고 제출은 가능하다.
     await dialog
       .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
       .click();
+    await expect(marketing).toBeChecked();
+    await marketing.click();
     await expect(marketing).not.toBeChecked();
+    await expect(
+      dialog.getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll }),
+    ).not.toBeChecked();
+    await expect(submitButton(page)).toBeEnabled();
     await submitButton(page).click();
 
     await expect(dialog).toBeHidden();
@@ -578,9 +594,9 @@ test.describe('필수 동의 시트의 광고성 알림 수신 동의(선택)', 
     await dialog
       .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
       .click();
-    await dialog
-      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.marketing })
-      .click();
+    await expect(
+      dialog.getByRole('checkbox', { name: CONSENT_SHEET_COPY.marketing }),
+    ).toBeChecked();
     await submitButton(page).click();
 
     await expect(dialog).toBeHidden();

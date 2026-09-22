@@ -168,8 +168,11 @@ function useConsentForm({
     setChecked(next);
   };
 
-  const toggleAll = (isChecked: boolean) =>
+  // 전체 동의는 선택 항목(광고 알림)까지 함께 켜고 끈다(Android와 동일). 제출 조건은 필수만 본다.
+  const toggleAll = (isChecked: boolean) => {
     setChecked(isChecked ? new Set(required.map(({ key }) => key)) : new Set());
+    setMarketingChecked(isChecked);
+  };
 
   const isLocked = record.isPending || isLoggingOut || isAskingPermission;
 
@@ -197,7 +200,8 @@ function useConsentForm({
 
   return {
     checked,
-    isAllChecked: isEveryRequiredChecked(required, checked),
+    isAllChecked: isEveryRequiredChecked(required, checked) && marketingChecked,
+    isEveryRequiredChecked: isEveryRequiredChecked(required, checked),
     notice,
     isSubmitting: record.isPending || isAskingPermission,
     isLoggingOut,
@@ -337,7 +341,7 @@ export function ConsentSheet({
                 type="button"
                 size="lg"
                 className="relative w-full"
-                disabled={!form.isAllChecked || form.isLocked}
+                disabled={!form.isEveryRequiredChecked || form.isLocked}
                 onClick={form.submit}>
                 <LoadingButtonContent
                   isLoading={form.isSubmitting}
