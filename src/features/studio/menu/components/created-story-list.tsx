@@ -92,16 +92,9 @@ export function CreatedStoryList() {
   } else {
     // 앱과 같이 빈 목록에도 FAB만 둔다. 만들기 진입은 FAB이 맡는다.
     stateKey = 'list';
-    content = (
-      <>
-        {showsEmptyNotice ? (
-          <EmptyListNotice>
-            {CREATED_STORY_LIST_COPY.emptyTitle}
-          </EmptyListNotice>
-        ) : null}
-        <CreateStoryFab onCreate={handleCreateClick} />
-      </>
-    );
+    content = showsEmptyNotice ? (
+      <EmptyListNotice>{CREATED_STORY_LIST_COPY.emptyTitle}</EmptyListNotice>
+    ) : null;
   }
 
   return (
@@ -143,6 +136,10 @@ export function CreatedStoryList() {
           {content}
         </FadeStateSwitch>
       </section>
+      {/* 스크롤 콘텐츠 밖으로 포털되므로 위치는 무관하다. 목록 상태에서만 둔다. */}
+      {stateKey === 'list' ? (
+        <CreateStoryFab onCreate={handleCreateClick} />
+      ) : null}
     </>
   );
 }
