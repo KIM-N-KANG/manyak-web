@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import type {
   CreditPolicyResponse,
   CreditProductResponse,
+  PushSettingsResponse,
   TrialsResponse,
   UserConsentResponse,
 } from '@/api/generated/models';
@@ -45,6 +46,11 @@ export async function mockApi(page: Page): Promise<void> {
   // 회원 시나리오가 동의 시트 없이 진행되게 한다. 동의 시나리오는 이 목을 override한다.
   await mockConsents(page);
   await mockGuestConsents(page);
+
+  // 회원 세션은 루트의 토큰 동기화·프롬프트가 알림 API를 부를 수 있다. 기본 설정과 204를
+  // 응답해 어떤 시나리오도 catch-all의 `[]`로 깨지지 않게 한다. 설정 시나리오는 override한다.
+  await mockPushTokens(page);
+  await mockPushSettings(page);
 }
 
 export const GUEST_CONSENT_VERSION_FIXTURE = 'guest-v1';
@@ -367,6 +373,65 @@ export async function mockChatShareCreate(
         turnCount: 1,
         createdAt: '2026-07-29T00:00:00Z',
       }),
+    });
+  });
+}
+
+/** 디바이스 푸시 토큰 등록·삭제(PUT/DELETE /api/v1/users/me/push-tokens) 라우트 글롭. */
+const PUSH_TOKENS_ROUTE = '**/api/v1/users/me/push-tokens';
+
+/** 알림 설정 조회·갱신(GET/PUT /api/v1/users/me/push-settings) 라우트 글롭. */
+const PUSH_SETTINGS_ROUTE = '**/api/v1/users/me/push-settings';
+
+/** E2E가 응답할 알림 설정 기본값. 서비스 켜짐, 광고·야간 꺼짐(서버 기본과 같다). */
+export const PUSH_SETTINGS_FIXTURE = {
+  servicePush: true,
+  marketingPush: false,
+  marketingNightPush: false,
+} as const satisfies Required<PushSettingsResponse>;
+
+/**
+ * 푸시 토큰 등록·삭제를 204로 목킹한다.
+ *
+ * @param page 대상 페이지
+ */
+export async function mockPushTokens(page: Page): Promise<void> {
+  await page.route(PUSH_TOKENS_ROUTE, async (route) => {
+    await route.fulfill({ status: 204 });
+  });
+}
+
+/**
+ * 알림 설정 조회·갱신을 목킹한다. GET은 픽스처(덮어쓰기 가능)를, PUT은 요청 본문을 그대로
+ * 돌려줘 전체 교체 계약을 재현한다. `status`를 넘기면 GET을 그 상태로 실패시킨다.
+ *
+ * @param page 대상 페이지
+ * @param overrides 기본 픽스처 위에 덮어쓸 항목
+ * @param status GET 응답 상태(기본 200)
+ */
+export async function mockPushSettings(
+  page: Page,
+  overrides: Partial<PushSettingsResponse> = {},
+  status = 200,
+): Promise<void> {
+  await page.route(PUSH_SETTINGS_ROUTE, async (route) => {
+    if (route.request().method() === 'PUT') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: route.request().postData() ?? '{}',
+      });
+
+      return;
+    }
+
+    await route.fulfill({
+      status,
+      contentType: 'application/json',
+      body:
+        status === 200
+          ? JSON.stringify({ ...PUSH_SETTINGS_FIXTURE, ...overrides })
+          : '{}',
     });
   });
 }

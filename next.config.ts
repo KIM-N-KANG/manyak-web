@@ -24,6 +24,17 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'no-referrer' },
         ],
       },
+      {
+        // FCM 서비스 워커는 항상 최신 본을 받아야 한다. 캐시된 구버전이 남으면
+        // Firebase 설정·SDK 버전이 앱과 어긋난 채 푸시를 처리한다.
+        source: '/firebase-messaging-sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
     ];
   },
   // 실기기 dev 테스트용 교차 출처 허용 목록. 개발자별 터널 도메인·LAN IP는

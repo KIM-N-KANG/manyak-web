@@ -23,8 +23,8 @@ const partiallyPending: UserConsentResponse = {
 describe('getRequiredConsents', () => {
   it('needsConsent가 true인 항목만 표시 순서대로 돌려준다', () => {
     expect(getRequiredConsents(partiallyPending)).toEqual([
-      { key: 'terms', requiredVersion: 'v1.3' },
       { key: 'age14', requiredVersion: '1' },
+      { key: 'terms', requiredVersion: 'v1.3' },
     ]);
   });
 
