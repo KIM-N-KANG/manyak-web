@@ -54,9 +54,13 @@ const storylinesResponse = {
   ],
 };
 
+/** 시드 초안의 처음 임시 저장 시각(UTC). 카드에는 KST `2026-09-20 21:05`로 보인다. */
+const DRAFT_CREATED_AT = '2026-09-20T12:05:00.000Z';
+
 const draftRecord: PendingCreationRequest = {
   stage: 'STORY_DRAFT',
   requestId: '33333333-3333-4333-8333-333333333333',
+  createdAt: DRAFT_CREATED_AT,
   step: 'storyline-select',
   generationRequest: {
     requestId: '11111111-1111-4111-8111-111111111111',
@@ -197,6 +201,9 @@ test.describe('스토리 임시 저장·재개', () => {
         body: JSON.stringify(storylinesResponse),
       });
     });
+    // 처음 임시 저장 시각(키워드 자동 저장)이 단계 전환 뒤에도 카드 날짜로 남는지 보기 위해
+    // 키워드 저장과 스토리라인 생성 사이에 시계를 옮긴다.
+    await page.clock.setFixedTime(new Date('2026-09-22T04:30:00.000Z'));
 
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
@@ -207,6 +214,8 @@ test.describe('스토리 임시 저장·재개', () => {
     );
 
     await page.getByRole('button', { name: '판타지' }).click();
+    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    await page.clock.setFixedTime(new Date('2026-09-22T05:45:00.000Z'));
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '용감한' }).click();
     await page.getByRole('button', { name: '다음' }).click();
@@ -236,6 +245,7 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(
       page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
+    await expect(page.getByText('2026-09-22 13:30')).toBeVisible();
     await page
       .getByRole('button', { name: '이어서 만들기', exact: true })
       .click();
@@ -365,9 +375,11 @@ test.describe('스토리 임시 저장·재개', () => {
   test('초안이 두 개면 각 카드의 이어서 만들기가 자기 내용을 복원한다', async ({
     page,
   }) => {
+    // 저장 순서는 스토리 초안이 먼저지만 처음 저장 시각은 키워드 초안이 더 최신이라 카드는 키워드 초안이 위다.
     const keywordDraft: PendingCreationRequest = {
       stage: 'KEYWORD_DRAFT',
       requestId: '44444444-4444-4444-8444-444444444444',
+      createdAt: '2026-09-21T03:00:00.000Z',
       snapshot: {
         selectedGenreTagIds: [1],
         customGenreTags: [],
@@ -390,23 +402,23 @@ test.describe('스토리 임시 저장·재개', () => {
     });
 
     await expect(cards).toHaveCount(2);
-    // 카드는 각 초안이 멈춘 단계를 설명한다.
+    // 카드는 처음 저장 시각 최신순이고 각 초안이 멈춘 단계를 설명한다.
     await expect(
       cards
         .nth(0)
-        .getByText(
-          CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
-        ),
+        .getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.keyword),
     ).toBeVisible();
     await expect(
       cards
         .nth(1)
-        .getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.keyword),
+        .getByText(
+          CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
+        ),
     ).toBeVisible();
 
-    // 두 번째 카드(키워드 초안)를 재개하면 키워드 입력이 복원된다.
+    // 첫 번째 카드(키워드 초안)를 재개하면 키워드 입력이 복원된다.
     await cards
-      .nth(1)
+      .nth(0)
       .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
       .click();
     await expect(page).toHaveURL(
@@ -417,10 +429,10 @@ test.describe('스토리 임시 저장·재개', () => {
       page.getByRole('textbox', { name: '주인공 이름' }),
     ).toHaveValue('두 번째 주인공');
 
-    // 첫 번째 카드(스토리 초안)를 재개하면 생성 결과가 복원되고 두 초안 모두 남는다.
+    // 두 번째 카드(스토리 초안)를 재개하면 생성 결과가 복원되고 두 초안 모두 남는다.
     await page.goto(APP_PATH.MAIN.STUDIO);
     await cards
-      .nth(0)
+      .nth(1)
       .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
       .click();
     await expect(page.getByText('첫 번째 이야기 흐름입니다.')).toBeVisible();
@@ -448,6 +460,8 @@ test.describe('스토리 임시 저장·재개', () => {
         CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
       ),
     ).toBeVisible();
+    // 처음 임시 저장한 시각을 KST 분 단위로 버튼 위에 표시한다.
+    await expect(card.getByText('2026-09-20 21:05')).toBeVisible();
     await expect(
       card.getByRole('button', { name: '이어서 만들기 배너 닫기' }),
     ).toHaveCount(0);

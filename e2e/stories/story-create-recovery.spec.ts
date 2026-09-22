@@ -83,6 +83,8 @@ const storylineRecord: PendingCreationRequest = {
 const completionRecord: StoryCompletionRecord = {
   stage: 'STORY_COMPLETION',
   requestId: COMPLETION_REQUEST_ID,
+  // 카드에는 KST `2026-09-20 21:05`로 보인다.
+  createdAt: '2026-09-20T12:05:00.000Z',
   generationRequest,
   generationResult: storylinesResult,
   selectedStoryline: storylinesResult.storylines[0],
@@ -331,6 +333,8 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
       });
 
       await expect(progress).toBeVisible();
+      // 완성 중 카드도 처음 임시 저장한 시각을 표시한다.
+      await expect(progress.getByText('2026-09-20 21:05')).toBeVisible();
 
       const progressBox = await progress.boundingBox();
       const oldCard = page.getByRole('link', {

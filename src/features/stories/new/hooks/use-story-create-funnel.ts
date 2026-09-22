@@ -140,7 +140,8 @@ export function useStoryCreateFunnel() {
   const ownedRequestIdRef = useRef<string | null>(null);
 
   /**
-   * 소유 레코드를 쓴다. 다른 requestId를 소유 중이면 그 레코드를 먼저 제거한다.
+   * 소유 레코드를 쓴다. 다른 requestId를 소유 중이면 그 레코드를 먼저 제거하되, 처음 임시
+   * 저장한 시각은 새 레코드로 이어 카드 날짜가 단계 전환마다 바뀌지 않게 한다.
    *
    * @param record 저장할 레코드
    * @param write 실제 저장 함수(upsert·교체 등)
@@ -151,12 +152,19 @@ export function useStoryCreateFunnel() {
     write: (record: Record) => boolean,
   ) => {
     const owned = ownedRequestIdRef.current;
+    let next = record;
 
     if (owned !== null && owned !== record.requestId) {
+      const createdAt = findPendingCreationRequest(owned)?.createdAt;
+
       takePendingCreationRequest(owned);
+
+      if (createdAt !== undefined && next.createdAt === undefined) {
+        next = { ...next, createdAt };
+      }
     }
 
-    const saved = write(record);
+    const saved = write(next);
 
     if (saved) {
       ownedRequestIdRef.current = record.requestId;

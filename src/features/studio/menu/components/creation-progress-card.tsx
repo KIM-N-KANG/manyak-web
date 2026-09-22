@@ -1,6 +1,7 @@
 'use client';
 
-import { Delete02Icon } from '@hugeicons/core-free-icons';
+import { Calendar04Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
 import { ImageGeneration } from '@/components/agents/image-generation';
@@ -17,6 +18,7 @@ import type {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { takePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { markDraftResumeIntent } from '@/features/stories/_shared/utils/draft-resume-intent';
+import { formatDateTime } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
@@ -59,6 +61,25 @@ export function CreationProgressCard({ record }: CreationProgressCardProps) {
   );
 }
 
+/** 내 스토리 카드의 날짜 줄과 같은 자리·스타일로 처음 임시 저장한 시각을 보여 준다. */
+function SavedAtRow({ createdAt }: { createdAt: string }) {
+  return (
+    <div className="flex items-center justify-end gap-1 text-sm whitespace-nowrap text-foreground-secondary">
+      <HugeiconsIcon
+        icon={Calendar04Icon}
+        className="size-3.5"
+        aria-hidden="true"
+      />
+      <time dateTime={createdAt}>
+        <span className="sr-only">
+          {CREATION_PROGRESS_CARD_COPY.savedAtLabel}{' '}
+        </span>
+        {formatDateTime(createdAt)}
+      </time>
+    </div>
+  );
+}
+
 type CompletingCardBodyProps = {
   record: StoryCompletionRecord;
 };
@@ -66,7 +87,11 @@ type CompletingCardBodyProps = {
 function CompletingCardBody({ record }: CompletingCardBodyProps) {
   useCreationProgressPolling(record);
 
-  return <CreationProgressCardBody isCompleting />;
+  return (
+    <CreationProgressCardBody isCompleting>
+      {record.createdAt ? <SavedAtRow createdAt={record.createdAt} /> : null}
+    </CreationProgressCardBody>
+  );
 }
 
 type GeneratingCardBodyProps = {
@@ -136,9 +161,12 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
           ]}
         />
       }>
-      <Button className="w-full" onClick={handleResume}>
-        {CREATION_PROGRESS_CARD_COPY.resume}
-      </Button>
+      <div className="flex flex-col gap-2">
+        {record.createdAt ? <SavedAtRow createdAt={record.createdAt} /> : null}
+        <Button className="w-full" onClick={handleResume}>
+          {CREATION_PROGRESS_CARD_COPY.resume}
+        </Button>
+      </div>
     </CreationProgressCardBody>
   );
 }

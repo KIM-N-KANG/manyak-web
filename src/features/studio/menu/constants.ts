@@ -25,6 +25,8 @@ export const CREATION_PROGRESS_CARD_COPY = {
   completingTitle: '스토리를 완성 중이에요',
   completingDescription: '조금만 기다리면 완성된 스토리를 볼 수 있어요',
   completingState: '스토리 완성 중',
+  /** 날짜 줄의 스크린 리더 라벨. 화면에는 KST `yyyy-MM-dd HH:mm`만 보인다. */
+  savedAtLabel: '처음 임시 저장한 시각',
   resume: '이어서 만들기',
   optionsKind: '만들던 스토리',
   optionsTrigger: '만들던 스토리 옵션 더보기',

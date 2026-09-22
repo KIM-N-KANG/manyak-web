@@ -127,6 +127,8 @@ export type KeywordDraftSnapshot = {
 export type StoryCompletionRecord = {
   stage: 'STORY_COMPLETION';
   requestId: string;
+  /** 이 제작을 처음 임시 저장한 시각(ISO). 완성 실패로 초안에 되돌릴 때 이어 준다. */
+  createdAt?: string;
   generationRequest: GenerateSimpleStorylinesRequest;
   generationResult: GenerateSimpleStorylinesResponse;
   activeStorylineIndex?: number;
@@ -147,16 +149,20 @@ export type PendingCreationRequest =
   | {
       stage: 'KEYWORD_DRAFT';
       requestId: string;
+      /** 이 제작을 처음 임시 저장한 시각(ISO). 첫 저장 때 찍고 단계 전환에도 유지한다. 구 레코드에는 없다. */
+      createdAt?: string;
       snapshot: KeywordDraftSnapshot;
     }
   | {
       stage: 'STORYLINE_GENERATION';
       requestId: string;
+      createdAt?: string;
       generationRequest: GenerateSimpleStorylinesRequest;
     }
   | {
       stage: 'STORY_DRAFT';
       requestId: string;
+      createdAt?: string;
       step: StoryDraftStep;
       generationRequest: GenerateSimpleStorylinesRequest;
       generationResult: GenerateSimpleStorylinesResponse;
@@ -359,6 +365,10 @@ function isPendingCreationRequest(
     return false;
   }
 
+  if (parsed.createdAt !== undefined && typeof parsed.createdAt !== 'string') {
+    return false;
+  }
+
   if (
     parsed.stage === 'KEYWORD_DRAFT' &&
     isKeywordDraftSnapshot(parsed.snapshot)
@@ -456,6 +466,27 @@ export function parsePendingCreationRequests(
 }
 
 /**
+ * 진행 레코드를 처음 저장 시각 내림차순(최신이 앞)으로 정렬한다. 시각이 없는 구 레코드는
+ * 저장 순서를 유지한 채 뒤로 보낸다. 제작 탭 카드 순서가 단계 전환(레코드 교체)에 흔들리지 않게 한다.
+ *
+ * @param records 정렬할 레코드 목록
+ * @returns 정렬된 새 배열
+ */
+export function sortByCreatedAtDesc<Record extends { createdAt?: string }>(
+  records: Record[],
+): Record[] {
+  return [...records].sort((a, b) => {
+    if (a.createdAt === undefined || b.createdAt === undefined) {
+      return (
+        Number(a.createdAt === undefined) - Number(b.createdAt === undefined)
+      );
+    }
+
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+}
+
+/**
  * 편집 초안 목록을 로컬스토리지에서 읽는다.
  *
  * @returns 저장된 편집 초안 목록. 없으면 빈 배열
@@ -513,23 +544,29 @@ function writePendingCreationRequests(
 
 /**
  * 편집 초안 목록에 레코드를 upsert한다. 같은 requestId가 있으면 그 자리에서 교체하고
- * 없으면 끝에 추가한다.
+ * 없으면 끝에 추가한다. 처음 저장 시각은 기존 레코드 → 새 레코드 → 지금 순으로 정해
+ * 갱신이 최초 저장 시각을 덮지 않게 한다.
  *
  * @param record 저장할 레코드
  * @returns 저장에 성공했으면 true
  */
 function upsertPendingCreationRequest(record: PendingCreationRequest): boolean {
   const records = loadPendingCreationRequests();
-  const exists = records.some(
+  const existing = records.find(
     ({ requestId }) => requestId === record.requestId,
   );
+  const stamped: PendingCreationRequest = {
+    ...record,
+    createdAt:
+      existing?.createdAt ?? record.createdAt ?? new Date().toISOString(),
+  };
 
   return writePendingCreationRequests(
-    exists
+    existing
       ? records.map((current) =>
-          current.requestId === record.requestId ? record : current,
+          current.requestId === record.requestId ? stamped : current,
         )
-      : [...records, record],
+      : [...records, stamped],
   );
 }
 
@@ -591,8 +628,11 @@ export function addStoryCompletionRequest(
   const others = loadStoryCompletionRequests().filter(
     ({ requestId }) => requestId !== record.requestId,
   );
+  const createdAt =
+    record.createdAt ??
+    findPendingCreationRequest(record.generationRequest.requestId)?.createdAt;
 
-  if (!writeStoryCompletionRequests([...others, record])) {
+  if (!writeStoryCompletionRequests([...others, { ...record, createdAt }])) {
     return false;
   }
 
@@ -700,13 +740,20 @@ export function replacePendingCreationRequest(
 
   const records = loadPendingCreationRequests();
 
-  if (!records.some((record) => record.requestId === requestId)) {
+  const existing = records.find((record) => record.requestId === requestId);
+
+  if (!existing) {
     return false;
   }
 
   return writePendingCreationRequests(
     records.map((record) =>
-      record.requestId === requestId ? replacement : record,
+      record.requestId === requestId
+        ? {
+            ...replacement,
+            createdAt: replacement.createdAt ?? existing.createdAt,
+          }
+        : record,
     ),
   );
 }
@@ -797,6 +844,7 @@ export function demotePendingCompletionToDraft(requestId: string): boolean {
   upsertPendingCreationRequest({
     stage: 'STORY_DRAFT',
     requestId: current.generationRequest.requestId,
+    createdAt: current.createdAt,
     step: 'additional-info',
     generationRequest: current.generationRequest,
     generationResult: current.generationResult,

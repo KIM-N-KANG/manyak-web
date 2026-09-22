@@ -26,6 +26,7 @@ import {
   replacePendingCreationRequest,
   saveDraftCreationRecord,
   savePendingCreationRequest,
+  sortByCreatedAtDesc,
   takePendingCreationRequest,
   takeStoryCompletionRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
@@ -220,14 +221,24 @@ describe('parsePendingCreationRequests', () => {
   });
 });
 
+/** 저장 시각을 고정해 createdAt 도장을 검증한다. */
+const SAVED_AT = '2026-09-22T05:00:00.000Z';
+const stamped = <Record extends { requestId: string }>(record: Record) => ({
+  ...record,
+  createdAt: SAVED_AT,
+});
+
 describe('편집 초안 목록', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   const values = new Map<string, string>();
   const stubStorage = () => {
     values.clear();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(SAVED_AT));
 
     const storage = {
       getItem: (key: string) => values.get(key) ?? null,
@@ -249,16 +260,38 @@ describe('편집 초안 목록', () => {
     });
 
     expect(loadPendingCreationRequests()).toEqual([
-      {
+      stamped({
         ...keywordDraftRecord,
         snapshot: { ...keywordDraftRecord.snapshot, selectedGenreTagIds: [9] },
-      },
-      storylineRecord,
+      }),
+      stamped(storylineRecord),
     ]);
     expect(findPendingCreationRequest(storylineRecord.requestId)).toEqual(
-      storylineRecord,
+      stamped(storylineRecord),
     );
     expect(findPendingCreationRequest('other')).toBeNull();
+  });
+
+  it('처음 저장 시각은 갱신·교체·완성 이관·강등에도 유지한다', () => {
+    stubStorage();
+    savePendingCreationRequest(storylineRecord);
+    vi.setSystemTime(new Date('2026-09-22T06:00:00.000Z'));
+
+    expect(
+      replacePendingCreationRequest(storylineRecord.requestId, draftRecord),
+    ).toBe(true);
+    expect(saveDraftCreationRecord(draftRecord)).toBe(true);
+    expect(loadPendingCreationRequests()).toEqual([stamped(draftRecord)]);
+
+    expect(addStoryCompletionRequest(completionRecord)).toBe(true);
+    expect(loadStoryCompletionRequests()).toEqual([stamped(completionRecord)]);
+
+    expect(demotePendingCompletionToDraft(completionRecord.requestId)).toBe(
+      true,
+    );
+    expect(loadPendingCreationRequests()).toMatchObject([
+      { stage: 'STORY_DRAFT', createdAt: SAVED_AT },
+    ]);
   });
 
   it('같은 requestId의 진행 중 요청은 지연된 초안이 덮지 않는다', () => {
@@ -266,7 +299,7 @@ describe('편집 초안 목록', () => {
     savePendingCreationRequest(storylineRecord);
 
     expect(saveDraftCreationRecord(draftRecord)).toBe(false);
-    expect(loadPendingCreationRequests()).toEqual([storylineRecord]);
+    expect(loadPendingCreationRequests()).toEqual([stamped(storylineRecord)]);
   });
 
   it('다른 requestId의 진행 중 요청이 있어도 초안은 함께 보관한다', () => {
@@ -288,7 +321,7 @@ describe('편집 초안 목록', () => {
       replacePendingCreationRequest(storylineRecord.requestId, draftRecord),
     ).toBe(true);
     expect(replacePendingCreationRequest('other', draftRecord)).toBe(false);
-    expect(loadPendingCreationRequests()).toEqual([draftRecord]);
+    expect(loadPendingCreationRequests()).toEqual([stamped(draftRecord)]);
   });
 
   it('제거는 해당 건만 지우고 목록이 비면 키를 없앤다', () => {
@@ -300,7 +333,7 @@ describe('편집 초안 목록', () => {
     expect(takePendingCreationRequest(keywordDraftRecord.requestId)).toBe(
       false,
     );
-    expect(loadPendingCreationRequests()).toEqual([storylineRecord]);
+    expect(loadPendingCreationRequests()).toEqual([stamped(storylineRecord)]);
     expect(takePendingCreationRequest(storylineRecord.requestId)).toBe(true);
     expect(values.has(PENDING_CREATION_REQUEST_STORAGE_KEY)).toBe(false);
   });
@@ -311,8 +344,10 @@ describe('편집 초안 목록', () => {
     savePendingCreationRequest(keywordDraftRecord);
 
     expect(addStoryCompletionRequest(completionRecord)).toBe(true);
-    expect(loadPendingCreationRequests()).toEqual([keywordDraftRecord]);
-    expect(loadStoryCompletionRequests()).toEqual([completionRecord]);
+    expect(loadPendingCreationRequests()).toEqual([
+      stamped(keywordDraftRecord),
+    ]);
+    expect(loadStoryCompletionRequests()).toEqual([stamped(completionRecord)]);
   });
 
   it('완성 요청은 여러 건이 공존하고 requestId별로만 제거한다', () => {
@@ -447,7 +482,7 @@ describe('demotePendingCompletionToDraft', () => {
       false,
     );
     expect(demotePendingCompletionToDraft('other')).toBe(false);
-    expect(loadPendingCreationRequests()).toEqual([storylineRecord]);
+    expect(loadPendingCreationRequests()).toMatchObject([storylineRecord]);
   });
 
   it('다른 초안이 있어도 실패 요청을 초안으로 되돌려 함께 보관한다', () => {
@@ -462,6 +497,22 @@ describe('demotePendingCompletionToDraft', () => {
     expect(loadPendingCreationRequests()).toMatchObject([
       keywordDraftRecord,
       { stage: 'STORY_DRAFT', requestId: generationRequest.requestId },
+    ]);
+  });
+});
+
+describe('sortByCreatedAtDesc', () => {
+  it('처음 저장 시각이 최신인 것을 앞에 두고 시각이 없는 구 레코드는 순서를 지켜 뒤로 보낸다', () => {
+    const legacyA = { requestId: 'legacy-a', createdAt: undefined };
+    const legacyB = { requestId: 'legacy-b', createdAt: undefined };
+    const older = { requestId: 'older', createdAt: '2026-09-20T00:00:00.000Z' };
+    const newer = { requestId: 'newer', createdAt: '2026-09-22T00:00:00.000Z' };
+
+    expect(sortByCreatedAtDesc([legacyA, older, legacyB, newer])).toEqual([
+      newer,
+      older,
+      legacyA,
+      legacyB,
     ]);
   });
 });
