@@ -83,6 +83,23 @@ type DraftCardBodyProps = {
   record: PendingCreationRequest;
 };
 
+/**
+ * 초안 레코드가 멈춘 단계의 설명 문구를 고른다.
+ *
+ * @param record 초안·생성 중 레코드
+ * @returns 단계별 설명
+ */
+function getDraftDescription(record: PendingCreationRequest): string {
+  const { draftDescription } = CREATION_PROGRESS_CARD_COPY;
+
+  if (record.stage === 'KEYWORD_DRAFT') return draftDescription.keyword;
+
+  if (record.stage === 'STORYLINE_GENERATION')
+    return draftDescription.generating;
+
+  return draftDescription[record.step];
+}
+
 function DraftCardBody({ record }: DraftCardBodyProps) {
   const router = useRouter();
 
@@ -96,6 +113,7 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
   return (
     <CreationProgressCardBody
       isCompleting={false}
+      description={getDraftDescription(record)}
       action={
         <CardOptionsSheet
           kind={CREATION_PROGRESS_CARD_COPY.optionsKind}
@@ -127,6 +145,8 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
 
 type CreationProgressCardBodyProps = {
   isCompleting: boolean;
+  /** 초안 카드의 단계별 설명. 완성 중 카드는 고정 문구를 쓴다. */
+  description?: string;
   /** 제목 줄 오른쪽 끝에 놓는 요소(옵션 버튼) */
   action?: React.ReactNode;
   /** 본문 하단에 놓는 요소(주 동작 버튼) */
@@ -135,15 +155,13 @@ type CreationProgressCardBodyProps = {
 
 function CreationProgressCardBody({
   isCompleting,
+  description = CREATION_PROGRESS_CARD_COPY.completingDescription,
   action,
   children,
 }: CreationProgressCardBodyProps) {
   const title = isCompleting
     ? CREATION_PROGRESS_CARD_COPY.completingTitle
     : CREATION_PROGRESS_CARD_COPY.draftTitle;
-  const description = isCompleting
-    ? CREATION_PROGRESS_CARD_COPY.completingDescription
-    : CREATION_PROGRESS_CARD_COPY.draftDescription;
 
   return (
     <div className={cn('flex min-w-0 flex-1', 'gap-4')}>

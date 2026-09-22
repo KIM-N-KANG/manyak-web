@@ -640,6 +640,12 @@ test.describe('이어서 만들기 진행 카드', () => {
         ),
       )
       .toContain('"stage":"STORY_DRAFT"');
+    // 카드 조회가 초안으로 승격하면 설명도 선택 단계로 바뀐다.
+    await expect(
+      page.getByText(
+        CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
+      ),
+    ).toBeVisible();
 
     const statusRequestsBeforeResume = statusRequestCount;
 
@@ -665,6 +671,9 @@ test.describe('이어서 만들기 진행 카드', () => {
 
     await expect(
       page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+    await expect(
+      page.getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.generating),
     ).toBeVisible();
     await expect(
       page.getByRole('button', { name: '이어서 만들기 배너 닫기' }),

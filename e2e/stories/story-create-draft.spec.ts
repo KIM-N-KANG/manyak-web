@@ -390,6 +390,19 @@ test.describe('스토리 임시 저장·재개', () => {
     });
 
     await expect(cards).toHaveCount(2);
+    // 카드는 각 초안이 멈춘 단계를 설명한다.
+    await expect(
+      cards
+        .nth(0)
+        .getByText(
+          CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
+        ),
+    ).toBeVisible();
+    await expect(
+      cards
+        .nth(1)
+        .getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.keyword),
+    ).toBeVisible();
 
     // 두 번째 카드(키워드 초안)를 재개하면 키워드 입력이 복원된다.
     await cards
@@ -431,7 +444,9 @@ test.describe('스토리 임시 저장·재개', () => {
       card.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
     await expect(
-      card.getByText(CREATION_PROGRESS_CARD_COPY.draftDescription),
+      card.getByText(
+        CREATION_PROGRESS_CARD_COPY.draftDescription['storyline-select'],
+      ),
     ).toBeVisible();
     await expect(
       card.getByRole('button', { name: '이어서 만들기 배너 닫기' }),

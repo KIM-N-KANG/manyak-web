@@ -9,10 +9,19 @@ export const CREATED_STORY_LIST_COPY = {
   emptyTitle: '아직 만든 스토리가 없어요',
 } as const;
 
-/** 제작 화면의 진행 카드(초안·완성 중) 정본 문구다. 앱 `studio_progress_*` 문자열과 같다. */
+/**
+ * 제작 화면의 진행 카드(초안·완성 중) 정본 문구다. 앱 `studio_progress_*` 문자열과 같되,
+ * 초안 설명은 멈춘 단계를 알려 주도록 단계별로 나눈다(앱 반영은 KNK-1395).
+ */
 export const CREATION_PROGRESS_CARD_COPY = {
   draftTitle: '만들고 있는 스토리',
-  draftDescription: '임시 저장한 내용부터 이어서 만들 수 있어요',
+  /** 초안이 멈춘 단계별 설명. 스토리라인 생성은 실제로 진행 중이라 현재형이다. */
+  draftDescription: {
+    keyword: '키워드를 선택하고 있었어요',
+    generating: '스토리라인을 만들고 있어요',
+    'storyline-select': '스토리라인을 선택하고 있었어요',
+    'additional-info': '추가 정보를 입력하고 있었어요',
+  },
   completingTitle: '스토리를 완성 중이에요',
   completingDescription: '조금만 기다리면 완성된 스토리를 볼 수 있어요',
   completingState: '스토리 완성 중',
