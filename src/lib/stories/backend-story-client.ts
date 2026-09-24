@@ -1,7 +1,4 @@
-import {
-  getGetOriginalStoriesUrl,
-  getGetPublicStoriesUrl,
-} from '@/api/generated/endpoints/stories/stories';
+import { getGetPublicStoriesUrl } from '@/api/generated/endpoints/stories/stories';
 import type {
   GetPublicStoriesParams,
   StoryPageResponse,
@@ -17,6 +14,12 @@ const SERVER_FETCH_TIMEOUT_MS = 5 * 1000;
 
 /** 서버 데이터 캐시에 공개 목록을 재사용하는 시간. */
 const SERVER_FETCH_REVALIDATE_SECONDS = 60;
+
+/** 오리지널 목록을 한 번에 읽는 개수. 서버가 1~50으로 보정한다. */
+const ORIGINAL_PAGE_LIMIT = 50;
+
+/** 오리지널 목록을 읽는 최대 페이지 수. 커서가 끝나지 않아도 요청이 무한히 이어지지 않게 막는다. */
+const ORIGINAL_MAX_PAGES = 10;
 
 /**
  * 서버(BFF)에서 인증 없는 공개 조회 API를 백엔드에 직접 읽는다.
@@ -56,19 +59,6 @@ async function fetchPublicOnServer<T>(path: string): Promise<T | null> {
 }
 
 /**
- * 서버(BFF)에서 오리지널 스토리 목록을 백엔드에 직접 읽는다.
- *
- * 스토리 상세 메타데이터·사이트맵이 공유한다. 서버 조회가 실패하면 오리지널이 없는 것으로 다룬다.
- *
- * @returns 오리지널 스토리 요약 목록. 읽지 못하면 null
- */
-export function fetchOriginalStoriesOnServer(): Promise<
-  StorySummaryResponse[] | null
-> {
-  return fetchPublicOnServer(getGetOriginalStoriesUrl());
-}
-
-/**
  * 서버(BFF)에서 공개 스토리 목록의 첫 페이지를 백엔드에 직접 읽는다.
  *
  * 홈 서버 렌더가 검색 크롤러용 첫 HTML에 목록을 싣는 데 쓴다. 실패하면 홈은 클라이언트 조회로 폴백한다.
@@ -80,4 +70,42 @@ export function fetchPublicStoriesOnServer(
   params: GetPublicStoriesParams,
 ): Promise<StoryPageResponse | null> {
   return fetchPublicOnServer(getGetPublicStoriesUrl(params));
+}
+
+/**
+ * 서버(BFF)에서 오리지널 스토리 전체를 `GET /stories?filter=original` 커서로 이어 읽는다.
+ *
+ * 스토리 상세 메타데이터·사이트맵이 공유한다. 한 페이지라도 실패하면 일부만 보고 오리지널
+ * 여부를 잘못 판정하지 않도록 전체를 읽지 못한 것으로 다룬다.
+ *
+ * @returns 오리지널 스토리 요약 목록. 읽지 못하면 null
+ */
+export async function fetchOriginalStoriesOnServer(): Promise<
+  StorySummaryResponse[] | null
+> {
+  const stories: StorySummaryResponse[] = [];
+  let cursor: string | undefined;
+
+  // ponytail: 최대 500편까지만 읽는다. 오리지널이 그보다 많아지면 상한을 올리거나 단건 판정 API로 바꾼다.
+  for (let page = 0; page < ORIGINAL_MAX_PAGES; page += 1) {
+    const response = await fetchPublicStoriesOnServer({
+      filter: 'original',
+      sort: 'latest',
+      limit: ORIGINAL_PAGE_LIMIT,
+      ...(cursor ? { cursor } : {}),
+    });
+
+    if (!response) {
+      return null;
+    }
+
+    stories.push(...(response.items ?? []));
+    cursor = response.nextCursor ?? undefined;
+
+    if (!cursor) {
+      break;
+    }
+  }
+
+  return stories;
 }

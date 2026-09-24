@@ -15,21 +15,49 @@ describe('fetchOriginalStoriesOnServer', () => {
     vi.unstubAllGlobals();
   });
 
-  it('생성된 URL 빌더 경로로 백엔드를 호출하고 목록을 반환한다', async () => {
+  it('filter=original 목록을 커서가 끝날 때까지 이어 읽는다', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify([{ id: 's1' }]), { status: 200 }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ items: [{ id: 's1' }], nextCursor: 'c1' }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ items: [{ id: 's2' }], nextCursor: null }),
+          { status: 200 },
+        ),
       );
 
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(fetchOriginalStoriesOnServer()).resolves.toEqual([
       { id: 's1' },
+      { id: 's2' },
     ]);
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://backend.example.com/api/v1/stories/originals',
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      'https://backend.example.com/api/v1/stories?filter=original&sort=latest&limit=50',
+      'https://backend.example.com/api/v1/stories?filter=original&sort=latest&limit=50&cursor=c1',
+    ]);
+  });
+
+  it('중간 페이지가 실패하면 일부 목록 대신 null을 반환한다', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ items: [{ id: 's1' }], nextCursor: 'c1' }),
+            { status: 200 },
+          ),
+        )
+        .mockResolvedValueOnce(new Response('', { status: 500 })),
     );
+
+    await expect(fetchOriginalStoriesOnServer()).resolves.toBeNull();
   });
 
   it('실패 응답·네트워크 오류는 throw하지 않고 null을 반환한다', async () => {
