@@ -8,7 +8,13 @@ import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 import { mockMemberSession } from '../fixtures/auth';
 import { oneLine } from '../fixtures/copy';
 import { seedStoryCompletionRequests } from '../fixtures/storage';
-import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
+import {
+  expect,
+  mockPublicStories,
+  seedStoryIds,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
   waitForDarkTheme,
@@ -21,7 +27,6 @@ import {
  */
 
 const STORIES_BATCH = '**/api/v1/stories/batch';
-const STORIES_ORIGINALS = '**/api/v1/stories/originals';
 const STORY_DETAIL = '**/api/v1/stories/s1';
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
@@ -286,18 +291,12 @@ test.describe('스토리 비주얼', () => {
 
   test('홈 오리지널 목록 (STORY-LIST)', async ({ page }) => {
     await seedStoryIds(page, ['s1']);
-    await page.route(STORIES_ORIGINALS, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([
-          {
-            ...story('o1', '마냑의 첫 이야기'),
-            author: { id: 1, nickname: '마냑', profileImageUrl: null },
-          },
-        ]),
-      });
-    });
+    await mockPublicStories(page, [
+      {
+        ...story('o1', '마냑의 첫 이야기'),
+        author: { id: 1, nickname: '마냑', profileImageUrl: null },
+      },
+    ]);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
         status: 200,

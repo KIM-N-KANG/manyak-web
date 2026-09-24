@@ -7,6 +7,7 @@ import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like
 import { oneLine } from '../fixtures/copy';
 import {
   expect,
+  isPublicStoriesUrl,
   mockMemberSession,
   seedStoryIds,
   skipOnboarding,
@@ -40,8 +41,8 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   const methods: string[] = [];
 
   await page.route(DETAIL, (route) => route.fulfill({ json: current }));
-  await page.route('**/api/v1/stories/originals', (route) =>
-    route.fulfill({ json: [current] }),
+  await page.route(isPublicStoriesUrl, (route) =>
+    route.fulfill({ json: { items: [current], nextCursor: null } }),
   );
   await page.route(LIKE, async (route) => {
     const method = route.request().method();

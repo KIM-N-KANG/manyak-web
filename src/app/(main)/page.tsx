@@ -1,14 +1,27 @@
-import { OriginalStoryList } from '@/features/stories/list/components/original-story-list';
-import { fetchOriginalStoriesOnServer } from '@/lib/stories/backend-story-client';
+import { Suspense } from 'react';
+
+import {
+  HomeStoryList,
+  StoryList,
+} from '@/features/stories/list/components/home-story-list';
+import { DEFAULT_STORY_LIST_QUERY } from '@/features/stories/list/constants';
+import { fetchPublicStoriesOnServer } from '@/lib/stories/backend-story-client';
 
 export default async function StoriesPage() {
-  // 검색 크롤러가 받는 첫 HTML에 오리지널 목록이 실리도록 서버에서 먼저 읽는다.
-  // 실패하면 undefined를 넘겨 클라이언트 조회로 폴백한다.
-  const initialStories = await fetchOriginalStoriesOnServer();
+  const initialPage =
+    (await fetchPublicStoriesOnServer(DEFAULT_STORY_LIST_QUERY)) ?? undefined;
 
   return (
     <main className="flex flex-1 flex-col">
-      <OriginalStoryList initialStories={initialStories ?? undefined} />
+      <Suspense
+        fallback={
+          <StoryList
+            query={DEFAULT_STORY_LIST_QUERY}
+            initialPage={initialPage}
+          />
+        }>
+        <HomeStoryList initialPage={initialPage} />
+      </Suspense>
     </main>
   );
 }

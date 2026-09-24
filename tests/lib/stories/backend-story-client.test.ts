@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchOriginalStoriesOnServer } from '@/lib/stories/backend-story-client';
+import {
+  fetchOriginalStoriesOnServer,
+  fetchPublicStoriesOnServer,
+} from '@/lib/stories/backend-story-client';
 
 describe('fetchOriginalStoriesOnServer', () => {
   beforeEach(() => {
@@ -48,5 +51,29 @@ describe('fetchOriginalStoriesOnServer', () => {
 
     await expect(fetchOriginalStoriesOnServer()).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('fetchPublicStoriesOnServer', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it('필터·정렬을 쿼리로 실어 첫 페이지를 반환한다', async () => {
+    const page = { items: [{ id: 's1' }], nextCursor: 'c1' };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(page), { status: 200 }));
+
+    vi.stubEnv('API_BASE_URL', 'https://backend.example.com');
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      fetchPublicStoriesOnServer({ filter: 'all', sort: 'likes' }),
+    ).resolves.toEqual(page);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://backend.example.com/api/v1/stories?filter=all&sort=likes',
+    );
   });
 });
