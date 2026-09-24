@@ -566,6 +566,28 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toHaveCount(0);
   });
 
+  test('홈·제작 카드는 채팅 횟수를 축약해 표시한다 (KNK-1421)', async ({
+    page,
+  }) => {
+    await seedStoryIds(page, ['s1']);
+    await mockPublicStories(page, [
+      { ...originalStory('o1', '마냑의 첫 이야기'), turnCount: 12345 },
+    ]);
+    await page.route(STORIES_BATCH, async (route) => {
+      await route.fulfill({
+        json: [{ ...story('s1', '용의 계곡'), turnCount: 1280 }],
+      });
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('누적 턴 수 12.3K')).toBeVisible();
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
+  });
+
   test('공개 스토리가 없으면 필터 줄 아래에 빈 안내를 보여준다 (KNK-1421)', async ({
     page,
   }) => {

@@ -28,6 +28,7 @@ import { StoryReportSheet } from '@/features/stories/_shared/components/story-re
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
+import { formatCompactCount } from '@/lib/format-count';
 import { formatSameDayTimeOrDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
@@ -241,7 +242,7 @@ function CreatedStoryCardBody({
             />
             <p>
               <span className="sr-only">누적 턴 수 </span>
-              {(story.turnCount ?? 0).toLocaleString()}
+              {formatCompactCount(story.turnCount ?? 0)}
             </p>
           </div>
           {story.createdAt ? (
