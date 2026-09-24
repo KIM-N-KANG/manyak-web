@@ -92,8 +92,7 @@ const tags = [
   { id: 4, name: '든든한', category: 'SUPPORTING_CHARACTER' },
 ];
 
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. UI를 되살릴 때 skip을 제거한다.
-test.describe.skip('스토리 좋아요 비주얼', () => {
+test.describe('스토리 좋아요 비주얼', () => {
   test('좋아요 로그인 바텀 시트', async ({ page }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
     await page.route(STORY_DETAIL, (route) =>

@@ -7,8 +7,7 @@ import Link from 'next/link';
 
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
-// import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
+import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
@@ -97,8 +96,7 @@ export function StoryCard({
           />
         )}
         <div className="absolute right-2 bottom-2 flex items-center gap-1">
-          {/* KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. */}
-          {/* <StoryLikeCount likeCount={story.likeCount ?? 0} size="sm" /> */}
+          <StoryLikeCount likeCount={story.likeCount ?? 0} size="sm" />
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
         </div>
       </AspectRatio>
