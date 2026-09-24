@@ -6,14 +6,24 @@ import { StoryCard } from './story-card';
 type StoryCardGridProps = {
   stories: StoryListItem[];
   section: StoryCardSection;
+  isOriginal: boolean;
 };
 
-export function StoryCardGrid({ stories, section }: StoryCardGridProps) {
+export function StoryCardGrid({
+  stories,
+  section,
+  isOriginal,
+}: StoryCardGridProps) {
   return (
     <ul className="grid grid-cols-2 gap-x-2 gap-y-4">
       {stories.map((story, index) => (
         <li key={story.id}>
-          <StoryCard story={story} position={index} section={section} />
+          <StoryCard
+            story={story}
+            position={index}
+            section={section}
+            isOriginal={isOriginal}
+          />
         </li>
       ))}
     </ul>

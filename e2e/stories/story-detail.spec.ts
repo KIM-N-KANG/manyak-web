@@ -81,7 +81,7 @@ test.describe('스토리 상세', () => {
     ).toBeVisible();
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
-    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
     await expect(page.getByText('제작자')).toBeVisible();
     await expect(page.getByText('마냑', { exact: true })).toBeVisible();
     await expect(page.getByText('생성일')).toBeVisible();
@@ -125,7 +125,7 @@ test.describe('스토리 상세', () => {
     await expect(
       page.getByRole('img', { name: '스토리 썸네일' }),
     ).toBeVisible();
-    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
 
     const header = page.locator('header');
 

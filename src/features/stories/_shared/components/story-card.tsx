@@ -7,25 +7,28 @@ import Link from 'next/link';
 
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
-// import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
-import { StoryOptionsMenu } from '@/features/stories/_shared/components/story-options-menu';
+import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 import type { StoryCardSection } from '@/observability/analytics';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
-import { StoryGenreBadges } from './story-genre-badges';
-
 type StoryCardProps = {
   story: StoryListItem;
   position?: number;
-  /** 카드가 속한 섹션. 분석에서 오리지널과 내가 만든 스토리의 성과를 분리한다. */
+  /** 카드가 속한 섹션. 분석에서 홈 목록과 내가 만든 스토리의 성과를 분리한다. */
   section: StoryCardSection;
+  /** ORIGINAL 태그 표시 여부 */
+  isOriginal: boolean;
 };
 
-export function StoryCard({ story, position, section }: StoryCardProps) {
+export function StoryCard({
+  story,
+  position,
+  section,
+  isOriginal,
+}: StoryCardProps) {
   const storyId = story.id;
   const impressionRef = useImpression({
     object: 'storyCard',
@@ -43,7 +46,6 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
   });
 
   const thumbnailUrl = story.thumbnailUrlSm ?? null;
-  const isOriginal = section === 'original';
 
   return (
     <article ref={impressionRef} className="relative flex flex-col gap-2">
@@ -93,45 +95,18 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
             className="absolute top-0 left-0 w-18 rounded-tl-[11px] rounded-br-[6px] backdrop-blur-md"
           />
         )}
-        {!isOriginal && storyId != null ? (
-          <div className="absolute top-2 right-2 z-20">
-            <StoryOptionsMenu
-              storyId={storyId}
-              title={story.title ?? ''}
-              source="studio"
-              canReport={false}
-              canDelete
-              size="icon-sm"
-              triggerClassName="rounded-full bg-black/20 text-white backdrop-blur-md hover:bg-black/20 hover:text-white aria-expanded:bg-black/20 aria-expanded:text-white"
-            />
-          </div>
-        ) : null}
         <div className="absolute right-2 bottom-2 flex items-center gap-1">
-          {/* KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. */}
-          {/* <StoryLikeCount likeCount={story.likeCount ?? 0} size="sm" /> */}
+          <StoryLikeCount likeCount={story.likeCount ?? 0} size="sm" />
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
         </div>
       </AspectRatio>
       {/* 모든 줄이 1줄 고정이라 카드 높이가 저절로 같아진다 — 텍스트 영역에 고정 높이를 두지 않는다. */}
       <div className="flex min-w-0 flex-col gap-0.5">
         <p className="line-clamp-1 leading-6 font-semibold">{story.title}</p>
-        {isOriginal ? (
-          story.author?.nickname != null && (
-            <p className="line-clamp-1 text-sm text-foreground-secondary">
-              @{story.author.nickname}
-            </p>
-          )
-        ) : (
-          <>
-            <p className="line-clamp-1 text-sm text-foreground-secondary">
-              {story.oneLineIntro}
-            </p>
-            {story.genres.length > 0 && (
-              <div className="mt-1.5">
-                <StoryGenreBadges genres={story.genres} />
-              </div>
-            )}
-          </>
+        {story.author?.nickname != null && (
+          <p className="line-clamp-1 text-sm text-foreground-secondary">
+            @{story.author.nickname}
+          </p>
         )}
       </div>
     </article>

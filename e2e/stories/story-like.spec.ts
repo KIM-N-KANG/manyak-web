@@ -3,18 +3,17 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { SOCIAL_LOGIN_PENDING_LABEL } from '@/features/auth/_shared/hooks/use-social-login';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+import { formatCompactCount } from '@/lib/format-count';
 
 import { oneLine } from '../fixtures/copy';
 import {
   expect,
+  isPublicStoriesUrl,
   mockMemberSession,
   seedStoryIds,
   skipOnboarding,
   test,
 } from '../fixtures/test';
-
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. UI를 되살릴 때 아래 skip을 제거한다.
-test.skip(true, 'KNK-1260: 좋아요 UI 임시 비노출');
 
 const DETAIL = '**/api/v1/stories/s1';
 const LIKE = '**/api/v1/stories/s1/like';
@@ -22,13 +21,14 @@ const story = {
   id: 's1',
   title: '용의 계곡',
   turnCount: 25,
-  likeCount: 1234,
+  // 등록·취소로 축약 표기가 바뀌는 경계(999 ↔ 1K)에 둔다.
+  likeCount: 999,
   isLiked: false,
   isOwner: false,
 };
 
 const countText = (count: number) =>
-  `${STORY_LIKE_COPY.count} ${count.toLocaleString('en-US')}`;
+  `${STORY_LIKE_COPY.count} ${formatCompactCount(count)}`;
 
 test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 반영한다', async ({
   page,
@@ -40,8 +40,8 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   const methods: string[] = [];
 
   await page.route(DETAIL, (route) => route.fulfill({ json: current }));
-  await page.route('**/api/v1/stories/originals', (route) =>
-    route.fulfill({ json: [current] }),
+  await page.route(isPublicStoriesUrl, (route) =>
+    route.fulfill({ json: { items: [current], nextCursor: null } }),
   );
   await page.route(LIKE, async (route) => {
     const method = route.request().method();
@@ -56,7 +56,7 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   });
 
   await page.goto(APP_PATH.MAIN.STORIES);
-  await expect(page.getByText(countText(1234), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
   await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
 
   const like = page.getByRole('button', {
@@ -71,13 +71,13 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   await expect(
     page.getByRole('button', { name: STORY_LIKE_COPY.unlike }),
   ).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText(countText(1235), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
   await page.goBack();
-  await expect(page.getByText(countText(1235), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
   await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
   await page.getByRole('button', { name: STORY_LIKE_COPY.unlike }).click();
   await expect(like).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByText(countText(1234), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
   expect(methods).toEqual(['POST', 'DELETE']);
 });
 
@@ -115,9 +115,7 @@ for (const isLiked of [false, true]) {
     await expect(page.getByText(TOAST_MESSAGE.STORY_LIKE_FAILED)).toBeVisible();
     await expect(button).toBeEnabled();
     await expect(button).toHaveAttribute('aria-pressed', String(isLiked));
-    await expect(
-      page.getByText(countText(1234), { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
     expect(requests).toBe(1);
   });
 }
@@ -139,9 +137,7 @@ for (const member of [false, true]) {
     await expect(
       page.getByRole('button', { name: STORY_LIKE_COPY.like, exact: true }),
     ).toHaveCount(0);
-    await expect(
-      page.getByText(countText(1234), { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
   });
 }
 

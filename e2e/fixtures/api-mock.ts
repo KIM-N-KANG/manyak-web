@@ -435,3 +435,22 @@ export async function mockPushSettings(
     });
   });
 }
+
+/** 홈 공개 스토리 목록(`GET /stories`) 요청. 하위 경로(`/stories/{id}` 등)와 구분하려고 경로를 정확히 비교한다. */
+export const isPublicStoriesUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories';
+
+/**
+ * 홈 공개 스토리 목록을 한 페이지(다음 커서 없음)로 목킹한다.
+ *
+ * @param page 대상 페이지
+ * @param items 응답할 스토리 요약 목록
+ */
+export async function mockPublicStories(
+  page: Page,
+  items: unknown[],
+): Promise<void> {
+  await page.route(isPublicStoriesUrl, async (route) => {
+    await route.fulfill({ json: { items, nextCursor: null } });
+  });
+}

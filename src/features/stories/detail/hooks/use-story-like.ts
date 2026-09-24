@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
-  getGetOriginalStoriesQueryKey,
   getGetPublicStoriesQueryKey,
   getGetStoryDetailQueryKey,
   type getStoryDetailResponse,
@@ -58,9 +57,6 @@ export function useStoryLike(storyId: string, isLiked: boolean) {
       );
       void queryClient.invalidateQueries({
         queryKey: getGetStoryDetailQueryKey(storyId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: getGetOriginalStoriesQueryKey(),
       });
       void queryClient.invalidateQueries({
         queryKey: getGetPublicStoriesQueryKey(),

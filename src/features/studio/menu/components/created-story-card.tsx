@@ -18,16 +18,16 @@ import {
   CardOptionsSheet,
   type CardOptionsSheetItem,
 } from '@/components/common/card-options-sheet';
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
-// import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
+import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryGenreBadges } from '@/features/stories/_shared/components/story-genre-badges';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
-// import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
+import { formatCompactCount } from '@/lib/format-count';
 import { formatSameDayTimeOrDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
@@ -221,18 +221,13 @@ function CreatedStoryCardBody({
             'mt-1 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-foreground-secondary',
             'text-sm',
           )}>
-          {/* KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
           <div className="flex items-center gap-1 whitespace-nowrap">
-            <HeartOutlineIcon
-              className={'size-3.5'}
-              aria-hidden="true"
-            />
+            <HeartOutlineIcon className={'size-3.5'} aria-hidden="true" />
             <p>
               <span className="sr-only">{STORY_LIKE_COPY.count} </span>
-              {(story.likeCount ?? 0).toLocaleString()}
+              {formatCompactCount(story.likeCount ?? 0)}
             </p>
           </div>
-          */}
           <div className="flex items-center gap-1 whitespace-nowrap">
             <HugeiconsIcon
               icon={BubbleChatIcon}
@@ -241,7 +236,7 @@ function CreatedStoryCardBody({
             />
             <p>
               <span className="sr-only">누적 턴 수 </span>
-              {(story.turnCount ?? 0).toLocaleString()}
+              {formatCompactCount(story.turnCount ?? 0)}
             </p>
           </div>
           {story.createdAt ? (
