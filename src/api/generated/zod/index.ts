@@ -1657,17 +1657,22 @@ export const GetMyChatsQueryParams = zod.object({
 export const GetMyChatsResponse = zod.unknown();
 
 /**
- * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 latest(기본, 등록 최신순)와 popular(좋아요 많은 순)이며, 다음 페이지는 응답의 nextCursor를 **같은 sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
+ * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 latest(기본, 등록 최신순)·likes(좋아요 많은 순)·chats(누적 턴 수 많은 순)이고, filter는 all(기본)과 original(마냑 공식 계정 소유만)입니다. 다음 페이지는 응답의 nextCursor를 **같은 filter·sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
  * @summary 공개 스토리 목록 조회
  */
+export const getPublicStoriesQueryFilterDefault = `all`;
 export const getPublicStoriesQuerySortDefault = `latest`;
 export const getPublicStoriesQueryLimitDefault = 20;
 
 export const GetPublicStoriesQueryParams = zod.object({
+  filter: zod
+    .string()
+    .default(getPublicStoriesQueryFilterDefault)
+    .describe('필터. all(기본) 또는 original(마냑 공식 계정 소유만)'),
   sort: zod
     .string()
     .default(getPublicStoriesQuerySortDefault)
-    .describe('정렬. latest(기본) 또는 popular'),
+    .describe('정렬. latest(기본), likes 또는 chats'),
   limit: zod
     .number()
     .default(getPublicStoriesQueryLimitDefault)
@@ -1725,8 +1730,9 @@ export const SearchStoriesQueryParams = zod.object({
 export const SearchStoriesResponse = zod.unknown();
 
 /**
- * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 피드·검색이 나오기 전까지 홈의 오리지널 섹션이 사용하며, 인증은 필요 없습니다. 공식 계정 미설정 환경은 빈 목록입니다.
- * @summary 오리지널 스토리 목록 조회
+ * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 인증은 필요 없고 공식 계정 미설정 환경은 빈 목록입니다. **폐기 예정**: GET /stories?filter=original이 대체하며, 클라이언트 전환 후 KNK-1400에서 제거합니다.
+ * @deprecated
+ * @summary 오리지널 스토리 목록 조회(폐기 예정)
  */
 export const GetOriginalStoriesResponse = zod.unknown();
 

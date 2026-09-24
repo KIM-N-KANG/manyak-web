@@ -8,7 +8,11 @@
 
 export type GetPublicStoriesParams = {
   /**
-   * 정렬. latest(기본) 또는 popular
+   * 필터. all(기본) 또는 original(마냑 공식 계정 소유만)
+   */
+  filter?: string;
+  /**
+   * 정렬. latest(기본), likes 또는 chats
    */
   sort?: string;
   /**
