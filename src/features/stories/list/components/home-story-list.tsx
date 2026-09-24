@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import type { StoryPageResponse } from '@/api/generated/models';
 import { EmptyListNotice } from '@/components/common/empty-list-notice';
@@ -22,7 +22,6 @@ import {
   toStoryListSearch,
 } from '../utils/story-list-query';
 import { StoryListSkeleton } from './story-list-skeleton';
-import { StoryListToolbar } from './story-list-toolbar';
 
 type HomeStoryListProps = {
   /** 서버 렌더 시점에 읽은 기본 필터·정렬의 첫 페이지. 없으면 클라이언트가 조회한다. */
@@ -42,8 +41,6 @@ type StoryListProps = HomeStoryListProps & {
 export function StoryList({ query, initialPage }: StoryListProps) {
   useTrackOnView('client_storyList_viewed');
 
-  const router = useRouter();
-  const pathname = usePathname();
   const [sentinelElement, setSentinelElement] = useState<HTMLDivElement | null>(
     null,
   );
@@ -86,12 +83,6 @@ export function StoryList({ query, initialPage }: StoryListProps) {
     isFetchNextPageError,
     fetchNextPage,
   ]);
-
-  const handleQueryChange = (nextQuery: StoryListQuery) => {
-    router.replace(`${pathname}${toStoryListSearch(nextQuery)}`, {
-      scroll: false,
-    });
-  };
 
   const renderContent = () => {
     if (isPending) {
@@ -140,8 +131,7 @@ export function StoryList({ query, initialPage }: StoryListProps) {
   };
 
   return (
-    <section className="flex flex-1 flex-col gap-2 px-4 pb-4">
-      <StoryListToolbar query={query} onChange={handleQueryChange} />
+    <section className="flex flex-1 flex-col px-4 pt-2 pb-4">
       {renderContent()}
     </section>
   );

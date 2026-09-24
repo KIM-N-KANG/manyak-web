@@ -234,6 +234,10 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByText('마냑의 첫 이야기', { exact: true }),
     ).toBeHidden();
+    // 필터·정렬 줄은 홈에서만 헤더 아래에 둔다.
+    await expect(
+      page.getByRole('group', { name: STORY_LIST_COPY.filterGroupLabel }),
+    ).toHaveCount(0);
 
     await expect(
       page.getByRole('main').getByRole('heading', { level: 2 }),

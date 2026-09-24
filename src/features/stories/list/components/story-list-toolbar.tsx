@@ -1,5 +1,10 @@
+'use client';
+
+import { Suspense } from 'react';
+
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,27 +15,64 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ToggleChip } from '@/components/ui/toggle-chip';
+import { APP_PATH } from '@/constants/app-path';
 
 import {
+  DEFAULT_STORY_LIST_QUERY,
   STORY_LIST_COPY,
   STORY_LIST_FILTER_OPTIONS,
   STORY_LIST_SORT_OPTIONS,
   type StoryListQuery,
   type StoryListSort,
 } from '../constants';
+import {
+  parseStoryListQuery,
+  toStoryListSearch,
+} from '../utils/story-list-query';
 
-type StoryListToolbarProps = {
+type StoryListToolbarViewProps = {
   query: StoryListQuery;
   onChange: (query: StoryListQuery) => void;
 };
 
-export function StoryListToolbar({ query, onChange }: StoryListToolbarProps) {
+export function StoryListToolbar() {
+  return (
+    <Suspense
+      fallback={
+        <StoryListToolbarView
+          query={DEFAULT_STORY_LIST_QUERY}
+          onChange={() => {}}
+        />
+      }>
+      <UrlStoryListToolbar />
+    </Suspense>
+  );
+}
+
+function UrlStoryListToolbar() {
+  const router = useRouter();
+  const query = parseStoryListQuery(useSearchParams());
+
+  return (
+    <StoryListToolbarView
+      query={query}
+      onChange={(nextQuery) =>
+        router.replace(
+          `${APP_PATH.MAIN.STORIES}${toStoryListSearch(nextQuery)}`,
+          { scroll: false },
+        )
+      }
+    />
+  );
+}
+
+function StoryListToolbarView({ query, onChange }: StoryListToolbarViewProps) {
   const sortLabel = STORY_LIST_SORT_OPTIONS.find(
     (option) => option.value === query.sort,
   )?.label;
 
   return (
-    <div className="sticky top-0 z-30 -mx-4 flex items-center gap-2 bg-background py-2 pr-4">
+    <div className="flex shrink-0 items-center gap-2 bg-background py-2 pr-4">
       <div
         role="group"
         aria-label={STORY_LIST_COPY.filterGroupLabel}
