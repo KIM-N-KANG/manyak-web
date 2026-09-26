@@ -19,16 +19,9 @@ type StoryCardProps = {
   position?: number;
   /** 카드가 속한 섹션. 분석에서 홈 목록과 내가 만든 스토리의 성과를 분리한다. */
   section: StoryCardSection;
-  /** ORIGINAL 태그 표시 여부 */
-  isOriginal: boolean;
 };
 
-export function StoryCard({
-  story,
-  position,
-  section,
-  isOriginal,
-}: StoryCardProps) {
+export function StoryCard({ story, position, section }: StoryCardProps) {
   const storyId = story.id;
   const impressionRef = useImpression({
     object: 'storyCard',
@@ -85,7 +78,7 @@ export function StoryCard({
             />
           </div>
         )}
-        {isOriginal && (
+        {story.isOriginal && (
           <Image
             src={ORIGINAL_TAG_SRC}
             alt="오리지널"
