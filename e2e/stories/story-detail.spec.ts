@@ -216,7 +216,9 @@ test.describe('스토리 상세', () => {
 
     if (!viewport) throw new Error('뷰포트 크기를 알 수 없다');
 
+    // 이미지를 더블 탭하면 2.5배로 커지고, 다시 더블 탭하면 원래 크기로 돌아온다.
     const viewerImage = viewer.getByRole('img', { name: '이무기 인물 이미지' });
+    const imageWidth = async () => (await viewerImage.boundingBox())?.width;
 
     // 로드 전에는 그림 영역을 알 수 없어 어느 탭이든 배경 탭으로 닫힌다.
     await expect
@@ -224,6 +226,11 @@ test.describe('스토리 상세', () => {
         viewerImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
       )
       .toBeGreaterThan(0);
+    await page.mouse.dblclick(viewport.width / 2, viewport.height / 2);
+    await expect.poll(imageWidth).toBeCloseTo(viewport.width * 2.5, 0);
+    await page.mouse.dblclick(viewport.width / 2, viewport.height / 2);
+    await expect.poll(imageWidth).toBeCloseTo(viewport.width, 0);
+
     await page.mouse.click(viewport.width / 2, viewport.height / 2);
     await expect(viewer).toBeVisible();
     await page.mouse.click(viewport.width / 2, 40);
