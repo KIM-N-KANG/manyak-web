@@ -2,17 +2,18 @@
 
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
+import { useLiveQuery } from 'dexie-react-hooks';
+
 import { useGetCreationRequest } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesResponse } from '@/api/generated/models';
 import { useIsCreationRequestPending } from '@/features/stories/_shared/hooks/use-is-creation-request-pending';
+import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
 import type { StorylineGenerationRecord } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  buildStorylineDraftRecord,
   findPendingCreationRequest,
-  getPendingCreationRequestSnapshot,
-  getServerPendingCreationRequestSnapshot,
-  parsePendingCreationRequests,
-  subscribePendingCreationRequest,
+  replacePendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { FetchError } from '@/lib/custom-fetch';
@@ -51,6 +52,7 @@ function getServerPageVisibilitySnapshot(): boolean {
 }
 
 type UseCreationRequestRecoveryArgs = {
+  epoch: number;
   /** 이 퍼널이 소유한 스토리라인 생성 요청 ID. null이면 되찾을 요청이 없다. */
   requestId: string | null;
   /** 원 생성 요청이 진행 중인 동안 true — 복구 조회를 보류하고 원 응답을 기다린다. */
@@ -82,20 +84,15 @@ type UseCreationRequestRecoveryArgs = {
  */
 export function useCreationRequestRecovery({
   requestId,
+  epoch,
   suspended,
   ...callbacks
 }: UseCreationRequestRecoveryArgs) {
-  const rawRecords = useSyncExternalStore(
-    subscribePendingCreationRequest,
-    getPendingCreationRequestSnapshot,
-    getServerPendingCreationRequestSnapshot,
-  );
-  const storedRecord =
-    requestId === null
-      ? null
-      : (parsePendingCreationRequests(rawRecords).find(
-          (record) => record.requestId === requestId,
-        ) ?? null);
+  const storedRecord = useLiveQuery(async () => {
+    if (requestId === null || getCreationEpoch() !== epoch) return null;
+
+    return findPendingCreationRequest(requestId);
+  }, [requestId, epoch]);
   const isPageVisible = useSyncExternalStore(
     subscribePageVisibility,
     getPageVisibilitySnapshot,
@@ -128,12 +125,10 @@ export function useCreationRequestRecovery({
 
     restoredRequestIdRef.current = activeRequestId;
 
-    const record = findPendingCreationRequest(activeRequestId);
-
-    if (record?.stage === 'STORYLINE_GENERATION') {
-      callbacksRef.current.onRestorePending(record);
+    if (activeRecord?.stage === 'STORYLINE_GENERATION') {
+      callbacksRef.current.onRestorePending(activeRecord);
     }
-  }, [activeRequestId]);
+  }, [activeRequestId, activeRecord]);
 
   const recoveryQuery = useGetCreationRequest(activeRequestId ?? '', {
     query: {
@@ -168,31 +163,48 @@ export function useCreationRequestRecovery({
       return;
     }
 
-    // 원 응답이 먼저 레코드를 교체했으면 결과 반영을 건너뛴다.
-    if (!takePendingCreationRequest(activeRecord.requestId)) {
-      return;
-    }
+    void (async () => {
+      if (action.type === 'storylines-completed') {
+        const changed = await replacePendingCreationRequest(
+          activeRecord.requestId,
+          buildStorylineDraftRecord(
+            activeRecord.requestId,
+            activeRecord.generationRequest,
+            action.result,
+          ),
+          epoch,
+        );
 
-    if (action.type === 'storylines-completed') {
-      callbacksRef.current.onStorylinesCompleted(activeRecord, action.result);
-    } else {
-      callbacksRef.current.onFailed(activeRecord);
-    }
-  }, [activeRecord, isOriginalRequestPending, recoveryData]);
-
-  // 404(미존재·타인)는 되찾을 수 없으므로 레코드를 지우고 실패 처리로 합류한다.
-  // 그 외 오류(네트워크·5xx)는 레코드를 유지한 채 폴링을 계속한다.
-  useEffect(() => {
-    if (isOriginalRequestPending || !activeRecord || !recoveryError) {
-      return;
-    }
-
-    if (recoveryError instanceof FetchError && recoveryError.status === 404) {
-      if (takePendingCreationRequest(activeRecord.requestId)) {
-        callbacksRef.current.onFailed(activeRecord);
+        if (changed && getCreationEpoch() === epoch)
+          callbacksRef.current.onStorylinesCompleted(
+            activeRecord,
+            action.result,
+          );
+      } else if (
+        await takePendingCreationRequest(activeRecord.requestId, epoch)
+      ) {
+        if (getCreationEpoch() === epoch)
+          callbacksRef.current.onFailed(activeRecord);
       }
-    }
-  }, [activeRecord, isOriginalRequestPending, recoveryError]);
+    })();
+  }, [activeRecord, isOriginalRequestPending, recoveryData, epoch]);
+
+  useEffect(() => {
+    if (
+      isOriginalRequestPending ||
+      !activeRecord ||
+      !(recoveryError instanceof FetchError) ||
+      recoveryError.status !== 404
+    )
+      return;
+
+    void takePendingCreationRequest(activeRecord.requestId, epoch).then(
+      (taken) => {
+        if (taken && getCreationEpoch() === epoch)
+          callbacksRef.current.onFailed(activeRecord);
+      },
+    );
+  }, [activeRecord, isOriginalRequestPending, recoveryError, epoch]);
 
   return {
     isRecovering: activeRecord !== null,

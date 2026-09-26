@@ -1,9 +1,6 @@
 import { revokePushToken } from '@/features/my/_shared/utils/revoke-push-token';
 import { clearPendingCreditOrder } from '@/features/my/credits/utils/pending-credit-order-storage';
-import {
-  clearPendingCreationRequests,
-  clearStoryCompletionRequests,
-} from '@/features/stories/_shared/utils/creation-request-storage';
+import { clearCreationStorage } from '@/features/stories/_shared/utils/creation-request-storage';
 import { resetAnalyticsUser } from '@/observability/analytics';
 
 import { clearPendingLogin } from './pending-login-storage';
@@ -18,11 +15,16 @@ import { clearPendingLogin } from './pending-login-storage';
  * 지운다(세션 쿠키가 살아 있는 동안 불러야 서버 삭제가 통과한다). Auth.js `signOut`
  * 자체는 호출하지 않는다 — 리다이렉트 여부가 호출처마다 다르다.
  */
-export function clearLocalMemberState(): void {
+export async function clearLocalMemberState(): Promise<void> {
   revokePushToken();
   resetAnalyticsUser();
   clearPendingLogin();
-  clearPendingCreationRequests();
-  clearStoryCompletionRequests();
+
   clearPendingCreditOrder();
+
+  try {
+    await clearCreationStorage();
+  } catch {
+    // 동기 세대값이 이전 기록 접근을 막으며 다음 DB 접근에서 정리를 재시도한다.
+  }
 }

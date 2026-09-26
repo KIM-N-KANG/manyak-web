@@ -16,8 +16,8 @@ import {
   ONBOARDING_SEEN_STORAGE_KEY,
   ONBOARDING_SEEN_VALUE,
 } from '@/features/onboarding/constants';
+import { CREATION_DB_NAME } from '@/features/stories/_shared/utils/creation-db';
 import {
-  PENDING_CREATION_REQUEST_STORAGE_KEY,
   type PendingCreationRequest,
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
   type StoryCompletionRecord,
@@ -151,19 +151,14 @@ export async function seedPendingCreditOrder(
 }
 
 /**
- * 로컬스토리지의 편집 초안 목록에 초안·스토리라인 생성 레코드를 심는다.
+ * IndexedDB의 편집 초안 목록에 초안·스토리라인 생성 레코드를 심는다.
  * 제작 탭 카드 표시와 "이어서 만들기" 재개, 복구 조회 폴링이 시작되는 상태를 재현할 때 쓴다.
  */
 export async function seedPendingCreationRequests(
   page: Page,
   records: PendingCreationRequest[],
 ): Promise<void> {
-  await page.addInitScript(
-    ([key, value]) => {
-      window.localStorage.setItem(key, value);
-    },
-    [PENDING_CREATION_REQUEST_STORAGE_KEY, JSON.stringify(records)] as const,
-  );
+  await seedCreationRecords(page, 'pendingCreations', records);
 }
 
 /**
@@ -183,19 +178,14 @@ export async function seedDraftResumeIntent(
 }
 
 /**
- * 로컬스토리지의 완성 요청 목록에 레코드를 심는다.
+ * IndexedDB의 완성 요청 목록에 레코드를 심는다.
  * 제작 탭의 완성 중 카드 폴링이 시작되는 상태를 재현할 때 쓴다.
  */
 export async function seedStoryCompletionRequests(
   page: Page,
   records: StoryCompletionRecord[],
 ): Promise<void> {
-  await page.addInitScript(
-    ([key, value]) => {
-      window.localStorage.setItem(key, value);
-    },
-    [STORY_COMPLETION_REQUESTS_STORAGE_KEY, JSON.stringify(records)] as const,
-  );
+  await seedCreationRecords(page, 'storyCompletions', records);
 }
 
 /**
@@ -222,5 +212,101 @@ export async function seedGuestChatIds(
       window.sessionStorage.setItem(key, value);
     },
     [GUEST_CHAT_IDS_STORAGE_KEY, JSON.stringify(chatIds)] as const,
+  );
+}
+
+/** 앱보다 먼저 DB 초기화를 예약하며 새로고침에서 같은 데이터를 다시 심지 않는다. */
+async function seedCreationRecords(
+  page: Page,
+  table: 'pendingCreations' | 'storyCompletions',
+  records: (PendingCreationRequest | StoryCompletionRecord)[],
+) {
+  await page.addInitScript(
+    ({ name, table, records }) => {
+      const marker = `e2e:${table}`;
+
+      if (sessionStorage.getItem(marker)) return;
+
+      const open = indexedDB.open(name, 10);
+
+      open.onupgradeneeded = () => {
+        const db = open.result;
+        const pending = db.createObjectStore('pendingCreations', {
+          keyPath: 'requestId',
+        });
+
+        pending.createIndex('storageOrder', 'storageOrder');
+
+        const completion = db.createObjectStore('storyCompletions', {
+          keyPath: 'requestId',
+        });
+
+        completion.createIndex('storageOrder', 'storageOrder');
+        completion.createIndex(
+          'generationRequest.requestId',
+          'generationRequest.requestId',
+        );
+        db.createObjectStore('metadata', { keyPath: 'key' });
+      };
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction([table, 'metadata'], 'readwrite');
+        const state = tx.objectStore('metadata').get('state');
+
+        state.onsuccess = () => {
+          let sequence = state.result?.sequence ?? 0;
+
+          for (const record of records)
+            tx.objectStore(table).put({ ...record, storageOrder: ++sequence });
+
+          tx.objectStore('metadata').put({
+            key: 'state',
+            epoch: 0,
+            migrated: true,
+            sequence,
+          });
+        };
+        tx.oncomplete = () => {
+          sessionStorage.setItem(marker, '1');
+          db.close();
+        };
+        tx.onabort = () => db.close();
+      };
+    },
+    { name: CREATION_DB_NAME, table, records },
+  );
+}
+
+/** 실제 IndexedDB의 레코드를 기존 JSON 단언 형식으로 읽는다. */
+export async function readCreationStorage(
+  page: Page,
+  key: string,
+): Promise<string | null> {
+  const table =
+    key === STORY_COMPLETION_REQUESTS_STORAGE_KEY
+      ? 'storyCompletions'
+      : 'pendingCreations';
+
+  return page.evaluate(
+    ({ name, table }) =>
+      new Promise<string | null>((resolve, reject) => {
+        const open = indexedDB.open(name);
+
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          const tx = db.transaction(table, 'readonly');
+          const request = tx.objectStore(table).index('storageOrder').getAll();
+
+          request.onerror = () => reject(request.error);
+          tx.oncomplete = () => {
+            db.close();
+            resolve(
+              request.result.length ? JSON.stringify(request.result) : null,
+            );
+          };
+        };
+      }),
+    { name: CREATION_DB_NAME, table },
   );
 }

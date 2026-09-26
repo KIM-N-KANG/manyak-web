@@ -12,6 +12,7 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
+import { readCreationStorage } from '../fixtures/storage';
 import {
   seedDraftResumeIntent,
   seedPendingCreationRequests,
@@ -477,6 +478,57 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     await expect(page.getByRole('button', { name: '선택하기' })).toBeVisible();
   });
 
+  test('생성 성공 직후 초안 저장이 실패해도 복구 조회로 결과를 반영한다 (STORY-DRAFT-18)', async ({
+    page,
+  }) => {
+    await page.route(STORYLINES, (route) =>
+      route.fulfill({ status: 201, json: storylinesResult }),
+    );
+
+    let lookups = 0;
+
+    await page.route(CREATION_REQUEST, (route) => {
+      lookups++;
+
+      return route.fulfill({
+        json: {
+          stage: 'STORYLINE_GENERATION',
+          status: 'COMPLETED',
+          result: storylinesResult,
+        },
+      });
+    });
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지' }).click();
+    await page.evaluate(() => {
+      const put = IDBObjectStore.prototype.put;
+      let failed = false;
+
+      IDBObjectStore.prototype.put = function (...args) {
+        if (
+          !failed &&
+          this.name === 'pendingCreations' &&
+          args[0]?.stage === 'STORY_DRAFT'
+        ) {
+          failed = true;
+
+          throw new DOMException('Temporary write failure', 'UnknownError');
+        }
+
+        return put.apply(this, args);
+      };
+    });
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '스토리라인 만들기' }).click();
+    await expect(
+      page.getByText(storylinesResult.storylines[0].storyline),
+    ).toBeVisible();
+    expect(lookups).toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: '선택하기' })).toBeVisible();
+  });
+
   test('스토리라인 실패 재시도의 409는 같은 requestId로 복구 폴링에 합류한다', async ({
     page,
   }) => {
@@ -542,10 +594,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     ).toBeHidden();
     expect(lookupCount).toBe(0);
     expect(
-      await page.evaluate(
-        (key) => localStorage.getItem(key),
-        STORY_COMPLETION_REQUESTS_STORAGE_KEY,
-      ),
+      await readCreationStorage(page, STORY_COMPLETION_REQUESTS_STORAGE_KEY),
     ).toContain(COMPLETION_REQUEST_ID);
   });
 
@@ -637,12 +686,7 @@ test.describe('이어서 만들기 진행 카드', () => {
       page.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeVisible();
     await expect
-      .poll(() =>
-        page.evaluate(
-          (key) => localStorage.getItem(key),
-          'manyak:pending-creation-request',
-        ),
-      )
+      .poll(() => readCreationStorage(page, 'manyak:pending-creation-request'))
       .toContain('"stage":"STORY_DRAFT"');
     // 카드 조회가 초안으로 승격하면 설명도 선택 단계로 바뀐다.
     await expect(

@@ -32,14 +32,14 @@ export function AccountDeletionScreen() {
   >(() => new Set());
   const withdraw = useWithdraw({
     mutation: {
-      onSuccess: (response) => {
+      onSuccess: async (response) => {
         if (response.status !== 204) {
           toast.error(TOAST_MESSAGE.ACCOUNT_DELETION_FAILED);
 
           return;
         }
 
-        clearLocalMemberState();
+        await clearLocalMemberState();
         queryClient.clear();
         void signOut({ redirectTo: APP_PATH.MAIN.MY });
       },

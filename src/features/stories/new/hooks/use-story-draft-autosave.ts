@@ -12,7 +12,7 @@ type UseStoryDraftAutosaveArgs<Value> = {
   candidate: Value | null;
   fingerprint: string;
   enabled: boolean;
-  persist: (value: Value | null) => boolean;
+  persist: (value: Value | null) => Promise<boolean>;
 };
 
 /**
@@ -97,7 +97,7 @@ export function useStoryDraftAutosave<Value>({
     const controller = controllerRef.current;
 
     if (controller === null || !enabled) {
-      return false;
+      return Promise.resolve(false);
     }
 
     controller.schedule(candidateRef.current);
@@ -124,5 +124,8 @@ export function useStoryDraftAutosave<Value>({
     markCurrentAsSaved,
     setPersistedStatus,
     cancel,
+    settle: async () => {
+      await controllerRef.current?.settle();
+    },
   };
 }

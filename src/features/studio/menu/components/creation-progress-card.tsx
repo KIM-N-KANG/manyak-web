@@ -3,6 +3,7 @@
 import { Calendar04Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import { ImageGeneration } from '@/components/agents/image-generation';
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';
@@ -11,6 +12,8 @@ import { TextShimmer } from '@/components/motion/text-shimmer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import type {
   CreationProgressRecord,
   PendingCreationRequest,
@@ -127,6 +130,7 @@ function getDraftDescription(record: PendingCreationRequest): string {
 
 function DraftCardBody({ record }: DraftCardBodyProps) {
   const router = useRouter();
+  const epoch = useCreationEpoch();
 
   // 초안·생성 중 레코드 모두 재개 의도를 남겨 퍼널이 이 레코드만 복원하게 한다.
   const handleResume = () => {
@@ -149,8 +153,11 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
               icon: Delete02Icon,
               label: CREATION_PROGRESS_CARD_COPY.delete,
               variant: 'destructive',
-              onSelect: () => {
-                takePendingCreationRequest(record.requestId);
+              onSelect: async () => {
+                if (
+                  !(await takePendingCreationRequest(record.requestId, epoch))
+                )
+                  toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
               },
               confirm: {
                 title: CREATION_PROGRESS_CARD_COPY.deleteConfirmTitle,

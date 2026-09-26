@@ -28,10 +28,11 @@ export function SessionExpiryWatcher() {
 
       isHandlingRef.current = true;
 
-      clearLocalMemberState();
-      void signOut({
-        redirectTo: `${APP_PATH.LOGIN}?${SESSION_EXPIRED_PARAM}`,
-      });
+      void clearLocalMemberState().finally(() =>
+        signOut({
+          redirectTo: `${APP_PATH.LOGIN}?${SESSION_EXPIRED_PARAM}`,
+        }),
+      );
     });
   }, []);
 

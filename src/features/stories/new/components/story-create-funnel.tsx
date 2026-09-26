@@ -2,6 +2,9 @@
 
 import { useEffect } from 'react';
 
+import { RetryListStatus } from '@/components/common/retry-list-status';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { track } from '@/observability/analytics';
 
@@ -16,6 +19,9 @@ import { StoryTagStepSection } from './tag-step/story-tag-step-section';
 
 export function StoryCreateFunnel() {
   const {
+    isEntryResolved,
+    entryError,
+    retryEntry,
     guestLimitOpen,
     setGuestLimitOpen,
     step,
@@ -76,14 +82,23 @@ export function StoryCreateFunnel() {
         onConfirmBack={handleConfirmBack}
       />
 
-      {step === 'keyword' && (
+      {entryError ? (
+        <RetryListStatus
+          title={TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED}
+          onRetry={retryEntry}
+        />
+      ) : !isEntryResolved ? (
+        <Skeleton className="m-4 h-48" />
+      ) : null}
+
+      {isEntryResolved && !entryError && step === 'keyword' && (
         <StoryTagStepSection
           controller={tagStep}
           hasGenerateStorylinesError={hasGenerateStorylinesError}
         />
       )}
 
-      {step === 'storyline-select' && (
+      {isEntryResolved && !entryError && step === 'storyline-select' && (
         <StorylineSelectStepSection
           storylines={storylines}
           creationId={creationId}
@@ -97,24 +112,27 @@ export function StoryCreateFunnel() {
         />
       )}
 
-      {step === 'additional-info' && selectedStoryline && (
-        <StoryAdditionalInfoStepSection
-          storylineItem={selectedStoryline}
-          isCompletingStory={isCompletingStory}
-          hasCompleteStoryError={hasCompleteStoryError}
-          canCompleteStory={canCompleteStory}
-          selectedRecommendations={selectedRecommendations}
-          additionalInfos={additionalInfos}
-          canAddAdditionalInfo={canAddAdditionalInfo}
-          onToggleRecommendation={handleToggleRecommendation}
-          onAddAdditionalInfo={addAdditionalInfo}
-          onRemoveAdditionalInfo={removeAdditionalInfo}
-          onChangeAdditionalInfo={changeAdditionalInfo}
-          onRegisterAdditionalInfoInput={registerAdditionalInfoInput}
-          onCompleteStory={handleCompleteStory}
-          onBackToStorylineSelect={handleBackToStorylineSelect}
-        />
-      )}
+      {isEntryResolved &&
+        !entryError &&
+        step === 'additional-info' &&
+        selectedStoryline && (
+          <StoryAdditionalInfoStepSection
+            storylineItem={selectedStoryline}
+            isCompletingStory={isCompletingStory}
+            hasCompleteStoryError={hasCompleteStoryError}
+            canCompleteStory={canCompleteStory}
+            selectedRecommendations={selectedRecommendations}
+            additionalInfos={additionalInfos}
+            canAddAdditionalInfo={canAddAdditionalInfo}
+            onToggleRecommendation={handleToggleRecommendation}
+            onAddAdditionalInfo={addAdditionalInfo}
+            onRemoveAdditionalInfo={removeAdditionalInfo}
+            onChangeAdditionalInfo={changeAdditionalInfo}
+            onRegisterAdditionalInfoInput={registerAdditionalInfoInput}
+            onCompleteStory={handleCompleteStory}
+            onBackToStorylineSelect={handleBackToStorylineSelect}
+          />
+        )}
 
       {step === 'complete' && <StoryCompletionLoading />}
 

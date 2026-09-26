@@ -33,10 +33,10 @@ export function MyScreen() {
     track('client_account_viewed');
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
     track('client_account_logoutButton_clicked');
-    clearLocalMemberState();
+    await clearLocalMemberState();
     void signOut({ redirectTo: APP_PATH.MAIN.MY });
   };
 
