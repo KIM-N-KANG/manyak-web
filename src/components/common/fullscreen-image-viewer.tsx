@@ -13,6 +13,7 @@ import {
   DialogPortal,
 } from '@/components/ui/dialog';
 import { useCloseOnBack } from '@/hooks/use-close-on-back';
+import { isPointInContainedImage } from '@/lib/contained-image';
 
 type FullscreenImageViewerProps = {
   open: boolean;
@@ -27,7 +28,8 @@ type FullscreenImageViewerProps = {
 /**
  * 이미지를 화면 전체로 크게 보여주는 뷰어.
  *
- * 배경·X·뒤로가기 어느 것으로든 페이지 이동 없이 뷰어만 닫힌다.
+ * 이미지 밖 검은 배경·X·뒤로가기 어느 것으로든 페이지 이동 없이 뷰어만 닫힌다.
+ * 이미지는 화면 전체 박스에 contain으로 그려 박스가 여백까지 덮으므로, 탭 지점이 실제 그림 위면 닫지 않는다.
  */
 export function FullscreenImageViewer({
   open,
@@ -45,7 +47,25 @@ export function FullscreenImageViewer({
         <DialogPrimitive.Popup
           data-slot="dialog-content"
           className="fixed inset-0 z-50 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
-          onClick={() => onOpenChange(false)}>
+          onClick={(event) => {
+            const image = event.currentTarget.querySelector('img');
+
+            if (
+              image &&
+              isPointInContainedImage({
+                box: image.getBoundingClientRect(),
+                natural: {
+                  width: image.naturalWidth,
+                  height: image.naturalHeight,
+                },
+                point: { x: event.clientX, y: event.clientY },
+              })
+            ) {
+              return;
+            }
+
+            onOpenChange(false);
+          }}>
           <DialogPrimitive.Title className="sr-only">
             {title}
           </DialogPrimitive.Title>

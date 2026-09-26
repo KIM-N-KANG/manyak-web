@@ -64,9 +64,9 @@ const STORY_CHARACTERS = [
   { name: '계곡지기', imageUrl: null },
 ];
 
-// 1x1 투명 PNG. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+// 60×60 투명 PNG. 뷰어의 srcset 밀도로 나눠도 naturalWidth가 0으로 반올림되지 않게 1×1보다 크게 둔다. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAJElEQVR4nO3BMQEAAADCoPVP7WkJoAAAAAAAAAAAAAAAAAAAbjh8AAFOgZ4bAAAAAElFTkSuQmCC',
   'base64',
 );
 
@@ -204,6 +204,30 @@ test.describe('스토리 상세', () => {
     await viewer.getByRole('button', { name: '닫기' }).click();
     await expect(viewer).not.toBeVisible();
     await expect(page).toHaveURL(/\/stories\/s1$/);
+
+    // 정사각형 이미지라 세로 화면에서는 가운데만 그림이고 위아래는 검은 여백이다.
+    // 그림을 탭하면 그대로 두고, 여백을 탭해야 닫힌다(KNK-1427).
+    await page
+      .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+
+    const viewport = page.viewportSize();
+
+    if (!viewport) throw new Error('뷰포트 크기를 알 수 없다');
+
+    const viewerImage = viewer.getByRole('img', { name: '이무기 인물 이미지' });
+
+    // 로드 전에는 그림 영역을 알 수 없어 어느 탭이든 배경 탭으로 닫힌다.
+    await expect
+      .poll(() =>
+        viewerImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0);
+    await page.mouse.click(viewport.width / 2, viewport.height / 2);
+    await expect(viewer).toBeVisible();
+    await page.mouse.click(viewport.width / 2, 40);
+    await expect(viewer).not.toBeVisible();
 
     await page
       .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
