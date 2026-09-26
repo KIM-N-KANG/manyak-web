@@ -107,7 +107,7 @@ export default function RootLayout({
                       <GuestConsentProvider>
                         <div
                           id={APP_FRAME_ID}
-                          className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                          className="relative mx-auto flex h-dvh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                           {children}
                           <InAppBrowserObserver />
                         </div>

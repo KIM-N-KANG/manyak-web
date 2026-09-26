@@ -64,9 +64,9 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 
 ## 레이아웃·스크롤
 
-앱은 단일 프레임(루트 `src/app/layout.tsx`의 `h-svh overflow-hidden max-w-md` 컨테이너) 안에서 화면별 flex 컬럼(헤더 / 스크롤 영역 / 푸터)으로 구성됩니다.
+앱은 단일 프레임(루트 `src/app/layout.tsx`의 `h-dvh overflow-hidden max-w-md` 컨테이너) 안에서 화면별 flex 컬럼(헤더 / 스크롤 영역 / 푸터)으로 구성됩니다.
 
-- 뷰포트 높이(`h-svh`)는 루트 앱 프레임만 소유합니다. 화면 셸은 `h-full`로 부모 높이를 따르고, `h-svh`를 재선언하지 마세요. (예외: 루트 레이아웃을 대체하는 `global-error.tsx`)
+- 뷰포트 높이(`h-dvh`)는 루트 앱 프레임만 소유합니다. 화면 셸은 `h-full`로 부모 높이를 따르고, 뷰포트 높이를 재선언하지 마세요. (예외: 루트 레이아웃을 대체하는 `global-error.tsx`)
 - 스크롤 컨테이너(`overflow-y-auto`)에는 `overscroll-contain`을 함께 붙이세요. 없으면 스크롤 끝에서 문서로 체이닝돼 macOS/iOS에서 앱 프레임 전체가 러버밴드로 밀립니다.
 - 앱 프레임 내부 UI에 `position: fixed`를 쓰지 마세요(조상에 transform이 생기면 기준이 조용히 깨집니다). 하단 네비·푸터는 flex 컬럼의 in-flow 요소로 두고, 스크롤을 따라가지 않는 오버레이(FAB 등)는 `(main)/layout.tsx`의 positioned 스크롤 래퍼에 `absolute`로 붙입니다. `fixed`는 body로 포털되는 다이얼로그·드로어 전용입니다.
 - 헤더·네비 높이를 다른 요소의 패딩/오프셋 매직 넘버로 보정하지 마세요. 공간 분배는 flex 레이아웃에 맡깁니다.
