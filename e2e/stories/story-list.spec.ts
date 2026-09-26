@@ -420,6 +420,36 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
   });
 
+  test('아래로 스크롤하면 필터 바를 숨기고 위로 스크롤하면 다시 보인다 (KNK-1426)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockPublicStories(
+      page,
+      Array.from({ length: 12 }, (_, index) =>
+        originalStory(`o${index + 1}`, `긴 목록 ${index + 1}`),
+      ),
+    );
+
+    await page.goto('/');
+    await expect(page.getByText('긴 목록 1', { exact: true })).toBeVisible();
+
+    const filterGroup = page.getByRole('group', {
+      name: STORY_LIST_COPY.filterGroupLabel,
+    });
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    await expect(filterGroup).toBeVisible();
+
+    await scroller.evaluate((element) => element.scrollTo({ top: 300 }));
+    await expect(filterGroup).toBeHidden();
+
+    await scroller.evaluate((element) => element.scrollTo({ top: 200 }));
+    await expect(filterGroup).toBeVisible();
+  });
+
   test('필터·정렬을 바꾸면 URL과 요청에 반영하고 상세에서 돌아와도 유지한다 (KNK-1421)', async ({
     page,
   }) => {
