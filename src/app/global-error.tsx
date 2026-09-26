@@ -43,8 +43,8 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
       lang="ko"
       className={`${pretendard.variable} ${maruburi.variable} antialiased ${isDark ? 'dark' : ''}`}
       suppressHydrationWarning>
-      <body className="bg-border font-sans text-foreground">
-        <div className="mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+      <body className="font-sans text-foreground">
+        <div className="mx-auto flex h-dvh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
           <RetryListStatus title="문제가 발생했어요" onRetry={() => reset()} />
         </div>
       </body>

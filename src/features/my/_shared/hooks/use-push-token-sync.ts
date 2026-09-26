@@ -109,10 +109,12 @@ export function usePushTokenSync() {
 
     void sync();
     window.addEventListener(PUSH_PERMISSION_EVENT, sync);
+    window.addEventListener('online', sync);
 
     return () => {
       cancelled = true;
       window.removeEventListener(PUSH_PERMISSION_EVENT, sync);
+      window.removeEventListener('online', sync);
     };
   }, [shouldSync, registerMutate]);
 

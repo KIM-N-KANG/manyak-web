@@ -95,9 +95,7 @@ export default function RootLayout({
         />
       </head>
       {/* suppressHydrationWarning: 카카오톡 iOS 웹뷰가 body에 -webkit-text-size-adjust 스타일을 주입해 속성 불일치 경고가 발생 */}
-      <body
-        className="bg-border font-sans text-foreground"
-        suppressHydrationWarning>
+      <body className="font-sans text-foreground" suppressHydrationWarning>
         <IosInputZoomLock />
         <AmplitudeProvider>
           <MetaPixelProvider>
@@ -109,7 +107,7 @@ export default function RootLayout({
                       <GuestConsentProvider>
                         <div
                           id={APP_FRAME_ID}
-                          className="relative mx-auto flex h-svh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
+                          className="relative mx-auto flex h-dvh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
                           {children}
                           <InAppBrowserObserver />
                         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { type UIEvent, useRef, useState } from 'react';
+import { type UIEvent, useLayoutEffect, useRef, useState } from 'react';
 
 import { usePathname } from 'next/navigation';
 
@@ -25,7 +25,10 @@ export default function MainLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const isHome = pathname === APP_PATH.MAIN.STORIES;
+  const isStudio = pathname === APP_PATH.MAIN.STUDIO;
   const refreshActiveQueries = useRefreshActiveQueries();
+  const scrollContainerRef = useRef<HTMLElement>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isToolbarHidden, setIsToolbarHidden] = useState(false);
   const lastScrollTopRef = useRef(0);
@@ -33,12 +36,27 @@ export default function MainLayout({
   const [overlayContainer, setOverlayContainer] =
     useState<HTMLDivElement | null>(null);
 
+  useLayoutEffect(() => {
+    const scrollTop = scrollContainerRef.current?.scrollTop ?? 0;
+
+    lastScrollTopRef.current = scrollTop;
+    directionDistanceRef.current = 0;
+    setHasScrolled(isStudio && scrollTop > 0);
+    setIsToolbarHidden(isHome && scrollTop > TOOLBAR_SCROLL_THRESHOLD);
+  }, [isHome, isStudio]);
+
   const handleContentScroll = (event: UIEvent<HTMLElement>) => {
     const { scrollTop } = event.currentTarget;
+
+    if (isStudio) {
+      setHasScrolled(scrollTop > 0);
+
+      return;
+    }
+
     const delta = scrollTop - lastScrollTopRef.current;
 
     lastScrollTopRef.current = scrollTop;
-    setHasScrolled(scrollTop > 0);
 
     if (Math.sign(delta) !== Math.sign(directionDistanceRef.current)) {
       directionDistanceRef.current = 0;
@@ -56,16 +74,17 @@ export default function MainLayout({
   };
 
   return (
-    <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <MainHeader />
       {/* 스크롤 영역과 같은 박스를 가지는 positioned 래퍼.
           FAB처럼 스크롤·당김을 따라가지 않아야 하는 오버레이가 포털로 여기에 absolute로 붙는다. */}
       <div ref={setOverlayContainer} className="relative min-h-0 flex-1">
         {/* 홈·채팅·제작은 당겨서 화면이 구독 중인 목록을 다시 읽는다. 마이는 앱과 같이 두지 않는다. */}
         <PullToRefresh
+          ref={scrollContainerRef}
           onRefresh={refreshActiveQueries}
           disabled={pathname === APP_PATH.MAIN.MY}
-          onScroll={handleContentScroll}
+          onScroll={isHome || isStudio ? handleContentScroll : undefined}
           className="h-full"
           contentClassName="flex min-h-full flex-col">
           <MainScrollProvider

@@ -172,7 +172,6 @@ export function PullToRefresh({
   const indicatorScale = useTransform(y, [0, pullThreshold], [0.86, 1]);
   const isRefreshing = refreshing || internalRefreshing;
 
-  // 네이티브 터치 리스너가 최신 prop을 읽도록 ref에 비춘다. 렌더 중 대입은 React 규칙 위반이라 커밋 뒤에 쓴다.
   useEffect(() => {
     disabledRef.current = disabled;
     externalRefreshingRef.current = refreshing;
@@ -221,8 +220,6 @@ export function PullToRefresh({
     } finally {
       setInternalRefreshing(false);
 
-      // A synchronous refresh can resolve before React commits the temporary
-      // internal state, so release here instead of relying only on the effect.
       if (!externalRefreshingRef.current) {
         setStatus('idle');
         settle(0);
@@ -268,6 +265,17 @@ export function PullToRefresh({
     const root = rootRef.current;
 
     if (!root) return;
+
+    if (disabled) {
+      gestureRef.current = { ...EMPTY_GESTURE };
+
+      if (statusRef.current === 'pulling' || statusRef.current === 'ready') {
+        setStatus('idle');
+        settle(0);
+      }
+
+      return;
+    }
 
     const onTouchStart = (event: TouchEvent) => {
       if (
@@ -324,9 +332,8 @@ export function PullToRefresh({
       root.removeEventListener('touchend', onTouchEnd);
       root.removeEventListener('touchcancel', onTouchEnd);
     };
-    // 제스처 처리 함수는 React Compiler가 메모하므로 마운트 시 한 번만 붙인다.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 활성화 여부가 바뀔 때만 리스너를 연결한다.
+  }, [disabled]);
 
   useEffect(() => {
     return () => animationRef.current?.stop();
@@ -354,14 +361,6 @@ export function PullToRefresh({
       data-disabled={disabled || undefined}
       className={cn(
         'relative w-full overflow-y-auto overscroll-contain bg-background',
-        // 당김은 터치 전용이다. 마우스·펜 경로를 두지 않아 커서 모양도 바꾸지 않는다.
-        // No `touch-none` here — this element is the scroller, and the pull
-        // only takes over once the content is already at the top. The callout
-        // has to be off from the first frame though: iOS decides on it while
-        // the finger is still resting, long before the pull is recognised.
-        // Whatever the consumer renders inside stays selectable with a mouse;
-        // only the pull itself suppresses selection, and only while it runs,
-        // so dragging the page down cannot highlight it on the way.
         TOUCH_GESTURE_CONTENT_CLASS,
         (status === 'pulling' || status === 'ready') && 'select-none',
         className,
