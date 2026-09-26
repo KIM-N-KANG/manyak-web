@@ -38,6 +38,7 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
 
   let current = { ...story };
   const methods: string[] = [];
+  let release!: () => void;
 
   await page.route(DETAIL, (route) => route.fulfill({ json: current }));
   await page.route(isPublicStoriesUrl, (route) =>
@@ -47,6 +48,9 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
     const method = route.request().method();
 
     methods.push(method);
+    await new Promise<void>((resolve) => {
+      release = resolve;
+    });
     current = {
       ...current,
       isLiked: method === 'POST',
@@ -72,52 +76,95 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
     page.getByRole('button', { name: STORY_LIKE_COPY.unlike }),
   ).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
+  await expect.poll(() => methods.length).toBe(1);
+
+  const unlike = page.getByRole('button', { name: STORY_LIKE_COPY.unlike });
+
+  await expect(unlike).toBeDisabled();
+  release();
+  await expect(unlike).toBeEnabled();
   await page.goBack();
   await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
   await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
   await page.getByRole('button', { name: STORY_LIKE_COPY.unlike }).click();
   await expect(like).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
+  await expect.poll(() => methods.length).toBe(2);
+  await expect(like).toBeDisabled();
+  release();
+  await expect(like).toBeEnabled();
   expect(methods).toEqual(['POST', 'DELETE']);
 });
 
 for (const isLiked of [false, true]) {
-  test(`요청 중 중복 클릭을 막고 실패하면 기존 상태를 유지한다 (${isLiked})`, async ({
-    page,
-  }) => {
-    await mockMemberSession(page);
-    await page.route(DETAIL, (route) =>
-      route.fulfill({ json: { ...story, isLiked } }),
-    );
+  for (const failure of ['http', 'network', 'unexpected-status'] as const) {
+    test(`응답 전에 반영하고 실패하면 복원하여 재시도한다 (${isLiked}, ${failure})`, async ({
+      page,
+    }) => {
+      await mockMemberSession(page);
+      await page.route(DETAIL, (route) =>
+        route.fulfill({ json: { ...story, isLiked } }),
+      );
 
-    let requests = 0;
-    let release!: () => void;
-    const gate = new Promise<void>((resolve) => {
-      release = resolve;
+      let requests = 0;
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+
+      await page.route(LIKE, async (route) => {
+        requests += 1;
+        await gate;
+
+        if (failure === 'network') await route.abort();
+        else
+          await route.fulfill({
+            status: failure === 'http' ? 500 : 200,
+            json: {},
+          });
+      });
+      await page.goto(APP_PATH.STORY_DETAIL('s1'));
+
+      const originalButton = page.getByRole('button', {
+        name: isLiked ? STORY_LIKE_COPY.unlike : STORY_LIKE_COPY.like,
+        exact: true,
+      });
+
+      await originalButton.click();
+
+      const button = page.getByRole('button', {
+        name: isLiked ? STORY_LIKE_COPY.like : STORY_LIKE_COPY.unlike,
+        exact: true,
+      });
+
+      await expect(button).toBeDisabled();
+      await expect(button).toHaveAttribute('aria-pressed', String(!isLiked));
+      await expect(
+        page.getByText(countText(isLiked ? 998 : 1000), { exact: true }),
+      ).toBeVisible();
+      await expect.poll(() => requests).toBe(1);
+      await button.evaluate((element: HTMLButtonElement) => element.click());
+      release();
+      await expect(
+        page.getByText(TOAST_MESSAGE.STORY_LIKE_FAILED),
+      ).toBeVisible();
+      await expect(originalButton).toBeEnabled();
+      await expect(originalButton).toHaveAttribute(
+        'aria-pressed',
+        String(isLiked),
+      );
+      await expect(
+        page.getByText(countText(999), { exact: true }),
+      ).toBeVisible();
+      expect(requests).toBe(1);
+      await originalButton.click();
+      await expect.poll(() => requests).toBe(2);
+      await expect(originalButton).toBeEnabled();
+      await expect(
+        page.getByText(countText(999), { exact: true }),
+      ).toBeVisible();
     });
-
-    await page.route(LIKE, async (route) => {
-      requests += 1;
-      await gate;
-      await route.fulfill({ status: 500, json: {} });
-    });
-    await page.goto(APP_PATH.STORY_DETAIL('s1'));
-
-    const button = page.getByRole('button', {
-      name: isLiked ? STORY_LIKE_COPY.unlike : STORY_LIKE_COPY.like,
-      exact: true,
-    });
-
-    await button.click();
-    await expect(button).toBeDisabled();
-    await button.evaluate((element: HTMLButtonElement) => element.click());
-    release();
-    await expect(page.getByText(TOAST_MESSAGE.STORY_LIKE_FAILED)).toBeVisible();
-    await expect(button).toBeEnabled();
-    await expect(button).toHaveAttribute('aria-pressed', String(isLiked));
-    await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
-    expect(requests).toBe(1);
-  });
+  }
 }
 
 for (const member of [false, true]) {
