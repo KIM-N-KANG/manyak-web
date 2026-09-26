@@ -4,6 +4,7 @@ import {
   HomeStoryList,
   StoryList,
 } from '@/features/stories/list/components/home-story-list';
+import { StoryListToolbar } from '@/features/stories/list/components/story-list-toolbar';
 import { DEFAULT_STORY_LIST_QUERY } from '@/features/stories/list/constants';
 import { fetchPublicStoriesOnServer } from '@/lib/stories/backend-story-client';
 
@@ -13,6 +14,7 @@ export default async function StoriesPage() {
 
   return (
     <main className="flex flex-1 flex-col">
+      <StoryListToolbar />
       <Suspense
         fallback={
           <StoryList

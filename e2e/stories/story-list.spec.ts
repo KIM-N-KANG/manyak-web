@@ -392,11 +392,17 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
   });
 
-  test('홈 카드는 제작자를 보여주고 오리지널 필터에서만 ORIGINAL 태그를 붙인다 (KNK-983·KNK-1421)', async ({
+  test('홈 카드는 제작자를 보여주고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (KNK-983·KNK-1426)', async ({
     page,
   }) => {
     await skipOnboarding(page);
-    await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
+    await mockPublicStories(page, [
+      { ...originalStory('o1', '마냑의 첫 이야기'), isOriginal: true },
+      {
+        ...story('u1', '사용자 이야기'),
+        author: { id: 2, nickname: '작가', profileImageUrl: null },
+      },
+    ]);
 
     await page.goto('/');
 
@@ -404,12 +410,44 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('@마냑', { exact: true })).toBeVisible();
     // 내가 만든 스토리 카드와 달리 한 줄 소개·장르는 노출하지 않는다.
     await expect(page.getByText('한 줄 소개입니다')).toBeHidden();
-    // 응답에 오리지널 여부가 없어 전체 필터에서는 태그를 붙이지 않는다.
-    await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(0);
+    // 필터와 무관하게 응답의 isOriginal인 카드에만 태그를 붙인다.
+    await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
+    await expect(
+      page
+        .getByRole('listitem')
+        .filter({ hasText: '마냑의 첫 이야기' })
+        .getByRole('img', { name: '오리지널' }),
+    ).toBeVisible();
+  });
 
-    await page.getByRole('button', { name: '오리지널', exact: true }).click();
+  test('아래로 스크롤하면 필터 바를 숨기고 위로 스크롤하면 다시 보인다 (KNK-1426)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockPublicStories(
+      page,
+      Array.from({ length: 12 }, (_, index) =>
+        originalStory(`o${index + 1}`, `긴 목록 ${index + 1}`),
+      ),
+    );
 
-    await expect(page.getByRole('img', { name: '오리지널' })).toBeVisible();
+    await page.goto('/');
+    await expect(page.getByText('긴 목록 1', { exact: true })).toBeVisible();
+
+    const filterGroup = page.getByRole('group', {
+      name: STORY_LIST_COPY.filterGroupLabel,
+    });
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    await expect(filterGroup).toBeVisible();
+
+    await scroller.evaluate((element) => element.scrollTo({ top: 300 }));
+    await expect(filterGroup).toBeHidden();
+
+    await scroller.evaluate((element) => element.scrollTo({ top: 200 }));
+    await expect(filterGroup).toBeVisible();
   });
 
   test('필터·정렬을 바꾸면 URL과 요청에 반영하고 상세에서 돌아와도 유지한다 (KNK-1421)', async ({

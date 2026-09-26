@@ -104,11 +104,7 @@ export function StoryList({ query, initialPage }: StoryListProps) {
 
     return (
       <>
-        <StoryCardGrid
-          stories={stories}
-          section="original"
-          isOriginal={query.filter === 'original'}
-        />
+        <StoryCardGrid stories={stories} section="original" />
         {isFetchingNextPage && (
           <div className="flex justify-center py-4">
             <Spinner aria-label={STORY_LIST_COPY.loadingLabel} />

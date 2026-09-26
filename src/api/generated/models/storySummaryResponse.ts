@@ -34,4 +34,5 @@ export interface StorySummaryResponse {
   status?: StorySummaryResponseStatus;
   /** 생성 시각 */
   createdAt?: string;
+  isOriginal?: boolean;
 }

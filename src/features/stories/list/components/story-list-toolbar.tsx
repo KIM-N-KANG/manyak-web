@@ -6,6 +6,7 @@ import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { useMainScroll } from '@/components/layout/main-scroll-context';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ToggleChip } from '@/components/ui/toggle-chip';
 import { APP_PATH } from '@/constants/app-path';
+import { cn } from '@/lib/utils';
 
 import {
   DEFAULT_STORY_LIST_QUERY,
@@ -35,17 +37,39 @@ type StoryListToolbarViewProps = {
   onChange: (query: StoryListQuery) => void;
 };
 
+/**
+ * 필터 바 숨김·재노출 모션이다. 바는 목록 스크롤 영역 안에 sticky로 붙어 있어 자리를 비우지 않고 위로 미끄러지기만 하므로
+ * 목록 높이와 스크롤 위치가 바뀌지 않는다. 사라짐은 짧은 가속 곡선, 나타남은 조금 긴 감속 곡선(iOS 시트 곡선)이다.
+ * 숨은 뒤에는 invisible로 포커스·보조기기에서 빠진다.
+ */
+const TOOLBAR_MOTION = {
+  hidden:
+    'invisible -translate-y-full duration-150 ease-[cubic-bezier(0.4,0,1,1)]',
+  shown: 'duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+};
+
+/**
+ * 홈 목록 위의 필터·정렬 바. 아래로 스크롤하면 위로 숨고 위로 스크롤하면 다시 내려온다.
+ */
 export function StoryListToolbar() {
+  const { isToolbarHidden } = useMainScroll();
+
   return (
-    <Suspense
-      fallback={
-        <StoryListToolbarView
-          query={DEFAULT_STORY_LIST_QUERY}
-          onChange={() => {}}
-        />
-      }>
-      <UrlStoryListToolbar />
-    </Suspense>
+    <div
+      className={cn(
+        'sticky top-0 z-20 shrink-0 transition-[translate,visibility] motion-reduce:transition-none',
+        isToolbarHidden ? TOOLBAR_MOTION.hidden : TOOLBAR_MOTION.shown,
+      )}>
+      <Suspense
+        fallback={
+          <StoryListToolbarView
+            query={DEFAULT_STORY_LIST_QUERY}
+            onChange={() => {}}
+          />
+        }>
+        <UrlStoryListToolbar />
+      </Suspense>
+    </div>
   );
 }
 
