@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_STORY_LIST_QUERY } from '@/features/stories/list/constants';
 import {
   fetchOriginalStoriesOnServer,
   fetchPublicStoriesOnServer,
@@ -98,10 +99,10 @@ describe('fetchPublicStoriesOnServer', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(
-      fetchPublicStoriesOnServer({ filter: 'all', sort: 'likes' }),
+      fetchPublicStoriesOnServer(DEFAULT_STORY_LIST_QUERY),
     ).resolves.toEqual(page);
     expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://backend.example.com/api/v1/stories?filter=all&sort=likes',
+      'https://backend.example.com/api/v1/stories?filter=all&sort=latest',
     );
   });
 });

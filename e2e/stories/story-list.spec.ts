@@ -518,8 +518,8 @@ test.describe('홈·제작 스토리 목록', () => {
         },
       });
     });
-    await page.route('**/api/v1/stories/original-latest', (route) =>
-      route.fulfill({ json: originalStory('original-latest', '상세') }),
+    await page.route('**/api/v1/stories/original-likes', (route) =>
+      route.fulfill({ json: originalStory('original-likes', '상세') }),
     );
 
     await page.goto('/');
@@ -527,7 +527,7 @@ test.describe('홈·제작 스토리 목록', () => {
     const [allLabel, originalLabel] = STORY_LIST_FILTER_OPTIONS.map(
       (option) => option.label,
     );
-    const [likesLabel, latestLabel] = STORY_LIST_SORT_OPTIONS.map(
+    const [latestLabel, likesLabel] = STORY_LIST_SORT_OPTIONS.map(
       (option) => option.label,
     );
     const allChip = page.getByRole('button', { name: allLabel, exact: true });
@@ -536,44 +536,56 @@ test.describe('홈·제작 스토리 목록', () => {
       exact: true,
     });
 
-    // 기본은 전체·인기순이다.
-    await expect(page.getByText('all likes 스토리')).toBeVisible();
+    // 기본은 전체와 최신순이다.
+    await expect(page.getByText('all latest 스토리')).toBeVisible();
+    expect(requests.at(-1)?.get('filter')).toBe('all');
+    expect(requests.at(-1)?.get('sort')).toBe('latest');
     await expect(allChip).toHaveAttribute('aria-pressed', 'true');
     await expect(
       page.getByRole('button', {
-        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${likesLabel}`,
+        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${latestLabel}`,
       }),
     ).toBeVisible();
 
     await originalChip.click();
 
     await expect(page).toHaveURL(/\/\?filter=original$/);
-    await expect(page.getByText('original likes 스토리')).toBeVisible();
+    await expect(page.getByText('original latest 스토리')).toBeVisible();
     await expect(originalChip).toHaveAttribute('aria-pressed', 'true');
 
     await page
       .getByRole('button', {
-        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${likesLabel}`,
+        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${latestLabel}`,
       })
       .click();
-    await page.getByRole('menuitemradio', { name: latestLabel }).click();
+    await expect(page.getByRole('menuitemradio').first()).toHaveText(
+      latestLabel,
+    );
+    await page.getByRole('menuitemradio', { name: likesLabel }).click();
 
-    await expect(page).toHaveURL(/\/\?filter=original&sort=latest$/);
-    await expect(page.getByText('original latest 스토리')).toBeVisible();
+    await expect(page).toHaveURL(/\/\?filter=original&sort=likes$/);
+    await expect(page.getByText('original likes 스토리')).toBeVisible();
     expect(requests.at(-1)?.get('filter')).toBe('original');
-    expect(requests.at(-1)?.get('sort')).toBe('latest');
+    expect(requests.at(-1)?.get('sort')).toBe('likes');
 
     await page
-      .getByRole('link', { name: 'original latest 스토리 상세 보기' })
+      .getByRole('link', { name: 'original likes 스토리 상세 보기' })
       .click();
-    await expect(page).toHaveURL(/\/stories\/original-latest$/);
+    await expect(page).toHaveURL(/\/stories\/original-likes$/);
     await page.goBack();
 
-    await expect(page.getByText('original latest 스토리')).toBeVisible();
+    await expect(page.getByText('original likes 스토리')).toBeVisible();
     await expect(originalChip).toHaveAttribute('aria-pressed', 'true');
     await expect(
       page.getByRole('button', {
-        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${latestLabel}`,
+        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${likesLabel}`,
+      }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(page.getByText('original likes 스토리')).toBeVisible();
+    await expect(
+      page.getByRole('button', {
+        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${likesLabel}`,
       }),
     ).toBeVisible();
   });
