@@ -88,6 +88,10 @@ export async function isPushSupported(): Promise<boolean> {
  * @returns 등록 토큰. 지원하지 않거나 발급에 실패하면 null
  */
 export async function requestPushToken(): Promise<string | null> {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return null;
+  }
+
   const messaging = await getPushMessaging();
 
   if (!messaging) {
@@ -95,6 +99,10 @@ export async function requestPushToken(): Promise<string | null> {
   }
 
   const serviceWorkerRegistration = await registerServiceWorker();
+
+  if (!navigator.onLine) {
+    return null;
+  }
 
   return getToken(messaging, {
     vapidKey: PUSH_VAPID_KEY,
