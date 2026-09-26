@@ -5,95 +5,19 @@ import type {
   SimpleStoryCharacterRequestGender,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
+import {
+  creationDb,
+  type CreationMetadata,
+  getCreationEpoch,
+  invalidateCreationEpoch,
+  type StoredCreation,
+} from '@/features/stories/_shared/utils/creation-db';
 
-/**
- * 편집 초안 목록(키워드 초안·스토리라인 생성·스토리 초안)을 requestId별로 보관하는
- * 로컬스토리지 키(JSON 배열). 구 형식의 단일 객체도 1건 목록으로 읽는다.
- */
+/** 최초 IndexedDB 이관에서만 읽는 구 저장소 키다. */
 export const PENDING_CREATION_REQUEST_STORAGE_KEY =
   'manyak:pending-creation-request';
-
-/** 완성 요청을 requestId별로 여러 건 보관하는 로컬스토리지 키(JSON 배열) */
 export const STORY_COMPLETION_REQUESTS_STORAGE_KEY =
   'manyak:story-completion-requests';
-
-/** 같은 탭 내 복구 레코드 변경을 알리는 커스텀 이벤트 이름 */
-const PENDING_CREATION_REQUEST_CHANGE_EVENT = `${PENDING_CREATION_REQUEST_STORAGE_KEY}-change`;
-
-/** 같은 탭 구독자에게 복구 레코드 변경을 알린다. */
-function notifyPendingCreationRequestChange(): void {
-  window.dispatchEvent(new Event(PENDING_CREATION_REQUEST_CHANGE_EVENT));
-}
-
-/**
- * 편집 초안 목록·완성 요청 목록의 변경(같은 탭 커스텀 이벤트·다른 탭 storage 이벤트)을 구독한다.
- * 두 저장소가 같은 이벤트를 공유하므로 어느 쪽 스냅샷과 조합해도 된다.
- *
- * @param onStoreChange 변경 시 호출할 콜백
- * @returns 구독 해제 함수
- */
-export function subscribePendingCreationRequest(
-  onStoreChange: () => void,
-): () => void {
-  if (typeof window === 'undefined') {
-    return () => {};
-  }
-
-  const handleStorageChange = (event: StorageEvent) => {
-    if (
-      event.key === PENDING_CREATION_REQUEST_STORAGE_KEY ||
-      event.key === STORY_COMPLETION_REQUESTS_STORAGE_KEY
-    ) {
-      onStoreChange();
-    }
-  };
-
-  window.addEventListener('storage', handleStorageChange);
-  window.addEventListener(PENDING_CREATION_REQUEST_CHANGE_EVENT, onStoreChange);
-
-  return () => {
-    window.removeEventListener('storage', handleStorageChange);
-    window.removeEventListener(
-      PENDING_CREATION_REQUEST_CHANGE_EVENT,
-      onStoreChange,
-    );
-  };
-}
-
-/**
- * 로컬스토리지에 저장된 복구 레코드 원본 문자열의 현재 스냅샷을 반환한다.
- *
- * @returns 저장된 원본 문자열. 없으면 null
- */
-export function getPendingCreationRequestSnapshot(): string | null {
-  try {
-    return localStorage.getItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * 로컬스토리지에 저장된 완성 요청 목록 원본 문자열의 현재 스냅샷을 반환한다.
- *
- * @returns 저장된 원본 문자열. 없으면 null
- */
-export function getStoryCompletionRequestsSnapshot(): string | null {
-  try {
-    return localStorage.getItem(STORY_COMPLETION_REQUESTS_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * 서버 렌더링 시점의 스냅샷(로컬스토리지 접근 불가)을 반환한다.
- *
- * @returns 항상 null
- */
-export function getServerPendingCreationRequestSnapshot(): null {
-  return null;
-}
 
 /** 임시 저장(draft) 레코드가 복원할 퍼널 스텝 */
 export type StoryDraftStep = 'storyline-select' | 'additional-info';
@@ -487,310 +411,6 @@ export function sortByCreatedAtDesc<Record extends { createdAt?: string }>(
 }
 
 /**
- * 편집 초안 목록을 로컬스토리지에서 읽는다.
- *
- * @returns 저장된 편집 초안 목록. 없으면 빈 배열
- */
-export function loadPendingCreationRequests(): PendingCreationRequest[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  return parsePendingCreationRequests(getPendingCreationRequestSnapshot());
-}
-
-/**
- * 지정한 requestId의 편집 초안 레코드를 찾는다.
- *
- * @param requestId 찾을 레코드의 요청 ID
- * @returns 레코드. 없으면 null
- */
-export function findPendingCreationRequest(
-  requestId: string,
-): PendingCreationRequest | null {
-  return (
-    loadPendingCreationRequests().find(
-      (record) => record.requestId === requestId,
-    ) ?? null
-  );
-}
-
-/**
- * 편집 초안 목록을 통째로 쓰고 성공 여부를 반환한다. 빈 목록은 키를 제거한다.
- *
- * @param records 저장할 편집 초안 목록
- * @returns 저장에 성공했으면 true
- */
-function writePendingCreationRequests(
-  records: PendingCreationRequest[],
-): boolean {
-  try {
-    if (records.length === 0) {
-      localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
-    } else {
-      localStorage.setItem(
-        PENDING_CREATION_REQUEST_STORAGE_KEY,
-        JSON.stringify(records),
-      );
-    }
-
-    notifyPendingCreationRequestChange();
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * 편집 초안 목록에 레코드를 upsert한다. 같은 requestId가 있으면 그 자리에서 교체하고
- * 없으면 끝에 추가한다. 처음 저장 시각은 기존 레코드 → 새 레코드 → 지금 순으로 정해
- * 갱신이 최초 저장 시각을 덮지 않게 한다.
- *
- * @param record 저장할 레코드
- * @returns 저장에 성공했으면 true
- */
-function upsertPendingCreationRequest(record: PendingCreationRequest): boolean {
-  const records = loadPendingCreationRequests();
-  const existing = records.find(
-    ({ requestId }) => requestId === record.requestId,
-  );
-  const stamped: PendingCreationRequest = {
-    ...record,
-    createdAt:
-      existing?.createdAt ?? record.createdAt ?? new Date().toISOString(),
-  };
-
-  return writePendingCreationRequests(
-    existing
-      ? records.map((current) =>
-          current.requestId === record.requestId ? stamped : current,
-        )
-      : [...records, stamped],
-  );
-}
-
-/**
- * 완성 요청 목록을 로컬스토리지에서 읽는다.
- *
- * @returns 저장된 완성 요청 목록. 없으면 빈 배열
- */
-export function loadStoryCompletionRequests(): StoryCompletionRecord[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  return parseStoryCompletionRequests(getStoryCompletionRequestsSnapshot());
-}
-
-/**
- * 완성 요청 목록을 통째로 쓰고 성공 여부를 반환한다. 빈 목록은 키를 제거한다.
- *
- * @param records 저장할 완성 요청 목록
- * @returns 저장에 성공했으면 true
- */
-function writeStoryCompletionRequests(
-  records: StoryCompletionRecord[],
-): boolean {
-  try {
-    if (records.length === 0) {
-      localStorage.removeItem(STORY_COMPLETION_REQUESTS_STORAGE_KEY);
-    } else {
-      localStorage.setItem(
-        STORY_COMPLETION_REQUESTS_STORAGE_KEY,
-        JSON.stringify(records),
-      );
-    }
-
-    notifyPendingCreationRequestChange();
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * 완성 요청 직전에 레코드를 목록에 추가하고 제출 원본인 편집 초안(생성 요청 ID)만 제거한다
- * (앱의 삽입+초안 삭제 트랜잭션과 같다). 같은 requestId가 이미 있으면 교체한다.
- * 목록 저장에 실패하면 초안을 건드리지 않는다.
- *
- * @param record 저장할 완성 요청 레코드
- * @returns 목록 저장에 성공했으면 true
- */
-export function addStoryCompletionRequest(
-  record: StoryCompletionRecord,
-): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const others = loadStoryCompletionRequests().filter(
-    ({ requestId }) => requestId !== record.requestId,
-  );
-  const createdAt =
-    record.createdAt ??
-    findPendingCreationRequest(record.generationRequest.requestId)?.createdAt;
-
-  if (!writeStoryCompletionRequests([...others, { ...record, createdAt }])) {
-    return false;
-  }
-
-  takePendingCreationRequest(record.generationRequest.requestId);
-
-  return true;
-}
-
-/**
- * 지정한 requestId의 완성 요청이 목록에 있는지 반환한다.
- *
- * @param requestId 완성 요청 ID
- * @returns 목록에 있으면 true
- */
-export function hasStoryCompletionRequest(requestId: string): boolean {
-  return loadStoryCompletionRequests().some(
-    (record) => record.requestId === requestId,
-  );
-}
-
-/**
- * 지정한 requestId의 완성 요청을 목록에서 제거하고 제거 여부를 반환한다.
- * 원 응답과 폴링이 경합할 때 true를 받은 쪽만 후속 처리를 수행한다(제거 선점 가드).
- *
- * @param requestId 제거할 완성 요청 ID
- * @returns 레코드가 존재해 제거했으면 true
- */
-export function takeStoryCompletionRequest(requestId: string): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const records = loadStoryCompletionRequests();
-  const remaining = records.filter((record) => record.requestId !== requestId);
-
-  if (remaining.length === records.length) {
-    return false;
-  }
-
-  return writeStoryCompletionRequests(remaining);
-}
-
-/** 완성 요청 목록을 조건 없이 비운다(로그아웃·세션 만료·탈퇴). */
-export function clearStoryCompletionRequests(): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  writeStoryCompletionRequests([]);
-}
-
-/**
- * 생성 요청 직전에 편집 초안 목록에 복구 레코드를 저장한다(같은 requestId는 교체).
- *
- * @param record 저장할 복구 레코드
- * @returns 저장에 성공했으면 true
- */
-export function savePendingCreationRequest(
-  record: PendingCreationRequest,
-): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return upsertPendingCreationRequest(record);
-}
-
-/**
- * 편집 임시 저장본을 쓴다. 같은 requestId로 진행 중인 스토리라인 생성이 있으면
- * 지연된 자동 저장이 복구 재료를 덮지 못하게 저장하지 않는다.
- *
- * @param record 저장할 편집 임시 저장본
- * @returns 실제로 저장했으면 true
- */
-export function saveDraftCreationRecord(record: DraftCreationRecord): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  if (
-    findPendingCreationRequest(record.requestId)?.stage ===
-    'STORYLINE_GENERATION'
-  ) {
-    return false;
-  }
-
-  return upsertPendingCreationRequest(record);
-}
-
-/**
- * 지정한 요청 레코드를 새 레코드로 교체한다. 원 응답과 복구 조회 경합에서
- * 현재 requestId를 가진 쪽만 성공 결과를 draft로 승격할 수 있다.
- *
- * @param requestId 교체할 현재 레코드의 요청 ID
- * @param replacement 교체할 레코드
- * @returns 교체에 성공했으면 true
- */
-export function replacePendingCreationRequest(
-  requestId: string,
-  replacement: PendingCreationRequest,
-): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const records = loadPendingCreationRequests();
-
-  const existing = records.find((record) => record.requestId === requestId);
-
-  if (!existing) {
-    return false;
-  }
-
-  return writePendingCreationRequests(
-    records.map((record) =>
-      record.requestId === requestId
-        ? {
-            ...replacement,
-            createdAt: replacement.createdAt ?? existing.createdAt,
-          }
-        : record,
-    ),
-  );
-}
-
-/**
- * 완성 레코드에 이미 생성된 스토리 ID를 확정한다.
- * 목록 정리 전에 새로고침해도 폴링이 게스트 카운터·로컬 저장 부수효과를
- * 다시 적용하지 않게 하기 위한 표시다.
- *
- * @param requestId 완성 요청 ID
- * @param storyId 생성된 스토리 ID
- * @returns 같은 완성 레코드에 저장했으면 true
- */
-export function markPendingStoryCreated(
-  requestId: string,
-  storyId: string,
-): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const records = loadStoryCompletionRequests();
-
-  if (!records.some((record) => record.requestId === requestId)) {
-    return false;
-  }
-
-  return writeStoryCompletionRequests(
-    records.map((record) =>
-      record.requestId === requestId
-        ? { ...record, createdStoryId: storyId }
-        : record,
-    ),
-  );
-}
-
-/**
  * 스토리라인 생성 결과를 스토리라인 선택 단계의 편집 초안 레코드로 만든다.
  * 원 응답·재진입 복구·제작 탭 폴링이 같은 형태로 승격하도록 한 곳에서 조립한다.
  *
@@ -819,79 +439,417 @@ export function buildStorylineDraftRecord(
   };
 }
 
-/**
- * 완성 요청 레코드를 목록에서 빼고 추가 정보 단계의 편집 초안으로 강등한다.
- * 퍼널을 떠난 뒤 서버가 실패를 확정하면 완성 중 카드를 유지할 수 없으므로,
- * 같은 입력으로 다시 완성할 수 있게 컨텍스트를 STORY_DRAFT로 되돌린다.
- * 초안 키는 퍼널 자동 저장 후보와 같은 생성 요청 ID를 쓴다.
- *
- * @param requestId 강등할 완성 요청 ID
- * @returns 같은 완성 레코드를 목록에서 제거했으면 true(초안 저장 여부와 무관)
- */
-export function demotePendingCompletionToDraft(requestId: string): boolean {
-  if (typeof window === 'undefined') {
+/** 구 저장값 전체가 검증된 경우에만 이관 후 삭제할 수 있다. */
+function isFullyParsed(
+  raw: string | null,
+  count: number,
+  single: boolean,
+): boolean {
+  if (raw === null) return true;
+
+  try {
+    const value: unknown = JSON.parse(raw);
+
+    return Array.isArray(value)
+      ? value.length === count
+      : single && count === 1;
+  } catch {
     return false;
   }
+}
 
-  const current = loadStoryCompletionRequests().find(
-    (record) => record.requestId === requestId,
-  );
+/** DB 초기화와 구 저장소 이관을 완료한다. 실패를 빈 목록으로 바꾸지 않는다. */
+export async function initializeCreationStorage(): Promise<void> {
+  const epoch = getCreationEpoch();
 
-  if (!current || !takeStoryCompletionRequest(requestId)) {
-    return false;
-  }
+  if (epoch < 0) throw new Error('Creation storage is unavailable');
 
-  upsertPendingCreationRequest({
-    stage: 'STORY_DRAFT',
-    requestId: current.generationRequest.requestId,
-    createdAt: current.createdAt,
-    step: 'additional-info',
-    generationRequest: current.generationRequest,
-    generationResult: current.generationResult,
-    activeStorylineIndex: current.activeStorylineIndex ?? 0,
-    selectedStoryline: current.selectedStoryline,
-    additionalInfos: current.additionalInfos ?? [],
-    selectedRecommendations: current.selectedRecommendations ?? [],
-    createdStoryId: null,
-    completionRequest: current.completionRequest,
+  const state = await creationDb.metadata.get('state');
+
+  if (state?.migrated && state.epoch === epoch) return;
+
+  if (state && state.epoch > epoch)
+    throw new Error('Creation session is expired');
+
+  // 세션 종료 이후에는 남은 legacy 입력을 다시 가져오지 않는다.
+  const pendingRaw =
+    epoch === 0
+      ? localStorage.getItem(PENDING_CREATION_REQUEST_STORAGE_KEY)
+      : null;
+  const completionRaw =
+    epoch === 0
+      ? localStorage.getItem(STORY_COMPLETION_REQUESTS_STORAGE_KEY)
+      : null;
+  const pending = parsePendingCreationRequests(pendingRaw);
+  const completions = parseStoryCompletionRequests(completionRaw);
+
+  await creationDb.transaction('rw', creationDb.tables, async () => {
+    if (getCreationEpoch() !== epoch)
+      throw new Error('Creation session is expired');
+
+    const current = await creationDb.metadata.get('state');
+
+    if (current && current.epoch > epoch)
+      throw new Error('Creation session is expired');
+
+    if (current?.migrated && current.epoch === epoch) return;
+
+    let sequence = current?.sequence ?? 0;
+
+    if (current?.epoch !== undefined && current.epoch !== epoch) {
+      await creationDb.pendingCreations.clear();
+      await creationDb.storyCompletions.clear();
+    }
+
+    if (epoch === 0 && !current?.migrated) {
+      for (const record of pending) {
+        if (!(await creationDb.pendingCreations.get(record.requestId))) {
+          await creationDb.pendingCreations.add({
+            ...record,
+            storageOrder: ++sequence,
+          });
+        }
+      }
+
+      for (const record of completions) {
+        if (!(await creationDb.storyCompletions.get(record.requestId))) {
+          await creationDb.storyCompletions.add({
+            ...record,
+            storageOrder: ++sequence,
+          });
+        }
+      }
+    }
+
+    await creationDb.metadata.put({
+      key: 'state',
+      epoch,
+      migrated: true,
+      sequence,
+    });
   });
 
-  return true;
+  // DB 커밋 후 legacy 정리가 실패해도 DB의 이관 완료 표시를 따른다.
+  try {
+    if (getCreationEpoch() !== epoch) return;
+
+    if (
+      isFullyParsed(pendingRaw, pending.length, true) &&
+      localStorage.getItem(PENDING_CREATION_REQUEST_STORAGE_KEY) === pendingRaw
+    ) {
+      localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
+    }
+
+    if (
+      isFullyParsed(completionRaw, completions.length, false) &&
+      localStorage.getItem(STORY_COMPLETION_REQUESTS_STORAGE_KEY) ===
+        completionRaw
+    ) {
+      localStorage.removeItem(STORY_COMPLETION_REQUESTS_STORAGE_KEY);
+    }
+  } catch {
+    // 이관 커밋이 완료되었으므로 legacy 정리 실패가 DB 쓰기를 되돌리지는 않는다.
+  }
 }
 
-/**
- * 지정한 requestId의 복구 레코드를 제거하고 제거 여부를 반환한다.
- * 원 응답과 복구 조회가 경합할 때 true를 받은 쪽만 성공 부수효과를 수행해
- * 채팅 중복 생성·카운터 이중 증가를 막는다(제거 선점 가드).
- *
- * @param requestId 제거할 레코드의 요청 ID
- * @returns 레코드가 존재해 제거했으면 true
- */
-export function takePendingCreationRequest(requestId: string): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
+/** 순서 보조 필드를 제외한 도메인 레코드를 반환한다. */
+function withoutOrder<T>(record: StoredCreation<T>): T {
+  const { storageOrder: _, ...value } = record;
 
-  const records = loadPendingCreationRequests();
-  const remaining = records.filter((record) => record.requestId !== requestId);
-
-  if (remaining.length === records.length) {
-    return false;
-  }
-
-  return writePendingCreationRequests(remaining);
+  return value as T;
 }
 
-/** 편집 초안 목록을 조건 없이 비운다(로그아웃·세션 만료·탈퇴). */
-export function clearPendingCreationRequests(): void {
-  if (typeof window === 'undefined') {
-    return;
+export async function loadPendingCreationRequests(): Promise<
+  PendingCreationRequest[]
+> {
+  await initializeCreationStorage();
+
+  return (
+    await creationDb.pendingCreations.orderBy('storageOrder').toArray()
+  ).map(withoutOrder);
+}
+
+export async function loadStoryCompletionRequests(): Promise<
+  StoryCompletionRecord[]
+> {
+  await initializeCreationStorage();
+
+  return (
+    await creationDb.storyCompletions.orderBy('storageOrder').toArray()
+  ).map(withoutOrder);
+}
+
+export async function findPendingCreationRequest(
+  requestId: string,
+): Promise<PendingCreationRequest | null> {
+  await initializeCreationStorage();
+
+  const record = await creationDb.pendingCreations.get(requestId);
+
+  return record ? withoutOrder(record) : null;
+}
+
+export async function hasStoryCompletionRequest(
+  requestId: string,
+): Promise<boolean> {
+  await initializeCreationStorage();
+
+  return Boolean(await creationDb.storyCompletions.get(requestId));
+}
+
+/** 상태 확인과 쓰기를 같은 트랜잭션에서 실행한다. */
+async function writeCreation(
+  epoch: number,
+  write: (state: CreationMetadata) => Promise<boolean>,
+): Promise<boolean> {
+  try {
+    await initializeCreationStorage();
+
+    return await creationDb.transaction('rw', creationDb.tables, async () => {
+      const state = await creationDb.metadata.get('state');
+
+      if (!state || state.epoch !== epoch || getCreationEpoch() !== epoch)
+        return false;
+
+      const saved = await write(state);
+
+      if (getCreationEpoch() !== epoch)
+        throw new Error('Creation session is expired');
+
+      return saved;
+    });
+  } catch {
+    return false;
+  }
+}
+
+/** 최초 시각과 목록 내 순서를 유지한다. */
+async function putPending(
+  record: PendingCreationRequest,
+  state: CreationMetadata,
+  previous?: StoredCreation<PendingCreationRequest>,
+) {
+  const existing =
+    previous ?? (await creationDb.pendingCreations.get(record.requestId));
+  const storageOrder = existing?.storageOrder ?? ++state.sequence;
+
+  await creationDb.pendingCreations.put({
+    ...record,
+    createdAt: existing
+      ? existing.createdAt
+      : (record.createdAt ?? new Date().toISOString()),
+    storageOrder,
+  });
+  await creationDb.metadata.put(state);
+}
+
+/** 소유 초안의 교체와 최초 저장 시각 전달을 원자적으로 처리한다. */
+export function savePendingCreationRequest(
+  record: PendingCreationRequest,
+  epoch = getCreationEpoch(),
+  previousId?: string | null,
+): Promise<boolean> {
+  return writeCreation(epoch, async (state) => {
+    const previous = previousId
+      ? await creationDb.pendingCreations.get(previousId)
+      : undefined;
+
+    if (previousId && !previous) return false;
+
+    await putPending(record, state, previous);
+
+    if (previousId && previousId !== record.requestId)
+      await creationDb.pendingCreations.delete(previousId);
+
+    return true;
+  });
+}
+
+/** 진행 요청이나 삭제된 초안에 지연 편집값이 덮어써지지 않게 한다. */
+export function saveDraftCreationRecord(
+  record: DraftCreationRecord,
+  epoch = getCreationEpoch(),
+  previousId?: string | null,
+): Promise<boolean> {
+  return writeCreation(epoch, async (state) => {
+    const current = await creationDb.pendingCreations.get(record.requestId);
+
+    if (current?.stage === 'STORYLINE_GENERATION') return false;
+
+    const previous = previousId
+      ? await creationDb.pendingCreations.get(previousId)
+      : undefined;
+
+    if (previousId && (!previous || previous.stage === 'STORYLINE_GENERATION'))
+      return false;
+
+    if (
+      await creationDb.storyCompletions
+        .where('generationRequest.requestId')
+        .equals(record.requestId)
+        .count()
+    )
+      return false;
+
+    await putPending(record, state, previous);
+
+    if (previousId && previousId !== record.requestId)
+      await creationDb.pendingCreations.delete(previousId);
+
+    return true;
+  });
+}
+
+/** 생성 결과를 한 경로만 초안으로 승격한다. */
+export function replacePendingCreationRequest(
+  requestId: string,
+  replacement: PendingCreationRequest,
+  epoch = getCreationEpoch(),
+): Promise<boolean> {
+  return writeCreation(epoch, async (state) => {
+    const current = await creationDb.pendingCreations.get(requestId);
+
+    if (!current || current.stage !== 'STORYLINE_GENERATION') return false;
+
+    await putPending(replacement, state, current);
+
+    if (requestId !== replacement.requestId)
+      await creationDb.pendingCreations.delete(requestId);
+
+    return true;
+  });
+}
+
+export function addStoryCompletionRequest(
+  record: StoryCompletionRecord,
+  epoch = getCreationEpoch(),
+): Promise<boolean> {
+  return writeCreation(epoch, async (state) => {
+    const pending = await creationDb.pendingCreations.get(
+      record.generationRequest.requestId,
+    );
+    const existing = await creationDb.storyCompletions.get(record.requestId);
+
+    if (!pending && !existing) return false;
+
+    const source = existing ?? pending;
+
+    await creationDb.storyCompletions.put({
+      ...record,
+      createdAt: source?.createdAt ?? record.createdAt,
+      storageOrder: source?.storageOrder ?? ++state.sequence,
+    });
+    await creationDb.pendingCreations.delete(
+      record.generationRequest.requestId,
+    );
+    await creationDb.metadata.put(state);
+
+    return true;
+  });
+}
+
+export function takePendingCreationRequest(
+  requestId: string,
+  epoch = getCreationEpoch(),
+): Promise<boolean> {
+  return writeCreation(epoch, async () => {
+    if (!(await creationDb.pendingCreations.get(requestId))) return false;
+
+    await creationDb.pendingCreations.delete(requestId);
+
+    return true;
+  });
+}
+
+export function takeStoryCompletionRequest(
+  requestId: string,
+  epoch = getCreationEpoch(),
+): Promise<boolean> {
+  return writeCreation(epoch, async () => {
+    if (!(await creationDb.storyCompletions.get(requestId))) return false;
+
+    await creationDb.storyCompletions.delete(requestId);
+
+    return true;
+  });
+}
+
+export function markPendingStoryCreated(
+  requestId: string,
+  storyId: string,
+  epoch = getCreationEpoch(),
+): Promise<boolean> {
+  return writeCreation(epoch, async () => {
+    const current = await creationDb.storyCompletions.get(requestId);
+
+    if (!current || current.createdStoryId) return false;
+
+    await creationDb.storyCompletions.update(requestId, {
+      createdStoryId: storyId,
+    });
+
+    return true;
+  });
+}
+
+export function demotePendingCompletionToDraft(
+  requestId: string,
+  epoch = getCreationEpoch(),
+): Promise<boolean> {
+  return writeCreation(epoch, async (state) => {
+    const current = await creationDb.storyCompletions.get(requestId);
+
+    if (!current || current.createdStoryId) return false;
+
+    await creationDb.pendingCreations.put({
+      stage: 'STORY_DRAFT',
+      requestId: current.generationRequest.requestId,
+      createdAt: current.createdAt,
+      storageOrder: current.storageOrder,
+      step: 'additional-info',
+      generationRequest: current.generationRequest,
+      generationResult: current.generationResult,
+      activeStorylineIndex: current.activeStorylineIndex ?? 0,
+      selectedStoryline: current.selectedStoryline,
+      additionalInfos: current.additionalInfos ?? [],
+      selectedRecommendations: current.selectedRecommendations ?? [],
+      createdStoryId: null,
+      completionRequest: current.completionRequest,
+    });
+    await creationDb.storyCompletions.delete(requestId);
+    await creationDb.metadata.put(state);
+
+    return true;
+  });
+}
+
+/** 세션 종료를 먼저 기록하고 두 제작 테이블을 함께 비운다. 실패해도 다음 접근에서 다시 정리한다. */
+export async function clearCreationStorage(): Promise<void> {
+  let epoch: number;
+
+  try {
+    epoch = invalidateCreationEpoch();
+  } catch {
+    epoch = Date.now();
   }
 
   try {
     localStorage.removeItem(PENDING_CREATION_REQUEST_STORAGE_KEY);
-    notifyPendingCreationRequestChange();
+    localStorage.removeItem(STORY_COMPLETION_REQUESTS_STORAGE_KEY);
   } catch {
-    // 저장소 접근이 막힌 환경에서는 메모리 화면 흐름만 계속한다.
+    // DB의 migrated 표시가 남은 legacy 데이터의 재이관을 막는다.
   }
+
+  await creationDb.transaction('rw', creationDb.tables, async () => {
+    const current = await creationDb.metadata.get('state');
+
+    await creationDb.pendingCreations.clear();
+    await creationDb.storyCompletions.clear();
+    await creationDb.metadata.put({
+      key: 'state',
+      epoch: Math.max(epoch, current?.epoch ?? 0),
+      migrated: true,
+      sequence: 0,
+    });
+  });
 }

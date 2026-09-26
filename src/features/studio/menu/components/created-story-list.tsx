@@ -16,10 +16,7 @@ import { track } from '@/observability/analytics';
 
 import { CREATED_STORY_LIST_COPY } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
-import {
-  usePendingCreationRequests,
-  useStoryCompletionRequests,
-} from '../hooks/use-pending-creation-request';
+import { useCreationRecords } from '../hooks/use-pending-creation-request';
 import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryCard } from './created-story-card';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
@@ -28,9 +25,10 @@ import { CreationProgressCard } from './creation-progress-card';
 export function CreatedStoryList() {
   const router = useRouter();
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
-  const pendingCreationRecords = usePendingCreationRequests();
-  const completionRecords = useStoryCompletionRequests();
-  const showSkeleton = useDelayedLoading(isLoading);
+  const local = useCreationRecords();
+  const pendingCreationRecords = local.pending ?? [];
+  const completionRecords = local.completions ?? [];
+  const showSkeleton = useDelayedLoading(isLoading || local.isLoading);
   const shouldReduceMotion = useReducedMotion();
   const isStoryListed = (storyId: string | null | undefined) =>
     typeof storyId === 'string' &&
@@ -78,15 +76,21 @@ export function CreatedStoryList() {
   if (showSkeleton && visibleCompletionRecords.length === 0) {
     stateKey = 'skeleton';
     content = <CreatedStoryListSkeleton />;
-  } else if (isLoading && visibleCompletionRecords.length === 0) {
+  } else if (
+    (isLoading || local.isLoading) &&
+    visibleCompletionRecords.length === 0
+  ) {
     stateKey = 'pending';
     content = null;
-  } else if (isError) {
+  } else if (isError || local.isError) {
     stateKey = 'error';
     content = (
       <RetryListStatus
         title={STORY_LIST_ERROR_TITLE}
-        onRetry={() => refetch()}
+        onRetry={() => {
+          local.retry();
+          void refetch();
+        }}
       />
     );
   } else {
@@ -117,7 +121,7 @@ export function CreatedStoryList() {
               <CreationProgressCard record={record} />
             </m.li>
           ))}
-          {!isLoading && !isError
+          {!isLoading && !isError && !local.isLoading
             ? stories.map((story, index) => (
                 <m.li
                   key={story.id}

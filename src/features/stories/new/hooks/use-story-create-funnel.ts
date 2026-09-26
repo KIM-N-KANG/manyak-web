@@ -36,6 +36,8 @@ import {
 } from '@/features/auth/_shared/utils/guest-trial';
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
+import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import {
   resolveErrorSettlement,
   resolveSuccessSettlement,
@@ -51,17 +53,13 @@ import {
   buildStorylineDraftRecord,
   demotePendingCompletionToDraft,
   findPendingCreationRequest,
-  hasStoryCompletionRequest,
   replacePendingCreationRequest,
   saveDraftCreationRecord,
   savePendingCreationRequest,
   takePendingCreationRequest,
   takeStoryCompletionRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
-import {
-  applyStoryCompletedEffects,
-  applyStorylinesGeneratedEffects,
-} from '@/features/stories/_shared/utils/creation-side-effects';
+import { applyStorylinesGeneratedEffects } from '@/features/stories/_shared/utils/creation-side-effects';
 import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
@@ -99,6 +97,23 @@ const getGeneratedStorylines = (
  */
 export function useStoryCreateFunnel() {
   const router = useRouter();
+  const currentEpoch = useCreationEpoch();
+  const [epoch, setEpoch] = useState(-1);
+
+  useEffect(() => {
+    let active = true;
+
+    queueMicrotask(() => {
+      if (active) setEpoch(getCreationEpoch());
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const storageBusy = useRef(false);
+  const [isPersisting, setIsPersisting] = useState(false);
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
   const requestConsent = useGuestConsent();
@@ -111,6 +126,9 @@ export function useStoryCreateFunnel() {
     useState<GenerateSimpleStorylinesRequest | null>(null);
   const [generationResult, setGenerationResult] =
     useState<GenerateSimpleStorylinesResponse | null>(null);
+  const [settledGenerationRequestId, setSettledGenerationRequestId] = useState<
+    string | null
+  >(null);
   const [activeStorylineIndex, setActiveStorylineIndex] = useState(0);
   const [selectedStoryline, setSelectedStoryline] =
     useState<SimpleStorylineResponse | null>(null);
@@ -131,44 +149,24 @@ export function useStoryCreateFunnel() {
   // 중복 생성·중복 과금을 막는다.
   const [lastCompletionRequest, setLastCompletionRequest] =
     useState<CreateSimpleStoryRequest | null>(null);
-  // 직전 완성 시도가 requestId를 재사용했는지 여부(409 응답을 복구 조회로 돌릴 판단 근거).
-  const reusedCompletionRequestIdRef = useRef<string | null>(null);
   const reusedGenerationRequestIdRef = useRef<string | null>(null);
   // 이 퍼널 세션이 편집 초안 목록에 소유한 레코드의 requestId. 세션은 레코드를 최대 한 건만
   // 갖는다. 단계 전환(키워드 초안→생성 요청, 재생성, 복원 뒤 자동 저장)으로 requestId가
   // 바뀔 때 이전 레코드를 지워, 단일 슬롯이 덮어쓰기로 해 주던 정리를 명시적으로 대신한다.
   const ownedRequestIdRef = useRef<string | null>(null);
 
-  /**
-   * 소유 레코드를 쓴다. 다른 requestId를 소유 중이면 그 레코드를 먼저 제거하되, 처음 임시
-   * 저장한 시각은 새 레코드로 이어 카드 날짜가 단계 전환마다 바뀌지 않게 한다.
-   *
-   * @param record 저장할 레코드
-   * @param write 실제 저장 함수(upsert·교체 등)
-   * @returns 저장에 성공했으면 true
-   */
-  const persistOwnRecord = <Record extends PendingCreationRequest>(
+  /** 소유 초안의 교체는 저장소 트랜잭션이 처리한다. */
+  const persistOwnRecord = async <Record extends PendingCreationRequest>(
     record: Record,
-    write: (record: Record) => boolean,
+    write: (
+      record: Record,
+      epoch: number,
+      previousId?: string | null,
+    ) => Promise<boolean>,
   ) => {
-    const owned = ownedRequestIdRef.current;
-    let next = record;
+    const saved = await write(record, epoch, ownedRequestIdRef.current);
 
-    if (owned !== null && owned !== record.requestId) {
-      const createdAt = findPendingCreationRequest(owned)?.createdAt;
-
-      takePendingCreationRequest(owned);
-
-      if (createdAt !== undefined && next.createdAt === undefined) {
-        next = { ...next, createdAt };
-      }
-    }
-
-    const saved = write(next);
-
-    if (saved) {
-      ownedRequestIdRef.current = record.requestId;
-    }
+    if (saved) ownedRequestIdRef.current = record.requestId;
 
     return saved;
   };
@@ -201,10 +199,18 @@ export function useStoryCreateFunnel() {
   const hasLeftForCreateRef = useRef(false);
   const [hasLeftForCreate, setHasLeftForCreate] = useState(false);
   const isFunnelActive = () =>
-    isMountedRef.current && !hasLeftForCreateRef.current;
+    isMountedRef.current &&
+    !hasLeftForCreateRef.current &&
+    getCreationEpoch() === epoch;
 
   const canGenerate = async (kind: TrialKind | null) => {
-    if (awaitingAccess.current) return false;
+    if (
+      awaitingAccess.current ||
+      storageBusy.current ||
+      !draft.isEntryResolved ||
+      getCreationEpoch() !== epoch
+    )
+      return false;
 
     awaitingAccess.current = true;
 
@@ -274,7 +280,9 @@ export function useStoryCreateFunnel() {
 
   const generateStorylines = useGenerateSimpleStorylines({
     mutation: {
-      onSuccess: (response, variables) => {
+      onSuccess: async (response, variables) => {
+        if (getCreationEpoch() !== epoch) return;
+
         // 이탈 후 도착한 응답은 레코드를 남겨 제작 탭 배너를 유지하고,
         // 재진입 시 복구 조회가 결과를 되찾게 한다(성공 부수효과도 그쪽에서 수행).
         if (resolveSuccessSettlement(isMountedRef.current) !== 'apply') {
@@ -294,13 +302,20 @@ export function useStoryCreateFunnel() {
         // 복구 조회가 결과를 선점 반영했으면 이중 적용을 건너뛴다. 성공 결과는
         // 즉시 draft로 승격해 다음 편집 자동 저장의 기준점으로 남긴다.
         if (
-          !persistOwnRecord(draftRecord, (record) =>
-            replacePendingCreationRequest(variables.data.requestId, record),
-          )
+          !(await persistOwnRecord(draftRecord, (record) =>
+            replacePendingCreationRequest(
+              variables.data.requestId,
+              record,
+              epoch,
+            ),
+          ))
         ) {
           return;
         }
 
+        if (!isFunnelActive()) return;
+
+        setSettledGenerationRequestId(variables.data.requestId);
         draftAutosave.markCurrentAsSaved(true);
         applyStorylinesGeneratedEffects(queryClient);
 
@@ -310,7 +325,9 @@ export function useStoryCreateFunnel() {
         setSelectedStoryline(null);
         setStep('storyline-select');
       },
-      onError: (error, variables) => {
+      onError: async (error, variables) => {
+        if (getCreationEpoch() !== epoch) return;
+
         // 이탈 후 도착한 오류는 화면에 알릴 수 없으니 레코드를 남겨
         // 재진입 복구 조회가 실패·완료를 판정하게 한다. 마운트 상태에서는
         // 서버가 응답한 실패는 레코드를 지우고, 네트워크 오류는 보존한다.
@@ -331,7 +348,7 @@ export function useStoryCreateFunnel() {
           error instanceof FetchError &&
           error.status === 409 &&
           reusedGenerationRequestIdRef.current === variables.data.requestId &&
-          findPendingCreationRequest(variables.data.requestId) !== null
+          (await findPendingCreationRequest(variables.data.requestId)) !== null
         ) {
           draftAutosave.setPersistedStatus(true);
 
@@ -339,7 +356,9 @@ export function useStoryCreateFunnel() {
         }
 
         if (settlement === 'discard-record') {
-          takePendingCreationRequest(variables.data.requestId);
+          await takePendingCreationRequest(variables.data.requestId, epoch);
+          ownedRequestIdRef.current = null;
+          setHasRecoveredGenerateError(true);
           draftAutosave.setPersistedStatus(false);
         } else {
           draftAutosave.setPersistedStatus(true);
@@ -353,7 +372,7 @@ export function useStoryCreateFunnel() {
     mutation: {
       onSuccess: async (response) => {
         // 이탈 후 도착한 응답에 홈에서 강제 이동·토스트가 실행되지 않게 한다.
-        if (!isMountedRef.current) {
+        if (!isFunnelActive()) {
           return;
         }
 
@@ -365,14 +384,17 @@ export function useStoryCreateFunnel() {
           return;
         }
 
-        // 퍼널 안에서 완성→채팅까지 이어진 경우(저장 실패 대기 경로)의 편집 초안·완성 레코드를 정리한다.
+        // 구버전에서 완성까지 저장한 초안의 채팅 재시도가 성공하면 기록을 정리한다.
         if (ownedRequestIdRef.current !== null) {
-          takePendingCreationRequest(ownedRequestIdRef.current);
+          await takePendingCreationRequest(ownedRequestIdRef.current, epoch);
           ownedRequestIdRef.current = null;
         }
 
         if (lastCompletionRequest !== null) {
-          takeStoryCompletionRequest(lastCompletionRequest.requestId);
+          await takeStoryCompletionRequest(
+            lastCompletionRequest.requestId,
+            epoch,
+          );
         }
 
         // 회원 서재는 서버가 정본 — 게스트로 확정됐을 때만 로컬에 ID를 남긴다.
@@ -389,7 +411,7 @@ export function useStoryCreateFunnel() {
         leaveAfterCleanup(() => router.replace(APP_PATH.CHAT_ROOM(chatId)));
       },
       onError: () => {
-        if (!isMountedRef.current) {
+        if (!isFunnelActive()) {
           return;
         }
 
@@ -401,37 +423,9 @@ export function useStoryCreateFunnel() {
 
   const createStory = useCreateSimpleStory({
     mutation: {
-      onSuccess: (response, variables) => {
-        // 제작 탭으로 나간 뒤 도착한 응답은 레코드를 남겨 진행 카드 폴링이 결과를
-        // 반영하게 한다(언마운트 상태의 강제 이동·토스트 방지). 퍼널에 남은 경우는
-        // 레코드 저장에 실패한 대기 경로뿐이므로 여기서 채팅까지 잇는다.
-        if (resolveSuccessSettlement(isFunnelActive()) !== 'apply') {
-          return;
-        }
+      onError: async (error, variables) => {
+        if (getCreationEpoch() !== epoch) return;
 
-        if (response.status !== 201) {
-          failToAdditionalInfo('story');
-
-          return;
-        }
-
-        const storyId = response.data.id;
-
-        if (typeof storyId === 'string') {
-          applyStoryCompletedEffects(
-            variables.data.requestId,
-            storyId,
-            sessionStatus,
-            queryClient,
-            response.data.genres,
-          );
-
-          setCreatedStoryId(storyId);
-        }
-
-        createChat.mutate({ data: { storyId: response.data.id } });
-      },
-      onError: (error, variables) => {
         // 이탈 후 도착한 오류는 레코드를 남겨 재진입 복구 조회에 맡긴다.
         const settlement = resolveErrorSettlement(isFunnelActive(), error);
 
@@ -441,7 +435,13 @@ export function useStoryCreateFunnel() {
 
         // 제작 탭으로 돌아간 뒤 확정된 실패는 카드를 초안으로 되돌리고 토스트로만 알린다.
         if (settlement === 'downgrade-to-draft') {
-          demotePendingCompletionToDraft(variables.data.requestId);
+          if (
+            !(await demotePendingCompletionToDraft(
+              variables.data.requestId,
+              epoch,
+            ))
+          )
+            return;
 
           if (
             resolvePaymentRequiredReason(error, sessionStatus) ===
@@ -459,44 +459,21 @@ export function useStoryCreateFunnel() {
 
           return;
         }
-
-        // 재사용한 requestId의 409는 실패가 아니라 "서버에 결과가 있거나 곧 생긴다"는
-        // 신호다(멱등 계약 — PENDING 재POST). 실패 처리 대신 복구 조회로 되찾는다.
-        if (
-          error instanceof FetchError &&
-          error.status === 409 &&
-          reusedCompletionRequestIdRef.current === variables.data.requestId &&
-          hasStoryCompletionRequest(variables.data.requestId)
-        ) {
-          // 레코드를 남겨 두면 뮤테이션 종료와 함께 진행 카드 폴링이 자동 활성화된다.
-          draftAutosave.setPersistedStatus(true);
-
-          return;
-        }
-
-        if (settlement === 'discard-record') {
-          takeStoryCompletionRequest(variables.data.requestId);
-          draftAutosave.markCurrentAsSaved(
-            storyDraftCandidate !== null &&
-              persistOwnRecord(storyDraftCandidate, saveDraftCreationRecord),
-          );
-        } else {
-          draftAutosave.setPersistedStatus(true);
-        }
-
-        showCreditShortageIfNeeded(error);
-        failToAdditionalInfo('story');
       },
     },
   });
 
   const recovery = useCreationRequestRecovery({
     requestId: generationRequest?.requestId ?? null,
+    epoch,
     // 원 생성 요청이 진행 중이면 원 응답을 우선하고, 끝난 뒤에도 레코드가 남아
     // 있을 때(재진입·응답 유실)만 복구 조회를 시작한다.
     suspended:
       hasLeftForCreate ||
       generateStorylines.isPending ||
+      (generationRequest !== null &&
+        settledGenerationRequestId === generationRequest.requestId) ||
+      hasRecoveredGenerateError ||
       createStory.isPending ||
       createChat.isPending ||
       createdStoryId !== null,
@@ -518,18 +495,7 @@ export function useStoryCreateFunnel() {
         generateStorylines.reset();
       }
 
-      const saved = persistOwnRecord(
-        buildStorylineDraftRecord(
-          record.requestId,
-          record.generationRequest,
-          result,
-        ),
-        saveDraftCreationRecord,
-      );
-
-      draftAutosave.markCurrentAsSaved(saved);
-
-      // 원 onSuccess가 실행되지 못했으므로 성공 부수효과(체험 잔여·픽셀)를 여기서 수행한다.
+      draftAutosave.markCurrentAsSaved(true);
       applyStorylinesGeneratedEffects(queryClient);
 
       setGenerationRequest(record.generationRequest);
@@ -559,7 +525,7 @@ export function useStoryCreateFunnel() {
     typeof selectedStoryline?.id === 'number';
 
   const isGeneratingStorylines =
-    generateStorylines.isPending || recovery.isRecovering;
+    generateStorylines.isPending || recovery.isRecovering || isPersisting;
   const tagStep = useStoryTagStep({
     isGeneratingStorylines,
     onGenerateStorylines: handleGenerateStorylines,
@@ -640,6 +606,9 @@ export function useStoryCreateFunnel() {
   const draftFingerprint = JSON.stringify(draftCandidate);
   const isDraftAutosaveEnabled =
     draft.isEntryResolved &&
+    currentEpoch === epoch &&
+    !isPersisting &&
+    !hasLeftForCreate &&
     !generateStorylines.isPending &&
     !createStory.isPending &&
     !createChat.isPending &&
@@ -647,9 +616,9 @@ export function useStoryCreateFunnel() {
     !recovery.isRecovering &&
     step !== 'complete';
 
-  const persistDraftCandidate = (record: DraftCreationRecord | null) => {
+  const persistDraftCandidate = async (record: DraftCreationRecord | null) => {
     if (record !== null) {
-      const saved = persistOwnRecord(record, saveDraftCreationRecord);
+      const saved = await persistOwnRecord(record, saveDraftCreationRecord);
 
       if (saved) {
         track('client_storyCreate_draftSaved', {
@@ -662,17 +631,18 @@ export function useStoryCreateFunnel() {
 
     // 키워드 입력을 모두 지우면 소유한 키워드 초안을 제거한다.
     if (
-      findPendingCreationRequest(keywordDraftRequestId)?.stage ===
+      (await findPendingCreationRequest(keywordDraftRequestId))?.stage ===
       'KEYWORD_DRAFT'
     ) {
-      takePendingCreationRequest(keywordDraftRequestId);
+      if (!(await takePendingCreationRequest(keywordDraftRequestId, epoch)))
+        return false;
 
       if (ownedRequestIdRef.current === keywordDraftRequestId) {
         ownedRequestIdRef.current = null;
       }
     }
 
-    return false;
+    return true;
   };
 
   const draftAutosave = useStoryDraftAutosave({
@@ -689,7 +659,7 @@ export function useStoryCreateFunnel() {
   // 체인 방식이라 항상 "바로 직전" 값만 가리키며, 최초 생성은 부모가 없어 null이다. 재생성은
   // 직전 요청 전체(input)를 그대로 다시 보내는 구조라, 값을 명시하지 않으면 직전 요청의
   // parentCreationId가 스프레드로 딸려와 조부모를 가리키게 되므로 매번 덮어쓴다.
-  const requestGenerateStorylines = (
+  const requestGenerateStorylines = async (
     input: Omit<GenerateSimpleStorylinesRequest, 'requestId'>,
     parentCreationId: string | null = null,
     reusedRequestId: string | null = null,
@@ -704,9 +674,11 @@ export function useStoryCreateFunnel() {
     };
 
     reusedGenerationRequestIdRef.current = reusedRequestId;
-    draftAutosave.cancel();
+    storageBusy.current = true;
+    setIsPersisting(true);
+    await draftAutosave.settle();
 
-    const saved = persistOwnRecord(
+    const saved = await persistOwnRecord(
       {
         stage: 'STORYLINE_GENERATION',
         requestId: request.requestId,
@@ -715,7 +687,27 @@ export function useStoryCreateFunnel() {
       savePendingCreationRequest,
     );
 
+    storageBusy.current = false;
+    setIsPersisting(false);
     draftAutosave.setPersistedStatus(saved);
+
+    if (!saved || !isFunnelActive()) {
+      if (isFunnelActive()) toast.error(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED);
+
+      return;
+    }
+
+    if (parentCreationId === null) {
+      setGenerationResult(null);
+      setActiveStorylineIndex(0);
+      setSelectedStoryline(null);
+      setCreatedStoryId(null);
+      setLastCompletionRequest(null);
+      resetAdditionalInfoStep();
+    }
+
+    setStep('storyline-select');
+    setSettledGenerationRequestId(null);
     setGenerationRequest(request);
     setHasRecoveredGenerateError(false);
     generateStorylines.mutate({ data: request });
@@ -726,16 +718,8 @@ export function useStoryCreateFunnel() {
   ) {
     if (!(await canGenerate('storylineGeneration'))) return;
 
-    setGenerationResult(null);
-    setActiveStorylineIndex(0);
-    setSelectedStoryline(null);
-    setCreatedStoryId(null);
-    setLastCompletionRequest(null);
-    reusedCompletionRequestIdRef.current = null;
-    resetAdditionalInfoStep();
-    setStep('storyline-select');
     track('client_storyCreate_storyGeneration_requested');
-    requestGenerateStorylines(request);
+    await requestGenerateStorylines(request);
   }
 
   const handleRegenerateStorylines = async () => {
@@ -754,7 +738,7 @@ export function useStoryCreateFunnel() {
     const isFailureRetry =
       generateStorylines.isError || hasRecoveredGenerateError;
 
-    requestGenerateStorylines(
+    await requestGenerateStorylines(
       generationRequest,
       generationRequest.requestId,
       isFailureRetry ? generationRequest.requestId : null,
@@ -883,9 +867,6 @@ export function useStoryCreateFunnel() {
     };
 
     setLastCompletionRequest(request);
-    reusedCompletionRequestIdRef.current = isSamePayload
-      ? request.requestId
-      : null;
 
     // 실패 시 초안 복원에 필요한 퍼널 컨텍스트가 온전할 때만 완성 레코드를 저장한다.
     // (완료 조건상 이 시점에 항상 존재하지만 타입 좁히기를 겸한다.) 저장 성공 시
@@ -893,20 +874,27 @@ export function useStoryCreateFunnel() {
     let saved = false;
 
     if (generationRequest !== null && generationResult !== null) {
-      draftAutosave.cancel();
+      storageBusy.current = true;
+      setIsPersisting(true);
+      await draftAutosave.settle();
 
-      saved = addStoryCompletionRequest({
-        stage: 'STORY_COMPLETION',
-        requestId: request.requestId,
-        generationRequest,
-        generationResult,
-        activeStorylineIndex,
-        selectedStoryline,
-        additionalInfos: additionalInfos.map(({ value }) => value),
-        selectedRecommendations: [...selectedRecommendations],
-        createdStoryId: null,
-        completionRequest: request,
-      });
+      saved = await addStoryCompletionRequest(
+        {
+          stage: 'STORY_COMPLETION',
+          requestId: request.requestId,
+          generationRequest,
+          generationResult,
+          activeStorylineIndex,
+          selectedStoryline,
+          additionalInfos: additionalInfos.map(({ value }) => value),
+          selectedRecommendations: [...selectedRecommendations],
+          createdStoryId: null,
+          completionRequest: request,
+        },
+        epoch,
+      );
+      storageBusy.current = false;
+      setIsPersisting(false);
 
       draftAutosave.setPersistedStatus(saved);
 
@@ -915,32 +903,48 @@ export function useStoryCreateFunnel() {
       }
     }
 
+    if (!saved || !isFunnelActive()) {
+      if (isFunnelActive()) toast.error(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED);
+
+      return;
+    }
+
+    hasLeftForCreateRef.current = true;
     createStory.mutate({ data: request });
 
-    // 복구 레코드가 있으면 응답을 기다리지 않고 제작 탭으로 돌아간다(앱 패리티).
-    // 결과는 제작 탭의 완성 중 카드가 폴링으로 되찾는다. 레코드를
-    // 저장하지 못했으면 되찾을 길이 없으므로 퍼널의 완성 로딩에서 응답을 기다린다.
-    // 제작 탭으로 나가는 경로에서는 완성 로딩 화면을 한 프레임도 그리지 않는다.
-    if (saved) {
-      hasLeftForCreateRef.current = true;
-      setHasLeftForCreate(true);
-      exitToCreate();
-    } else {
-      setStep('complete');
-    }
+    // 저장한 완성 요청의 결과는 제작 탭 진행 카드가 되찾는다.
+    setHasLeftForCreate(true);
+    exitToCreate();
   };
 
-  /** 예약된 편집을 즉시 저장한 뒤 제작 탭으로 나간다. */
-  const flushAndExit = () => {
-    draftAutosave.flushCurrent();
-    exitToCreate();
+  /** 명시적 이탈은 최신 입력의 저장 완료를 기다린다. */
+  const flushAndExit = async () => {
+    if (storageBusy.current) return;
+
+    storageBusy.current = true;
+
+    try {
+      const saved = isDraftAutosaveEnabled
+        ? await draftAutosave.flushCurrent()
+        : true;
+
+      if (!saved) {
+        toast.error(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED);
+
+        return;
+      }
+
+      exitToCreate();
+    } finally {
+      storageBusy.current = false;
+    }
   };
 
   // X·브라우저 뒤로가기 이탈 시도: 이탈은 늘 확인을 거친다(Android 패리티). 보존되는
   // 내용(자동 저장본·진행 중 요청·생성 결과)이 있으면 이어서 만들 수 있다는 확인을,
   // 저장할 수 없으면 소실 경고를 띄운다. 키워드 단계에서 입력이 비어 있으면 잃을 것이
   // 없으므로 묻지 않고 조용히 나간다.
-  const handleBackAttempt = () => {
+  const handleBackAttempt = async () => {
     if (step === 'keyword') {
       if (!tagStep.hasKeywordInput) {
         track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
@@ -954,13 +958,17 @@ export function useStoryCreateFunnel() {
       return;
     }
 
-    const hasPreservedContent =
-      generationResult !== null ||
-      (generationRequest !== null &&
-        findPendingCreationRequest(generationRequest.requestId)?.stage ===
-          'STORYLINE_GENERATION');
+    try {
+      const hasPreservedContent =
+        generationResult !== null ||
+        (generationRequest !== null &&
+          (await findPendingCreationRequest(generationRequest.requestId))
+            ?.stage === 'STORYLINE_GENERATION');
 
-    setBackDialog(hasPreservedContent ? 'saved' : 'lost');
+      setBackDialog(hasPreservedContent ? 'saved' : 'lost');
+    } catch {
+      toast.error(TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED);
+    }
   };
 
   const handleHeaderBack = () => handleBackAttempt();
@@ -986,6 +994,9 @@ export function useStoryCreateFunnel() {
   return {
     guestLimitOpen,
     setGuestLimitOpen,
+    isEntryResolved: draft.isEntryResolved && epoch >= 0,
+    entryError: draft.isError || (epoch >= 0 && currentEpoch !== epoch),
+    retryEntry: draft.retry,
     step,
     tagStep,
     draftSaveStatus: draftAutosave.status,
@@ -1004,7 +1015,8 @@ export function useStoryCreateFunnel() {
     isGeneratingStorylines,
     hasGenerateStorylinesError:
       generateStorylines.isError || hasRecoveredGenerateError,
-    isCompletingStory: createStory.isPending || createChat.isPending,
+    isCompletingStory:
+      isPersisting || createStory.isPending || createChat.isPending,
     hasCompleteStoryError,
     handleRegenerateStorylines,
     handleActiveStorylineIndexChange,

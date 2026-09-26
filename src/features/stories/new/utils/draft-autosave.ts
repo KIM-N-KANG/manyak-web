@@ -1,77 +1,91 @@
 /** 편집 임시 저장 디바운스 시간(ms) */
 export const DRAFT_AUTOSAVE_DELAY_MS = 300;
-
-/** 헤더에 표시할 편집 임시 저장 상태 */
 export type DraftSaveStatus = 'hidden' | 'saving' | 'saved';
 
 type DraftAutosaveOptions<Value> = {
-  persist: (value: Value | null) => boolean;
+  persist: (value: Value | null) => Promise<boolean>;
   onStatusChange: (status: DraftSaveStatus) => void;
 };
 
-/** 300ms 자동 저장 타이머를 관리하는 순수 컨트롤러 */
 export type DraftAutosaveController<Value> = {
   schedule: (value: Value | null) => void;
-  flush: () => boolean;
+  flush: () => Promise<boolean>;
   cancel: () => void;
+  settle: () => Promise<void>;
   markSaved: () => void;
 };
 
-/**
- * 마지막 편집값만 300ms 뒤 저장하는 컨트롤러를 만든다.
- * null은 저장할 입력이 없어 기존 keyword draft를 정리하는 상태를 뜻한다.
- *
- * @param options 저장 함수와 상태 변경 콜백
- * @returns 예약·즉시 저장·취소 컨트롤러
- */
+/** 최신 편집값만 저장하고 실제 커밋 순서와 표시 상태를 맞춘다. */
 export function createDraftAutosave<Value>({
   persist,
   onStatusChange,
 }: DraftAutosaveOptions<Value>): DraftAutosaveController<Value> {
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let pendingValue: Value | null | undefined;
+  let pending: { value: Value | null; revision: number } | undefined;
+  let revision = 0;
+  let running: Promise<boolean> | null = null;
 
+  const clearTimer = () => {
+    if (timer !== null) clearTimeout(timer);
+
+    timer = null;
+  };
   const cancel = () => {
-    if (timer !== null) {
-      clearTimeout(timer);
-    }
-
-    timer = null;
-    pendingValue = undefined;
+    clearTimer();
+    pending = undefined;
+    revision++;
   };
+  const flush = (): Promise<boolean> => {
+    clearTimer();
 
-  const flush = () => {
-    if (pendingValue === undefined) {
-      return false;
-    }
+    if (running) return running;
 
-    const value = pendingValue;
+    if (!pending) return Promise.resolve(true);
 
-    if (timer !== null) {
-      clearTimeout(timer);
-    }
+    running = (async () => {
+      let saved = true;
 
-    timer = null;
-    pendingValue = undefined;
+      while (pending) {
+        const current = pending;
 
-    const saved = persist(value);
+        pending = undefined;
 
-    onStatusChange(saved ? 'saved' : 'hidden');
+        try {
+          saved = await persist(current.value);
+        } catch {
+          saved = false;
+        }
 
-    return saved;
+        if (current.revision === revision) {
+          onStatusChange(saved && current.value !== null ? 'saved' : 'hidden');
+        }
+      }
+
+      return saved;
+    })().finally(() => {
+      running = null;
+    });
+
+    return running;
   };
-
   const schedule = (value: Value | null) => {
-    if (timer !== null) {
-      clearTimeout(timer);
-    }
-
-    pendingValue = value;
+    clearTimer();
+    pending = { value, revision: ++revision };
     onStatusChange(value === null ? 'hidden' : 'saving');
-    timer = setTimeout(flush, DRAFT_AUTOSAVE_DELAY_MS);
+    timer = setTimeout(() => {
+      void flush();
+    }, DRAFT_AUTOSAVE_DELAY_MS);
+  };
+  const settle = async () => {
+    cancel();
+    await running;
   };
 
-  const markSaved = () => onStatusChange('saved');
-
-  return { schedule, flush, cancel, markSaved };
+  return {
+    schedule,
+    flush,
+    cancel,
+    settle,
+    markSaved: () => onStatusChange('saved'),
+  };
 }

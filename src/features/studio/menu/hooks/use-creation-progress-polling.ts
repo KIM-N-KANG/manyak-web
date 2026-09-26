@@ -11,7 +11,9 @@ import {
   useGetCreationRequest,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { useIsCreationRequestPending } from '@/features/stories/_shared/hooks/use-is-creation-request-pending';
+import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import { resolveCreationRecovery } from '@/features/stories/_shared/utils/creation-request-recovery';
 import {
   buildStorylineDraftRecord,
@@ -44,6 +46,7 @@ export function useCreationProgressPolling(
   record: InFlightCreationRequest,
 ): void {
   const queryClient = useQueryClient();
+  const epoch = useCreationEpoch();
   const { status: sessionStatus } = useSession();
   const { requestId, stage } = record;
   const isOriginalRequestPending = useIsCreationRequestPending(record);
@@ -73,49 +76,53 @@ export function useCreationProgressPolling(
       return;
     }
 
-    if (action.type === 'storylines-completed') {
-      const promoted = replacePendingCreationRequest(
-        requestId,
-        buildStorylineDraftRecord(
+    void (async () => {
+      if (action.type === 'storylines-completed') {
+        const promoted = await replacePendingCreationRequest(
           requestId,
-          record.generationRequest,
-          action.result,
-        ),
-      );
+          buildStorylineDraftRecord(
+            requestId,
+            record.generationRequest,
+            action.result,
+          ),
+          epoch,
+        );
 
-      // 원 응답이 먼저 승격했으면 부수효과를 다시 적용하지 않는다.
-      if (promoted) {
-        applyStorylinesGeneratedEffects(queryClient);
+        // 원 응답이 먼저 승격했으면 부수효과를 다시 적용하지 않는다.
+        if (promoted && getCreationEpoch() === epoch) {
+          applyStorylinesGeneratedEffects(queryClient);
+        }
+
+        return;
       }
 
-      return;
-    }
-
-    if (stage !== 'STORY_COMPLETION') {
-      return;
-    }
-
-    const result = action.type === 'story-completed' ? action.result : null;
-    const storyId = result?.id;
-
-    if (typeof storyId !== 'string') {
-      if (demotePendingCompletionToDraft(requestId)) {
-        toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+      if (stage !== 'STORY_COMPLETION') {
+        return;
       }
 
-      return;
-    }
+      const result = action.type === 'story-completed' ? action.result : null;
+      const storyId = result?.id;
 
-    // 원 응답이 먼저 ID를 확정한 레코드는 부수효과를 다시 적용하지 않는다.
-    if (record.createdStoryId !== storyId) {
-      applyStoryCompletedEffects(
-        requestId,
-        storyId,
-        sessionStatus,
-        queryClient,
-        result?.genres,
-      );
-    }
+      if (typeof storyId !== 'string') {
+        if (await demotePendingCompletionToDraft(requestId, epoch)) {
+          toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+        }
+
+        return;
+      }
+
+      // 원 응답이 먼저 ID를 확정한 레코드는 부수효과를 다시 적용하지 않는다.
+      if (record.createdStoryId !== storyId) {
+        await applyStoryCompletedEffects(
+          requestId,
+          storyId,
+          sessionStatus,
+          queryClient,
+          result?.genres,
+          epoch,
+        );
+      }
+    })();
   }, [
     data,
     isOriginalRequestPending,
@@ -124,6 +131,7 @@ export function useCreationProgressPolling(
     requestId,
     sessionStatus,
     stage,
+    epoch,
   ]);
 
   // 404(미존재·타인)는 되찾을 수 없다. 완성은 초안으로 되돌리고, 스토리라인은 조회만 멈춘다.
@@ -132,12 +140,14 @@ export function useCreationProgressPolling(
       !isOriginalRequestPending &&
       stage === 'STORY_COMPLETION' &&
       error instanceof FetchError &&
-      error.status === 404 &&
-      demotePendingCompletionToDraft(requestId)
+      error.status === 404
     ) {
-      toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+      void demotePendingCompletionToDraft(requestId, epoch).then((changed) => {
+        if (changed && getCreationEpoch() === epoch)
+          toast.error(TOAST_MESSAGE.STORY_COMPLETE_FAILED);
+      });
     }
-  }, [error, isOriginalRequestPending, requestId, stage]);
+  }, [error, isOriginalRequestPending, requestId, stage, epoch]);
 }
 
 /**

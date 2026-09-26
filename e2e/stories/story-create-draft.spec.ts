@@ -9,6 +9,7 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
+import { readCreationStorage } from '../fixtures/storage';
 import { seedPendingCreationRequests } from '../fixtures/storage';
 import {
   expect,
@@ -26,14 +27,13 @@ const STORYLINES = '**/api/v1/stories/simple/storylines';
 const STORAGE_KEY = 'manyak:pending-creation-request';
 
 /** 저장된 편집 초안 목록의 stage 배열을 읽는다. */
-const readDraftStages = (page: Page) =>
-  page.evaluate((key) => {
-    const raw = localStorage.getItem(key);
+const readDraftStages = async (page: Page) => {
+  const raw = await readCreationStorage(page, STORAGE_KEY);
 
-    return raw
-      ? (JSON.parse(raw) as { stage: string }[]).map(({ stage }) => stage)
-      : [];
-  }, STORAGE_KEY);
+  return raw
+    ? (JSON.parse(raw) as { stage: string }[]).map(({ stage }) => stage)
+    : [];
+};
 
 const tags = [
   { id: 1, name: '판타지', category: 'GENRE' },
@@ -257,9 +257,7 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(page.getByRole('button', { name: '선택하기' })).toBeVisible();
 
     await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
+      .poll(() => readCreationStorage(page, STORAGE_KEY))
       .toContain('"stage":"STORY_DRAFT"');
   });
 
@@ -304,9 +302,7 @@ test.describe('스토리 임시 저장·재개', () => {
       page.getByRole('button', { name: '주인공은 비밀을 품고 있다' }),
     ).toHaveAttribute('aria-pressed', 'true');
     await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
+      .poll(() => readCreationStorage(page, STORAGE_KEY))
       .toContain('"stage":"STORY_DRAFT"');
   });
 
@@ -477,9 +473,7 @@ test.describe('스토리 임시 저장·재개', () => {
       }),
     ).toBeVisible();
     await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
+      .poll(() => readCreationStorage(page, STORAGE_KEY))
       .not.toBeNull();
   });
 
@@ -509,10 +503,6 @@ test.describe('스토리 임시 저장·재개', () => {
         .getByRole('article')
         .getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeHidden();
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
-      .toBeNull();
+    await expect.poll(() => readCreationStorage(page, STORAGE_KEY)).toBeNull();
   });
 });

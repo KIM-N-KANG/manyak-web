@@ -1,43 +1,80 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState } from 'react';
 
+import { useLiveQuery } from 'dexie-react-hooks';
+
+import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
+import { creationDb } from '@/features/stories/_shared/utils/creation-db';
 import {
-  getPendingCreationRequestSnapshot,
-  getServerPendingCreationRequestSnapshot,
-  getStoryCompletionRequestsSnapshot,
-  parsePendingCreationRequests,
-  parseStoryCompletionRequests,
+  initializeCreationStorage,
+  loadPendingCreationRequests,
+  loadStoryCompletionRequests,
   sortByCreatedAtDesc,
-  subscribePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 
-/**
- * 제작 화면에서 편집 초안 목록(초안·스토리라인 생성)을 구독한다.
- *
- * @returns 파싱에 성공한 편집 초안 레코드 목록(처음 저장 시각 최신순)
- */
-export function usePendingCreationRequests() {
-  const raw = useSyncExternalStore(
-    subscribePendingCreationRequest,
-    getPendingCreationRequestSnapshot,
-    getServerPendingCreationRequestSnapshot,
-  );
+/** 초안과 완성 목록을 조회하며 로딩, 실패, 빈 목록을 구분한다. */
+export function useCreationRecords() {
+  const epoch = useCreationEpoch();
+  const [attempt, setAttempt] = useState(0);
+  const [initialization, setInitialization] = useState<{
+    epoch: number;
+    attempt: number;
+    failed: boolean;
+  } | null>(null);
 
-  return sortByCreatedAtDesc(parsePendingCreationRequests(raw));
-}
+  useEffect(() => {
+    let active = true;
 
-/**
- * 제작 화면에서 완성 요청 목록을 구독한다.
- *
- * @returns 파싱에 성공한 완성 요청 레코드 목록(처음 저장 시각 최신순)
- */
-export function useStoryCompletionRequests() {
-  const raw = useSyncExternalStore(
-    subscribePendingCreationRequest,
-    getStoryCompletionRequestsSnapshot,
-    getServerPendingCreationRequestSnapshot,
-  );
+    void initializeCreationStorage().then(
+      () => {
+        if (active) setInitialization({ epoch, attempt, failed: false });
+      },
+      () => {
+        if (active) setInitialization({ epoch, attempt, failed: true });
+      },
+    );
 
-  return sortByCreatedAtDesc(parseStoryCompletionRequests(raw));
+    return () => {
+      active = false;
+    };
+  }, [epoch, attempt]);
+
+  const ready =
+    initialization?.epoch === epoch && initialization.attempt === attempt;
+  const result = useLiveQuery(async () => {
+    if (!ready) return undefined;
+
+    try {
+      if (initialization.failed)
+        throw new Error('Creation storage is unavailable');
+
+      const [pending, completions] = await creationDb.transaction(
+        'r',
+        creationDb.tables,
+        () =>
+          Promise.all([
+            loadPendingCreationRequests(),
+            loadStoryCompletionRequests(),
+          ]),
+      );
+
+      return {
+        epoch,
+        pending: sortByCreatedAtDesc(pending),
+        completions: sortByCreatedAtDesc(completions),
+        isError: false,
+      };
+    } catch {
+      return { epoch, pending: [], completions: [], isError: true };
+    }
+  }, [epoch, attempt, ready, initialization?.failed]);
+
+  const current = ready && result?.epoch === epoch ? result : undefined;
+
+  return {
+    ...current,
+    isLoading: current === undefined,
+    retry: () => setAttempt((value) => value + 1),
+  };
 }
