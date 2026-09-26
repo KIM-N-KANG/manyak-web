@@ -318,6 +318,23 @@ test.describe('홈·제작 스토리 목록', () => {
     const scroller = page.getByRole('region', {
       name: PULL_TO_REFRESH_COPY.ariaLabel,
     });
+    const navigation = page.getByRole('navigation', {
+      name: '하단 네비게이션',
+    });
+
+    await navigation.getByRole('link', { name: '마이' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.MY}$`));
+    await expect(scroller).toHaveAttribute('data-disabled', 'true');
+    await dispatchTouch(scroller, 'touchstart', 100, 100);
+    await dispatchTouch(scroller, 'touchmove', 100, 300);
+    await dispatchTouch(scroller, 'touchend', 100, 300);
+    await expect(scroller).toHaveAttribute('data-state', 'idle');
+
+    await navigation.getByRole('link', { name: '홈', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+    await expect(card).toBeVisible();
+    await expect(scroller).not.toHaveAttribute('data-disabled');
+
     const box = await scroller.boundingBox();
 
     if (!box) throw new Error('스크롤 영역을 찾지 못했다');
@@ -446,6 +463,34 @@ test.describe('홈·제작 스토리 목록', () => {
     await scroller.evaluate((element) => element.scrollTo({ top: 300 }));
     await expect(filterGroup).toBeHidden();
 
+    await scroller.evaluate((element) => element.scrollTo({ top: 200 }));
+    await expect(filterGroup).toBeVisible();
+
+    const navigation = page.getByRole('navigation', {
+      name: '하단 네비게이션',
+    });
+
+    await navigation.getByRole('link', { name: '제작' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    const fabLabel = page.getByText(CREATE_STORY_FAB_COPY.label, {
+      exact: true,
+    });
+
+    await expect
+      .poll(() =>
+        fabLabel.locator('..').evaluate((element) => element.clientWidth),
+      )
+      .toBeGreaterThan(0);
+
+    await navigation.getByRole('link', { name: '마이' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.MY}$`));
+    await navigation.getByRole('link', { name: '홈', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+    await expect(filterGroup).toBeVisible();
+
+    await scroller.evaluate((element) => element.scrollTo({ top: 300 }));
+    await expect(filterGroup).toBeHidden();
     await scroller.evaluate((element) => element.scrollTo({ top: 200 }));
     await expect(filterGroup).toBeVisible();
   });
