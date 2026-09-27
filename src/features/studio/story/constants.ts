@@ -1,6 +1,6 @@
 /** 제작 FAB로 들어오는 제작 방식 선택 화면 정본 문구다. */
 export const STORY_MODE_SELECT_COPY = {
-  title: '스토리 만들기',
+  title: '스토리 제작',
   simple: {
     title: '간편 제작',
     description: '키워드만 고르면 AI가 이미지까지 담긴 스토리를 완성해드려요',
