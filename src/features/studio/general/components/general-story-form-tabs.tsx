@@ -179,7 +179,7 @@ export function GeneralStoryFormTabs({
       </TabsList>
       <div
         ref={scrollAreaRef}
-        className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain">
+        className="relative min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain">
         {GENERAL_STORY_TABS.map(({ value, fields }) => (
           <TabsContent
             key={value}
