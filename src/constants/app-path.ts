@@ -23,14 +23,15 @@ export const APP_PATH = {
   SHARE_VIEW: (shareId: string) => `/share/${shareId}`,
   STUDIO: {
     STORY: {
+      SELECT: '/studio/story',
       SIMPLE: '/studio/story/simple',
+      GENERAL: '/studio/story/general',
     },
   },
   LEGACY: {
     CREATE: '/create',
     CREATE_STORY: '/create/story',
     NEW_STORY: '/stories/new',
-    STUDIO_STORY: '/studio/story',
   },
 } as const;
 

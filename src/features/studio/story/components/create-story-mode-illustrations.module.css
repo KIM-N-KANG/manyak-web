@@ -1,0 +1,456 @@
+/*
+ * 제작 방식 선택 일러스트. 시안(manyak-marketing/story-create-mode-dialog.html)의 CSS를 그대로 옮기고
+ * 색·곡률·글꼴(마루부리 자간 포함)만 globals.css 토큰으로 바꾼다. 토큰이 .dark에서 바뀌므로 다크 모드도 따라간다.
+ */
+
+/* 4:3 일러스트: 회색 판 위로 앱 화면이 아래로 흘러나가는 구도. 안쪽 크기는 일러스트 폭 기준(cqw) */
+.art {
+  /* 모션 원칙: 들어올 때는 길게 감속(ease-out), 나갈 때는 짧게 가속(ease-in), 누름 반응은 스프링 */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --out: cubic-bezier(0.16, 1, 0.3, 1);
+  --in: cubic-bezier(0.55, 0, 0.75, 0.2);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --primary-10: color-mix(in oklch, var(--primary) 10%, transparent);
+  /* ToggleChip·Input의 rounded-md(14px)를 칩과 같은 축척(14px 글자 = 3.6cqw)으로 옮긴 곡률 */
+  --radius-control: 3.6cqw;
+
+  aspect-ratio: 4 / 3;
+  border-radius: calc(var(--radius) * 1.4);
+  overflow: hidden;
+  position: relative;
+  background: var(--secondary);
+  container-type: inline-size;
+}
+
+.sheet {
+  position: absolute;
+  left: 8cqw;
+  right: 8cqw;
+  top: 7cqw;
+  bottom: -4cqw;
+  background: var(--background);
+  border-radius: 4cqw 4cqw 0 0;
+  padding: 5cqw 5.5cqw 0;
+  box-shadow:
+    0 0 0 0.3cqw oklch(0.145 0 0 / 0.04),
+    0 3cqw 8cqw oklch(0.145 0 0 / 0.08);
+  transition: transform 0.5s var(--ease);
+}
+
+@media (hover: hover) {
+  a:hover .sheet {
+    transform: translateY(-1.5cqw);
+  }
+}
+
+.hint {
+  font-size: 3.2cqw;
+  font-weight: 600;
+  color: var(--foreground-tertiary);
+}
+
+.caret::after {
+  content: '';
+  display: inline-block;
+  width: 0.5cqw;
+  height: 1em;
+  margin-left: 0.4cqw;
+  vertical-align: -0.12em;
+  background: var(--primary);
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 손가락 터치 표시 */
+.touch {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  width: 7cqw;
+  height: 7cqw;
+  margin: -3.5cqw 0 0 -3.5cqw;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--foreground) 16%, transparent);
+  box-shadow:
+    0 0 0 0.5cqw color-mix(in oklch, var(--background) 70%, transparent),
+    0 1cqw 3cqw oklch(0.145 0 0 / 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    translate 0.6s var(--out),
+    opacity 0.3s var(--out),
+    scale 0.14s ease-out;
+}
+
+.touch.show {
+  opacity: 1;
+}
+
+.touch.down {
+  scale: 0.72;
+}
+
+/* 간편 제작: 키워드 선택 → 스토리라인 선택 (features/stories/new 흐름) */
+.indicator {
+  display: flex;
+  gap: 1.2cqw;
+}
+
+.indicator i {
+  flex: 1;
+  height: 0.9cqw;
+  border-radius: 1cqw;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.indicator i::after {
+  content: '';
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.8s var(--out);
+}
+
+.indicator i.on::after {
+  transform: none;
+}
+
+.phase {
+  position: absolute;
+  inset: 9cqw 5.5cqw 0;
+  transition: opacity 0.35s var(--out);
+}
+
+.rest .phase {
+  opacity: 0;
+  transition: opacity 0.3s var(--in);
+}
+
+.title {
+  font-size: 4.6cqw;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.phase .hint {
+  margin: 4cqw 0 2cqw;
+}
+
+.phase > * {
+  transition:
+    opacity 0.5s var(--out),
+    transform 0.7s var(--out),
+    filter 0.5s var(--out);
+}
+
+.storylinePhase > * {
+  opacity: 0;
+  transform: translateX(7cqw);
+}
+
+.picked .storylinePhase > * {
+  opacity: 1;
+  transform: none;
+}
+
+.picked .storylinePhase > :nth-child(1) {
+  transition-delay: 0.12s;
+}
+
+.picked .storylinePhase > :nth-child(2) {
+  transition-delay: 0.18s;
+}
+
+.picked .keywordPhase > * {
+  opacity: 0;
+  transform: translateX(-5cqw);
+  filter: blur(2px);
+  transition-duration: 0.28s;
+  transition-timing-function: var(--in);
+}
+
+.picked .keywordPhase > :nth-child(2) {
+  transition-delay: 0.03s;
+}
+
+.picked .keywordPhase > :nth-child(3) {
+  transition-delay: 0.06s;
+}
+
+.noAnim,
+.noAnim * {
+  transition: none !important;
+}
+
+/* ToggleChip: rounded-md, border-border, bg-input, 선택 시 border-primary + bg-primary/10 + text-primary */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6cqw;
+}
+
+.chip {
+  font-size: 3.6cqw;
+  font-weight: 500;
+  padding: 1.9cqw 3cqw;
+  border-radius: var(--radius-control);
+  white-space: nowrap;
+  background: var(--input);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 0.35cqw var(--border);
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s,
+    scale 0.5s var(--spring);
+}
+
+.chip.press {
+  scale: 0.93;
+  transition-duration: 0.2s, 0.2s, 0.2s, 0.12s;
+}
+
+.chip.on {
+  background: var(--primary-10);
+  color: var(--primary);
+  box-shadow: inset 0 0 0 0.35cqw var(--primary);
+}
+
+/* Tabs line 변형: 첫 번째 / 두 번째 / 세 번째 */
+.tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 3.4cqw;
+  border-bottom: 0.3cqw solid var(--border);
+}
+
+.tabs span {
+  text-align: center;
+  font-size: 3.4cqw;
+  font-weight: 500;
+  padding: 1.8cqw 0;
+  color: var(--foreground-secondary);
+  transition: color 0.3s;
+}
+
+.tabs span.on {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.tabs b {
+  position: absolute;
+  left: 0;
+  bottom: -0.3cqw;
+  width: calc(100% / 3);
+  height: 0.6cqw;
+  background: var(--foreground);
+  transition: transform 0.55s var(--out);
+}
+
+.storyline {
+  margin-top: 3.4cqw;
+  font-family: var(--font-maruburi-family), serif;
+  letter-spacing: -0.02em;
+  font-size: 4.1cqw;
+  line-height: 1.75;
+  transition: opacity 0.2s var(--in);
+}
+
+.storyline.gone {
+  opacity: 0;
+}
+
+/* 스토리라인은 생성되듯 어절 단위로 번져 나온다 */
+.storyline .w {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(3px);
+  transform: translateY(0.25em);
+  transition:
+    opacity 0.5s var(--out),
+    filter 0.5s var(--out),
+    transform 0.6s var(--out);
+}
+
+.storyline.shown .w {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+/* 일반 제작: 스토리 상세(StoryDetailResponse) 항목을 하나씩 직접 입력 */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8cqw;
+  transition: opacity 0.35s var(--out);
+}
+
+.form.rest {
+  opacity: 0;
+  transition: opacity 0.3s var(--in);
+}
+
+.field {
+  position: relative;
+}
+
+.field .hint {
+  display: block;
+  margin-bottom: 1cqw;
+  transition: color 0.3s;
+}
+
+.field.active .hint {
+  color: var(--primary);
+}
+
+/*
+ * 제목·한 줄 소개는 Input(ui/input.tsx)과 같은 칸이다: 높이 40px, rounded-md, border-border, bg-input,
+ * 가로 14px 여백, 14px 글자. 입력 중인 칸은 포커스 상태(border-ring + ring-2 ring-ring/50)를 보인다.
+ * 칩과 같은 축척으로 옮기고 높이를 고정해 빈 칸과 입력 중인 칸의 높이가 같다.
+ */
+.box {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 10.3cqw;
+  padding: 0 3.6cqw;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--input);
+  box-shadow: inset 0 0 0 0.35cqw var(--border);
+  font-size: 3.6cqw;
+  color: var(--foreground);
+  transition: box-shadow 0.25s var(--in);
+}
+
+:global(.dark) .box {
+  background: color-mix(in oklch, var(--input) 30%, transparent);
+}
+
+.field.active .box {
+  box-shadow:
+    inset 0 0 0 0.35cqw var(--ring),
+    0 0 0 0.5cqw color-mix(in oklch, var(--ring) 50%, transparent);
+  transition: box-shadow 0.3s var(--out);
+}
+
+/* 칸보다 긴 글은 실제 입력창처럼 앞이 밀려 끝부분이 보인다. */
+.field .val {
+  flex: 0 0 auto;
+  min-width: 100%;
+  white-space: nowrap;
+}
+
+.empty .val {
+  color: transparent;
+}
+
+.empty .val::before {
+  content: '';
+  display: inline-block;
+  width: 40%;
+  height: 0.7em;
+  border-radius: 1cqw;
+  background: var(--muted);
+  vertical-align: middle;
+}
+
+.empty.active .val::before {
+  display: none;
+}
+
+/* 입력 중에는 커서가 멈춰 있고, 쉬는 동안만 깜빡인다 */
+.caret.typing::after {
+  animation: none;
+}
+
+.slot {
+  position: relative;
+  min-height: 6.4cqw;
+}
+
+.slot::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 40%;
+  height: 2.6cqw;
+  margin-top: -1.3cqw;
+  border-radius: 1cqw;
+  background: var(--muted);
+  transition: opacity 0.2s;
+}
+
+.slot:has(.in)::before {
+  opacity: 0;
+}
+
+.pop {
+  opacity: 0;
+  transform: translateY(1.6cqw) scale(0.88);
+  filter: blur(2px);
+  transition:
+    opacity 0.35s var(--out),
+    transform 0.55s var(--spring),
+    filter 0.35s var(--out);
+}
+
+.pop.in {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.people {
+  display: flex;
+  gap: 3cqw;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 1.4cqw;
+  font-size: 3.4cqw;
+  font-weight: 500;
+}
+
+.avatar {
+  width: 6.4cqw;
+  height: 6.4cqw;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 2.8cqw;
+  font-weight: 700;
+  background: var(--secondary);
+  color: var(--foreground-secondary);
+}
+
+.avatar.me {
+  background: var(--primary-10);
+  color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art *,
+  .art *::before,
+  .art *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -79,6 +79,7 @@ export type AnalyticsEventProps = {
     section: StoryCardSection;
   };
   // storyCreate
+  client_storyCreate_methodOption_selected: { method: 'simple' | 'general' };
   client_storyCreate_viewed: void;
   client_storyCreate_step_viewed: { step_name: StepName; step_number: number };
   client_storyCreate_tagCategory_selected: {

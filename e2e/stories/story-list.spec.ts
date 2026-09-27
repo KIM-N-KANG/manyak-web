@@ -9,10 +9,12 @@ import {
   STORY_LIST_FILTER_OPTIONS,
   STORY_LIST_SORT_OPTIONS,
 } from '@/features/stories/list/constants';
+import { GENERAL_STORY_CREATE_COPY } from '@/features/studio/general/constants';
 import {
   CREATE_STORY_FAB_COPY,
   CREATED_STORY_LIST_COPY,
 } from '@/features/studio/menu/constants';
+import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -96,14 +98,50 @@ test.describe('홈·제작 스토리 목록', () => {
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
 
-    await page.goto(APP_PATH.LEGACY.STUDIO_STORY);
-    await expect(page).toHaveURL(
-      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
-    );
-
     await page.goto(APP_PATH.LEGACY.NEW_STORY);
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+  });
+
+  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 준비 중 화면으로 이동한다 (STORY-LIST-38)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SELECT}$`),
+    );
+    await expect(
+      page.getByRole('banner').getByText(STORY_MODE_SELECT_COPY.title),
+    ).toBeVisible();
+    // 일러스트는 장식이라 선택지의 접근 가능한 이름은 제목과 설명뿐이다.
+    await expect(
+      page.getByRole('link', {
+        name: `${STORY_MODE_SELECT_COPY.simple.title} ${STORY_MODE_SELECT_COPY.simple.description}`,
+        exact: true,
+      }),
+    ).toHaveAttribute('href', APP_PATH.STUDIO.STORY.SIMPLE);
+
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.general.title })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
+    );
+    await expect(
+      page.getByText(GENERAL_STORY_CREATE_COPY.preparing),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SELECT}$`),
     );
   });
 
@@ -951,6 +989,9 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
       .click();
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),

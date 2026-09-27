@@ -31,7 +31,7 @@ export function CreateStoryFab({ onCreate }: CreateStoryFabProps) {
   return createPortal(
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-end px-4">
       <Link
-        href={APP_PATH.STUDIO.STORY.SIMPLE}
+        href={APP_PATH.STUDIO.STORY.SELECT}
         onClick={onCreate}
         aria-label={CREATE_STORY_FAB_COPY.accessibleLabel}
         className="pointer-events-auto flex h-14 items-center rounded-full bg-primary px-4 text-primary-foreground shadow-md shadow-primary/20 transition-transform outline-none hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:hover:scale-100">
