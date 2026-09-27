@@ -790,31 +790,31 @@ export function useGetMyCreditTransactions<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type getResponse200 = {
+export type get1Response200 = {
   data: CreditOrderResponse;
   status: 200;
 };
 
-export type getResponse401 = {
+export type get1Response401 = {
   data: ApiErrorResponse;
   status: 401;
 };
 
-export type getResponse404 = {
+export type get1Response404 = {
   data: ApiErrorResponse;
   status: 404;
 };
 
-export type getResponseSuccess = getResponse200 & {
+export type get1ResponseSuccess = get1Response200 & {
   headers: Headers;
 };
-export type getResponseError = (getResponse401 | getResponse404) & {
+export type get1ResponseError = (get1Response401 | get1Response404) & {
   headers: Headers;
 };
 
-export type getResponse = getResponseSuccess | getResponseError;
+export type get1Response = get1ResponseSuccess | get1ResponseError;
 
-export const getGetUrl = (orderId: string) => {
+export const getGet1Url = (orderId: string) => {
   return `/api/v1/users/me/credits/orders/${orderId}`;
 };
 
@@ -822,67 +822,67 @@ export const getGetUrl = (orderId: string) => {
  * 결제 복귀 후 완료 여부 확인용입니다. 없는 주문과 타인 주문은 모두 404입니다.
  * @summary 본인 이프 충전 주문 조회
  */
-export const get = async (
+export const get1 = async (
   orderId: string,
   options?: RequestInit,
-): Promise<getResponse> => {
-  return customInstance<getResponse>(getGetUrl(orderId), {
+): Promise<get1Response> => {
+  return customInstance<get1Response>(getGet1Url(orderId), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getGetQueryKey = (orderId: string) => {
+export const getGet1QueryKey = (orderId: string) => {
   return [`/api/v1/users/me/credits/orders/${orderId}`] as const;
 };
 
-export const getGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof get>>,
+export const getGet1QueryOptions = <
+  TData = Awaited<ReturnType<typeof get1>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetQueryKey(orderId);
+  const queryKey = queryOptions?.queryKey ?? getGet1QueryKey(orderId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof get>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof get1>>> = ({
     signal,
-  }) => get(orderId, { signal, ...requestOptions });
+  }) => get1(orderId, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: orderId !== null && orderId !== undefined,
     ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData> & {
+  } as UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData> & {
     queryKey: DataTag<QueryKey, TData, TError>;
   };
 };
 
-export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>;
-export type GetQueryError = ErrorType<ApiErrorResponse>;
+export type Get1QueryResult = NonNullable<Awaited<ReturnType<typeof get1>>>;
+export type Get1QueryError = ErrorType<ApiErrorResponse>;
 
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGet1<
+  TData = Awaited<ReturnType<typeof get1>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get>>,
+          Awaited<ReturnType<typeof get1>>,
           TError,
-          Awaited<ReturnType<typeof get>>
+          Awaited<ReturnType<typeof get1>>
         >,
         'initialData'
       >;
@@ -892,20 +892,20 @@ export function useGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGet1<
+  TData = Awaited<ReturnType<typeof get1>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get>>,
+          Awaited<ReturnType<typeof get1>>,
           TError,
-          Awaited<ReturnType<typeof get>>
+          Awaited<ReturnType<typeof get1>>
         >,
         'initialData'
       >;
@@ -915,14 +915,14 @@ export function useGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGet1<
+  TData = Awaited<ReturnType<typeof get1>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -934,14 +934,14 @@ export function useGet<
  * @summary 본인 이프 충전 주문 조회
  */
 
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGet1<
+  TData = Awaited<ReturnType<typeof get1>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -949,7 +949,7 @@ export function useGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGetQueryOptions(orderId, options);
+  const queryOptions = getGet1QueryOptions(orderId, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

@@ -11,6 +11,7 @@ import type { StoryEditFormResponseVisibility } from './storyEditFormResponseVis
 import type { StoryEditSettingsResponse } from './storyEditSettingsResponse';
 import type { StoryMainEventResponse } from './storyMainEventResponse';
 import type { StoryStartSettingResponse } from './storyStartSettingResponse';
+import type { SubmissionMetadata } from './submissionMetadata';
 
 /**
  * 스토리 수정 폼(편집 가능 필드 전체)
@@ -46,4 +47,5 @@ export interface StoryEditFormResponse {
   thumbnailModerationStatus?: StoryEditFormResponseThumbnailModerationStatus;
   /** 인물과 인물별 이미지 목록(KNK-1126). 인물이 없으면 빈 배열 */
   characters?: StoryEditCharacterResponse[];
+  submission?: SubmissionMetadata | null;
 }
