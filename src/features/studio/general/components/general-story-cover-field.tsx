@@ -142,7 +142,7 @@ export function GeneralStoryCoverField({
               </Button>
             )}
           </div>
-          <FieldDescription className="text-foreground-secondary">
+          <FieldDescription className="break-keep text-foreground-secondary">
             {GENERAL_STORY_COVER_COPY.description}
             <br />
             {GENERAL_STORY_COVER_COPY.fileRule}

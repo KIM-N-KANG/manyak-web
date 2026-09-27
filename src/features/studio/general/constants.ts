@@ -38,7 +38,10 @@ export const GENERAL_STORY_EXIT_WARNING_COPY = {
   { title: string; description: string; cancel: string; confirm: string }
 >;
 
-/** 탭에서 입력하는 글 항목이다. 키는 등록 요청(`CreateGeneralStoryRequest`)의 필드명과 같다. */
+/**
+ * 탭에서 입력하는 글 항목이다. 키는 등록 요청(`CreateGeneralStoryRequest`)의 필드명이거나,
+ * 스토리 설정 글(`worldSetting`·`ruleSetting`)을 이루는 절이다(`utils/story-setting-sections`).
+ */
 export const GENERAL_STORY_TEXT_FIELDS = {
   title: {
     label: '제목',
@@ -56,8 +59,39 @@ export const GENERAL_STORY_TEXT_FIELDS = {
     placeholder: '예: 막차에서 내린 곳은 존재하지 않는 역이었다',
     description: '스토리의 핵심을 한 문장으로 적어주세요',
   },
-  worldSetting: { label: '세계관', multiline: true },
-  ruleSetting: { label: '규칙', multiline: true },
+  world: {
+    label: '세계관',
+    maxLength: 5000,
+    multiline: true,
+    placeholder: [
+      '예: 유실역은 막차가 끊긴 뒤에만 불이 켜지는, 노선도에 없는 역이다.',
+      '세상에서 잃어버린 물건과 기억은 모두 이 역의 유실물 보관소로 모인다.',
+      '무언가를 되찾으려면 대신 자신의 무언가 하나를 맡겨야 한다.',
+      '',
+      '# 전제',
+      '막차에서 잘못 내린 주인공은 텅 빈 승강장에 홀로 남았다.',
+      '',
+      '# 갈등',
+      '첫차가 오기 전에 역을 나가야 하지만, 보관소에는 주인공이 잊고 지낸 누군가의 기억이 있다.',
+    ].join('\n'),
+    description:
+      '시대와 장소, 사회의 모습처럼 스토리의 배경이 되는 설정이에요. 마법이 작동하는 원리나 기술의 수준 등 이 세계만의 특징과 법칙을 적어주세요',
+  },
+  progression: {
+    label: '전개 방식',
+    maxLength: 1000,
+    multiline: true,
+    placeholder: [
+      '예: 역무실, 보관소, 개찰구 순서로 한 곳씩 탐색하며 단서를 모은다.',
+      '첫차 시각이 다가올수록 사건의 속도를 높인다.',
+      '보관소의 진실은 주인공이 무언가를 맡긴 뒤에야 드러난다.',
+      '',
+      '# 문체 톤',
+      '새벽 역의 적막이 느껴지는 잔잔하고 쓸쓸한 문체로 쓴다.',
+    ].join('\n'),
+    description:
+      '스토리의 진행 속도와 중요한 사건이 일어나는 조건을 정해요. 갈등을 천천히 쌓을지, 사건을 빠르게 이어갈지와 함께 원하는 말투와 분위기도 적어주세요',
+  },
   userRoleSetting: { label: '주인공(나)', multiline: true },
   characterSetting: { label: '주변 인물', multiline: true },
 } as const satisfies Record<
@@ -90,7 +124,7 @@ export const GENERAL_STORY_TABS = [
     value: 'story',
     label: '스토리 설정',
     required: true,
-    fields: ['worldSetting', 'ruleSetting'],
+    fields: ['world', 'progression'],
   },
   {
     value: 'character',
@@ -117,4 +151,12 @@ export const GENERAL_STORY_COVER_COPY = {
   fileRule: '(JPG, PNG, WEBP / 최대 5MB)',
   upload: '이미지 추가',
   remove: '삭제',
+} as const;
+
+/** 스토리 설정 탭의 분량 배분 슬라이더 문구다. */
+export const GENERAL_STORY_LENGTH_RATIO_COPY = {
+  label: '분량 배분',
+  description: 'AI가 응답할 때 장면 묘사와 인물 대사를 어떤 비율로 쓸지 정해요',
+  descriptionPart: '묘사',
+  dialoguePart: '대사',
 } as const;

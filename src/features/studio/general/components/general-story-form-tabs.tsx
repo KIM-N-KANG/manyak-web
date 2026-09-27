@@ -29,8 +29,19 @@ import {
   type GeneralStoryCover,
   GeneralStoryCoverField,
 } from './general-story-cover-field';
+import { GeneralStoryLengthRatioField } from './general-story-length-ratio-field';
 
 export type GeneralStoryTextValues = Record<GeneralStoryTextField, string>;
+
+/**
+ * 여러 줄 입력의 최소·최대 높이다. 글 길이에 맞춰 늘다가 최대 높이부터는 칸 안에서 스크롤한다.
+ * 없는 항목은 `min-h-24`만 쓴다.
+ */
+const TEXTAREA_HEIGHT: Partial<Record<GeneralStoryTextField, string>> = {
+  oneLineIntro: 'min-h-16 max-h-40',
+  world: 'min-h-40 max-h-90',
+  progression: 'min-h-28 max-h-70',
+};
 
 type GeneralStoryTextInputProps = {
   field: GeneralStoryTextField;
@@ -76,7 +87,7 @@ function GeneralStoryTextInput({
         {config.multiline ? (
           <InputGroupTextarea
             {...controlProps}
-            className="min-h-24"
+            className={TEXTAREA_HEIGHT[field] ?? 'min-h-24'}
             onChange={(event) => onChange(event.target.value)}
           />
         ) : (
@@ -100,7 +111,7 @@ function GeneralStoryTextInput({
         description && (
           <FieldDescription
             id={descriptionId}
-            className="text-foreground-secondary">
+            className="break-keep text-foreground-secondary">
             {description}
           </FieldDescription>
         )
@@ -114,6 +125,8 @@ type GeneralStoryFormTabsProps = {
   onChange: (field: GeneralStoryTextField, value: string) => void;
   cover: GeneralStoryCover | null;
   onCoverChange: (cover: GeneralStoryCover | null) => void;
+  descriptionRatio: number;
+  onDescriptionRatioChange: (descriptionRatio: number) => void;
 };
 
 export function GeneralStoryFormTabs({
@@ -121,6 +134,8 @@ export function GeneralStoryFormTabs({
   onChange,
   cover,
   onCoverChange,
+  descriptionRatio,
+  onDescriptionRatioChange,
 }: GeneralStoryFormTabsProps) {
   const [tab, setTab] = useState<GeneralStoryTab>(GENERAL_STORY_TABS[0].value);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -187,6 +202,12 @@ export function GeneralStoryFormTabs({
                     onChange={(value) => onChange(field, value)}
                   />
                 ))}
+                {value === 'story' && (
+                  <GeneralStoryLengthRatioField
+                    descriptionRatio={descriptionRatio}
+                    onChange={onDescriptionRatioChange}
+                  />
+                )}
               </FieldGroup>
             )}
           </TabsContent>

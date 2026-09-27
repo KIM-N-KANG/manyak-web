@@ -26,6 +26,7 @@ import {
   type GeneralStoryExitWarning,
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
+import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
 import { cn } from '@/lib/utils';
 
 import { type GeneralStoryCover } from './general-story-cover-field';
@@ -82,6 +83,8 @@ export function GeneralStoryCreateScreen() {
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [textValues, setTextValues] = useState(EMPTY_TEXT_VALUES);
   const [cover, setCover] = useState<GeneralStoryCover | null>(null);
+  const [descriptionRatio, setDescriptionRatio] =
+    useState(LENGTH_RATIO_DEFAULT);
 
   const hasUnsavedChanges = false;
   const hasSavedDraft = false;
@@ -122,6 +125,8 @@ export function GeneralStoryCreateScreen() {
         }
         cover={cover}
         onCoverChange={setCover}
+        descriptionRatio={descriptionRatio}
+        onDescriptionRatioChange={setDescriptionRatio}
       />
       <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
         <AlertDialogContent size="sm">
