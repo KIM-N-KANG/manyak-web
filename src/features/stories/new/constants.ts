@@ -188,6 +188,12 @@ export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 
 export const SELECTED_TAGS_TRIGGER_LABEL = '선택한 키워드 보기';
 
+/** 스토리라인 단계의 선택한 키워드 드로어 문구다. 앱 `create_selected_keywords_*` 문자열과 같다. */
+export const SELECTED_TAGS_DRAWER_COPY = {
+  title: '선택한 키워드들이에요',
+  description: '이 키워드들을 이용해서 스토리라인 세 개를 만들었어요',
+} as const;
+
 /** 추가 정보 단계 하단에 표시하는 스토리 완성 비용의 라벨. */
 export const STORY_COMPLETION_CREDIT_COST_LABEL = '스토리 완성 비용';
 
