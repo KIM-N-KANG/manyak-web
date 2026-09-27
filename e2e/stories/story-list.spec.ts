@@ -9,7 +9,10 @@ import {
   STORY_LIST_FILTER_OPTIONS,
   STORY_LIST_SORT_OPTIONS,
 } from '@/features/stories/list/constants';
-import { GENERAL_STORY_CREATE_COPY } from '@/features/studio/general/constants';
+import {
+  GENERAL_STORY_CREATE_COPY,
+  GENERAL_STORY_EXIT_WARNING_COPY,
+} from '@/features/studio/general/constants';
 import {
   CREATE_STORY_FAB_COPY,
   CREATED_STORY_LIST_COPY,
@@ -104,7 +107,7 @@ test.describe('홈·제작 스토리 목록', () => {
     );
   });
 
-  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 준비 중 화면으로 이동한다 (STORY-LIST-38)', async ({
+  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 닫기 확인 후 제작 탭으로 나간다 (STORY-LIST-38)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -134,15 +137,31 @@ test.describe('홈·제작 스토리 목록', () => {
       new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
     );
     await expect(
+      page.getByRole('banner').getByText(GENERAL_STORY_CREATE_COPY.title),
+    ).toBeVisible();
+    await expect(
       page.getByText(GENERAL_STORY_CREATE_COPY.preparing),
     ).toBeVisible();
+    // 자동 저장이 없고 저장할 입력도 없으니 임시 저장 버튼은 잠겨 있다.
+    await expect(
+      page.getByRole('button', { name: GENERAL_STORY_CREATE_COPY.draftSave }),
+    ).toBeDisabled();
 
     await page
-      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
       .click();
-    await expect(page).toHaveURL(
-      new RegExp(`${APP_PATH.STUDIO.STORY.SELECT}$`),
-    );
+
+    const exitDialog = page.getByRole('alertdialog');
+
+    await expect(
+      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.nothing.title),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', {
+        name: GENERAL_STORY_EXIT_WARNING_COPY.nothing.confirm,
+      })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 
   test('목록이 화면보다 길어도 FAB는 화면 아래에 붙어 있다 (STORY-LIST-11)', async ({
