@@ -6,7 +6,6 @@ import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
-import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +22,21 @@ import { APP_PATH } from '@/constants/app-path';
 import {
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_EXIT_WARNING_COPY,
+  GENERAL_STORY_TEXT_FIELDS,
   type GeneralStoryExitWarning,
+  type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
 import { cn } from '@/lib/utils';
+
+import { type GeneralStoryCover } from './general-story-cover-field';
+import {
+  GeneralStoryFormTabs,
+  type GeneralStoryTextValues,
+} from './general-story-form-tabs';
+
+const EMPTY_TEXT_VALUES = Object.fromEntries(
+  Object.keys(GENERAL_STORY_TEXT_FIELDS).map((field) => [field, '']),
+) as GeneralStoryTextValues;
 
 type DraftSaveStatus = 'idle' | 'saving' | 'saved';
 
@@ -69,6 +80,8 @@ export function GeneralStoryCreateScreen() {
   const [exitWarning, setExitWarning] =
     useState<GeneralStoryExitWarning>('nothing');
   const [isExitOpen, setIsExitOpen] = useState(false);
+  const [textValues, setTextValues] = useState(EMPTY_TEXT_VALUES);
+  const [cover, setCover] = useState<GeneralStoryCover | null>(null);
 
   const hasUnsavedChanges = false;
   const hasSavedDraft = false;
@@ -102,7 +115,14 @@ export function GeneralStoryCreateScreen() {
           </Button>
         </div>
       </header>
-      <EmptyListNotice>{GENERAL_STORY_CREATE_COPY.preparing}</EmptyListNotice>
+      <GeneralStoryFormTabs
+        values={textValues}
+        onChange={(field: GeneralStoryTextField, value: string) =>
+          setTextValues((previous) => ({ ...previous, [field]: value }))
+        }
+        cover={cover}
+        onCoverChange={setCover}
+      />
       <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>

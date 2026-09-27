@@ -12,6 +12,8 @@ import {
 import {
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_EXIT_WARNING_COPY,
+  GENERAL_STORY_TABS,
+  GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
 import {
   CREATE_STORY_FAB_COPY,
@@ -107,7 +109,7 @@ test.describe('홈·제작 스토리 목록', () => {
     );
   });
 
-  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 닫기 확인 후 제작 탭으로 나간다 (STORY-LIST-38)', async ({
+  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 입력 탭을 바꾸고 닫기 확인 후 제작 탭으로 나간다 (STORY-LIST-38)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -139,8 +141,16 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('banner').getByText(GENERAL_STORY_CREATE_COPY.title),
     ).toBeVisible();
+    // 첫 탭(기본 정보)이 열리고, 탭을 바꾸면 그 탭의 입력 항목이 보인다.
     await expect(
-      page.getByText(GENERAL_STORY_CREATE_COPY.preparing),
+      page.getByRole('tab', { name: GENERAL_STORY_TABS[0].label }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toBeVisible();
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[2].label }).click();
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.userRoleSetting.label),
     ).toBeVisible();
     // 자동 저장이 없고 저장할 입력도 없으니 임시 저장 버튼은 잠겨 있다.
     await expect(
