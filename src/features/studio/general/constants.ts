@@ -92,8 +92,6 @@ export const GENERAL_STORY_TEXT_FIELDS = {
     description:
       '스토리의 진행 속도와 중요한 사건이 일어나는 조건을 정해요. 갈등을 천천히 쌓을지, 사건을 빠르게 이어갈지와 함께 원하는 말투와 분위기도 적어주세요',
   },
-  userRoleSetting: { label: '주인공(나)', multiline: true },
-  characterSetting: { label: '주변 인물', multiline: true },
 } as const satisfies Record<
   string,
   {
@@ -126,12 +124,8 @@ export const GENERAL_STORY_TABS = [
     required: true,
     fields: ['world', 'progression'],
   },
-  {
-    value: 'character',
-    label: '인물 설정',
-    required: true,
-    fields: ['userRoleSetting', 'characterSetting'],
-  },
+  { value: 'protagonist', label: '주인공(나)', required: true, fields: [] },
+  { value: 'supporting', label: '주변 인물', required: true, fields: [] },
   { value: 'start', label: '시작 설정', required: true, fields: [] },
   { value: 'event', label: '주요 사건', required: false, fields: [] },
   { value: 'publish', label: '등록', required: true, fields: [] },
@@ -159,4 +153,53 @@ export const GENERAL_STORY_LENGTH_RATIO_COPY = {
   description: 'AI가 응답할 때 장면 묘사와 인물 대사를 어떤 비율로 쓸지 정해요',
   descriptionPart: '묘사',
   dialoguePart: '대사',
+} as const;
+
+/** 주인공(나)·주변 인물 탭의 입력 문구와 제한이다. 레이아웃은 간편 제작의 인물 입력을 따른다. */
+export const GENERAL_STORY_CHARACTER_COPY = {
+  basicInfoLabel: '기본 정보',
+  nameLabel: '이름',
+  genderLabel: '성별',
+  genderPlaceholder: '성별',
+  featureLabel: '특징',
+  nameMaxLength: 30,
+  featureMaxLength: 1000,
+  protagonistNamePlaceholder: '예: 윤해솔',
+  protagonistFeaturePlaceholder: [
+    '예:',
+    '## 역할',
+    '막차에서 잘못 내려 유실역에 남겨진 회사원',
+    '',
+    '## 배경',
+    '몇 해 전 동생과 크게 다툰 뒤로 연락을 끊고 지냈다.',
+    '',
+    '## 성격',
+    '겁이 많지만 한번 정한 일은 끝까지 해내는 편이다.',
+  ].join('\n'),
+  supportingNamePlaceholders: [
+    '예: 도하람',
+    '예: 서은결',
+    '예: 강태오',
+    '예: 민소율',
+    '예: 한시원',
+  ],
+  supportingFeaturePlaceholder: [
+    '예:',
+    '### 성격',
+    '유실물 보관소를 지키는 무뚝뚝한 관리인이다.',
+    '',
+    '### 말투',
+    '짧고 건조한 반말을 쓴다.',
+    '',
+    '### 동기',
+    '보관소에 맡겨진 자신의 이름을 되찾고 싶어 한다.',
+    '',
+    '### 주인공을 대하는 태도',
+    '처음에는 경계하지만, 주인공이 무언가를 맡기면 조금씩 돕는다.',
+  ].join('\n'),
+  imageLabel: '이미지',
+  imageDescription: '가로 4 : 세로 3 비율을 추천해요',
+  supportingMaxCount: 5,
+  addSupporting: '인물 추가',
+  remove: '삭제',
 } as const;

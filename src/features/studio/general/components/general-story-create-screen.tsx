@@ -20,20 +20,27 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import {
+  GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_EXIT_WARNING_COPY,
   GENERAL_STORY_TEXT_FIELDS,
   type GeneralStoryExitWarning,
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
+import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
+import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
 import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
 import { cn } from '@/lib/utils';
 
-import { type GeneralStoryCover } from './general-story-cover-field';
+import { GeneralStoryCharacterFields } from './general-story-character-fields';
 import {
   GeneralStoryFormTabs,
   type GeneralStoryTextValues,
 } from './general-story-form-tabs';
+import {
+  type GeneralStorySupportingCharacter,
+  GeneralStorySupportingCharacterList,
+} from './general-story-supporting-character-list';
 
 const EMPTY_TEXT_VALUES = Object.fromEntries(
   Object.keys(GENERAL_STORY_TEXT_FIELDS).map((field) => [field, '']),
@@ -82,9 +89,25 @@ export function GeneralStoryCreateScreen() {
     useState<GeneralStoryExitWarning>('nothing');
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [textValues, setTextValues] = useState(EMPTY_TEXT_VALUES);
-  const [cover, setCover] = useState<GeneralStoryCover | null>(null);
+  const [cover, setCover] = useState<DraftImage | null>(null);
   const [descriptionRatio, setDescriptionRatio] =
     useState(LENGTH_RATIO_DEFAULT);
+  const [protagonist, setProtagonist] = useState<GeneralStoryCharacter>({
+    name: '',
+    gender: null,
+    feature: '',
+  });
+  const [supporting, setSupporting] = useState<
+    GeneralStorySupportingCharacter[]
+  >(() => [
+    {
+      id: crypto.randomUUID(),
+      name: '',
+      gender: null,
+      feature: '',
+      image: null,
+    },
+  ]);
 
   const hasUnsavedChanges = false;
   const hasSavedDraft = false;
@@ -127,6 +150,29 @@ export function GeneralStoryCreateScreen() {
         onCoverChange={setCover}
         descriptionRatio={descriptionRatio}
         onDescriptionRatioChange={setDescriptionRatio}
+        panels={{
+          protagonist: (
+            <GeneralStoryCharacterFields
+              idPrefix="general-story-protagonist"
+              labelPrefix="주인공"
+              character={protagonist}
+              namePlaceholder={
+                GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
+              }
+              featurePlaceholder={
+                GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
+              }
+              featureRequired
+              onChange={setProtagonist}
+            />
+          ),
+          supporting: (
+            <GeneralStorySupportingCharacterList
+              characters={supporting}
+              onChange={setSupporting}
+            />
+          ),
+        }}
       />
       <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
         <AlertDialogContent size="sm">

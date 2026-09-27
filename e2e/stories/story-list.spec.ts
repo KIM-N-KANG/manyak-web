@@ -148,9 +148,9 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
     ).toBeVisible();
-    await page.getByRole('tab', { name: GENERAL_STORY_TABS[2].label }).click();
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
     await expect(
-      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.userRoleSetting.label),
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.world.label),
     ).toBeVisible();
     // 자동 저장이 없고 저장할 입력도 없으니 임시 저장 버튼은 잠겨 있다.
     await expect(

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 
 import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import {
@@ -17,18 +17,18 @@ import {
 } from '@/components/ui/input-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  GENERAL_STORY_COVER_COPY,
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
   type GeneralStoryTab,
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
+import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
 import { getGeneralStoryTextError } from '@/features/studio/general/utils/general-story-text-error';
+import { cn } from '@/lib/utils';
 
-import {
-  type GeneralStoryCover,
-  GeneralStoryCoverField,
-} from './general-story-cover-field';
+import { GeneralStoryImageField } from './general-story-image-field';
 import { GeneralStoryLengthRatioField } from './general-story-length-ratio-field';
 
 export type GeneralStoryTextValues = Record<GeneralStoryTextField, string>;
@@ -123,10 +123,12 @@ function GeneralStoryTextInput({
 type GeneralStoryFormTabsProps = {
   values: GeneralStoryTextValues;
   onChange: (field: GeneralStoryTextField, value: string) => void;
-  cover: GeneralStoryCover | null;
-  onCoverChange: (cover: GeneralStoryCover | null) => void;
+  cover: DraftImage | null;
+  onCoverChange: (cover: DraftImage | null) => void;
   descriptionRatio: number;
   onDescriptionRatioChange: (descriptionRatio: number) => void;
+  /** 글 항목 대신 직접 그리는 탭 내용이다. */
+  panels: Partial<Record<GeneralStoryTab, ReactNode>>;
 };
 
 export function GeneralStoryFormTabs({
@@ -136,6 +138,7 @@ export function GeneralStoryFormTabs({
   onCoverChange,
   descriptionRatio,
   onDescriptionRatioChange,
+  panels,
 }: GeneralStoryFormTabsProps) {
   const [tab, setTab] = useState<GeneralStoryTab>(GENERAL_STORY_TABS[0].value);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -181,35 +184,45 @@ export function GeneralStoryFormTabs({
           <TabsContent
             key={value}
             value={value}
-            className="flex min-h-full flex-col p-4">
-            {fields.length === 0 ? (
-              <EmptyListNotice>
-                {GENERAL_STORY_CREATE_COPY.preparing}
-              </EmptyListNotice>
-            ) : (
-              <FieldGroup className="gap-6">
-                {value === 'basic' && (
-                  <GeneralStoryCoverField
-                    cover={cover}
-                    onChange={onCoverChange}
-                  />
-                )}
-                {fields.map((field) => (
-                  <GeneralStoryTextInput
-                    key={field}
-                    field={field}
-                    value={values[field]}
-                    onChange={(value) => onChange(field, value)}
-                  />
-                ))}
-                {value === 'story' && (
-                  <GeneralStoryLengthRatioField
-                    descriptionRatio={descriptionRatio}
-                    onChange={onDescriptionRatioChange}
-                  />
-                )}
-              </FieldGroup>
-            )}
+            className={cn(
+              'flex min-h-full flex-col p-4',
+              value === 'supporting' && 'px-0 pt-0',
+            )}>
+            {panels[value] ??
+              (fields.length === 0 ? (
+                <EmptyListNotice>
+                  {GENERAL_STORY_CREATE_COPY.preparing}
+                </EmptyListNotice>
+              ) : (
+                <FieldGroup className="gap-6">
+                  {value === 'basic' && (
+                    <GeneralStoryImageField
+                      id="general-story-cover"
+                      label={GENERAL_STORY_COVER_COPY.label}
+                      kind="COVER"
+                      ratio={3 / 4}
+                      widthClassName="w-32"
+                      description={GENERAL_STORY_COVER_COPY.description}
+                      image={cover}
+                      onChange={onCoverChange}
+                    />
+                  )}
+                  {fields.map((field) => (
+                    <GeneralStoryTextInput
+                      key={field}
+                      field={field}
+                      value={values[field]}
+                      onChange={(value) => onChange(field, value)}
+                    />
+                  ))}
+                  {value === 'story' && (
+                    <GeneralStoryLengthRatioField
+                      descriptionRatio={descriptionRatio}
+                      onChange={onDescriptionRatioChange}
+                    />
+                  )}
+                </FieldGroup>
+              ))}
           </TabsContent>
         ))}
       </div>

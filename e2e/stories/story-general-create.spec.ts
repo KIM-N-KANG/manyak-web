@@ -3,7 +3,9 @@ import type { Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
+  GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
+  GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
 import { DRAFT_IMAGE_FILE_ERROR } from '@/features/studio/general/utils/draft-image-file';
@@ -123,5 +125,77 @@ test.describe('일반 제작 커버 이미지', () => {
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
     ).toHaveCount(0);
+  });
+});
+
+test.describe('일반 제작 주변 인물', () => {
+  test('1명으로 시작해 1명일 때는 삭제할 수 없고, 5명까지 추가한다 (STORY-GENERAL-07)', async ({
+    page,
+  }) => {
+    const { addSupporting, remove, supportingMaxCount } =
+      GENERAL_STORY_CHARACTER_COPY;
+    const supportingTab = GENERAL_STORY_TABS.find(
+      ({ value }) => value === 'supporting',
+    );
+
+    await openGeneralCreate(page);
+    await page
+      .getByRole('tab', { name: supportingTab?.label, exact: true })
+      .click();
+
+    const nameInputs = page.getByRole('textbox', {
+      name: new RegExp(`^${supportingTab?.label} \\d+ 이름$`),
+    });
+    const removeButtons = page.getByRole('button', {
+      name: new RegExp(`${remove}$`),
+    });
+    const addButton = page.getByRole('button', { name: addSupporting });
+
+    await expect(nameInputs).toHaveCount(1);
+    await expect(removeButtons).toHaveCount(0);
+
+    for (let count = 2; count <= supportingMaxCount; count += 1) {
+      await addButton.click();
+      await expect(nameInputs).toHaveCount(count);
+    }
+
+    await expect(addButton).toBeDisabled();
+    await expect(removeButtons).toHaveCount(supportingMaxCount);
+
+    await removeButtons.first().click();
+    await expect(nameInputs).toHaveCount(supportingMaxCount - 1);
+    await expect(addButton).toBeEnabled();
+  });
+
+  test('인물마다 이미지를 한 장 올리고 삭제할 수 있다 (STORY-GENERAL-08)', async ({
+    page,
+  }) => {
+    const { presignBodies } = await mockCoverUpload(page);
+    const supportingTab = GENERAL_STORY_TABS.find(
+      ({ value }) => value === 'supporting',
+    );
+    const imageRemove = page.getByRole('button', {
+      name: `${supportingTab?.label} 1 ${GENERAL_STORY_CHARACTER_COPY.imageLabel} ${GENERAL_STORY_COVER_COPY.remove}`,
+    });
+
+    await openGeneralCreate(page);
+    await page
+      .getByRole('tab', { name: supportingTab?.label, exact: true })
+      .click();
+    await page
+      .getByLabel(GENERAL_STORY_CHARACTER_COPY.imageLabel, { exact: true })
+      .setInputFiles(COVER_FILE);
+
+    await expect(imageRemove).toBeVisible();
+    expect(presignBodies).toEqual([
+      {
+        kind: 'CHARACTER',
+        contentType: 'image/png',
+        contentLength: COVER_FILE.buffer.length,
+      },
+    ]);
+
+    await imageRemove.click();
+    await expect(imageRemove).toHaveCount(0);
   });
 });
