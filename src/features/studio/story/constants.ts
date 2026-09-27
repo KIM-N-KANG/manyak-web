@@ -3,11 +3,11 @@ export const STORY_MODE_SELECT_COPY = {
   title: '스토리 만들기',
   simple: {
     title: '간편 제작',
-    description: '키워드를 고르면 스토리라인을 추천해 드려요.',
+    description: '키워드만 고르면 AI가 이미지까지 담긴 스토리를 완성해드려요',
   },
   general: {
     title: '일반 제작',
-    description: '제목부터 인물까지 하나하나 직접 입력해요.',
+    description: '스토리 설정, 엔딩 등 스토리에 필요한 내용을 직접 입력해요',
   },
 } as const;
 
