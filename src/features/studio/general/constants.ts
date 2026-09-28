@@ -114,7 +114,7 @@ export type GeneralStoryTextField = keyof typeof GENERAL_STORY_TEXT_FIELDS;
 export const GENERAL_STORY_TABS = [
   {
     value: 'basic',
-    label: '기본 정보',
+    label: '스토리 프로필',
     required: true,
     fields: ['title', 'oneLineIntro'],
   },
@@ -138,7 +138,7 @@ export const GENERAL_STORY_TABS = [
 
 export type GeneralStoryTab = (typeof GENERAL_STORY_TABS)[number]['value'];
 
-/** 기본 정보 탭의 커버 이미지(요청의 표지 `thumbnailObjectKey`) 입력 문구다. */
+/** 스토리 프로필 탭의 커버 이미지(요청의 표지 `thumbnailObjectKey`) 입력 문구다. */
 export const GENERAL_STORY_COVER_COPY = {
   label: '커버 이미지',
   description: '가로 3 : 세로 4 비율을 추천해요',

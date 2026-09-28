@@ -141,7 +141,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('banner').getByText(GENERAL_STORY_CREATE_COPY.title),
     ).toBeVisible();
-    // 첫 탭(기본 정보)이 열리고, 탭을 바꾸면 그 탭의 입력 항목이 보인다.
+    // 첫 탭(스토리 프로필)이 열리고, 탭을 바꾸면 그 탭의 입력 항목이 보인다.
     await expect(
       page.getByRole('tab', { name: GENERAL_STORY_TABS[0].label }),
     ).toHaveAttribute('aria-selected', 'true');
