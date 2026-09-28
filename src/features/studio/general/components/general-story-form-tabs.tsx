@@ -1,6 +1,5 @@
 import { type ReactNode, useRef, useState } from 'react';
 
-import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import { FieldGroup } from '@/components/ui/field';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -130,41 +129,36 @@ export function GeneralStoryFormTabs({
                 value === 'event') &&
                 'px-0 pt-0',
             )}>
-            {panels[value] ??
-              (fields.length === 0 ? (
-                <EmptyListNotice>
-                  {GENERAL_STORY_CREATE_COPY.preparing}
-                </EmptyListNotice>
-              ) : (
-                <FieldGroup className="gap-6">
-                  {value === 'basic' && (
-                    <GeneralStoryImageField
-                      id="general-story-cover"
-                      label={GENERAL_STORY_COVER_COPY.label}
-                      kind="COVER"
-                      ratio={3 / 4}
-                      widthClassName="w-32"
-                      ratioHint={GENERAL_STORY_COVER_COPY.description}
-                      image={cover}
-                      onChange={onCoverChange}
-                    />
-                  )}
-                  {fields.map((field) => (
-                    <GeneralStoryTextInput
-                      key={field}
-                      field={field}
-                      value={values[field]}
-                      onChange={(value) => onChange(field, value)}
-                    />
-                  ))}
-                  {value === 'story' && (
-                    <GeneralStoryLengthRatioField
-                      descriptionRatio={descriptionRatio}
-                      onChange={onDescriptionRatioChange}
-                    />
-                  )}
-                </FieldGroup>
-              ))}
+            {panels[value] ?? (
+              <FieldGroup className="gap-6">
+                {value === 'basic' && (
+                  <GeneralStoryImageField
+                    id="general-story-cover"
+                    label={GENERAL_STORY_COVER_COPY.label}
+                    kind="COVER"
+                    ratio={3 / 4}
+                    widthClassName="w-32"
+                    ratioHint={GENERAL_STORY_COVER_COPY.description}
+                    image={cover}
+                    onChange={onCoverChange}
+                  />
+                )}
+                {fields.map((field) => (
+                  <GeneralStoryTextInput
+                    key={field}
+                    field={field}
+                    value={values[field]}
+                    onChange={(value) => onChange(field, value)}
+                  />
+                ))}
+                {value === 'story' && (
+                  <GeneralStoryLengthRatioField
+                    descriptionRatio={descriptionRatio}
+                    onChange={onDescriptionRatioChange}
+                  />
+                )}
+              </FieldGroup>
+            )}
           </TabsContent>
         ))}
       </div>

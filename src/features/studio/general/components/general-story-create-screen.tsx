@@ -6,6 +6,7 @@ import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
+import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
 import {
   AlertDialog,
@@ -30,6 +31,7 @@ import {
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
+import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
 import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
 import {
   createStartSettingDraft,
@@ -44,6 +46,7 @@ import {
   type GeneralStoryTextValues,
 } from './general-story-form-tabs';
 import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
+import { GeneralStoryRegisterPanel } from './general-story-register-panel';
 import { GeneralStoryStartSettingPanel } from './general-story-start-setting-panel';
 import {
   type GeneralStorySupportingCharacter,
@@ -122,6 +125,10 @@ export function GeneralStoryCreateScreen() {
   const [mainEvents, setMainEvents] = useState<GeneralStoryMainEventDraft[]>(
     [],
   );
+  const [genres, setGenres] = useState(EMPTY_GENRE_SELECTION);
+  const [storyDescription, setStoryDescription] = useState('');
+  const [storyVisibility, setStoryVisibility] =
+    useState<CreateGeneralStoryRequestVisibility>('PRIVATE');
 
   const hasUnsavedChanges = false;
   const hasSavedDraft = false;
@@ -204,6 +211,16 @@ export function GeneralStoryCreateScreen() {
               <GeneralStoryMainEventPanel
                 mainEvents={mainEvents}
                 onChange={setMainEvents}
+              />
+            ),
+            publish: (
+              <GeneralStoryRegisterPanel
+                genres={genres}
+                onGenresChange={setGenres}
+                storyDescription={storyDescription}
+                onStoryDescriptionChange={setStoryDescription}
+                storyVisibility={storyVisibility}
+                onStoryVisibilityChange={setStoryVisibility}
               />
             ),
           }}

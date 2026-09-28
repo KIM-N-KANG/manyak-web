@@ -1,7 +1,6 @@
-/** 일반 제작 화면 정본 문구다. 아직 만들지 않은 탭은 준비 중 안내만 둔다. */
+/** 일반 제작 화면 정본 문구다. */
 export const GENERAL_STORY_CREATE_COPY = {
   title: '스토리 일반 제작',
-  preparing: '준비 중이에요',
   close: '스토리 만들기 닫기',
   draftSave: '임시 저장',
   draftSaved: '임시 저장됨',
@@ -339,4 +338,32 @@ export const GENERAL_STORY_EVENT_COPY = {
     description:
       '주인공(나)의 행동이 이 사건과 관련되는지 AI가 판단하는 기준 문장이에요. 할 법한 행동을 한 문장으로 적어주세요',
   },
+} as const;
+
+/** 등록 탭의 문구·예시와 제한이다. 장르는 간편 제작의 키워드 선택을 쓰며 예시는 유실역 설정을 잇는다. */
+export const GENERAL_STORY_REGISTER_COPY = {
+  genre: {
+    label: '장르',
+    maxCount: 8,
+    maxCountLabel: (maxCount: number) => `(최대 ${maxCount}개)`,
+    description: '스토리 목록과 상세에 보이는 장르예요',
+    addPlaceholder: '예: 타임루프, 영지물, 먼치킨',
+  },
+  description: {
+    label: '주요 내용',
+    maxLength: 1000,
+    placeholder: [
+      '예: 막차에서 잘못 내린 윤해솔은 노선도에 없는 유실역에 홀로 남는다.',
+      '역의 유실물 보관소에는 세상에서 잃어버린 물건과 기억이 모두 모이고, 무언가를 되찾으려면 자신의 무언가를 맡겨야 한다.',
+      '첫차가 오기 전, 해솔은 보관소에서 잊고 지낸 동생의 기억을 발견한다.',
+    ].join('\n'),
+    description:
+      '스토리 상세의 주요 내용에 보이는 글이에요. 한 줄 소개보다 자세한 줄거리와 볼거리를 적어주세요',
+  },
+  visibility: {
+    label: '공개',
+    description: '누구나 스토리를 찾아보고 플레이할 수 있어요',
+  },
+  notice:
+    '노골적인 성적 표현, 지나치게 잔혹한 묘사, 혐오를 부추기는 내용은 등록할 수 없어요. 이런 내용을 올리면 이용이 제한될 수 있어요',
 } as const;

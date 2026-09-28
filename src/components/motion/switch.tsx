@@ -21,6 +21,8 @@ export interface SwitchProps {
   disabled?: boolean;
   label?: string;
   ariaLabel?: string;
+  /** 스위치를 설명하는 요소의 id다. */
+  ariaDescribedBy?: string;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export function Switch({
   disabled,
   label,
   ariaLabel,
+  ariaDescribedBy,
   className,
 }: SwitchProps) {
   const id = useId();
@@ -62,6 +65,7 @@ export function Switch({
           role="switch"
           aria-checked={checked}
           aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
           disabled={disabled}
           onClick={() => !disabled && onCheckedChange(!checked)}
           onPointerDown={(e) => {
