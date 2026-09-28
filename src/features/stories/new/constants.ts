@@ -6,7 +6,6 @@ import type {
   TagCategoryConfig,
 } from './types';
 
-export const ADD_TAG_MAX_LENGTH = 15;
 export const STORYLINE_GENERATE_LABEL = '스토리라인 만들기';
 
 /** 인물 이름 입력의 클라이언트 상한. 서버 스키마도 30자다. */
@@ -120,29 +119,6 @@ export const TAG_CATEGORIES = [
   PROTAGONIST_CATEGORY,
   SUPPORTING_CHARACTER_CATEGORY,
 ] satisfies TagCategoryConfig[];
-
-export const SKELETON_TAG_CHIP_WIDTH_CLASSES = [
-  'w-24',
-  'w-10',
-  'w-32',
-  'w-16',
-  'w-14',
-  'w-28',
-  'w-20',
-  'w-12',
-  'w-24',
-  'w-16',
-  'w-10',
-  'w-32',
-  'w-14',
-  'w-28',
-  'w-20',
-  'w-12',
-  'w-24',
-  'w-10',
-  'w-16',
-  'w-28',
-] as const;
 
 export const STORY_CREATE_INDICATOR_STEPS = [
   { step: 'keyword', label: '키워드 선택' },
