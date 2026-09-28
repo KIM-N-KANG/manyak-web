@@ -101,7 +101,6 @@ async function playSimple(sheet: HTMLElement, { wait, frame }: Timeline) {
   };
 
   for (;;) {
-    await wait(500);
     touch.style.transition = 'none';
     moveTo(chips[PICKS[0]]);
     await frame();
@@ -150,6 +149,8 @@ async function playSimple(sheet: HTMLElement, { wait, frame }: Timeline) {
     storyline.classList.remove(styles.shown);
     await frame();
     sheet.classList.remove(styles.noAnim, styles.rest);
+    // 쉬는 박자는 되돌린 뒤에 두어 화면을 열면 바로 시작한다.
+    await wait(500);
   }
 }
 
@@ -237,7 +238,7 @@ function stillGeneral(form: HTMLElement) {
 async function playGeneral(form: HTMLElement, { wait, frame }: Timeline) {
   const fields = all(form, styles.field);
 
-  await wait(1400); // 두 일러스트가 동시에 바뀌지 않도록 박자를 엇갈린다.
+  await wait(300); // 두 일러스트가 동시에 바뀌지 않도록 박자를 엇갈린다.
 
   for (;;) {
     for (const f of fields) {
