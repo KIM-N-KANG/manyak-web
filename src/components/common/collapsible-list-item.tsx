@@ -19,7 +19,7 @@ export const COLLAPSIBLE_LIST_ITEM_COPY = {
 const { collapse, expand, remove } = COLLAPSIBLE_LIST_ITEM_COPY;
 
 const HEADER_BUTTON_CLASS_NAME =
-  'justify-end rounded-none px-0 text-sm text-foreground-secondary aria-expanded:text-foreground-secondary aria-expanded:hover:text-foreground';
+  'h-8 text-foreground-secondary aria-expanded:text-foreground-secondary aria-expanded:hover:text-foreground';
 
 const BODY_TRANSITION: Transition = {
   type: 'spring',
@@ -117,8 +117,12 @@ export function CollapsibleListItem({
   const bodyId = `${id}-body`;
 
   return (
-    <section className="flex flex-col">
-      <div className="flex min-h-12 items-center bg-muted px-4">
+    <section
+      data-collapsed={!isExpanded || undefined}
+      // 바로 앞 항목이 접혀 있으면 목록 간격만큼 끌어올려 접힌 머리 줄끼리 붙인다.
+      className="flex flex-col transition-[margin] duration-300 ease-out motion-reduce:transition-none [[data-collapsed]+&]:-mt-4">
+      {/* 버튼 안쪽 여백(8px)만큼 오른쪽 여백을 줄여, 삭제 글자가 목록 좌우 여백(16px) 자리에 오게 한다. */}
+      <div className="flex min-h-12 items-center bg-muted pr-2 pl-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="min-w-0 truncate text-sm font-medium text-foreground-secondary">
             {label}
@@ -130,12 +134,12 @@ export function CollapsibleListItem({
         <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
-            size="lg"
+            size="xs"
             variant="ghost"
             aria-label={`${label} ${isExpanded ? collapse : expand}`}
             aria-expanded={isExpanded}
             aria-controls={bodyId}
-            className={cn(HEADER_BUTTON_CLASS_NAME, 'w-16 gap-0.5')}
+            className={HEADER_BUTTON_CLASS_NAME}
             onClick={() => {
               setIsAnimating(true);
               collapsedItems.setCollapsed(id, isExpanded);
@@ -145,7 +149,7 @@ export function CollapsibleListItem({
               icon={ArrowDown01Icon}
               aria-hidden="true"
               className={cn(
-                'size-4 transition-transform duration-300 ease-out motion-reduce:transition-none',
+                'transition-transform duration-300 ease-out motion-reduce:transition-none',
                 isExpanded && 'rotate-180',
               )}
             />
@@ -153,11 +157,11 @@ export function CollapsibleListItem({
           {onRemove && (
             <Button
               type="button"
-              size="lg"
+              size="xs"
               variant="ghost"
               aria-label={`${label} ${remove}`}
               disabled={removeDisabled}
-              className={cn(HEADER_BUTTON_CLASS_NAME, 'w-12')}
+              className={HEADER_BUTTON_CLASS_NAME}
               onClick={onRemove}>
               {remove}
             </Button>
