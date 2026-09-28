@@ -1,4 +1,9 @@
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import {
   InputGroup,
   InputGroupAddon,
@@ -42,6 +47,8 @@ type GeneralStoryCharacterFieldsProps = {
   character: GeneralStoryCharacter;
   namePlaceholder: string;
   featurePlaceholder: string;
+  basicInfoDescription: string;
+  featureDescription: string;
   featureRequired: boolean;
   onChange: (character: GeneralStoryCharacter) => void;
   nameInputRef?: (element: HTMLInputElement | null) => void;
@@ -53,6 +60,8 @@ export function GeneralStoryCharacterFields({
   character,
   namePlaceholder,
   featurePlaceholder,
+  basicInfoDescription,
+  featureDescription,
   featureRequired,
   onChange,
   nameInputRef,
@@ -117,6 +126,9 @@ export function GeneralStoryCharacterFields({
             </SelectContent>
           </Select>
         </div>
+        <FieldDescription className="break-keep text-foreground-secondary">
+          {basicInfoDescription}
+        </FieldDescription>
       </Field>
 
       <Field className="gap-2">
@@ -142,6 +154,9 @@ export function GeneralStoryCharacterFields({
             </InputGroupText>
           </InputGroupAddon>
         </InputGroup>
+        <FieldDescription className="break-keep text-foreground-secondary">
+          {featureDescription}
+        </FieldDescription>
       </Field>
     </FieldGroup>
   );

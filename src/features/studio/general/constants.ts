@@ -159,10 +159,16 @@ export const GENERAL_STORY_LENGTH_RATIO_COPY = {
 /** 주인공(나)·주변 인물 탭의 입력 문구와 제한이다. 레이아웃은 간편 제작의 인물 입력을 따른다. */
 export const GENERAL_STORY_CHARACTER_COPY = {
   basicInfoLabel: '기본 정보',
+  protagonistBasicInfoDescription:
+    '스토리 속에서 내가 사용할 이름과 성별이에요',
+  supportingBasicInfoDescription: '이 이름과 성별로 스토리에 등장해요',
   nameLabel: '이름',
   genderLabel: '성별',
   genderPlaceholder: '성별',
   featureLabel: '특징',
+  protagonistFeatureDescription:
+    '내가 어떤 사람인지에 따라 주변 인물들의 반응이 달라져요',
+  supportingFeatureDescription: '인물의 성격이 대화와 행동에 드러나요',
   nameMaxLength: 30,
   featureMaxLength: 1000,
   protagonistNamePlaceholder: '예: 윤해솔',
@@ -199,7 +205,9 @@ export const GENERAL_STORY_CHARACTER_COPY = {
     '처음에는 경계하지만, 주인공이 무언가를 맡기면 조금씩 돕는다.',
   ].join('\n'),
   imageLabel: '이미지',
-  imageDescription: '가로 4 : 세로 3 비율을 추천해요',
+  imageRatioHint: '가로 4 : 세로 3 비율을 추천해요',
+  imageDescription:
+    '이 이미지를 바탕으로 상황에 맞게 인물의 모습이 실시간으로 바뀌어요',
   supportingMaxCount: 5,
   addSupporting: '인물 추가',
   remove: '삭제',

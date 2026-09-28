@@ -145,7 +145,7 @@ export function GeneralStoryFormTabs({
                       kind="COVER"
                       ratio={3 / 4}
                       widthClassName="w-32"
-                      description={GENERAL_STORY_COVER_COPY.description}
+                      ratioHint={GENERAL_STORY_COVER_COPY.description}
                       image={cover}
                       onChange={onCoverChange}
                     />

@@ -23,7 +23,10 @@ type GeneralStoryImageFieldProps = {
   ratio: number;
   /** 미리보기 폭 클래스다. */
   widthClassName: string;
-  description: string;
+  /** 미리보기 옆 버튼 아래에 두는 권장 비율 안내다. */
+  ratioHint: string;
+  /** 다른 입력처럼 입력 영역 아래에 두는 설명이다. */
+  description?: string;
   /** 같은 화면에 여러 개가 있을 때 버튼을 구분하는 접근 가능한 이름 앞머리다. */
   ariaLabelPrefix?: string;
   image: DraftImage | null;
@@ -36,6 +39,7 @@ export function GeneralStoryImageField({
   kind,
   ratio,
   widthClassName,
+  ratioHint,
   description,
   ariaLabelPrefix,
   image,
@@ -117,11 +121,16 @@ export function GeneralStoryImageField({
             )}
           </div>
           <FieldDescription className="break-keep text-foreground-secondary">
-            {description}
+            {ratioHint}
             <span className="block text-xs">{fileRule}</span>
           </FieldDescription>
         </div>
       </div>
+      {description && (
+        <FieldDescription className="break-keep text-foreground-secondary">
+          {description}
+        </FieldDescription>
+      )}
       <input id={id} {...inputProps} />
     </Field>
   );

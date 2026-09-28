@@ -170,6 +170,12 @@ export function GeneralStoryCreateScreen() {
               featurePlaceholder={
                 GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
               }
+              basicInfoDescription={
+                GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
+              }
+              featureDescription={
+                GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
+              }
               featureRequired
               onChange={setProtagonist}
             />

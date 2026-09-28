@@ -119,6 +119,7 @@ export function GeneralStorySupportingCharacterList({
                 kind="CHARACTER"
                 ratio={4 / 3}
                 widthClassName="w-32"
+                ratioHint={GENERAL_STORY_CHARACTER_COPY.imageRatioHint}
                 description={GENERAL_STORY_CHARACTER_COPY.imageDescription}
                 ariaLabelPrefix={labelPrefix}
                 image={character.image}
@@ -134,6 +135,12 @@ export function GeneralStorySupportingCharacterList({
                   ]
                 }
                 featurePlaceholder={supportingFeaturePlaceholder}
+                basicInfoDescription={
+                  GENERAL_STORY_CHARACTER_COPY.supportingBasicInfoDescription
+                }
+                featureDescription={
+                  GENERAL_STORY_CHARACTER_COPY.supportingFeatureDescription
+                }
                 featureRequired={false}
                 onChange={({ name, gender, feature }) =>
                   update(character.id, { name, gender, feature })
