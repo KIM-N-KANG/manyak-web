@@ -10,6 +10,7 @@ import {
   GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
 import { DRAFT_IMAGE_FILE_ERROR } from '@/features/studio/general/utils/draft-image-file';
+import { DISCARD_INPUT_CONFIRM_COPY } from '@/hooks/use-discard-confirm';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { expect, skipOnboarding, test } from '../fixtures/test';
@@ -250,5 +251,56 @@ test.describe('일반 제작 시작 상황 설정', () => {
 
     await minTurns.fill('99턴');
     await expect(minTurns).toHaveValue(String(ending.minTurns.max));
+  });
+});
+
+test.describe('일반 제작 삭제 확인', () => {
+  test('입력한 주변 인물·시작 상황은 확인 후 지우고, 빈 항목은 바로 지운다 (STORY-GENERAL-11)', async ({
+    page,
+  }) => {
+    const { title, cancelLabel, confirmLabel } = DISCARD_INPUT_CONFIRM_COPY;
+    const tabLabel = (value: string) =>
+      GENERAL_STORY_TABS.find((tab) => tab.value === value)?.label;
+    const dialog = page.getByRole('alertdialog');
+
+    await openGeneralCreate(page);
+    await page
+      .getByRole('tab', { name: tabLabel('supporting'), exact: true })
+      .click();
+
+    const nameInputs = page.getByRole('textbox', {
+      name: /^주변 인물 \d+ 이름$/,
+    });
+    const addCharacter = page.getByRole('button', {
+      name: GENERAL_STORY_CHARACTER_COPY.addSupporting,
+    });
+
+    await addCharacter.click();
+    await addCharacter.click();
+    await nameInputs.nth(1).fill('하람');
+
+    await page.getByRole('button', { name: '하람 삭제' }).click();
+    await expect(dialog.getByText(title)).toBeVisible();
+    await dialog.getByRole('button', { name: cancelLabel }).click();
+    await expect(nameInputs).toHaveCount(3);
+
+    await page.getByRole('button', { name: '주변 인물 3 삭제' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(nameInputs).toHaveCount(2);
+
+    await page.getByRole('button', { name: '하람 삭제' }).click();
+    await dialog.getByRole('button', { name: confirmLabel }).click();
+    await expect(nameInputs).toHaveCount(1);
+
+    await page
+      .getByRole('tab', { name: tabLabel('start'), exact: true })
+      .click();
+    await page
+      .getByRole('button', { name: GENERAL_STORY_START_COPY.add, exact: true })
+      .click();
+    await page.getByLabel(GENERAL_STORY_START_COPY.name.label).fill('역무실');
+    await page.getByRole('button', { name: '역무실 삭제' }).click();
+    await dialog.getByRole('button', { name: confirmLabel }).click();
+    await expect(page.locator('[data-slot=toggle-chip]')).toHaveCount(1);
   });
 });

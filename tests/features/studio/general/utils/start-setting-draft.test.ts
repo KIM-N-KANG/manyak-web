@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createEndingDraft,
+  createStartSettingDraft,
   getStartSettingLabel,
+  hasEndingInput,
+  hasStartSettingInput,
   normalizeMinTurns,
 } from '@/features/studio/general/utils/start-setting-draft';
 
@@ -36,5 +40,40 @@ describe('normalizeMinTurns', () => {
   it('숫자가 없으면 빈 문자열이다', () => {
     expect(normalizeMinTurns('턴', 50)).toBe('');
     expect(normalizeMinTurns('', 50)).toBe('');
+  });
+});
+
+describe('hasStartSettingInput·hasEndingInput', () => {
+  it('비었거나 공백뿐이면 입력이 없다', () => {
+    const startSetting = createStartSettingDraft();
+
+    expect(hasStartSettingInput(startSetting)).toBe(false);
+    expect(
+      hasStartSettingInput({
+        ...startSetting,
+        suggestedInputs: [' ', '', '\n'],
+      }),
+    ).toBe(false);
+    expect(hasEndingInput(createEndingDraft())).toBe(false);
+  });
+
+  it('칸 하나라도 쓰였거나 엔딩이 있으면 입력이 있다', () => {
+    const startSetting = createStartSettingDraft();
+
+    expect(
+      hasStartSettingInput({
+        ...startSetting,
+        suggestedInputs: ['', '문을 연다', ''],
+      }),
+    ).toBe(true);
+    expect(
+      hasStartSettingInput({
+        ...startSetting,
+        endings: [createEndingDraft()],
+      }),
+    ).toBe(true);
+    expect(hasEndingInput({ ...createEndingDraft(), minTurns: '10' })).toBe(
+      true,
+    );
   });
 });

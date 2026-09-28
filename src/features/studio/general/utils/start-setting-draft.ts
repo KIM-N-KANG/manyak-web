@@ -61,3 +61,20 @@ export function normalizeMinTurns(input: string, max: number) {
 
   return digits ? String(Math.min(max, Number(digits))) : '';
 }
+
+const hasText = (...values: string[]) => values.some((value) => value.trim());
+
+/** 엔딩에 입력한 내용이 있는지 반환한다. 삭제 전 확인 여부를 정할 때 쓴다. */
+export const hasEndingInput = (ending: GeneralStoryEndingDraft) =>
+  hasText(ending.name, ending.minTurns, ending.condition, ending.epilogue);
+
+/** 시작 상황에 입력한 내용(엔딩 포함)이 있는지 반환한다. */
+export const hasStartSettingInput = (
+  startSetting: GeneralStoryStartSettingDraft,
+) =>
+  hasText(
+    startSetting.name,
+    startSetting.prologue,
+    startSetting.situation,
+    ...startSetting.suggestedInputs,
+  ) || startSetting.endings.length > 0;

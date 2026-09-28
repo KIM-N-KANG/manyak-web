@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   GENERAL_STORY_CHARACTER_COPY,
@@ -10,6 +11,7 @@ import {
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
+import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
@@ -42,6 +44,15 @@ export function GeneralStorySupportingCharacterList({
   const canRemove = characters.length > 1;
   const { registerInput, scrollInputIntoView } =
     useInputRefRegistry<HTMLInputElement>();
+  const { request: requestDiscard, dialogProps } = useDiscardConfirm((id) => {
+    const removed = characters.find((item) => item.id === id);
+
+    if (removed?.image) {
+      URL.revokeObjectURL(removed.image.previewUrl);
+    }
+
+    onChange((previous) => previous.filter((item) => item.id !== id));
+  });
 
   const update = (
     id: string,
@@ -85,15 +96,17 @@ export function GeneralStorySupportingCharacterList({
                   size="lg"
                   variant="ghost"
                   aria-label={`${headerLabel} ${remove}`}
-                  onClick={() => {
-                    if (character.image) {
-                      URL.revokeObjectURL(character.image.previewUrl);
-                    }
-
-                    onChange((previous) =>
-                      previous.filter((item) => item.id !== character.id),
-                    );
-                  }}
+                  onClick={() =>
+                    requestDiscard(
+                      character.id,
+                      Boolean(
+                        character.name.trim() ||
+                        character.gender ||
+                        character.feature.trim() ||
+                        character.image,
+                      ),
+                    )
+                  }
                   className="w-12 justify-end rounded-none px-0 text-sm text-foreground-secondary">
                   {remove}
                 </Button>
@@ -141,6 +154,7 @@ export function GeneralStorySupportingCharacterList({
           {addSupporting}
         </Button>
       </div>
+      <ConfirmAlertDialog {...dialogProps} />
     </div>
   );
 }

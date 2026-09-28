@@ -4,7 +4,9 @@ import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
+import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
+import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { cn } from '@/lib/utils';
 
 import {
@@ -66,6 +68,9 @@ export function SupportingCharacterList({
   onAddCharacter,
   onRemoveCharacter,
 }: SupportingCharacterListProps) {
+  const { request: requestDiscard, dialogProps } =
+    useDiscardConfirm(onRemoveCharacter);
+
   return (
     <div className="flex flex-col gap-4">
       {characters.map((character, index) => {
@@ -96,7 +101,17 @@ export function SupportingCharacterList({
                 variant="ghost"
                 aria-label={`${headerLabel} 삭제`}
                 disabled={disabled}
-                onClick={() => onRemoveCharacter(character.id)}
+                onClick={() =>
+                  requestDiscard(
+                    character.id,
+                    Boolean(
+                      character.name.trim() ||
+                      character.gender ||
+                      character.selectedTagIds.length ||
+                      character.customTags.length,
+                    ),
+                  )
+                }
                 className="w-12 justify-end rounded-none px-0 text-sm text-foreground-secondary">
                 삭제
               </Button>
@@ -159,6 +174,7 @@ export function SupportingCharacterList({
           인물 추가
         </Button>
       </div>
+      <ConfirmAlertDialog {...dialogProps} />
     </div>
   );
 }

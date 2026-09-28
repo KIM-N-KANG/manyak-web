@@ -3,6 +3,7 @@ import { type Dispatch, type SetStateAction, useRef, useState } from 'react';
 import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -24,8 +25,11 @@ import {
   type GeneralStoryEndingDraft,
   type GeneralStoryStartSettingDraft,
   getStartSettingLabel,
+  hasEndingInput,
+  hasStartSettingInput,
   normalizeMinTurns,
 } from '@/features/studio/general/utils/start-setting-draft';
+import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 import { cn } from '@/lib/utils';
 
@@ -95,6 +99,11 @@ export function GeneralStoryStartSettingPanel({
     }
   };
 
+  const {
+    request: requestDiscardStartSetting,
+    dialogProps: startSettingDialogProps,
+  } = useDiscardConfirm(removeStartSetting);
+
   return (
     <div className="flex flex-col">
       <div
@@ -129,7 +138,12 @@ export function GeneralStoryStartSettingPanel({
                 <button
                   type="button"
                   aria-label={`${label} ${remove}`}
-                  onClick={() => removeStartSetting(item.id)}
+                  onClick={() =>
+                    requestDiscardStartSetting(
+                      item.id,
+                      hasStartSettingInput(item),
+                    )
+                  }
                   className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-foreground-secondary outline-none group-has-aria-pressed:text-primary hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50">
                   <HugeiconsIcon
                     icon={Cancel01Icon}
@@ -157,6 +171,7 @@ export function GeneralStoryStartSettingPanel({
         startSetting={selected}
         onChange={onChange}
       />
+      <ConfirmAlertDialog {...startSettingDialogProps} />
     </div>
   );
 }
@@ -196,6 +211,20 @@ function GeneralStoryStartSettingEditor({
               ),
             }
           : item,
+      ),
+    );
+
+  const { request: requestDiscardEnding, dialogProps: endingDialogProps } =
+    useDiscardConfirm((endingId) =>
+      onChange((previous) =>
+        previous.map((item) =>
+          item.id === selected.id
+            ? {
+                ...item,
+                endings: item.endings.filter(({ id }) => id !== endingId),
+              }
+            : item,
+        ),
       ),
     );
 
@@ -315,11 +344,10 @@ function GeneralStoryStartSettingEditor({
                   aria-label={`${endingLabel} ${remove}`}
                   className="w-12 justify-end rounded-none px-0 text-sm text-foreground-secondary"
                   onClick={() =>
-                    update({
-                      endings: selected.endings.filter(
-                        ({ id }) => id !== endingItem.id,
-                      ),
-                    })
+                    requestDiscardEnding(
+                      endingItem.id,
+                      hasEndingInput(endingItem),
+                    )
                   }>
                   {remove}
                 </Button>
@@ -396,6 +424,7 @@ function GeneralStoryStartSettingEditor({
           </Button>
         </div>
       </div>
+      <ConfirmAlertDialog {...endingDialogProps} />
     </>
   );
 }
