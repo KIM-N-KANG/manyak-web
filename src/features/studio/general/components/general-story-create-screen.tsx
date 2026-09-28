@@ -189,6 +189,7 @@ export function GeneralStoryCreateScreen() {
             ),
             supporting: (
               <GeneralStorySupportingCharacterList
+                protagonistName={protagonist.name}
                 characters={supporting}
                 onChange={setSupporting}
               />

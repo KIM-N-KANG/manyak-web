@@ -300,7 +300,7 @@ export const GENERAL_STORY_START_COPY = {
   },
 } as const;
 
-/** 앞 항목과 이름이 겹친 주요 사건의 이름 칸에 설명 대신 보이는 오류다. */
+/** 앞 항목과 이름이 겹친 주요 사건·주변 인물·엔딩의 이름 칸에 설명 대신 보이는 오류다. */
 export const GENERAL_STORY_DUPLICATE_NAME_ERROR = '이미 사용한 이름이에요';
 
 /** 주요 사건 탭의 문구·예시와 제한이다. 예시는 유실역 설정을 잇는다. */

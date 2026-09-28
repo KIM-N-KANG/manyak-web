@@ -1,6 +1,7 @@
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -50,6 +51,8 @@ type GeneralStoryCharacterFieldsProps = {
   basicInfoDescription: string;
   featureDescription: string;
   featureRequired: boolean;
+  /** 있으면 기본 정보 설명 대신 보이는 이름 오류다. */
+  nameError?: string | null;
   onChange: (character: GeneralStoryCharacter) => void;
   nameInputRef?: (element: HTMLInputElement | null) => void;
 };
@@ -63,6 +66,7 @@ export function GeneralStoryCharacterFields({
   basicInfoDescription,
   featureDescription,
   featureRequired,
+  nameError,
   onChange,
   nameInputRef,
 }: GeneralStoryCharacterFieldsProps) {
@@ -74,6 +78,7 @@ export function GeneralStoryCharacterFields({
     nameMaxLength,
     featureMaxLength,
   } = GENERAL_STORY_CHARACTER_COPY;
+  const nameErrorId = `${idPrefix}-name-error`;
 
   return (
     <FieldGroup className="gap-6">
@@ -89,6 +94,8 @@ export function GeneralStoryCharacterFields({
               ref={nameInputRef}
               aria-label={`${labelPrefix} ${nameLabel}`}
               aria-required
+              aria-invalid={nameError ? true : undefined}
+              aria-describedby={nameError ? nameErrorId : undefined}
               maxLength={nameMaxLength}
               placeholder={namePlaceholder}
               value={character.name}
@@ -126,9 +133,13 @@ export function GeneralStoryCharacterFields({
             </SelectContent>
           </Select>
         </div>
-        <FieldDescription className="break-keep text-foreground-secondary">
-          {basicInfoDescription}
-        </FieldDescription>
+        {nameError ? (
+          <FieldError id={nameErrorId}>{nameError}</FieldError>
+        ) : (
+          <FieldDescription className="break-keep text-foreground-secondary">
+            {basicInfoDescription}
+          </FieldDescription>
+        )}
       </Field>
 
       <Field className="gap-2">

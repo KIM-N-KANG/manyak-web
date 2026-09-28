@@ -8,10 +8,12 @@ import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   GENERAL_STORY_CHARACTER_COPY,
+  GENERAL_STORY_DUPLICATE_NAME_ERROR,
   GENERAL_STORY_TABS,
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
+import { getDuplicateNameIds } from '@/features/studio/general/utils/duplicate-name';
 import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 
@@ -23,15 +25,21 @@ export type GeneralStorySupportingCharacter = GeneralStoryCharacter & {
   image: DraftImage | null;
 };
 
+/** 주인공을 주변 인물보다 앞에 두고 이름 중복을 판정할 때 쓰는 id다. 주변 인물 id는 UUID라 겹치지 않는다. */
+const PROTAGONIST_ID = 'protagonist';
+
 const SUPPORTING_LABEL =
   GENERAL_STORY_TABS.find(({ value }) => value === 'supporting')?.label ?? '';
 
 type GeneralStorySupportingCharacterListProps = {
+  /** 주변 인물 이름이 주인공 이름과 겹치는지 볼 때 쓴다. */
+  protagonistName: string;
   characters: GeneralStorySupportingCharacter[];
   onChange: Dispatch<SetStateAction<GeneralStorySupportingCharacter[]>>;
 };
 
 export function GeneralStorySupportingCharacterList({
+  protagonistName,
   characters,
   onChange,
 }: GeneralStorySupportingCharacterListProps) {
@@ -42,6 +50,10 @@ export function GeneralStorySupportingCharacterList({
     addSupporting,
   } = GENERAL_STORY_CHARACTER_COPY;
   const canRemove = characters.length > 1;
+  const duplicateNameIds = getDuplicateNameIds([
+    { id: PROTAGONIST_ID, name: protagonistName },
+    ...characters,
+  ]);
   const { registerInput, scrollInputIntoView } =
     useInputRefRegistry<HTMLInputElement>();
   const { request: requestDiscard, dialogProps } = useDiscardConfirm((id) => {
@@ -130,6 +142,11 @@ export function GeneralStorySupportingCharacterList({
                   GENERAL_STORY_CHARACTER_COPY.supportingFeatureDescription
                 }
                 featureRequired={false}
+                nameError={
+                  duplicateNameIds.has(character.id)
+                    ? GENERAL_STORY_DUPLICATE_NAME_ERROR
+                    : null
+                }
                 onChange={({ name, gender, feature }) =>
                   update(character.id, { name, gender, feature })
                 }

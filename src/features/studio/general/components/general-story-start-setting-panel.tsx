@@ -19,7 +19,11 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { ToggleChip } from '@/components/ui/toggle-chip';
-import { GENERAL_STORY_START_COPY } from '@/features/studio/general/constants';
+import {
+  GENERAL_STORY_DUPLICATE_NAME_ERROR,
+  GENERAL_STORY_START_COPY,
+} from '@/features/studio/general/constants';
+import { getDuplicateNameIds } from '@/features/studio/general/utils/duplicate-name';
 import {
   createEndingDraft,
   createStartSettingDraft,
@@ -228,6 +232,8 @@ function GeneralStoryStartSettingEditor({
       ),
     );
 
+  const duplicateEndingIds = getDuplicateNameIds(selected.endings);
+
   const addEnding = () => {
     const next = createEndingDraft();
 
@@ -345,6 +351,11 @@ function GeneralStoryStartSettingEditor({
                   maxLength={ending.name.maxLength}
                   placeholder={ending.name.placeholder}
                   description={ending.name.description}
+                  error={
+                    duplicateEndingIds.has(endingItem.id)
+                      ? GENERAL_STORY_DUPLICATE_NAME_ERROR
+                      : null
+                  }
                   value={endingItem.name}
                   onChange={(value) =>
                     updateEnding(endingItem.id, { name: value })

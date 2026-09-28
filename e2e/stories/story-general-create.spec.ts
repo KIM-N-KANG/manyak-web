@@ -315,6 +315,52 @@ test.describe('일반 제작 주요 사건', () => {
   });
 });
 
+test.describe('일반 제작 이름 중복', () => {
+  test('주인공과 겹친 주변 인물, 같은 시작 상황에서 겹친 엔딩은 뒤 항목 이름 칸에 오류를 보인다 (STORY-GENERAL-13)', async ({
+    page,
+  }) => {
+    const tabLabel = (value: string) =>
+      GENERAL_STORY_TABS.find((tab) => tab.value === value)?.label;
+    const duplicateError = page.getByText(GENERAL_STORY_DUPLICATE_NAME_ERROR);
+    const { ending } = GENERAL_STORY_START_COPY;
+
+    await openGeneralCreate(page);
+    await page
+      .getByRole('tab', { name: tabLabel('protagonist'), exact: true })
+      .click();
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('윤해솔');
+    await page
+      .getByRole('tab', { name: tabLabel('supporting'), exact: true })
+      .click();
+
+    const supportingName = page.getByRole('textbox', {
+      name: `${tabLabel('supporting')} 1 이름`,
+    });
+
+    await supportingName.fill('윤해솔');
+    await expect(supportingName).toHaveAttribute('aria-invalid', 'true');
+    await expect(duplicateError).toHaveCount(1);
+    await supportingName.fill('도하람');
+    await expect(duplicateError).toHaveCount(0);
+
+    await page
+      .getByRole('tab', { name: tabLabel('start'), exact: true })
+      .click();
+
+    const addEnding = page.getByRole('button', { name: ending.add });
+
+    await addEnding.click();
+    await addEnding.click();
+
+    const endingNames = page.getByRole('textbox', { name: ending.name.label });
+
+    await endingNames.nth(0).fill('첫차');
+    await endingNames.nth(1).fill('첫차');
+    await expect(endingNames.nth(0)).not.toHaveAttribute('aria-invalid');
+    await expect(endingNames.nth(1)).toHaveAttribute('aria-invalid', 'true');
+  });
+});
+
 test.describe('일반 제작 삭제 확인', () => {
   test('입력한 주변 인물·시작 상황은 확인 후 지우고, 빈 항목은 바로 지운다 (STORY-GENERAL-11)', async ({
     page,
