@@ -60,6 +60,7 @@ import {
 import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
+import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { cn } from '@/lib/utils';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
@@ -297,6 +298,8 @@ function GeneralStoryCreateForm({
       });
     }
   };
+
+  useSaveWhenBackgrounded(saveDraft);
 
   const handleClose = () => {
     setExitWarning(getDraftExitWarning({ hasInput, hasSavedDraft, isSaved }));

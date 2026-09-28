@@ -756,6 +756,40 @@ test.describe('일반 제작 임시 저장', () => {
     ).toBeVisible();
   });
 
+  test('화면이 가려지면 저장하지 않은 입력을 임시 저장한다 (STORY-GENERAL-20)', async ({
+    page,
+  }) => {
+    await openGeneralCreate(page);
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
+      .fill('노선도에 없는 역');
+    // 탭 전환·앱 전환처럼 문서는 남은 채 화면만 가려진 상황을 흉내 낸다.
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await waitForSavedDraft(page, '노선도에 없는 역');
+
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+
+    const exitDialog = page.getByRole('alertdialog');
+
+    await expect(
+      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', {
+        name: GENERAL_STORY_EXIT_WARNING_COPY.saved.confirm,
+      })
+      .click();
+    await expect(draftCard(page).getByText('노선도에 없는 역')).toBeVisible();
+  });
+
   test('저장하지 않은 입력이 있으면 새로고침·탭 닫기 때 브라우저 확인창을 띄운다 (STORY-GENERAL-19)', async ({
     page,
   }) => {
