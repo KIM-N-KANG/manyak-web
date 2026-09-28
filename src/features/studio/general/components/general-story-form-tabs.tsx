@@ -86,6 +86,8 @@ type GeneralStoryFormTabsProps = {
   onRegisterAttempt: () => void;
   /** 오류 없이 등록하기를 눌렀을 때 호출한다. */
   onRegister?: () => void;
+  /** 다른 탭으로 옮길 때마다 호출한다(탭 누르기·이전·다음·등록 오류 이동). */
+  onTabChange?: () => void;
 };
 
 export function GeneralStoryFormTabs({
@@ -99,6 +101,7 @@ export function GeneralStoryFormTabs({
   registerErrors,
   onRegisterAttempt,
   onRegister,
+  onTabChange,
 }: GeneralStoryFormTabsProps) {
   const shownRegisterErrors = use(GeneralStoryRegisterErrorsContext);
   const { setCollapsed } = useCollapsedListItems();
@@ -110,6 +113,8 @@ export function GeneralStoryFormTabs({
   const nextTab = GENERAL_STORY_TABS[tabIndex + 1]?.value;
 
   const handleTabChange = (value: GeneralStoryTab) => {
+    if (value !== tab) onTabChange?.();
+
     setTab(value);
     scrollAreaRef.current?.scrollTo({ top: 0 });
   };

@@ -3,12 +3,14 @@ import type { Page } from '@playwright/test';
 import { COLLAPSIBLE_LIST_ITEM_COPY } from '@/components/common/collapsible-list-item';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_DUPLICATE_NAME_ERROR,
   GENERAL_STORY_EVENT_COPY,
+  GENERAL_STORY_EXIT_WARNING_COPY,
   GENERAL_STORY_REGISTER_ERROR_COPY,
   GENERAL_STORY_START_COPY,
   GENERAL_STORY_TABS,
@@ -19,9 +21,11 @@ import {
   getMinLengthError,
   getRequiredError,
 } from '@/features/studio/general/utils/general-story-text-error';
+import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 import { DISCARD_INPUT_CONFIRM_COPY } from '@/hooks/use-discard-confirm';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { readCreationStorage } from '../fixtures/storage';
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
 const UPLOAD_URL = 'https://upload.e2e.test/cover';
@@ -581,5 +585,191 @@ test.describe('일반 제작 삭제 확인', () => {
     await page.getByRole('button', { name: '역무실 삭제' }).click();
     await dialog.getByRole('button', { name: confirmLabel }).click();
     await expect(page.locator('[data-slot=toggle-chip]')).toHaveCount(1);
+  });
+});
+
+test.describe('일반 제작 임시 저장', () => {
+  const saveButton = (page: Page) =>
+    page.getByRole('button', {
+      name: GENERAL_STORY_CREATE_COPY.draftSave,
+      exact: true,
+    });
+  const savedToast = (page: Page) =>
+    page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVED);
+  /** 버튼 없이 저장되는 경우(탭 이동·화면 숨김)는 IndexedDB에 들어갈 때까지 기다린다. */
+  const waitForSavedDraft = (page: Page, text: string) =>
+    expect
+      .poll(() =>
+        readCreationStorage(page, PENDING_CREATION_REQUEST_STORAGE_KEY),
+      )
+      .toContain(text);
+  const draftCard = (page: Page) =>
+    page.getByRole('article', { name: CREATION_PROGRESS_CARD_COPY.draftTitle });
+
+  test('표지·제목·한 줄 소개를 넣고 탭을 옮기면 임시 저장되고, 제작 탭 카드에 보이며 이어서 만든다 (STORY-GENERAL-16)', async ({
+    page,
+  }) => {
+    await mockCoverUpload(page);
+    await openGeneralCreate(page);
+    await page
+      .getByLabel(GENERAL_STORY_COVER_COPY.label, { exact: true })
+      .setInputFiles(COVER_FILE);
+    await expect(
+      page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
+    ).toBeVisible();
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
+      .fill('노선도에 없는 역');
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.oneLineIntro.label)
+      .fill('막차에서 내린 곳은 존재하지 않는 역이었다');
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
+    await waitForSavedDraft(page, '노선도에 없는 역');
+
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+
+    const exitDialog = page.getByRole('alertdialog');
+
+    await expect(
+      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', {
+        name: GENERAL_STORY_EXIT_WARNING_COPY.saved.confirm,
+      })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    const card = draftCard(page);
+
+    await expect(card.getByText('노선도에 없는 역')).toBeVisible();
+    await expect(
+      card.getByText('막차에서 내린 곳은 존재하지 않는 역이었다'),
+    ).toBeVisible();
+    await expect(card.locator('img')).toHaveAttribute('src', /^blob:/);
+    await expect(card.locator('time')).toBeVisible();
+
+    await card
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
+    );
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toHaveValue('노선도에 없는 역');
+    await expect(
+      page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
+    ).toBeVisible();
+    // 이어서 연 저장본은 바뀐 것이 없으니 닫기는 저장본 안내다.
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+    await expect(
+      page
+        .getByRole('alertdialog')
+        .getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+    ).toBeVisible();
+  });
+
+  test('제목·한 줄 소개·표지 없이 임시 저장하면 카드는 기본 제목·설명·이미지를 보이고, 저장 뒤 뒤로가기는 저장본 안내를 띄운다 (STORY-GENERAL-17)', async ({
+    page,
+  }) => {
+    await openGeneralCreate(page);
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.world.label)
+      .fill('유실역은 막차가 끊긴 뒤에만 불이 켜진다');
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
+    // 연타해도 토스트는 하나만 남는다(이전 토스트를 대신한다).
+    await saveButton(page).click();
+    await saveButton(page).click();
+    await expect(savedToast(page)).toHaveCount(1);
+
+    await page.goBack();
+
+    const exitDialog = page.getByRole('alertdialog');
+
+    await expect(
+      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', {
+        name: GENERAL_STORY_EXIT_WARNING_COPY.saved.confirm,
+      })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    const card = draftCard(page);
+
+    await expect(
+      card.getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
+    ).toBeVisible();
+    await expect(
+      card.getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.general),
+    ).toBeVisible();
+    await expect(card.locator('img')).toHaveCount(0);
+  });
+
+  test('입력이 없으면 저장하지 않고, 저장하지 않은 입력은 뒤로가기·닫기에서 경고한다 (STORY-GENERAL-18)', async ({
+    page,
+  }) => {
+    await openGeneralCreate(page);
+    await expect(saveButton(page)).toBeDisabled();
+    // 입력 없이 탭을 옮겨도 저장하지 않는다.
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
+    await expect(saveButton(page)).toBeDisabled();
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[0].label }).click();
+
+    const title = page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label);
+
+    await title.fill('유실역');
+    await page.goBack();
+
+    const exitDialog = page.getByRole('alertdialog');
+
+    await expect(
+      exitDialog.getByText(
+        GENERAL_STORY_EXIT_WARNING_COPY.unsavedNew.description,
+      ),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', {
+        name: GENERAL_STORY_EXIT_WARNING_COPY.unsavedNew.cancel,
+      })
+      .click();
+    await expect(exitDialog).toBeHidden();
+    await expect(title).toHaveValue('유실역');
+
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
+    await title.fill('유실역 2');
+    await expect(saveButton(page)).toBeEnabled();
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+    await expect(
+      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.unsaved.description),
+    ).toBeVisible();
+  });
+
+  test('저장하지 않은 입력이 있으면 새로고침·탭 닫기 때 브라우저 확인창을 띄운다 (STORY-GENERAL-19)', async ({
+    page,
+  }) => {
+    await openGeneralCreate(page);
+
+    const title = page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label);
+
+    await title.click();
+    await title.fill('유실역');
+
+    const dialog = page.waitForEvent('dialog');
+
+    void page.close({ runBeforeUnload: true });
+    expect((await dialog).type()).toBe('beforeunload');
+    await (await dialog).dismiss();
   });
 });

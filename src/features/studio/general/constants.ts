@@ -3,20 +3,29 @@ export const GENERAL_STORY_CREATE_COPY = {
   title: '스토리 일반 제작',
   close: '스토리 만들기 닫기',
   draftSave: '임시 저장',
-  draftSaved: '임시 저장됨',
   previous: '이전',
   next: '다음',
   register: '등록하기',
 } as const;
 
 /**
- * 닫기 확인 다이얼로그의 종류. Android 간편 제작의 이탈 경고와 같은 기준으로 고른다.
- * `unsaved`는 임시 저장 뒤 편집이 남은 경우, `saved`는 임시 저장본만 남은 경우,
- * `nothing`은 저장한 것도 저장할 것도 없는 경우다.
+ * 닫기·뒤로가기 확인 다이얼로그의 종류. Android 간편 제작의 이탈 경고와 같은 기준으로 고른다.
+ * `unsavedNew`는 임시 저장한 적 없이 입력만 있는 경우, `unsaved`는 임시 저장 뒤 편집이 남은 경우,
+ * `saved`는 임시 저장본만 남은 경우, `nothing`은 저장한 것도 저장할 것도 없는 경우다.
  */
-export type GeneralStoryExitWarning = 'unsaved' | 'saved' | 'nothing';
+export type GeneralStoryExitWarning =
+  | 'unsavedNew'
+  | 'unsaved'
+  | 'saved'
+  | 'nothing';
 
 export const GENERAL_STORY_EXIT_WARNING_COPY = {
+  unsavedNew: {
+    title: '임시 저장하지 않은 내용이 있어요',
+    description: '지금 나가면 입력한 내용이 사라져요',
+    cancel: '닫기',
+    confirm: '나가기',
+  },
   unsaved: {
     title: '임시 저장하지 않은 내용이 있어요',
     description: '지금 나가면 임시 저장한 뒤에 만든 내용은 사라져요',
