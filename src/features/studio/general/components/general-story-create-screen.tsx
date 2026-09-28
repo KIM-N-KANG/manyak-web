@@ -87,6 +87,9 @@ const DRAFT_SAVE_CLICK_THROTTLE_MS = 1000;
 /** 임시 저장 결과 토스트의 id다. 같은 id로 다시 띄우면 이전 토스트를 대신한다. */
 const DRAFT_SAVE_TOAST_ID = 'general-story-draft-save';
 
+/** 저장 완료 토스트를 띄워 두는 시간이다. 위쪽 토스트가 헤더의 저장·닫기 버튼을 오래 가리지 않게 짧게 둔다. */
+const DRAFT_SAVED_TOAST_DURATION_MS = 1500;
+
 /**
  * 임시 저장본의 이미지로 폼 이미지를 만든다. 미리보기 blob URL은 저장한 파일로 다시 만든다.
  *
@@ -295,6 +298,7 @@ function GeneralStoryCreateForm({
     if (isSaved || (await writeDraft())) {
       toast.success(TOAST_MESSAGE.STORY_DRAFT_SAVED, {
         id: DRAFT_SAVE_TOAST_ID,
+        duration: DRAFT_SAVED_TOAST_DURATION_MS,
       });
     }
   };
