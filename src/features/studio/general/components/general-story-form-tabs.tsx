@@ -129,7 +129,10 @@ export function GeneralStoryFormTabs({
             value={value}
             className={cn(
               'flex min-h-full flex-col p-4',
-              (value === 'supporting' || value === 'start') && 'px-0 pt-0',
+              (value === 'supporting' ||
+                value === 'start' ||
+                value === 'event') &&
+                'px-0 pt-0',
             )}>
             {panels[value] ??
               (fields.length === 0 ? (

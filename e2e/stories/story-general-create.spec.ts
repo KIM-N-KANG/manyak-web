@@ -6,6 +6,8 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
+  GENERAL_STORY_DUPLICATE_NAME_ERROR,
+  GENERAL_STORY_EVENT_COPY,
   GENERAL_STORY_START_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
@@ -270,6 +272,46 @@ test.describe('일반 제작 시작 상황 설정', () => {
 
     await minTurns.fill('99턴');
     await expect(minTurns).toHaveValue(String(ending.minTurns.max));
+  });
+});
+
+test.describe('일반 제작 주요 사건', () => {
+  test('0개로 시작해 10개까지 추가하고, 앞 사건과 이름이 겹치면 뒤 사건에 오류를 보이며, 빈 사건은 바로 지운다 (STORY-GENERAL-12)', async ({
+    page,
+  }) => {
+    const { add, maxCount, name, defaultLabel } = GENERAL_STORY_EVENT_COPY;
+    const eventTab = GENERAL_STORY_TABS.find(({ value }) => value === 'event');
+
+    await openGeneralCreate(page);
+    await page.getByRole('tab', { name: eventTab?.label, exact: true }).click();
+
+    const nameInputs = page.getByRole('textbox', { name: name.label });
+    const addButton = page.getByRole('button', { name: add });
+
+    await expect(nameInputs).toHaveCount(0);
+
+    for (let count = 1; count <= maxCount; count += 1) {
+      await addButton.click();
+      await expect(nameInputs).toHaveCount(count);
+    }
+
+    await expect(addButton).toBeDisabled();
+
+    await nameInputs.nth(0).fill('도하람의 장부');
+    await nameInputs.nth(1).fill(' 도하람의 장부 ');
+    await expect(nameInputs.nth(0)).not.toHaveAttribute('aria-invalid');
+    await expect(nameInputs.nth(1)).toHaveAttribute('aria-invalid', 'true');
+    await expect(
+      page.getByText(GENERAL_STORY_DUPLICATE_NAME_ERROR),
+    ).toHaveCount(1);
+
+    await page
+      .getByRole('button', {
+        name: `${defaultLabel(maxCount)} ${COLLAPSIBLE_LIST_ITEM_COPY.remove}`,
+      })
+      .click();
+    await expect(nameInputs).toHaveCount(maxCount - 1);
+    await expect(addButton).toBeEnabled();
   });
 });
 

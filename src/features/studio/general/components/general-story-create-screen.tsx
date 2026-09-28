@@ -30,6 +30,7 @@ import {
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
+import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
 import {
   createStartSettingDraft,
   type GeneralStoryStartSettingDraft,
@@ -42,6 +43,7 @@ import {
   GeneralStoryFormTabs,
   type GeneralStoryTextValues,
 } from './general-story-form-tabs';
+import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
 import { GeneralStoryStartSettingPanel } from './general-story-start-setting-panel';
 import {
   type GeneralStorySupportingCharacter,
@@ -117,6 +119,9 @@ export function GeneralStoryCreateScreen() {
   const [startSettings, setStartSettings] = useState<
     GeneralStoryStartSettingDraft[]
   >(() => [createStartSettingDraft()]);
+  const [mainEvents, setMainEvents] = useState<GeneralStoryMainEventDraft[]>(
+    [],
+  );
 
   const hasUnsavedChanges = false;
   const hasSavedDraft = false;
@@ -192,6 +197,12 @@ export function GeneralStoryCreateScreen() {
               <GeneralStoryStartSettingPanel
                 startSettings={startSettings}
                 onChange={setStartSettings}
+              />
+            ),
+            event: (
+              <GeneralStoryMainEventPanel
+                mainEvents={mainEvents}
+                onChange={setMainEvents}
               />
             ),
           }}

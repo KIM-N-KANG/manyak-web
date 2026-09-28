@@ -299,3 +299,42 @@ export const GENERAL_STORY_START_COPY = {
     },
   },
 } as const;
+
+/** 앞 항목과 이름이 겹친 주요 사건의 이름 칸에 설명 대신 보이는 오류다. */
+export const GENERAL_STORY_DUPLICATE_NAME_ERROR = '이미 사용한 이름이에요';
+
+/** 주요 사건 탭의 문구·예시와 제한이다. 예시는 유실역 설정을 잇는다. */
+export const GENERAL_STORY_EVENT_COPY = {
+  label: '주요 사건',
+  intro:
+    '채팅이 엔딩을 향하도록 이야기의 방향을 잡아 주는 사건이에요. 모든 시작 상황에 함께 쓰이며, 주인공(나)이 겪을 큰 위기나 전환점을 적어주세요',
+  maxCount: 10,
+  add: '사건 추가',
+  defaultLabel: (order: number) => `주요 사건 ${order}`,
+  name: {
+    label: '사건 이름',
+    maxLength: 100,
+    placeholder: '예: 도하람의 장부',
+    description:
+      '채팅과 스토리 상세에는 보이지 않고, AI가 사건을 구분할 때 쓰는 이름이에요',
+  },
+  description: {
+    label: '사건 설명',
+    maxLength: 1000,
+    placeholder: [
+      '예: 보관소 장부에는 맡겨진 물건과 기억의 주인이 모두 적혀 있다.',
+      '도하람은 대가 없이는 장부를 보여 주지 않는다.',
+      '주인공이 무언가를 맡기면 동생의 기억이 있는 자리를 알게 되고, 몰래 훔쳐보면 도하람의 신뢰를 잃는다.',
+    ].join('\n'),
+    description:
+      'AI가 이 사건을 장면으로 풀어낼 때 참고하는 내용이에요. 무슨 일이 벌어지고 어떤 방향으로 풀릴 수 있는지 적어주세요',
+  },
+  keySentence: {
+    label: '키 문장',
+    maxLength: 200,
+    placeholder:
+      '예: 주인공이 도하람에게 장부를 보여 달라고 하거나 장부를 몰래 살펴보려 한다',
+    description:
+      '주인공(나)의 행동이 이 사건과 관련되는지 AI가 판단하는 기준 문장이에요. 할 법한 행동을 한 문장으로 적어주세요',
+  },
+} as const;
