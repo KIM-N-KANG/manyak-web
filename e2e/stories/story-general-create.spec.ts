@@ -249,14 +249,14 @@ test.describe('일반 제작 시작 상황 설정', () => {
       await expect(chips).toHaveCount(count);
     }
 
-    await expect(addChip).toHaveCount(0);
+    await expect(addChip).toBeDisabled();
     await expect(chips.last()).toHaveAttribute('aria-pressed', 'true');
 
     await page
       .getByRole('button', { name: `${defaultLabel(maxCount)} ${remove}` })
       .click();
     await expect(chips).toHaveCount(maxCount - 1);
-    await expect(addChip).toBeVisible();
+    await expect(addChip).toBeEnabled();
 
     const addEnding = page.getByRole('button', { name: ending.add });
 

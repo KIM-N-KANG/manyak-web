@@ -156,16 +156,15 @@ export function GeneralStoryStartSettingPanel({
             </div>
           );
         })}
-        {startSettings.length < maxCount && (
-          <Button
-            type="button"
-            variant="secondary"
-            className={CHIP_CLASS_NAME}
-            onClick={addStartSetting}>
-            <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-            {add}
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="secondary"
+          className={CHIP_CLASS_NAME}
+          disabled={startSettings.length >= maxCount}
+          onClick={addStartSetting}>
+          <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
+          {add}
+        </Button>
       </div>
       <GeneralStoryStartSettingEditor
         key={selected.id}
