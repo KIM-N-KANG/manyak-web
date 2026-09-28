@@ -83,6 +83,8 @@ export function Switch({
           <m.div
             ref={thumbRef}
             layout
+            // React Compiler가 손잡이 다시 그리기를 건너뛰면 layout 애니메이션이 이전 위치를 못 잡으므로 값이 바뀔 때마다 다시 그린다.
+            layoutDependency={checked}
             animate={{ scale: squish ? 0.9 : 1 }}
             className="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-md">
             {/* Stretch toward the destination while active. */}
