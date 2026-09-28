@@ -50,14 +50,16 @@ export const GENERAL_STORY_TEXT_FIELDS = {
     maxLength: 100,
     multiline: false,
     placeholder: '예: 노선도에 없는 역',
-    description: '스토리의 특징이 드러나는 제목을 지어주세요',
+    description:
+      '스토리 목록과 상세에 보이는 제목이에요. 스토리의 특징이 드러나게 지어주세요',
   },
   oneLineIntro: {
     label: '한 줄 소개',
     maxLength: 255,
     multiline: true,
     placeholder: '예: 막차에서 내린 곳은 존재하지 않는 역이었다',
-    description: '스토리의 핵심을 한 문장으로 적어주세요',
+    description:
+      '스토리 상세에 보이는 소개 글이에요. 스토리의 핵심을 한 문장으로 적어주세요',
   },
   world: {
     label: '세계관',
@@ -286,7 +288,7 @@ export const GENERAL_STORY_START_COPY = {
       placeholder:
         '예: 보관소에서 동생의 기억을 되찾고, 그 대가로 무언가를 맡긴 뒤 첫차에 오르면 이 엔딩에 도달한다',
       description:
-        '어떤 상황이 되면 이 엔딩에 도달하는지 적어주세요. AI가 채팅 흐름을 보고 판단해요',
+        'AI가 채팅 흐름을 보고 이 엔딩에 도달했는지 판단하는 기준이에요. 어떤 상황이 되면 도달하는지 적어주세요',
     },
     epilogue: {
       label: '에필로그',
