@@ -1,20 +1,7 @@
 import { type ReactNode, useRef, useState } from 'react';
 
 import { EmptyListNotice } from '@/components/common/empty-list-notice';
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-  InputGroupTextarea,
-} from '@/components/ui/input-group';
+import { FieldGroup } from '@/components/ui/field';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   GENERAL_STORY_COVER_COPY,
@@ -29,6 +16,7 @@ import { getGeneralStoryTextError } from '@/features/studio/general/utils/genera
 import { cn } from '@/lib/utils';
 
 import { GeneralStoryImageField } from './general-story-image-field';
+import { GeneralStoryInputField } from './general-story-input-field';
 import { GeneralStoryLengthRatioField } from './general-story-length-ratio-field';
 
 export type GeneralStoryTextValues = Record<GeneralStoryTextField, string>;
@@ -55,68 +43,23 @@ function GeneralStoryTextInput({
   onChange,
 }: GeneralStoryTextInputProps) {
   const config = GENERAL_STORY_TEXT_FIELDS[field];
-  const maxLength = 'maxLength' in config ? config.maxLength : undefined;
-  const placeholder = 'placeholder' in config ? config.placeholder : undefined;
-  const description = 'description' in config ? config.description : undefined;
-  const id = `general-story-${field}`;
-  const descriptionId = `${id}-description`;
-  const errorId = `${id}-error`;
   const [isTouched, setIsTouched] = useState(false);
-  const error = isTouched ? getGeneralStoryTextError(field, value) : null;
-  const describedBy = error ? errorId : description ? descriptionId : undefined;
-  const controlProps = {
-    id,
-    value,
-    maxLength,
-    placeholder,
-    'aria-describedby': describedBy,
-    'aria-invalid': error ? true : undefined,
-    onBlur: () => setIsTouched(true),
-    'aria-required': true,
-  };
 
   return (
-    <Field className="gap-2">
-      <FieldLabel htmlFor={id} className="gap-0.5">
-        {config.label}
-        <span className="text-destructive" aria-hidden="true">
-          *
-        </span>
-      </FieldLabel>
-      <InputGroup>
-        {config.multiline ? (
-          <InputGroupTextarea
-            {...controlProps}
-            className={TEXTAREA_HEIGHT[field] ?? 'min-h-24'}
-            onChange={(event) => onChange(event.target.value)}
-          />
-        ) : (
-          <InputGroupInput
-            {...controlProps}
-            onChange={(event) => onChange(event.target.value)}
-          />
-        )}
-        {maxLength !== undefined && (
-          <InputGroupAddon
-            align={config.multiline ? 'block-end' : 'inline-end'}>
-            <InputGroupText>
-              {value.length} / {maxLength}
-            </InputGroupText>
-          </InputGroupAddon>
-        )}
-      </InputGroup>
-      {error ? (
-        <FieldError id={errorId}>{error}</FieldError>
-      ) : (
-        description && (
-          <FieldDescription
-            id={descriptionId}
-            className="break-keep text-foreground-secondary">
-            {description}
-          </FieldDescription>
-        )
-      )}
-    </Field>
+    <GeneralStoryInputField
+      id={`general-story-${field}`}
+      label={config.label}
+      required
+      multiline={config.multiline}
+      heightClassName={TEXTAREA_HEIGHT[field]}
+      maxLength={'maxLength' in config ? config.maxLength : undefined}
+      placeholder={'placeholder' in config ? config.placeholder : undefined}
+      description={'description' in config ? config.description : undefined}
+      error={isTouched ? getGeneralStoryTextError(field, value) : null}
+      value={value}
+      onChange={onChange}
+      onBlur={() => setIsTouched(true)}
+    />
   );
 }
 
