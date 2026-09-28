@@ -1,4 +1,5 @@
 export const TOAST_MESSAGE = {
+  STORY_DRAFT_SAVED: '임시 저장했어요',
   STORY_DRAFT_SAVE_FAILED: '작성 내용을 저장하지 못했어요. 다시 시도해주세요',
   STORY_DRAFT_LOAD_FAILED: '작성 내용을 불러오지 못했어요',
   STORY_COMPLETED: '스토리가 완성되었어요',

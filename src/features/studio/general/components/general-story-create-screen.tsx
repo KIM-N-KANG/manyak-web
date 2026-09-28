@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
-import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
+import { RetryListStatus } from '@/components/common/retry-list-status';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,8 +21,20 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
+import {
+  type GeneralDraftRecord,
+  savePendingCreationRequest,
+} from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  type GeneralStoryDraftImage,
+  type GeneralStoryDraftSnapshot,
+  hasGeneralStoryDraftInput,
+} from '@/features/studio/_shared/utils/general-story-draft';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_CREATE_COPY,
@@ -30,7 +44,9 @@ import {
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
+import { useGeneralStoryDraftEntry } from '@/features/studio/general/hooks/use-general-story-draft-entry';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
+import { getDraftExitWarning } from '@/features/studio/general/utils/draft-exit-warning';
 import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
 import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
 import {
@@ -42,6 +58,9 @@ import {
   type GeneralStoryStartSettingDraft,
 } from '@/features/studio/general/utils/start-setting-draft';
 import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
+import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
+import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { cn } from '@/lib/utils';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
@@ -62,79 +81,168 @@ const EMPTY_TEXT_VALUES = Object.fromEntries(
   Object.keys(GENERAL_STORY_TEXT_FIELDS).map((field) => [field, '']),
 ) as GeneralStoryTextValues;
 
-type DraftSaveStatus = 'idle' | 'saving' | 'saved';
+/** 임시 저장 버튼 연타를 막는 간격이다. 첫 누름은 바로 저장하고 이 간격 안의 누름은 버린다. */
+const DRAFT_SAVE_CLICK_THROTTLE_MS = 1000;
+
+/** 임시 저장 결과 토스트의 id다. 같은 id로 다시 띄우면 이전 토스트를 대신한다. */
+const DRAFT_SAVE_TOAST_ID = 'general-story-draft-save';
+
+/** 저장 완료 토스트를 띄워 두는 시간이다. 위쪽 토스트가 헤더의 저장·닫기 버튼을 오래 가리지 않게 짧게 둔다. */
+const DRAFT_SAVED_TOAST_DURATION_MS = 1500;
+
+/**
+ * 임시 저장본의 이미지로 폼 이미지를 만든다. 미리보기 blob URL은 저장한 파일로 다시 만든다.
+ *
+ * @param image 임시 저장한 이미지
+ * @returns 폼에서 쓰는 이미지. 없으면 null
+ */
+const toDraftImage = (
+  image: GeneralStoryDraftImage | null,
+): DraftImage | null =>
+  image && { ...image, previewUrl: URL.createObjectURL(image.blob) };
+
+/**
+ * 폼 이미지를 임시 저장할 형태로 바꾼다. 페이지마다 달라지는 blob URL은 빼고 저장한다.
+ *
+ * @param image 폼에서 쓰는 이미지
+ * @returns 임시 저장할 이미지. 없으면 null
+ */
+const toStoredImage = (
+  image: DraftImage | null,
+): GeneralStoryDraftImage | null =>
+  image && { objectKey: image.objectKey, blob: image.blob };
 
 type DraftSaveButtonProps = {
-  status: DraftSaveStatus;
-  canSave: boolean;
+  isSaving: boolean;
+  disabled: boolean;
   onClick: () => void;
 };
 
-function DraftSaveButton({ status, canSave, onClick }: DraftSaveButtonProps) {
-  const isSaved = status === 'saved';
-
+function DraftSaveButton({
+  isSaving,
+  disabled,
+  onClick,
+}: DraftSaveButtonProps) {
   return (
     <Button
       type="button"
       variant="outline"
-      disabled={!canSave || status !== 'idle'}
+      disabled={disabled || isSaving}
       onClick={onClick}
-      className={cn(
-        'relative',
-        status !== 'idle' && 'disabled:opacity-100',
-        isSaved && 'border-transparent bg-primary/10 text-primary',
-      )}>
-      <span
-        className={cn(
-          'flex items-center gap-1',
-          status === 'saving' && 'invisible',
-        )}>
-        {isSaved && <HugeiconsIcon icon={Tick02Icon} aria-hidden="true" />}
-        {isSaved
-          ? GENERAL_STORY_CREATE_COPY.draftSaved
-          : GENERAL_STORY_CREATE_COPY.draftSave}
+      className={cn('relative', isSaving && 'disabled:opacity-100')}>
+      <span className={cn(isSaving && 'invisible')}>
+        {GENERAL_STORY_CREATE_COPY.draftSave}
       </span>
-      {status === 'saving' && <Spinner className="absolute" />}
+      {isSaving && <Spinner className="absolute" />}
     </Button>
   );
 }
 
 export function GeneralStoryCreateScreen() {
+  const { entry, isError, retry } = useGeneralStoryDraftEntry();
+  const showSkeleton = useDelayedLoading(!entry && !isError);
+
+  if (entry) {
+    return <GeneralStoryCreateForm initialRecord={entry.record} />;
+  }
+
+  if (isError) {
+    return (
+      <RetryListStatus
+        title={TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED}
+        onRetry={retry}
+      />
+    );
+  }
+
+  return showSkeleton ? <Skeleton className="m-4 h-48" /> : null;
+}
+
+type GeneralStoryCreateFormProps = {
+  /** 이어서 만들 임시 저장본. 없으면 빈 폼으로 새로 만든다. */
+  initialRecord: GeneralDraftRecord | null;
+};
+
+function GeneralStoryCreateForm({
+  initialRecord,
+}: GeneralStoryCreateFormProps) {
   const router = useRouter();
+  const epoch = useCreationEpoch();
+  const initial = initialRecord?.snapshot;
+  const [requestId] = useState(
+    () => initialRecord?.requestId ?? crypto.randomUUID(),
+  );
   const [exitWarning, setExitWarning] =
     useState<GeneralStoryExitWarning>('nothing');
   const [isExitOpen, setIsExitOpen] = useState(false);
-  const [textValues, setTextValues] = useState(EMPTY_TEXT_VALUES);
-  const [cover, setCover] = useState<DraftImage | null>(null);
-  const [descriptionRatio, setDescriptionRatio] =
-    useState(LENGTH_RATIO_DEFAULT);
-  const [protagonist, setProtagonist] = useState<GeneralStoryCharacter>({
-    name: '',
-    gender: null,
-    feature: '',
-  });
+  const [textValues, setTextValues] = useState(
+    initial?.texts ?? EMPTY_TEXT_VALUES,
+  );
+  const [cover, setCover] = useState(() =>
+    toDraftImage(initial?.cover ?? null),
+  );
+  const [descriptionRatio, setDescriptionRatio] = useState(
+    initial?.descriptionRatio ?? LENGTH_RATIO_DEFAULT,
+  );
+  const [protagonist, setProtagonist] = useState<GeneralStoryCharacter>(
+    initial?.protagonist ?? { name: '', gender: null, feature: '' },
+  );
   const [supporting, setSupporting] = useState<
     GeneralStorySupportingCharacter[]
-  >(() => [
-    {
-      id: crypto.randomUUID(),
-      name: '',
-      gender: null,
-      feature: '',
-      image: null,
-    },
-  ]);
+  >(() =>
+    initial
+      ? initial.supporting.map((character) => ({
+          ...character,
+          image: toDraftImage(character.image),
+        }))
+      : [
+          {
+            id: crypto.randomUUID(),
+            name: '',
+            gender: null,
+            feature: '',
+            image: null,
+          },
+        ],
+  );
   const [startSettings, setStartSettings] = useState<
     GeneralStoryStartSettingDraft[]
-  >(() => [createStartSettingDraft()]);
+  >(() => initial?.startSettings ?? [createStartSettingDraft()]);
   const [mainEvents, setMainEvents] = useState<GeneralStoryMainEventDraft[]>(
-    [],
+    initial?.mainEvents ?? [],
   );
-  const [genres, setGenres] = useState(EMPTY_GENRE_SELECTION);
-  const [storyDescription, setStoryDescription] = useState('');
+  const [genres, setGenres] = useState(
+    initial?.genres ?? EMPTY_GENRE_SELECTION,
+  );
+  const [storyDescription, setStoryDescription] = useState(
+    initial?.description ?? '',
+  );
   const [storyVisibility, setStoryVisibility] =
-    useState<CreateGeneralStoryRequestVisibility>('PRIVATE');
+    useState<CreateGeneralStoryRequestVisibility>(
+      initial?.visibility ?? 'PRIVATE',
+    );
   const [hasTriedRegister, setHasTriedRegister] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const lastSaveClickAtRef = useRef(0);
+  const snapshot: GeneralStoryDraftSnapshot = {
+    texts: textValues,
+    cover: toStoredImage(cover),
+    descriptionRatio,
+    protagonist,
+    supporting: supporting.map((character) => ({
+      ...character,
+      image: toStoredImage(character.image),
+    })),
+    startSettings,
+    mainEvents,
+    genres,
+    description: storyDescription,
+    visibility: storyVisibility,
+  };
+  const snapshotKey = JSON.stringify(snapshot);
+  const [savedKey, setSavedKey] = useState(() =>
+    initialRecord ? snapshotKey : null,
+  );
   const registerErrors = getRegisterErrors({
     texts: textValues,
     protagonist,
@@ -145,15 +253,68 @@ export function GeneralStoryCreateScreen() {
     description: storyDescription,
   });
 
-  const hasUnsavedChanges = false;
-  const hasSavedDraft = false;
+  const hasInput = hasGeneralStoryDraftInput(snapshot);
+  const hasSavedDraft = savedKey !== null;
+  const isSaved = snapshotKey === savedKey;
+
+  const writeDraft = async () => {
+    const key = snapshotKey;
+
+    setIsSaving(true);
+
+    const saved = await savePendingCreationRequest(
+      { stage: 'GENERAL_DRAFT', requestId, snapshot },
+      epoch,
+    );
+
+    setIsSaving(false);
+
+    if (saved) {
+      setSavedKey(key);
+    } else {
+      toast.error(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED, {
+        id: DRAFT_SAVE_TOAST_ID,
+      });
+    }
+
+    return saved;
+  };
+
+  const saveDraft = async () => {
+    if (hasInput && !isSaved && !isSaving) await writeDraft();
+  };
+
+  const handleSaveClick = async () => {
+    const now = Date.now();
+
+    if (
+      isSaving ||
+      now - lastSaveClickAtRef.current < DRAFT_SAVE_CLICK_THROTTLE_MS
+    )
+      return;
+
+    lastSaveClickAtRef.current = now;
+
+    if (isSaved || (await writeDraft())) {
+      toast.success(TOAST_MESSAGE.STORY_DRAFT_SAVED, {
+        id: DRAFT_SAVE_TOAST_ID,
+        duration: DRAFT_SAVED_TOAST_DURATION_MS,
+      });
+    }
+  };
+
+  useSaveWhenBackgrounded(saveDraft);
 
   const handleClose = () => {
-    setExitWarning(
-      hasUnsavedChanges ? 'unsaved' : hasSavedDraft ? 'saved' : 'nothing',
-    );
+    setExitWarning(getDraftExitWarning({ hasInput, hasSavedDraft, isSaved }));
     setIsExitOpen(true);
   };
+
+  const { leaveAfterCleanup } = usePreventPageLeave({
+    warnOnUnload: hasSavedDraft ? !isSaved : hasInput,
+    interceptBack: true,
+    onBackAttempt: () => (isExitOpen ? setIsExitOpen(false) : handleClose()),
+  });
 
   const copy = GENERAL_STORY_EXIT_WARNING_COPY[exitWarning];
 
@@ -163,9 +324,9 @@ export function GeneralStoryCreateScreen() {
         <h1 className="font-semibold">{GENERAL_STORY_CREATE_COPY.title}</h1>
         <div className="ml-auto flex items-center gap-1">
           <DraftSaveButton
-            status="idle"
-            canSave={hasUnsavedChanges}
-            onClick={() => {}}
+            isSaving={isSaving}
+            disabled={!hasInput}
+            onClick={handleSaveClick}
           />
           <Button
             type="button"
@@ -248,6 +409,7 @@ export function GeneralStoryCreateScreen() {
             }}
             registerErrors={registerErrors}
             onRegisterAttempt={() => setHasTriedRegister(true)}
+            onTabChange={saveDraft}
           />
         </GeneralStoryRegisterErrorsContext>
       </CollapsedListItemsProvider>
@@ -262,7 +424,9 @@ export function GeneralStoryCreateScreen() {
             <AlertDialogAction
               type="button"
               variant="destructive"
-              onClick={() => router.replace(APP_PATH.MAIN.STUDIO)}>
+              onClick={() =>
+                leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO))
+              }>
               {copy.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>

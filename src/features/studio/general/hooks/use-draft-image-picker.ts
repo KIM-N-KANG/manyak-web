@@ -11,10 +11,14 @@ import {
 
 import { useDraftImageUpload } from './use-draft-image-upload';
 
-/** 등록 전에 올린 이미지다. 요청에는 객체 키를, 미리보기에는 고른 파일의 blob URL을 쓴다. */
+/**
+ * 등록 전에 올린 이미지다. 요청에는 객체 키를, 미리보기에는 고른 파일의 blob URL을 쓴다.
+ * 임시 저장 뒤 미리보기를 다시 만들 수 있게 고른 파일도 함께 둔다.
+ */
 export type DraftImage = {
   objectKey: string;
   previewUrl: string;
+  blob: Blob;
 };
 
 type UseDraftImagePickerOptions = {
@@ -66,7 +70,7 @@ export function useDraftImagePicker({
         URL.revokeObjectURL(image.previewUrl);
       }
 
-      onChange({ objectKey, previewUrl: nextPreviewUrl });
+      onChange({ objectKey, previewUrl: nextPreviewUrl, blob: file });
     } catch {
       URL.revokeObjectURL(nextPreviewUrl);
       toast.error(TOAST_MESSAGE.DRAFT_IMAGE_UPLOAD_FAILED);

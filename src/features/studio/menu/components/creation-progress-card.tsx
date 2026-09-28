@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import { Calendar04Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
@@ -112,13 +114,18 @@ type DraftCardBodyProps = {
 };
 
 /**
- * 초안 레코드가 멈춘 단계의 설명 문구를 고른다.
+ * 초안 레코드가 멈춘 단계의 설명 문구를 고른다. 일반 제작 초안은 입력한 한 줄 소개를 쓴다.
  *
  * @param record 초안·생성 중 레코드
  * @returns 단계별 설명
  */
 function getDraftDescription(record: PendingCreationRequest): string {
   const { draftDescription } = CREATION_PROGRESS_CARD_COPY;
+
+  if (record.stage === 'GENERAL_DRAFT')
+    return (
+      record.snapshot.texts.oneLineIntro.trim() || draftDescription.general
+    );
 
   if (record.stage === 'KEYWORD_DRAFT') return draftDescription.keyword;
 
@@ -131,22 +138,29 @@ function getDraftDescription(record: PendingCreationRequest): string {
 function DraftCardBody({ record }: DraftCardBodyProps) {
   const router = useRouter();
   const epoch = useCreationEpoch();
+  const isGeneral = record.stage === 'GENERAL_DRAFT';
+  const title =
+    (isGeneral && record.snapshot.texts.title.trim()) ||
+    CREATION_PROGRESS_CARD_COPY.draftTitle;
 
-  // 초안·생성 중 레코드 모두 재개 의도를 남겨 퍼널이 이 레코드만 복원하게 한다.
   const handleResume = () => {
     track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
     markDraftResumeIntent(record.requestId);
-    router.push(APP_PATH.STUDIO.STORY.SIMPLE);
+    router.push(
+      isGeneral ? APP_PATH.STUDIO.STORY.GENERAL : APP_PATH.STUDIO.STORY.SIMPLE,
+    );
   };
 
   return (
     <CreationProgressCardBody
       isCompleting={false}
+      title={title}
+      cover={isGeneral ? record.snapshot.cover?.blob : undefined}
       description={getDraftDescription(record)}
       action={
         <CardOptionsSheet
           kind={CREATION_PROGRESS_CARD_COPY.optionsKind}
-          title={CREATION_PROGRESS_CARD_COPY.draftTitle}
+          title={title}
           triggerAriaLabel={CREATION_PROGRESS_CARD_COPY.optionsTrigger}
           items={[
             {
@@ -178,8 +192,27 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
   );
 }
 
+function DraftCoverImage({ blob }: { blob: Blob }) {
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(blob);
+
+    if (imageRef.current) imageRef.current.src = url;
+
+    return () => URL.revokeObjectURL(url);
+  }, [blob]);
+
+  // eslint-disable-next-line @next/next/no-img-element -- blob URL을 effect에서 붙이므로 next/image를 쓸 수 없다.
+  return <img ref={imageRef} alt="" className="size-full object-cover" />;
+}
+
 type CreationProgressCardBodyProps = {
   isCompleting: boolean;
+  /** 초안 카드 제목. 없으면 단계에 맞는 고정 문구를 쓴다. */
+  title?: string;
+  /** 일반 제작 초안의 표지 파일. 없으면 기본 심벌을 보인다. */
+  cover?: Blob;
   /** 초안 카드의 단계별 설명. 완성 중 카드는 고정 문구를 쓴다. */
   description?: string;
   /** 제목 줄 오른쪽 끝에 놓는 요소(옵션 버튼) */
@@ -190,14 +223,14 @@ type CreationProgressCardBodyProps = {
 
 function CreationProgressCardBody({
   isCompleting,
+  title = isCompleting
+    ? CREATION_PROGRESS_CARD_COPY.completingTitle
+    : CREATION_PROGRESS_CARD_COPY.draftTitle,
+  cover,
   description = CREATION_PROGRESS_CARD_COPY.completingDescription,
   action,
   children,
 }: CreationProgressCardBodyProps) {
-  const title = isCompleting
-    ? CREATION_PROGRESS_CARD_COPY.completingTitle
-    : CREATION_PROGRESS_CARD_COPY.draftTitle;
-
   return (
     <div className={cn('flex min-w-0 flex-1', 'gap-4')}>
       <AspectRatio
@@ -216,6 +249,8 @@ function CreationProgressCardBody({
             showStatus={false}
             resolution=""
           />
+        ) : cover ? (
+          <DraftCoverImage blob={cover} />
         ) : (
           <div className="flex size-full items-center justify-center text-foreground-tertiary">
             <ManyakSymbolIcon aria-hidden="true" className={'size-8'} />
@@ -242,7 +277,7 @@ function CreationProgressCardBody({
             </p>
             {action ? <div className="shrink-0">{action}</div> : null}
           </div>
-          <p className="mt-1 text-sm leading-5 break-keep text-foreground-secondary">
+          <p className="mt-1 line-clamp-2 text-sm leading-5 break-keep text-foreground-secondary">
             {description}
           </p>
         </div>

@@ -12,6 +12,7 @@ import {
   invalidateCreationEpoch,
   type StoredCreation,
 } from '@/features/stories/_shared/utils/creation-db';
+import type { GeneralStoryDraftSnapshot } from '@/features/studio/_shared/utils/general-story-draft';
 
 /** 최초 IndexedDB 이관에서만 읽는 구 저장소 키다. */
 export const PENDING_CREATION_REQUEST_STORAGE_KEY =
@@ -96,6 +97,13 @@ export type PendingCreationRequest =
       selectedRecommendations: string[];
       createdStoryId: string | null;
       completionRequest: CreateSimpleStoryRequest | null;
+    }
+  | {
+      /** 일반 제작 폼의 임시 저장본. 임시 저장 버튼과 탭 이동 때만 갱신한다. */
+      stage: 'GENERAL_DRAFT';
+      requestId: string;
+      createdAt?: string;
+      snapshot: GeneralStoryDraftSnapshot;
     };
 
 /** 스토리라인 생성 진행 레코드 */
@@ -124,6 +132,12 @@ export type KeywordDraftRecord = Extract<
 export type StoryDraftRecord = Extract<
   PendingCreationRequest,
   { stage: 'STORY_DRAFT' }
+>;
+
+/** 일반 제작 임시 저장 레코드 */
+export type GeneralDraftRecord = Extract<
+  PendingCreationRequest,
+  { stage: 'GENERAL_DRAFT' }
 >;
 
 /** 서버 조회 대상이 아닌 편집 임시 저장 레코드 */

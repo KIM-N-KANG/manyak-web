@@ -60,6 +60,7 @@ import {
   takeStoryCompletionRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { applyStorylinesGeneratedEffects } from '@/features/stories/_shared/utils/creation-side-effects';
+import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
@@ -71,7 +72,6 @@ import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedKeywordGroups } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { useCreationRequestRecovery } from './use-creation-request-recovery';
-import { usePreventPageLeave } from './use-prevent-page-leave';
 import { useStoryCreateDraft } from './use-story-create-draft';
 import { useStoryDraftAutosave } from './use-story-draft-autosave';
 import { useStoryTagStep } from './use-story-tag-step';
