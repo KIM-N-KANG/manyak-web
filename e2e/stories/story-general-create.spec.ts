@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 
+import { COLLAPSIBLE_LIST_ITEM_COPY } from '@/components/common/collapsible-list-item';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
@@ -134,11 +135,11 @@ test.describe('일반 제작 커버 이미지', () => {
 });
 
 test.describe('일반 제작 주변 인물', () => {
-  test('1명으로 시작해 1명일 때는 삭제할 수 없고, 5명까지 추가한다 (STORY-GENERAL-07)', async ({
+  test('1명으로 시작해 1명일 때는 삭제할 수 없고, 접은 상태는 탭을 바꿔도 남으며, 5명까지 추가한다 (STORY-GENERAL-07)', async ({
     page,
   }) => {
-    const { addSupporting, remove, supportingMaxCount } =
-      GENERAL_STORY_CHARACTER_COPY;
+    const { addSupporting, supportingMaxCount } = GENERAL_STORY_CHARACTER_COPY;
+    const { collapse, expand, remove } = COLLAPSIBLE_LIST_ITEM_COPY;
     const supportingTab = GENERAL_STORY_TABS.find(
       ({ value }) => value === 'supporting',
     );
@@ -158,6 +159,24 @@ test.describe('일반 제작 주변 인물', () => {
 
     await expect(nameInputs).toHaveCount(1);
     await expect(removeButtons).toHaveCount(0);
+
+    await page
+      .getByRole('button', { name: `${supportingTab?.label} 1 ${collapse}` })
+      .click();
+    await expect(nameInputs).toHaveCount(0);
+
+    await page
+      .getByRole('tab', { name: GENERAL_STORY_TABS[0].label, exact: true })
+      .click();
+    await page
+      .getByRole('tab', { name: supportingTab?.label, exact: true })
+      .click();
+    await expect(nameInputs).toHaveCount(0);
+
+    await page
+      .getByRole('button', { name: `${supportingTab?.label} 1 ${expand}` })
+      .click();
+    await expect(nameInputs).toHaveCount(1);
 
     for (let count = 2; count <= supportingMaxCount; count += 1) {
       await addButton.click();

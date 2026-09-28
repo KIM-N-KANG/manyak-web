@@ -6,6 +6,7 @@ import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
+import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -149,51 +150,53 @@ export function GeneralStoryCreateScreen() {
           </Button>
         </div>
       </header>
-      <GeneralStoryFormTabs
-        values={textValues}
-        onChange={(field: GeneralStoryTextField, value: string) =>
-          setTextValues((previous) => ({ ...previous, [field]: value }))
-        }
-        cover={cover}
-        onCoverChange={setCover}
-        descriptionRatio={descriptionRatio}
-        onDescriptionRatioChange={setDescriptionRatio}
-        panels={{
-          protagonist: (
-            <GeneralStoryCharacterFields
-              idPrefix="general-story-protagonist"
-              labelPrefix="주인공"
-              character={protagonist}
-              namePlaceholder={
-                GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
-              }
-              featurePlaceholder={
-                GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
-              }
-              basicInfoDescription={
-                GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
-              }
-              featureDescription={
-                GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
-              }
-              featureRequired
-              onChange={setProtagonist}
-            />
-          ),
-          supporting: (
-            <GeneralStorySupportingCharacterList
-              characters={supporting}
-              onChange={setSupporting}
-            />
-          ),
-          start: (
-            <GeneralStoryStartSettingPanel
-              startSettings={startSettings}
-              onChange={setStartSettings}
-            />
-          ),
-        }}
-      />
+      <CollapsedListItemsProvider>
+        <GeneralStoryFormTabs
+          values={textValues}
+          onChange={(field: GeneralStoryTextField, value: string) =>
+            setTextValues((previous) => ({ ...previous, [field]: value }))
+          }
+          cover={cover}
+          onCoverChange={setCover}
+          descriptionRatio={descriptionRatio}
+          onDescriptionRatioChange={setDescriptionRatio}
+          panels={{
+            protagonist: (
+              <GeneralStoryCharacterFields
+                idPrefix="general-story-protagonist"
+                labelPrefix="주인공"
+                character={protagonist}
+                namePlaceholder={
+                  GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
+                }
+                featurePlaceholder={
+                  GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
+                }
+                basicInfoDescription={
+                  GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
+                }
+                featureDescription={
+                  GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
+                }
+                featureRequired
+                onChange={setProtagonist}
+              />
+            ),
+            supporting: (
+              <GeneralStorySupportingCharacterList
+                characters={supporting}
+                onChange={setSupporting}
+              />
+            ),
+            start: (
+              <GeneralStoryStartSettingPanel
+                startSettings={startSettings}
+                onChange={setStartSettings}
+              />
+            ),
+          }}
+        />
+      </CollapsedListItemsProvider>
       <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>

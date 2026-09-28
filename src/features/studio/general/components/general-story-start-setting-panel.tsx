@@ -3,6 +3,7 @@ import { type Dispatch, type SetStateAction, useRef, useState } from 'react';
 import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { CollapsibleListItem } from '@/components/common/collapsible-list-item';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -327,31 +328,15 @@ function GeneralStoryStartSettingEditor({
           const idPrefix = `general-story-ending-${endingItem.id}`;
 
           return (
-            <section key={endingItem.id} className="flex flex-col gap-4">
-              <div className="flex min-h-12 items-center bg-muted px-4">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="min-w-0 truncate text-sm font-medium text-foreground-secondary">
-                    {endingLabel}
-                  </span>
-                  <span className="shrink-0 rounded-full bg-border px-2 py-1 text-xs leading-none text-foreground-secondary">
-                    {index + 1}/{ending.maxCount}
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="ghost"
-                  aria-label={`${endingLabel} ${remove}`}
-                  className="w-12 justify-end rounded-none px-0 text-sm text-foreground-secondary"
-                  onClick={() =>
-                    requestDiscardEnding(
-                      endingItem.id,
-                      hasEndingInput(endingItem),
-                    )
-                  }>
-                  {remove}
-                </Button>
-              </div>
+            <CollapsibleListItem
+              key={endingItem.id}
+              id={idPrefix}
+              label={endingLabel}
+              order={index + 1}
+              maxCount={ending.maxCount}
+              onRemove={() =>
+                requestDiscardEnding(endingItem.id, hasEndingInput(endingItem))
+              }>
               <FieldGroup className="gap-6 px-4">
                 <GeneralStoryInputField
                   inputRef={(element) => registerInput(endingItem.id, element)}
@@ -410,7 +395,7 @@ function GeneralStoryStartSettingEditor({
                   }
                 />
               </FieldGroup>
-            </section>
+            </CollapsibleListItem>
           );
         })}
         <div className="flex justify-center">

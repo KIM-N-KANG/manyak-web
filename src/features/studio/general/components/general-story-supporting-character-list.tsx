@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { CollapsibleListItem } from '@/components/common/collapsible-list-item';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +40,6 @@ export function GeneralStorySupportingCharacterList({
     supportingNamePlaceholders,
     supportingFeaturePlaceholder,
     addSupporting,
-    remove,
   } = GENERAL_STORY_CHARACTER_COPY;
   const canRemove = characters.length > 1;
   const { registerInput, scrollInputIntoView } =
@@ -80,23 +80,15 @@ export function GeneralStorySupportingCharacterList({
         const headerLabel = character.name.trim() || labelPrefix;
 
         return (
-          <section key={character.id} className="flex flex-col gap-4">
-            <div className="flex min-h-12 items-center bg-muted px-4">
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="min-w-0 truncate text-sm font-medium text-foreground-secondary">
-                  {headerLabel}
-                </span>
-                <span className="shrink-0 rounded-full bg-border px-2 py-1 text-xs leading-none text-foreground-secondary">
-                  {order}/{supportingMaxCount}
-                </span>
-              </div>
-              {canRemove && (
-                <Button
-                  type="button"
-                  size="lg"
-                  variant="ghost"
-                  aria-label={`${headerLabel} ${remove}`}
-                  onClick={() =>
+          <CollapsibleListItem
+            key={character.id}
+            id={`general-story-supporting-${character.id}`}
+            label={headerLabel}
+            order={order}
+            maxCount={supportingMaxCount}
+            onRemove={
+              canRemove
+                ? () =>
                     requestDiscard(
                       character.id,
                       Boolean(
@@ -106,12 +98,8 @@ export function GeneralStorySupportingCharacterList({
                         character.image,
                       ),
                     )
-                  }
-                  className="w-12 justify-end rounded-none px-0 text-sm text-foreground-secondary">
-                  {remove}
-                </Button>
-              )}
-            </div>
+                : undefined
+            }>
             <div className="flex flex-col gap-6 px-4">
               <GeneralStoryImageField
                 id={`general-story-supporting-${character.id}-image`}
@@ -148,7 +136,7 @@ export function GeneralStorySupportingCharacterList({
                 nameInputRef={(element) => registerInput(character.id, element)}
               />
             </div>
-          </section>
+          </CollapsibleListItem>
         );
       })}
       <div className="flex justify-center">

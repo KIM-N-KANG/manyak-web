@@ -212,7 +212,6 @@ export const GENERAL_STORY_CHARACTER_COPY = {
     '이 이미지를 바탕으로 상황에 맞게 인물의 모습이 실시간으로 바뀌어요',
   supportingMaxCount: 5,
   addSupporting: '인물 추가',
-  remove: '삭제',
 } as const;
 
 /** 시작 상황 설정 탭의 문구·예시와 제한이다. 예시는 유실역 설정을 잇는다. */
