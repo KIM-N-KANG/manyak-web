@@ -126,7 +126,7 @@ export const GENERAL_STORY_TABS = [
   },
   { value: 'protagonist', label: '주인공(나)', required: true, fields: [] },
   { value: 'supporting', label: '주변 인물', required: true, fields: [] },
-  { value: 'start', label: '시작 설정', required: true, fields: [] },
+  { value: 'start', label: '시작 상황 설정', required: true, fields: [] },
   { value: 'event', label: '주요 사건', required: false, fields: [] },
   { value: 'publish', label: '등록', required: true, fields: [] },
 ] as const satisfies readonly {
@@ -203,4 +203,90 @@ export const GENERAL_STORY_CHARACTER_COPY = {
   supportingMaxCount: 5,
   addSupporting: '인물 추가',
   remove: '삭제',
+} as const;
+
+/** 시작 상황 설정 탭의 문구·예시와 제한이다. 예시는 유실역 설정을 잇는다. */
+export const GENERAL_STORY_START_COPY = {
+  maxCount: 3,
+  chipLabelMaxLength: 8,
+  defaultLabel: (order: number) => `시작 상황 ${order}`,
+  groupLabel: '시작 상황',
+  add: '추가',
+  remove: '삭제',
+  name: {
+    label: '상황 이름',
+    maxLength: 100,
+    placeholder: '예: 불 꺼진 승강장',
+    description: '스토리 상세에서 시작 상황을 고를 때 보이는 이름이에요',
+  },
+  prologue: {
+    label: '프롤로그',
+    maxLength: 1000,
+    placeholder: [
+      '예: 막차 문이 닫히는 소리에 잠에서 깼다.',
+      '열차는 이미 떠났고, 승강장에는 나 혼자 남았다.',
+      '역명판에는 처음 보는 이름이 적혀 있었다. 유실역.',
+    ].join('\n'),
+    description:
+      '채팅을 시작하면 첫 화면에 보이는 도입 글이에요. 주인공(나)이 스토리 속으로 들어서는 순간을 적어주세요',
+  },
+  situation: {
+    label: '상황 설명',
+    maxLength: 1000,
+    placeholder: [
+      '예: 텅 빈 승강장 끝, 유실물 보관소 창구에만 불이 켜져 있다.',
+      '창구 안의 관리인 도하람이 주인공을 보고 말없이 장부를 덮는다.',
+      '첫차까지 남은 시간은 네 시간이다.',
+    ].join('\n'),
+    description:
+      'AI가 첫 장면을 이어 쓰는 출발점이에요. 주인공(나)이 마주한 상황과 주변 인물들이 하고 있는 일을 적어주세요',
+  },
+  suggestedInput: {
+    label: '추천 입력',
+    maxLength: 200,
+    placeholders: [
+      '예: *창구로 다가가 유리창을 가볍게 두드린다* 실례지만, 여기가 어디예요?',
+      '예: *승강장을 따라 걸으며 출구 계단을 찾는다* 누구 없어요? 여기 사람 있어요!',
+      '예: *휴대전화를 꺼내 시간과 전파를 확인한다* 전파가 하나도 안 잡히네…',
+    ],
+    description:
+      '채팅 첫 화면에서 누르면 바로 보내지는 입력이에요. 주인공(나)이 할 수 있는 행동이나 말을 세 가지 적어주세요',
+  },
+  ending: {
+    label: '엔딩',
+    description:
+      '이 시작 상황에서 스토리가 끝나는 결말이에요. 엔딩이 없으면 채팅이 끝나지 않고 계속 이어져요',
+    maxCount: 3,
+    add: '엔딩 추가',
+    defaultLabel: (order: number) => `엔딩 ${order}`,
+    name: {
+      label: '엔딩 이름',
+      maxLength: 100,
+      placeholder: '예: 첫차',
+      description: '엔딩에 도달했을 때 채팅과 스토리 상세에 보이는 이름이에요',
+    },
+    minTurns: {
+      label: '최소 턴 수',
+      max: 50,
+      unit: '턴',
+      placeholder: '예: 10',
+      description: '이 턴 수를 넘기기 전에는 엔딩에 도달하지 않아요',
+    },
+    condition: {
+      label: '달성 조건',
+      maxLength: 500,
+      placeholder:
+        '예: 보관소에서 동생의 기억을 되찾고, 그 대가로 무언가를 맡긴 뒤 첫차에 오르면 이 엔딩에 도달한다',
+      description:
+        '어떤 상황이 되면 이 엔딩에 도달하는지 적어주세요. AI가 채팅 흐름을 보고 판단해요',
+    },
+    epilogue: {
+      label: '에필로그',
+      maxLength: 500,
+      placeholder:
+        '예: 되찾은 기억과 맡기고 온 것을 나란히 비추며, 새벽빛이 드는 첫차 안에서 잔잔하게 마무리한다',
+      description:
+        '엔딩에 도달했을 때 AI가 마지막 장면을 쓰는 방향이에요. 어떤 분위기로 마무리할지 적어주세요',
+    },
+  },
 } as const;

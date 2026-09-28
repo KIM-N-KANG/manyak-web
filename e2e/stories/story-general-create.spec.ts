@@ -5,6 +5,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
+  GENERAL_STORY_START_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
@@ -200,5 +201,54 @@ test.describe('일반 제작 주변 인물', () => {
 
     await imageRemove.click();
     await expect(imageRemove).toHaveCount(0);
+  });
+});
+
+test.describe('일반 제작 시작 상황 설정', () => {
+  test('시작 상황은 1개로 시작해 칩으로 3개까지 추가·전환하고, 1개일 때는 지울 수 없으며, 엔딩은 3개까지이며 최소 턴 수는 50을 넘지 않는다 (STORY-GENERAL-10)', async ({
+    page,
+  }) => {
+    const { defaultLabel, maxCount, add, remove, ending, name } =
+      GENERAL_STORY_START_COPY;
+    const startTab = GENERAL_STORY_TABS.find(({ value }) => value === 'start');
+    const chips = page.locator('[data-slot=toggle-chip]');
+    const addChip = page.getByRole('button', { name: add, exact: true });
+
+    await openGeneralCreate(page);
+    await page.getByRole('tab', { name: startTab?.label, exact: true }).click();
+
+    await expect(chips).toHaveText([defaultLabel(1)]);
+    await expect(
+      page.getByRole('button', { name: `${defaultLabel(1)} ${remove}` }),
+    ).toHaveCount(0);
+    await page.getByLabel(name.label).fill('불 꺼진 승강장의 밤');
+    await expect(chips).toHaveText(['불 꺼진 승강장…']);
+
+    for (let count = 2; count <= maxCount; count += 1) {
+      await addChip.click();
+      await expect(chips).toHaveCount(count);
+    }
+
+    await expect(addChip).toHaveCount(0);
+    await expect(chips.last()).toHaveAttribute('aria-pressed', 'true');
+
+    await page
+      .getByRole('button', { name: `${defaultLabel(maxCount)} ${remove}` })
+      .click();
+    await expect(chips).toHaveCount(maxCount - 1);
+    await expect(addChip).toBeVisible();
+
+    const addEnding = page.getByRole('button', { name: ending.add });
+
+    for (let count = 1; count <= ending.maxCount; count += 1) {
+      await addEnding.click();
+    }
+
+    await expect(addEnding).toBeDisabled();
+
+    const minTurns = page.getByLabel(ending.minTurns.label).first();
+
+    await minTurns.fill('99턴');
+    await expect(minTurns).toHaveValue(String(ending.minTurns.max));
   });
 });
