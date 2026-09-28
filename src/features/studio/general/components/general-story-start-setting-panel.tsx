@@ -1,4 +1,10 @@
-import { type Dispatch, type SetStateAction, useRef, useState } from 'react';
+import {
+  type Dispatch,
+  type SetStateAction,
+  use,
+  useRef,
+  useState,
+} from 'react';
 
 import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -26,6 +32,7 @@ import {
 } from '@/features/studio/general/constants';
 import { getDuplicateNameIds } from '@/features/studio/general/utils/duplicate-name';
 import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
+import { REGISTER_ERROR_KEY } from '@/features/studio/general/utils/register-validation';
 import {
   createEndingDraft,
   createStartSettingDraft,
@@ -41,6 +48,7 @@ import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 import { cn } from '@/lib/utils';
 
 import { GeneralStoryInputField } from './general-story-input-field';
+import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
 
 const {
   maxCount,
@@ -74,6 +82,7 @@ export function GeneralStoryStartSettingPanel({
 }: GeneralStoryStartSettingPanelProps) {
   const [selectedId, setSelectedId] = useState(startSettings[0]?.id);
   const chipRowRef = useRef<HTMLDivElement>(null);
+  const registerErrors = use(GeneralStoryRegisterErrorsContext);
   const selectedIndex = Math.max(
     0,
     startSettings.findIndex(({ id }) => id === selectedId),
@@ -125,6 +134,11 @@ export function GeneralStoryStartSettingPanel({
             chipLabelMaxLength,
           );
           const isRemovable = index > 0;
+          const hasRegisterError = Boolean(
+            registerErrors?.some(
+              ({ startSettingId }) => startSettingId === item.id,
+            ),
+          );
 
           return (
             <div
@@ -132,7 +146,12 @@ export function GeneralStoryStartSettingPanel({
               data-start-setting-id={item.id}
               className="group relative shrink-0">
               <ToggleChip
-                className={cn(CHIP_CLASS_NAME, isRemovable && 'pr-9.5')}
+                data-register-error={hasRegisterError || undefined}
+                className={cn(
+                  CHIP_CLASS_NAME,
+                  isRemovable && 'pr-9.5',
+                  hasRegisterError && 'text-destructive',
+                )}
                 pressed={item.id === selected.id}
                 onPressedChange={(pressed) => {
                   if (pressed) {
@@ -240,10 +259,15 @@ function GeneralStoryStartSettingEditor({
     false,
     false,
   ]);
-  const suggestedInputErrors = selected.suggestedInputs.map((value, index) =>
-    touchedSuggestedInputs[index]
-      ? getMinLengthError(suggestedInput.label, value)
-      : null,
+  const registerErrors = use(GeneralStoryRegisterErrorsContext);
+  const suggestedInputErrors = selected.suggestedInputs.map(
+    (value, index) =>
+      registerErrors?.find(
+        ({ key }) => key === REGISTER_ERROR_KEY.suggested(selected.id, index),
+      )?.message ??
+      (touchedSuggestedInputs[index]
+        ? getMinLengthError(suggestedInput.label, value)
+        : null),
   );
   const suggestedInputError =
     suggestedInputErrors.find((error) => error !== null) ?? null;
@@ -266,6 +290,7 @@ function GeneralStoryStartSettingEditor({
           maxLength={name.maxLength}
           placeholder={name.placeholder}
           description={name.description}
+          registerErrorKey={REGISTER_ERROR_KEY.start(selected.id, 'name')}
           value={selected.name}
           onChange={(value) => update({ name: value })}
         />
@@ -278,6 +303,7 @@ function GeneralStoryStartSettingEditor({
           maxLength={prologue.maxLength}
           placeholder={prologue.placeholder}
           description={prologue.description}
+          registerErrorKey={REGISTER_ERROR_KEY.start(selected.id, 'prologue')}
           value={selected.prologue}
           onChange={(value) => update({ prologue: value })}
         />
@@ -290,6 +316,7 @@ function GeneralStoryStartSettingEditor({
           maxLength={situation.maxLength}
           placeholder={situation.placeholder}
           description={situation.description}
+          registerErrorKey={REGISTER_ERROR_KEY.start(selected.id, 'situation')}
           value={selected.situation}
           onChange={(value) => update({ situation: value })}
         />
@@ -387,6 +414,10 @@ function GeneralStoryStartSettingEditor({
                   maxLength={ending.name.maxLength}
                   placeholder={ending.name.placeholder}
                   description={ending.name.description}
+                  registerErrorKey={REGISTER_ERROR_KEY.ending(
+                    endingItem.id,
+                    'name',
+                  )}
                   error={
                     duplicateEndingIds.has(endingItem.id)
                       ? GENERAL_STORY_DUPLICATE_NAME_ERROR
@@ -405,6 +436,10 @@ function GeneralStoryStartSettingEditor({
                   suffix={ending.minTurns.unit}
                   placeholder={ending.minTurns.placeholder}
                   description={ending.minTurns.description}
+                  registerErrorKey={REGISTER_ERROR_KEY.ending(
+                    endingItem.id,
+                    'minTurns',
+                  )}
                   value={endingItem.minTurns}
                   onChange={(value) =>
                     updateEnding(endingItem.id, {
@@ -421,6 +456,10 @@ function GeneralStoryStartSettingEditor({
                   maxLength={ending.condition.maxLength}
                   placeholder={ending.condition.placeholder}
                   description={ending.condition.description}
+                  registerErrorKey={REGISTER_ERROR_KEY.ending(
+                    endingItem.id,
+                    'condition',
+                  )}
                   value={endingItem.condition}
                   onChange={(value) =>
                     updateEnding(endingItem.id, { condition: value })
@@ -435,6 +474,10 @@ function GeneralStoryStartSettingEditor({
                   maxLength={ending.epilogue.maxLength}
                   placeholder={ending.epilogue.placeholder}
                   description={ending.epilogue.description}
+                  registerErrorKey={REGISTER_ERROR_KEY.ending(
+                    endingItem.id,
+                    'epilogue',
+                  )}
                   value={endingItem.epilogue}
                   onChange={(value) =>
                     updateEnding(endingItem.id, { epilogue: value })

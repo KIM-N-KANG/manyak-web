@@ -7,6 +7,7 @@ import { Switch } from '@/components/motion/switch';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -17,8 +18,10 @@ import {
   type GeneralStoryGenreSelection,
   toggleGenre,
 } from '@/features/studio/general/utils/genre-selection';
+import { REGISTER_ERROR_KEY } from '@/features/studio/general/utils/register-validation';
 
 import { GeneralStoryInputField } from './general-story-input-field';
+import { useRegisterError } from './general-story-register-errors';
 
 const { genre, description, visibility, notice } = GENERAL_STORY_REGISTER_COPY;
 
@@ -47,6 +50,7 @@ export function GeneralStoryRegisterPanel({
       ? tags.data.data.filter(({ category }) => category === 'GENRE')
       : [];
   const isGenreMaxReached = genres.selected.length >= genre.maxCount;
+  const genreError = useRegisterError(REGISTER_ERROR_KEY.genre);
 
   const addCustomGenre = (name: string) => {
     if (isGenreMaxReached) {
@@ -63,7 +67,10 @@ export function GeneralStoryRegisterPanel({
 
   return (
     <FieldGroup className="gap-6">
-      <Field className="gap-2">
+      <Field
+        className="gap-2"
+        data-invalid={genreError ? true : undefined}
+        data-register-error={genreError ? true : undefined}>
         <FieldLabel className="gap-0.5">
           {genre.label} {genre.maxCountLabel(genre.maxCount)}
           <span className="text-destructive" aria-hidden="true">
@@ -109,9 +116,13 @@ export function GeneralStoryRegisterPanel({
             )
           }
         />
-        <FieldDescription className="break-keep text-foreground-secondary">
-          {genre.description}
-        </FieldDescription>
+        {genreError ? (
+          <FieldError>{genreError}</FieldError>
+        ) : (
+          <FieldDescription className="break-keep text-foreground-secondary">
+            {genre.description}
+          </FieldDescription>
+        )}
       </Field>
 
       <GeneralStoryInputField
@@ -122,6 +133,7 @@ export function GeneralStoryRegisterPanel({
         maxLength={description.maxLength}
         placeholder={description.placeholder}
         description={description.description}
+        registerErrorKey={REGISTER_ERROR_KEY.description}
         value={storyDescription}
         onChange={onStoryDescriptionChange}
       />

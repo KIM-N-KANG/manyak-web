@@ -34,6 +34,10 @@ import type { GeneralStoryCharacter } from '@/features/studio/general/utils/char
 import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
 import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
 import {
+  getRegisterErrors,
+  REGISTER_ERROR_KEY,
+} from '@/features/studio/general/utils/register-validation';
+import {
   createStartSettingDraft,
   type GeneralStoryStartSettingDraft,
 } from '@/features/studio/general/utils/start-setting-draft';
@@ -46,6 +50,7 @@ import {
   type GeneralStoryTextValues,
 } from './general-story-form-tabs';
 import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
+import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
 import { GeneralStoryRegisterPanel } from './general-story-register-panel';
 import { GeneralStoryStartSettingPanel } from './general-story-start-setting-panel';
 import {
@@ -129,6 +134,16 @@ export function GeneralStoryCreateScreen() {
   const [storyDescription, setStoryDescription] = useState('');
   const [storyVisibility, setStoryVisibility] =
     useState<CreateGeneralStoryRequestVisibility>('PRIVATE');
+  const [hasTriedRegister, setHasTriedRegister] = useState(false);
+  const registerErrors = getRegisterErrors({
+    texts: textValues,
+    protagonist,
+    supporting,
+    startSettings,
+    mainEvents,
+    genreCount: genres.selected.length,
+    description: storyDescription,
+  });
 
   const hasUnsavedChanges = false;
   const hasSavedDraft = false;
@@ -163,68 +178,78 @@ export function GeneralStoryCreateScreen() {
         </div>
       </header>
       <CollapsedListItemsProvider>
-        <GeneralStoryFormTabs
-          values={textValues}
-          onChange={(field: GeneralStoryTextField, value: string) =>
-            setTextValues((previous) => ({ ...previous, [field]: value }))
-          }
-          cover={cover}
-          onCoverChange={setCover}
-          descriptionRatio={descriptionRatio}
-          onDescriptionRatioChange={setDescriptionRatio}
-          panels={{
-            protagonist: (
-              <GeneralStoryCharacterFields
-                idPrefix="general-story-protagonist"
-                labelPrefix="주인공"
-                character={protagonist}
-                namePlaceholder={
-                  GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
-                }
-                featurePlaceholder={
-                  GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
-                }
-                basicInfoDescription={
-                  GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
-                }
-                featureDescription={
-                  GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
-                }
-                featureRequired
-                onChange={setProtagonist}
-              />
-            ),
-            supporting: (
-              <GeneralStorySupportingCharacterList
-                protagonistName={protagonist.name}
-                characters={supporting}
-                onChange={setSupporting}
-              />
-            ),
-            start: (
-              <GeneralStoryStartSettingPanel
-                startSettings={startSettings}
-                onChange={setStartSettings}
-              />
-            ),
-            event: (
-              <GeneralStoryMainEventPanel
-                mainEvents={mainEvents}
-                onChange={setMainEvents}
-              />
-            ),
-            publish: (
-              <GeneralStoryRegisterPanel
-                genres={genres}
-                onGenresChange={setGenres}
-                storyDescription={storyDescription}
-                onStoryDescriptionChange={setStoryDescription}
-                storyVisibility={storyVisibility}
-                onStoryVisibilityChange={setStoryVisibility}
-              />
-            ),
-          }}
-        />
+        <GeneralStoryRegisterErrorsContext
+          value={hasTriedRegister ? registerErrors : null}>
+          <GeneralStoryFormTabs
+            values={textValues}
+            onChange={(field: GeneralStoryTextField, value: string) =>
+              setTextValues((previous) => ({ ...previous, [field]: value }))
+            }
+            cover={cover}
+            onCoverChange={setCover}
+            descriptionRatio={descriptionRatio}
+            onDescriptionRatioChange={setDescriptionRatio}
+            panels={{
+              protagonist: (
+                <GeneralStoryCharacterFields
+                  idPrefix="general-story-protagonist"
+                  labelPrefix="주인공"
+                  character={protagonist}
+                  namePlaceholder={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
+                  }
+                  featurePlaceholder={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
+                  }
+                  basicInfoDescription={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
+                  }
+                  featureDescription={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
+                  }
+                  featureRequired
+                  registerErrorKeys={{
+                    name: REGISTER_ERROR_KEY.protagonist('name'),
+                    gender: REGISTER_ERROR_KEY.protagonist('gender'),
+                    feature: REGISTER_ERROR_KEY.protagonist('feature'),
+                  }}
+                  onChange={setProtagonist}
+                />
+              ),
+              supporting: (
+                <GeneralStorySupportingCharacterList
+                  protagonistName={protagonist.name}
+                  characters={supporting}
+                  onChange={setSupporting}
+                />
+              ),
+              start: (
+                <GeneralStoryStartSettingPanel
+                  startSettings={startSettings}
+                  onChange={setStartSettings}
+                />
+              ),
+              event: (
+                <GeneralStoryMainEventPanel
+                  mainEvents={mainEvents}
+                  onChange={setMainEvents}
+                />
+              ),
+              publish: (
+                <GeneralStoryRegisterPanel
+                  genres={genres}
+                  onGenresChange={setGenres}
+                  storyDescription={storyDescription}
+                  onStoryDescriptionChange={setStoryDescription}
+                  storyVisibility={storyVisibility}
+                  onStoryVisibilityChange={setStoryVisibility}
+                />
+              ),
+            }}
+            registerErrors={registerErrors}
+            onRegisterAttempt={() => setHasTriedRegister(true)}
+          />
+        </GeneralStoryRegisterErrorsContext>
       </CollapsedListItemsProvider>
       <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
         <AlertDialogContent size="sm">

@@ -29,6 +29,8 @@ import type {
 import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
 import { cn } from '@/lib/utils';
 
+import { useRegisterError } from './general-story-register-errors';
+
 const GENDER_OPTIONS = [
   { value: 'MALE', label: '남성' },
   { value: 'FEMALE', label: '여성' },
@@ -56,6 +58,8 @@ type GeneralStoryCharacterFieldsProps = {
   featureRequired: boolean;
   /** 있으면 최소 글자 수 오류보다 먼저 기본 정보 설명 대신 보이는 이름 오류다. */
   nameError?: string | null;
+  /** 등록하기를 누른 뒤 이름·성별·특징의 오류를 찾는 키다(`REGISTER_ERROR_KEY`). */
+  registerErrorKeys?: Record<'name' | 'gender' | 'feature', string>;
   onChange: (character: GeneralStoryCharacter) => void;
   nameInputRef?: (element: HTMLInputElement | null) => void;
 };
@@ -70,6 +74,7 @@ export function GeneralStoryCharacterFields({
   featureDescription,
   featureRequired,
   nameError,
+  registerErrorKeys,
   onChange,
   nameInputRef,
 }: GeneralStoryCharacterFieldsProps) {
@@ -82,12 +87,19 @@ export function GeneralStoryCharacterFields({
     featureMaxLength,
   } = GENERAL_STORY_CHARACTER_COPY;
   const [touched, setTouched] = useState({ name: false, feature: false });
+  const registerNameError = useRegisterError(registerErrorKeys?.name);
+  const genderError = useRegisterError(registerErrorKeys?.gender);
+  const registerFeatureError = useRegisterError(registerErrorKeys?.feature);
   const shownNameError =
     nameError ??
+    registerNameError ??
     (touched.name ? getMinLengthError(nameLabel, character.name) : null);
-  const featureError = touched.feature
-    ? getMinLengthError(featureLabel, character.feature)
-    : null;
+  const basicInfoError = shownNameError ?? genderError;
+  const featureError =
+    registerFeatureError ??
+    (touched.feature
+      ? getMinLengthError(featureLabel, character.feature)
+      : null);
   const nameErrorId = `${idPrefix}-name-error`;
   const featureErrorId = `${idPrefix}-feature-error`;
 
@@ -135,7 +147,9 @@ export function GeneralStoryCharacterFields({
                 character.gender === null && 'text-foreground-tertiary',
               )}
               aria-label={`${labelPrefix} ${genderLabel}`}
-              aria-required>
+              aria-required
+              aria-invalid={genderError ? true : undefined}
+              aria-describedby={genderError ? nameErrorId : undefined}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>
@@ -147,8 +161,8 @@ export function GeneralStoryCharacterFields({
             </SelectContent>
           </Select>
         </div>
-        {shownNameError ? (
-          <FieldError id={nameErrorId}>{shownNameError}</FieldError>
+        {basicInfoError ? (
+          <FieldError id={nameErrorId}>{basicInfoError}</FieldError>
         ) : (
           <FieldDescription className="break-keep text-foreground-secondary">
             {basicInfoDescription}

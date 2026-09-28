@@ -5,19 +5,29 @@ const HANGUL_SYLLABLE_COUNT = 11172;
 const HANGUL_FINAL_CONSONANT_COUNT = 28;
 
 /**
- * 낱말의 받침에 맞는 주제 조사를 고른다. 한글 음절로 끝나지 않으면 받침이 없는 것으로 본다.
+ * 낱말이 받침으로 끝나는지 반환한다. 한글 음절로 끝나지 않으면 받침이 없는 것으로 본다.
  *
- * @param word 조사를 붙일 낱말
- * @returns 받침이 있으면 '은', 없으면 '는'
+ * @param word 검사할 낱말
+ * @returns 받침이 있으면 참
  */
-function getTopicParticle(word: string) {
+function hasFinalConsonant(word: string) {
   const offset = word.charCodeAt(word.length - 1) - HANGUL_SYLLABLE_START;
-  const hasFinalConsonant =
+
+  return (
     offset >= 0 &&
     offset < HANGUL_SYLLABLE_COUNT &&
-    offset % HANGUL_FINAL_CONSONANT_COUNT !== 0;
+    offset % HANGUL_FINAL_CONSONANT_COUNT !== 0
+  );
+}
 
-  return hasFinalConsonant ? '은' : '는';
+/**
+ * 빈 필수 칸의 오류 문구를 반환한다.
+ *
+ * @param label 오류 문구 앞에 넣을 칸 이름
+ * @returns "{칸 이름}을(를) 입력해 주세요"
+ */
+export function getRequiredError(label: string) {
+  return `${label}${hasFinalConsonant(label) ? '을' : '를'} 입력해 주세요`;
 }
 
 /**
@@ -35,5 +45,5 @@ export function getMinLengthError(label: string, value: string) {
     return null;
   }
 
-  return `${label}${getTopicParticle(label)} ${GENERAL_STORY_MIN_LENGTH}자 이상 입력해 주세요`;
+  return `${label}${hasFinalConsonant(label) ? '은' : '는'} ${GENERAL_STORY_MIN_LENGTH}자 이상 입력해 주세요`;
 }

@@ -13,7 +13,8 @@ import {
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
-import { getDuplicateNameIds } from '@/features/studio/general/utils/duplicate-name';
+import { getDuplicateCharacterNameIds } from '@/features/studio/general/utils/duplicate-name';
+import { REGISTER_ERROR_KEY } from '@/features/studio/general/utils/register-validation';
 import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 
@@ -24,9 +25,6 @@ export type GeneralStorySupportingCharacter = GeneralStoryCharacter & {
   id: string;
   image: DraftImage | null;
 };
-
-/** 주인공을 주변 인물보다 앞에 두고 이름 중복을 판정할 때 쓰는 id다. 주변 인물 id는 UUID라 겹치지 않는다. */
-const PROTAGONIST_ID = 'protagonist';
 
 const SUPPORTING_LABEL =
   GENERAL_STORY_TABS.find(({ value }) => value === 'supporting')?.label ?? '';
@@ -50,10 +48,10 @@ export function GeneralStorySupportingCharacterList({
     addSupporting,
   } = GENERAL_STORY_CHARACTER_COPY;
   const canRemove = characters.length > 1;
-  const duplicateNameIds = getDuplicateNameIds([
-    { id: PROTAGONIST_ID, name: protagonistName },
-    ...characters,
-  ]);
+  const duplicateNameIds = getDuplicateCharacterNameIds(
+    protagonistName,
+    characters,
+  );
   const { registerInput, scrollInputIntoView } =
     useInputRefRegistry<HTMLInputElement>();
   const { request: requestDiscard, dialogProps } = useDiscardConfirm((id) => {
@@ -142,6 +140,14 @@ export function GeneralStorySupportingCharacterList({
                   GENERAL_STORY_CHARACTER_COPY.supportingFeatureDescription
                 }
                 featureRequired={false}
+                registerErrorKeys={{
+                  name: REGISTER_ERROR_KEY.supporting(character.id, 'name'),
+                  gender: REGISTER_ERROR_KEY.supporting(character.id, 'gender'),
+                  feature: REGISTER_ERROR_KEY.supporting(
+                    character.id,
+                    'feature',
+                  ),
+                }}
                 nameError={
                   duplicateNameIds.has(character.id)
                     ? GENERAL_STORY_DUPLICATE_NAME_ERROR

@@ -17,6 +17,7 @@ import {
   type GeneralStoryMainEventDraft,
   hasMainEventInput,
 } from '@/features/studio/general/utils/main-event-draft';
+import { REGISTER_ERROR_KEY } from '@/features/studio/general/utils/register-validation';
 import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 
@@ -96,6 +97,10 @@ export function GeneralStoryMainEventPanel({
                 maxLength={name.maxLength}
                 placeholder={name.placeholder}
                 description={name.description}
+                registerErrorKey={REGISTER_ERROR_KEY.event(
+                  mainEvent.id,
+                  'name',
+                )}
                 error={
                   duplicateNameIds.has(mainEvent.id)
                     ? GENERAL_STORY_DUPLICATE_NAME_ERROR
@@ -113,6 +118,10 @@ export function GeneralStoryMainEventPanel({
                 maxLength={description.maxLength}
                 placeholder={description.placeholder}
                 description={description.description}
+                registerErrorKey={REGISTER_ERROR_KEY.event(
+                  mainEvent.id,
+                  'description',
+                )}
                 value={mainEvent.description}
                 onChange={(value) =>
                   update(mainEvent.id, { description: value })
@@ -127,6 +136,10 @@ export function GeneralStoryMainEventPanel({
                 maxLength={keySentence.maxLength}
                 placeholder={keySentence.placeholder}
                 description={keySentence.description}
+                registerErrorKey={REGISTER_ERROR_KEY.event(
+                  mainEvent.id,
+                  'keySentence',
+                )}
                 value={mainEvent.keySentence}
                 onChange={(value) =>
                   update(mainEvent.id, { keySentence: value })

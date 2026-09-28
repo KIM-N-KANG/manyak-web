@@ -6,14 +6,19 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
+  GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_DUPLICATE_NAME_ERROR,
   GENERAL_STORY_EVENT_COPY,
+  GENERAL_STORY_REGISTER_ERROR_COPY,
   GENERAL_STORY_START_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
 import { DRAFT_IMAGE_FILE_ERROR } from '@/features/studio/general/utils/draft-image-file';
-import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
+import {
+  getMinLengthError,
+  getRequiredError,
+} from '@/features/studio/general/utils/general-story-text-error';
 import { DISCARD_INPUT_CONFIRM_COPY } from '@/hooks/use-discard-confirm';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -412,6 +417,119 @@ test.describe('일반 제작 이름 중복', () => {
     await endingNames.nth(1).fill('첫차');
     await expect(endingNames.nth(0)).not.toHaveAttribute('aria-invalid');
     await expect(endingNames.nth(1)).toHaveAttribute('aria-invalid', 'true');
+  });
+});
+
+test.describe('일반 제작 하단 버튼과 등록 탭', () => {
+  test('프로필 탭은 다음만, 가운데 탭은 이전과 다음, 등록 탭은 이전과 켜진 등록하기를 두고, 장르는 키워드를 고르거나 직접 추가한다 (STORY-GENERAL-14)', async ({
+    page,
+  }) => {
+    await page.route('**/api/v1/stories/simple/tags', (route) =>
+      route.fulfill({
+        json: [
+          { id: 1, name: '판타지', category: 'GENRE' },
+          { id: 2, name: '용감한', category: 'PROTAGONIST' },
+        ],
+      }),
+    );
+
+    const { previous, next, register } = GENERAL_STORY_CREATE_COPY;
+    const footerButton = (name: string) =>
+      page.getByRole('button', { name, exact: true });
+    const tab = (index: number) =>
+      page.getByRole('tab', {
+        name: GENERAL_STORY_TABS.at(index)?.label,
+        exact: true,
+      });
+
+    await openGeneralCreate(page);
+    await expect(footerButton(previous)).toHaveCount(0);
+    await footerButton(next).click();
+    await expect(tab(1)).toHaveAttribute('aria-selected', 'true');
+    await footerButton(previous).click();
+    await expect(tab(0)).toHaveAttribute('aria-selected', 'true');
+
+    await tab(-1).click();
+    await expect(footerButton(next)).toHaveCount(0);
+    await expect(footerButton(previous)).toBeVisible();
+    await expect(footerButton(register)).toBeEnabled();
+
+    const fantasy = page.getByRole('button', { name: '판타지', exact: true });
+
+    await fantasy.click();
+    await expect(fantasy).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.getByRole('button', { name: '용감한', exact: true }),
+    ).toHaveCount(0);
+
+    await page.getByRole('button', { name: '키워드 추가' }).click();
+
+    const dialog = page.getByRole('dialog');
+
+    await dialog.getByRole('textbox').fill('유실물');
+    await dialog.getByRole('button', { name: '추가하기' }).click();
+    await expect(
+      page.getByRole('button', { name: '유실물', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+test.describe('일반 제작 등록 오류 표시', () => {
+  test('등록하기를 누르면 덜 채운 탭 이름과 칸에 오류를 보이고, 첫 오류 탭으로 옮기며, 접힌 항목을 펼친다 (STORY-GENERAL-15)', async ({
+    page,
+  }) => {
+    const tab = (value: string) =>
+      page.getByRole('tab', {
+        name: new RegExp(
+          `^${GENERAL_STORY_TABS.find((item) => item.value === value)?.label}`,
+        ),
+      });
+    const { title, oneLineIntro } = GENERAL_STORY_TEXT_FIELDS;
+    const supportingLabel = GENERAL_STORY_TABS.find(
+      ({ value }) => value === 'supporting',
+    )?.label;
+
+    await openGeneralCreate(page);
+    await page.getByLabel(title.label).fill('노선도에 없는 역');
+    await tab('supporting').click();
+    await page
+      .getByRole('button', {
+        name: `${supportingLabel} 1 ${COLLAPSIBLE_LIST_ITEM_COPY.collapse}`,
+      })
+      .click();
+    await tab('publish').click();
+    await page
+      .getByRole('button', {
+        name: GENERAL_STORY_CREATE_COPY.register,
+        exact: true,
+      })
+      .click();
+
+    await expect(tab('basic')).toHaveAttribute('aria-selected', 'true');
+    await expect(tab('basic')).toHaveAttribute('data-invalid');
+    await expect(tab('event')).not.toHaveAttribute('data-invalid');
+    await expect(page.getByLabel(oneLineIntro.label)).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    await expect(
+      page.getByText(getRequiredError(oneLineIntro.label)),
+    ).toBeVisible();
+
+    await page.getByLabel(oneLineIntro.label).fill('막차에서 내린 곳');
+    await expect(
+      page.getByText(getRequiredError(oneLineIntro.label)),
+    ).toHaveCount(0);
+
+    await tab('supporting').click();
+    await expect(
+      page.getByRole('textbox', { name: `${supportingLabel} 1 이름` }),
+    ).toHaveAttribute('aria-invalid', 'true');
+
+    await tab('publish').click();
+    await expect(
+      page.getByText(GENERAL_STORY_REGISTER_ERROR_COPY.genre),
+    ).toBeVisible();
   });
 });
 

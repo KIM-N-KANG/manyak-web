@@ -31,3 +31,23 @@ export function getDuplicateNameIds(items: { id: string; name: string }[]) {
 
   return duplicateIds;
 }
+
+/** 주인공을 주변 인물보다 앞에 두고 판정할 때 쓰는 id다. 주변 인물 id는 UUID라 겹치지 않는다. */
+const PROTAGONIST_ID = 'protagonist';
+
+/**
+ * 주인공 이름이나 앞선 주변 인물과 이름이 겹친 주변 인물의 id를 모은다. 주인공은 늘 먼저 쓴 쪽으로 본다.
+ *
+ * @param protagonistName 주인공 이름
+ * @param supporting 입력 순서대로 놓인 주변 인물
+ * @returns 이름이 겹친 주변 인물의 id 집합
+ */
+export function getDuplicateCharacterNameIds(
+  protagonistName: string,
+  supporting: { id: string; name: string }[],
+) {
+  return getDuplicateNameIds([
+    { id: PROTAGONIST_ID, name: protagonistName },
+    ...supporting,
+  ]);
+}

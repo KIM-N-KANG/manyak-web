@@ -1,21 +1,33 @@
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, use, useRef, useState } from 'react';
 
+import { useCollapsedListItems } from '@/components/common/collapsible-list-item';
+import { StepFooter } from '@/components/common/step-footer';
+import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   GENERAL_STORY_COVER_COPY,
   GENERAL_STORY_CREATE_COPY,
+  GENERAL_STORY_REGISTER_ERROR_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
   type GeneralStoryTab,
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
+import {
+  type GeneralStoryRegisterError,
+  REGISTER_ERROR_KEY,
+} from '@/features/studio/general/utils/register-validation';
 import { cn } from '@/lib/utils';
 
 import { GeneralStoryImageField } from './general-story-image-field';
 import { GeneralStoryInputField } from './general-story-input-field';
 import { GeneralStoryLengthRatioField } from './general-story-length-ratio-field';
+import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
+
+/** 접힌 항목을 펼치는 애니메이션이 끝날 만큼 기다리는 시간이다. */
+const EXPAND_SETTLE_MS = 400;
 
 export type GeneralStoryTextValues = Record<GeneralStoryTextField, string>;
 
@@ -45,6 +57,7 @@ function GeneralStoryTextInput({
   return (
     <GeneralStoryInputField
       id={`general-story-${field}`}
+      registerErrorKey={REGISTER_ERROR_KEY.text(field)}
       label={config.label}
       required
       multiline={config.multiline}
@@ -67,6 +80,12 @@ type GeneralStoryFormTabsProps = {
   onDescriptionRatioChange: (descriptionRatio: number) => void;
   /** 글 항목 대신 직접 그리는 탭 내용이다. */
   panels: Partial<Record<GeneralStoryTab, ReactNode>>;
+  /** 지금 입력의 칸별 등록 오류다. 등록하기를 누르면 첫 오류 탭과 칸으로 옮긴다. */
+  registerErrors: GeneralStoryRegisterError[];
+  /** 등록하기를 누를 때마다 호출한다. 이때부터 탭과 칸에 오류를 표시한다. */
+  onRegisterAttempt: () => void;
+  /** 오류 없이 등록하기를 눌렀을 때 호출한다. */
+  onRegister?: () => void;
 };
 
 export function GeneralStoryFormTabs({
@@ -77,13 +96,63 @@ export function GeneralStoryFormTabs({
   descriptionRatio,
   onDescriptionRatioChange,
   panels,
+  registerErrors,
+  onRegisterAttempt,
+  onRegister,
 }: GeneralStoryFormTabsProps) {
+  const shownRegisterErrors = use(GeneralStoryRegisterErrorsContext);
+  const { setCollapsed } = useCollapsedListItems();
   const [tab, setTab] = useState<GeneralStoryTab>(GENERAL_STORY_TABS[0].value);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const tabIndex = GENERAL_STORY_TABS.findIndex(({ value }) => value === tab);
+  const previousTab = GENERAL_STORY_TABS[tabIndex - 1]?.value;
+  const nextTab = GENERAL_STORY_TABS[tabIndex + 1]?.value;
 
   const handleTabChange = (value: GeneralStoryTab) => {
     setTab(value);
     scrollAreaRef.current?.scrollTo({ top: 0 });
+  };
+
+  const handleRegister = () => {
+    onRegisterAttempt();
+
+    const [firstError] = registerErrors;
+
+    if (!firstError) {
+      onRegister?.();
+
+      return;
+    }
+
+    const collapsibleIds = new Set(
+      registerErrors.flatMap(({ collapsibleId }) =>
+        collapsibleId ? [collapsibleId] : [],
+      ),
+    );
+
+    collapsibleIds.forEach((id) => setCollapsed(id, false));
+    moveToTab(firstError.tab);
+    // 탭 전환과 펼침이 그려진 뒤, 펼침 애니메이션이 끝나 위치가 굳으면 첫 오류 칸으로 스크롤한다.
+    setTimeout(
+      () =>
+        scrollAreaRef.current
+          ?.querySelector('[aria-invalid="true"], [data-register-error]')
+          ?.scrollIntoView({ block: 'center', behavior: 'smooth' }),
+      collapsibleIds.size > 0 ? EXPAND_SETTLE_MS : 0,
+    );
+  };
+
+  /** 하단 버튼으로 탭을 옮길 때도 탭을 누른 것처럼 새 탭을 탭 줄 가운데로 스크롤한다. */
+  const moveToTab = (value: GeneralStoryTab) => {
+    handleTabChange(value);
+    tabListRef.current
+      ?.querySelector(`[data-tab-value="${value}"]`)
+      ?.scrollIntoView({
+        block: 'nearest',
+        inline: 'center',
+        behavior: 'smooth',
+      });
   };
 
   return (
@@ -92,28 +161,48 @@ export function GeneralStoryFormTabs({
       onValueChange={(value) => handleTabChange(value as GeneralStoryTab)}
       className="min-h-0 flex-1 gap-0">
       <TabsList
+        ref={tabListRef}
         variant="line"
         className="relative scrollbar-none w-full shrink-0 justify-start gap-0 overflow-x-auto overscroll-x-contain p-0 shadow-[inset_0_-1px_0_var(--color-border)]">
-        {GENERAL_STORY_TABS.map(({ value, label, required }) => (
-          <TabsTrigger
-            key={value}
-            value={value}
-            className="h-full flex-auto gap-0.5 rounded-none border-0 py-0 after:bottom-0!"
-            onClick={(event) =>
-              event.currentTarget.scrollIntoView({
-                block: 'nearest',
-                inline: 'center',
-                behavior: 'smooth',
-              })
-            }>
-            {label}
-            {required && (
-              <span className="text-destructive" aria-hidden="true">
-                *
-              </span>
-            )}
-          </TabsTrigger>
-        ))}
+        {GENERAL_STORY_TABS.map(({ value, label, required }) => {
+          const hasError = Boolean(
+            shownRegisterErrors?.some(
+              ({ tab: errorTab }) => errorTab === value,
+            ),
+          );
+
+          return (
+            <TabsTrigger
+              key={value}
+              value={value}
+              data-tab-value={value}
+              data-invalid={hasError || undefined}
+              className={cn(
+                'h-full flex-auto gap-0.5 rounded-none border-0 py-0 after:bottom-0!',
+                hasError &&
+                  'text-destructive hover:text-destructive dark:text-destructive dark:hover:text-destructive data-active:text-destructive dark:data-active:text-destructive',
+              )}
+              onClick={(event) =>
+                event.currentTarget.scrollIntoView({
+                  block: 'nearest',
+                  inline: 'center',
+                  behavior: 'smooth',
+                })
+              }>
+              {label}
+              {required && (
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              )}
+              {hasError && (
+                <span className="sr-only">
+                  {GENERAL_STORY_REGISTER_ERROR_COPY.invalidTab}
+                </span>
+              )}
+            </TabsTrigger>
+          );
+        })}
       </TabsList>
       <div
         ref={scrollAreaRef}
@@ -162,6 +251,26 @@ export function GeneralStoryFormTabs({
           </TabsContent>
         ))}
       </div>
+      <StepFooter>
+        {previousTab && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            onClick={() => moveToTab(previousTab)}>
+            {GENERAL_STORY_CREATE_COPY.previous}
+          </Button>
+        )}
+        {nextTab ? (
+          <Button type="button" size="lg" onClick={() => moveToTab(nextTab)}>
+            {GENERAL_STORY_CREATE_COPY.next}
+          </Button>
+        ) : (
+          <Button type="button" size="lg" onClick={handleRegister}>
+            {GENERAL_STORY_CREATE_COPY.register}
+          </Button>
+        )}
+      </StepFooter>
     </Tabs>
   );
 }

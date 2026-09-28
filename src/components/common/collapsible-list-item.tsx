@@ -66,6 +66,23 @@ export function CollapsedListItemsProvider({
   );
 }
 
+/**
+ * 항목의 접힘 상태를 읽고 바꾸는 값을 반환한다. `CollapsedListItemsProvider` 안에서만 쓴다.
+ *
+ * @returns 접힌 항목 id 집합과 접힘을 바꾸는 함수
+ */
+export function useCollapsedListItems() {
+  const collapsedItems = use(CollapsedListItemsContext);
+
+  if (!collapsedItems) {
+    throw new Error(
+      'useCollapsedListItems는 CollapsedListItemsProvider 안에서 써야 한다.',
+    );
+  }
+
+  return collapsedItems;
+}
+
 type CollapsibleListItemProps = {
   id: string;
   label: string;

@@ -4,6 +4,9 @@ export const GENERAL_STORY_CREATE_COPY = {
   close: '스토리 만들기 닫기',
   draftSave: '임시 저장',
   draftSaved: '임시 저장됨',
+  previous: '이전',
+  next: '다음',
+  register: '등록하기',
 } as const;
 
 /**
@@ -366,4 +369,12 @@ export const GENERAL_STORY_REGISTER_COPY = {
   },
   notice:
     '노골적인 성적 표현, 지나치게 잔혹한 묘사, 혐오를 부추기는 내용은 등록할 수 없어요. 이런 내용을 올리면 이용이 제한될 수 있어요',
+} as const;
+
+/** 등록하기를 눌렀을 때 칸 이름으로 만들지 않는 오류 문구다. 빈 글 칸은 "{칸 이름}을 입력해 주세요"로 만든다. */
+export const GENERAL_STORY_REGISTER_ERROR_COPY = {
+  gender: '성별을 선택해 주세요',
+  genre: '장르를 1개 이상 선택해 주세요',
+  suggestedInput: '추천 입력을 모두 채워 주세요',
+  invalidTab: '입력이 필요한 항목이 있어요',
 } as const;

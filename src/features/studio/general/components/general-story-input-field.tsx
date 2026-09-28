@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/input-group';
 import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
 
+import { useRegisterError } from './general-story-register-errors';
+
 type GeneralStoryInputFieldProps = {
   id: string;
   label: string;
@@ -25,8 +27,10 @@ type GeneralStoryInputFieldProps = {
   maxLength?: number;
   placeholder?: string;
   description?: string;
-  /** 최소 글자 수 오류보다 먼저 보이는 오류다. */
+  /** 등록 오류와 최소 글자 수 오류보다 먼저 보이는 오류다. */
   error?: string | null;
+  /** 등록하기를 누른 뒤 이 칸의 오류를 찾는 키다(`REGISTER_ERROR_KEY`). */
+  registerErrorKey?: string;
   inputMode?: 'numeric';
   /** 한 줄 입력 오른쪽 끝에 붙는 단위다. 글자 수 대신 표시한다. */
   suffix?: string;
@@ -46,6 +50,7 @@ export function GeneralStoryInputField({
   placeholder,
   description,
   error,
+  registerErrorKey,
   inputMode,
   suffix,
   value,
@@ -53,8 +58,10 @@ export function GeneralStoryInputField({
   inputRef,
 }: GeneralStoryInputFieldProps) {
   const [isTouched, setIsTouched] = useState(false);
+  const registerError = useRegisterError(registerErrorKey);
   const shownError =
     error ??
+    registerError ??
     (isTouched && inputMode !== 'numeric'
       ? getMinLengthError(label, value)
       : null);
