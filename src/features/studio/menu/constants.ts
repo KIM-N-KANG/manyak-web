@@ -21,6 +21,8 @@ export const CREATION_PROGRESS_CARD_COPY = {
     generating: '스토리라인을 만들고 있어요',
     'storyline-select': '스토리라인을 선택하고 있었어요',
     'additional-info': '추가 정보를 입력하고 있었어요',
+    /** 일반 제작 초안에서 한 줄 소개를 입력하지 않았을 때 쓴다. */
+    general: '일반 제작으로 만들고 있었어요',
   },
   completingTitle: '스토리를 완성 중이에요',
   completingDescription: '조금만 기다리면 완성된 스토리를 볼 수 있어요',

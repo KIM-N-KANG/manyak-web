@@ -120,14 +120,16 @@ export type AnalyticsEventProps = {
       | 'KEYWORD_DRAFT'
       | 'STORYLINE_GENERATION'
       | 'STORY_COMPLETION'
-      | 'STORY_DRAFT';
+      | 'STORY_DRAFT'
+      | 'GENERAL_DRAFT';
   };
   client_storyCreate_continueBanner_clicked: {
     stage:
       | 'KEYWORD_DRAFT'
       | 'STORYLINE_GENERATION'
       | 'STORY_COMPLETION'
-      | 'STORY_DRAFT';
+      | 'STORY_DRAFT'
+      | 'GENERAL_DRAFT';
   };
   client_storyCreate_exitButton_clicked: {
     step_name: StepName;
