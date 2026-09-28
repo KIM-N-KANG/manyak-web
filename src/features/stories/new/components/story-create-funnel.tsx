@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
@@ -68,79 +69,81 @@ export function StoryCreateFunnel() {
   }, [step]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <LoginRequiredSheet
-        open={guestLimitOpen}
-        onOpenChange={setGuestLimitOpen}
-      />
-      <StoryCreateHeader
-        step={step}
-        draftSaveStatus={draftSaveStatus}
-        backDialog={backDialog}
-        onBackClick={handleHeaderBack}
-        onBackDialogOpenChange={onBackDialogOpenChange}
-        onConfirmBack={handleConfirmBack}
-      />
-
-      {entryError ? (
-        <RetryListStatus
-          title={TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED}
-          onRetry={retryEntry}
+    <CollapsedListItemsProvider>
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <LoginRequiredSheet
+          open={guestLimitOpen}
+          onOpenChange={setGuestLimitOpen}
         />
-      ) : !isEntryResolved ? (
-        <Skeleton className="m-4 h-48" />
-      ) : null}
-
-      {isEntryResolved && !entryError && step === 'keyword' && (
-        <StoryTagStepSection
-          controller={tagStep}
-          hasGenerateStorylinesError={hasGenerateStorylinesError}
+        <StoryCreateHeader
+          step={step}
+          draftSaveStatus={draftSaveStatus}
+          backDialog={backDialog}
+          onBackClick={handleHeaderBack}
+          onBackDialogOpenChange={onBackDialogOpenChange}
+          onConfirmBack={handleConfirmBack}
         />
-      )}
 
-      {isEntryResolved && !entryError && step === 'storyline-select' && (
-        <StorylineSelectStepSection
-          storylines={storylines}
-          creationId={creationId}
-          selectedTagGroups={selectedTagGroups}
-          activeStorylineIndex={activeStorylineIndex}
-          isGeneratingStorylines={isGeneratingStorylines}
-          hasGenerateStorylinesError={hasGenerateStorylinesError}
-          onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
-          onRegenerateStorylines={handleRegenerateStorylines}
-          onSelectStoryline={handleSelectStoryline}
-        />
-      )}
+        {entryError ? (
+          <RetryListStatus
+            title={TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED}
+            onRetry={retryEntry}
+          />
+        ) : !isEntryResolved ? (
+          <Skeleton className="m-4 h-48" />
+        ) : null}
 
-      {isEntryResolved &&
-        !entryError &&
-        step === 'additional-info' &&
-        selectedStoryline && (
-          <StoryAdditionalInfoStepSection
-            storylineItem={selectedStoryline}
-            isCompletingStory={isCompletingStory}
-            hasCompleteStoryError={hasCompleteStoryError}
-            canCompleteStory={canCompleteStory}
-            selectedRecommendations={selectedRecommendations}
-            additionalInfos={additionalInfos}
-            canAddAdditionalInfo={canAddAdditionalInfo}
-            onToggleRecommendation={handleToggleRecommendation}
-            onAddAdditionalInfo={addAdditionalInfo}
-            onRemoveAdditionalInfo={removeAdditionalInfo}
-            onChangeAdditionalInfo={changeAdditionalInfo}
-            onRegisterAdditionalInfoInput={registerAdditionalInfoInput}
-            onCompleteStory={handleCompleteStory}
-            onBackToStorylineSelect={handleBackToStorylineSelect}
+        {isEntryResolved && !entryError && step === 'keyword' && (
+          <StoryTagStepSection
+            controller={tagStep}
+            hasGenerateStorylinesError={hasGenerateStorylinesError}
           />
         )}
 
-      {step === 'complete' && <StoryCompletionLoading />}
+        {isEntryResolved && !entryError && step === 'storyline-select' && (
+          <StorylineSelectStepSection
+            storylines={storylines}
+            creationId={creationId}
+            selectedTagGroups={selectedTagGroups}
+            activeStorylineIndex={activeStorylineIndex}
+            isGeneratingStorylines={isGeneratingStorylines}
+            hasGenerateStorylinesError={hasGenerateStorylinesError}
+            onActiveStorylineIndexChange={handleActiveStorylineIndexChange}
+            onRegenerateStorylines={handleRegenerateStorylines}
+            onSelectStoryline={handleSelectStoryline}
+          />
+        )}
 
-      <StorylineReselectDialog
-        open={reselectDialogOpen}
-        onOpenChange={onReselectDialogOpenChange}
-        onConfirm={handleConfirmReselect}
-      />
-    </div>
+        {isEntryResolved &&
+          !entryError &&
+          step === 'additional-info' &&
+          selectedStoryline && (
+            <StoryAdditionalInfoStepSection
+              storylineItem={selectedStoryline}
+              isCompletingStory={isCompletingStory}
+              hasCompleteStoryError={hasCompleteStoryError}
+              canCompleteStory={canCompleteStory}
+              selectedRecommendations={selectedRecommendations}
+              additionalInfos={additionalInfos}
+              canAddAdditionalInfo={canAddAdditionalInfo}
+              onToggleRecommendation={handleToggleRecommendation}
+              onAddAdditionalInfo={addAdditionalInfo}
+              onRemoveAdditionalInfo={removeAdditionalInfo}
+              onChangeAdditionalInfo={changeAdditionalInfo}
+              onRegisterAdditionalInfoInput={registerAdditionalInfoInput}
+              onCompleteStory={handleCompleteStory}
+              onBackToStorylineSelect={handleBackToStorylineSelect}
+            />
+          )}
+
+        {step === 'complete' && <StoryCompletionLoading />}
+
+        <StorylineReselectDialog
+          open={reselectDialogOpen}
+          onOpenChange={onReselectDialogOpenChange}
+          onConfirm={handleConfirmReselect}
+        />
+      </div>
+    </CollapsedListItemsProvider>
   );
 }

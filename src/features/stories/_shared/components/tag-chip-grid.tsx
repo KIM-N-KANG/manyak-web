@@ -3,16 +3,13 @@ import type { ReactNode } from 'react';
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleChip } from '@/components/ui/toggle-chip';
-
-import { SKELETON_TAG_CHIP_WIDTH_CLASSES } from '../../constants';
-import type { CustomTag } from '../../types';
-import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
+import { SKELETON_TAG_CHIP_WIDTH_CLASSES } from '@/features/stories/_shared/constants/tag';
 
 type TagChipGridProps = {
   /** 스켈레톤·칩 key를 화면 안에서 유일하게 만들기 위한 접두사 */
   keyPrefix: string;
   predefinedTags: SimpleStoryTagListItemResponse[];
-  customTags: CustomTag[];
+  customTags: { id: string; name: string }[];
   selectedTagIds: number[];
   selectedCustomTagIds: string[];
   isMaxSelectionReached: boolean;
@@ -50,9 +47,9 @@ export function TagChipGrid({
           />
         ))}
       {hasTagsError && (
-        <StoryCreateErrorMessage className="py-2">
+        <p className="py-2 text-sm text-destructive">
           키워드를 불러오지 못했어요
-        </StoryCreateErrorMessage>
+        </p>
       )}
       {!isLoadingTags &&
         predefinedTags.map((tag) => {

@@ -34,7 +34,7 @@ export function StoryCreateHeader({
     <>
       <header className="flex shrink-0 flex-col bg-background">
         <div className="flex h-14 items-center gap-2 px-4">
-          <h1 className="font-semibold">스토리 만들기</h1>
+          <h1 className="font-semibold">스토리 간편 제작</h1>
           <div className="ml-auto flex items-center gap-1">
             {draftSaveStatus !== 'hidden' && (
               <Badge

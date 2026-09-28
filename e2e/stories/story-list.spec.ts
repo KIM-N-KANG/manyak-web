@@ -10,9 +10,16 @@ import {
   STORY_LIST_SORT_OPTIONS,
 } from '@/features/stories/list/constants';
 import {
+  GENERAL_STORY_CREATE_COPY,
+  GENERAL_STORY_EXIT_WARNING_COPY,
+  GENERAL_STORY_TABS,
+  GENERAL_STORY_TEXT_FIELDS,
+} from '@/features/studio/general/constants';
+import {
   CREATE_STORY_FAB_COPY,
   CREATED_STORY_LIST_COPY,
 } from '@/features/studio/menu/constants';
+import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -96,15 +103,75 @@ test.describe('홈·제작 스토리 목록', () => {
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
 
-    await page.goto(APP_PATH.LEGACY.STUDIO_STORY);
-    await expect(page).toHaveURL(
-      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
-    );
-
     await page.goto(APP_PATH.LEGACY.NEW_STORY);
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
+  });
+
+  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 입력 탭을 바꾸고 닫기 확인 후 제작 탭으로 나간다 (STORY-LIST-38)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SELECT}$`),
+    );
+    await expect(
+      page.getByRole('banner').getByText(STORY_MODE_SELECT_COPY.title),
+    ).toBeVisible();
+    // 일러스트는 장식이라 선택지의 접근 가능한 이름은 제목과 설명뿐이다.
+    await expect(
+      page.getByRole('link', {
+        name: `${STORY_MODE_SELECT_COPY.simple.title} ${STORY_MODE_SELECT_COPY.simple.description}`,
+        exact: true,
+      }),
+    ).toHaveAttribute('href', APP_PATH.STUDIO.STORY.SIMPLE);
+
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.general.title })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
+    );
+    await expect(
+      page.getByRole('banner').getByText(GENERAL_STORY_CREATE_COPY.title),
+    ).toBeVisible();
+    // 첫 탭(스토리 프로필)이 열리고, 탭을 바꾸면 그 탭의 입력 항목이 보인다.
+    await expect(
+      page.getByRole('tab', { name: GENERAL_STORY_TABS[0].label }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toBeVisible();
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.world.label),
+    ).toBeVisible();
+    // 자동 저장이 없고 저장할 입력도 없으니 임시 저장 버튼은 잠겨 있다.
+    await expect(
+      page.getByRole('button', { name: GENERAL_STORY_CREATE_COPY.draftSave }),
+    ).toBeDisabled();
+
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+
+    const exitDialog = page.getByRole('alertdialog');
+
+    await expect(
+      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.nothing.title),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', {
+        name: GENERAL_STORY_EXIT_WARNING_COPY.nothing.confirm,
+      })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 
   test('목록이 화면보다 길어도 FAB는 화면 아래에 붙어 있다 (STORY-LIST-11)', async ({
@@ -951,6 +1018,9 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('회원의 서재', { exact: true })).toBeVisible();
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
       .click();
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),

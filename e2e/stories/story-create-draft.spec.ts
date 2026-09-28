@@ -8,6 +8,7 @@ import {
   CREATE_STORY_FAB_COPY,
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
+import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
 import { readCreationStorage } from '../fixtures/storage';
 import { seedPendingCreationRequests } from '../fixtures/storage';
@@ -209,6 +210,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
       .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
+      .click();
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
@@ -314,6 +318,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
       .click();
 
     await expect(page).toHaveURL(

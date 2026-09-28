@@ -4,7 +4,10 @@ import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
+import { CollapsibleListItem } from '@/components/common/collapsible-list-item';
+import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';
 import { Button } from '@/components/ui/button';
+import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { cn } from '@/lib/utils';
 
 import {
@@ -66,6 +69,9 @@ export function SupportingCharacterList({
   onAddCharacter,
   onRemoveCharacter,
 }: SupportingCharacterListProps) {
+  const { request: requestDiscard, dialogProps } =
+    useDiscardConfirm(onRemoveCharacter);
+
   return (
     <div className="flex flex-col gap-4">
       {characters.map((character, index) => {
@@ -80,28 +86,24 @@ export function SupportingCharacterList({
           ];
 
         return (
-          <section key={character.id} className="flex flex-col gap-4">
-            <div className="flex min-h-12 items-center bg-muted px-4">
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="min-w-0 truncate text-sm font-medium text-foreground-secondary">
-                  {headerLabel}
-                </span>
-                <span className="shrink-0 rounded-full bg-border px-2 py-1 text-xs leading-none text-foreground-secondary">
-                  {order}/{SUPPORTING_CHARACTER_MAX_COUNT}
-                </span>
-              </div>
-              <Button
-                type="button"
-                size="lg"
-                variant="ghost"
-                aria-label={`${headerLabel} 삭제`}
-                disabled={disabled}
-                onClick={() => onRemoveCharacter(character.id)}
-                className="w-12 justify-end rounded-none px-0 text-sm text-foreground-secondary">
-                삭제
-              </Button>
-            </div>
-
+          <CollapsibleListItem
+            key={character.id}
+            id={`supporting-character-${character.id}`}
+            label={headerLabel}
+            order={order}
+            maxCount={SUPPORTING_CHARACTER_MAX_COUNT}
+            removeDisabled={disabled}
+            onRemove={() =>
+              requestDiscard(
+                character.id,
+                Boolean(
+                  character.name.trim() ||
+                  character.gender ||
+                  character.selectedTagIds.length ||
+                  character.customTags.length,
+                ),
+              )
+            }>
             <div className="px-4">
               <CharacterForm
                 category="SUPPORTING_CHARACTER"
@@ -136,7 +138,7 @@ export function SupportingCharacterList({
                 onAddCustomTag={(name) => onAddCustomTag(character.id, name)}
               />
             </div>
-          </section>
+          </CollapsibleListItem>
         );
       })}
 
@@ -159,6 +161,7 @@ export function SupportingCharacterList({
           인물 추가
         </Button>
       </div>
+      <ConfirmAlertDialog {...dialogProps} />
     </div>
   );
 }

@@ -46,4 +46,5 @@ export const TOAST_MESSAGE = {
   PUSH_PERMISSION_DENIED: '브라우저 알림이 차단되어 있어요',
   PUSH_SETTINGS_LOAD_FAILED: '알림 설정을 불러오지 못했어요',
   PUSH_SETTINGS_SAVE_FAILED: '알림 설정을 저장하지 못했어요',
+  DRAFT_IMAGE_UPLOAD_FAILED: '이미지를 올리지 못했어요. 다시 시도해주세요',
 } as const;

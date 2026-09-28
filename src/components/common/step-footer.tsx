@@ -5,17 +5,13 @@ import type { ReactNode } from 'react';
 import { useVirtualKeyboardOpen } from '@/hooks/use-virtual-keyboard-open';
 import { cn } from '@/lib/utils';
 
-type StoryCreateStepFooterProps = {
+type StepFooterProps = {
   children: ReactNode;
   top?: ReactNode;
   message?: ReactNode;
 };
 
-export function StoryCreateStepFooter({
-  children,
-  top,
-  message,
-}: StoryCreateStepFooterProps) {
+export function StepFooter({ children, top, message }: StepFooterProps) {
   const isVirtualKeyboardOpen = useVirtualKeyboardOpen();
 
   return (

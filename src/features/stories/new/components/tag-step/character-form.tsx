@@ -21,7 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AddTagDialog } from '@/features/stories/_shared/components/add-tag-dialog';
+import { TagChipGrid } from '@/features/stories/_shared/components/tag-chip-grid';
 import { cn } from '@/lib/utils';
+import { track } from '@/observability/analytics';
 
 import {
   CHARACTER_BASIC_INFO_DESCRIPTION,
@@ -36,8 +39,6 @@ import type {
   CharacterInput,
   CharacterTagCategory,
 } from '../../types';
-import { AddTagDialog } from './add-tag-dialog';
-import { TagChipGrid } from './tag-chip-grid';
 
 type CharacterFormProps = {
   category: CharacterTagCategory;
@@ -175,12 +176,14 @@ export function CharacterForm({
           disabled={disabled}
           addTagTrigger={
             <AddTagDialog
-              category={category}
               categoryLabel={categoryLabel}
               fieldId={fieldId}
               placeholder={tagPlaceholder}
               disabled={disabled || isMaxSelectionReached}
-              onAddTag={onAddCustomTag}
+              onAddTag={(tag) => {
+                track('client_storyCreate_addTag_submitted', { category });
+                onAddCustomTag(tag);
+              }}
             />
           }
           onTogglePredefinedTag={onTogglePredefinedTag}

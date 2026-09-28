@@ -61,7 +61,7 @@ export function CreatedStoryList() {
     event.preventDefault();
     // 앱과 같이 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab이다.
     track('client_storyList_createButton_clicked', { source: 'fab' });
-    router.push(APP_PATH.STUDIO.STORY.SIMPLE);
+    router.push(APP_PATH.STUDIO.STORY.SELECT);
   };
 
   // 진행 카드(초안·완성 중)가 하나라도 있으면 목록이 비어 있어도 빈 안내를 두지 않는다.

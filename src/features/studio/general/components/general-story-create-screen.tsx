@@ -1,0 +1,273 @@
+'use client';
+
+import { useState } from 'react';
+
+import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { useRouter } from 'next/navigation';
+
+import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
+import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { APP_PATH } from '@/constants/app-path';
+import {
+  GENERAL_STORY_CHARACTER_COPY,
+  GENERAL_STORY_CREATE_COPY,
+  GENERAL_STORY_EXIT_WARNING_COPY,
+  GENERAL_STORY_TEXT_FIELDS,
+  type GeneralStoryExitWarning,
+  type GeneralStoryTextField,
+} from '@/features/studio/general/constants';
+import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
+import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
+import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
+import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
+import {
+  getRegisterErrors,
+  REGISTER_ERROR_KEY,
+} from '@/features/studio/general/utils/register-validation';
+import {
+  createStartSettingDraft,
+  type GeneralStoryStartSettingDraft,
+} from '@/features/studio/general/utils/start-setting-draft';
+import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
+import { cn } from '@/lib/utils';
+
+import { GeneralStoryCharacterFields } from './general-story-character-fields';
+import {
+  GeneralStoryFormTabs,
+  type GeneralStoryTextValues,
+} from './general-story-form-tabs';
+import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
+import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
+import { GeneralStoryRegisterPanel } from './general-story-register-panel';
+import { GeneralStoryStartSettingPanel } from './general-story-start-setting-panel';
+import {
+  type GeneralStorySupportingCharacter,
+  GeneralStorySupportingCharacterList,
+} from './general-story-supporting-character-list';
+
+const EMPTY_TEXT_VALUES = Object.fromEntries(
+  Object.keys(GENERAL_STORY_TEXT_FIELDS).map((field) => [field, '']),
+) as GeneralStoryTextValues;
+
+type DraftSaveStatus = 'idle' | 'saving' | 'saved';
+
+type DraftSaveButtonProps = {
+  status: DraftSaveStatus;
+  canSave: boolean;
+  onClick: () => void;
+};
+
+function DraftSaveButton({ status, canSave, onClick }: DraftSaveButtonProps) {
+  const isSaved = status === 'saved';
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={!canSave || status !== 'idle'}
+      onClick={onClick}
+      className={cn(
+        'relative',
+        status !== 'idle' && 'disabled:opacity-100',
+        isSaved && 'border-transparent bg-primary/10 text-primary',
+      )}>
+      <span
+        className={cn(
+          'flex items-center gap-1',
+          status === 'saving' && 'invisible',
+        )}>
+        {isSaved && <HugeiconsIcon icon={Tick02Icon} aria-hidden="true" />}
+        {isSaved
+          ? GENERAL_STORY_CREATE_COPY.draftSaved
+          : GENERAL_STORY_CREATE_COPY.draftSave}
+      </span>
+      {status === 'saving' && <Spinner className="absolute" />}
+    </Button>
+  );
+}
+
+export function GeneralStoryCreateScreen() {
+  const router = useRouter();
+  const [exitWarning, setExitWarning] =
+    useState<GeneralStoryExitWarning>('nothing');
+  const [isExitOpen, setIsExitOpen] = useState(false);
+  const [textValues, setTextValues] = useState(EMPTY_TEXT_VALUES);
+  const [cover, setCover] = useState<DraftImage | null>(null);
+  const [descriptionRatio, setDescriptionRatio] =
+    useState(LENGTH_RATIO_DEFAULT);
+  const [protagonist, setProtagonist] = useState<GeneralStoryCharacter>({
+    name: '',
+    gender: null,
+    feature: '',
+  });
+  const [supporting, setSupporting] = useState<
+    GeneralStorySupportingCharacter[]
+  >(() => [
+    {
+      id: crypto.randomUUID(),
+      name: '',
+      gender: null,
+      feature: '',
+      image: null,
+    },
+  ]);
+  const [startSettings, setStartSettings] = useState<
+    GeneralStoryStartSettingDraft[]
+  >(() => [createStartSettingDraft()]);
+  const [mainEvents, setMainEvents] = useState<GeneralStoryMainEventDraft[]>(
+    [],
+  );
+  const [genres, setGenres] = useState(EMPTY_GENRE_SELECTION);
+  const [storyDescription, setStoryDescription] = useState('');
+  const [storyVisibility, setStoryVisibility] =
+    useState<CreateGeneralStoryRequestVisibility>('PRIVATE');
+  const [hasTriedRegister, setHasTriedRegister] = useState(false);
+  const registerErrors = getRegisterErrors({
+    texts: textValues,
+    protagonist,
+    supporting,
+    startSettings,
+    mainEvents,
+    genreCount: genres.selected.length,
+    description: storyDescription,
+  });
+
+  const hasUnsavedChanges = false;
+  const hasSavedDraft = false;
+
+  const handleClose = () => {
+    setExitWarning(
+      hasUnsavedChanges ? 'unsaved' : hasSavedDraft ? 'saved' : 'nothing',
+    );
+    setIsExitOpen(true);
+  };
+
+  const copy = GENERAL_STORY_EXIT_WARNING_COPY[exitWarning];
+
+  return (
+    <div className="flex h-full flex-col">
+      <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-4">
+        <h1 className="font-semibold">{GENERAL_STORY_CREATE_COPY.title}</h1>
+        <div className="ml-auto flex items-center gap-1">
+          <DraftSaveButton
+            status="idle"
+            canSave={hasUnsavedChanges}
+            onClick={() => {}}
+          />
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label={GENERAL_STORY_CREATE_COPY.close}
+            onClick={handleClose}>
+            <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
+          </Button>
+        </div>
+      </header>
+      <CollapsedListItemsProvider>
+        <GeneralStoryRegisterErrorsContext
+          value={hasTriedRegister ? registerErrors : null}>
+          <GeneralStoryFormTabs
+            values={textValues}
+            onChange={(field: GeneralStoryTextField, value: string) =>
+              setTextValues((previous) => ({ ...previous, [field]: value }))
+            }
+            cover={cover}
+            onCoverChange={setCover}
+            descriptionRatio={descriptionRatio}
+            onDescriptionRatioChange={setDescriptionRatio}
+            panels={{
+              protagonist: (
+                <GeneralStoryCharacterFields
+                  idPrefix="general-story-protagonist"
+                  labelPrefix="주인공"
+                  character={protagonist}
+                  namePlaceholder={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
+                  }
+                  featurePlaceholder={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
+                  }
+                  basicInfoDescription={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
+                  }
+                  featureDescription={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
+                  }
+                  featureRequired
+                  registerErrorKeys={{
+                    name: REGISTER_ERROR_KEY.protagonist('name'),
+                    gender: REGISTER_ERROR_KEY.protagonist('gender'),
+                    feature: REGISTER_ERROR_KEY.protagonist('feature'),
+                  }}
+                  onChange={setProtagonist}
+                />
+              ),
+              supporting: (
+                <GeneralStorySupportingCharacterList
+                  protagonistName={protagonist.name}
+                  characters={supporting}
+                  onChange={setSupporting}
+                />
+              ),
+              start: (
+                <GeneralStoryStartSettingPanel
+                  startSettings={startSettings}
+                  onChange={setStartSettings}
+                />
+              ),
+              event: (
+                <GeneralStoryMainEventPanel
+                  mainEvents={mainEvents}
+                  onChange={setMainEvents}
+                />
+              ),
+              publish: (
+                <GeneralStoryRegisterPanel
+                  genres={genres}
+                  onGenresChange={setGenres}
+                  storyDescription={storyDescription}
+                  onStoryDescriptionChange={setStoryDescription}
+                  storyVisibility={storyVisibility}
+                  onStoryVisibilityChange={setStoryVisibility}
+                />
+              ),
+            }}
+            registerErrors={registerErrors}
+            onRegisterAttempt={() => setHasTriedRegister(true)}
+          />
+        </GeneralStoryRegisterErrorsContext>
+      </CollapsedListItemsProvider>
+      <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{copy.title}</AlertDialogTitle>
+            <AlertDialogDescription>{copy.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{copy.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              type="button"
+              variant="destructive"
+              onClick={() => router.replace(APP_PATH.MAIN.STUDIO)}>
+              {copy.confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

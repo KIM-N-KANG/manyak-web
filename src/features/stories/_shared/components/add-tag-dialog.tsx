@@ -22,23 +22,20 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
-
-import { ADD_TAG_MAX_LENGTH } from '../../constants';
-import { useAddTagDialog } from '../../hooks/use-add-tag-dialog';
-import type { TagCategory } from '../../types';
+import { ADD_TAG_MAX_LENGTH } from '@/features/stories/_shared/constants/tag';
+import { useAddTagDialog } from '@/features/stories/_shared/hooks/use-add-tag-dialog';
 
 type AddTagDialogProps = {
-  category: TagCategory;
   categoryLabel: string;
   /** 인물마다 다이얼로그가 하나씩 있어 화면 안에서 유일해야 하는 필드 id */
   fieldId: string;
   placeholder: string;
   disabled?: boolean;
+  /** 앞뒤 공백을 뺀 키워드로 호출한다. 분석 이벤트는 호출하는 쪽이 보낸다. */
   onAddTag: (tag: string) => void;
 };
 
 export function AddTagDialog({
-  category,
   categoryLabel,
   fieldId,
   placeholder,
@@ -52,7 +49,7 @@ export function AddTagDialog({
     validationError,
     handleTagChange,
     handleSubmit,
-  } = useAddTagDialog({ category, onAddTag });
+  } = useAddTagDialog({ onAddTag });
   const errorId = `${fieldId}-tag-error`;
 
   return (

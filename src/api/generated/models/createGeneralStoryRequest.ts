@@ -12,7 +12,7 @@ import type { GeneralStorySettingsInput } from './generalStorySettingsInput';
 import type { MainEventItem } from './mainEventItem';
 
 /**
- * 일반 제작 스토리 등록 요청(단발). 검증 후 그대로 저장하며 AI를 호출하지 않는다.
+ * 일반 제작 스토리 등록 요청(단발). 검수 제출본으로 접수하며 승인 후 저장한다.
  */
 export interface CreateGeneralStoryRequest {
   /**
