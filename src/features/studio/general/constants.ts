@@ -144,6 +144,7 @@ export const GENERAL_STORY_COVER_COPY = {
   description: '가로 3 : 세로 4 비율을 추천해요',
   fileRule: '(JPG, PNG, WEBP / 최대 5MB)',
   upload: '이미지 추가',
+  change: '이미지 변경',
   remove: '삭제',
 } as const;
 

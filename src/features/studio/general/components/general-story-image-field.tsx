@@ -43,7 +43,13 @@ export function GeneralStoryImageField({
 }: GeneralStoryImageFieldProps) {
   const { isUploading, previewUrl, open, remove, inputProps } =
     useDraftImagePicker({ kind, image, onChange });
-  const { upload, remove: removeLabel, fileRule } = GENERAL_STORY_COVER_COPY;
+  const {
+    upload,
+    change,
+    remove: removeLabel,
+    fileRule,
+  } = GENERAL_STORY_COVER_COPY;
+  const uploadLabel = image ? change : upload;
 
   return (
     <Field className="gap-2">
@@ -86,11 +92,13 @@ export function GeneralStoryImageField({
               variant="secondary"
               disabled={isUploading}
               aria-label={
-                ariaLabelPrefix ? `${ariaLabelPrefix} ${upload}` : undefined
+                ariaLabelPrefix
+                  ? `${ariaLabelPrefix} ${uploadLabel}`
+                  : undefined
               }
               onClick={open}>
               <HugeiconsIcon icon={ImageUpload01Icon} aria-hidden="true" />
-              {upload}
+              {uploadLabel}
             </Button>
             {image && (
               <Button

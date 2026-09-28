@@ -74,6 +74,9 @@ test.describe('일반 제작 커버 이미지', () => {
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.change }),
+    ).toBeVisible();
     expect(presignBodies).toEqual([
       {
         kind: 'COVER',
