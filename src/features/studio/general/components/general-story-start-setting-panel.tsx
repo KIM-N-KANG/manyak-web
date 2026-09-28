@@ -67,6 +67,10 @@ const {
 /** 기본 선택 칩 모양에서 모서리만 알약 모양으로 둔다. */
 const CHIP_CLASS_NAME = 'shrink-0 rounded-full';
 
+/** 선택한 시작 상황 칩은 프라이머리로 채우고 라벨을 온 프라이머리로 둔다. */
+const SELECTED_CHIP_CLASS_NAME =
+  'aria-pressed:bg-primary aria-pressed:text-primary-foreground';
+
 const LONG_TEXT_HEIGHT = 'min-h-28 max-h-70';
 const SHORT_TEXT_HEIGHT = 'min-h-16 max-h-40';
 const SUGGESTED_INPUT_HEIGHT = 'min-h-12 max-h-40';
@@ -149,6 +153,7 @@ export function GeneralStoryStartSettingPanel({
                 data-register-error={hasRegisterError || undefined}
                 className={cn(
                   CHIP_CLASS_NAME,
+                  SELECTED_CHIP_CLASS_NAME,
                   isRemovable && 'pr-9.5',
                   hasRegisterError && 'text-destructive',
                 )}
@@ -170,7 +175,7 @@ export function GeneralStoryStartSettingPanel({
                       hasStartSettingInput(item),
                     )
                   }
-                  className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-foreground-secondary outline-none group-has-aria-pressed:text-primary hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring/50">
+                  className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-foreground-secondary outline-none group-has-aria-pressed:text-primary-foreground hover:bg-foreground/10 group-has-aria-pressed:hover:bg-primary-foreground/20 focus-visible:ring-2 focus-visible:ring-ring/50">
                   <HugeiconsIcon
                     icon={Cancel01Icon}
                     aria-hidden="true"
