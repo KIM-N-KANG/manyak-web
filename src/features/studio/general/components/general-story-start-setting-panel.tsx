@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -24,6 +25,7 @@ import {
   GENERAL_STORY_START_COPY,
 } from '@/features/studio/general/constants';
 import { getDuplicateNameIds } from '@/features/studio/general/utils/duplicate-name';
+import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
 import {
   createEndingDraft,
   createStartSettingDraft,
@@ -233,6 +235,19 @@ function GeneralStoryStartSettingEditor({
     );
 
   const duplicateEndingIds = getDuplicateNameIds(selected.endings);
+  const [touchedSuggestedInputs, setTouchedSuggestedInputs] = useState([
+    false,
+    false,
+    false,
+  ]);
+  const suggestedInputErrors = selected.suggestedInputs.map((value, index) =>
+    touchedSuggestedInputs[index]
+      ? getMinLengthError(suggestedInput.label, value)
+      : null,
+  );
+  const suggestedInputError =
+    suggestedInputErrors.find((error) => error !== null) ?? null;
+  const suggestedInputErrorId = `general-story-start-${selected.id}-suggested-input-error`;
 
   const addEnding = () => {
     const next = createEndingDraft();
@@ -286,36 +301,57 @@ function GeneralStoryStartSettingEditor({
               *
             </span>
           </FieldLabel>
-          {selected.suggestedInputs.map((value, index) => (
-            <InputGroup key={index}>
-              <InputGroupTextarea
-                aria-label={`${suggestedInput.label} ${index + 1}`}
-                aria-required
-                maxLength={suggestedInput.maxLength}
-                placeholder={suggestedInput.placeholders[index]}
-                value={value}
-                className={SUGGESTED_INPUT_HEIGHT}
-                onChange={(event) => {
-                  const next = [...selected.suggestedInputs] as [
-                    string,
-                    string,
-                    string,
-                  ];
+          {selected.suggestedInputs.map((value, index) => {
+            const hasError = suggestedInputErrors[index] !== null;
 
-                  next[index] = event.target.value;
-                  update({ suggestedInputs: next });
-                }}
-              />
-              <InputGroupAddon align="block-end">
-                <InputGroupText>
-                  {value.length} / {suggestedInput.maxLength}
-                </InputGroupText>
-              </InputGroupAddon>
-            </InputGroup>
-          ))}
-          <FieldDescription className="break-keep text-foreground-secondary">
-            {suggestedInput.description}
-          </FieldDescription>
+            return (
+              <InputGroup key={index}>
+                <InputGroupTextarea
+                  aria-label={`${suggestedInput.label} ${index + 1}`}
+                  aria-required
+                  aria-invalid={hasError ? true : undefined}
+                  aria-describedby={
+                    hasError ? suggestedInputErrorId : undefined
+                  }
+                  maxLength={suggestedInput.maxLength}
+                  placeholder={suggestedInput.placeholders[index]}
+                  value={value}
+                  className={SUGGESTED_INPUT_HEIGHT}
+                  onChange={(event) => {
+                    const next = [...selected.suggestedInputs] as [
+                      string,
+                      string,
+                      string,
+                    ];
+
+                    next[index] = event.target.value;
+                    update({ suggestedInputs: next });
+                  }}
+                  onBlur={() =>
+                    setTouchedSuggestedInputs((previous) =>
+                      previous.map((touched, touchedIndex) =>
+                        touchedIndex === index ? true : touched,
+                      ),
+                    )
+                  }
+                />
+                <InputGroupAddon align="block-end">
+                  <InputGroupText>
+                    {value.length} / {suggestedInput.maxLength}
+                  </InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
+            );
+          })}
+          {suggestedInputError ? (
+            <FieldError id={suggestedInputErrorId}>
+              {suggestedInputError}
+            </FieldError>
+          ) : (
+            <FieldDescription className="break-keep text-foreground-secondary">
+              {suggestedInput.description}
+            </FieldDescription>
+          )}
         </Field>
 
         <Field className="gap-2">

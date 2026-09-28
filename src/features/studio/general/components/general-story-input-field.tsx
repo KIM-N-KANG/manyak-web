@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from 'react';
+import { type Ref, useState } from 'react';
 
 import {
   Field,
@@ -13,10 +13,11 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
+import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
 
 type GeneralStoryInputFieldProps = {
   id: string;
-  label: ReactNode;
+  label: string;
   required?: boolean;
   multiline?: boolean;
   /** 여러 줄 입력의 최소·최대 높이 클래스다. */
@@ -24,13 +25,13 @@ type GeneralStoryInputFieldProps = {
   maxLength?: number;
   placeholder?: string;
   description?: string;
+  /** 최소 글자 수 오류보다 먼저 보이는 오류다. */
   error?: string | null;
   inputMode?: 'numeric';
   /** 한 줄 입력 오른쪽 끝에 붙는 단위다. 글자 수 대신 표시한다. */
   suffix?: string;
   value: string;
   onChange: (value: string) => void;
-  onBlur?: () => void;
   /** 한 줄 입력 요소 ref다. 동적으로 추가한 칸으로 스크롤할 때 쓴다. */
   inputRef?: Ref<HTMLInputElement>;
 };
@@ -49,9 +50,14 @@ export function GeneralStoryInputField({
   suffix,
   value,
   onChange,
-  onBlur,
   inputRef,
 }: GeneralStoryInputFieldProps) {
+  const [isTouched, setIsTouched] = useState(false);
+  const shownError =
+    error ??
+    (isTouched && inputMode !== 'numeric'
+      ? getMinLengthError(label, value)
+      : null);
   const descriptionId = `${id}-description`;
   const errorId = `${id}-error`;
   const controlProps = {
@@ -60,14 +66,14 @@ export function GeneralStoryInputField({
     maxLength,
     placeholder,
     inputMode,
-    'aria-describedby': error
+    'aria-describedby': shownError
       ? errorId
       : description
         ? descriptionId
         : undefined,
-    'aria-invalid': error ? true : undefined,
+    'aria-invalid': shownError ? true : undefined,
     'aria-required': required,
-    onBlur,
+    onBlur: () => setIsTouched(true),
   };
   const addon =
     suffix ?? (maxLength !== undefined && `${value.length} / ${maxLength}`);
@@ -102,8 +108,8 @@ export function GeneralStoryInputField({
           </InputGroupAddon>
         )}
       </InputGroup>
-      {error ? (
-        <FieldError id={errorId}>{error}</FieldError>
+      {shownError ? (
+        <FieldError id={errorId}>{shownError}</FieldError>
       ) : (
         description && (
           <FieldDescription

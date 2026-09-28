@@ -12,7 +12,6 @@ import {
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
-import { getGeneralStoryTextError } from '@/features/studio/general/utils/general-story-text-error';
 import { cn } from '@/lib/utils';
 
 import { GeneralStoryImageField } from './general-story-image-field';
@@ -43,7 +42,6 @@ function GeneralStoryTextInput({
   onChange,
 }: GeneralStoryTextInputProps) {
   const config = GENERAL_STORY_TEXT_FIELDS[field];
-  const [isTouched, setIsTouched] = useState(false);
 
   return (
     <GeneralStoryInputField
@@ -55,10 +53,8 @@ function GeneralStoryTextInput({
       maxLength={'maxLength' in config ? config.maxLength : undefined}
       placeholder={'placeholder' in config ? config.placeholder : undefined}
       description={'description' in config ? config.description : undefined}
-      error={isTouched ? getGeneralStoryTextError(field, value) : null}
       value={value}
       onChange={onChange}
-      onBlur={() => setIsTouched(true)}
     />
   );
 }

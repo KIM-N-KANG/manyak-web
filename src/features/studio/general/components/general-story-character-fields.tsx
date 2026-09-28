@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
   Field,
   FieldDescription,
@@ -24,6 +26,7 @@ import type {
   CharacterGender,
   GeneralStoryCharacter,
 } from '@/features/studio/general/utils/character-settings';
+import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
 import { cn } from '@/lib/utils';
 
 const GENDER_OPTIONS = [
@@ -51,7 +54,7 @@ type GeneralStoryCharacterFieldsProps = {
   basicInfoDescription: string;
   featureDescription: string;
   featureRequired: boolean;
-  /** 있으면 기본 정보 설명 대신 보이는 이름 오류다. */
+  /** 있으면 최소 글자 수 오류보다 먼저 기본 정보 설명 대신 보이는 이름 오류다. */
   nameError?: string | null;
   onChange: (character: GeneralStoryCharacter) => void;
   nameInputRef?: (element: HTMLInputElement | null) => void;
@@ -78,7 +81,15 @@ export function GeneralStoryCharacterFields({
     nameMaxLength,
     featureMaxLength,
   } = GENERAL_STORY_CHARACTER_COPY;
+  const [touched, setTouched] = useState({ name: false, feature: false });
+  const shownNameError =
+    nameError ??
+    (touched.name ? getMinLengthError(nameLabel, character.name) : null);
+  const featureError = touched.feature
+    ? getMinLengthError(featureLabel, character.feature)
+    : null;
   const nameErrorId = `${idPrefix}-name-error`;
+  const featureErrorId = `${idPrefix}-feature-error`;
 
   return (
     <FieldGroup className="gap-6">
@@ -94,13 +105,16 @@ export function GeneralStoryCharacterFields({
               ref={nameInputRef}
               aria-label={`${labelPrefix} ${nameLabel}`}
               aria-required
-              aria-invalid={nameError ? true : undefined}
-              aria-describedby={nameError ? nameErrorId : undefined}
+              aria-invalid={shownNameError ? true : undefined}
+              aria-describedby={shownNameError ? nameErrorId : undefined}
               maxLength={nameMaxLength}
               placeholder={namePlaceholder}
               value={character.name}
               onChange={(event) =>
                 onChange({ ...character, name: event.target.value })
+              }
+              onBlur={() =>
+                setTouched((previous) => ({ ...previous, name: true }))
               }
             />
             <InputGroupAddon align="inline-end">
@@ -133,8 +147,8 @@ export function GeneralStoryCharacterFields({
             </SelectContent>
           </Select>
         </div>
-        {nameError ? (
-          <FieldError id={nameErrorId}>{nameError}</FieldError>
+        {shownNameError ? (
+          <FieldError id={nameErrorId}>{shownNameError}</FieldError>
         ) : (
           <FieldDescription className="break-keep text-foreground-secondary">
             {basicInfoDescription}
@@ -151,12 +165,17 @@ export function GeneralStoryCharacterFields({
           <InputGroupTextarea
             id={`${idPrefix}-feature`}
             aria-required={featureRequired}
+            aria-invalid={featureError ? true : undefined}
+            aria-describedby={featureError ? featureErrorId : undefined}
             maxLength={featureMaxLength}
             placeholder={featurePlaceholder}
             value={character.feature}
             className="max-h-70 min-h-28"
             onChange={(event) =>
               onChange({ ...character, feature: event.target.value })
+            }
+            onBlur={() =>
+              setTouched((previous) => ({ ...previous, feature: true }))
             }
           />
           <InputGroupAddon align="block-end">
@@ -165,9 +184,13 @@ export function GeneralStoryCharacterFields({
             </InputGroupText>
           </InputGroupAddon>
         </InputGroup>
-        <FieldDescription className="break-keep text-foreground-secondary">
-          {featureDescription}
-        </FieldDescription>
+        {featureError ? (
+          <FieldError id={featureErrorId}>{featureError}</FieldError>
+        ) : (
+          <FieldDescription className="break-keep text-foreground-secondary">
+            {featureDescription}
+          </FieldDescription>
+        )}
       </Field>
     </FieldGroup>
   );

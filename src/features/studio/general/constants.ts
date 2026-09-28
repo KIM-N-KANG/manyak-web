@@ -45,8 +45,6 @@ export const GENERAL_STORY_EXIT_WARNING_COPY = {
 export const GENERAL_STORY_TEXT_FIELDS = {
   title: {
     label: '제목',
-    minLength: 2,
-    minLengthError: '제목은 2자 이상 입력해 주세요',
     maxLength: 100,
     multiline: false,
     placeholder: '예: 노선도에 없는 역',
@@ -98,8 +96,6 @@ export const GENERAL_STORY_TEXT_FIELDS = {
   string,
   {
     label: string;
-    minLength?: number;
-    minLengthError?: string;
     maxLength?: number;
     multiline: boolean;
     placeholder?: string;
@@ -108,6 +104,12 @@ export const GENERAL_STORY_TEXT_FIELDS = {
 >;
 
 export type GeneralStoryTextField = keyof typeof GENERAL_STORY_TEXT_FIELDS;
+
+/**
+ * 모든 글 입력의 클라이언트 전용 최소 글자 수다. 앞뒤 공백을 빼고 세며, 한 글자만 쓰고 칸을 벗어나면
+ * 설명 자리에 오류를 보인다(`utils/general-story-text-error`). 숫자 칸(최소 턴 수)은 대상이 아니다.
+ */
+export const GENERAL_STORY_MIN_LENGTH = 2;
 
 /**
  * 입력 탭 순서와 각 탭의 글 항목이다. 필수 항목을 가진 탭을 앞에, 게시 정보를 정하는 등록을 끝에 둔다.

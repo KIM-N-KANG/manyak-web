@@ -13,6 +13,7 @@ import {
   GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
 import { DRAFT_IMAGE_FILE_ERROR } from '@/features/studio/general/utils/draft-image-file';
+import { getMinLengthError } from '@/features/studio/general/utils/general-story-text-error';
 import { DISCARD_INPUT_CONFIRM_COPY } from '@/hooks/use-discard-confirm';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -133,6 +134,59 @@ test.describe('일반 제작 커버 이미지', () => {
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
     ).toHaveCount(0);
+  });
+});
+
+test.describe('일반 제작 최소 글자 수', () => {
+  test('글 입력에 한 글자만 쓰고 칸을 벗어나면 설명 대신 최소 글자 수 오류를 보이고, 2자가 되면 설명으로 돌아간다 (STORY-GENERAL-04)', async ({
+    page,
+  }) => {
+    const tabLabel = (value: string) =>
+      GENERAL_STORY_TABS.find((tab) => tab.value === value)?.label;
+    const { title } = GENERAL_STORY_TEXT_FIELDS;
+    const { featureLabel } = GENERAL_STORY_CHARACTER_COPY;
+    const { suggestedInput } = GENERAL_STORY_START_COPY;
+
+    await openGeneralCreate(page);
+
+    const titleInput = page.getByLabel(title.label);
+    const titleError = page.getByText(getMinLengthError(title.label, '역')!);
+
+    await titleInput.fill('역');
+    await titleInput.blur();
+    await expect(titleError).toBeVisible();
+    await expect(titleInput).toHaveAttribute('aria-invalid', 'true');
+    await titleInput.fill('역사');
+    await expect(titleError).toHaveCount(0);
+    await expect(page.getByText(title.description)).toBeVisible();
+
+    await page
+      .getByRole('tab', { name: tabLabel('protagonist'), exact: true })
+      .click();
+
+    const feature = page.getByLabel(featureLabel);
+
+    await feature.fill('역');
+    await feature.blur();
+    await expect(feature).toHaveAttribute('aria-invalid', 'true');
+    await expect(
+      page.getByText(getMinLengthError(featureLabel, '역')!),
+    ).toBeVisible();
+
+    await page
+      .getByRole('tab', { name: tabLabel('start'), exact: true })
+      .click();
+
+    const firstSuggestedInput = page.getByRole('textbox', {
+      name: `${suggestedInput.label} 1`,
+    });
+
+    await firstSuggestedInput.fill('역');
+    await firstSuggestedInput.blur();
+    await expect(firstSuggestedInput).toHaveAttribute('aria-invalid', 'true');
+    await expect(
+      page.getByText(getMinLengthError(suggestedInput.label, '역')!),
+    ).toBeVisible();
   });
 });
 
