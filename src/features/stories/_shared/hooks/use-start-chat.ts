@@ -19,6 +19,8 @@ type UseStartChatOptions = {
   startSettingId?: string;
   /** 생성 요청 직전에 호출한다. 진입점별 분석 이벤트는 호출부가 소유한다. */
   onStart?: () => void;
+  /** 채팅 생성에 실패해 토스트를 띄운 뒤 채팅을 만들려던 스토리 id로 호출한다. */
+  onError?: (storyId: string) => void;
 };
 
 /**
@@ -27,12 +29,12 @@ type UseStartChatOptions = {
  * 채팅 생성 후 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
  *
  * @param storyId 채팅을 시작할 스토리 id
- * @param options 시작 설정 id와 요청 직전 콜백
- * @returns 채팅 시작 함수와 진행/에러 상태
+ * @param options 시작 설정 id와 요청 직전·실패 콜백
+ * @returns 채팅 시작 함수(호출 시점에야 id를 아는 경우 `startChatFor`)와 진행/에러 상태
  */
 export function useStartChat(
   storyId: string,
-  { startSettingId, onStart }: UseStartChatOptions = {},
+  { startSettingId, onStart, onError }: UseStartChatOptions = {},
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -58,20 +60,24 @@ export function useStartChat(
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
-      onError: () => {
+      onError: (_error, variables) => {
         // 채팅 생성은 이프를 소모하지 않으므로 사유 구분 없이 실패 토스트를 띄운다.
         toast.error(TOAST_MESSAGE.CHAT_START_FAILED);
+        onError?.(variables.data.storyId ?? storyId);
       },
     },
   });
 
-  const startChat = () => {
+  const startChatFor = (targetStoryId: string) => {
     onStart?.();
-    createChat.mutate({ data: { storyId, startSettingId } });
+    createChat.mutate({ data: { storyId: targetStoryId, startSettingId } });
   };
+
+  const startChat = () => startChatFor(storyId);
 
   return {
     startChat,
+    startChatFor,
     isStarting: createChat.isPending || createChat.isSuccess,
     isError: createChat.isError,
   };

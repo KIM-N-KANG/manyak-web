@@ -1,9 +1,13 @@
 'use client';
 
+import { useState } from 'react';
+
 import Link from 'next/link';
 
 import { BackHeader } from '@/components/layout/back-header';
 import { APP_PATH } from '@/constants/app-path';
+import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
@@ -37,6 +41,9 @@ const OPTION_HEIGHT =
   'min-h-[calc((667px-3.5rem-2rem)/2)] max-h-[calc((924px-3.5rem-4rem)/2)]';
 
 export function StoryModeSelectScreen() {
+  const { isGuest } = useMemberAccess();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <BackHeader
@@ -49,9 +56,15 @@ export function StoryModeSelectScreen() {
             <Link
               key={method}
               href={href}
-              onClick={() =>
-                track('client_storyCreate_methodOption_selected', { method })
-              }
+              onClick={(event) => {
+                track('client_storyCreate_methodOption_selected', { method });
+
+                // 일반 제작은 회원 전용이라 게스트는 이동하지 않고 로그인을 먼저 받는다.
+                if (method === 'general' && isGuest) {
+                  event.preventDefault();
+                  setIsLoginOpen(true);
+                }
+              }}
               className={cn(
                 OPTION_HEIGHT,
                 'flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors duration-250 ease-[cubic-bezier(.2,.8,.2,1)] outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none',
@@ -67,6 +80,7 @@ export function StoryModeSelectScreen() {
           ))}
         </div>
       </main>
+      <LoginRequiredSheet open={isLoginOpen} onOpenChange={setIsLoginOpen} />
     </div>
   );
 }

@@ -37,4 +37,25 @@ describe('getDraftExitWarning', () => {
       }),
     ).toBe('unsaved');
   });
+
+  it('등록을 요청했으면 임시 저장 상태와 무관하게 요청 뒤 고친 것이 있는지로 고른다', () => {
+    expect(
+      getDraftExitWarning({
+        hasInput: true,
+        hasSavedDraft: false,
+        isSaved: false,
+        hasSubmitted: true,
+        isSubmittedUnchanged: true,
+      }),
+    ).toBe('submitted');
+    expect(
+      getDraftExitWarning({
+        hasInput: true,
+        hasSavedDraft: false,
+        isSaved: false,
+        hasSubmitted: true,
+        isSubmittedUnchanged: false,
+      }),
+    ).toBe('submittedEdited');
+  });
 });

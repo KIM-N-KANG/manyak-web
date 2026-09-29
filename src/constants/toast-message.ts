@@ -1,9 +1,13 @@
 export const TOAST_MESSAGE = {
   STORY_DRAFT_SAVED: '임시 저장했어요',
-  STORY_DRAFT_SAVE_FAILED: '작성 내용을 저장하지 못했어요. 다시 시도해주세요',
+  STORY_DRAFT_SAVE_FAILED: '작성 내용을 저장하지 못했어요',
   STORY_DRAFT_LOAD_FAILED: '작성 내용을 불러오지 못했어요',
   STORY_COMPLETED: '스토리가 완성되었어요',
   STORY_COMPLETE_FAILED: '스토리를 완성하지 못했어요',
+  STORY_REVIEWING: '스토리를 검토하고 있어요',
+  STORY_REVIEW_REJECTED: '스토리가 검토를 통과하지 못했어요',
+  STORY_REVIEW_DELAYED: '검토가 늦어지고 있어요. 끝나면 제작 탭에 추가돼요',
+  STORY_REGISTER_FAILED: '스토리를 등록하지 못했어요',
   STORY_DELETED: '스토리가 삭제되었어요',
   CHAT_DELETED: '채팅이 삭제되었어요',
   STORY_DELETE_FAILED: '스토리 삭제에 실패했어요',
@@ -47,5 +51,5 @@ export const TOAST_MESSAGE = {
   PUSH_PERMISSION_DENIED: '브라우저 알림이 차단되어 있어요',
   PUSH_SETTINGS_LOAD_FAILED: '알림 설정을 불러오지 못했어요',
   PUSH_SETTINGS_SAVE_FAILED: '알림 설정을 저장하지 못했어요',
-  DRAFT_IMAGE_UPLOAD_FAILED: '이미지를 올리지 못했어요. 다시 시도해주세요',
+  DRAFT_IMAGE_UPLOAD_FAILED: '이미지를 올리지 못했어요',
 } as const;

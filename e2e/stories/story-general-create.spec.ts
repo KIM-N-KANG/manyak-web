@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { COLLAPSIBLE_LIST_ITEM_COPY } from '@/components/common/collapsible-list-item';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   GENERAL_STORY_CHARACTER_COPY,
@@ -22,9 +23,11 @@ import {
   getRequiredError,
 } from '@/features/studio/general/utils/general-story-text-error';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
+import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 import { DISCARD_INPUT_CONFIRM_COPY } from '@/hooks/use-discard-confirm';
 
-import { mockMemberSession } from '../fixtures/auth';
+import { mockGuestSession, mockMemberSession } from '../fixtures/auth';
+import { oneLine } from '../fixtures/copy';
 import { readCreationStorage } from '../fixtures/storage';
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
@@ -805,5 +808,328 @@ test.describe('일반 제작 임시 저장', () => {
     void page.close({ runBeforeUnload: true });
     expect((await dialog).type()).toBe('beforeunload');
     await (await dialog).dismiss();
+  });
+});
+
+test.describe('일반 제작 등록', () => {
+  const GENERAL_STORY_API = '**/api/v1/stories/general';
+  const tab = (page: Page, value: string) =>
+    page.locator(`[role="tab"][data-tab-value="${value}"]`);
+  const activePanel = (page: Page) => page.getByRole('tabpanel');
+  const registerButton = (page: Page) =>
+    page.getByRole('button', {
+      name: GENERAL_STORY_CREATE_COPY.register,
+      exact: true,
+    });
+
+  /** 제공 장르를 목킹하고 일반 제작을 연다. 장르 목록은 화면을 열 때 받는다. */
+  async function openWithGenreTags(page: Page) {
+    await page.route('**/api/v1/stories/simple/tags', (route) =>
+      route.fulfill({ json: [{ id: 1, name: '판타지', category: 'GENRE' }] }),
+    );
+    await openGeneralCreate(page);
+  }
+
+  /** 필수 항목을 모두 채우고 등록 탭으로 옮긴다. 탭을 옮길 때마다 임시 저장된다. */
+  async function fillRequiredForm(page: Page) {
+    const { title, oneLineIntro, world, progression } =
+      GENERAL_STORY_TEXT_FIELDS;
+    const selectGender = async (label: string) => {
+      await page.getByRole('combobox', { name: label }).click();
+      await page.getByRole('option', { name: '여성' }).click();
+    };
+
+    await page.getByLabel(title.label).fill(' 노선도에 없는 역 ');
+    await page.getByLabel(oneLineIntro.label).fill('막차에서 내린 곳');
+    await tab(page, 'story').click();
+    await page.getByLabel(world.label).fill('막차 뒤에만 열리는 역');
+    await page.getByLabel(progression.label).fill('긴장감 있게 전개한다');
+    await tab(page, 'protagonist').click();
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('윤해솔');
+    await selectGender('주인공 성별');
+    await activePanel(page)
+      .getByLabel(GENERAL_STORY_CHARACTER_COPY.featureLabel)
+      .fill('겁이 많은 회사원');
+    await tab(page, 'supporting').click();
+    await page
+      .getByRole('textbox', { name: '주변 인물 1 이름' })
+      .fill('도하람');
+    await selectGender('주변 인물 1 성별');
+    await tab(page, 'start').click();
+    await page.getByLabel(GENERAL_STORY_START_COPY.name.label).fill('승강장');
+    await page
+      .getByLabel(GENERAL_STORY_START_COPY.prologue.label)
+      .fill('불 꺼진 승강장에 내렸다');
+    await page
+      .getByLabel(GENERAL_STORY_START_COPY.situation.label)
+      .fill('열차가 떠나고 혼자 남았다');
+
+    for (const index of [1, 2, 3]) {
+      await page
+        .getByRole('textbox', {
+          name: `${GENERAL_STORY_START_COPY.suggestedInput.label} ${index}`,
+        })
+        .fill(`추천 입력 ${index}`);
+    }
+
+    await tab(page, 'publish').click();
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+  }
+
+  const SUBMISSION_API = '**/api/v1/stories/submissions/submission-1';
+  const readDraftStorage = async (page: Page) =>
+    (await readCreationStorage(page, PENDING_CREATION_REQUEST_STORAGE_KEY)) ??
+    '';
+
+  /** 등록 요청을 202로 접수하고, 받은 요청 본문을 기록한다. */
+  async function mockRegisterAccepted(page: Page) {
+    const requests: Record<string, unknown>[] = [];
+
+    await page.route(GENERAL_STORY_API, async (route) => {
+      requests.push(route.request().postDataJSON() as Record<string, unknown>);
+      await route.fulfill({
+        status: 202,
+        json: { submissionId: 'submission-1', status: 'PENDING' },
+      });
+    });
+
+    return requests;
+  }
+
+  test('필수 항목을 채워 등록하면 검토 중을 안내하고, 승인되면 임시 저장본을 지운 뒤 채팅방으로 간다 (STORY-GENERAL-21)', async ({
+    page,
+  }) => {
+    const registerRequests = await mockRegisterAccepted(page);
+    const chatRequests: Record<string, unknown>[] = [];
+    let submissionReads = 0;
+
+    await page.route(SUBMISSION_API, async (route) => {
+      submissionReads += 1;
+      await route.fulfill({
+        json:
+          submissionReads < 2
+            ? { submissionId: 'submission-1', status: 'PENDING' }
+            : {
+                submissionId: 'submission-1',
+                status: 'APPROVED',
+                storyId: 'story-1',
+              },
+      });
+    });
+    await page.route('**/api/v1/chats', async (route) => {
+      chatRequests.push(
+        route.request().postDataJSON() as Record<string, unknown>,
+      );
+      await route.fulfill({ status: 201, json: { id: 'chat-1' } });
+    });
+    await openWithGenreTags(page);
+    await fillRequiredForm(page);
+    await expect
+      .poll(() => readDraftStorage(page))
+      .toContain('노선도에 없는 역');
+
+    await registerButton(page).click();
+    await expect(
+      page.getByLabel(GENERAL_STORY_CREATE_COPY.registering),
+    ).toBeVisible();
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REVIEWING)).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.CHAT_ROOM('chat-1')}$`),
+    );
+    expect(registerRequests).toHaveLength(1);
+    expect(registerRequests[0]).toMatchObject({
+      title: '노선도에 없는 역',
+      oneLineIntro: '막차에서 내린 곳',
+      genres: ['판타지'],
+      visibility: 'PRIVATE',
+      characters: [{ name: '도하람', images: [] }],
+      startSettings: [
+        {
+          name: '승강장',
+          suggestedInputs: ['추천 입력 1', '추천 입력 2', '추천 입력 3'],
+          endings: [],
+        },
+      ],
+      mainEvents: [],
+    });
+    expect(registerRequests[0]).not.toHaveProperty('description');
+    expect(chatRequests).toEqual([{ storyId: 'story-1' }]);
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REVIEWING)).toHaveCount(0);
+    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+
+    // 채팅방에서 뒤로가기는 등록을 마친 일반 제작 화면으로 돌아가지 않는다.
+    await page.goBack();
+    await expect(page).not.toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
+    );
+  });
+
+  test('검토를 통과하지 못하면 안내하고 입력을 두며, 다시 등록하면 같은 제출본을 재제출한다 (STORY-GENERAL-25)', async ({
+    page,
+  }) => {
+    const registerRequests = await mockRegisterAccepted(page);
+    const resubmitRequests: Record<string, unknown>[] = [];
+
+    await page.route(SUBMISSION_API, async (route) => {
+      if (route.request().method() === 'PUT') {
+        resubmitRequests.push(
+          route.request().postDataJSON() as Record<string, unknown>,
+        );
+        await route.fulfill({
+          status: 202,
+          json: { submissionId: 'submission-1', status: 'PENDING' },
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        json: { submissionId: 'submission-1', status: 'REJECTED' },
+      });
+    });
+    await openWithGenreTags(page);
+    await fillRequiredForm(page);
+    await registerButton(page).click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_REVIEW_REJECTED),
+    ).toBeVisible();
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REVIEWING)).toHaveCount(0);
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
+    );
+    await expect(registerButton(page)).toBeEnabled();
+    // 접수된 입력은 서버 제출본이 정본이라 임시 저장본을 지우고 다시 임시 저장하지 않는다.
+    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+    await expect(
+      page.getByRole('button', {
+        name: GENERAL_STORY_CREATE_COPY.draftSave,
+        exact: true,
+      }),
+    ).toBeDisabled();
+
+    await registerButton(page).click();
+    await expect.poll(() => resubmitRequests.length).toBe(1);
+    expect(resubmitRequests[0]).toMatchObject({ title: '노선도에 없는 역' });
+    expect(registerRequests).toHaveLength(1);
+  });
+
+  test('검토가 1분 넘게 끝나지 않으면 기다리지 않고 제작 탭으로 가 늦어진다고 안내한다 (STORY-GENERAL-26)', async ({
+    page,
+  }) => {
+    await page.clock.install();
+    await mockRegisterAccepted(page);
+    await page.route(SUBMISSION_API, (route) =>
+      route.fulfill({
+        json: { submissionId: 'submission-1', status: 'PENDING' },
+      }),
+    );
+    await openWithGenreTags(page);
+    await fillRequiredForm(page);
+
+    const firstRead = page.waitForRequest(SUBMISSION_API);
+
+    await registerButton(page).click();
+    await firstRead;
+    await page.clock.fastForward('01:01');
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_REVIEW_DELAYED),
+    ).toBeVisible();
+    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+  });
+
+  test('검토 중에 나가면 제출본이 있다고 안내하고, 이어서 만들 임시 저장본을 남기지 않는다 (STORY-GENERAL-28)', async ({
+    page,
+  }) => {
+    await mockRegisterAccepted(page);
+    await page.route(SUBMISSION_API, (route) =>
+      route.fulfill({
+        json: { submissionId: 'submission-1', status: 'PENDING' },
+      }),
+    );
+    await openWithGenreTags(page);
+    await fillRequiredForm(page);
+    await expect
+      .poll(() => readDraftStorage(page))
+      .toContain('노선도에 없는 역');
+
+    const firstRead = page.waitForRequest(SUBMISSION_API);
+
+    await registerButton(page).click();
+    await firstRead;
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+
+    const exitDialog = page.getByRole('alertdialog');
+
+    await expect(
+      exitDialog.getByText(
+        GENERAL_STORY_EXIT_WARNING_COPY.submitted.description,
+      ),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', {
+        name: GENERAL_STORY_EXIT_WARNING_COPY.submitted.confirm,
+      })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REVIEWING)).toHaveCount(0);
+    await expect(
+      page.getByRole('article', {
+        name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+      }),
+    ).toHaveCount(0);
+    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+  });
+
+  test('등록 요청이 실패하면 안내하고 입력을 그대로 둔다 (STORY-GENERAL-22)', async ({
+    page,
+  }) => {
+    await page.route(GENERAL_STORY_API, (route) =>
+      route.fulfill({ status: 500, json: { status: 500 } }),
+    );
+    await openWithGenreTags(page);
+    await fillRequiredForm(page);
+    await registerButton(page).click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_REGISTER_FAILED),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
+    );
+    await expect(registerButton(page)).toBeEnabled();
+    await tab(page, 'basic').click();
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toHaveValue(' 노선도에 없는 역 ');
+  });
+
+  test('게스트는 제작 방식 선택에서 일반 제작을 고르면 로그인 시트를 보고, 주소로 들어오면 로그인 화면으로 간다 (STORY-GENERAL-23)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockGuestSession(page);
+    await page.goto(APP_PATH.STUDIO.STORY.SELECT);
+    await page
+      .getByRole('link', {
+        name: new RegExp(STORY_MODE_SELECT_COPY.general.title),
+      })
+      .click();
+
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SELECT}$`),
+    );
+
+    await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.LOGIN}\\?`));
   });
 });

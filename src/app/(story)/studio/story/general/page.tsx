@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { GeneralStoryCreateScreen } from '@/features/studio/general/components/general-story-create-screen';
+import { GeneralStoryCreateGate } from '@/features/studio/general/components/general-story-create-gate';
 import { GENERAL_STORY_CREATE_COPY } from '@/features/studio/general/constants';
 
 export const metadata: Metadata = {
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function GeneralStoryStudioPage() {
-  return <GeneralStoryCreateScreen />;
+  return <GeneralStoryCreateGate />;
 }

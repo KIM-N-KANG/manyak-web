@@ -1,6 +1,7 @@
 import { type ReactNode, use, useRef, useState } from 'react';
 
 import { useCollapsedListItems } from '@/components/common/collapsible-list-item';
+import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { StepFooter } from '@/components/common/step-footer';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
@@ -86,6 +87,8 @@ type GeneralStoryFormTabsProps = {
   onRegisterAttempt: () => void;
   /** 오류 없이 등록하기를 눌렀을 때 호출한다. */
   onRegister?: () => void;
+  /** 등록 요청·검토 중이면 등록하기에 스피너를 두고 탭과 입력을 잠근다. */
+  isRegistering?: boolean;
   /** 다른 탭으로 옮길 때마다 호출한다(탭 누르기·이전·다음·등록 오류 이동). */
   onTabChange?: () => void;
 };
@@ -101,6 +104,7 @@ export function GeneralStoryFormTabs({
   registerErrors,
   onRegisterAttempt,
   onRegister,
+  isRegistering = false,
   onTabChange,
 }: GeneralStoryFormTabsProps) {
   const shownRegisterErrors = use(GeneralStoryRegisterErrorsContext);
@@ -167,6 +171,7 @@ export function GeneralStoryFormTabs({
       className="min-h-0 flex-1 gap-0">
       <TabsList
         ref={tabListRef}
+        inert={isRegistering}
         variant="line"
         className="relative scrollbar-none w-full shrink-0 justify-start gap-0 overflow-x-auto overscroll-x-contain p-0 shadow-[inset_0_-1px_0_var(--color-border)]">
         {GENERAL_STORY_TABS.map(({ value, label, required }) => {
@@ -211,6 +216,7 @@ export function GeneralStoryFormTabs({
       </TabsList>
       <div
         ref={scrollAreaRef}
+        inert={isRegistering}
         className="relative min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain">
         {GENERAL_STORY_TABS.map(({ value, fields }) => (
           <TabsContent
@@ -262,6 +268,7 @@ export function GeneralStoryFormTabs({
             type="button"
             variant="secondary"
             size="lg"
+            disabled={isRegistering}
             onClick={() => moveToTab(previousTab)}>
             {GENERAL_STORY_CREATE_COPY.previous}
           </Button>
@@ -271,8 +278,17 @@ export function GeneralStoryFormTabs({
             {GENERAL_STORY_CREATE_COPY.next}
           </Button>
         ) : (
-          <Button type="button" size="lg" onClick={handleRegister}>
-            {GENERAL_STORY_CREATE_COPY.register}
+          <Button
+            type="button"
+            size="lg"
+            disabled={isRegistering}
+            className={cn('relative', isRegistering && 'disabled:opacity-100')}
+            onClick={handleRegister}>
+            <LoadingButtonContent
+              isLoading={isRegistering}
+              loadingLabel={GENERAL_STORY_CREATE_COPY.registering}>
+              {GENERAL_STORY_CREATE_COPY.register}
+            </LoadingButtonContent>
           </Button>
         )}
       </StepFooter>

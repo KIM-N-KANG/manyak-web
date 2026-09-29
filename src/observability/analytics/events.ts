@@ -139,6 +139,22 @@ export type AnalyticsEventProps = {
     story_id: string;
     genres?: string[];
   };
+  // generalCreate
+  client_generalCreate_viewed: void;
+  client_generalCreate_completed: {
+    submission_id: string;
+    start_setting_count: number;
+    ending_count: number;
+    main_event_count: number;
+    image_count: number;
+  };
+  /** 등록 요청 실패 안내를 띄울 때 보낸다. 응답이 없는 네트워크 오류는 0이다. */
+  client_generalCreate_registerError_shown: { status: number };
+  /** 등록 요청이 접수된 뒤 검수 결과(또는 기다림 상한 초과)를 안내할 때 보낸다. */
+  client_generalCreate_reviewResult_shown: {
+    submission_id: string;
+    result: 'approved' | 'rejected' | 'failed' | 'timeout';
+  };
   // storyDetail
   client_storyDetail_viewed: { story_id: string };
   client_storyDetail_chatStartButton_clicked: { story_id: string };
