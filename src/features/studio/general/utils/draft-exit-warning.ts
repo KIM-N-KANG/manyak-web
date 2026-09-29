@@ -7,6 +7,10 @@ type DraftExitState = {
   hasSavedDraft: boolean;
   /** 지금 폼이 마지막 임시 저장본과 같은지 */
   isSaved: boolean;
+  /** 등록을 요청해 입력이 서버 제출본에 있는지 */
+  hasSubmitted?: boolean;
+  /** 지금 폼이 마지막으로 등록을 요청한 입력과 같은지 */
+  isSubmittedUnchanged?: boolean;
 };
 
 /**
@@ -19,7 +23,14 @@ export function getDraftExitWarning({
   hasInput,
   hasSavedDraft,
   isSaved,
+  hasSubmitted = false,
+  isSubmittedUnchanged = false,
 }: DraftExitState): GeneralStoryExitWarning {
+  // 등록을 요청하면 임시 저장본을 지우고 서버 제출본을 정본으로 삼는다.
+  if (hasSubmitted) {
+    return isSubmittedUnchanged ? 'submitted' : 'submittedEdited';
+  }
+
   if (hasSavedDraft) {
     return isSaved ? 'saved' : 'unsaved';
   }

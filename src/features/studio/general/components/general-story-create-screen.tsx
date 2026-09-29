@@ -1,12 +1,20 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
+import { useCreateGeneralStory } from '@/api/generated/endpoints/stories/stories';
+import {
+  get as getStorySubmission,
+  useResubmit,
+} from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
+import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
 import { RetryListStatus } from '@/components/common/retry-list-status';
@@ -26,9 +34,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
+import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
 import {
   type GeneralDraftRecord,
   savePendingCreationRequest,
+  takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   type GeneralStoryDraftImage,
@@ -45,6 +55,10 @@ import {
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
 import { useGeneralStoryDraftEntry } from '@/features/studio/general/hooks/use-general-story-draft-entry';
+import {
+  buildGeneralStoryRequest,
+  resolveGenreNames,
+} from '@/features/studio/general/utils/build-general-story-request';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
 import { getDraftExitWarning } from '@/features/studio/general/utils/draft-exit-warning';
 import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
@@ -58,10 +72,16 @@ import {
   type GeneralStoryStartSettingDraft,
 } from '@/features/studio/general/utils/start-setting-draft';
 import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
+import {
+  readSubmissionReview,
+  type SubmissionReview,
+} from '@/features/studio/general/utils/submission-review';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
+import { FetchError } from '@/lib/api-error';
 import { cn } from '@/lib/utils';
+import { track } from '@/observability/analytics';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
 import {
@@ -87,8 +107,25 @@ const DRAFT_SAVE_CLICK_THROTTLE_MS = 1000;
 /** 임시 저장 결과 토스트의 id다. 같은 id로 다시 띄우면 이전 토스트를 대신한다. */
 const DRAFT_SAVE_TOAST_ID = 'general-story-draft-save';
 
-/** 저장 완료 토스트를 띄워 두는 시간이다. 위쪽 토스트가 헤더의 저장·닫기 버튼을 오래 가리지 않게 짧게 둔다. */
+/** 저장 완료·검토 중 토스트를 띄워 두는 시간이다. 위쪽 토스트가 헤더의 저장·닫기 버튼을 오래 가리지 않게 짧게 둔다. */
 const DRAFT_SAVED_TOAST_DURATION_MS = 1500;
+
+/** 검토 중 토스트의 id다. 결과를 알리거나 화면을 떠날 때 아직 떠 있으면 이 id로 닫는다. */
+const REVIEW_TOAST_ID = 'general-story-review';
+
+/** 검수 결과를 다시 조회하는 간격이다. 서버 검수 폴러의 간격과 같다. */
+const REVIEW_POLL_INTERVAL_MS = 1000;
+
+/**
+ * 검수 결과를 기다리는 상한이다. 정상 검수는 몇 초 안에 끝나고, 이보다 길면 서버가 일시 실패를
+ * 1분·5분 뒤 재시도하는 경우라 화면에서 기다리지 않는다.
+ */
+const REVIEW_WAIT_MS = 60_000;
+
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 /**
  * 임시 저장본의 이미지로 폼 이미지를 만든다. 미리보기 blob URL은 저장한 파일로 다시 만든다.
@@ -224,6 +261,38 @@ function GeneralStoryCreateForm({
   const [hasTriedRegister, setHasTriedRegister] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const lastSaveClickAtRef = useRef(0);
+  const [isReviewing, setIsReviewing] = useState(false);
+  /** 검토 중이거나 승인돼 떠나는 중이면 참이다. 비동기 흐름과 저장 판단이 같은 값을 보도록 ref로 둔다. */
+  const isReviewingRef = useRef(false);
+  /** 화면을 떠나면 중단해 검토 결과 조회와 이후 이동을 멈춘다. */
+  const reviewAbortRef = useRef<AbortController | null>(null);
+  /** 반려·실패한 제출본 id다. 다시 등록하면 새로 제출하지 않고 이 제출본을 재제출한다. */
+  const rejectedSubmissionIdRef = useRef<string | null>(null);
+  /**
+   * 마지막으로 접수된 입력의 스냅숏 키다. 접수되면 입력의 정본이 서버 제출본이 되므로 임시 저장본을
+   * 지우고 이 화면에서는 다시 임시 저장하지 않는다(이어서 만들기로 같은 입력을 새로 제출하지 않게).
+   */
+  const [submittedKey, setSubmittedKey] = useState<string | null>(null);
+  const isSubmittedRef = useRef(false);
+  const queryClient = useQueryClient();
+  const tags = useGetSimpleStoryTags();
+  const createGeneralStory = useCreateGeneralStory();
+  const resubmitGeneralStory = useResubmit();
+  const { startChatFor } = useStartChat('', {
+    // 스토리는 이미 만들어졌으므로 채팅을 열지 못하면 상세로 보내 거기서 시작하게 한다.
+    onError: (storyId) => router.replace(APP_PATH.STORY_DETAIL(storyId)),
+  });
+
+  useEffect(() => {
+    track('client_generalCreate_viewed');
+
+    // 검토 중에 화면을 떠나면 검토 중 토스트를 닫고 조회를 멈춘다.
+    return () => {
+      reviewAbortRef.current?.abort();
+      toast.dismiss(REVIEW_TOAST_ID);
+    };
+  }, []);
+
   const snapshot: GeneralStoryDraftSnapshot = {
     texts: textValues,
     cover: toStoredImage(cover),
@@ -280,8 +349,16 @@ function GeneralStoryCreateForm({
     return saved;
   };
 
+  // 검토 중이거나 접수된 뒤에는 저장하지 않는다. 지운 임시 저장본을 화면 숨김 저장이 되살리지 않게 한다.
   const saveDraft = async () => {
-    if (hasInput && !isSaved && !isSaving) await writeDraft();
+    if (
+      hasInput &&
+      !isSaved &&
+      !isSaving &&
+      !isReviewingRef.current &&
+      !isSubmittedRef.current
+    )
+      await writeDraft();
   };
 
   const handleSaveClick = async () => {
@@ -289,6 +366,8 @@ function GeneralStoryCreateForm({
 
     if (
       isSaving ||
+      isReviewingRef.current ||
+      isSubmittedRef.current ||
       now - lastSaveClickAtRef.current < DRAFT_SAVE_CLICK_THROTTLE_MS
     )
       return;
@@ -306,15 +385,207 @@ function GeneralStoryCreateForm({
   useSaveWhenBackgrounded(saveDraft);
 
   const handleClose = () => {
-    setExitWarning(getDraftExitWarning({ hasInput, hasSavedDraft, isSaved }));
+    setExitWarning(
+      getDraftExitWarning({
+        hasInput,
+        hasSavedDraft,
+        isSaved,
+        hasSubmitted: submittedKey !== null,
+        isSubmittedUnchanged: snapshotKey === submittedKey,
+      }),
+    );
     setIsExitOpen(true);
   };
 
   const { leaveAfterCleanup } = usePreventPageLeave({
-    warnOnUnload: hasSavedDraft ? !isSaved : hasInput,
+    warnOnUnload:
+      submittedKey !== null
+        ? snapshotKey !== submittedKey
+        : hasSavedDraft
+          ? !isSaved
+          : hasInput,
     interceptBack: true,
     onBackAttempt: () => (isExitOpen ? setIsExitOpen(false) : handleClose()),
   });
+
+  const finishReview = () => {
+    isReviewingRef.current = false;
+    setIsReviewing(false);
+    toast.dismiss(REVIEW_TOAST_ID);
+  };
+
+  /**
+   * 제출본의 검수 결과를 기다린다. 조회가 일시적으로 실패해도 상한까지 다시 조회한다.
+   *
+   * @returns 검수 결과. 상한까지 끝나지 않으면 대기 중(`PENDING`)
+   */
+  const waitForReview = async (
+    submissionId: string,
+    signal: AbortSignal,
+  ): Promise<SubmissionReview> => {
+    const deadline = Date.now() + REVIEW_WAIT_MS;
+
+    while (Date.now() < deadline) {
+      await wait(REVIEW_POLL_INTERVAL_MS);
+
+      if (signal.aborted) break;
+
+      try {
+        const response = await getStorySubmission(submissionId, { signal });
+        const review = readSubmissionReview(response.data);
+
+        if (review.status !== 'PENDING') return review;
+      } catch {
+        // 일시적인 조회 실패는 다음 조회에서 다시 확인한다.
+      }
+    }
+
+    return { status: 'PENDING' };
+  };
+
+  const handleRegister = async () => {
+    if (isReviewingRef.current) return;
+
+    const genreNames = resolveGenreNames(
+      genres,
+      tags.data?.status === 200 ? tags.data.data : [],
+    );
+
+    // 제공 장르 목록을 아직 받지 못해 장르 이름을 만들 수 없으면 요청하지 않는다.
+    if (!genreNames) {
+      track('client_generalCreate_registerError_shown', { status: 0 });
+      toast.error(TOAST_MESSAGE.STORY_REGISTER_FAILED);
+
+      return;
+    }
+
+    const request = buildGeneralStoryRequest(
+      {
+        texts: textValues,
+        coverObjectKey: cover?.objectKey ?? null,
+        descriptionRatio,
+        protagonist,
+        supporting: supporting.map((character) => ({
+          ...character,
+          imageObjectKey: character.image?.objectKey ?? null,
+        })),
+        startSettings,
+        mainEvents,
+        genres,
+        description: storyDescription,
+        visibility: storyVisibility,
+      },
+      genreNames,
+    );
+    const requestKey = snapshotKey;
+    const controller = new AbortController();
+
+    reviewAbortRef.current = controller;
+    isReviewingRef.current = true;
+    setIsReviewing(true);
+    // 위쪽 토스트가 헤더의 닫기를 오래 가리지 않게 짧게 띄우고, 검토가 이어지는 동안은 등록하기 스피너가 알린다.
+    toast(TOAST_MESSAGE.STORY_REVIEWING, {
+      id: REVIEW_TOAST_ID,
+      duration: DRAFT_SAVED_TOAST_DURATION_MS,
+      icon: <Spinner className="size-4" />,
+    });
+
+    let submissionId: string | undefined;
+
+    try {
+      const rejectedId = rejectedSubmissionIdRef.current;
+      const response = rejectedId
+        ? await resubmitGeneralStory.mutateAsync({
+            id: rejectedId,
+            data: request,
+          })
+        : await createGeneralStory.mutateAsync({ data: request });
+
+      submissionId = response.data.submissionId;
+    } catch (error) {
+      if (controller.signal.aborted) return;
+
+      // 재제출할 수 없는 제출본(이미 지웠거나 상태가 바뀜)이면 다음에는 새로 제출한다.
+      rejectedSubmissionIdRef.current = null;
+      finishReview();
+      track('client_generalCreate_registerError_shown', {
+        status: error instanceof FetchError ? error.status : 0,
+      });
+      toast.error(TOAST_MESSAGE.STORY_REGISTER_FAILED);
+
+      return;
+    }
+
+    if (!submissionId) {
+      if (controller.signal.aborted) return;
+
+      finishReview();
+      track('client_generalCreate_registerError_shown', { status: 0 });
+      toast.error(TOAST_MESSAGE.STORY_REGISTER_FAILED);
+
+      return;
+    }
+
+    // 접수된 입력은 서버 제출본에 남으므로 임시 저장본을 지운다. 지우지 못해도 흐름은 막지 않는다.
+    isSubmittedRef.current = true;
+    setSubmittedKey(requestKey);
+    setSavedKey(null);
+    await takePendingCreationRequest(requestId, epoch).catch(() => false);
+
+    // 응답을 받은 뒤 화면을 떠났어도 위에서 임시 저장본은 지우고, 그 뒤 흐름만 멈춘다.
+    if (controller.signal.aborted) return;
+
+    track('client_generalCreate_completed', {
+      submission_id: submissionId,
+      start_setting_count: startSettings.length,
+      ending_count: startSettings.reduce(
+        (count, setting) => count + setting.endings.length,
+        0,
+      ),
+      main_event_count: mainEvents.length,
+      image_count:
+        (cover ? 1 : 0) +
+        supporting.filter((character) => character.image).length,
+    });
+
+    const review = await waitForReview(submissionId, controller.signal);
+
+    if (controller.signal.aborted) return;
+
+    const trackResult = (
+      result: 'approved' | 'rejected' | 'failed' | 'timeout',
+    ) =>
+      track('client_generalCreate_reviewResult_shown', {
+        submission_id: submissionId,
+        result,
+      });
+
+    if (review.status === 'REJECTED' || review.status === 'FAILED') {
+      rejectedSubmissionIdRef.current = submissionId;
+      trackResult(review.status === 'REJECTED' ? 'rejected' : 'failed');
+      finishReview();
+      toast.error(TOAST_MESSAGE.STORY_REVIEW_REJECTED);
+
+      return;
+    }
+
+    // 검토 중 표시(버튼 잠금)는 떠날 때까지 둔다.
+    toast.dismiss(REVIEW_TOAST_ID);
+
+    if (review.status === 'APPROVED') {
+      trackResult('approved');
+      void queryClient.invalidateQueries({
+        queryKey: getGetMyStoriesQueryKey(),
+      });
+      leaveAfterCleanup(() => startChatFor(review.storyId));
+
+      return;
+    }
+
+    trackResult('timeout');
+    toast(TOAST_MESSAGE.STORY_REVIEW_DELAYED);
+    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
+  };
 
   const copy = GENERAL_STORY_EXIT_WARNING_COPY[exitWarning];
 
@@ -325,7 +596,7 @@ function GeneralStoryCreateForm({
         <div className="ml-auto flex items-center gap-1">
           <DraftSaveButton
             isSaving={isSaving}
-            disabled={!hasInput}
+            disabled={!hasInput || isReviewing || submittedKey !== null}
             onClick={handleSaveClick}
           />
           <Button
@@ -409,6 +680,8 @@ function GeneralStoryCreateForm({
             }}
             registerErrors={registerErrors}
             onRegisterAttempt={() => setHasTriedRegister(true)}
+            onRegister={handleRegister}
+            isRegistering={isReviewing}
             onTabChange={saveDraft}
           />
         </GeneralStoryRegisterErrorsContext>

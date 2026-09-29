@@ -113,6 +113,8 @@ test.describe('홈·제작 스토리 목록', () => {
     page,
   }) => {
     await skipOnboarding(page);
+    // 일반 제작은 회원 전용이다. 게스트 흐름은 STORY-GENERAL-23에서 다룬다.
+    await mockMemberSession(page);
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
