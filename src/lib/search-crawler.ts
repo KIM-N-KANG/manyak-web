@@ -9,10 +9,13 @@
  * 링크 미리보기 스크래퍼(카카오톡·페이스북 등)도 포함한다. 공유된 홈 URL이
  * 온보딩 리다이렉트로 해석되지 않고 홈 메타데이터로 미리보기가 그려지게 한다.
  *
+ * Search Console URL 검사 도구(`Google-InspectionTool`)는 `googlebot` 토큰이 없어 따로 둔다.
+ *
  * AI/LLM 크롤러(GPTBot 등)는 수집 허용 정책이 별도 결정 사안이라 제외한다.
  */
 const SEARCH_CRAWLER_UA_KEYWORDS = [
   'googlebot',
+  'google-inspectiontool',
   'bingbot',
   'yeti',
   'daumoa',
