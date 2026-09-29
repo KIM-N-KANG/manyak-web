@@ -12,6 +12,7 @@ import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-cr
 import { useCreateGeneralStory } from '@/api/generated/endpoints/stories/stories';
 import {
   get as getStorySubmission,
+  getListQueryKey as getStorySubmissionsQueryKey,
   useResubmit,
 } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
@@ -36,7 +37,6 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
 import {
-  type GeneralDraftRecord,
   savePendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
@@ -45,6 +45,10 @@ import {
   type GeneralStoryDraftSnapshot,
   hasGeneralStoryDraftInput,
 } from '@/features/studio/_shared/utils/general-story-draft';
+import {
+  readStorySubmission,
+  type StorySubmission,
+} from '@/features/studio/_shared/utils/story-submission';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_CREATE_COPY,
@@ -68,29 +72,32 @@ import {
   REGISTER_ERROR_KEY,
 } from '@/features/studio/general/utils/register-validation';
 import {
+  type GeneralStoryReviewForm,
+  getReviewErrors,
+} from '@/features/studio/general/utils/review-issues';
+import {
   createStartSettingDraft,
   type GeneralStoryStartSettingDraft,
 } from '@/features/studio/general/utils/start-setting-draft';
 import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
-import {
-  readSubmissionReview,
-  type SubmissionReview,
-} from '@/features/studio/general/utils/submission-review';
+import type { GeneralStoryFormInitial } from '@/features/studio/general/utils/submission-form';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
-import { FetchError } from '@/lib/api-error';
+import { FetchError, getApiErrorCode } from '@/lib/api-error';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
 import {
   GeneralStoryFormTabs,
+  type GeneralStoryFormTabsHandle,
   type GeneralStoryTextValues,
 } from './general-story-form-tabs';
 import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
 import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
 import { GeneralStoryRegisterPanel } from './general-story-register-panel';
+import { GeneralStoryReviewNotice } from './general-story-review-notice';
 import { GeneralStoryStartSettingPanel } from './general-story-start-setting-panel';
 import {
   type GeneralStorySupportingCharacter,
@@ -136,7 +143,10 @@ const wait = (ms: number) =>
 const toDraftImage = (
   image: GeneralStoryDraftImage | null,
 ): DraftImage | null =>
-  image && { ...image, previewUrl: URL.createObjectURL(image.blob) };
+  image && {
+    ...image,
+    previewUrl: image.blob ? URL.createObjectURL(image.blob) : '',
+  };
 
 /**
  * 폼 이미지를 임시 저장할 형태로 바꾼다. 페이지마다 달라지는 blob URL은 빼고 저장한다.
@@ -180,7 +190,23 @@ export function GeneralStoryCreateScreen() {
   const showSkeleton = useDelayedLoading(!entry && !isError);
 
   if (entry) {
-    return <GeneralStoryCreateForm initialRecord={entry.record} />;
+    const { record } = entry;
+
+    return (
+      <GeneralStoryCreateForm
+        initial={
+          record && {
+            ...record.snapshot,
+            cover: toDraftImage(record.snapshot.cover),
+            supporting: record.snapshot.supporting.map((character) => ({
+              ...character,
+              image: toDraftImage(character.image),
+            })),
+          }
+        }
+        draftRequestId={record?.requestId}
+      />
+    );
   }
 
   if (isError) {
@@ -196,28 +222,30 @@ export function GeneralStoryCreateScreen() {
 }
 
 type GeneralStoryCreateFormProps = {
-  /** 이어서 만들 임시 저장본. 없으면 빈 폼으로 새로 만든다. */
-  initialRecord: GeneralDraftRecord | null;
+  /** 폼 초기 입력. 없으면 빈 폼으로 새로 만든다. */
+  initial: GeneralStoryFormInitial | null;
+  /** 이어서 만드는 임시 저장본의 id다. 있으면 같은 레코드에 덮어쓴다. */
+  draftRequestId?: string;
+  /** 고쳐 다시 제출할 반려·실패 제출본이다. 있으면 처음부터 접수된 상태로 연다. */
+  submission?: StorySubmission;
 };
 
-function GeneralStoryCreateForm({
-  initialRecord,
+export function GeneralStoryCreateForm({
+  initial,
+  draftRequestId,
+  submission,
 }: GeneralStoryCreateFormProps) {
   const router = useRouter();
   const epoch = useCreationEpoch();
-  const initial = initialRecord?.snapshot;
-  const [requestId] = useState(
-    () => initialRecord?.requestId ?? crypto.randomUUID(),
-  );
+  const tabsRef = useRef<GeneralStoryFormTabsHandle>(null);
+  const [requestId] = useState(() => draftRequestId ?? crypto.randomUUID());
   const [exitWarning, setExitWarning] =
     useState<GeneralStoryExitWarning>('nothing');
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [textValues, setTextValues] = useState(
     initial?.texts ?? EMPTY_TEXT_VALUES,
   );
-  const [cover, setCover] = useState(() =>
-    toDraftImage(initial?.cover ?? null),
-  );
+  const [cover, setCover] = useState(initial?.cover ?? null);
   const [descriptionRatio, setDescriptionRatio] = useState(
     initial?.descriptionRatio ?? LENGTH_RATIO_DEFAULT,
   );
@@ -228,10 +256,7 @@ function GeneralStoryCreateForm({
     GeneralStorySupportingCharacter[]
   >(() =>
     initial
-      ? initial.supporting.map((character) => ({
-          ...character,
-          image: toDraftImage(character.image),
-        }))
+      ? initial.supporting
       : [
           {
             id: crypto.randomUUID(),
@@ -267,13 +292,8 @@ function GeneralStoryCreateForm({
   /** 화면을 떠나면 중단해 검토 결과 조회와 이후 이동을 멈춘다. */
   const reviewAbortRef = useRef<AbortController | null>(null);
   /** 반려·실패한 제출본 id다. 다시 등록하면 새로 제출하지 않고 이 제출본을 재제출한다. */
-  const rejectedSubmissionIdRef = useRef<string | null>(null);
-  /**
-   * 마지막으로 접수된 입력의 스냅숏 키다. 접수되면 입력의 정본이 서버 제출본이 되므로 임시 저장본을
-   * 지우고 이 화면에서는 다시 임시 저장하지 않는다(이어서 만들기로 같은 입력을 새로 제출하지 않게).
-   */
-  const [submittedKey, setSubmittedKey] = useState<string | null>(null);
-  const isSubmittedRef = useRef(false);
+  const rejectedSubmissionIdRef = useRef(submission?.submissionId ?? null);
+  const isSubmittedRef = useRef(Boolean(submission));
   const queryClient = useQueryClient();
   const tags = useGetSimpleStoryTags();
   const createGeneralStory = useCreateGeneralStory();
@@ -310,8 +330,32 @@ function GeneralStoryCreateForm({
   };
   const snapshotKey = JSON.stringify(snapshot);
   const [savedKey, setSavedKey] = useState(() =>
-    initialRecord ? snapshotKey : null,
+    draftRequestId ? snapshotKey : null,
   );
+  /**
+   * 마지막으로 접수된 입력의 스냅숏 키다. 접수되면 입력의 정본이 서버 제출본이 되므로 임시 저장본을
+   * 지우고 이 화면에서는 다시 임시 저장하지 않는다(이어서 만들기로 같은 입력을 새로 제출하지 않게).
+   */
+  const [submittedKey, setSubmittedKey] = useState(() =>
+    submission ? snapshotKey : null,
+  );
+  const reviewForm: GeneralStoryReviewForm = {
+    texts: textValues,
+    cover,
+    protagonist,
+    supporting,
+    startSettings,
+    mainEvents,
+    genres,
+    description: storyDescription,
+  };
+  /** 통과하지 못한 검수 결과와 그때 제출한 폼이다. 다시 접수되면 비운다. */
+  const [review, setReview] = useState(() =>
+    submission ? { submission, form: reviewForm } : null,
+  );
+  const reviewErrors = review
+    ? getReviewErrors(review.submission, reviewForm, review.form)
+    : { fieldErrors: [], notices: [] };
   const registerErrors = getRegisterErrors({
     texts: textValues,
     protagonist,
@@ -416,13 +460,14 @@ function GeneralStoryCreateForm({
 
   /**
    * 제출본의 검수 결과를 기다린다. 조회가 일시적으로 실패해도 상한까지 다시 조회한다.
+   * 승인됐는데 스토리 id가 아직 없으면 끝나지 않은 것으로 보고 다시 조회한다.
    *
-   * @returns 검수 결과. 상한까지 끝나지 않으면 대기 중(`PENDING`)
+   * @returns 검수가 끝난 제출본. 상한까지 끝나지 않으면 null
    */
   const waitForReview = async (
     submissionId: string,
     signal: AbortSignal,
-  ): Promise<SubmissionReview> => {
+  ): Promise<StorySubmission | null> => {
     const deadline = Date.now() + REVIEW_WAIT_MS;
 
     while (Date.now() < deadline) {
@@ -432,15 +477,20 @@ function GeneralStoryCreateForm({
 
       try {
         const response = await getStorySubmission(submissionId, { signal });
-        const review = readSubmissionReview(response.data);
+        const result = readStorySubmission(response.data);
 
-        if (review.status !== 'PENDING') return review;
+        if (
+          result &&
+          result.status !== 'PENDING' &&
+          (result.status !== 'APPROVED' || result.storyId)
+        )
+          return result;
       } catch {
         // 일시적인 조회 실패는 다음 조회에서 다시 확인한다.
       }
     }
 
-    return { status: 'PENDING' };
+    return null;
   };
 
   const handleRegister = async () => {
@@ -478,6 +528,7 @@ function GeneralStoryCreateForm({
       genreNames,
     );
     const requestKey = snapshotKey;
+    const requestForm = reviewForm;
     const controller = new AbortController();
 
     reviewAbortRef.current = controller;
@@ -505,13 +556,22 @@ function GeneralStoryCreateForm({
     } catch (error) {
       if (controller.signal.aborted) return;
 
+      const status = error instanceof FetchError ? error.status : 0;
+      const errorCode = getApiErrorCode(error);
+
       // 재제출할 수 없는 제출본(이미 지웠거나 상태가 바뀜)이면 다음에는 새로 제출한다.
-      rejectedSubmissionIdRef.current = null;
+      if (status === 404 || status === 409)
+        rejectedSubmissionIdRef.current = null;
+
       finishReview();
-      track('client_generalCreate_registerError_shown', {
-        status: error instanceof FetchError ? error.status : 0,
-      });
-      toast.error(TOAST_MESSAGE.STORY_REGISTER_FAILED);
+      track('client_generalCreate_registerError_shown', { status });
+      toast.error(
+        errorCode === 'IMAGES_TOO_LARGE'
+          ? TOAST_MESSAGE.STORY_IMAGES_TOO_LARGE
+          : errorCode === 'UPLOAD_NOT_FOUND'
+            ? TOAST_MESSAGE.STORY_IMAGE_NOT_FOUND
+            : TOAST_MESSAGE.STORY_REGISTER_FAILED,
+      );
 
       return;
     }
@@ -530,6 +590,10 @@ function GeneralStoryCreateForm({
     isSubmittedRef.current = true;
     setSubmittedKey(requestKey);
     setSavedKey(null);
+    setReview(null);
+    void queryClient.invalidateQueries({
+      queryKey: getStorySubmissionsQueryKey(),
+    });
     await takePendingCreationRequest(requestId, epoch).catch(() => false);
 
     // 응답을 받은 뒤 화면을 떠났어도 위에서 임시 저장본은 지우고, 그 뒤 흐름만 멈춘다.
@@ -548,7 +612,7 @@ function GeneralStoryCreateForm({
         supporting.filter((character) => character.image).length,
     });
 
-    const review = await waitForReview(submissionId, controller.signal);
+    const result = await waitForReview(submissionId, controller.signal);
 
     if (controller.signal.aborted) return;
 
@@ -560,24 +624,34 @@ function GeneralStoryCreateForm({
         result,
       });
 
-    if (review.status === 'REJECTED' || review.status === 'FAILED') {
+    if (result?.status === 'REJECTED' || result?.status === 'FAILED') {
       rejectedSubmissionIdRef.current = submissionId;
-      trackResult(review.status === 'REJECTED' ? 'rejected' : 'failed');
+      trackResult(result.status === 'REJECTED' ? 'rejected' : 'failed');
       finishReview();
       toast.error(TOAST_MESSAGE.STORY_REVIEW_REJECTED);
+      // 제출한 폼 기준으로 칸별 사유를 붙이고, 첫 사유 칸으로 옮긴다.
+      setReview({ submission: result, form: requestForm });
+      tabsRef.current?.revealErrors(
+        getReviewErrors(result, requestForm, requestForm).fieldErrors,
+      );
 
       return;
     }
 
     // 검토 중 표시(버튼 잠금)는 떠날 때까지 둔다.
     toast.dismiss(REVIEW_TOAST_ID);
+    void queryClient.invalidateQueries({
+      queryKey: getStorySubmissionsQueryKey(),
+    });
 
-    if (review.status === 'APPROVED') {
+    if (result?.status === 'APPROVED' && result.storyId) {
+      const { storyId } = result;
+
       trackResult('approved');
       void queryClient.invalidateQueries({
         queryKey: getGetMyStoriesQueryKey(),
       });
-      leaveAfterCleanup(() => startChatFor(review.storyId));
+      leaveAfterCleanup(() => startChatFor(storyId));
 
       return;
     }
@@ -587,6 +661,18 @@ function GeneralStoryCreateForm({
     leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
   };
 
+  // 등록하기를 누른 뒤의 입력 오류와 검수 결과를 함께 보인다. 같은 칸이면 입력 오류가 먼저다.
+  const shownErrors =
+    hasTriedRegister || reviewErrors.fieldErrors.length > 0
+      ? [
+          ...(hasTriedRegister ? registerErrors : []),
+          ...reviewErrors.fieldErrors.filter(
+            ({ key }) =>
+              !hasTriedRegister ||
+              !registerErrors.some((error) => error.key === key),
+          ),
+        ]
+      : null;
   const copy = GENERAL_STORY_EXIT_WARNING_COPY[exitWarning];
 
   return (
@@ -609,10 +695,23 @@ function GeneralStoryCreateForm({
           </Button>
         </div>
       </header>
+      {review &&
+        (review.submission.status === 'REJECTED' ||
+          review.submission.status === 'FAILED') && (
+          <GeneralStoryReviewNotice
+            status={review.submission.status}
+            hasImageError={
+              review.submission.imageErrors.length > 0 ||
+              Boolean(review.submission.errorCode?.startsWith('IMAGE_'))
+            }
+            notices={reviewErrors.notices}
+          />
+        )}
       <CollapsedListItemsProvider>
-        <GeneralStoryRegisterErrorsContext
-          value={hasTriedRegister ? registerErrors : null}>
+        <GeneralStoryRegisterErrorsContext value={shownErrors}>
           <GeneralStoryFormTabs
+            ref={tabsRef}
+            initialTab={reviewErrors.fieldErrors[0]?.tab}
             values={textValues}
             onChange={(field: GeneralStoryTextField, value: string) =>
               setTextValues((previous) => ({ ...previous, [field]: value }))

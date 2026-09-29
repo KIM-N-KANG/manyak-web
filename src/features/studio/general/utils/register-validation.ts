@@ -60,6 +60,8 @@ export const REGISTER_ERROR_KEY = {
     `event.${id}.${part}`,
   genre: 'genre',
   description: 'description',
+  cover: 'cover',
+  supportingImage: (id: string) => `supporting.${id}.image`,
 };
 
 /**

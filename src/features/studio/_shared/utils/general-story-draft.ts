@@ -11,8 +11,11 @@ import {
   hasStartSettingInput,
 } from '@/features/studio/general/utils/start-setting-draft';
 
-/** 임시 저장한 이미지다. 새로고침 뒤에도 미리보기를 다시 만들 수 있게 원본 파일을 함께 둔다. */
-export type GeneralStoryDraftImage = { objectKey: string; blob: Blob };
+/**
+ * 임시 저장한 이미지다. 새로고침 뒤에도 미리보기를 다시 만들 수 있게 원본 파일을 함께 둔다.
+ * 검수 제출본에서 복원한 이미지는 파일이 없어(`null`) 임시 저장하지 않는다.
+ */
+export type GeneralStoryDraftImage = { objectKey: string; blob: Blob | null };
 
 /** 일반 제작 폼 전체의 임시 저장 스냅숏이다. 제작 탭 카드와 폼 복원이 함께 읽는다. */
 export type GeneralStoryDraftSnapshot = {

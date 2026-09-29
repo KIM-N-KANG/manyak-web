@@ -1,4 +1,11 @@
-import { type ReactNode, use, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  type Ref,
+  use,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 
 import { useCollapsedListItems } from '@/components/common/collapsible-list-item';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
@@ -31,6 +38,12 @@ import { GeneralStoryRegisterErrorsContext } from './general-story-register-erro
 const EXPAND_SETTLE_MS = 400;
 
 export type GeneralStoryTextValues = Record<GeneralStoryTextField, string>;
+
+/** 폼 밖에서 오류 칸을 보여 줄 때 쓰는 핸들이다. */
+export type GeneralStoryFormTabsHandle = {
+  /** 탭 순서상 첫 오류 탭으로 옮겨 접힌 항목을 펼치고 첫 오류 칸으로 스크롤한다. */
+  revealErrors: (errors: GeneralStoryRegisterError[]) => void;
+};
 
 /**
  * 여러 줄 입력의 최소·최대 높이다. 글 길이에 맞춰 늘다가 최대 높이부터는 칸 안에서 스크롤한다.
@@ -91,6 +104,9 @@ type GeneralStoryFormTabsProps = {
   isRegistering?: boolean;
   /** 다른 탭으로 옮길 때마다 호출한다(탭 누르기·이전·다음·등록 오류 이동). */
   onTabChange?: () => void;
+  /** 처음 여는 탭이다. 없으면 첫 탭이다. */
+  initialTab?: GeneralStoryTab;
+  ref?: Ref<GeneralStoryFormTabsHandle>;
 };
 
 export function GeneralStoryFormTabs({
@@ -106,10 +122,12 @@ export function GeneralStoryFormTabs({
   onRegister,
   isRegistering = false,
   onTabChange,
+  initialTab = GENERAL_STORY_TABS[0].value,
+  ref,
 }: GeneralStoryFormTabsProps) {
   const shownRegisterErrors = use(GeneralStoryRegisterErrorsContext);
   const { setCollapsed } = useCollapsedListItems();
-  const [tab, setTab] = useState<GeneralStoryTab>(GENERAL_STORY_TABS[0].value);
+  const [tab, setTab] = useState<GeneralStoryTab>(initialTab);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
   const tabIndex = GENERAL_STORY_TABS.findIndex(({ value }) => value === tab);
@@ -126,16 +144,22 @@ export function GeneralStoryFormTabs({
   const handleRegister = () => {
     onRegisterAttempt();
 
-    const [firstError] = registerErrors;
-
-    if (!firstError) {
+    if (registerErrors.length === 0) {
       onRegister?.();
 
       return;
     }
 
+    revealErrors(registerErrors);
+  };
+
+  const revealErrors = (errors: GeneralStoryRegisterError[]) => {
+    const [firstError] = errors;
+
+    if (!firstError) return;
+
     const collapsibleIds = new Set(
-      registerErrors.flatMap(({ collapsibleId }) =>
+      errors.flatMap(({ collapsibleId }) =>
         collapsibleId ? [collapsibleId] : [],
       ),
     );
@@ -151,6 +175,8 @@ export function GeneralStoryFormTabs({
       collapsibleIds.size > 0 ? EXPAND_SETTLE_MS : 0,
     );
   };
+
+  useImperativeHandle(ref, () => ({ revealErrors }));
 
   /** 하단 버튼으로 탭을 옮길 때도 탭을 누른 것처럼 새 탭을 탭 줄 가운데로 스크롤한다. */
   const moveToTab = (value: GeneralStoryTab) => {
@@ -239,6 +265,7 @@ export function GeneralStoryFormTabs({
                     ratio={3 / 4}
                     widthClassName="w-32"
                     ratioHint={GENERAL_STORY_COVER_COPY.description}
+                    registerErrorKey={REGISTER_ERROR_KEY.cover}
                     image={cover}
                     onChange={onCoverChange}
                   />

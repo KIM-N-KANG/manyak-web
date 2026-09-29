@@ -13,12 +13,13 @@ import { useDraftImageUpload } from './use-draft-image-upload';
 
 /**
  * 등록 전에 올린 이미지다. 요청에는 객체 키를, 미리보기에는 고른 파일의 blob URL을 쓴다.
- * 임시 저장 뒤 미리보기를 다시 만들 수 있게 고른 파일도 함께 둔다.
+ * 임시 저장 뒤 미리보기를 다시 만들 수 있게 고른 파일도 함께 둔다. 검수 제출본에서 복원한
+ * 이미지는 파일 없이(`blob: null`) 서버 미리보기 URL만 가진다.
  */
 export type DraftImage = {
   objectKey: string;
   previewUrl: string;
-  blob: Blob;
+  blob: Blob | null;
 };
 
 type UseDraftImagePickerOptions = {

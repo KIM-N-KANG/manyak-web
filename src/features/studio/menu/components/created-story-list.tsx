@@ -17,15 +17,18 @@ import { track } from '@/observability/analytics';
 import { CREATED_STORY_LIST_COPY } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { useCreationRecords } from '../hooks/use-pending-creation-request';
+import { useStorySubmissions } from '../hooks/use-story-submissions';
 import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryCard } from './created-story-card';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
 import { CreationProgressCard } from './creation-progress-card';
+import { SubmissionCard } from './submission-card';
 
 export function CreatedStoryList() {
   const router = useRouter();
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const local = useCreationRecords();
+  const { submissions } = useStorySubmissions();
   const pendingCreationRecords = local.pending ?? [];
   const completionRecords = local.completions ?? [];
   const showSkeleton = useDelayedLoading(isLoading || local.isLoading);
@@ -64,11 +67,12 @@ export function CreatedStoryList() {
     router.push(APP_PATH.STUDIO.STORY.SELECT);
   };
 
-  // 진행 카드(초안·완성 중)가 하나라도 있으면 목록이 비어 있어도 빈 안내를 두지 않는다.
+  // 진행 카드(초안·완성 중·검수 제출본)가 하나라도 있으면 목록이 비어 있어도 빈 안내를 두지 않는다.
   const showsEmptyNotice =
     isEmpty &&
     pendingCreationRecords.length === 0 &&
-    visibleCompletionRecords.length === 0;
+    visibleCompletionRecords.length === 0 &&
+    submissions.length === 0;
 
   let stateKey: string;
   let content: ReactNode;
@@ -113,6 +117,18 @@ export function CreatedStoryList() {
               <CreationProgressCard record={record} />
             </m.li>
           ))}
+          {submissions.map((submission) =>
+            submission.status === 'APPROVED' ? null : (
+              <m.li
+                key={`submission-${submission.submissionId}`}
+                layout={shouldReduceMotion ? false : 'position'}
+                {...rowMotion}>
+                <SubmissionCard
+                  submission={{ ...submission, status: submission.status }}
+                />
+              </m.li>
+            ),
+          )}
           {visibleCompletionRecords.map((record) => (
             <m.li
               key={`creation-${record.requestId}`}

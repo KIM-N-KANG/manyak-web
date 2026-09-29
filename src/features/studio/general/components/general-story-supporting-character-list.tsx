@@ -120,6 +120,9 @@ export function GeneralStorySupportingCharacterList({
                 ratioHint={GENERAL_STORY_CHARACTER_COPY.imageRatioHint}
                 description={GENERAL_STORY_CHARACTER_COPY.imageDescription}
                 ariaLabelPrefix={labelPrefix}
+                registerErrorKey={REGISTER_ERROR_KEY.supportingImage(
+                  character.id,
+                )}
                 image={character.image}
                 onChange={(image) => update(character.id, { image })}
               />
