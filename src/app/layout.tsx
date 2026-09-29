@@ -9,6 +9,7 @@ import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
 import { AuthSessionProvider } from '@/components/providers/auth-session-provider';
+import { InAppNavigationTracker } from '@/components/providers/in-app-navigation-tracker';
 import { MetaPixelProvider } from '@/components/providers/meta-pixel-provider';
 import { MotionProvider } from '@/components/providers/motion-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
@@ -114,6 +115,7 @@ export default function RootLayout({
                         <Toaster />
                         <AnalyticsUserSync />
                         <SessionExpiryWatcher />
+                        <InAppNavigationTracker />
                         <AutoMigration />
                         <HandoffCleanup />
                         <InviteOnboardingSheet />
