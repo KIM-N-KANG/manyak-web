@@ -7,6 +7,22 @@ export const metadata: Metadata = {
   title: GENERAL_STORY_CREATE_COPY.title,
 };
 
-export default function GeneralStoryStudioPage() {
-  return <GeneralStoryCreateGate />;
+type GeneralStoryStudioPageProps = {
+  searchParams: Promise<{ submissionId?: string | string[] }>;
+};
+
+export default async function GeneralStoryStudioPage({
+  searchParams,
+}: GeneralStoryStudioPageProps) {
+  const { submissionId } = await searchParams;
+
+  return (
+    <GeneralStoryCreateGate
+      submissionId={
+        typeof submissionId === 'string' && submissionId
+          ? submissionId
+          : undefined
+      }
+    />
+  );
 }

@@ -8,6 +8,7 @@ export const GENERAL_STORY_CREATE_COPY = {
   register: '등록하기',
   registering: '등록하는 중',
   checking: '로그인 상태를 확인하는 중',
+  loading: '스토리를 불러오는 중',
 } as const;
 
 /**
@@ -403,4 +404,20 @@ export const GENERAL_STORY_REGISTER_ERROR_COPY = {
   genre: '장르를 1개 이상 선택해 주세요',
   suggestedInput: '추천 입력을 모두 채워 주세요',
   invalidTab: '입력이 필요한 항목이 있어요',
+} as const;
+
+/** 검수를 통과하지 못한 제출본을 폼에서 고칠 때 보이는 문구다. */
+export const GENERAL_STORY_REVIEW_COPY = {
+  rejectedTitle: '검토를 통과하지 못했어요',
+  rejectedDescription: '표시된 곳을 고쳐 다시 등록해 주세요',
+  failedTitle: '검토를 마치지 못했어요',
+  failedImageDescription: '표시된 이미지를 바꿔 다시 등록해 주세요',
+  failedDescription: '검토 중 문제가 생겼어요. 다시 등록해 주세요',
+  /** AI가 사유를 남기지 않았을 때 칸에 보이는 문구다. */
+  issueFallback: '등록할 수 없는 내용이 있어요',
+  imageError: {
+    IMAGE_INVALID: '이미지 형식이나 크기를 확인해 주세요',
+    IMAGE_UNREADABLE: '이미지를 읽을 수 없어요. 다른 이미지로 바꿔 주세요',
+    default: '이미지를 확인하지 못했어요. 다른 이미지로 바꿔 주세요',
+  },
 } as const;

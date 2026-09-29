@@ -6,7 +6,12 @@ import type { ImagePresignRequestKind } from '@/api/generated/models';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Spinner } from '@/components/ui/spinner';
 import { GENERAL_STORY_COVER_COPY } from '@/features/studio/general/constants';
 import {
@@ -14,6 +19,8 @@ import {
   useDraftImagePicker,
 } from '@/features/studio/general/hooks/use-draft-image-picker';
 import { cn } from '@/lib/utils';
+
+import { useRegisterError } from './general-story-register-errors';
 
 type GeneralStoryImageFieldProps = {
   id: string;
@@ -29,6 +36,8 @@ type GeneralStoryImageFieldProps = {
   description?: string;
   /** 같은 화면에 여러 개가 있을 때 버튼을 구분하는 접근 가능한 이름 앞머리다. */
   ariaLabelPrefix?: string;
+  /** 검수 결과 등 이 칸의 오류를 찾는 `REGISTER_ERROR_KEY`다. 오류는 설명 자리에 보인다. */
+  registerErrorKey?: string;
   image: DraftImage | null;
   onChange: (image: DraftImage | null) => void;
 };
@@ -42,9 +51,11 @@ export function GeneralStoryImageField({
   ratioHint,
   description,
   ariaLabelPrefix,
+  registerErrorKey,
   image,
   onChange,
 }: GeneralStoryImageFieldProps) {
+  const error = useRegisterError(registerErrorKey);
   const { isUploading, previewUrl, open, remove, inputProps } =
     useDraftImagePicker({ kind, image, onChange });
   const {
@@ -68,7 +79,10 @@ export function GeneralStoryImageField({
           className={cn('shrink-0 rounded-lg outline-none', widthClassName)}>
           <AspectRatio
             ratio={ratio}
-            className="overflow-hidden rounded-lg border border-border bg-muted">
+            className={cn(
+              'overflow-hidden rounded-lg border border-border bg-muted',
+              error && 'border-destructive',
+            )}>
             {previewUrl ? (
               <Image
                 src={previewUrl}
@@ -126,10 +140,14 @@ export function GeneralStoryImageField({
           </FieldDescription>
         </div>
       </div>
-      {description && (
-        <FieldDescription className="break-keep text-foreground-secondary">
-          {description}
-        </FieldDescription>
+      {error ? (
+        <FieldError data-register-error>{error}</FieldError>
+      ) : (
+        description && (
+          <FieldDescription className="break-keep text-foreground-secondary">
+            {description}
+          </FieldDescription>
+        )
       )}
       <input id={id} {...inputProps} />
     </Field>

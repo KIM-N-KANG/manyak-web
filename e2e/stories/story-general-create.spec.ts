@@ -13,6 +13,7 @@ import {
   GENERAL_STORY_EVENT_COPY,
   GENERAL_STORY_EXIT_WARNING_COPY,
   GENERAL_STORY_REGISTER_ERROR_COPY,
+  GENERAL_STORY_REVIEW_COPY,
   GENERAL_STORY_START_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
@@ -984,7 +985,18 @@ test.describe('일반 제작 등록', () => {
       }
 
       await route.fulfill({
-        json: { submissionId: 'submission-1', status: 'REJECTED' },
+        json: {
+          submissionId: 'submission-1',
+          status: 'REJECTED',
+          issues: [
+            {
+              path: 'startSettings[0].prologue',
+              type: 'TEXT',
+              rule: 'DRUGS',
+              reason: '마약 사용을 직접 권장합니다.',
+            },
+          ],
+        },
       });
     });
     await openWithGenreTags(page);
@@ -998,7 +1010,18 @@ test.describe('일반 제작 등록', () => {
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
     );
-    await expect(registerButton(page)).toBeEnabled();
+    // 사유가 있는 시작 상황 설정 탭으로 옮겨 칸에 사유를 보이고, 폼 위에 반려 안내를 둔다.
+    await expect(
+      page.getByRole('status', {
+        name: GENERAL_STORY_REVIEW_COPY.rejectedTitle,
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(tab(page, 'start')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText('마약 사용을 직접 권장합니다.')).toBeVisible();
+    await expect(
+      page.getByLabel(GENERAL_STORY_START_COPY.prologue.label),
+    ).toHaveAttribute('aria-invalid', 'true');
     // 접수된 입력은 서버 제출본이 정본이라 임시 저장본을 지우고 다시 임시 저장하지 않는다.
     expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
     await expect(
@@ -1008,6 +1031,8 @@ test.describe('일반 제작 등록', () => {
       }),
     ).toBeDisabled();
 
+    await tab(page, 'publish').click();
+    await expect(registerButton(page)).toBeEnabled();
     await registerButton(page).click();
     await expect.poll(() => resubmitRequests.length).toBe(1);
     expect(resubmitRequests[0]).toMatchObject({ title: '노선도에 없는 역' });

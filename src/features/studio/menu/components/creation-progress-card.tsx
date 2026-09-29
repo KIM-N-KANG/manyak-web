@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { Calendar04Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -66,8 +67,15 @@ export function CreationProgressCard({ record }: CreationProgressCardProps) {
   );
 }
 
-/** 내 스토리 카드의 날짜 줄과 같은 자리·스타일로 처음 임시 저장한 시각을 보여 준다. */
-function SavedAtRow({ createdAt }: { createdAt: string }) {
+/** 내 스토리 카드의 날짜 줄과 같은 자리·스타일로 처음 임시 저장한(또는 등록을 요청한) 시각을 보여 준다. */
+export function SavedAtRow({
+  createdAt,
+  label = CREATION_PROGRESS_CARD_COPY.savedAtLabel,
+}: {
+  createdAt: string;
+  /** 스크린 리더가 읽는 시각의 뜻이다. */
+  label?: string;
+}) {
   return (
     <div className="flex items-center justify-end gap-1 text-sm whitespace-nowrap text-foreground-secondary">
       <HugeiconsIcon
@@ -76,9 +84,7 @@ function SavedAtRow({ createdAt }: { createdAt: string }) {
         aria-hidden="true"
       />
       <time dateTime={createdAt}>
-        <span className="sr-only">
-          {CREATION_PROGRESS_CARD_COPY.savedAtLabel}{' '}
-        </span>
+        <span className="sr-only">{label} </span>
         {formatDateTime(createdAt)}
       </time>
     </div>
@@ -155,7 +161,7 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
     <CreationProgressCardBody
       isCompleting={false}
       title={title}
-      cover={isGeneral ? record.snapshot.cover?.blob : undefined}
+      cover={(isGeneral && record.snapshot.cover?.blob) || undefined}
       description={getDraftDescription(record)}
       action={
         <CardOptionsSheet
@@ -211,8 +217,10 @@ type CreationProgressCardBodyProps = {
   isCompleting: boolean;
   /** 초안 카드 제목. 없으면 단계에 맞는 고정 문구를 쓴다. */
   title?: string;
-  /** 일반 제작 초안의 표지 파일. 없으면 기본 심벌을 보인다. */
-  cover?: Blob;
+  /** 일반 제작 초안의 표지 파일 또는 검수 제출본의 표지 URL. 없으면 기본 심벌을 보인다. */
+  cover?: Blob | string;
+  /** 제목 위에 두는 상태 표시(검수 제출본의 상태 배지) */
+  badge?: React.ReactNode;
   /** 초안 카드의 단계별 설명. 완성 중 카드는 고정 문구를 쓴다. */
   description?: string;
   /** 제목 줄 오른쪽 끝에 놓는 요소(옵션 버튼) */
@@ -221,13 +229,14 @@ type CreationProgressCardBodyProps = {
   children?: React.ReactNode;
 };
 
-function CreationProgressCardBody({
+export function CreationProgressCardBody({
   isCompleting,
   title = isCompleting
     ? CREATION_PROGRESS_CARD_COPY.completingTitle
     : CREATION_PROGRESS_CARD_COPY.draftTitle,
   cover,
   description = CREATION_PROGRESS_CARD_COPY.completingDescription,
+  badge,
   action,
   children,
 }: CreationProgressCardBodyProps) {
@@ -249,6 +258,8 @@ function CreationProgressCardBody({
             showStatus={false}
             resolution=""
           />
+        ) : typeof cover === 'string' ? (
+          <Image src={cover} alt="" fill unoptimized className="object-cover" />
         ) : cover ? (
           <DraftCoverImage blob={cover} />
         ) : (
@@ -263,6 +274,7 @@ function CreationProgressCardBody({
           'min-h-[10.6667rem]',
         )}>
         <div>
+          {badge}
           <div className="flex items-start gap-2">
             <p
               className={cn(

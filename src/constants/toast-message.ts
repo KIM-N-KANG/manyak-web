@@ -8,6 +8,13 @@ export const TOAST_MESSAGE = {
   STORY_REVIEW_REJECTED: '스토리가 검토를 통과하지 못했어요',
   STORY_REVIEW_DELAYED: '검토가 늦어지고 있어요. 끝나면 제작 탭에 추가돼요',
   STORY_REGISTER_FAILED: '스토리를 등록하지 못했어요',
+  STORY_IMAGES_TOO_LARGE: '이미지 크기나 장수를 줄여 주세요',
+  STORY_IMAGE_NOT_FOUND:
+    '올린 이미지를 찾지 못했어요. 이미지를 다시 올려 주세요',
+  STORY_SUBMISSION_PENDING: '아직 검토 중이에요',
+  STORY_SUBMISSION_LOAD_FAILED: '스토리를 불러오지 못했어요',
+  STORY_REGISTER_CANCELED: '등록을 취소했어요',
+  STORY_REGISTER_CANCEL_FAILED: '등록을 취소하지 못했어요',
   STORY_DELETED: '스토리가 삭제되었어요',
   CHAT_DELETED: '채팅이 삭제되었어요',
   STORY_DELETE_FAILED: '스토리 삭제에 실패했어요',

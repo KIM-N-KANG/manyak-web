@@ -150,6 +150,12 @@ export type AnalyticsEventProps = {
   };
   /** 등록 요청 실패 안내를 띄울 때 보낸다. 응답이 없는 네트워크 오류는 0이다. */
   client_generalCreate_registerError_shown: { status: number };
+  /** 제작 탭의 검수 제출본 카드에서 수정·등록 취소·삭제를 고를 때 보낸다. */
+  client_storyList_submissionCard_clicked: {
+    submission_id: string;
+    status: 'pending' | 'rejected' | 'failed';
+    action: 'edit' | 'cancel' | 'delete';
+  };
   /** 등록 요청이 접수된 뒤 검수 결과(또는 기다림 상한 초과)를 안내할 때 보낸다. */
   client_generalCreate_reviewResult_shown: {
     submission_id: string;
