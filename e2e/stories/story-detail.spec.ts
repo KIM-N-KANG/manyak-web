@@ -5,7 +5,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, seedStoryIds, test } from '../fixtures/test';
+import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
 const STORY_DETAIL = '**/api/v1/stories/s1';
@@ -324,6 +324,54 @@ test.describe('스토리 상세', () => {
     await page.goBack();
     await expect(viewer).not.toBeVisible();
     await expect(page).toHaveURL(/\/stories\/s1$/);
+  });
+
+  test('공유 링크처럼 새 탭에서 바로 열면 헤더 뒤로가기가 홈 탭으로 이동한다 (KNK-1461)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    await page.goto('/stories/s1');
+    await expect(
+      page.getByRole('heading', { level: 1, name: '용의 계곡' }),
+    ).toBeVisible();
+
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe(APP_PATH.MAIN.STORIES);
+  });
+
+  test('앱 안에서 이동해 왔으면 헤더 뒤로가기가 이전 화면으로 돌아간다 (KNK-1461)', async ({
+    page,
+  }) => {
+    await seedStoryIds(page, ['s1']);
+    await page.route('**/api/v1/stories/batch', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([storyDetail]),
+      });
+    });
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
+    await expect(
+      page.getByRole('heading', { level: 1, name: '용의 계곡' }),
+    ).toBeVisible();
+
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 
   test('채팅 시작 상황을 선택하면 상황 설명이 바뀐다 (US-4-1)', async ({

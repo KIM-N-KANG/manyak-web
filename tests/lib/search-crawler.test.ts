@@ -6,6 +6,8 @@ import { isSearchCrawler } from '@/lib/search-crawler';
 const CRAWLER_USER_AGENTS = {
   googlebot:
     'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Googlebot/2.1; +http://www.google.com/bot.html) Chrome/125.0.6422.175 Safari/537.36',
+  googleInspectionTool:
+    'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.175 Mobile Safari/537.36 (compatible; Google-InspectionTool/1.0;)',
   bingbot:
     'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/116.0.1938.76 Safari/537.36',
   yeti: 'Mozilla/5.0 (compatible; Yeti/1.1; +https://naver.me/spd)',

@@ -7,7 +7,9 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { m } from 'motion/react';
 import { useRouter } from 'next/navigation';
 
+import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import { Button } from '@/components/ui/button';
+import { APP_PATH } from '@/constants/app-path';
 import { StoryOptionsMenu } from '@/features/stories/_shared/components/story-options-menu';
 
 type StoryDetailHeaderProps = {
@@ -37,6 +39,17 @@ export function StoryDetailHeader({
 }: StoryDetailHeaderProps) {
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
+
+  // 공유 링크처럼 상세로 바로 들어오면 돌아갈 앱 화면이 없으므로 홈 탭으로 보낸다.
+  const handleBack = () => {
+    if (!hasInAppNavigation()) {
+      router.replace(APP_PATH.MAIN.STORIES);
+
+      return;
+    }
+
+    router.back();
+  };
 
   useEffect(() => {
     const header = headerRef.current;
@@ -114,7 +127,7 @@ export function StoryDetailHeader({
         variant="ghost"
         aria-label="이전 페이지로 돌아가기 버튼"
         className="relative text-current hover:bg-black/10 hover:text-current"
-        onClick={() => router.back()}>
+        onClick={handleBack}>
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
 
