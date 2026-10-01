@@ -29,4 +29,9 @@ export interface GeneralCharacterInput {
    * @nullable
    */
   images?: GeneralCharacterImageInput[] | null;
+  /**
+   * 인물 소개. 앞뒤 공백 제거 후 80자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.
+   * @nullable
+   */
+  description?: string | null;
 }
