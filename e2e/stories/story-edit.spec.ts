@@ -4,6 +4,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import {
+  GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
   GENERAL_STORY_EDIT_COPY,
   GENERAL_STORY_REVIEW_COPY,
@@ -20,6 +21,9 @@ const EDIT_FORM_URL = `**/api/v1/stories/${STORY_ID}/edit`;
 const SUBMISSION_URL = '**/api/v1/stories/submissions/sub-1';
 const PUBLISH_TAB = GENERAL_STORY_TABS.find(
   ({ value }) => value === 'publish',
+)!.label;
+const SUPPORTING_TAB = GENERAL_STORY_TABS.find(
+  ({ value }) => value === 'supporting',
 )!.label;
 const TITLE_REASON = '부적절한 제목이에요';
 const COVER_URL = 'https://cdn.manyak.app/thumbnails/edit-cover.png';
@@ -77,7 +81,9 @@ const EDIT_FORM = {
   mainEvents: [],
   thumbnailUrl: COVER_URL,
   thumbnailModerationStatus: 'APPROVED',
-  characters: [{ id: 'char-1', name: '도하람', images: [] }],
+  characters: [
+    { id: 'char-1', name: '도하람', description: '보관소 관리인', images: [] },
+  ],
   submission: null,
 };
 
@@ -252,6 +258,38 @@ test.describe('스토리 수정', () => {
       new RegExp(`${APP_PATH.STORY_DETAIL(STORY_ID)}$`),
     );
     expect(patches).toEqual([{ title: '막차 뒤의 역' }]);
+  });
+
+  test('주변 인물의 인물 소개를 현재 값으로 채우고, 고쳐 저장하면 인물 목록에 실어 보낸다 (STORY-EDIT-16)', async ({
+    page,
+  }) => {
+    const patches = await setup(page);
+
+    await openEditFromDetail(page);
+    await page.getByRole('tab', { name: SUPPORTING_TAB, exact: true }).click();
+
+    const introduction = page.getByLabel(
+      GENERAL_STORY_CHARACTER_COPY.introductionLabel,
+      { exact: true },
+    );
+
+    await expect(introduction).toHaveValue('보관소 관리인');
+    await introduction.fill('무뚝뚝한 보관소 관리인');
+    await save(page);
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_EDITED)).toBeVisible();
+    expect(patches).toEqual([
+      {
+        characters: [
+          {
+            id: 'char-1',
+            name: '도하람',
+            description: '무뚝뚝한 보관소 관리인',
+            images: [],
+          },
+        ],
+      },
+    ]);
   });
 
   test('저장을 마치고 돌아온 뒤 뒤로가기를 눌러도 수정 화면이 다시 나오지 않는다 (STORY-EDIT-14)', async ({

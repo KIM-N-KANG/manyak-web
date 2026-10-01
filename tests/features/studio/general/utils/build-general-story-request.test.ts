@@ -25,10 +25,17 @@ const INPUT: GeneralStoryRequestInput = {
     {
       name: ' 도하람 ',
       gender: 'MALE',
+      description: ' 무뚝뚝한\t보관소 관리인 ',
       feature: '',
       imageObjectKey: 'characters/uploaded/drafts/me/a.png',
     },
-    { name: '서은결', gender: 'FEMALE', feature: '', imageObjectKey: null },
+    {
+      name: '서은결',
+      gender: 'FEMALE',
+      description: '  ',
+      feature: '',
+      imageObjectKey: null,
+    },
   ],
   startSettings: [
     {
@@ -113,6 +120,7 @@ describe('buildGeneralStoryRequest', () => {
       characters: [
         {
           name: '도하람',
+          description: '무뚝뚝한 보관소 관리인',
           images: [
             {
               objectKey: 'characters/uploaded/drafts/me/a.png',
@@ -126,6 +134,7 @@ describe('buildGeneralStoryRequest', () => {
     expect(request.storySettings.ruleSetting).toContain('묘사 6 : 대사 4');
     expect(request.storySettings.characterSetting).toContain('## 도하람');
     expect(request).not.toHaveProperty('description');
+    expect(request.characters?.[1]).not.toHaveProperty('description');
     expect(JSON.stringify(request)).not.toContain('client-');
   });
 });

@@ -19,7 +19,9 @@ const validForm = (): GeneralStoryRegisterForm => ({
     gender: 'FEMALE',
     feature: '막차에서 잘못 내린 회사원',
   },
-  supporting: [{ id: 's1', name: '도하람', gender: 'MALE', feature: '' }],
+  supporting: [
+    { id: 's1', name: '도하람', gender: 'MALE', description: '', feature: '' },
+  ],
   startSettings: [
     {
       id: 'st1',
@@ -95,9 +97,11 @@ describe('getRegisterErrors', () => {
     const form = validForm();
 
     form.description = '역';
+    form.supporting[0].description = '역';
     form.supporting[0].feature = '역';
 
     expect(Object.keys(messages(form))).toEqual([
+      REGISTER_ERROR_KEY.supporting('s1', 'description'),
       REGISTER_ERROR_KEY.supporting('s1', 'feature'),
       REGISTER_ERROR_KEY.description,
     ]);

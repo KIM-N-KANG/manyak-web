@@ -24,6 +24,7 @@ export type GeneralStoryReviewForm = {
   protagonist: GeneralStoryCharacter;
   supporting: (GeneralStoryCharacter & {
     id: string;
+    description: string;
     image: { objectKey: string } | null;
   })[];
   startSettings: GeneralStoryStartSettingDraft[];
@@ -168,6 +169,14 @@ function resolveTarget(
         ...base,
         key: REGISTER_ERROR_KEY.supporting(target.id, 'name'),
         valueOf: (form) => find(form)?.name,
+      };
+    }
+
+    if (character[2] === 'description') {
+      return {
+        ...base,
+        key: REGISTER_ERROR_KEY.supporting(target.id, 'description'),
+        valueOf: (form) => find(form)?.description,
       };
     }
 

@@ -40,15 +40,16 @@ const payload = readStorySubmission({
     characters: [
       {
         name: '서은결',
+        description: '첫차를 기다리는 학생',
         images: [{ objectKey: 'eun-key', imageUrl: 'https://cdn/eun.png' }],
       },
-      { name: '도하람', images: [] },
+      { name: '도하람', description: null, images: [] },
     ],
   },
 })!.payload;
 
 describe('submissionToFormInitial', () => {
-  it('설정 글을 칸으로 나누고 이미지는 같은 이름의 인물에 붙인다', () => {
+  it('설정 글을 칸으로 나누고 이미지와 인물 소개는 같은 이름의 인물에 붙인다', () => {
     const form = submissionToFormInitial(payload, [
       { id: 7, name: '호러', category: 'GENRE' },
     ]);
@@ -66,16 +67,18 @@ describe('submissionToFormInitial', () => {
       feature: '회사원',
     });
     expect(
-      form.supporting.map(({ name, gender, image }) => ({
+      form.supporting.map(({ name, gender, description, image }) => ({
         name,
         gender,
+        description,
         image,
       })),
     ).toEqual([
-      { name: '도하람', gender: 'MALE', image: null },
+      { name: '도하람', gender: 'MALE', description: '', image: null },
       {
         name: '서은결',
         gender: 'FEMALE',
+        description: '첫차를 기다리는 학생',
         image: {
           objectKey: 'eun-key',
           previewUrl: 'https://cdn/eun.png',

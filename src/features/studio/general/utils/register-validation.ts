@@ -26,7 +26,7 @@ import type { GeneralStoryStartSettingDraft } from '@/features/studio/general/ut
 export type GeneralStoryRegisterForm = {
   texts: Record<GeneralStoryTextField, string>;
   protagonist: GeneralStoryCharacter;
-  supporting: (GeneralStoryCharacter & { id: string })[];
+  supporting: (GeneralStoryCharacter & { id: string; description: string })[];
   startSettings: GeneralStoryStartSettingDraft[];
   mainEvents: GeneralStoryMainEventDraft[];
   genreCount: number;
@@ -45,7 +45,7 @@ export type GeneralStoryRegisterError = {
   collapsibleId?: string;
 };
 
-type CharacterPart = 'name' | 'gender' | 'feature';
+type CharacterPart = 'name' | 'gender' | 'description' | 'feature';
 
 export const REGISTER_ERROR_KEY = {
   text: (field: GeneralStoryTextField) => field,
@@ -111,7 +111,8 @@ export function getRegisterErrors({
       errors.push({ ...error, message });
     }
   };
-  const { nameLabel, featureLabel } = GENERAL_STORY_CHARACTER_COPY;
+  const { nameLabel, featureLabel, introductionLabel } =
+    GENERAL_STORY_CHARACTER_COPY;
   const { ending } = GENERAL_STORY_START_COPY;
   const duplicateCharacterIds = getDuplicateCharacterNameIds(
     protagonist.name,
@@ -156,6 +157,15 @@ export function getRegisterErrors({
     push(
       { ...target, key: REGISTER_ERROR_KEY.supporting(character.id, 'gender') },
       character.gender ? null : GENERAL_STORY_REGISTER_ERROR_COPY.gender,
+    );
+    push(
+      {
+        ...target,
+        key: REGISTER_ERROR_KEY.supporting(character.id, 'description'),
+      },
+      getTextError(introductionLabel, character.description, {
+        required: false,
+      }),
     );
     push(
       {

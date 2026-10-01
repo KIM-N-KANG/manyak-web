@@ -324,6 +324,12 @@ export const ResubmitBody = zod
               .describe(
                 '이 인물의 이미지 목록(최대 10장). 배열 순서가 표시 순서가 된다. \*\*수정에서 생략하면 기존 이미지를 유지\*\*하고 빈 배열이면 모두 삭제한다.',
               ),
+            description: zod
+              .string()
+              .nullish()
+              .describe(
+                '인물 소개. 앞뒤 공백 제거 후 80자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
+              ),
           })
           .describe('인물 입력(제작·수정 공용)'),
       )
@@ -1010,6 +1016,12 @@ export const CreateGeneralStoryBody = zod
               .nullish()
               .describe(
                 '이 인물의 이미지 목록(최대 10장). 배열 순서가 표시 순서가 된다. \*\*수정에서 생략하면 기존 이미지를 유지\*\*하고 빈 배열이면 모두 삭제한다.',
+              ),
+            description: zod
+              .string()
+              .nullish()
+              .describe(
+                '인물 소개. 앞뒤 공백 제거 후 80자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
               ),
           })
           .describe('인물 입력(제작·수정 공용)'),
@@ -1785,6 +1797,12 @@ export const UpdateStoryBody = zod
               .nullish()
               .describe(
                 '이 인물의 이미지 목록(최대 10장). 배열 순서가 표시 순서가 된다. \*\*수정에서 생략하면 기존 이미지를 유지\*\*하고 빈 배열이면 모두 삭제한다.',
+              ),
+            description: zod
+              .string()
+              .nullish()
+              .describe(
+                '인물 소개. 앞뒤 공백 제거 후 80자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
               ),
           })
           .describe('인물 입력(제작·수정 공용)'),

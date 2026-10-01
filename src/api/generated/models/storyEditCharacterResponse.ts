@@ -20,4 +20,9 @@ export interface StoryEditCharacterResponse {
   name?: string;
   /** 이 인물의 이미지 목록(표시 순서) */
   images?: CharacterImageResponse[];
+  /**
+   * 인물 소개
+   * @nullable
+   */
+  description?: string | null;
 }

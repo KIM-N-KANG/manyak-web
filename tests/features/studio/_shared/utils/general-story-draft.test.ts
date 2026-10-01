@@ -45,7 +45,7 @@ describe('hasGeneralStoryDraftInput', () => {
     ).toBe(false);
   });
 
-  it('글·이미지·성별·엔딩·장르 중 하나라도 있으면 입력이 있는 것이다', () => {
+  it('글·이미지·성별·인물 소개·엔딩·장르 중 하나라도 있으면 입력이 있는 것이다', () => {
     const cases: Partial<GeneralStoryDraftSnapshot>[] = [
       { texts: { ...empty().texts, oneLineIntro: '소개' } },
       { cover: IMAGE },
@@ -53,6 +53,18 @@ describe('hasGeneralStoryDraftInput', () => {
       {
         supporting: [
           { id: 's1', name: '', gender: null, feature: '', image: IMAGE },
+        ],
+      },
+      {
+        supporting: [
+          {
+            id: 's1',
+            name: '',
+            gender: null,
+            description: '관리인',
+            feature: '',
+            image: null,
+          },
         ],
       },
       {

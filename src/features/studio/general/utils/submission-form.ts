@@ -22,6 +22,7 @@ export type GeneralStoryFormInitial = Omit<
   cover: DraftImage | null;
   supporting: (GeneralStoryCharacter & {
     id: string;
+    description: string;
     image: DraftImage | null;
   })[];
 };
@@ -77,7 +78,7 @@ function toGenreSelection(
 
 /**
  * 검수 제출본의 입력을 일반 제작 폼의 초기 입력으로 바꾼다. 설정 글은 수정 폼과 같은 규칙으로 칸에 나누고,
- * 주변 인물 이미지는 같은 이름(없으면 같은 순서)의 인물에 붙인다.
+ * 주변 인물 이미지와 인물 소개는 같은 이름(없으면 같은 순서)의 인물에 붙인다.
  *
  * @param payload 제출본 입력
  * @param tags 제공 장르 태그 목록
@@ -107,15 +108,16 @@ export function submissionToFormInitial(
       ? supportingBase
       : [{ name: '', gender: null, feature: '' }]
   ).map((character, index) => {
-    const images =
+    const matched =
       payload.characters.find(
         ({ name }) => name.trim() === character.name.trim(),
-      )?.images ?? payload.characters[index]?.images;
+      ) ?? payload.characters[index];
 
     return {
       ...character,
       id: crypto.randomUUID(),
-      image: toFormImage(images?.[0]),
+      description: matched?.description ?? '',
+      image: toFormImage(matched?.images[0]),
     };
   });
 
