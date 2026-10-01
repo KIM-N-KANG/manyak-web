@@ -61,18 +61,25 @@ const THUMBNAIL_URL = 'https://cdn.manyak.app/thumbnails/dragon.png';
 
 // 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 일반 제작에서 올린 이미지는
 // `characters/uploaded/` 아래로 온다(KNK-1503). 이미지 생성에 실패한 인물은 imageUrl이
-// null로 내려오므로 이름만 남는 경우도 함께 덮는다.
+// null로 내려오므로 이름만 남는 경우도 함께 덮는다. 소개 없이 만든 인물은
+// description이 null이다(KNK-1467).
 const STORY_CHARACTERS = [
   {
     name: '이무기',
     imageUrl: 'https://cdn.manyak.app/characters/generated/s1/imugi.webp',
+    description: '천 년을 기다려 용이 되려는 이무기.',
   },
   {
     name: '산신령',
     imageUrl:
       'https://cdn.manyak.app/characters/uploaded/moderated/sansin.webp',
+    description: null,
   },
-  { name: '계곡지기', imageUrl: null },
+  {
+    name: '계곡지기',
+    imageUrl: null,
+    description: '계곡 입구를 지키는 과묵한 노인.',
+  },
 ];
 
 // 60×60 투명 PNG. 뷰어의 srcset 밀도로 나눠도 naturalWidth가 0으로 반올림되지 않게 1×1보다 크게 둔다. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
@@ -154,7 +161,7 @@ test.describe('스토리 상세', () => {
     expect(headerGradientCount).toBe(0);
   });
 
-  test('주변 인물 이름과 인물 이미지를 보여준다 (KNK-1058)', async ({
+  test('주변 인물 이름·소개·인물 이미지를 보여준다 (KNK-1058, KNK-1467)', async ({
     page,
   }) => {
     await page.route(STORY_DETAIL, async (route) => {
@@ -186,6 +193,15 @@ test.describe('스토리 상세', () => {
     await expect(
       page.getByRole('img', { name: '계곡지기 인물 이미지' }),
     ).toHaveCount(0);
+
+    // 소개는 해당 인물 이름 바로 아래에 오고, 소개가 null인 산신령은 이름 다음에 소개 없이 다음 인물로 넘어간다
+    const [imugi, sansin, gyegok] = STORY_CHARACTERS;
+
+    await expect(
+      page.getByRole('heading', { name: '주변 인물' }).locator('..'),
+    ).toHaveText(
+      `주변 인물${imugi.name}${imugi.description}${sansin.name}${gyegok.name}${gyegok.description}`,
+    );
   });
 
   test('인물 이미지를 탭하면 풀스크린 뷰어가 열리고 페이지 이동 없이 닫힌다 (KNK-1276)', async ({

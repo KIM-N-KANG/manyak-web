@@ -1,6 +1,7 @@
 'use client';
 
 import type { StoryCharacterResponse } from '@/api/generated/models';
+import { TextContent } from '@/components/common/text-content';
 import { ChatCharacterImage } from '@/features/chats/_shared/components/chat-character-image';
 import { track } from '@/observability/analytics';
 
@@ -19,7 +20,11 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
             key={`${character.name}-${index}`}
             className="flex flex-col gap-4">
             <h3 className="font-semibold">{character.name}</h3>
-            {/* 이미지 생성에 실패한 인물은 imageUrl이 null이라 이름만 남긴다 */}
+            {/* 소개 없이 만든 기존·일반 제작 인물은 description이 null이라 생략한다 */}
+            {character.description ? (
+              <TextContent>{character.description}</TextContent>
+            ) : null}
+            {/* 이미지 생성에 실패한 인물은 imageUrl이 null이라 이미지를 생략한다 */}
             {character.imageUrl ? (
               <ChatCharacterImage
                 name={character.name ?? ''}
