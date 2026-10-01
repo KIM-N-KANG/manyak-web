@@ -17,6 +17,7 @@ import {
   skipOnboarding,
   test,
 } from '../fixtures/test';
+import { waitForToastToClose } from '../fixtures/toast';
 
 const draft: KeywordDraftRecord = {
   stage: 'KEYWORD_DRAFT',
@@ -158,6 +159,10 @@ test('용량 초과 시 임시 저장 완료로 표시하지 않고 생성 제�
   await expect(page.getByRole('button', { name: '판타지' })).toHaveAttribute(
     'aria-pressed',
     'true',
+  );
+  await waitForToastToClose(
+    page,
+    page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED),
   );
   // 저장하지 못했으니 닫기는 저장하지 않은 입력 경고다.
   await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();

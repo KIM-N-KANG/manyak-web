@@ -20,6 +20,7 @@ import {
   skipOnboarding,
   test,
 } from '../fixtures/test';
+import { waitForToastToClose } from '../fixtures/toast';
 
 // 편집 임시 저장(draft): 임시 저장 버튼·단계 이동·화면 숨김 때 제작 상태를 저장하고
 // 제작 탭 진행 카드의 "이어서 만들기"로 이어 만드는 흐름. 초안은 여러 건 공존하고
@@ -145,8 +146,8 @@ test.describe('스토리 임시 저장·재개', () => {
     );
     expect(await readDraftStages(page)).toEqual([]);
 
-    // 연타 처리는 공용 버튼이라 일반 제작(STORY-GENERAL-17)에서 확인한다. 토스트가 버튼을 덮는
-    // iPhone 화면에서는 포인터가 토스트 위에 머물러 sonner가 닫힘을 멈추기 때문이다.
+    // 연타 처리는 공용 버튼이라 일반 제작(STORY-GENERAL-17)에서 확인한다. iPhone 폭에서는 토스트가
+    // 버튼을 덮어 포인터가 토스트 위에 머물면 sonner가 닫힘을 멈추기 때문이다.
     await saveButton(page).click();
     await expect(savedToast(page)).toBeVisible();
     await expect.poll(() => readDraftStages(page)).toEqual(['KEYWORD_DRAFT']);
@@ -164,6 +165,7 @@ test.describe('스토리 임시 저장·재개', () => {
 
     await saveButton(page).click();
     await expect(savedToast(page)).toBeVisible();
+    await waitForToastToClose(page, savedToast(page));
     await closeButton(page).click();
     await expect(
       exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.saved.description),
@@ -425,6 +427,7 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect
       .poll(() => readDraftStages(page))
       .toEqual(['STORY_DRAFT', 'KEYWORD_DRAFT']);
+    await waitForToastToClose(page, savedToast(page));
 
     // 시드 initScript가 새 문서 로드마다 다시 심으므로 클라이언트 전환으로 제작 탭에 간다.
     await closeButton(page).click();
