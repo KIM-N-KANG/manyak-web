@@ -34,7 +34,7 @@ export const DRAFT_EXIT_WARNING_COPY = {
   nothing: {
     title: '스토리를 그만 만들까요?',
     description: '지금 나가면 만들고 있는 내용이 사라져요',
-    cancel: '닫기',
+    cancel: '계속 만들기',
     confirm: '그만 만들기',
   },
   submitted: {

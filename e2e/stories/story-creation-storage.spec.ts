@@ -1,11 +1,12 @@
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
+import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { CREATION_EPOCH_KEY } from '@/features/stories/_shared/utils/creation-db';
 import {
   type KeywordDraftRecord,
   PENDING_CREATION_REQUEST_STORAGE_KEY,
 } from '@/features/stories/_shared/utils/creation-request-storage';
-import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockApi } from '../fixtures/api-mock';
@@ -123,7 +124,7 @@ test('DB를 열 수 없으면 입력을 표시하지 않고 실패와 재시도�
   ).toBeVisible();
 });
 
-test('용량 초과 시 저장 완료로 표시하지 않고 이탈과 생성 제출을 막는다 (STORY-DRAFT-15)', async ({
+test('용량 초과 시 임시 저장 완료로 표시하지 않고 생성 제출을 막는다 (STORY-DRAFT-15)', async ({
   page,
 }) => {
   await page.route('**/api/v1/stories/simple/tags', (route) =>
@@ -147,19 +148,29 @@ test('용량 초과 시 저장 완료로 표시하지 않고 이탈과 생성 �
     };
   });
   await page.getByRole('button', { name: '판타지' }).click();
-  await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
   await page
-    .getByRole('button', { name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm })
+    .getByRole('button', { name: DRAFT_SAVE_BUTTON_LABEL, exact: true })
     .click();
   await expect(
     page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED),
   ).toBeVisible();
-  await expect(page).toHaveURL(new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`));
+  await expect(page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVED)).toHaveCount(0);
   await expect(page.getByRole('button', { name: '판타지' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await expect(page.getByText('임시 저장됨', { exact: true })).toBeHidden();
+  // 저장하지 못했으니 닫기는 저장하지 않은 입력 경고다.
+  await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+
+  const exitDialog = page.getByRole('alertdialog');
+
+  await expect(
+    exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.unsavedNew.description),
+  ).toBeVisible();
+  await exitDialog
+    .getByRole('button', { name: DRAFT_EXIT_WARNING_COPY.unsavedNew.cancel })
+    .click();
+  await expect(exitDialog).toBeHidden();
 
   await expect(
     page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED),
