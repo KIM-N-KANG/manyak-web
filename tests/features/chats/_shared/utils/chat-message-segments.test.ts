@@ -18,6 +18,10 @@ const DEV_ORIGINAL_IMAGE_URL =
   'https://dev-cdn.manyak.app/characters/originals/story-id/serin.webp';
 const REALTIME_IMAGE_URL =
   'https://dev-cdn.manyak.app/chat-images/chat-id/10-turn-uuid.webp';
+const UPLOADED_IMAGE_URL =
+  'https://cdn.manyak.app/characters/uploaded/moderated/image-uuid.webp';
+const DEV_UPLOADED_IMAGE_URL =
+  'https://dev-cdn.manyak.app/characters/uploaded/moderated/image-uuid.png';
 
 describe('채팅 메시지 조각', () => {
   it('텍스트 토큰은 마지막 텍스트 조각에 누적한다', () => {
@@ -63,11 +67,13 @@ describe('채팅 메시지 조각', () => {
     ).toHaveLength(2);
   });
 
-  it('허용된 CDN의 생성·오리지널·실시간 인물 이미지 URL만 받는다', () => {
+  it('허용된 CDN의 생성·오리지널·업로드·실시간 인물 이미지 URL만 받는다', () => {
     expect(isAllowedChatCharacterImageUrl(SERIN_IMAGE_URL)).toBe(true);
     expect(isAllowedChatCharacterImageUrl(DEV_IMAGE_URL)).toBe(true);
     expect(isAllowedChatCharacterImageUrl(ORIGINAL_IMAGE_URL)).toBe(true);
     expect(isAllowedChatCharacterImageUrl(DEV_ORIGINAL_IMAGE_URL)).toBe(true);
+    expect(isAllowedChatCharacterImageUrl(UPLOADED_IMAGE_URL)).toBe(true);
+    expect(isAllowedChatCharacterImageUrl(DEV_UPLOADED_IMAGE_URL)).toBe(true);
     expect(isAllowedChatCharacterImageUrl(REALTIME_IMAGE_URL)).toBe(true);
     expect(
       isAllowedChatCharacterImageUrl('https://cdn.manyak.app/chat-images/'),
@@ -95,6 +101,11 @@ describe('채팅 메시지 조각', () => {
     expect(
       isAllowedChatCharacterImageUrl(
         'https://cdn.manyak.app/characters/originals/',
+      ),
+    ).toBe(false);
+    expect(
+      isAllowedChatCharacterImageUrl(
+        'https://cdn.manyak.app/characters/uploaded/',
       ),
     ).toBe(false);
     expect(
