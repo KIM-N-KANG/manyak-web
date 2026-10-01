@@ -190,7 +190,7 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
       }>
       <div className="flex flex-col gap-2">
         {record.createdAt ? <SavedAtRow createdAt={record.createdAt} /> : null}
-        <Button className="w-full" onClick={handleResume}>
+        <Button variant="secondary" className="w-full" onClick={handleResume}>
           {CREATION_PROGRESS_CARD_COPY.resume}
         </Button>
       </div>

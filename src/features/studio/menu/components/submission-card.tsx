@@ -139,6 +139,7 @@ export function SubmissionCard({ submission }: SubmissionCardProps) {
           ) : null}
           {!isPending && (
             <Button
+              variant="secondary"
               className="w-full"
               onClick={() => {
                 trackClick('edit');
