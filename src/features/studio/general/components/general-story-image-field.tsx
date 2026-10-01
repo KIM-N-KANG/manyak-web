@@ -20,13 +20,14 @@ import {
 } from '@/features/studio/general/hooks/use-draft-image-picker';
 import { cn } from '@/lib/utils';
 
+import { GeneralStoryImageCropSheet } from './general-story-image-crop-sheet';
 import { useRegisterError } from './general-story-register-errors';
 
 type GeneralStoryImageFieldProps = {
   id: string;
   label: string;
   kind: ImagePresignRequestKind;
-  /** 미리보기 비율(가로/세로)이다. */
+  /** 미리보기와 자르기 비율(가로/세로)이다. */
   ratio: number;
   /** 미리보기 폭 클래스다. */
   widthClassName: string;
@@ -56,7 +57,7 @@ export function GeneralStoryImageField({
   onChange,
 }: GeneralStoryImageFieldProps) {
   const error = useRegisterError(registerErrorKey);
-  const { isUploading, previewUrl, open, remove, inputProps } =
+  const { isUploading, previewUrl, open, remove, crop, inputProps } =
     useDraftImagePicker({ kind, image, onChange });
   const {
     upload,
@@ -150,6 +151,14 @@ export function GeneralStoryImageField({
         )
       )}
       <input id={id} {...inputProps} />
+      {crop && (
+        <GeneralStoryImageCropSheet
+          imageUrl={crop.imageUrl}
+          aspect={ratio}
+          onCancel={crop.cancel}
+          onConfirm={crop.confirm}
+        />
+      )}
     </Field>
   );
 }

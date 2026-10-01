@@ -2,12 +2,12 @@ import { usePresignDraftImage } from '@/api/generated/endpoints/stories/stories'
 import type { ImagePresignRequestKind } from '@/api/generated/models';
 
 /**
- * 등록 전 이미지를 올리는 훅. presign으로 받은 URL에 파일을 PUT 하고, 등록 요청에 넣을 객체 키를 반환한다.
+ * 등록 전 이미지를 올리는 훅. presign으로 받은 URL에 이미지를 PUT 하고, 등록 요청에 넣을 객체 키를 반환한다.
  */
 export function useDraftImageUpload() {
   const presign = usePresignDraftImage();
 
-  return async (file: File, kind: ImagePresignRequestKind) => {
+  return async (file: Blob, kind: ImagePresignRequestKind) => {
     const response = await presign.mutateAsync({
       data: { kind, contentType: file.type, contentLength: file.size },
     });
