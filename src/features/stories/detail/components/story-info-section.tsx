@@ -3,9 +3,11 @@ import type { Ref } from 'react';
 import type {
   StoryAuthorResponse,
   StoryCharacterResponse,
+  StoryDetailResponseVisibility,
   StoryStartSettingResponse,
 } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
 import { formatDate } from '@/lib/format-date';
 
 import { StoryCharacters } from './story-characters';
@@ -22,6 +24,8 @@ type StoryInfo = {
   reachedEndings?: string[];
   startSettings?: StoryStartSettingResponse[];
   createdAt?: string;
+  isOwner?: boolean;
+  visibility?: StoryDetailResponseVisibility;
 };
 
 type StoryInfoSectionProps = {
@@ -48,6 +52,10 @@ export function StoryInfoSection({
   );
   const startSettings = story.startSettings ?? [];
   const authorNickname = story.author?.nickname;
+  const visibilityLabel =
+    story.isOwner && story.visibility
+      ? STORY_VISIBILITY_COPY[story.visibility]
+      : undefined;
 
   return (
     <div className="flex flex-col gap-8">
@@ -87,7 +95,7 @@ export function StoryInfoSection({
         />
       )}
 
-      {(authorNickname || story.createdAt) && (
+      {(authorNickname || story.createdAt || visibilityLabel) && (
         <div
           ref={metadataRef}
           className="-mx-4 flex flex-col gap-4 bg-muted p-4 text-sm text-foreground-secondary">
@@ -103,6 +111,14 @@ export function StoryInfoSection({
               <time dateTime={story.createdAt}>
                 {formatDate(story.createdAt)}
               </time>
+            </div>
+          )}
+          {visibilityLabel && (
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">
+                {STORY_VISIBILITY_COPY.label}
+              </span>
+              <span>{visibilityLabel}</span>
             </div>
           )}
         </div>
