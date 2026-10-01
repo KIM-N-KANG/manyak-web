@@ -10,6 +10,14 @@ export const GENERAL_STORY_CREATE_COPY = {
   loading: '스토리를 불러오는 중',
 } as const;
 
+/** 스토리 수정 화면 문구다. 폼은 일반 제작과 같고 헤더와 저장 버튼만 다르다. */
+export const GENERAL_STORY_EDIT_COPY = {
+  title: '스토리 수정',
+  close: '스토리 수정 닫기',
+  save: '저장하기',
+  saving: '저장하는 중',
+} as const;
+
 /**
  * 탭에서 입력하는 글 항목이다. 키는 등록 요청(`CreateGeneralStoryRequest`)의 필드명이거나,
  * 스토리 설정 글(`worldSetting`·`ruleSetting`)을 이루는 절이다(`utils/story-setting-sections`).
@@ -364,6 +372,11 @@ export const GENERAL_STORY_REVIEW_COPY = {
   failedTitle: '검토를 마치지 못했어요',
   failedImageDescription: '표시된 이미지를 바꿔 다시 등록해 주세요',
   failedDescription: '검토 중 문제가 생겼어요. 다시 등록해 주세요',
+  pendingTitle: '수정 내용을 검토하고 있어요',
+  pendingDescription: '검토가 끝나면 다시 수정할 수 있어요',
+  editRejectedDescription: '표시된 곳을 고쳐 다시 저장해 주세요',
+  editFailedImageDescription: '표시된 이미지를 바꿔 다시 저장해 주세요',
+  editFailedDescription: '검토 중 문제가 생겼어요. 다시 저장해 주세요',
   /** AI가 사유를 남기지 않았을 때 칸에 보이는 문구다. */
   issueFallback: '등록할 수 없는 내용이 있어요',
   imageError: {

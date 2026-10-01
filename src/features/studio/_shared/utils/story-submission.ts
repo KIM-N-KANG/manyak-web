@@ -128,7 +128,9 @@ function readImage(
  * @param value 응답의 `payload`
  * @returns 제출본 입력
  */
-function readPayload(value: unknown): StorySubmissionPayload {
+export function readStorySubmissionPayload(
+  value: unknown,
+): StorySubmissionPayload {
   const payload = asObject(value);
   const settings = asObject(payload.storySettings);
 
@@ -228,7 +230,7 @@ export function readStorySubmission(data: unknown): StorySubmission | null {
 
       return path ? [{ path, errorCode: asText(error.errorCode) }] : [];
     }),
-    payload: readPayload(item.payload),
+    payload: readStorySubmissionPayload(item.payload),
   };
 }
 

@@ -7,11 +7,13 @@ import {
   BubbleChatIcon,
   Calendar04Icon,
   Delete02Icon,
+  Edit02Icon,
   Image01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import {
@@ -94,11 +96,22 @@ function CreatedStoryCardOptions({
   storyId,
 }: CreatedStoryCardOptionsProps) {
   const { status } = useSession();
+  const router = useRouter();
   const [isReportOpen, setIsReportOpen] = useState(false);
   const { deleteStory, isPending } = useDeleteCreatedStory(storyId);
-  const canReport = status === 'authenticated';
+  const isMember = status === 'authenticated';
+  const canReport = isMember;
 
   const items: CardOptionsSheetItem[] = [];
+
+  // 수정은 회원만 할 수 있어(게스트 스토리 PATCH 401) 회원 카드에만 맨 위에 둔다.
+  if (isMember) {
+    items.push({
+      icon: Edit02Icon,
+      label: '수정하기',
+      onSelect: () => router.push(APP_PATH.STORY_EDIT(storyId)),
+    });
+  }
 
   if (canReport) {
     items.push({

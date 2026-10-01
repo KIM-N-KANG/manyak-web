@@ -66,6 +66,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     (isMember
       ? story.isOwner === true
       : (createdStoryIds?.includes(storyId) ?? false));
+  const canEdit = isMember && story?.isOwner === true;
 
   useDocumentTitle(story?.title ?? '');
 
@@ -122,6 +123,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
       <StoryDetailHeader
         storyId={storyId}
         title={story?.title ?? ''}
+        canEdit={canEdit}
         canReport={isMember && story !== undefined}
         canDelete={canDelete}
         onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STUDIO)}

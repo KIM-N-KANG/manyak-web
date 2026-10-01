@@ -141,6 +141,8 @@ export type AnalyticsEventProps = {
   };
   // generalCreate
   client_generalCreate_viewed: void;
+  client_storyEdit_viewed: { story_id: string };
+  client_storyEdit_completed: { story_id: string };
   client_generalCreate_completed: {
     submission_id: string;
     start_setting_count: number;
