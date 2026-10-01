@@ -1,22 +1,21 @@
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { DraftSaveButton } from '@/features/stories/_shared/components/draft-save-button';
+import type { DraftExitDialog } from '@/features/stories/_shared/constants/draft-exit-warning';
 
 import type { StoryCreateStep } from '../../types';
-import type { DraftSaveStatus } from '../../utils/draft-autosave';
 import { StoryCreateStepIndicator } from '../step-layout/story-create-step-indicator';
-import {
-  StoryCreateBackDialog,
-  type StoryCreateBackDialogVariant,
-} from './story-create-back-dialog';
+import { StoryCreateBackDialog } from './story-create-back-dialog';
 
 type StoryCreateHeaderProps = {
   step: StoryCreateStep;
-  draftSaveStatus: DraftSaveStatus;
-  backDialog: StoryCreateBackDialogVariant | null;
+  isSavingDraft: boolean;
+  canSaveDraft: boolean;
+  isDraftSaved: boolean;
+  onSaveDraft: () => Promise<boolean>;
+  backDialog: DraftExitDialog | null;
   onBackClick: () => void;
   onBackDialogOpenChange: (open: boolean) => void;
   onConfirmBack: () => void;
@@ -24,7 +23,10 @@ type StoryCreateHeaderProps = {
 
 export function StoryCreateHeader({
   step,
-  draftSaveStatus,
+  isSavingDraft,
+  canSaveDraft,
+  isDraftSaved,
+  onSaveDraft,
   backDialog,
   onBackClick,
   onBackDialogOpenChange,
@@ -36,17 +38,12 @@ export function StoryCreateHeader({
         <div className="flex h-14 items-center gap-2 px-4">
           <h1 className="font-semibold">스토리 간편 제작</h1>
           <div className="ml-auto flex items-center gap-1">
-            {draftSaveStatus !== 'hidden' && (
-              <Badge
-                variant="secondary"
-                aria-live="polite"
-                className={cn(
-                  'h-auto px-2.5 py-1 text-sm',
-                  draftSaveStatus === 'saved' && 'bg-primary/10 text-primary',
-                )}>
-                {draftSaveStatus === 'saving' ? '임시 저장중' : '임시 저장됨'}
-              </Badge>
-            )}
+            <DraftSaveButton
+              isSaving={isSavingDraft}
+              disabled={!canSaveDraft}
+              isSaved={isDraftSaved}
+              onSave={onSaveDraft}
+            />
             <Button
               type="button"
               size="icon"

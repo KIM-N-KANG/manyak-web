@@ -1,11 +1,11 @@
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
 import {
   type PendingCreationRequest,
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
   type StoryCompletionRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
-import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
 import { STORYLINE_SELECT_LOADING_LABEL } from '@/features/stories/new/constants';
 import {
   CREATE_STORY_FAB_COPY,
@@ -186,7 +186,7 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
     await page
       .getByRole('button', {
-        name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.saved.confirm,
         exact: true,
       })
       .click();

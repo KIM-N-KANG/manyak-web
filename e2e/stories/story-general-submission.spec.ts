@@ -2,6 +2,7 @@ import type { Page, Route } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
 import {
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_REVIEW_COPY,
@@ -209,7 +210,7 @@ test.describe('제작 탭 검수 제출본', () => {
     await expect(page.getByText(PROLOGUE_REASON)).toBeVisible();
     await expect(
       page.getByRole('button', {
-        name: GENERAL_STORY_CREATE_COPY.draftSave,
+        name: DRAFT_SAVE_BUTTON_LABEL,
         exact: true,
       }),
     ).toBeDisabled();

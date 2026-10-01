@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getDraftExitWarning } from '@/features/studio/general/utils/draft-exit-warning';
+import { getDraftExitWarning } from '@/features/stories/_shared/utils/draft-exit-warning';
 
 describe('getDraftExitWarning', () => {
   it('임시 저장본이 없으면 입력 여부로 고른다', () => {

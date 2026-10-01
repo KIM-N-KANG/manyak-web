@@ -27,7 +27,10 @@ export function StoryCreateFunnel() {
     setGuestLimitOpen,
     step,
     tagStep,
-    draftSaveStatus,
+    isSavingDraft,
+    canSaveDraft,
+    isDraftSaved,
+    saveDraft,
     creationId,
     storylines,
     selectedTagGroups,
@@ -77,7 +80,10 @@ export function StoryCreateFunnel() {
         />
         <StoryCreateHeader
           step={step}
-          draftSaveStatus={draftSaveStatus}
+          isSavingDraft={isSavingDraft}
+          canSaveDraft={canSaveDraft}
+          isDraftSaved={isDraftSaved}
+          onSaveDraft={saveDraft}
           backDialog={backDialog}
           onBackClick={handleHeaderBack}
           onBackDialogOpenChange={onBackDialogOpenChange}

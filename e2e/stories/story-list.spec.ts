@@ -2,6 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { PULL_TO_REFRESH_COPY } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
+import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import {
@@ -11,7 +12,6 @@ import {
 } from '@/features/stories/list/constants';
 import {
   GENERAL_STORY_CREATE_COPY,
-  GENERAL_STORY_EXIT_WARNING_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
@@ -109,7 +109,7 @@ test.describe('홈·제작 스토리 목록', () => {
     );
   });
 
-  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 입력 탭을 바꾸고 닫기 확인 후 제작 탭으로 나간다 (STORY-LIST-38)', async ({
+  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 입력 탭을 바꾸고 입력 없이 닫으면 묻지 않고 제작 탭으로 나간다 (STORY-LIST-38)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -156,24 +156,15 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
     // 자동 저장이 없고 저장할 입력도 없으니 임시 저장 버튼은 잠겨 있다.
     await expect(
-      page.getByRole('button', { name: GENERAL_STORY_CREATE_COPY.draftSave }),
+      page.getByRole('button', { name: DRAFT_SAVE_BUTTON_LABEL }),
     ).toBeDisabled();
 
+    // 잃을 것이 없으니 닫기는 묻지 않고 나간다.
     await page
       .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
       .click();
-
-    const exitDialog = page.getByRole('alertdialog');
-
-    await expect(
-      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.nothing.title),
-    ).toBeVisible();
-    await exitDialog
-      .getByRole('button', {
-        name: GENERAL_STORY_EXIT_WARNING_COPY.nothing.confirm,
-      })
-      .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });
 
   test('목록이 화면보다 길어도 FAB는 화면 아래에 붙어 있다 (STORY-LIST-11)', async ({

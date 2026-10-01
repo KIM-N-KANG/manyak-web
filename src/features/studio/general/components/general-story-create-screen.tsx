@@ -34,12 +34,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import {
+  DRAFT_SAVE_TOAST_ID,
+  DRAFT_SAVED_TOAST_DURATION_MS,
+  DraftSaveButton,
+} from '@/features/stories/_shared/components/draft-save-button';
+import {
+  DRAFT_EXIT_WARNING_COPY,
+  type DraftExitDialog,
+} from '@/features/stories/_shared/constants/draft-exit-warning';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
 import {
   savePendingCreationRequest,
   takePendingCreationRequest,
 } from '@/features/stories/_shared/utils/creation-request-storage';
+import { getDraftExitWarning } from '@/features/stories/_shared/utils/draft-exit-warning';
 import {
   type GeneralStoryDraftImage,
   type GeneralStoryDraftSnapshot,
@@ -52,9 +62,7 @@ import {
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_CREATE_COPY,
-  GENERAL_STORY_EXIT_WARNING_COPY,
   GENERAL_STORY_TEXT_FIELDS,
-  type GeneralStoryExitWarning,
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
@@ -64,7 +72,6 @@ import {
   resolveGenreNames,
 } from '@/features/studio/general/utils/build-general-story-request';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
-import { getDraftExitWarning } from '@/features/studio/general/utils/draft-exit-warning';
 import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
 import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
 import {
@@ -85,7 +92,6 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { FetchError, getApiErrorCode } from '@/lib/api-error';
-import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
@@ -107,15 +113,6 @@ import {
 const EMPTY_TEXT_VALUES = Object.fromEntries(
   Object.keys(GENERAL_STORY_TEXT_FIELDS).map((field) => [field, '']),
 ) as GeneralStoryTextValues;
-
-/** 임시 저장 버튼 연타를 막는 간격이다. 첫 누름은 바로 저장하고 이 간격 안의 누름은 버린다. */
-const DRAFT_SAVE_CLICK_THROTTLE_MS = 1000;
-
-/** 임시 저장 결과 토스트의 id다. 같은 id로 다시 띄우면 이전 토스트를 대신한다. */
-const DRAFT_SAVE_TOAST_ID = 'general-story-draft-save';
-
-/** 저장 완료·검토 중 토스트를 띄워 두는 시간이다. 위쪽 토스트가 헤더의 저장·닫기 버튼을 오래 가리지 않게 짧게 둔다. */
-const DRAFT_SAVED_TOAST_DURATION_MS = 1500;
 
 /** 검토 중 토스트의 id다. 결과를 알리거나 화면을 떠날 때 아직 떠 있으면 이 id로 닫는다. */
 const REVIEW_TOAST_ID = 'general-story-review';
@@ -158,32 +155,6 @@ const toStoredImage = (
   image: DraftImage | null,
 ): GeneralStoryDraftImage | null =>
   image && { objectKey: image.objectKey, blob: image.blob };
-
-type DraftSaveButtonProps = {
-  isSaving: boolean;
-  disabled: boolean;
-  onClick: () => void;
-};
-
-function DraftSaveButton({
-  isSaving,
-  disabled,
-  onClick,
-}: DraftSaveButtonProps) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      disabled={disabled || isSaving}
-      onClick={onClick}
-      className={cn('relative', isSaving && 'disabled:opacity-100')}>
-      <span className={cn(isSaving && 'invisible')}>
-        {GENERAL_STORY_CREATE_COPY.draftSave}
-      </span>
-      {isSaving && <Spinner className="absolute" />}
-    </Button>
-  );
-}
 
 export function GeneralStoryCreateScreen() {
   const { entry, isError, retry } = useGeneralStoryDraftEntry();
@@ -239,8 +210,7 @@ export function GeneralStoryCreateForm({
   const epoch = useCreationEpoch();
   const tabsRef = useRef<GeneralStoryFormTabsHandle>(null);
   const [requestId] = useState(() => draftRequestId ?? crypto.randomUUID());
-  const [exitWarning, setExitWarning] =
-    useState<GeneralStoryExitWarning>('nothing');
+  const [exitWarning, setExitWarning] = useState<DraftExitDialog>('saved');
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [textValues, setTextValues] = useState(
     initial?.texts ?? EMPTY_TEXT_VALUES,
@@ -285,7 +255,6 @@ export function GeneralStoryCreateForm({
     );
   const [hasTriedRegister, setHasTriedRegister] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const lastSaveClickAtRef = useRef(0);
   const [isReviewing, setIsReviewing] = useState(false);
   /** 검토 중이거나 승인돼 떠나는 중이면 참이다. 비동기 흐름과 저장 판단이 같은 값을 보도록 ref로 둔다. */
   const isReviewingRef = useRef(false);
@@ -405,39 +374,28 @@ export function GeneralStoryCreateForm({
       await writeDraft();
   };
 
-  const handleSaveClick = async () => {
-    const now = Date.now();
-
-    if (
-      isSaving ||
-      isReviewingRef.current ||
-      isSubmittedRef.current ||
-      now - lastSaveClickAtRef.current < DRAFT_SAVE_CLICK_THROTTLE_MS
-    )
-      return;
-
-    lastSaveClickAtRef.current = now;
-
-    if (isSaved || (await writeDraft())) {
-      toast.success(TOAST_MESSAGE.STORY_DRAFT_SAVED, {
-        id: DRAFT_SAVE_TOAST_ID,
-        duration: DRAFT_SAVED_TOAST_DURATION_MS,
-      });
-    }
-  };
-
   useSaveWhenBackgrounded(saveDraft);
 
+  const leaveToStudio = () =>
+    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
+
+  // 잃을 것이 없으면 묻지 않고 나간다.
   const handleClose = () => {
-    setExitWarning(
-      getDraftExitWarning({
-        hasInput,
-        hasSavedDraft,
-        isSaved,
-        hasSubmitted: submittedKey !== null,
-        isSubmittedUnchanged: snapshotKey === submittedKey,
-      }),
-    );
+    const warning = getDraftExitWarning({
+      hasInput,
+      hasSavedDraft,
+      isSaved,
+      hasSubmitted: submittedKey !== null,
+      isSubmittedUnchanged: snapshotKey === submittedKey,
+    });
+
+    if (warning === 'nothing') {
+      leaveToStudio();
+
+      return;
+    }
+
+    setExitWarning(warning);
     setIsExitOpen(true);
   };
 
@@ -658,7 +616,7 @@ export function GeneralStoryCreateForm({
 
     trackResult('timeout');
     toast(TOAST_MESSAGE.STORY_REVIEW_DELAYED);
-    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
+    leaveToStudio();
   };
 
   // 등록하기를 누른 뒤의 입력 오류와 검수 결과를 함께 보인다. 같은 칸이면 입력 오류가 먼저다.
@@ -673,7 +631,7 @@ export function GeneralStoryCreateForm({
           ),
         ]
       : null;
-  const copy = GENERAL_STORY_EXIT_WARNING_COPY[exitWarning];
+  const copy = DRAFT_EXIT_WARNING_COPY[exitWarning];
 
   return (
     <div className="flex h-full flex-col">
@@ -683,7 +641,8 @@ export function GeneralStoryCreateForm({
           <DraftSaveButton
             isSaving={isSaving}
             disabled={!hasInput || isReviewing || submittedKey !== null}
-            onClick={handleSaveClick}
+            isSaved={isSaved}
+            onSave={writeDraft}
           />
           <Button
             type="button"
@@ -796,9 +755,7 @@ export function GeneralStoryCreateForm({
             <AlertDialogAction
               type="button"
               variant="destructive"
-              onClick={() =>
-                leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO))
-              }>
+              onClick={leaveToStudio}>
               {copy.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
