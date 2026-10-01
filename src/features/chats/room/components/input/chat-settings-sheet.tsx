@@ -10,6 +10,7 @@ import {
   Settings01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
+import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 
 import { CreditMark } from '@/components/common/credit-mark';
 import { Switch } from '@/components/motion/switch';
@@ -41,6 +42,64 @@ import {
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { isTrialFree } from '../../utils/chat-turn-cost';
 
+/** 딤이 천천히 내려앉고 걷히도록 양끝을 부드럽게 늦추는 곡선. */
+const NUDGE_EASE_IN_OUT = [0.4, 0, 0.2, 1] as const;
+
+/** 드로어 전환과 같은 감속 곡선. 카드가 나타나는 흐름을 시트와 같은 결로 맞춘다. */
+const NUDGE_EASE_OUT = [0.22, 1, 0.36, 1] as const;
+
+/** 시트가 자리를 잡은 뒤 화면 전체에 딤을 천천히 깐다. */
+const NUDGE_DIM_MOTION = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { delay: 0.3, duration: 0.55, ease: NUDGE_EASE_IN_OUT },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.3, ease: NUDGE_EASE_IN_OUT },
+  },
+};
+
+/**
+ * 딤이 반쯤 내려앉을 즈음 안내 카드를 하이라이트 바로 아래에서 띄운다.
+ * 위치는 튀지 않는 스프링으로 끝까지 감속하고, 동작 줄이기에서는 투명도만 바꾼다.
+ *
+ * @param reduceMotion 동작 줄이기 설정 여부
+ * @returns 안내 카드의 등장·퇴장 모션
+ */
+function nudgeCardMotion(reduceMotion: boolean) {
+  const settle = {
+    type: 'spring',
+    bounce: 0,
+    duration: 0.75,
+    delay: 0.5,
+  } as const;
+
+  return {
+    initial: {
+      opacity: 0,
+      y: reduceMotion ? 0 : 12,
+      scale: reduceMotion ? 1 : 0.98,
+    },
+    animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        opacity: { delay: 0.5, duration: 0.45, ease: NUDGE_EASE_OUT },
+        y: settle,
+        scale: settle,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: reduceMotion ? 0 : 4,
+      transition: { duration: 0.2, ease: NUDGE_EASE_IN_OUT },
+    },
+  };
+}
+
 type ChatSettingsButtonProps = {
   onClick: () => void;
 };
@@ -65,6 +124,10 @@ type ChatSettingsSheetProps = {
   onOpenChange: (open: boolean) => void;
   realtimeImageEnabled: boolean;
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
+  /** 실시간 이미지 항목만 밝혀 두고 나머지를 어둡게 덮어 켜고 끄는 방법을 안내한다 */
+  highlightsRealtimeImage?: boolean;
+  /** 안내 카드의 확인이나 어두운 영역을 눌러 안내를 닫을 때 호출된다 */
+  onHighlightDismiss?: () => void;
   choicesEnabled: boolean;
   onChoicesEnabledChange: (enabled: boolean) => void;
   mode: ChatInputMode;
@@ -73,12 +136,13 @@ type ChatSettingsSheetProps = {
   isMember: boolean;
 };
 
-/** 채팅 기능·입력 모드 스위치를 담은 채팅 설정 바텀 시트. */
 export function ChatSettingsSheet({
   open,
   onOpenChange,
   realtimeImageEnabled,
   onRealtimeImageEnabledChange,
+  highlightsRealtimeImage = false,
+  onHighlightDismiss,
   choicesEnabled,
   onChoicesEnabledChange,
   mode,
@@ -89,8 +153,8 @@ export function ChatSettingsSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const chatImageCost = useCreditPolicy()?.chatImageCost;
   const imageRemaining = getTrialRemaining(useTrials(), 'chatImage');
-  // 이미지 체험이 남아 있으면 정가에 취소선을 긋고 적용가 0을 보인다.
   const showsImageStrike = isTrialFree(imageRemaining);
+  const reduceMotion = useReducedMotion();
 
   return (
     <Drawer open={open && container !== null} onOpenChange={onOpenChange}>
@@ -166,7 +230,29 @@ export function ChatSettingsSheet({
               }
               checked={realtimeImageEnabled}
               onCheckedChange={onRealtimeImageEnabledChange}
-            />
+              className="z-20 mx-2 rounded-md bg-popover px-2">
+              <AnimatePresence>
+                {highlightsRealtimeImage && (
+                  <m.div
+                    {...nudgeCardMotion(reduceMotion === true)}
+                    className="absolute top-full left-0 mt-3 flex w-72 origin-top flex-col gap-1 rounded-md bg-background p-4 shadow-lg">
+                    <p className="font-semibold">
+                      {CHAT_SETTINGS_COPY.realtimeImage.nudge.title}
+                    </p>
+                    <p className="text-sm break-keep text-foreground-secondary">
+                      {CHAT_SETTINGS_COPY.realtimeImage.nudge.description}
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-3 self-end"
+                      onClick={onHighlightDismiss}>
+                      {CHAT_SETTINGS_COPY.realtimeImage.nudge.confirm}
+                    </Button>
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </SettingRow>
             <SettingRow
               icon={AiChat02Icon}
               copy={CHAT_SETTINGS_COPY.choices}
@@ -188,6 +274,16 @@ export function ChatSettingsSheet({
             />
           </section>
         </div>
+        <AnimatePresence>
+          {highlightsRealtimeImage && (
+            <m.div
+              aria-hidden="true"
+              {...NUDGE_DIM_MOTION}
+              className="absolute inset-x-0 -top-[100dvh] -bottom-(--bleed) z-10 bg-black/50"
+              onClick={onHighlightDismiss}
+            />
+          )}
+        </AnimatePresence>
       </DrawerContent>
     </Drawer>
   );
@@ -200,18 +296,26 @@ type SettingRowProps = {
   titleAddon?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  className?: string;
+  /** 행 아래에 붙는 안내 카드 등 행을 기준으로 배치할 요소 */
+  children?: ReactNode;
 };
 
-/** 마이 페이지 메뉴 항목과 같은 배치(아이콘·라벨·설명)에 오른쪽 스위치를 둔 설정 행. */
 function SettingRow({
   icon,
   copy,
   titleAddon,
   checked,
   onCheckedChange,
+  className,
+  children,
 }: SettingRowProps) {
   return (
-    <div className="flex min-h-12 items-center gap-3 px-4 py-2">
+    <div
+      className={cn(
+        'relative flex min-h-12 items-center gap-3 px-4 py-2',
+        className,
+      )}>
       <HugeiconsIcon icon={icon} className="size-5" aria-hidden="true" />
       <span className="flex flex-1 flex-col text-left text-base">
         <span className="flex items-center gap-2">
@@ -227,6 +331,7 @@ function SettingRow({
         onCheckedChange={onCheckedChange}
         ariaLabel={copy.label}
       />
+      {children}
     </div>
   );
 }
