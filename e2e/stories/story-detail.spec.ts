@@ -54,12 +54,18 @@ const fulfillStoryDetail = async (route: Route) => {
 
 const THUMBNAIL_URL = 'https://cdn.manyak.app/thumbnails/dragon.png';
 
-// 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 이미지 생성에 실패한
-// 인물은 imageUrl이 null로 내려오므로 이름만 남는 경우도 함께 덮는다.
+// 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 일반 제작에서 올린 이미지는
+// `characters/uploaded/` 아래로 온다(KNK-1503). 이미지 생성에 실패한 인물은 imageUrl이
+// null로 내려오므로 이름만 남는 경우도 함께 덮는다.
 const STORY_CHARACTERS = [
   {
     name: '이무기',
     imageUrl: 'https://cdn.manyak.app/characters/generated/s1/imugi.webp',
+  },
+  {
+    name: '산신령',
+    imageUrl:
+      'https://cdn.manyak.app/characters/uploaded/moderated/sansin.webp',
   },
   { name: '계곡지기', imageUrl: null },
 ];
@@ -165,6 +171,9 @@ test.describe('스토리 상세', () => {
     await expect(page.getByRole('heading', { name: '이무기' })).toBeVisible();
     await expect(
       page.getByRole('img', { name: '이무기 인물 이미지' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: '산신령 인물 이미지' }),
     ).toBeVisible();
 
     // 이미지가 없는 인물도 이름은 남는다
