@@ -106,7 +106,7 @@ test.describe('스토리 임시 저장·재개', () => {
     });
   });
 
-  test('키워드 단계에서 입력 없이 브라우저 뒤로 가기를 하면 확인 뒤 제작 탭으로 이동한다 (KNK-988)', async ({
+  test('키워드 단계에서 입력 없이 브라우저 뒤로 가기를 하면 묻지 않고 제작 탭으로 이동한다 (KNK-988)', async ({
     page,
   }) => {
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
@@ -118,17 +118,8 @@ test.describe('스토리 임시 저장·재개', () => {
       .toBeGreaterThan(2);
     await page.goBack();
 
-    const exitDialog = page.getByRole('alertdialog', {
-      name: DRAFT_EXIT_WARNING_COPY.nothing.title,
-    });
-
-    await expect(
-      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.nothing.description),
-    ).toBeVisible();
-    await exitDialog
-      .getByRole('button', { name: DRAFT_EXIT_WARNING_COPY.nothing.confirm })
-      .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });
 
   test('저장하지 않은 키워드 입력은 닫기에서 경고하고, 임시 저장 뒤에는 이어서 만들기 안내를 거쳐 나간다', async ({

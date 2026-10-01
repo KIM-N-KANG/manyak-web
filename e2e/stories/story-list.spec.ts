@@ -3,7 +3,6 @@ import type { Locator, Page } from '@playwright/test';
 import { PULL_TO_REFRESH_COPY } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
 import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
-import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import {
@@ -110,7 +109,7 @@ test.describe('홈·제작 스토리 목록', () => {
     );
   });
 
-  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 입력 탭을 바꾸고 닫기 확인 후 제작 탭으로 나간다 (STORY-LIST-38)', async ({
+  test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 입력 탭을 바꾸고 입력 없이 닫으면 묻지 않고 제작 탭으로 나간다 (STORY-LIST-38)', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -160,21 +159,12 @@ test.describe('홈·제작 스토리 목록', () => {
       page.getByRole('button', { name: DRAFT_SAVE_BUTTON_LABEL }),
     ).toBeDisabled();
 
+    // 잃을 것이 없으니 닫기는 묻지 않고 나간다.
     await page
       .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
       .click();
-
-    const exitDialog = page.getByRole('alertdialog');
-
-    await expect(
-      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.nothing.title),
-    ).toBeVisible();
-    await exitDialog
-      .getByRole('button', {
-        name: DRAFT_EXIT_WARNING_COPY.nothing.confirm,
-      })
-      .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });
 
   test('목록이 화면보다 길어도 FAB는 화면 아래에 붙어 있다 (STORY-LIST-11)', async ({

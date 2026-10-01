@@ -3,7 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
 import { DraftSaveButton } from '@/features/stories/_shared/components/draft-save-button';
-import type { DraftExitWarning } from '@/features/stories/_shared/constants/draft-exit-warning';
+import type { DraftExitDialog } from '@/features/stories/_shared/constants/draft-exit-warning';
 
 import type { StoryCreateStep } from '../../types';
 import { StoryCreateStepIndicator } from '../step-layout/story-create-step-indicator';
@@ -15,7 +15,7 @@ type StoryCreateHeaderProps = {
   canSaveDraft: boolean;
   isDraftSaved: boolean;
   onSaveDraft: () => Promise<boolean>;
-  backDialog: DraftExitWarning | null;
+  backDialog: DraftExitDialog | null;
   onBackClick: () => void;
   onBackDialogOpenChange: (open: boolean) => void;
   onConfirmBack: () => void;

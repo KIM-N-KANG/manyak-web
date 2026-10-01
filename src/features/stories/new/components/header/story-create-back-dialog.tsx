@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   DRAFT_EXIT_WARNING_COPY,
-  type DraftExitWarning,
+  type DraftExitDialog,
 } from '@/features/stories/_shared/constants/draft-exit-warning';
 
 type StoryCreateBackDialogProps = {
-  variant: DraftExitWarning | null;
+  variant: DraftExitDialog | null;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 };
@@ -29,7 +29,7 @@ export function StoryCreateBackDialog({
   onConfirm,
 }: StoryCreateBackDialogProps) {
   // 닫힘 애니메이션 동안 variant가 null이 되어도 마지막 문구를 유지한다(렌더 중 setState).
-  const [shownVariant, setShownVariant] = useState(variant ?? 'nothing');
+  const [shownVariant, setShownVariant] = useState(variant ?? 'saved');
 
   if (variant !== null && variant !== shownVariant) {
     setShownVariant(variant);

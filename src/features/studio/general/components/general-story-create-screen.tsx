@@ -41,7 +41,7 @@ import {
 } from '@/features/stories/_shared/components/draft-save-button';
 import {
   DRAFT_EXIT_WARNING_COPY,
-  type DraftExitWarning,
+  type DraftExitDialog,
 } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
@@ -210,7 +210,7 @@ export function GeneralStoryCreateForm({
   const epoch = useCreationEpoch();
   const tabsRef = useRef<GeneralStoryFormTabsHandle>(null);
   const [requestId] = useState(() => draftRequestId ?? crypto.randomUUID());
-  const [exitWarning, setExitWarning] = useState<DraftExitWarning>('nothing');
+  const [exitWarning, setExitWarning] = useState<DraftExitDialog>('saved');
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [textValues, setTextValues] = useState(
     initial?.texts ?? EMPTY_TEXT_VALUES,
@@ -376,16 +376,26 @@ export function GeneralStoryCreateForm({
 
   useSaveWhenBackgrounded(saveDraft);
 
+  const leaveToStudio = () =>
+    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
+
+  // 잃을 것이 없으면 묻지 않고 나간다.
   const handleClose = () => {
-    setExitWarning(
-      getDraftExitWarning({
-        hasInput,
-        hasSavedDraft,
-        isSaved,
-        hasSubmitted: submittedKey !== null,
-        isSubmittedUnchanged: snapshotKey === submittedKey,
-      }),
-    );
+    const warning = getDraftExitWarning({
+      hasInput,
+      hasSavedDraft,
+      isSaved,
+      hasSubmitted: submittedKey !== null,
+      isSubmittedUnchanged: snapshotKey === submittedKey,
+    });
+
+    if (warning === 'nothing') {
+      leaveToStudio();
+
+      return;
+    }
+
+    setExitWarning(warning);
     setIsExitOpen(true);
   };
 
@@ -606,7 +616,7 @@ export function GeneralStoryCreateForm({
 
     trackResult('timeout');
     toast(TOAST_MESSAGE.STORY_REVIEW_DELAYED);
-    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
+    leaveToStudio();
   };
 
   // 등록하기를 누른 뒤의 입력 오류와 검수 결과를 함께 보인다. 같은 칸이면 입력 오류가 먼저다.
@@ -745,9 +755,7 @@ export function GeneralStoryCreateForm({
             <AlertDialogAction
               type="button"
               variant="destructive"
-              onClick={() =>
-                leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO))
-              }>
+              onClick={leaveToStudio}>
               {copy.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>

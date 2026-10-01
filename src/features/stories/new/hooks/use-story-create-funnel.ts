@@ -37,7 +37,7 @@ import {
 import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
 import { DRAFT_SAVE_TOAST_ID } from '@/features/stories/_shared/components/draft-save-button';
-import type { DraftExitWarning } from '@/features/stories/_shared/constants/draft-exit-warning';
+import type { DraftExitDialog } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import {
@@ -136,7 +136,7 @@ export function useStoryCreateFunnel() {
     useState<SimpleStorylineResponse | null>(null);
   const [createdStoryId, setCreatedStoryId] = useState<string | null>(null);
   const [hasCompleteStoryError, setHasCompleteStoryError] = useState(false);
-  const [backDialog, setBackDialog] = useState<DraftExitWarning | null>(null);
+  const [backDialog, setBackDialog] = useState<DraftExitDialog | null>(null);
   const [isReselectDialogOpen, setIsReselectDialogOpen] = useState(false);
   const [keywordDraftRequestId, setKeywordDraftRequestId] =
     useState(createClientId);
@@ -949,30 +949,39 @@ export function useStoryCreateFunnel() {
     exitToCreate();
   };
 
-  // X·브라우저 뒤로가기 이탈 시도: 이탈은 늘 확인을 거친다(Android 패리티). 일반 제작과 같은
-  // 기준으로 문구를 고른다. 생성 중 레코드는 생성 요청을 저장한 시점에 저장본으로 맞춰 두었으므로
-  // 생성 중에 나가면 이어서 만들 수 있다는 안내다.
-  const handleBackAttempt = () => {
-    setBackDialog(
-      getDraftExitWarning({
-        hasInput: hasDraftInput,
-        hasSavedDraft,
-        isSaved: isDraftSaved,
-      }),
-    );
-  };
-
-  const handleHeaderBack = () => handleBackAttempt();
-
-  // 이탈 확인 다이얼로그에서 이탈을 확정한 경우. 저장하지 않고 나간다. 생성 요청 레코드를 쓰는
-  // 중에는 요청을 보내기 전이라 나가지 않는다.
-  const handleConfirmBack = () => {
+  // 저장하지 않고 나간다. 생성 요청 레코드를 쓰는 중에는 요청을 보내기 전이라 나가지 않는다.
+  const leaveFunnel = () => {
     track('client_storyCreate_exitButton_clicked', mapStepToSpec(step));
-    setBackDialog(null);
 
     if (storageBusy.current) return;
 
     exitToCreate();
+  };
+
+  // X·브라우저 뒤로가기 이탈 시도: 일반 제작과 같은 기준으로 확인 다이얼로그를 고르고, 잃을 것이
+  // 없으면 묻지 않고 나간다. 생성 중 레코드는 생성 요청을 저장한 시점에 저장본으로 맞춰 두었으므로
+  // 생성 중에 나가면 이어서 만들 수 있다는 안내다.
+  const handleBackAttempt = () => {
+    const warning = getDraftExitWarning({
+      hasInput: hasDraftInput,
+      hasSavedDraft,
+      isSaved: isDraftSaved,
+    });
+
+    if (warning === 'nothing') {
+      leaveFunnel();
+
+      return;
+    }
+
+    setBackDialog(warning);
+  };
+
+  const handleHeaderBack = () => handleBackAttempt();
+
+  const handleConfirmBack = () => {
+    setBackDialog(null);
+    leaveFunnel();
   };
 
   return {
