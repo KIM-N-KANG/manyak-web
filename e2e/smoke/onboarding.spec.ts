@@ -141,6 +141,61 @@ test.describe('온보딩', () => {
       .toBe(0);
   });
 
+  test('여러 장면 카드 줄은 마우스로 끌어 넘기고, 놓으면 가장 가까운 카드에 맞춘다', async ({
+    page,
+  }) => {
+    await stubOptimizedImages(page);
+    await page.goto(APP_PATH.ONBOARDING);
+
+    const secondIndicator = page
+      .getByRole('button', { name: '2번째 화면 보기' })
+      .first();
+    const section = page
+      .getByRole('main')
+      .locator('section')
+      .filter({ has: secondIndicator })
+      .first();
+    const strip = section.locator('.snap-x');
+
+    await strip.scrollIntoViewIfNeeded();
+
+    const box = (await strip.boundingBox())!;
+    const y = box.y + box.height / 2;
+    const cursorAt = (x: number) =>
+      page.evaluate(
+        ([pointX, pointY]) =>
+          getComputedStyle(document.elementFromPoint(pointX, pointY)!).cursor,
+        [x, y],
+      );
+
+    // 카드 폭의 절반을 넘겨 끌면 놓았을 때 두 번째 카드로 넘어간다.
+    await page.mouse.move(box.x + box.width * 0.8, y);
+    // 넘치는 줄 위에서는 끌 수 있다는 뜻으로 grab 커서를 보인다.
+    await expect(strip).toHaveCSS('cursor', 'grab');
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.2, y, { steps: 10 });
+    // 끄는 동안에는 포인터 아래 요소와 무관하게 grabbing 커서를 보인다.
+    expect(await cursorAt(box.x + box.width * 0.2)).toBe('grabbing');
+    await page.mouse.up();
+    expect(await cursorAt(box.x + box.width * 0.2)).not.toBe('grabbing');
+
+    await expect(secondIndicator).toHaveAttribute('aria-current', 'true');
+    // 드래그 중 끈 스냅은 카드에 맞춘 뒤 되돌린다.
+    await expect
+      .poll(() =>
+        strip.evaluate((element) => {
+          const [first, second] = [...element.children] as HTMLElement[];
+
+          return (
+            Math.abs(
+              element.scrollLeft - (second.offsetLeft - first.offsetLeft),
+            ) < 1 && element.style.scrollSnapType === ''
+          );
+        }),
+      )
+      .toBe(true);
+  });
+
   for (const theme of ['light', 'dark'] as const) {
     test(`저장한 ${theme} 테마에 맞는 온보딩 이미지가 순서대로 표시된다`, async ({
       page,

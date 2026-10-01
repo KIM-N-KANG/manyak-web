@@ -44,6 +44,7 @@ import {
   normalizeMinTurns,
 } from '@/features/studio/general/utils/start-setting-draft';
 import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
+import { useDragScroll } from '@/hooks/use-drag-scroll';
 import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 import { cn } from '@/lib/utils';
 
@@ -86,6 +87,7 @@ export function GeneralStoryStartSettingPanel({
 }: GeneralStoryStartSettingPanelProps) {
   const [selectedId, setSelectedId] = useState(startSettings[0]?.id);
   const chipRowRef = useRef<HTMLDivElement>(null);
+  const dragScrollProps = useDragScroll();
   const registerErrors = use(GeneralStoryRegisterErrorsContext);
   const selectedIndex = Math.max(
     0,
@@ -128,6 +130,7 @@ export function GeneralStoryStartSettingPanel({
     <div className="flex flex-col">
       <div
         ref={chipRowRef}
+        {...dragScrollProps}
         role="group"
         aria-label={groupLabel}
         className="scrollbar-none flex gap-2 overflow-x-auto overscroll-x-contain px-4 pt-4 pb-2">

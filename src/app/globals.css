@@ -230,6 +230,17 @@
   }
 }
 
+/* useDragScroll이 붙은 가로 스크롤 영역의 커서. 칩·탭처럼 누를 수 있는 자식은
+   자기 커서를 유지하고, 끄는 동안에는 포인터 위치와 무관하게 grabbing을 보인다. */
+[data-drag-scrollable] {
+  cursor: grab;
+}
+
+:root[data-drag-scrolling],
+:root[data-drag-scrolling] * {
+  cursor: grabbing !important;
+}
+
 @keyframes story-skeleton-pulse {
   0%,
   100% {

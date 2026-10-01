@@ -355,6 +355,44 @@ test.describe('일반 제작 주변 인물', () => {
   });
 });
 
+test.describe('일반 제작 탭 줄', () => {
+  test('탭 줄은 마우스로 끌어 가로로 움직이고, 끌기를 마친 자리의 탭은 선택하지 않는다', async ({
+    page,
+  }) => {
+    // 좁은 화면에서 탭 줄이 넘치게 해 가로 스크롤이 생기게 한다.
+    await page.setViewportSize({ width: 320, height: 700 });
+    await openGeneralCreate(page);
+
+    const tabList = page.getByRole('tablist');
+    const tabs = page.getByRole('tab');
+    const isOverflowing = await tabList.evaluate(
+      (element) => element.scrollWidth > element.clientWidth,
+    );
+
+    expect(isOverflowing).toBe(true);
+
+    // 끄는 동안 탭이 포인터를 따라 움직여, 놓을 때도 처음 누른 탭 위에 있다.
+    const box = (await tabs.nth(1).boundingBox())!;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x - 40, y, { steps: 5 });
+    await page.mouse.up();
+
+    await expect
+      .poll(() => tabList.evaluate((element) => element.scrollLeft))
+      .toBeGreaterThan(0);
+    await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'false');
+    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+
+    // 끌기가 끝난 뒤의 일반 클릭은 그대로 탭을 바꾼다.
+    await tabs.last().click();
+    await expect(tabs.last()).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
 test.describe('일반 제작 시작 상황 설정', () => {
   test('시작 상황은 1개로 시작해 칩으로 3개까지 추가·전환하고, 1개일 때는 지울 수 없으며, 엔딩은 3개까지이며 최소 턴 수는 50을 넘지 않는다 (STORY-GENERAL-10)', async ({
     page,

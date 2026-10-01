@@ -27,6 +27,7 @@ import {
   type GeneralStoryRegisterError,
   REGISTER_ERROR_KEY,
 } from '@/features/studio/general/utils/register-validation';
+import { useDragScroll } from '@/hooks/use-drag-scroll';
 import { cn } from '@/lib/utils';
 
 import { GeneralStoryImageField } from './general-story-image-field';
@@ -139,6 +140,7 @@ export function GeneralStoryFormTabs({
   const [tab, setTab] = useState<GeneralStoryTab>(initialTab);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const tabListRef = useRef<HTMLDivElement>(null);
+  const dragScrollProps = useDragScroll();
   const tabIndex = GENERAL_STORY_TABS.findIndex(({ value }) => value === tab);
   const previousTab = GENERAL_STORY_TABS[tabIndex - 1]?.value;
   const nextTab = GENERAL_STORY_TABS[tabIndex + 1]?.value;
@@ -206,6 +208,7 @@ export function GeneralStoryFormTabs({
       className="min-h-0 flex-1 gap-0">
       <TabsList
         ref={tabListRef}
+        {...dragScrollProps}
         inert={isRegistering}
         variant="line"
         className="relative scrollbar-none w-full shrink-0 justify-start gap-0 overflow-x-auto overscroll-x-contain p-0 shadow-[inset_0_-1px_0_var(--color-border)]">
