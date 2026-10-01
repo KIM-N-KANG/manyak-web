@@ -1135,18 +1135,25 @@ test.describe('일반 제작 등록', () => {
   }) => {
     await skipOnboarding(page);
     await mockGuestSession(page);
-    await page.goto(APP_PATH.STUDIO.STORY.SELECT);
-    await page
-      .getByRole('link', {
-        name: new RegExp(STORY_MODE_SELECT_COPY.general.title),
-      })
-      .click();
 
-    await expect(
-      page
-        .getByRole('dialog')
-        .getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
-    ).toBeVisible();
+    // 세션 조회로 게스트가 확정되기 전에 누르면 링크가 일반 제작으로 이동해 게이트가 로그인 화면으로
+    // 보낸다. 조회 응답을 기다린 뒤 누르고, 그래도 판정 전에 눌렸으면 진입부터 다시 시도한다.
+    await expect(async () => {
+      const session = page.waitForResponse('**/api/auth/session');
+
+      await page.goto(APP_PATH.STUDIO.STORY.SELECT);
+      await session;
+      await page
+        .getByRole('link', {
+          name: new RegExp(STORY_MODE_SELECT_COPY.general.title),
+        })
+        .click();
+      await expect(
+        page
+          .getByRole('dialog')
+          .getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
+      ).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SELECT}$`),
     );
