@@ -34,6 +34,7 @@ import { track, useTrackOnView } from '@/observability/analytics';
 import {
   CHAT_CHOICES_ENABLED_STORAGE_KEY,
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
+  DEFAULT_REALTIME_IMAGE_ENABLED,
 } from '../constants';
 import { useChatChoices } from '../hooks/use-chat-choices';
 import { useChatChoicesHint } from '../hooks/use-chat-choices-hint';
@@ -45,6 +46,7 @@ import {
 } from '../hooks/use-chat-input-mode';
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
+import { useRealtimeImageNudge } from '../hooks/use-realtime-image-nudge';
 import { useStoredToggle } from '../hooks/use-stored-toggle';
 import {
   clearChatLoginDraft,
@@ -52,6 +54,10 @@ import {
   saveChatLoginDraft,
 } from '../utils/chat-login-draft-storage';
 import { calcChatTurnCost } from '../utils/chat-turn-cost';
+import {
+  recordCompletedTurn,
+  shouldOpenRealtimeImageNudge,
+} from '../utils/realtime-image-nudge';
 import { shouldGenerateChoices } from '../utils/should-generate-choices';
 import { ChatRoomHeader } from './header/chat-room-header';
 import { ChatInput } from './input/chat-input';
@@ -115,18 +121,30 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const { enabled: choicesEnabled, setEnabled: setChoicesEnabled } =
     useStoredToggle(CHAT_CHOICES_ENABLED_STORAGE_KEY, true);
   const { enabled: realtimeImageEnabled, setEnabled: setRealtimeImageEnabled } =
-    useStoredToggle(CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY, true);
+    useStoredToggle(
+      CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
+      DEFAULT_REALTIME_IMAGE_ENABLED,
+    );
+  const [realtimeImageNudgeRequested, setRealtimeImageNudgeRequested] =
+    useState(false);
   const { choicesStatus, generate: generateChoicesForTurn } = useChatChoices(
     chatId,
     refetch,
   );
-  const handleStreamCompleted = async () => {
+  const handleStreamCompleted = async (source: 'send' | 'regenerate') => {
     lastSubmitted.current = null;
     clearChatLoginDraft(chatId);
     void queryClient.invalidateQueries({ queryKey: getGetTrialsQueryKey() });
     void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
 
     const result = await refetch();
+
+    if (
+      source === 'send' &&
+      shouldOpenRealtimeImageNudge(recordCompletedTurn(), realtimeImageEnabled)
+    ) {
+      setRealtimeImageNudgeRequested(true);
+    }
 
     await queryClient.invalidateQueries({ queryKey: [CHATS_BATCH_QUERY_KEY] });
     await queryClient.invalidateQueries({ queryKey: getGetMyChatsQueryKey() });
@@ -155,6 +173,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       refetch,
       realtimeImageEnabled,
     );
+
+  const realtimeImageNudge = useRealtimeImageNudge(
+    realtimeImageNudgeRequested,
+    isStreaming,
+  );
 
   const tour = useChatTour({
     chatId,
@@ -410,6 +433,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           isStreaming={isStreaming}
           realtimeImageEnabled={realtimeImageEnabled}
           onRealtimeImageEnabledChange={setRealtimeImageEnabled}
+          realtimeImageNudgeOpen={realtimeImageNudge.isOpen}
+          onRealtimeImageNudgeClose={realtimeImageNudge.close}
           choicesEnabled={choicesEnabled}
           onChoicesEnabledChange={handleChoicesEnabledChange}
           isMember={sessionStatus === 'authenticated'}

@@ -18,6 +18,9 @@ type ChatInputProps = {
   isStreaming: boolean;
   realtimeImageEnabled: boolean;
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
+  /** 실시간 이미지 안내로 설정 시트를 열고 해당 항목을 강조하는지 여부 */
+  realtimeImageNudgeOpen: boolean;
+  onRealtimeImageNudgeClose: () => void;
   choicesEnabled: boolean;
   onChoicesEnabledChange: (enabled: boolean) => void;
   isMember: boolean;
@@ -30,6 +33,8 @@ export function ChatInput({
   isStreaming,
   realtimeImageEnabled,
   onRealtimeImageEnabledChange,
+  realtimeImageNudgeOpen,
+  onRealtimeImageNudgeClose,
   choicesEnabled,
   onChoicesEnabledChange,
   isMember,
@@ -42,10 +47,21 @@ export function ChatInput({
   // 시트는 입력 모드가 바뀌어도 열린 채 남아야 하므로 블럭·일반 입력 바깥에 둔다.
   const settingsSheet = (
     <ChatSettingsSheet
-      open={settingsOpen}
-      onOpenChange={setSettingsOpen}
+      open={settingsOpen || realtimeImageNudgeOpen}
+      onOpenChange={(open) => {
+        setSettingsOpen(open);
+
+        if (!open) {
+          onRealtimeImageNudgeClose();
+        }
+      }}
       realtimeImageEnabled={realtimeImageEnabled}
       onRealtimeImageEnabledChange={onRealtimeImageEnabledChange}
+      highlightsRealtimeImage={realtimeImageNudgeOpen}
+      onHighlightDismiss={() => {
+        setSettingsOpen(true);
+        onRealtimeImageNudgeClose();
+      }}
       choicesEnabled={choicesEnabled}
       onChoicesEnabledChange={onChoicesEnabledChange}
       mode={mode}

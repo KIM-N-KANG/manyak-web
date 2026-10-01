@@ -32,7 +32,7 @@ import {
  *
  * @param chatId 대상 채팅 ID
  * @param turnCount 현재까지의 턴 개수
- * @param onCompleted 스트림 완료 시 호출되는 콜백
+ * @param onCompleted 스트림 완료 시 호출되는 콜백. 턴 전송(`send`)과 응답 재생성(`regenerate`)을 구분해 받는다
  * @param onPaymentRequired 402(체험 한도·이프 부족) 발생 시 호출되는 콜백
  * @param onIndeterminate 서버 확정 상태가 불명(EOF·409)일 때 호출되는 콜백
  * @param realtimeImage 실시간 이미지 생성 여부. 전송·재생성 요청 본문에 그대로 싣는다
@@ -41,7 +41,7 @@ import {
 export function useChatStream(
   chatId: string,
   turnCount: number,
-  onCompleted: () => Promise<unknown> | unknown,
+  onCompleted: (source: 'send' | 'regenerate') => Promise<unknown> | unknown,
   onPaymentRequired?: (error: unknown) => void,
   onIndeterminate?: () => Promise<unknown> | unknown,
   realtimeImage = true,
@@ -112,7 +112,7 @@ export function useChatStream(
             trackMetaPixelOnce('StartTrial');
           }
 
-          await onCompleted();
+          await onCompleted('send');
           setStreamingTurn(null);
         } else if (event.type === 'error') {
           terminalReceived = true;
@@ -219,7 +219,7 @@ export function useChatStream(
           );
         } else if (event.type === 'completed') {
           terminalReceived = true;
-          await onCompleted();
+          await onCompleted('regenerate');
         } else if (event.type === 'error') {
           terminalReceived = true;
 

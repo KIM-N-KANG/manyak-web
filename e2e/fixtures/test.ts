@@ -34,6 +34,7 @@ export const test = base.extend({
 
 export { expect };
 export {
+  enableRealtimeImage,
   seedChatIds,
   seedGuestChatIds,
   seedPendingCreditOrder,

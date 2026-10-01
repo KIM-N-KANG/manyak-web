@@ -7,8 +7,11 @@ import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
   buildChatTurnCreditCostLabel,
+  CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
   CHAT_MENU_COPY,
+  CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_SETTINGS_COPY,
+  REALTIME_IMAGE_NUDGE_DELAY_MS,
 } from '@/features/chats/room/constants';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
@@ -17,6 +20,7 @@ import { mockMemberSession } from '../fixtures/auth';
 import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   CREDIT_POLICY_FIXTURE,
+  enableRealtimeImage,
   EXHAUSTED_TRIALS,
   expect,
   mockTrials,
@@ -85,8 +89,10 @@ const chatDetail = (
 const sse = (events: string[]) => events.join('');
 
 // 첫 진입 안내 투어는 별도 스펙(chat-tour)에서 다루므로 여기서는 노출을 막는다.
+// 비용·요청 본문 검증은 실시간 이미지가 켜진 상태를 전제로 하므로 켜고 시작한다.
 test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
+  await enableRealtimeImage(page);
 });
 
 test.describe('채팅 스트리밍', () => {
@@ -2008,6 +2014,153 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
       CHAT_MENU_COPY.share,
       CHAT_MENU_COPY.delete,
     ]);
+  });
+});
+
+test.describe('실시간 이미지 기본값과 안내 (KNK-1508)', () => {
+  const completedTurn = {
+    id: 1,
+    userInput: '앞으로 나아간다',
+    aiOutput: '어둠이 너를 삼킨다.',
+    choices: [],
+    createdAt: '2026-06-01T00:00:00Z',
+  };
+
+  // 공통 beforeEach가 켜 둔 실시간 이미지를 지워 기본값으로 시작하고,
+  // 이 기기에서 응답을 한 번 받은 상태로 만들어 다음 응답이 두 번째가 되게 한다.
+  test.beforeEach(async ({ page }) => {
+    await mockMemberSession(page);
+    await page.addInitScript(
+      ([enabledKey, countKey]) => {
+        window.localStorage.removeItem(enabledKey);
+        window.localStorage.setItem(countKey, '1');
+      },
+      [
+        CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
+        CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
+      ] as const,
+    );
+
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1 ? chatDetail() : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"어둠이 너를 삼킨다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"어둠이 너를 삼킨다."}\n\n',
+        ]),
+      });
+    });
+    await setPlainInputMode(page);
+  });
+
+  const sendMessage = async (page: Page) => {
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('앞으로 나아간다');
+    await page.getByRole('button', { name: '전송' }).click();
+    await expect(page.getByText('어둠이 너를 삼킨다.')).toBeVisible();
+  };
+
+  test('기본 off로 보내고, 두 번째 응답이 끝나면 설정 시트를 열어 실시간 이미지를 안내한다', async ({
+    page,
+  }) => {
+    await page.goto('/chats/c1');
+
+    const streamRequest = page.waitForRequest(CHAT_STREAM);
+
+    await sendMessage(page);
+
+    expect((await streamRequest).postDataJSON()).toMatchObject({
+      realtimeImage: false,
+    });
+
+    const sheet = page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title });
+    const nudgeText = sheet.getByText(
+      CHAT_SETTINGS_COPY.realtimeImage.nudge.description,
+    );
+    const realtimeImageSwitch = sheet.getByRole('switch', {
+      name: CHAT_SETTINGS_COPY.realtimeImage.label,
+    });
+
+    await expect(nudgeText).toBeVisible();
+    await expect(realtimeImageSwitch).toHaveAttribute('aria-checked', 'false');
+
+    // 확인을 누르면 안내만 닫히고 시트는 남아 바로 켤 수 있다.
+    await sheet
+      .getByRole('button', {
+        name: CHAT_SETTINGS_COPY.realtimeImage.nudge.confirm,
+      })
+      .click();
+    await expect(nudgeText).toHaveCount(0);
+    await realtimeImageSwitch.click();
+    await expect(realtimeImageSwitch).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('실시간 이미지를 켜 둔 기기는 두 번째 응답이 끝나도 안내하지 않는다', async ({
+    page,
+  }) => {
+    await enableRealtimeImage(page);
+    await page.goto('/chats/c1');
+    await sendMessage(page);
+    await page.waitForTimeout(REALTIME_IMAGE_NUDGE_DELAY_MS + 500);
+
+    await expect(
+      page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+    ).toHaveCount(0);
+  });
+
+  test('응답 재생성은 횟수에 세지 않아 안내하지 않는다', async ({ page }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([completedTurn])),
+      });
+    });
+    await page.route(CHAT_REGENERATE, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"문이 굉음과 함께 부서졌다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"문이 굉음과 함께 부서졌다."}\n\n',
+        ]),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const regenerated = page.waitForResponse(CHAT_REGENERATE);
+
+    await page.getByRole('button', { name: '다시 생성' }).click();
+    await regenerated;
+    await page.waitForTimeout(REALTIME_IMAGE_NUDGE_DELAY_MS + 500);
+
+    await expect(
+      page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+    ).toHaveCount(0);
+    expect(
+      await page.evaluate(
+        (key) => window.localStorage.getItem(key),
+        CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
+      ),
+    ).toBe('1');
   });
 });
 
