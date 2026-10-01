@@ -11,8 +11,8 @@ export function StoryDetailTags({ genres }: StoryDetailTagsProps) {
         <Badge
           key={genre}
           variant="secondary"
-          className="h-auto px-3 py-1 text-sm text-foreground-secondary">
-          {genre}
+          className="h-auto max-w-full px-3 py-1 text-sm text-foreground-secondary">
+          <span className="truncate">{genre}</span>
         </Badge>
       ))}
     </div>

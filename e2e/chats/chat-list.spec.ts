@@ -5,6 +5,7 @@ import { CHAT_LIST_COPY } from '@/features/chats/list/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   expect,
   seedChatIds,
@@ -334,5 +335,29 @@ test.describe('채팅 카드 옵션 (KNK-1186)', () => {
     await sheet.getByRole('button', { name: STORY_REPORT_COPY.submit }).click();
 
     await expect(page.getByText(TOAST_MESSAGE.STORY_REPORTED)).toBeVisible();
+  });
+});
+
+test.describe('채팅 목록 긴 글', () => {
+  test('공백 없는 긴 제목과 미리보기도 카드 폭 안에서 말줄임한다 (CHAT-LIST-20)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/chats**', (route) =>
+      route.fulfill({
+        json: [
+          {
+            ...chat('c1', `제목${UNBROKEN_TEXT}`),
+            lastStoryPreview: `미리보기${UNBROKEN_TEXT}`,
+          },
+        ],
+      }),
+    );
+
+    await page.goto('/chats');
+
+    await expect(page.getByText(`제목${UNBROKEN_TEXT}`)).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 });

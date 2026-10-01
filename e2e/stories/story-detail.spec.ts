@@ -5,6 +5,11 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import {
+  findOverflowingTexts,
+  SPACED_LONG_TEXT,
+  UNBROKEN_TEXT,
+} from '../fixtures/layout';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
@@ -683,5 +688,38 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
 
     await expect(page.getByText(TOAST_MESSAGE.STORY_DELETED)).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+  });
+});
+
+test.describe('스토리 상세 긴 글', () => {
+  test('긴 제목·소개·주요 내용·본 엔딩·상황 이름도 화면 폭 안에서 줄바꿈하거나 말줄임한다 (STORY-DETAIL-46)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, (route) =>
+      route.fulfill({
+        json: {
+          ...storyDetail,
+          title: `제목${UNBROKEN_TEXT}`,
+          oneLineIntro: `소개${UNBROKEN_TEXT}`,
+          description: `줄거리${UNBROKEN_TEXT}`,
+          reachedEndings: [SPACED_LONG_TEXT],
+          startSettings: [
+            {
+              ...storyDetail.startSettings[0],
+              name: SPACED_LONG_TEXT,
+              startSituation: `상황${UNBROKEN_TEXT}`,
+            },
+          ],
+        },
+      }),
+    );
+
+    await page.goto('/stories/s1');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
+
+    await page.getByRole('combobox', { name: '채팅 시작 상황 선택' }).click();
+    await expect(page.getByRole('option')).toHaveCount(1);
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 });

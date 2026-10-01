@@ -14,6 +14,7 @@ import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   CREDIT_POLICY_FIXTURE,
   EXHAUSTED_TRIALS,
@@ -2007,5 +2008,20 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
       CHAT_MENU_COPY.share,
       CHAT_MENU_COPY.delete,
     ]);
+  });
+});
+
+test.describe('추천 입력 긴 글', () => {
+  test('공백 없는 긴 추천 입력도 버튼 폭 안에서 줄바꿈한다 (CHAT-INPUT-21)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, (route) =>
+      route.fulfill({ json: chatDetail([], [`추천${UNBROKEN_TEXT}`]) }),
+    );
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText(`추천${UNBROKEN_TEXT}`)).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 });

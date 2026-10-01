@@ -22,6 +22,7 @@ import {
 import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   expect,
   isPublicStoriesUrl,
@@ -1018,6 +1019,50 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
+  });
+
+  test('공백 없는 긴 제목·한 줄 소개와 긴 장르도 카드 폭 안에서 줄바꿈하거나 말줄임한다 (STORY-LIST-40)', async ({
+    page,
+  }) => {
+    const longText = 'ㄹㄱㅇㅇㅇ222ㅇㅇ123213'.repeat(4);
+
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/stories**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            ...story('s1', longText),
+            oneLineIntro: longText,
+            genres: [
+              '아주 긴 직접 추가 장르 이름 서른 글자까지 들어감',
+              '판타지',
+            ],
+          },
+        ]),
+      });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    await expect(page.getByText(longText, { exact: true })).toHaveCount(2);
+    expect(await findOverflowingTexts(page)).toEqual([]);
+  });
+
+  test('홈 카드의 공백 없는 긴 제목도 카드 폭 안에서 말줄임한다 (STORY-LIST-41)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockPublicStories(page, [
+      originalStory('o1', `제목${UNBROKEN_TEXT}`),
+    ]);
+
+    await page.goto('/');
+
+    await expect(page.getByText(`제목${UNBROKEN_TEXT}`)).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 
   test('로그인 상태에서 스토리를 삭제하면 목록에서 사라진다', async ({

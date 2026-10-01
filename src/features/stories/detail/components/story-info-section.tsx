@@ -53,11 +53,13 @@ export function StoryInfoSection({
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
-          <h1 ref={titleRef} className="text-2xl font-bold">
+          <h1 ref={titleRef} className="text-2xl font-bold wrap-break-word">
             {story.title}
           </h1>
           {story.oneLineIntro ? (
-            <p className="text-foreground-secondary">{story.oneLineIntro}</p>
+            <p className="wrap-break-word text-foreground-secondary">
+              {story.oneLineIntro}
+            </p>
           ) : null}
         </div>
         {genres.length > 0 ? <StoryDetailTags genres={genres} /> : null}
