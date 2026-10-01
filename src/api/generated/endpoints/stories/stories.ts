@@ -24,9 +24,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
-  AddCharacterImageRequest,
   BatchStoryRequest,
-  CharacterImageResponse,
   CreateGeneralStoryRequest,
   GetLorebooksParams,
   GetPublicStoriesParams,
@@ -34,12 +32,17 @@ import type {
   ImagePresignResponse,
   LorebookListItemResponse,
   SearchStoriesParams,
-  SimpleStoryCreateResponse,
   StoryDetailResponse,
   StoryEditFormResponse,
   StoryPageResponse,
   StoryReportRequest,
   StorySummaryResponse,
+  SubmissionAccepted,
+  UpdateStory400,
+  UpdateStory401,
+  UpdateStory403,
+  UpdateStory404,
+  UpdateStory409,
   UpdateStoryRequest,
 } from '../../models';
 
@@ -543,170 +546,6 @@ export const usePresign = <TError = ErrorType<void>, TContext = unknown>(
 > => {
   return useMutation(getPresignMutationOptions(options), queryClient);
 };
-export type addCharacterImageResponse201 = {
-  data: CharacterImageResponse;
-  status: 201;
-};
-
-export type addCharacterImageResponse400 = {
-  data: void;
-  status: 400;
-};
-
-export type addCharacterImageResponse401 = {
-  data: void;
-  status: 401;
-};
-
-export type addCharacterImageResponse403 = {
-  data: void;
-  status: 403;
-};
-
-export type addCharacterImageResponse404 = {
-  data: void;
-  status: 404;
-};
-
-export type addCharacterImageResponse409 = {
-  data: void;
-  status: 409;
-};
-
-export type addCharacterImageResponseSuccess = addCharacterImageResponse201 & {
-  headers: Headers;
-};
-export type addCharacterImageResponseError = (
-  | addCharacterImageResponse400
-  | addCharacterImageResponse401
-  | addCharacterImageResponse403
-  | addCharacterImageResponse404
-  | addCharacterImageResponse409
-) & {
-  headers: Headers;
-};
-
-export type addCharacterImageResponse =
-  | addCharacterImageResponseSuccess
-  | addCharacterImageResponseError;
-
-export const getAddCharacterImageUrl = (
-  storyId: string,
-  characterId: string,
-) => {
-  return `/api/v1/stories/${storyId}/characters/${characterId}/images`;
-};
-
-/**
- * 업로드한 이미지를 인물에 연결합니다(KNK-1126). 이름은 `{인물이름}_{접미}` 형식이며 접미는 1~20자 한글·영문·숫자(표정·상황·감정)입니다. 같은 인물 안에서 이름이 겹치면 409, 형식이 어긋나면 400, 인물당 10장을 넘으면 400입니다. 서버가 객체 키가 이 스토리의 업로드 경로 아래인지 확인하고 `HEAD`로 존재·크기·형식을 재검증합니다.
- * @summary 인물 이미지 연결
- */
-export const addCharacterImage = async (
-  storyId: string,
-  characterId: string,
-  addCharacterImageRequest: AddCharacterImageRequest,
-  options?: RequestInit,
-): Promise<addCharacterImageResponse> => {
-  return customInstance<addCharacterImageResponse>(
-    getAddCharacterImageUrl(storyId, characterId),
-    {
-      ...options,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
-      body: JSON.stringify(addCharacterImageRequest),
-    },
-  );
-};
-
-export const getAddCharacterImageMutationOptions = <
-  TError = ErrorType<void>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof addCharacterImage>>,
-    TError,
-    {
-      storyId: string;
-      characterId: string;
-      data: BodyType<AddCharacterImageRequest>;
-    },
-    TContext
-  >;
-  request?: SecondParameter<typeof customInstance>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof addCharacterImage>>,
-  TError,
-  {
-    storyId: string;
-    characterId: string;
-    data: BodyType<AddCharacterImageRequest>;
-  },
-  TContext
-> => {
-  const mutationKey = ['addCharacterImage'];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      'mutationKey' in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof addCharacterImage>>,
-    {
-      storyId: string;
-      characterId: string;
-      data: BodyType<AddCharacterImageRequest>;
-    }
-  > = (props) => {
-    const { storyId, characterId, data } = props ?? {};
-
-    return addCharacterImage(storyId, characterId, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type AddCharacterImageMutationResult = NonNullable<
-  Awaited<ReturnType<typeof addCharacterImage>>
->;
-export type AddCharacterImageMutationBody = BodyType<AddCharacterImageRequest>;
-export type AddCharacterImageMutationError = ErrorType<void>;
-
-/**
- * @summary 인물 이미지 연결
- */
-export const useAddCharacterImage = <
-  TError = ErrorType<void>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof addCharacterImage>>,
-      TError,
-      {
-        storyId: string;
-        characterId: string;
-        data: BodyType<AddCharacterImageRequest>;
-      },
-      TContext
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof addCharacterImage>>,
-  TError,
-  {
-    storyId: string;
-    characterId: string;
-    data: BodyType<AddCharacterImageRequest>;
-  },
-  TContext
-> => {
-  return useMutation(getAddCharacterImageMutationOptions(options), queryClient);
-};
 export type presignDraftImageResponse201 = {
   data: ImagePresignResponse;
   status: 201;
@@ -837,21 +676,35 @@ export const usePresignDraftImage = <
 > => {
   return useMutation(getPresignDraftImageMutationOptions(options), queryClient);
 };
-export type createGeneralStoryResponse201 = {
-  data: SimpleStoryCreateResponse;
-  status: 201;
+export type createGeneralStoryResponse202 = {
+  data: SubmissionAccepted;
+  status: 202;
 };
 
 export type createGeneralStoryResponse400 = {
-  data: void;
+  data: SubmissionAccepted;
   status: 400;
 };
 
+export type createGeneralStoryResponse401 = {
+  data: SubmissionAccepted;
+  status: 401;
+};
+
+export type createGeneralStoryResponse409 = {
+  data: SubmissionAccepted;
+  status: 409;
+};
+
 export type createGeneralStoryResponseSuccess =
-  createGeneralStoryResponse201 & {
+  createGeneralStoryResponse202 & {
     headers: Headers;
   };
-export type createGeneralStoryResponseError = createGeneralStoryResponse400 & {
+export type createGeneralStoryResponseError = (
+  | createGeneralStoryResponse400
+  | createGeneralStoryResponse401
+  | createGeneralStoryResponse409
+) & {
   headers: Headers;
 };
 
@@ -864,8 +717,8 @@ export const getCreateGeneralStoryUrl = () => {
 };
 
 /**
- * 폼에 직접 입력한 스토리 구성 항목을 한 번에 등록합니다(단발, 임시저장 없음). 인증은 선택이며 유효 토큰이면 생성자 소유가 됩니다. AI를 호출하지 않아 크레딧 소모·게스트 한도 카운트가 없습니다. 응답은 간편 제작과 동일합니다.
- * @summary 일반 제작 스토리 등록
+ * 회원이 전체 입력을 제출하면 202로 접수합니다. AI 검수 승인 후 스토리를 생성하며 이프는 소모하지 않습니다.
+ * @summary 일반 제작 검수 제출
  */
 export const createGeneralStory = async (
   createGeneralStoryRequest: CreateGeneralStoryRequest,
@@ -883,7 +736,7 @@ export const createGeneralStory = async (
 };
 
 export const getCreateGeneralStoryMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<SubmissionAccepted>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -925,13 +778,13 @@ export type CreateGeneralStoryMutationResult = NonNullable<
 >;
 export type CreateGeneralStoryMutationBody =
   BodyType<CreateGeneralStoryRequest>;
-export type CreateGeneralStoryMutationError = ErrorType<void>;
+export type CreateGeneralStoryMutationError = ErrorType<SubmissionAccepted>;
 
 /**
- * @summary 일반 제작 스토리 등록
+ * @summary 일반 제작 검수 제출
  */
 export const useCreateGeneralStory = <
-  TError = ErrorType<void>,
+  TError = ErrorType<SubmissionAccepted>,
   TContext = unknown,
 >(
   options?: {
@@ -1353,28 +1206,48 @@ export type updateStoryResponse200 = {
   status: 200;
 };
 
+export type updateStoryResponse202 = {
+  data: SubmissionAccepted;
+  status: 202;
+};
+
 export type updateStoryResponse400 = {
-  data: void;
+  data: UpdateStory400;
   status: 400;
 };
 
+export type updateStoryResponse401 = {
+  data: UpdateStory401;
+  status: 401;
+};
+
 export type updateStoryResponse403 = {
-  data: void;
+  data: UpdateStory403;
   status: 403;
 };
 
 export type updateStoryResponse404 = {
-  data: void;
+  data: UpdateStory404;
   status: 404;
 };
 
-export type updateStoryResponseSuccess = updateStoryResponse200 & {
+export type updateStoryResponse409 = {
+  data: UpdateStory409;
+  status: 409;
+};
+
+export type updateStoryResponseSuccess = (
+  | updateStoryResponse200
+  | updateStoryResponse202
+) & {
   headers: Headers;
 };
 export type updateStoryResponseError = (
   | updateStoryResponse400
+  | updateStoryResponse401
   | updateStoryResponse403
   | updateStoryResponse404
+  | updateStoryResponse409
 ) & {
   headers: Headers;
 };
@@ -1388,8 +1261,8 @@ export const getUpdateStoryUrl = (storyId: string) => {
 };
 
 /**
- * 보낸 필드만 교체하고 나머지는 유지합니다(간편·일반 제작 무관). 리스트는 보내면 전체 교체, 빈 배열이면 전부 삭제입니다. 인증은 선택이며 회원 소유 스토리는 소유자만(타인·미인증 403). 검증 실패 400, 없는 스토리 404. 스토리 공개 전환(PRIVATE↔PUBLIC)도 별도 엔드포인트 없이 visibility 부분 갱신으로 수행하며, 전환은 읽기 가시성에 즉시 반영됩니다. 단 등록되지 않은(PUBLISHED가 아닌) 스토리의 공개 범위 변경은 400입니다(읽기 게이트상 공개해도 읽히지 않는 모순 방지).
- * @summary 스토리 수정(부분 갱신)
+ * 회원 소유자만 허용합니다. visibility 단독은 즉시 200, 그 외 입력은 202로 접수하며 승인 후 반영합니다. PENDING 중에는 모든 PATCH가 409입니다.
+ * @summary 스토리 수정 검수 제출
  */
 export const updateStory = async (
   storyId: string,
@@ -1405,7 +1278,13 @@ export const updateStory = async (
 };
 
 export const getUpdateStoryMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<
+    | UpdateStory400
+    | UpdateStory401
+    | UpdateStory403
+    | UpdateStory404
+    | UpdateStory409
+  >,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1446,12 +1325,27 @@ export type UpdateStoryMutationResult = NonNullable<
   Awaited<ReturnType<typeof updateStory>>
 >;
 export type UpdateStoryMutationBody = BodyType<UpdateStoryRequest>;
-export type UpdateStoryMutationError = ErrorType<void>;
+export type UpdateStoryMutationError = ErrorType<
+  | UpdateStory400
+  | UpdateStory401
+  | UpdateStory403
+  | UpdateStory404
+  | UpdateStory409
+>;
 
 /**
- * @summary 스토리 수정(부분 갱신)
+ * @summary 스토리 수정 검수 제출
  */
-export const useUpdateStory = <TError = ErrorType<void>, TContext = unknown>(
+export const useUpdateStory = <
+  TError = ErrorType<
+    | UpdateStory400
+    | UpdateStory401
+    | UpdateStory403
+    | UpdateStory404
+    | UpdateStory409
+  >,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof updateStory>>,
@@ -1508,7 +1402,7 @@ export const getGetPublicStoriesUrl = (params?: GetPublicStoriesParams) => {
 };
 
 /**
- * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 latest(기본, 등록 최신순)와 popular(좋아요 많은 순)이며, 다음 페이지는 응답의 nextCursor를 **같은 sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
+ * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 latest(기본, 등록 최신순)·likes(좋아요 많은 순)·chats(누적 턴 수 많은 순)이고, filter는 all(기본)과 original(마냑 공식 계정 소유만)입니다. 다음 페이지는 응답의 nextCursor를 **같은 filter·sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
  * @summary 공개 스토리 목록 조회
  */
 export const getPublicStories = async (
@@ -1707,7 +1601,7 @@ export const getGetEditFormUrl = (storyId: string) => {
 };
 
 /**
- * 수정 폼을 채우기 위한 편집 가능 필드 전체(통글 4필드 포함)를 조회합니다. 인증은 선택이며, 회원 소유 스토리는 소유자만(타인·미인증 403), 소유자 없는 게스트 스토리는 허용합니다. 없는 스토리는 404입니다.
+ * 미승인 제출본을 반영한 편집 가능 필드와 submission 메타를 조회합니다. 인증은 선택이며, 회원 소유 스토리는 소유자만(타인·미인증 403), 소유자 없는 게스트 스토리는 허용합니다. 없는 스토리는 404입니다.
  * @summary 스토리 수정 폼 조회
  */
 export const getEditForm = async (
@@ -2052,8 +1946,9 @@ export const getGetOriginalStoriesUrl = () => {
 };
 
 /**
- * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 피드·검색이 나오기 전까지 홈의 오리지널 섹션이 사용하며, 인증은 필요 없습니다. 공식 계정 미설정 환경은 빈 목록입니다.
- * @summary 오리지널 스토리 목록 조회
+ * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 인증은 필요 없고 공식 계정 미설정 환경은 빈 목록입니다. **폐기 예정**: GET /stories?filter=original이 대체하며, 클라이언트 전환 후 KNK-1400에서 제거합니다.
+ * @deprecated
+ * @summary 오리지널 스토리 목록 조회(폐기 예정)
  */
 export const getOriginalStories = async (
   options?: RequestInit,
@@ -2175,7 +2070,8 @@ export function useGetOriginalStories<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary 오리지널 스토리 목록 조회
+ * @deprecated
+ * @summary 오리지널 스토리 목록 조회(폐기 예정)
  */
 
 export function useGetOriginalStories<

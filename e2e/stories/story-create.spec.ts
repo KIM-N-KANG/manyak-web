@@ -19,6 +19,7 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
+import { readCreationStorage } from '../fixtures/storage';
 import {
   seedPendingCreationRequests,
   seedStoryCompletionRequests,
@@ -424,12 +425,11 @@ test.describe('스토리 생성', () => {
     ).toBeHidden();
     await expect
       .poll(() =>
-        page.evaluate(
-          (keys) => keys.map((key) => localStorage.getItem(key)),
+        Promise.all(
           [
             PENDING_CREATION_REQUEST_STORAGE_KEY,
             STORY_COMPLETION_REQUESTS_STORAGE_KEY,
-          ],
+          ].map((key) => readCreationStorage(page, key)),
         ),
       )
       .toEqual([null, null]);
@@ -521,12 +521,11 @@ test.describe('스토리 생성', () => {
       expect(chatCount).toBe(0);
       await expect
         .poll(() =>
-          page.evaluate(
-            (keys) => keys.map((key) => localStorage.getItem(key)),
+          Promise.all(
             [
               PENDING_CREATION_REQUEST_STORAGE_KEY,
               STORY_COMPLETION_REQUESTS_STORAGE_KEY,
-            ],
+            ].map((key) => readCreationStorage(page, key)),
           ),
         )
         .toEqual([null, null]);
@@ -606,10 +605,10 @@ test.describe('스토리 생성', () => {
       }),
     ).toHaveCount(1);
     expect(
-      await page.evaluate(
-        (key) => JSON.parse(localStorage.getItem(key) ?? '[]'),
+      await readCreationStorage(
+        page,
         PENDING_CREATION_REQUEST_STORAGE_KEY,
-      ),
+      ).then((raw) => JSON.parse(raw ?? '[]')),
     ).toMatchObject([{ stage: 'KEYWORD_DRAFT', requestId: 'keyword-other' }]);
   });
 

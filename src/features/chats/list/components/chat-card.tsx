@@ -178,7 +178,7 @@ function ChatCardBody({ chat, action }: ChatCardBodyProps) {
           <div className="flex items-start gap-2">
             <p
               className={cn(
-                'line-clamp-1 min-w-0 flex-1 font-semibold',
+                'line-clamp-1 min-w-0 flex-1 font-semibold wrap-break-word',
                 'leading-6',
                 isStoryDeleted && 'text-foreground-tertiary',
               )}>
@@ -190,7 +190,7 @@ function ChatCardBody({ chat, action }: ChatCardBodyProps) {
           </div>
           <p
             className={cn(
-              'line-clamp-1',
+              'line-clamp-1 wrap-break-word',
               'text-sm leading-3.5',
               chat.lastStoryPreview
                 ? 'text-foreground-secondary'

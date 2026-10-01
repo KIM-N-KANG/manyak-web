@@ -68,8 +68,8 @@ describe('법적 문서 콘텐츠', () => {
 
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
-    expect(privacyContent.effectiveDate).toBe('2026-09-20');
-    expect(privacyContent.version).toBe('v1.6');
+    expect(privacyContent.effectiveDate).toBe('2026-09-25');
+    expect(privacyContent.version).toBe('v1.7');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 
@@ -126,6 +126,18 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('동의를 철회하거나 회원을 탈퇴할 때까지');
     expect(text).toContain('전송자, 의사 표시 일시, 처리 내용');
     expect(text).toContain('동의일부터 2년마다');
+  });
+
+  it('개인정보 처리방침은 웹 브라우저 푸시와 브라우저 저장 항목을 Android와 함께 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain('알림 정보(Android 앱·웹 브라우저)');
+    expect(text).toContain('웹 브라우저(홈 화면 설치본 포함)의 푸시 알림');
+    expect(text).toContain('"[선택] 광고성 알림 수신 동의"');
+    expect(text).toContain('앱·웹 화면에서 전송자, 의사 표시 일시, 처리 내용');
+    expect(text).toContain('웹 푸시 등록 토큰');
+    expect(text).toContain('앱·웹 로그아웃 시 해당 기기(브라우저)의 토큰');
+    expect(text).not.toContain('알림 정보(Android 앱):');
   });
 
   it('개인정보 처리방침은 삭제·피드백·로그·백업 보유기간을 구체적으로 고지한다', () => {

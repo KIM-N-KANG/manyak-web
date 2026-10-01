@@ -5,6 +5,11 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import {
+  findOverflowingTexts,
+  SPACED_LONG_TEXT,
+  UNBROKEN_TEXT,
+} from '../fixtures/layout';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
@@ -54,19 +59,25 @@ const fulfillStoryDetail = async (route: Route) => {
 
 const THUMBNAIL_URL = 'https://cdn.manyak.app/thumbnails/dragon.png';
 
-// 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 이미지 생성에 실패한
-// 인물은 imageUrl이 null로 내려오므로 이름만 남는 경우도 함께 덮는다.
+// 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 일반 제작에서 올린 이미지는
+// `characters/uploaded/` 아래로 온다(KNK-1503). 이미지 생성에 실패한 인물은 imageUrl이
+// null로 내려오므로 이름만 남는 경우도 함께 덮는다.
 const STORY_CHARACTERS = [
   {
     name: '이무기',
     imageUrl: 'https://cdn.manyak.app/characters/generated/s1/imugi.webp',
   },
+  {
+    name: '산신령',
+    imageUrl:
+      'https://cdn.manyak.app/characters/uploaded/moderated/sansin.webp',
+  },
   { name: '계곡지기', imageUrl: null },
 ];
 
-// 1x1 투명 PNG. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+// 60×60 투명 PNG. 뷰어의 srcset 밀도로 나눠도 naturalWidth가 0으로 반올림되지 않게 1×1보다 크게 둔다. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAJElEQVR4nO3BMQEAAADCoPVP7WkJoAAAAAAAAAAAAAAAAAAAbjh8AAFOgZ4bAAAAAElFTkSuQmCC',
   'base64',
 );
 
@@ -81,7 +92,7 @@ test.describe('스토리 상세', () => {
     ).toBeVisible();
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
-    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
     await expect(page.getByText('제작자')).toBeVisible();
     await expect(page.getByText('마냑', { exact: true })).toBeVisible();
     await expect(page.getByText('생성일')).toBeVisible();
@@ -125,7 +136,7 @@ test.describe('스토리 상세', () => {
     await expect(
       page.getByRole('img', { name: '스토리 썸네일' }),
     ).toBeVisible();
-    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
 
     const header = page.locator('header');
 
@@ -166,6 +177,9 @@ test.describe('스토리 상세', () => {
     await expect(
       page.getByRole('img', { name: '이무기 인물 이미지' }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: '산신령 인물 이미지' }),
+    ).toBeVisible();
 
     // 이미지가 없는 인물도 이름은 남는다
     await expect(page.getByRole('heading', { name: '계곡지기' })).toBeVisible();
@@ -204,6 +218,37 @@ test.describe('스토리 상세', () => {
     await viewer.getByRole('button', { name: '닫기' }).click();
     await expect(viewer).not.toBeVisible();
     await expect(page).toHaveURL(/\/stories\/s1$/);
+
+    // 정사각형 이미지라 세로 화면에서는 가운데만 그림이고 위아래는 검은 여백이다.
+    // 그림을 탭하면 그대로 두고, 여백을 탭해야 닫힌다(KNK-1427).
+    await page
+      .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+
+    const viewport = page.viewportSize();
+
+    if (!viewport) throw new Error('뷰포트 크기를 알 수 없다');
+
+    // 이미지를 더블 탭하면 2.5배로 커지고, 다시 더블 탭하면 원래 크기로 돌아온다.
+    const viewerImage = viewer.getByRole('img', { name: '이무기 인물 이미지' });
+    const imageWidth = async () => (await viewerImage.boundingBox())?.width;
+
+    // 로드 전에는 그림 영역을 알 수 없어 어느 탭이든 배경 탭으로 닫힌다.
+    await expect
+      .poll(() =>
+        viewerImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0);
+    await page.mouse.dblclick(viewport.width / 2, viewport.height / 2);
+    await expect.poll(imageWidth).toBeCloseTo(viewport.width * 2.5, 0);
+    await page.mouse.dblclick(viewport.width / 2, viewport.height / 2);
+    await expect.poll(imageWidth).toBeCloseTo(viewport.width, 0);
+
+    await page.mouse.click(viewport.width / 2, viewport.height / 2);
+    await expect(viewer).toBeVisible();
+    await page.mouse.click(viewport.width / 2, 40);
+    await expect(viewer).not.toBeVisible();
 
     await page
       .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
@@ -643,5 +688,38 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
 
     await expect(page.getByText(TOAST_MESSAGE.STORY_DELETED)).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+  });
+});
+
+test.describe('스토리 상세 긴 글', () => {
+  test('긴 제목·소개·주요 내용·본 엔딩·상황 이름도 화면 폭 안에서 줄바꿈하거나 말줄임한다 (STORY-DETAIL-46)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, (route) =>
+      route.fulfill({
+        json: {
+          ...storyDetail,
+          title: `제목${UNBROKEN_TEXT}`,
+          oneLineIntro: `소개${UNBROKEN_TEXT}`,
+          description: `줄거리${UNBROKEN_TEXT}`,
+          reachedEndings: [SPACED_LONG_TEXT],
+          startSettings: [
+            {
+              ...storyDetail.startSettings[0],
+              name: SPACED_LONG_TEXT,
+              startSituation: `상황${UNBROKEN_TEXT}`,
+            },
+          ],
+        },
+      }),
+    );
+
+    await page.goto('/stories/s1');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
+
+    await page.getByRole('combobox', { name: '채팅 시작 상황 선택' }).click();
+    await expect(page.getByRole('option')).toHaveCount(1);
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 });

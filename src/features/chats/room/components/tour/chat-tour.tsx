@@ -121,6 +121,30 @@ function hasStepFrom(steps: ChatTourStep[], from: number): boolean {
  * @param from 탐색을 시작할 스텝 인덱스
  * @returns 표시할 스텝 상태. 남은 스텝이 없으면 null
  */
+/** 열린 직후 대상 등장 애니메이션이 끝날 때까지 프레임마다 재측정하는 시간(ms). */
+const SETTLE_REMEASURE_MS = 1000;
+
+/**
+ * 두 하이라이트 사각형이 같은지 비교한다. 같으면 상태를 갱신하지 않아 프레임마다 다시
+ * 그리지 않는다.
+ *
+ * @param a 이전 사각형
+ * @param b 새 사각형
+ * @returns 같으면 true
+ */
+function isSameRect(a: TourRect | null, b: TourRect | null): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+
+  return (
+    a.top === b.top &&
+    a.left === b.left &&
+    a.width === b.width &&
+    a.height === b.height
+  );
+}
+
 function resolveStepState(
   steps: ChatTourStep[],
   from: number,
@@ -171,15 +195,33 @@ export function ChatTour({
 
   useEffect(() => {
     const remeasure = () =>
-      setStep((prev) =>
-        prev === null
-          ? prev
-          : { ...prev, rect: measureStep(steps[prev.index].selectors) },
-      );
+      setStep((prev) => {
+        if (prev === null) {
+          return prev;
+        }
+
+        const rect = measureStep(steps[prev.index].selectors);
+
+        return isSameRect(prev.rect, rect) ? prev : { ...prev, rect };
+      });
+
+    // 화면이 준비되자마자 열리므로 추천 입력 등장 애니메이션 동안 대상이 아래로 밀린다.
+    // 정착할 때까지 프레임마다 다시 재서 하이라이트가 대상을 따라가게 한다.
+    const settleStart = performance.now();
+    let frame = requestAnimationFrame(function tick() {
+      remeasure();
+
+      if (performance.now() - settleStart < SETTLE_REMEASURE_MS) {
+        frame = requestAnimationFrame(tick);
+      }
+    });
 
     window.addEventListener('resize', remeasure);
 
-    return () => window.removeEventListener('resize', remeasure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', remeasure);
+    };
   }, [steps]);
 
   const goToStep = (from: number) => {

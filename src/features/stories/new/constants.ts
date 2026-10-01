@@ -6,7 +6,6 @@ import type {
   TagCategoryConfig,
 } from './types';
 
-export const ADD_TAG_MAX_LENGTH = 15;
 export const STORYLINE_GENERATE_LABEL = '스토리라인 만들기';
 
 /** 인물 이름 입력의 클라이언트 상한. 서버 스키마도 30자다. */
@@ -121,29 +120,6 @@ export const TAG_CATEGORIES = [
   SUPPORTING_CHARACTER_CATEGORY,
 ] satisfies TagCategoryConfig[];
 
-export const SKELETON_TAG_CHIP_WIDTH_CLASSES = [
-  'w-24',
-  'w-10',
-  'w-32',
-  'w-16',
-  'w-14',
-  'w-28',
-  'w-20',
-  'w-12',
-  'w-24',
-  'w-16',
-  'w-10',
-  'w-32',
-  'w-14',
-  'w-28',
-  'w-20',
-  'w-12',
-  'w-24',
-  'w-10',
-  'w-16',
-  'w-28',
-] as const;
-
 export const STORY_CREATE_INDICATOR_STEPS = [
   { step: 'keyword', label: '키워드 선택' },
   { step: 'storyline-select', label: '스토리라인 선택' },
@@ -187,6 +163,12 @@ export const getStorylineTabLabel = (index: number): string => {
 export const STORYLINE_SELECT_LOADING_LABEL = '스토리라인 생성 중';
 
 export const SELECTED_TAGS_TRIGGER_LABEL = '선택한 키워드 보기';
+
+/** 스토리라인 단계의 선택한 키워드 드로어 문구다. 앱 `create_selected_keywords_*` 문자열과 같다. */
+export const SELECTED_TAGS_DRAWER_COPY = {
+  title: '선택한 키워드들이에요',
+  description: '이 키워드들을 이용해서 스토리라인 세 개를 만들었어요',
+} as const;
 
 /** 추가 정보 단계 하단에 표시하는 스토리 완성 비용의 라벨. */
 export const STORY_COMPLETION_CREDIT_COST_LABEL = '스토리 완성 비용';
@@ -234,6 +216,6 @@ export const STORY_COMPLETION_LOADING_HINTS = [
 
 /** 회원 확인 전·게스트에게 보이는 제작 진입 게이트 문구. 퍼널 헤더 제목과 같은 화면 이름을 쓴다. */
 export const STORY_CREATE_GATE_COPY = {
-  title: '스토리 만들기',
+  title: '스토리 간편 제작',
   checking: '로그인 상태를 확인하는 중',
 } as const;

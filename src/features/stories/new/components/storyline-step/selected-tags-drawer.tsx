@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -11,7 +12,10 @@ import {
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { track } from '@/observability/analytics';
 
-import { SELECTED_TAGS_TRIGGER_LABEL } from '../../constants';
+import {
+  SELECTED_TAGS_DRAWER_COPY,
+  SELECTED_TAGS_TRIGGER_LABEL,
+} from '../../constants';
 import type { SelectedTagGroup as SelectedTagGroupModel } from '../../types';
 import { SelectedTagGroup } from '../tag-step/selected-tag-group';
 
@@ -51,10 +55,15 @@ export function SelectedTagsDrawer({
         {SELECTED_TAGS_TRIGGER_LABEL}
       </DrawerTrigger>
       <DrawerContent container={container}>
-        <DrawerHeader>
-          <DrawerTitle>선택한 키워드</DrawerTitle>
+        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
+          <DrawerTitle className="text-xl leading-snug font-bold">
+            {SELECTED_TAGS_DRAWER_COPY.title}
+          </DrawerTitle>
+          <DrawerDescription className="text-base leading-6">
+            {SELECTED_TAGS_DRAWER_COPY.description}
+          </DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-6 overflow-y-auto overscroll-contain p-4">
+        <div className="flex flex-col gap-6 overflow-y-auto overscroll-contain px-4 pt-8 pb-4">
           {groups.map((group) => (
             <SelectedTagGroup key={group.id} group={group} />
           ))}

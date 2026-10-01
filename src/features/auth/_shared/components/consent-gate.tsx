@@ -23,6 +23,7 @@ import {
   hasPendingLogin,
 } from '@/features/auth/_shared/utils/pending-login-storage';
 import { signOutBeforeConsent } from '@/features/auth/_shared/utils/sign-out-before-consent';
+import { submitMarketingConsentAnswer } from '@/features/my/_shared/utils/marketing-consent-store';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
 import { FetchError } from '@/lib/custom-fetch';
 
@@ -177,12 +178,20 @@ function useConsentGate() {
     void signOutBeforeConsent();
   }, [phase]);
 
-  const applyRecordedConsent = (recorded: UserConsentResponse) => {
+  const applyRecordedConsent = (
+    recorded: UserConsentResponse,
+    marketingAccepted: boolean,
+  ) => {
     queryClient.setQueryData(queryKey, {
       data: recorded,
       status: 200,
       headers: new Headers(),
     });
+
+    // 필수 동의가 저장된 뒤에야 광고 동의를 저장한다(선택 항목은 완료 조건이 아니다).
+    if (userId) {
+      submitMarketingConsentAnswer(userId, marketingAccepted);
+    }
   };
 
   return {

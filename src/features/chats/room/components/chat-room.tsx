@@ -79,6 +79,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const creditBalance =
     meData?.status === 200 ? meData.data.creditBalance : undefined;
   const [loginOpen, setLoginOpen] = useState(false);
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const lastSubmitted = useRef<string | null>(null);
   const handlePaymentRequired = (error: unknown) => {
     if (
@@ -403,6 +404,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           storyId={storyId}
           storyTitle={storyTitle}
           turnCount={turns.length}
+          hidden={isHeaderHidden && !tour.isOpen}
         />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages
@@ -421,6 +423,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             onCharacterImageZoom={() =>
               track('client_chat_characterImage_clicked', { chat_id: chatId })
             }
+            onBackgroundTap={() => setIsHeaderHidden((hidden) => !hidden)}
           />
         </div>
         <ChatInput
@@ -465,7 +468,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   return (
     <FadeStateSwitch
       stateKey={stateKey}
-      className="relative flex h-full min-h-0 flex-col">
+      className="relative flex h-full min-h-0 flex-col [--chat-header-height:--spacing(14)]">
       {content}
     </FadeStateSwitch>
   );

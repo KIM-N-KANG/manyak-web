@@ -15,6 +15,8 @@ import { StoryOptionsMenu } from '@/features/stories/_shared/components/story-op
 type StoryDetailHeaderProps = {
   storyId: string;
   title: string;
+  /** 수정하기 노출 여부(회원이 만든 스토리만) */
+  canEdit: boolean;
   /** 신고하기 노출 여부(회원만) */
   canReport: boolean;
   /** 삭제하기 노출 여부(내가 만든 스토리만) */
@@ -29,6 +31,7 @@ type StoryDetailHeaderProps = {
 export function StoryDetailHeader({
   storyId,
   title,
+  canEdit,
   canReport,
   canDelete,
   onDeleteSuccess,
@@ -144,6 +147,7 @@ export function StoryDetailHeader({
         storyId={storyId}
         title={title}
         source="storyDetail"
+        canEdit={canEdit}
         canReport={canReport}
         canDelete={canDelete}
         onDeleteSuccess={onDeleteSuccess}

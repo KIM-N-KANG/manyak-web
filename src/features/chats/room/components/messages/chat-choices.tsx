@@ -79,7 +79,7 @@ export function ChatChoices({
             variant="secondary"
             onClick={() => onSend(choice, index, sourceTurnId)}
             className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi leading-[1.75] font-normal whitespace-normal">
-            <span>
+            <span className="min-w-0 wrap-break-word">
               <ChatTextSegments>{choice}</ChatTextSegments>
             </span>
           </Button>

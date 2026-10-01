@@ -97,10 +97,13 @@ export function StoryGenreBadges({ genres }: StoryGenreBadgesProps) {
   );
 }
 
+/** 장르 배지다. 한 장르가 줄보다 길면 뒤의 "+N" 자리를 남기고 줄어들며 말줄임한다. */
 function GenreBadge({ genre }: { genre: string }) {
   return (
-    <Badge variant="secondary" className="text-foreground-secondary">
-      {genre}
+    <Badge
+      variant="secondary"
+      className="min-w-0 shrink text-foreground-secondary">
+      <span className="truncate">{genre}</span>
     </Badge>
   );
 }

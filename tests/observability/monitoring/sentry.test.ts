@@ -18,6 +18,7 @@ import {
   dropRecoverableApiError,
   identifyUser,
   recordAnalyticsBreadcrumb,
+  SENTRY_IGNORE_ERRORS,
 } from '@/observability/monitoring/sentry';
 
 function abortError() {
@@ -145,5 +146,27 @@ describe('recordAnalyticsBreadcrumb', () => {
     expect(setTag).toHaveBeenCalledWith('chat_id', undefined);
     expect(setTag).toHaveBeenCalledWith('story_id', undefined);
     expect(setTag).toHaveBeenCalledWith('creation_id', undefined);
+  });
+});
+
+describe('SENTRY_IGNORE_ERRORS', () => {
+  // Sentry ignoreErrors의 판정 방식이다. 문자열은 부분 일치, 정규식은 test로 비교한다.
+  const isIgnored = (message: string) =>
+    SENTRY_IGNORE_ERRORS.some((pattern) =>
+      typeof pattern === 'string'
+        ? message.includes(pattern)
+        : pattern.test(message),
+    );
+
+  it.each([
+    'Error invoking postMessage: Java object is gone',
+    'Error invoking postMessage: Java exception was raised during method invocation',
+    'Error invoking enableButtonsClickedMetaDataLogging: Java object is gone',
+  ])('인앱 브라우저 브릿지 오류를 거른다: %s', (message) => {
+    expect(isIgnored(message)).toBe(true);
+  });
+
+  it('앱 코드 오류는 거르지 않는다', () => {
+    expect(isIgnored('TypeError: Failed to fetch')).toBe(false);
   });
 });

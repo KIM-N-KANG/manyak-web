@@ -17,6 +17,7 @@ import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   CREDIT_POLICY_FIXTURE,
   enableRealtimeImage,
@@ -1015,6 +1016,38 @@ test.describe('채팅 헤더', () => {
     await page.mouse.wheel(0, 150);
 
     await expect(header.getByText('용의 계곡')).toBeVisible();
+  });
+
+  test('메시지 영역을 탭하면 헤더가 사라지고 다시 탭하면 나타나며, 버튼 탭은 헤더를 바꾸지 않는다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    const header = page.getByRole('banner');
+    const prologue = page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.');
+
+    await expect(header).toBeVisible();
+
+    await prologue.click();
+    await expect(header).toBeHidden();
+
+    await prologue.click();
+    await expect(header).toBeVisible();
+
+    await page
+      .getByRole('button', { name: '입력창에 넣어 수정' })
+      .first()
+      .click();
+    await expect(header).toBeVisible();
   });
 });
 
@@ -2128,5 +2161,20 @@ test.describe('실시간 이미지 기본값과 안내 (KNK-1508)', () => {
         CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
       ),
     ).toBe('1');
+  });
+});
+
+test.describe('추천 입력 긴 글', () => {
+  test('공백 없는 긴 추천 입력도 버튼 폭 안에서 줄바꿈한다 (CHAT-INPUT-21)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, (route) =>
+      route.fulfill({ json: chatDetail([], [`추천${UNBROKEN_TEXT}`]) }),
+    );
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText(`추천${UNBROKEN_TEXT}`)).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 });

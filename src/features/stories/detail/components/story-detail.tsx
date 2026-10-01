@@ -17,8 +17,7 @@ import { FullscreenImageViewer } from '@/components/common/fullscreen-image-view
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
-// import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
+import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 import { useStoryFooterBackground } from '@/features/stories/detail/hooks/use-story-footer-background';
@@ -67,6 +66,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     (isMember
       ? story.isOwner === true
       : (createdStoryIds?.includes(storyId) ?? false));
+  const canEdit = isMember && story?.isOwner === true;
 
   useDocumentTitle(story?.title ?? '');
 
@@ -123,6 +123,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
       <StoryDetailHeader
         storyId={storyId}
         title={story?.title ?? ''}
+        canEdit={canEdit}
         canReport={isMember && story !== undefined}
         canDelete={canDelete}
         onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STUDIO)}
@@ -188,8 +189,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                         className="object-cover"
                       />
                       <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                        {/* KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. */}
-                        {/* <StoryLikeCount likeCount={story.likeCount ?? 0} /> */}
+                        <StoryLikeCount likeCount={story.likeCount ?? 0} />
                         <StoryTurnCount turnCount={story.turnCount ?? 0} />
                       </div>
                     </AspectRatio>
@@ -208,8 +208,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                       />
                     </div>
                     <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                      {/* KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. */}
-                      {/* <StoryLikeCount likeCount={story.likeCount ?? 0} /> */}
+                      <StoryLikeCount likeCount={story.likeCount ?? 0} />
                       <StoryTurnCount turnCount={story.turnCount ?? 0} />
                     </div>
                   </AspectRatio>
@@ -230,14 +229,13 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             <StoryDetailCta
               storyId={storyId}
               startSettingId={activeStartSettingId}
-              // KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
-              // canLike={
-              //   sessionStatus !== 'loading' &&
-              //   (isMember || createdStoryIds !== null) &&
-              //   !canDelete &&
-              //   story.isOwner !== true
-              // }
-              // isLiked={story.isLiked === true}
+              canLike={
+                sessionStatus !== 'loading' &&
+                (isMember || createdStoryIds !== null) &&
+                !canDelete &&
+                story.isOwner !== true
+              }
+              isLiked={story.isLiked === true}
             />
 
             {thumbnailUrl && (

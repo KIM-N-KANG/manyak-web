@@ -6,6 +6,7 @@ import {
   CREATE_STORY_FAB_COPY,
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
+import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
 import { seedPendingCreationRequests } from '../fixtures/storage';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -41,6 +42,9 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
       .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
+      .click();
 
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
@@ -57,6 +61,9 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
     // 빈 목록에도 별도 CTA 없이 FAB 하나만 둔다(KNK-1355).
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
       .click();
 
     await expect(page).toHaveURL(

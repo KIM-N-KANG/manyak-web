@@ -3,18 +3,17 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { SOCIAL_LOGIN_PENDING_LABEL } from '@/features/auth/_shared/hooks/use-social-login';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+import { formatCompactCount } from '@/lib/format-count';
 
 import { oneLine } from '../fixtures/copy';
 import {
   expect,
+  isPublicStoriesUrl,
   mockMemberSession,
   seedStoryIds,
   skipOnboarding,
   test,
 } from '../fixtures/test';
-
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. UI를 되살릴 때 아래 skip을 제거한다.
-test.skip(true, 'KNK-1260: 좋아요 UI 임시 비노출');
 
 const DETAIL = '**/api/v1/stories/s1';
 const LIKE = '**/api/v1/stories/s1/like';
@@ -22,13 +21,14 @@ const story = {
   id: 's1',
   title: '용의 계곡',
   turnCount: 25,
-  likeCount: 1234,
+  // 등록·취소로 축약 표기가 바뀌는 경계(999 ↔ 1K)에 둔다.
+  likeCount: 999,
   isLiked: false,
   isOwner: false,
 };
 
 const countText = (count: number) =>
-  `${STORY_LIKE_COPY.count} ${count.toLocaleString('en-US')}`;
+  `${STORY_LIKE_COPY.count} ${formatCompactCount(count)}`;
 
 test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 반영한다', async ({
   page,
@@ -38,15 +38,19 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
 
   let current = { ...story };
   const methods: string[] = [];
+  let release!: () => void;
 
   await page.route(DETAIL, (route) => route.fulfill({ json: current }));
-  await page.route('**/api/v1/stories/originals', (route) =>
-    route.fulfill({ json: [current] }),
+  await page.route(isPublicStoriesUrl, (route) =>
+    route.fulfill({ json: { items: [current], nextCursor: null } }),
   );
   await page.route(LIKE, async (route) => {
     const method = route.request().method();
 
     methods.push(method);
+    await new Promise<void>((resolve) => {
+      release = resolve;
+    });
     current = {
       ...current,
       isLiked: method === 'POST',
@@ -56,7 +60,7 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   });
 
   await page.goto(APP_PATH.MAIN.STORIES);
-  await expect(page.getByText(countText(1234), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
   await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
 
   const like = page.getByRole('button', {
@@ -71,55 +75,96 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   await expect(
     page.getByRole('button', { name: STORY_LIKE_COPY.unlike }),
   ).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText(countText(1235), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
+  await expect.poll(() => methods.length).toBe(1);
+
+  const unlike = page.getByRole('button', { name: STORY_LIKE_COPY.unlike });
+
+  await expect(unlike).toBeDisabled();
+  release();
+  await expect(unlike).toBeEnabled();
   await page.goBack();
-  await expect(page.getByText(countText(1235), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
   await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
   await page.getByRole('button', { name: STORY_LIKE_COPY.unlike }).click();
   await expect(like).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByText(countText(1234), { exact: true })).toBeVisible();
+  await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
+  await expect.poll(() => methods.length).toBe(2);
+  await expect(like).toBeDisabled();
+  release();
+  await expect(like).toBeEnabled();
   expect(methods).toEqual(['POST', 'DELETE']);
 });
 
 for (const isLiked of [false, true]) {
-  test(`요청 중 중복 클릭을 막고 실패하면 기존 상태를 유지한다 (${isLiked})`, async ({
-    page,
-  }) => {
-    await mockMemberSession(page);
-    await page.route(DETAIL, (route) =>
-      route.fulfill({ json: { ...story, isLiked } }),
-    );
+  for (const failure of ['http', 'network', 'unexpected-status'] as const) {
+    test(`응답 전에 반영하고 실패하면 복원하여 재시도한다 (${isLiked}, ${failure})`, async ({
+      page,
+    }) => {
+      await mockMemberSession(page);
+      await page.route(DETAIL, (route) =>
+        route.fulfill({ json: { ...story, isLiked } }),
+      );
 
-    let requests = 0;
-    let release!: () => void;
-    const gate = new Promise<void>((resolve) => {
-      release = resolve;
+      let requests = 0;
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+
+      await page.route(LIKE, async (route) => {
+        requests += 1;
+        await gate;
+
+        if (failure === 'network') await route.abort();
+        else
+          await route.fulfill({
+            status: failure === 'http' ? 500 : 200,
+            json: {},
+          });
+      });
+      await page.goto(APP_PATH.STORY_DETAIL('s1'));
+
+      const originalButton = page.getByRole('button', {
+        name: isLiked ? STORY_LIKE_COPY.unlike : STORY_LIKE_COPY.like,
+        exact: true,
+      });
+
+      await originalButton.click();
+
+      const button = page.getByRole('button', {
+        name: isLiked ? STORY_LIKE_COPY.like : STORY_LIKE_COPY.unlike,
+        exact: true,
+      });
+
+      await expect(button).toBeDisabled();
+      await expect(button).toHaveAttribute('aria-pressed', String(!isLiked));
+      await expect(
+        page.getByText(countText(isLiked ? 998 : 1000), { exact: true }),
+      ).toBeVisible();
+      await expect.poll(() => requests).toBe(1);
+      await button.evaluate((element: HTMLButtonElement) => element.click());
+      release();
+      await expect(
+        page.getByText(TOAST_MESSAGE.STORY_LIKE_FAILED),
+      ).toBeVisible();
+      await expect(originalButton).toBeEnabled();
+      await expect(originalButton).toHaveAttribute(
+        'aria-pressed',
+        String(isLiked),
+      );
+      await expect(
+        page.getByText(countText(999), { exact: true }),
+      ).toBeVisible();
+      expect(requests).toBe(1);
+      await originalButton.click();
+      await expect.poll(() => requests).toBe(2);
+      await expect(originalButton).toBeEnabled();
+      await expect(
+        page.getByText(countText(999), { exact: true }),
+      ).toBeVisible();
     });
-
-    await page.route(LIKE, async (route) => {
-      requests += 1;
-      await gate;
-      await route.fulfill({ status: 500, json: {} });
-    });
-    await page.goto(APP_PATH.STORY_DETAIL('s1'));
-
-    const button = page.getByRole('button', {
-      name: isLiked ? STORY_LIKE_COPY.unlike : STORY_LIKE_COPY.like,
-      exact: true,
-    });
-
-    await button.click();
-    await expect(button).toBeDisabled();
-    await button.evaluate((element: HTMLButtonElement) => element.click());
-    release();
-    await expect(page.getByText(TOAST_MESSAGE.STORY_LIKE_FAILED)).toBeVisible();
-    await expect(button).toBeEnabled();
-    await expect(button).toHaveAttribute('aria-pressed', String(isLiked));
-    await expect(
-      page.getByText(countText(1234), { exact: true }),
-    ).toBeVisible();
-    expect(requests).toBe(1);
-  });
+  }
 }
 
 for (const member of [false, true]) {
@@ -139,9 +184,7 @@ for (const member of [false, true]) {
     await expect(
       page.getByRole('button', { name: STORY_LIKE_COPY.like, exact: true }),
     ).toHaveCount(0);
-    await expect(
-      page.getByText(countText(1234), { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
   });
 }
 

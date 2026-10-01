@@ -6,9 +6,9 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { getMeQueryKey } from '@/api/generated/endpoints/auth/auth';
 import {
-  get as getCreditOrder,
-  getGetQueryKey,
-  useGet as useCreditOrder,
+  get1 as getCreditOrder,
+  getGet1QueryKey,
+  useGet1 as useCreditOrder,
 } from '@/api/generated/endpoints/credits/credits';
 import { queryFnWithoutAbortSignal } from '@/lib/query-client';
 
@@ -49,7 +49,7 @@ export function usePendingCreditOrderId(): string | null {
  */
 export function useCreditOrderConfirmation(orderId: string) {
   const queryClient = useQueryClient();
-  const queryKey = getGetQueryKey(orderId);
+  const queryKey = getGet1QueryKey(orderId);
 
   const { data, error } = useCreditOrder(orderId, {
     query: {

@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
+import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import { markPendingStoryCreated } from '@/features/stories/_shared/utils/creation-request-storage';
 import { saveCreatedStoryId } from '@/features/stories/_shared/utils/story-id-storage';
 import { track } from '@/observability/analytics';
@@ -36,14 +37,19 @@ export function applyStorylinesGeneratedEffects(
  * @param queryClient 회원 목록 무효화에 쓰는 쿼리 클라이언트
  * @param genres 완성된 스토리의 장르 목록(분석 이벤트 프로퍼티)
  */
-export function applyStoryCompletedEffects(
+export async function applyStoryCompletedEffects(
   requestId: string,
   storyId: string,
   sessionStatus: SessionStatus,
   queryClient: QueryClient,
   genres?: string[],
-): void {
-  markPendingStoryCreated(requestId, storyId);
+  epoch = getCreationEpoch(),
+): Promise<void> {
+  if (
+    !(await markPendingStoryCreated(requestId, storyId, epoch)) ||
+    getCreationEpoch() !== epoch
+  )
+    return;
 
   // 게스트로 확정됐을 때만 로컬 서재에 ID를 남긴다. 제작 탭 폴링은 세션 판정을 기다리지
   // 않아 `loading` 중에도 완성이 도착할 수 있는데, 이를 게스트로 취급하면 회원의 스토리

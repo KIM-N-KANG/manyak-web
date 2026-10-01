@@ -4,6 +4,9 @@ import { LoadingButtonContent } from '@/components/common/loading-button-content
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { AddTagDialog } from '@/features/stories/_shared/components/add-tag-dialog';
+import { TagChipGrid } from '@/features/stories/_shared/components/tag-chip-grid';
+import { track } from '@/observability/analytics';
 
 import {
   CHARACTER_NAME_DUPLICATE_FOOTER_ERROR,
@@ -20,10 +23,8 @@ import { getGenerateStorylinesErrorMessage } from '../../utils/generate-storylin
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
-import { AddTagDialog } from './add-tag-dialog';
 import { CharacterForm } from './character-form';
 import { SupportingCharacterList } from './supporting-character-list';
-import { TagChipGrid } from './tag-chip-grid';
 
 type StoryTagStepSectionProps = {
   controller: StoryTagStepController;
@@ -163,12 +164,16 @@ export function StoryTagStepSection({
                 disabled={isGeneratingStorylines}
                 addTagTrigger={
                   <AddTagDialog
-                    category="GENRE"
                     categoryLabel={GENRE_CATEGORY.label}
                     fieldId="GENRE"
                     placeholder={GENRE_CATEGORY.placeholder}
                     disabled={isGeneratingStorylines || isGenreMaxReached}
-                    onAddTag={addCustomGenreTag}
+                    onAddTag={(tag) => {
+                      track('client_storyCreate_addTag_submitted', {
+                        category: 'GENRE',
+                      });
+                      addCustomGenreTag(tag);
+                    }}
                   />
                 }
                 onTogglePredefinedTag={toggleGenreTag}

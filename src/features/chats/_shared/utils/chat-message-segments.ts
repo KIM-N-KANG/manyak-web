@@ -9,6 +9,8 @@ const CHARACTER_IMAGE_HOSTNAMES = new Set([
 const CHARACTER_IMAGE_PATH_PREFIXES = [
   '/characters/generated/',
   '/characters/originals/',
+  // 일반 제작·수정에서 올린 인물 이미지(KNK-1503). 백엔드가 `characters/uploaded/` 아래 키로 저장한다.
+  '/characters/uploaded/',
   // 실시간 이미지(KNK-1299). 백엔드가 `chat-images/{chatId}/{turn}-{uuid}.webp` 키로 발급한다.
   '/chat-images/',
 ] as const;
@@ -27,7 +29,7 @@ type CharacterImageMarkerMatch = {
  * 채팅 인물 이미지로 허용된 CDN URL인지 확인한다.
  *
  * @param imageUrl 확인할 이미지 URL
- * @returns 운영·개발 생성·오리지널 인물 이미지 경로이면 true, 아니면 false
+ * @returns 운영·개발 생성·오리지널·업로드·실시간 인물 이미지 경로이면 true, 아니면 false
  */
 export function isAllowedChatCharacterImageUrl(imageUrl: string): boolean {
   try {

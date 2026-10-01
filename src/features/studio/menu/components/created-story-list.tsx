@@ -16,21 +16,22 @@ import { track } from '@/observability/analytics';
 
 import { CREATED_STORY_LIST_COPY } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
-import {
-  usePendingCreationRequests,
-  useStoryCompletionRequests,
-} from '../hooks/use-pending-creation-request';
+import { useCreationRecords } from '../hooks/use-pending-creation-request';
+import { useStorySubmissions } from '../hooks/use-story-submissions';
 import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryCard } from './created-story-card';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
 import { CreationProgressCard } from './creation-progress-card';
+import { SubmissionCard } from './submission-card';
 
 export function CreatedStoryList() {
   const router = useRouter();
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
-  const pendingCreationRecords = usePendingCreationRequests();
-  const completionRecords = useStoryCompletionRequests();
-  const showSkeleton = useDelayedLoading(isLoading);
+  const local = useCreationRecords();
+  const { submissions } = useStorySubmissions();
+  const pendingCreationRecords = local.pending ?? [];
+  const completionRecords = local.completions ?? [];
+  const showSkeleton = useDelayedLoading(isLoading || local.isLoading);
   const shouldReduceMotion = useReducedMotion();
   const isStoryListed = (storyId: string | null | undefined) =>
     typeof storyId === 'string' &&
@@ -63,14 +64,15 @@ export function CreatedStoryList() {
     event.preventDefault();
     // 앱과 같이 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab이다.
     track('client_storyList_createButton_clicked', { source: 'fab' });
-    router.push(APP_PATH.STUDIO.STORY.SIMPLE);
+    router.push(APP_PATH.STUDIO.STORY.SELECT);
   };
 
-  // 진행 카드(초안·완성 중)가 하나라도 있으면 목록이 비어 있어도 빈 안내를 두지 않는다.
+  // 진행 카드(초안·완성 중·검수 제출본)가 하나라도 있으면 목록이 비어 있어도 빈 안내를 두지 않는다.
   const showsEmptyNotice =
     isEmpty &&
     pendingCreationRecords.length === 0 &&
-    visibleCompletionRecords.length === 0;
+    visibleCompletionRecords.length === 0 &&
+    submissions.length === 0;
 
   let stateKey: string;
   let content: ReactNode;
@@ -78,15 +80,21 @@ export function CreatedStoryList() {
   if (showSkeleton && visibleCompletionRecords.length === 0) {
     stateKey = 'skeleton';
     content = <CreatedStoryListSkeleton />;
-  } else if (isLoading && visibleCompletionRecords.length === 0) {
+  } else if (
+    (isLoading || local.isLoading) &&
+    visibleCompletionRecords.length === 0
+  ) {
     stateKey = 'pending';
     content = null;
-  } else if (isError) {
+  } else if (isError || local.isError) {
     stateKey = 'error';
     content = (
       <RetryListStatus
         title={STORY_LIST_ERROR_TITLE}
-        onRetry={() => refetch()}
+        onRetry={() => {
+          local.retry();
+          void refetch();
+        }}
       />
     );
   } else {
@@ -109,6 +117,18 @@ export function CreatedStoryList() {
               <CreationProgressCard record={record} />
             </m.li>
           ))}
+          {submissions.map((submission) =>
+            submission.status === 'APPROVED' ? null : (
+              <m.li
+                key={`submission-${submission.submissionId}`}
+                layout={shouldReduceMotion ? false : 'position'}
+                {...rowMotion}>
+                <SubmissionCard
+                  submission={{ ...submission, status: submission.status }}
+                />
+              </m.li>
+            ),
+          )}
           {visibleCompletionRecords.map((record) => (
             <m.li
               key={`creation-${record.requestId}`}
@@ -117,7 +137,7 @@ export function CreatedStoryList() {
               <CreationProgressCard record={record} />
             </m.li>
           ))}
-          {!isLoading && !isError
+          {!isLoading && !isError && !local.isLoading
             ? stories.map((story, index) => (
                 <m.li
                   key={story.id}
@@ -129,7 +149,7 @@ export function CreatedStoryList() {
             : null}
         </AnimatePresence>
       </ul>
-      <section className="flex min-h-0 flex-1 flex-col pb-2">
+      <section className="flex min-h-0 flex-1 flex-col">
         <FadeStateSwitch
           stateKey={stateKey}
           className="flex min-h-0 flex-1 flex-col">

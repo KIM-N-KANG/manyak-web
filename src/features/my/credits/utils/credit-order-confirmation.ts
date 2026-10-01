@@ -1,4 +1,4 @@
-import type { getResponse } from '@/api/generated/endpoints/credits/credits';
+import type { get1Response } from '@/api/generated/endpoints/credits/credits';
 import { CreditOrderResponseStatus } from '@/api/generated/models';
 import { FetchError } from '@/lib/custom-fetch';
 
@@ -17,7 +17,7 @@ export type CreditOrderConfirmation =
   | { kind: 'failed' };
 
 type ResolveInput = {
-  data: getResponse | undefined;
+  data: get1Response | undefined;
   error: unknown;
   /** 지금까지 성공한 조회 횟수 */
   attempts: number;
