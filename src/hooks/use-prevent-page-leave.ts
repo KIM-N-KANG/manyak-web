@@ -39,6 +39,11 @@ export function usePreventPageLeave({
   const onBackAttemptRef = useRef(onBackAttempt);
   const ignoreBackRef = useRef(ignoreBack);
   const teardownRef = useRef<(() => void) | null>(null);
+  /**
+   * 이 화면이 쌓은 더미 항목이 히스토리에 남아 있는지다. 개발 모드의 StrictMode가 효과를 정리 후 다시
+   * 실행해도(정리는 더미를 빼지 않음) 더미를 한 번만 쌓아, 더미가 1개라는 `confirmLeave`의 전제를 지킨다.
+   */
+  const hasDummyRef = useRef(false);
 
   useEffect(() => {
     onBackAttemptRef.current = onBackAttempt;
@@ -76,7 +81,11 @@ export function usePreventPageLeave({
     };
 
     // 브라우저/모바일 뒤로가기를 흡수할 더미 히스토리 항목
-    window.history.pushState(null, '', window.location.href);
+    if (!hasDummyRef.current) {
+      window.history.pushState(null, '', window.location.href);
+      hasDummyRef.current = true;
+    }
+
     window.addEventListener('popstate', handlePopState);
 
     const teardown = () => {
@@ -98,6 +107,7 @@ export function usePreventPageLeave({
   const confirmLeave = () => {
     teardownRef.current?.();
     teardownRef.current = null;
+    hasDummyRef.current = false;
     window.history.go(-2);
   };
 
@@ -117,6 +127,7 @@ export function usePreventPageLeave({
 
     teardown();
     teardownRef.current = null;
+    hasDummyRef.current = false;
 
     const handlePopStateOnce = () => {
       window.removeEventListener('popstate', handlePopStateOnce);
