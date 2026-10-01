@@ -13,6 +13,7 @@ import {
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_DUPLICATE_NAME_ERROR,
   GENERAL_STORY_EVENT_COPY,
+  GENERAL_STORY_IMAGE_CROP_COPY,
   GENERAL_STORY_REGISTER_ERROR_COPY,
   GENERAL_STORY_REVIEW_COPY,
   GENERAL_STORY_START_COPY,
@@ -35,10 +36,14 @@ import { expect, skipOnboarding, test } from '../fixtures/test';
 
 const UPLOAD_URL = 'https://upload.e2e.test/cover';
 const OBJECT_KEY = 'thumbnails/uploaded/drafts/user-1/cover.png';
+/** 자르기 시트가 디코딩할 수 있는 60x60 정상 PNG다. */
 const COVER_FILE = {
   name: 'cover.png',
   mimeType: 'image/png',
-  buffer: Buffer.from('cover-image-bytes'),
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAJElEQVR4nO3BMQEAAADCoPVP7WkJoAAAAAAAAAAAAAAAAAAAbjh8AAFOgZ4bAAAAAElFTkSuQmCC',
+    'base64',
+  ),
 };
 
 type PresignBody = { kind: string; contentType: string; contentLength: number };
@@ -71,6 +76,31 @@ async function mockCoverUpload(page: Page, { putStatus = 200 } = {}) {
   return { presignBodies, putContentTypes };
 }
 
+/** 열린 자르기 시트에서 기본 영역(가운데)으로 자른다. */
+async function confirmCrop(page: Page) {
+  const sheet = page.getByRole('dialog', {
+    name: GENERAL_STORY_IMAGE_CROP_COPY.title,
+  });
+
+  await sheet
+    .getByRole('button', { name: GENERAL_STORY_IMAGE_CROP_COPY.confirm })
+    .click();
+  await expect(sheet).toHaveCount(0);
+}
+
+/** 올린 이미지(blob 미리보기 한 장)의 실제 가로/세로 비율을 반환한다. */
+async function readPreviewRatio(page: Page) {
+  const preview = page.locator('img[src^="blob:"]');
+
+  await expect
+    .poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+
+  return preview.evaluate(
+    (img: HTMLImageElement) => img.naturalWidth / img.naturalHeight,
+  );
+}
+
 async function openGeneralCreate(page: Page) {
   await skipOnboarding(page);
   await mockMemberSession(page);
@@ -90,6 +120,7 @@ test.describe('일반 제작 커버 이미지', () => {
     await page
       .getByLabel(GENERAL_STORY_COVER_COPY.label, { exact: true })
       .setInputFiles(COVER_FILE);
+    await confirmCrop(page);
 
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
@@ -100,11 +131,12 @@ test.describe('일반 제작 커버 이미지', () => {
     expect(presignBodies).toEqual([
       {
         kind: 'COVER',
-        contentType: 'image/png',
-        contentLength: COVER_FILE.buffer.length,
+        contentType: 'image/jpeg',
+        contentLength: expect.any(Number),
       },
     ]);
-    expect(putContentTypes).toEqual(['image/png']);
+    expect(putContentTypes).toEqual(['image/jpeg']);
+    expect(await readPreviewRatio(page)).toBeCloseTo(3 / 4, 1);
 
     await page
       .getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove })
@@ -141,6 +173,7 @@ test.describe('일반 제작 커버 이미지', () => {
     await page
       .getByLabel(GENERAL_STORY_COVER_COPY.label, { exact: true })
       .setInputFiles(COVER_FILE);
+    await confirmCrop(page);
 
     await expect(
       page.getByText(TOAST_MESSAGE.DRAFT_IMAGE_UPLOAD_FAILED),
@@ -148,6 +181,32 @@ test.describe('일반 제작 커버 이미지', () => {
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
     ).toHaveCount(0);
+  });
+
+  test('자르기 시트를 닫으면 올리지 않고 커버 이미지를 그대로 둔다 (STORY-GENERAL-29)', async ({
+    page,
+  }) => {
+    const { presignBodies } = await mockCoverUpload(page);
+    const sheet = page.getByRole('dialog', {
+      name: GENERAL_STORY_IMAGE_CROP_COPY.title,
+    });
+
+    await openGeneralCreate(page);
+    await page
+      .getByLabel(GENERAL_STORY_COVER_COPY.label, { exact: true })
+      .setInputFiles(COVER_FILE);
+    await expect(
+      sheet.getByRole('slider', { name: GENERAL_STORY_IMAGE_CROP_COPY.zoom }),
+    ).toBeVisible();
+    await sheet
+      .getByRole('button', { name: GENERAL_STORY_IMAGE_CROP_COPY.close })
+      .click();
+
+    await expect(sheet).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
+    ).toHaveCount(0);
+    expect(presignBodies).toEqual([]);
   });
 });
 
@@ -279,15 +338,17 @@ test.describe('일반 제작 주변 인물', () => {
     await page
       .getByLabel(GENERAL_STORY_CHARACTER_COPY.imageLabel, { exact: true })
       .setInputFiles(COVER_FILE);
+    await confirmCrop(page);
 
     await expect(imageRemove).toBeVisible();
     expect(presignBodies).toEqual([
       {
         kind: 'CHARACTER',
-        contentType: 'image/png',
-        contentLength: COVER_FILE.buffer.length,
+        contentType: 'image/jpeg',
+        contentLength: expect.any(Number),
       },
     ]);
+    expect(await readPreviewRatio(page)).toBeCloseTo(4 / 3, 1);
 
     await imageRemove.click();
     await expect(imageRemove).toHaveCount(0);
@@ -619,6 +680,7 @@ test.describe('일반 제작 임시 저장', () => {
     await page
       .getByLabel(GENERAL_STORY_COVER_COPY.label, { exact: true })
       .setInputFiles(COVER_FILE);
+    await confirmCrop(page);
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
     ).toBeVisible();

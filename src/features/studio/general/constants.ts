@@ -117,11 +117,19 @@ export type GeneralStoryTab = (typeof GENERAL_STORY_TABS)[number]['value'];
 /** 스토리 프로필 탭의 커버 이미지(요청의 표지 `thumbnailObjectKey`) 입력 문구다. */
 export const GENERAL_STORY_COVER_COPY = {
   label: '커버 이미지',
-  description: '가로 3 : 세로 4 비율을 추천해요',
+  description: '가로 3 : 세로 4 비율로 잘라서 올려요',
   fileRule: '(JPG, PNG, WEBP / 최대 5MB)',
   upload: '이미지 추가',
   change: '이미지 변경',
   remove: '삭제',
+} as const;
+
+/** 이미지를 고른 뒤 정해진 비율로 자르는 시트의 문구다. */
+export const GENERAL_STORY_IMAGE_CROP_COPY = {
+  title: '이미지 자르기',
+  zoom: '확대',
+  confirm: '자르기',
+  close: '닫기',
 } as const;
 
 /** 스토리 설정 탭의 분량 배분 슬라이더 문구다. */
@@ -181,7 +189,7 @@ export const GENERAL_STORY_CHARACTER_COPY = {
     '처음에는 경계하지만, 주인공이 무언가를 맡기면 조금씩 돕는다.',
   ].join('\n'),
   imageLabel: '이미지',
-  imageRatioHint: '가로 4 : 세로 3 비율을 추천해요',
+  imageRatioHint: '가로 4 : 세로 3 비율로 잘라서 올려요',
   imageDescription:
     '이 이미지를 바탕으로 상황에 맞게 인물의 모습이 실시간으로 바뀌어요',
   supportingMaxCount: 5,
