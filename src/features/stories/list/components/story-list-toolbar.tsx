@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ToggleChip } from '@/components/ui/toggle-chip';
 import { APP_PATH } from '@/constants/app-path';
+import { useDragScroll } from '@/hooks/use-drag-scroll';
 import { cn } from '@/lib/utils';
 
 import {
@@ -94,10 +95,12 @@ function StoryListToolbarView({ query, onChange }: StoryListToolbarViewProps) {
   const sortLabel = STORY_LIST_SORT_OPTIONS.find(
     (option) => option.value === query.sort,
   )?.label;
+  const dragScrollProps = useDragScroll();
 
   return (
     <div className="flex shrink-0 items-center gap-2 bg-background pr-4 pb-2">
       <div
+        {...dragScrollProps}
         role="group"
         aria-label={STORY_LIST_COPY.filterGroupLabel}
         className="scrollbar-none flex min-w-0 flex-1 gap-2 overflow-x-auto overscroll-x-contain pl-4">

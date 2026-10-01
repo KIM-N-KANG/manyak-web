@@ -8,6 +8,7 @@ import { m, useReducedMotion, type Variants } from 'motion/react';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
+import { useDragScroll } from '@/hooks/use-drag-scroll';
 import { cn } from '@/lib/utils';
 
 import {
@@ -62,6 +63,7 @@ interface OnboardingSceneStripProps {
 function OnboardingSceneStrip({ scenes, variants }: OnboardingSceneStripProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const dragScrollProps = useDragScroll();
 
   const resolveCards = () => {
     const scroller = scrollerRef.current;
@@ -114,6 +116,7 @@ function OnboardingSceneStrip({ scenes, variants }: OnboardingSceneStripProps) {
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
+        {...dragScrollProps}
         className="-mx-4 -my-2 scrollbar-none flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 py-2">
         {scenes.map((scene) => (
           <div key={scene.src} className="w-[82%] shrink-0 snap-start">
