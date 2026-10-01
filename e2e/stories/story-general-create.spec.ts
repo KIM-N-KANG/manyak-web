@@ -4,6 +4,8 @@ import { COLLAPSIBLE_LIST_ITEM_COPY } from '@/components/common/collapsible-list
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
+import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
+import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   GENERAL_STORY_CHARACTER_COPY,
@@ -11,7 +13,6 @@ import {
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_DUPLICATE_NAME_ERROR,
   GENERAL_STORY_EVENT_COPY,
-  GENERAL_STORY_EXIT_WARNING_COPY,
   GENERAL_STORY_REGISTER_ERROR_COPY,
   GENERAL_STORY_REVIEW_COPY,
   GENERAL_STORY_START_COPY,
@@ -595,7 +596,7 @@ test.describe('일반 제작 삭제 확인', () => {
 test.describe('일반 제작 임시 저장', () => {
   const saveButton = (page: Page) =>
     page.getByRole('button', {
-      name: GENERAL_STORY_CREATE_COPY.draftSave,
+      name: DRAFT_SAVE_BUTTON_LABEL,
       exact: true,
     });
   const savedToast = (page: Page) =>
@@ -637,11 +638,11 @@ test.describe('일반 제작 임시 저장', () => {
     const exitDialog = page.getByRole('alertdialog');
 
     await expect(
-      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.saved.title),
     ).toBeVisible();
     await exitDialog
       .getByRole('button', {
-        name: GENERAL_STORY_EXIT_WARNING_COPY.saved.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.saved.confirm,
       })
       .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
@@ -674,7 +675,7 @@ test.describe('일반 제작 임시 저장', () => {
     await expect(
       page
         .getByRole('alertdialog')
-        .getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+        .getByText(DRAFT_EXIT_WARNING_COPY.saved.title),
     ).toBeVisible();
   });
 
@@ -698,11 +699,11 @@ test.describe('일반 제작 임시 저장', () => {
     const exitDialog = page.getByRole('alertdialog');
 
     await expect(
-      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.saved.title),
     ).toBeVisible();
     await exitDialog
       .getByRole('button', {
-        name: GENERAL_STORY_EXIT_WARNING_COPY.saved.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.saved.confirm,
       })
       .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
@@ -736,13 +737,11 @@ test.describe('일반 제작 임시 저장', () => {
     const exitDialog = page.getByRole('alertdialog');
 
     await expect(
-      exitDialog.getByText(
-        GENERAL_STORY_EXIT_WARNING_COPY.unsavedNew.description,
-      ),
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.unsavedNew.description),
     ).toBeVisible();
     await exitDialog
       .getByRole('button', {
-        name: GENERAL_STORY_EXIT_WARNING_COPY.unsavedNew.cancel,
+        name: DRAFT_EXIT_WARNING_COPY.unsavedNew.cancel,
       })
       .click();
     await expect(exitDialog).toBeHidden();
@@ -756,7 +755,7 @@ test.describe('일반 제작 임시 저장', () => {
       .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
       .click();
     await expect(
-      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.unsaved.description),
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.unsaved.description),
     ).toBeVisible();
   });
 
@@ -784,11 +783,11 @@ test.describe('일반 제작 임시 저장', () => {
     const exitDialog = page.getByRole('alertdialog');
 
     await expect(
-      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.saved.title),
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.saved.title),
     ).toBeVisible();
     await exitDialog
       .getByRole('button', {
-        name: GENERAL_STORY_EXIT_WARNING_COPY.saved.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.saved.confirm,
       })
       .click();
     await expect(draftCard(page).getByText('노선도에 없는 역')).toBeVisible();
@@ -1026,7 +1025,7 @@ test.describe('일반 제작 등록', () => {
     expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
     await expect(
       page.getByRole('button', {
-        name: GENERAL_STORY_CREATE_COPY.draftSave,
+        name: DRAFT_SAVE_BUTTON_LABEL,
         exact: true,
       }),
     ).toBeDisabled();
@@ -1091,13 +1090,11 @@ test.describe('일반 제작 등록', () => {
     const exitDialog = page.getByRole('alertdialog');
 
     await expect(
-      exitDialog.getByText(
-        GENERAL_STORY_EXIT_WARNING_COPY.submitted.description,
-      ),
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.submitted.description),
     ).toBeVisible();
     await exitDialog
       .getByRole('button', {
-        name: GENERAL_STORY_EXIT_WARNING_COPY.submitted.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.submitted.confirm,
       })
       .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));

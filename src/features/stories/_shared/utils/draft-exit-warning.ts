@@ -1,4 +1,4 @@
-import type { GeneralStoryExitWarning } from '@/features/studio/general/constants';
+import type { DraftExitWarning } from '@/features/stories/_shared/constants/draft-exit-warning';
 
 type DraftExitState = {
   /** 지금 폼에 입력이 있는지 */
@@ -25,7 +25,7 @@ export function getDraftExitWarning({
   isSaved,
   hasSubmitted = false,
   isSubmittedUnchanged = false,
-}: DraftExitState): GeneralStoryExitWarning {
+}: DraftExitState): DraftExitWarning {
   // 등록을 요청하면 임시 저장본을 지우고 서버 제출본을 정본으로 삼는다.
   if (hasSubmitted) {
     return isSubmittedUnchanged ? 'submitted' : 'submittedEdited';

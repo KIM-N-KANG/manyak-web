@@ -2,6 +2,8 @@ import type { Locator, Page } from '@playwright/test';
 
 import { PULL_TO_REFRESH_COPY } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
+import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
+import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import {
@@ -11,7 +13,6 @@ import {
 } from '@/features/stories/list/constants';
 import {
   GENERAL_STORY_CREATE_COPY,
-  GENERAL_STORY_EXIT_WARNING_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
 } from '@/features/studio/general/constants';
@@ -156,7 +157,7 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
     // 자동 저장이 없고 저장할 입력도 없으니 임시 저장 버튼은 잠겨 있다.
     await expect(
-      page.getByRole('button', { name: GENERAL_STORY_CREATE_COPY.draftSave }),
+      page.getByRole('button', { name: DRAFT_SAVE_BUTTON_LABEL }),
     ).toBeDisabled();
 
     await page
@@ -166,11 +167,11 @@ test.describe('홈·제작 스토리 목록', () => {
     const exitDialog = page.getByRole('alertdialog');
 
     await expect(
-      exitDialog.getByText(GENERAL_STORY_EXIT_WARNING_COPY.nothing.title),
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.nothing.title),
     ).toBeVisible();
     await exitDialog
       .getByRole('button', {
-        name: GENERAL_STORY_EXIT_WARNING_COPY.nothing.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.nothing.confirm,
       })
       .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
