@@ -25,6 +25,8 @@ export type GeneralStoryDraftSnapshot = {
   protagonist: GeneralStoryCharacter;
   supporting: (GeneralStoryCharacter & {
     id: string;
+    /** 인물 소개다. 인물 소개 도입 전에 임시 저장한 레코드에는 없다. */
+    description?: string;
     image: GeneralStoryDraftImage | null;
   })[];
   startSettings: GeneralStoryStartSettingDraft[];
@@ -65,7 +67,10 @@ export function hasGeneralStoryDraftInput(
     snapshot.cover !== null ||
     hasCharacterInput(snapshot.protagonist) ||
     snapshot.supporting.some(
-      (character) => hasCharacterInput(character) || character.image !== null,
+      (character) =>
+        hasCharacterInput(character) ||
+        hasText(character.description ?? '') ||
+        character.image !== null,
     ) ||
     snapshot.startSettings.some(hasStartSettingInput) ||
     snapshot.mainEvents.some(hasMainEventInput) ||

@@ -14,6 +14,7 @@ import {
   buildGeneralStoryRequest,
   CHARACTER_IMAGE_SUFFIX,
   resolveGenreNames,
+  toCharacterDescription,
 } from '@/features/studio/general/utils/build-general-story-request';
 import {
   type GeneralStoryFormInitial,
@@ -85,7 +86,8 @@ const toImageInput = (
 /**
  * 폼 입력을 수정 요청의 전체 후보로 만든다. 글은 등록 요청과 같은 규칙으로 만들고, 시작 설정과 인물에
  * 서버 id를 붙인다. 인물마다 이미지를 모두 실어, 바꾼 대표 이미지만 새 객체 키로 갈아끼우고 나머지는 남긴다.
- * 폼에 없는 서버 인물도 그대로 실어 인물 목록을 보낼 때 지워지지 않게 한다.
+ * 인물 소개는 늘 실어 비운 소개를 빈 문자열로 지운다. 폼에 없는 서버 인물은 소개 없이 그대로 실어 인물 목록을
+ * 보낼 때 인물과 소개가 지워지지 않게 한다.
  *
  * @param form 폼 입력
  * @param genreNames 고른 순서대로 놓인 장르 이름
@@ -124,6 +126,7 @@ export function buildStoryEditCandidate(
       return {
         ...(server?.id && { id: server.id }),
         name,
+        description: toCharacterDescription(character.description),
         images: uploadedKey
           ? [
               {
@@ -222,7 +225,8 @@ export function readStoryEdit(
         formId === null && name.trim() === character.name.trim(),
     );
 
-    if (!server) return { ...character, image: null };
+    // 짝이 없는 인물은 새 인물이라 순서로 붙은 다른 서버 인물의 소개를 비운다.
+    if (!server) return { ...character, description: '', image: null };
 
     server.formId = server.id ?? character.id;
 

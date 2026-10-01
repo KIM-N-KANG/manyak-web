@@ -41,7 +41,12 @@ export type StorySubmissionPayload = {
   mainEvents: { name: string; description: string; keySentence: string }[];
   visibility: CreateGeneralStoryRequestVisibility;
   cover: StorySubmissionImage | null;
-  characters: { name: string; images: StorySubmissionImage[] }[];
+  characters: {
+    name: string;
+    /** 인물 소개다. 없으면 빈 문자열이다. */
+    description: string;
+    images: StorySubmissionImage[];
+  }[];
 };
 
 /** 검수가 칸 하나에 남긴 내용 위반이다. `path`는 요청 필드 경로(`startSettings[0].prologue` 등)다. */
@@ -187,6 +192,7 @@ export function readStorySubmissionPayload(
 
       return {
         name: asText(character.name),
+        description: asText(character.description),
         images: asArray(character.images).flatMap((imageItem) => {
           const image = asObject(imageItem);
           const read = readImage(image.objectKey, image.imageUrl);

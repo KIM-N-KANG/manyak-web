@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import {
   Field,
@@ -60,6 +60,8 @@ type GeneralStoryCharacterFieldsProps = {
   nameError?: string | null;
   /** 등록하기를 누른 뒤 이름·성별·특징의 오류를 찾는 키다(`REGISTER_ERROR_KEY`). */
   registerErrorKeys?: Record<'name' | 'gender' | 'feature', string>;
+  /** 기본 정보와 특징 사이에 놓는 칸이다. 주변 인물의 인물 소개를 둔다. */
+  afterBasicInfo?: ReactNode;
   onChange: (character: GeneralStoryCharacter) => void;
   nameInputRef?: (element: HTMLInputElement | null) => void;
 };
@@ -75,6 +77,7 @@ export function GeneralStoryCharacterFields({
   featureRequired,
   nameError,
   registerErrorKeys,
+  afterBasicInfo,
   onChange,
   nameInputRef,
 }: GeneralStoryCharacterFieldsProps) {
@@ -169,6 +172,8 @@ export function GeneralStoryCharacterFields({
           </FieldDescription>
         )}
       </Field>
+
+      {afterBasicInfo}
 
       <Field className="gap-2">
         <FieldLabel htmlFor={`${idPrefix}-feature`} className="gap-0.5">

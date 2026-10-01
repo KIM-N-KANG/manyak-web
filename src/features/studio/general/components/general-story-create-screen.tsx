@@ -184,6 +184,7 @@ export function GeneralStoryCreateScreen() {
             cover: toDraftImage(record.snapshot.cover),
             supporting: record.snapshot.supporting.map((character) => ({
               ...character,
+              description: character.description ?? '',
               image: toDraftImage(character.image),
             })),
           }
@@ -256,6 +257,7 @@ export function GeneralStoryCreateForm({
             id: crypto.randomUUID(),
             name: '',
             gender: null,
+            description: '',
             feature: '',
             image: null,
           },

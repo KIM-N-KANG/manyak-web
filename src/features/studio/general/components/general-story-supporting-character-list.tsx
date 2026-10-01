@@ -20,9 +20,11 @@ import { useInputRefRegistry } from '@/hooks/use-input-ref-registry';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
 import { GeneralStoryImageField } from './general-story-image-field';
+import { GeneralStoryInputField } from './general-story-input-field';
 
 export type GeneralStorySupportingCharacter = GeneralStoryCharacter & {
   id: string;
+  description: string;
   image: DraftImage | null;
 };
 
@@ -45,6 +47,10 @@ export function GeneralStorySupportingCharacterList({
     supportingMaxCount,
     supportingNamePlaceholders,
     supportingFeaturePlaceholder,
+    introductionLabel,
+    introductionMaxLength,
+    introductionPlaceholder,
+    introductionDescription,
     addSupporting,
   } = GENERAL_STORY_CHARACTER_COPY;
   const canRemove = characters.length > 1;
@@ -77,7 +83,14 @@ export function GeneralStorySupportingCharacterList({
 
     onChange((previous) => [
       ...previous,
-      { id, name: '', gender: null, feature: '', image: null },
+      {
+        id,
+        name: '',
+        gender: null,
+        description: '',
+        feature: '',
+        image: null,
+      },
     ]);
     scrollInputIntoView(id);
   };
@@ -104,6 +117,7 @@ export function GeneralStorySupportingCharacterList({
                       Boolean(
                         character.name.trim() ||
                         character.gender ||
+                        character.description.trim() ||
                         character.feature.trim() ||
                         character.image,
                       ),
@@ -155,6 +169,23 @@ export function GeneralStorySupportingCharacterList({
                   duplicateNameIds.has(character.id)
                     ? GENERAL_STORY_DUPLICATE_NAME_ERROR
                     : null
+                }
+                afterBasicInfo={
+                  <GeneralStoryInputField
+                    id={`general-story-supporting-${character.id}-description`}
+                    label={introductionLabel}
+                    maxLength={introductionMaxLength}
+                    placeholder={introductionPlaceholder}
+                    description={introductionDescription}
+                    registerErrorKey={REGISTER_ERROR_KEY.supporting(
+                      character.id,
+                      'description',
+                    )}
+                    value={character.description}
+                    onChange={(description) =>
+                      update(character.id, { description })
+                    }
+                  />
                 }
                 onChange={({ name, gender, feature }) =>
                   update(character.id, { name, gender, feature })

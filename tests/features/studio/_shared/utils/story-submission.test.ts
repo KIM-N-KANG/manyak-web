@@ -43,6 +43,7 @@ const SUBMISSION = {
       {
         id: null,
         name: '도하람',
+        description: '보관소 관리인',
         images: [
           {
             id: null,
@@ -87,6 +88,7 @@ describe('readStorySubmission', () => {
       characters: [
         {
           name: '도하람',
+          description: '보관소 관리인',
           images: [
             { objectKey: 'characters/k.png', imageUrl: 'https://cdn/k.png' },
           ],

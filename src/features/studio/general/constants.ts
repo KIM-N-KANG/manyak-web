@@ -196,6 +196,12 @@ export const GENERAL_STORY_CHARACTER_COPY = {
     '### 주인공을 대하는 태도',
     '처음에는 경계하지만, 주인공이 무언가를 맡기면 조금씩 돕는다.',
   ].join('\n'),
+  /** 주변 인물만 받는 인물 소개(`characters[].description`)다. 서버가 줄바꿈을 받지 않아 한 줄로 받는다. */
+  introductionLabel: '인물 소개',
+  introductionMaxLength: 80,
+  introductionPlaceholder: '예: 유실물 보관소를 지키는 무뚝뚝한 관리인',
+  introductionDescription:
+    '스토리 상세에서 이름 아래에 보이는 소개 글이에요. 어떤 인물인지 한 문장으로 적어주세요',
   imageLabel: '이미지',
   imageRatioHint: '가로 4 : 세로 3 비율로 잘라서 올려요',
   imageDescription:

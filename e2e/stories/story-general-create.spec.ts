@@ -917,6 +917,11 @@ test.describe('일반 제작 등록', () => {
       .getByRole('textbox', { name: '주변 인물 1 이름' })
       .fill('도하람');
     await selectGender('주변 인물 1 성별');
+    await activePanel(page)
+      .getByLabel(GENERAL_STORY_CHARACTER_COPY.introductionLabel, {
+        exact: true,
+      })
+      .fill(' 보관소 관리인 ');
     await tab(page, 'start').click();
     await page.getByLabel(GENERAL_STORY_START_COPY.name.label).fill('승강장');
     await page
@@ -1004,7 +1009,9 @@ test.describe('일반 제작 등록', () => {
       oneLineIntro: '막차에서 내린 곳',
       genres: ['판타지'],
       visibility: 'PRIVATE',
-      characters: [{ name: '도하람', images: [] }],
+      characters: [
+        { name: '도하람', description: '보관소 관리인', images: [] },
+      ],
       startSettings: [
         {
           name: '승강장',

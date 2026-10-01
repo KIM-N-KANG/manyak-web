@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { GENERAL_STORY_REVIEW_COPY } from '@/features/studio/general/constants';
+import { REGISTER_ERROR_KEY } from '@/features/studio/general/utils/register-validation';
 import {
   type GeneralStoryReviewForm,
   getReviewErrors,
@@ -20,6 +21,7 @@ const SUBMITTED: GeneralStoryReviewForm = {
       id: 'c1',
       name: '도하람',
       gender: 'MALE',
+      description: '보관소 관리인',
       feature: '',
       image: { objectKey: 'k1' },
     },
@@ -120,5 +122,32 @@ describe('getReviewErrors', () => {
     const { fieldErrors } = getReviewErrors(REVIEW, current, SUBMITTED);
 
     expect(fieldErrors.map(({ key }) => key)).toEqual(['review.supporting']);
+  });
+
+  it('인물 소개 사유는 그 인물의 인물 소개 칸에 두고 고치면 내린다', () => {
+    const review = {
+      issues: [{ path: 'characters[0].description', reason: '부적절한 소개' }],
+      imageErrors: [],
+    };
+    const { fieldErrors } = getReviewErrors(review, SUBMITTED, SUBMITTED);
+
+    expect(fieldErrors).toEqual([
+      {
+        key: REGISTER_ERROR_KEY.supporting('c1', 'description'),
+        tab: 'supporting',
+        collapsibleId: 'general-story-supporting-c1',
+        message: '부적절한 소개',
+      },
+    ]);
+    expect(
+      getReviewErrors(
+        review,
+        {
+          ...SUBMITTED,
+          supporting: [{ ...SUBMITTED.supporting[0], description: '관리인' }],
+        },
+        SUBMITTED,
+      ).fieldErrors,
+    ).toEqual([]);
   });
 });

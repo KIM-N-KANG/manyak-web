@@ -40,6 +40,7 @@ const EDIT_FORM: StoryEditFormResponse = {
     {
       id: 'char-ha',
       name: '도하람',
+      description: '보관소 관리인',
       images: [
         {
           id: 'img-1',
@@ -56,7 +57,7 @@ const EDIT_FORM: StoryEditFormResponse = {
       ],
     },
     // 간편 제작 스토리처럼 설정 글에 없는 인물 행이다. 폼에는 보이지 않지만 지워지면 안 된다.
-    { id: 'char-me', name: '윤해솔', images: [] },
+    { id: 'char-me', name: '윤해솔', description: '막차 승객', images: [] },
   ],
   submission: null,
 };
@@ -92,6 +93,7 @@ describe('readStoryEdit', () => {
     expect(initial.supporting[0]).toMatchObject({
       id: 'char-ha',
       name: '도하람',
+      description: '보관소 관리인',
       image: { objectKey: '', previewUrl: 'https://cdn/ha.png', blob: null },
     });
     expect(initial.cover).toEqual({
@@ -129,6 +131,25 @@ describe('readStoryEdit', () => {
       issues: [{ path: 'title', reason: '부적절한 제목' }],
     });
     expect(base.sendAll).toBe(true);
+  });
+
+  it('이름이 같은 서버 인물이 없는 주변 인물은 인물 소개를 비운다', () => {
+    const { initial } = readStoryEdit(
+      {
+        ...EDIT_FORM,
+        storySettings: {
+          ...EDIT_FORM.storySettings,
+          characterSetting: '# 등장인물\n\n## 도하늘\n관리인',
+        },
+      },
+      TAGS,
+    );
+
+    expect(initial.supporting[0]).toMatchObject({
+      name: '도하늘',
+      description: '',
+      image: null,
+    });
   });
 
   it('승인된 제출본은 없는 것으로 본다', () => {
@@ -190,10 +211,28 @@ describe('buildStoryEditRequest', () => {
       {
         id: 'char-ha',
         name: '도하늘',
+        description: '보관소 관리인',
         images: [{ id: 'img-1' }, { id: 'img-2' }],
       },
       { id: 'char-me', name: '윤해솔', images: [] },
     ]);
+  });
+
+  it('인물 소개를 지우면 빈 문자열로 인물 목록만 보낸다', () => {
+    const request = requestAfter((form) => ({
+      ...form,
+      supporting: form.supporting.map((character) => ({
+        ...character,
+        description: '  ',
+      })),
+    }));
+
+    expect(Object.keys(request)).toEqual(['characters']);
+    expect(request.characters?.[0]).toMatchObject({
+      id: 'char-ha',
+      description: '',
+    });
+    expect(request.characters?.[1]).not.toHaveProperty('description');
   });
 
   it('대표 이미지를 바꾸면 새 이미지를 맨 앞에 두고 나머지 이미지는 id로 남긴다', () => {
@@ -208,6 +247,7 @@ describe('buildStoryEditRequest', () => {
     expect(request.characters?.[0]).toEqual({
       id: 'char-ha',
       name: '도하람',
+      description: '보관소 관리인',
       images: [
         { objectKey: 'new-key', imageName: '도하람_기본' },
         { id: 'img-2' },
