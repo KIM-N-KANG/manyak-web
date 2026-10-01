@@ -7,6 +7,7 @@ import { GUEST_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/guest
 import {
   CHAT_CHOICES_HINT_SEEN_STORAGE_KEY,
   CHAT_CHOICES_HINT_SEEN_VALUE,
+  CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_TOUR_SEEN_STORAGE_KEY,
   CHAT_TOUR_SEEN_VALUE,
 } from '@/features/chats/room/constants';
@@ -89,6 +90,18 @@ export async function skipChatTour(page: Page): Promise<void> {
     },
     [CHAT_TOUR_SEEN_STORAGE_KEY, CHAT_TOUR_SEEN_VALUE] as const,
   );
+}
+
+/**
+ * 실시간 이미지를 켠 상태로 시작한다. 기본값은 off(KNK-1508)이므로
+ * 켜진 상태의 비용·요청 본문을 검증하는 스펙이 이 헬퍼를 쓴다.
+ *
+ * @param page 실시간 이미지를 켤 페이지
+ */
+export async function enableRealtimeImage(page: Page): Promise<void> {
+  await page.addInitScript((key) => {
+    window.localStorage.setItem(key, 'true');
+  }, CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY);
 }
 
 /** 추천 입력 힌트를 "이미 봄"으로 표시해 1회성 노출을 막는다(KNK-694). */

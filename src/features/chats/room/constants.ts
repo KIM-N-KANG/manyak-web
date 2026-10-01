@@ -28,6 +28,18 @@ export const CHAT_STREAM_LOADING_COPY = {
 export const CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY =
   'manyak:chat-realtime-image-enabled';
 
+/** 실시간 이미지 기본값. 꺼 두고 안내로 켜는 방법을 알린다. */
+export const DEFAULT_REALTIME_IMAGE_ENABLED = false;
+
+export const CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY =
+  'manyak:chat-completed-turn-count';
+
+/** 실시간 이미지가 꺼져 있으면 설정 시트로 안내하는 기기 누적 턴 전송 완료 횟수. */
+export const REALTIME_IMAGE_NUDGE_TURN_COUNT = 2;
+
+/** 응답이 끝난 뒤 안내 시트를 열기까지 두는 간격(ms). 방금 도착한 응답을 읽을 틈이다. */
+export const REALTIME_IMAGE_NUDGE_DELAY_MS = 500;
+
 /** 채팅 설정 시트의 문구. 그룹 순서와 항목 순서는 화면 순서 그대로다. */
 export const CHAT_SETTINGS_COPY = {
   trigger: '채팅 설정',
@@ -41,6 +53,11 @@ export const CHAT_SETTINGS_COPY = {
     description: '대화에 따라 인물 한 명의 표정과 모습이 달라져요',
     noticeLabel: '실시간 이미지 안내',
     notice: '이미지를 만들지 못한 경우 사용된 이프가 자동으로 취소돼요',
+    nudge: {
+      title: '실시간 이미지를 켜보세요',
+      description: '대화에 따라 달라지는 인물의 모습을 볼 수 있어요',
+      confirm: '확인',
+    },
   },
   choices: {
     label: 'AI 추천 입력',
