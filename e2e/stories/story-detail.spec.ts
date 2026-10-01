@@ -3,6 +3,7 @@ import type { Page, Route } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {
@@ -111,6 +112,36 @@ test.describe('스토리 상세', () => {
       .locator('xpath=ancestor::nav');
 
     await expect(cta).toHaveCSS('padding-top', '0px');
+  });
+
+  test('내가 만든 스토리에만 생성일 아래 공개 범위를 보여준다 (STORY-DETAIL-48)', async ({
+    page,
+  }) => {
+    let detail: object = {
+      ...storyDetail,
+      isOwner: true,
+      visibility: 'PRIVATE',
+    };
+
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(detail),
+      });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(page.getByText('생성일').locator('../..')).toHaveText(
+      `제작자마냑생성일2026-06-24${STORY_VISIBILITY_COPY.label}${STORY_VISIBILITY_COPY.PRIVATE}`,
+    );
+
+    detail = { ...storyDetail, isOwner: false, visibility: 'PUBLIC' };
+    await page.reload();
+
+    await expect(page.getByText('생성일')).toBeVisible();
+    await expect(page.getByText(STORY_VISIBILITY_COPY.label)).toHaveCount(0);
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
