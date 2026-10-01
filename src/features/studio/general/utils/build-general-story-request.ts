@@ -14,7 +14,7 @@ import type { GeneralStoryStartSettingDraft } from '@/features/studio/general/ut
 import { buildStorySettingTexts } from '@/features/studio/general/utils/story-setting-sections';
 
 /** 주변 인물 이미지 이름의 접미다. 간편 제작 대표 이미지와 같은 접미를 쓴다. */
-const CHARACTER_IMAGE_SUFFIX = '기본';
+export const CHARACTER_IMAGE_SUFFIX = '기본';
 
 export type GeneralStoryRequestInput = {
   texts: {

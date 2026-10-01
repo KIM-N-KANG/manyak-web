@@ -545,7 +545,7 @@ test.describe('스토리 임시 저장·재개', () => {
         name: CREATION_PROGRESS_CARD_COPY.resume,
         exact: true,
       }),
-    ).toHaveClass(/bg-primary/);
+    ).toHaveClass(/\bbg-muted\b/);
     await expect(
       card.getByRole('button', {
         name: CREATION_PROGRESS_CARD_COPY.optionsTrigger,

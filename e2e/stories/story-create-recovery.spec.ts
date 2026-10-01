@@ -728,7 +728,7 @@ test.describe('이어서 만들기 진행 카드', () => {
     ).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: '이어서 만들기', exact: true }),
-    ).toHaveClass(/bg-primary/);
+    ).toHaveClass(/\bbg-muted\b/);
     await expect(
       page.getByRole('button', {
         name: CREATION_PROGRESS_CARD_COPY.optionsTrigger,

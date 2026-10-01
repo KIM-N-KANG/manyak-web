@@ -9,7 +9,12 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import { useCreateGeneralStory } from '@/api/generated/endpoints/stories/stories';
+import {
+  getGetEditFormQueryKey,
+  getGetStoryDetailQueryKey,
+  useCreateGeneralStory,
+  useUpdateStory,
+} from '@/api/generated/endpoints/stories/stories';
 import {
   get as getStorySubmission,
   getListQueryKey as getStorySubmissionsQueryKey,
@@ -19,6 +24,7 @@ import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
 import { RetryListStatus } from '@/components/common/retry-list-status';
+import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +68,7 @@ import {
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_CREATE_COPY,
+  GENERAL_STORY_EDIT_COPY,
   GENERAL_STORY_TEXT_FIELDS,
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
@@ -72,6 +79,11 @@ import {
   resolveGenreNames,
 } from '@/features/studio/general/utils/build-general-story-request';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';
+import {
+  buildStoryEditCandidate,
+  buildStoryEditRequest,
+  type StoryEditBase,
+} from '@/features/studio/general/utils/edit-form';
 import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
 import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
 import {
@@ -100,6 +112,7 @@ import {
   type GeneralStoryFormTabsHandle,
   type GeneralStoryTextValues,
 } from './general-story-form-tabs';
+import { GeneralStoryImageRemovableContext } from './general-story-image-field';
 import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
 import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
 import { GeneralStoryRegisterPanel } from './general-story-register-panel';
@@ -192,6 +205,14 @@ export function GeneralStoryCreateScreen() {
   return showSkeleton ? <Skeleton className="m-4 h-48" /> : null;
 }
 
+/** 스토리 수정으로 열 때의 값이다. 있으면 등록 대신 PATCH로 저장하고 임시 저장하지 않는다. */
+export type GeneralStoryEditOptions = {
+  storyId: string;
+  base: StoryEditBase;
+  /** 폼을 연 시점의 미승인 수정 제출본이다. */
+  submission: StorySubmission | null;
+};
+
 type GeneralStoryCreateFormProps = {
   /** 폼 초기 입력. 없으면 빈 폼으로 새로 만든다. */
   initial: GeneralStoryFormInitial | null;
@@ -199,12 +220,15 @@ type GeneralStoryCreateFormProps = {
   draftRequestId?: string;
   /** 고쳐 다시 제출할 반려·실패 제출본이다. 있으면 처음부터 접수된 상태로 연다. */
   submission?: StorySubmission;
+  /** 스토리 수정으로 열 때의 값이다. */
+  edit?: GeneralStoryEditOptions;
 };
 
 export function GeneralStoryCreateForm({
   initial,
   draftRequestId,
   submission,
+  edit,
 }: GeneralStoryCreateFormProps) {
   const router = useRouter();
   const epoch = useCreationEpoch();
@@ -263,24 +287,35 @@ export function GeneralStoryCreateForm({
   /** 반려·실패한 제출본 id다. 다시 등록하면 새로 제출하지 않고 이 제출본을 재제출한다. */
   const rejectedSubmissionIdRef = useRef(submission?.submissionId ?? null);
   const isSubmittedRef = useRef(Boolean(submission));
+  const editStoryId = edit?.storyId;
+  /** 검토 중인 수정이 있으면 PATCH가 409라 입력과 저장을 잠근다. */
+  const isLocked = edit?.submission?.status === 'PENDING';
+  /** 반려·실패한 수정 제출본을 덮어쓸 때 참이다. 이 화면에서 반려돼도 참이 된다. */
+  const sendAllRef = useRef(edit?.base.sendAll ?? false);
+  const failedMessage = edit
+    ? TOAST_MESSAGE.STORY_EDIT_FAILED
+    : TOAST_MESSAGE.STORY_REGISTER_FAILED;
   const queryClient = useQueryClient();
   const tags = useGetSimpleStoryTags();
   const createGeneralStory = useCreateGeneralStory();
   const resubmitGeneralStory = useResubmit();
+  const updateStory = useUpdateStory();
   const { startChatFor } = useStartChat('', {
     // 스토리는 이미 만들어졌으므로 채팅을 열지 못하면 상세로 보내 거기서 시작하게 한다.
     onError: (storyId) => router.replace(APP_PATH.STORY_DETAIL(storyId)),
   });
 
   useEffect(() => {
-    track('client_generalCreate_viewed');
+    if (editStoryId)
+      track('client_storyEdit_viewed', { story_id: editStoryId });
+    else track('client_generalCreate_viewed');
 
     // 검토 중에 화면을 떠나면 검토 중 토스트를 닫고 조회를 멈춘다.
     return () => {
       reviewAbortRef.current?.abort();
       toast.dismiss(REVIEW_TOAST_ID);
     };
-  }, []);
+  }, [editStoryId]);
 
   const snapshot: GeneralStoryDraftSnapshot = {
     texts: textValues,
@@ -306,7 +341,7 @@ export function GeneralStoryCreateForm({
    * 지우고 이 화면에서는 다시 임시 저장하지 않는다(이어서 만들기로 같은 입력을 새로 제출하지 않게).
    */
   const [submittedKey, setSubmittedKey] = useState(() =>
-    submission ? snapshotKey : null,
+    submission || edit ? snapshotKey : null,
   );
   const reviewForm: GeneralStoryReviewForm = {
     texts: textValues,
@@ -319,8 +354,11 @@ export function GeneralStoryCreateForm({
     description: storyDescription,
   };
   /** 통과하지 못한 검수 결과와 그때 제출한 폼이다. 다시 접수되면 비운다. */
+  const openedSubmission = submission ?? edit?.submission ?? null;
   const [review, setReview] = useState(() =>
-    submission ? { submission, form: reviewForm } : null,
+    openedSubmission
+      ? { submission: openedSubmission, form: reviewForm }
+      : null,
   );
   const reviewErrors = review
     ? getReviewErrors(review.submission, reviewForm, review.form)
@@ -365,6 +403,7 @@ export function GeneralStoryCreateForm({
   // 검토 중이거나 접수된 뒤에는 저장하지 않는다. 지운 임시 저장본을 화면 숨김 저장이 되살리지 않게 한다.
   const saveDraft = async () => {
     if (
+      !edit &&
       hasInput &&
       !isSaved &&
       !isSaving &&
@@ -379,8 +418,19 @@ export function GeneralStoryCreateForm({
   const leaveToStudio = () =>
     leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
 
-  // 잃을 것이 없으면 묻지 않고 나간다.
+  // 잃을 것이 없으면 묻지 않고 나간다. 수정은 임시 저장이 없어 마지막으로 저장한 뒤 고친 것만 본다.
   const handleClose = () => {
+    if (edit) {
+      if (snapshotKey === submittedKey) {
+        leave();
+      } else {
+        setExitWarning('unsavedEdit');
+        setIsExitOpen(true);
+      }
+
+      return;
+    }
+
     const warning = getDraftExitWarning({
       hasInput,
       hasSavedDraft,
@@ -399,9 +449,9 @@ export function GeneralStoryCreateForm({
     setIsExitOpen(true);
   };
 
-  const { leaveAfterCleanup } = usePreventPageLeave({
+  const { confirmLeave, leaveAfterCleanup } = usePreventPageLeave({
     warnOnUnload:
-      submittedKey !== null
+      edit || submittedKey !== null
         ? snapshotKey !== submittedKey
         : hasSavedDraft
           ? !isSaved
@@ -409,6 +459,42 @@ export function GeneralStoryCreateForm({
     interceptBack: true,
     onBackAttempt: () => (isExitOpen ? setIsExitOpen(false) : handleClose()),
   });
+
+  /**
+   * 화면을 떠난다. 수정은 상세에서 들어왔으면 상세로 되돌아가고, 주소로 바로 열었으면 상세로 바꿔 연다.
+   * 일반 제작은 제작 탭으로 간다.
+   */
+  const leave = () => {
+    if (!edit) {
+      leaveToStudio();
+
+      return;
+    }
+
+    if (hasInAppNavigation()) {
+      confirmLeave();
+
+      return;
+    }
+
+    leaveAfterCleanup(() =>
+      router.replace(APP_PATH.STORY_DETAIL(edit.storyId)),
+    );
+  };
+
+  /** 수정을 마치고 상세로 돌아간다. 상세와 수정 폼, 내 스토리 목록은 새로 받게 한다. */
+  const finishEdit = (storyId: string, message: string) => {
+    toast.dismiss(REVIEW_TOAST_ID);
+    void queryClient.invalidateQueries({
+      queryKey: getGetStoryDetailQueryKey(storyId),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: getGetEditFormQueryKey(storyId),
+    });
+    void queryClient.invalidateQueries({ queryKey: getGetMyStoriesQueryKey() });
+    toast(message);
+    leave();
+  };
 
   const finishReview = () => {
     isReviewingRef.current = false;
@@ -452,7 +538,7 @@ export function GeneralStoryCreateForm({
   };
 
   const handleRegister = async () => {
-    if (isReviewingRef.current) return;
+    if (isReviewingRef.current || isLocked) return;
 
     const genreNames = resolveGenreNames(
       genres,
@@ -461,8 +547,40 @@ export function GeneralStoryCreateForm({
 
     // 제공 장르 목록을 아직 받지 못해 장르 이름을 만들 수 없으면 요청하지 않는다.
     if (!genreNames) {
-      track('client_generalCreate_registerError_shown', { status: 0 });
-      toast.error(TOAST_MESSAGE.STORY_REGISTER_FAILED);
+      if (!edit)
+        track('client_generalCreate_registerError_shown', { status: 0 });
+
+      toast.error(failedMessage);
+
+      return;
+    }
+
+    const editRequest =
+      edit &&
+      buildStoryEditRequest(
+        buildStoryEditCandidate(
+          {
+            texts: textValues,
+            cover,
+            descriptionRatio,
+            protagonist,
+            supporting,
+            startSettings,
+            mainEvents,
+            genres,
+            description: storyDescription,
+            visibility: storyVisibility,
+          },
+          genreNames,
+          edit.base,
+        ),
+        edit.base.baseline,
+        sendAllRef.current,
+      );
+
+    // 바뀐 것이 없으면 검수를 돌리지 않도록 요청하지 않고 상세로 돌아간다.
+    if (editRequest && Object.keys(editRequest).length === 0) {
+      leave();
 
       return;
     }
@@ -492,25 +610,49 @@ export function GeneralStoryCreateForm({
     reviewAbortRef.current = controller;
     isReviewingRef.current = true;
     setIsReviewing(true);
+
     // 위쪽 토스트가 헤더의 닫기를 오래 가리지 않게 짧게 띄우고, 검토가 이어지는 동안은 등록하기 스피너가 알린다.
-    toast(TOAST_MESSAGE.STORY_REVIEWING, {
-      id: REVIEW_TOAST_ID,
-      duration: DRAFT_SAVED_TOAST_DURATION_MS,
-      icon: <Spinner className="size-4" />,
-    });
+    // 공개 범위만 바꾼 수정은 검수 없이 바로 반영되므로 띄우지 않는다.
+    if (
+      !editRequest ||
+      Object.keys(editRequest).some((field) => field !== 'visibility')
+    ) {
+      toast(TOAST_MESSAGE.STORY_REVIEWING, {
+        id: REVIEW_TOAST_ID,
+        duration: DRAFT_SAVED_TOAST_DURATION_MS,
+        icon: <Spinner className="size-4" />,
+      });
+    }
 
     let submissionId: string | undefined;
 
     try {
-      const rejectedId = rejectedSubmissionIdRef.current;
-      const response = rejectedId
-        ? await resubmitGeneralStory.mutateAsync({
-            id: rejectedId,
-            data: request,
-          })
-        : await createGeneralStory.mutateAsync({ data: request });
+      if (edit && editRequest) {
+        const response = await updateStory.mutateAsync({
+          storyId: edit.storyId,
+          data: editRequest,
+        });
 
-      submissionId = response.data.submissionId;
+        if (response.status === 200) {
+          track('client_storyEdit_completed', { story_id: edit.storyId });
+          finishEdit(edit.storyId, TOAST_MESSAGE.STORY_EDITED);
+
+          return;
+        }
+
+        submissionId =
+          response.status === 202 ? response.data.submissionId : undefined;
+      } else {
+        const rejectedId = rejectedSubmissionIdRef.current;
+        const response = rejectedId
+          ? await resubmitGeneralStory.mutateAsync({
+              id: rejectedId,
+              data: request,
+            })
+          : await createGeneralStory.mutateAsync({ data: request });
+
+        submissionId = response.data.submissionId;
+      }
     } catch (error) {
       if (controller.signal.aborted) return;
 
@@ -518,17 +660,21 @@ export function GeneralStoryCreateForm({
       const errorCode = getApiErrorCode(error);
 
       // 재제출할 수 없는 제출본(이미 지웠거나 상태가 바뀜)이면 다음에는 새로 제출한다.
-      if (status === 404 || status === 409)
+      if (!edit && (status === 404 || status === 409))
         rejectedSubmissionIdRef.current = null;
 
       finishReview();
-      track('client_generalCreate_registerError_shown', { status });
+
+      if (!edit) track('client_generalCreate_registerError_shown', { status });
+
       toast.error(
         errorCode === 'IMAGES_TOO_LARGE'
           ? TOAST_MESSAGE.STORY_IMAGES_TOO_LARGE
           : errorCode === 'UPLOAD_NOT_FOUND'
             ? TOAST_MESSAGE.STORY_IMAGE_NOT_FOUND
-            : TOAST_MESSAGE.STORY_REGISTER_FAILED,
+            : edit && status === 409
+              ? TOAST_MESSAGE.STORY_SUBMISSION_PENDING
+              : failedMessage,
       );
 
       return;
@@ -538,37 +684,45 @@ export function GeneralStoryCreateForm({
       if (controller.signal.aborted) return;
 
       finishReview();
-      track('client_generalCreate_registerError_shown', { status: 0 });
-      toast.error(TOAST_MESSAGE.STORY_REGISTER_FAILED);
+
+      if (!edit)
+        track('client_generalCreate_registerError_shown', { status: 0 });
+
+      toast.error(failedMessage);
 
       return;
     }
 
-    // 접수된 입력은 서버 제출본에 남으므로 임시 저장본을 지운다. 지우지 못해도 흐름은 막지 않는다.
-    isSubmittedRef.current = true;
     setSubmittedKey(requestKey);
-    setSavedKey(null);
     setReview(null);
-    void queryClient.invalidateQueries({
-      queryKey: getStorySubmissionsQueryKey(),
-    });
-    await takePendingCreationRequest(requestId, epoch).catch(() => false);
 
-    // 응답을 받은 뒤 화면을 떠났어도 위에서 임시 저장본은 지우고, 그 뒤 흐름만 멈춘다.
-    if (controller.signal.aborted) return;
+    if (edit) {
+      track('client_storyEdit_completed', { story_id: edit.storyId });
+    } else {
+      // 접수된 입력은 서버 제출본에 남으므로 임시 저장본을 지운다. 지우지 못해도 흐름은 막지 않는다.
+      isSubmittedRef.current = true;
+      setSavedKey(null);
+      void queryClient.invalidateQueries({
+        queryKey: getStorySubmissionsQueryKey(),
+      });
+      await takePendingCreationRequest(requestId, epoch).catch(() => false);
 
-    track('client_generalCreate_completed', {
-      submission_id: submissionId,
-      start_setting_count: startSettings.length,
-      ending_count: startSettings.reduce(
-        (count, setting) => count + setting.endings.length,
-        0,
-      ),
-      main_event_count: mainEvents.length,
-      image_count:
-        (cover ? 1 : 0) +
-        supporting.filter((character) => character.image).length,
-    });
+      // 응답을 받은 뒤 화면을 떠났어도 위에서 임시 저장본은 지우고, 그 뒤 흐름만 멈춘다.
+      if (controller.signal.aborted) return;
+
+      track('client_generalCreate_completed', {
+        submission_id: submissionId,
+        start_setting_count: startSettings.length,
+        ending_count: startSettings.reduce(
+          (count, setting) => count + setting.endings.length,
+          0,
+        ),
+        main_event_count: mainEvents.length,
+        image_count:
+          (cover ? 1 : 0) +
+          supporting.filter((character) => character.image).length,
+      });
+    }
 
     const result = await waitForReview(submissionId, controller.signal);
 
@@ -583,14 +737,31 @@ export function GeneralStoryCreateForm({
       });
 
     if (result?.status === 'REJECTED' || result?.status === 'FAILED') {
-      rejectedSubmissionIdRef.current = submissionId;
-      trackResult(result.status === 'REJECTED' ? 'rejected' : 'failed');
+      // 수정은 반려본을 다음 PATCH가 덮어쓰므로 이후로는 모든 필드를 보낸다.
+      if (edit) {
+        sendAllRef.current = true;
+      } else {
+        rejectedSubmissionIdRef.current = submissionId;
+        trackResult(result.status === 'REJECTED' ? 'rejected' : 'failed');
+      }
+
       finishReview();
       toast.error(TOAST_MESSAGE.STORY_REVIEW_REJECTED);
       // 제출한 폼 기준으로 칸별 사유를 붙이고, 첫 사유 칸으로 옮긴다.
       setReview({ submission: result, form: requestForm });
       tabsRef.current?.revealErrors(
         getReviewErrors(result, requestForm, requestForm).fieldErrors,
+      );
+
+      return;
+    }
+
+    if (edit) {
+      finishEdit(
+        edit.storyId,
+        result?.status === 'APPROVED'
+          ? TOAST_MESSAGE.STORY_EDITED
+          : TOAST_MESSAGE.STORY_EDIT_REVIEW_DELAYED,
       );
 
       return;
@@ -636,25 +807,42 @@ export function GeneralStoryCreateForm({
   return (
     <div className="flex h-full flex-col">
       <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-4">
-        <h1 className="font-semibold">{GENERAL_STORY_CREATE_COPY.title}</h1>
+        <h1 className="font-semibold">
+          {edit
+            ? GENERAL_STORY_EDIT_COPY.title
+            : GENERAL_STORY_CREATE_COPY.title}
+        </h1>
         <div className="ml-auto flex items-center gap-1">
-          <DraftSaveButton
-            isSaving={isSaving}
-            disabled={!hasInput || isReviewing || submittedKey !== null}
-            isSaved={isSaved}
-            onSave={writeDraft}
-          />
+          {!edit && (
+            <DraftSaveButton
+              isSaving={isSaving}
+              disabled={!hasInput || isReviewing || submittedKey !== null}
+              isSaved={isSaved}
+              onSave={writeDraft}
+            />
+          )}
           <Button
             type="button"
             size="icon"
             variant="ghost"
-            aria-label={GENERAL_STORY_CREATE_COPY.close}
+            aria-label={
+              edit
+                ? GENERAL_STORY_EDIT_COPY.close
+                : GENERAL_STORY_CREATE_COPY.close
+            }
             onClick={handleClose}>
             <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
           </Button>
         </div>
       </header>
-      {review &&
+      {isLocked ? (
+        <GeneralStoryReviewNotice
+          status="PENDING"
+          hasImageError={false}
+          notices={[]}
+        />
+      ) : (
+        review &&
         (review.submission.status === 'REJECTED' ||
           review.submission.status === 'FAILED') && (
           <GeneralStoryReviewNotice
@@ -664,86 +852,95 @@ export function GeneralStoryCreateForm({
               Boolean(review.submission.errorCode?.startsWith('IMAGE_'))
             }
             notices={reviewErrors.notices}
+            isEdit={Boolean(edit)}
           />
-        )}
-      <CollapsedListItemsProvider>
-        <GeneralStoryRegisterErrorsContext value={shownErrors}>
-          <GeneralStoryFormTabs
-            ref={tabsRef}
-            initialTab={reviewErrors.fieldErrors[0]?.tab}
-            values={textValues}
-            onChange={(field: GeneralStoryTextField, value: string) =>
-              setTextValues((previous) => ({ ...previous, [field]: value }))
-            }
-            cover={cover}
-            onCoverChange={setCover}
-            descriptionRatio={descriptionRatio}
-            onDescriptionRatioChange={setDescriptionRatio}
-            panels={{
-              protagonist: (
-                <GeneralStoryCharacterFields
-                  idPrefix="general-story-protagonist"
-                  labelPrefix="주인공"
-                  character={protagonist}
-                  namePlaceholder={
-                    GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
-                  }
-                  featurePlaceholder={
-                    GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
-                  }
-                  basicInfoDescription={
-                    GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
-                  }
-                  featureDescription={
-                    GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
-                  }
-                  featureRequired
-                  registerErrorKeys={{
-                    name: REGISTER_ERROR_KEY.protagonist('name'),
-                    gender: REGISTER_ERROR_KEY.protagonist('gender'),
-                    feature: REGISTER_ERROR_KEY.protagonist('feature'),
-                  }}
-                  onChange={setProtagonist}
-                />
-              ),
-              supporting: (
-                <GeneralStorySupportingCharacterList
-                  protagonistName={protagonist.name}
-                  characters={supporting}
-                  onChange={setSupporting}
-                />
-              ),
-              start: (
-                <GeneralStoryStartSettingPanel
-                  startSettings={startSettings}
-                  onChange={setStartSettings}
-                />
-              ),
-              event: (
-                <GeneralStoryMainEventPanel
-                  mainEvents={mainEvents}
-                  onChange={setMainEvents}
-                />
-              ),
-              publish: (
-                <GeneralStoryRegisterPanel
-                  genres={genres}
-                  onGenresChange={setGenres}
-                  storyDescription={storyDescription}
-                  onStoryDescriptionChange={setStoryDescription}
-                  storyVisibility={storyVisibility}
-                  onStoryVisibilityChange={setStoryVisibility}
-                />
-              ),
-            }}
-            registerErrors={registerErrors}
-            onRegisterAttempt={() => setHasTriedRegister(true)}
-            onRegister={handleRegister}
-            isRegistering={isReviewing}
-            onTabChange={saveDraft}
-          />
-        </GeneralStoryRegisterErrorsContext>
-      </CollapsedListItemsProvider>
+        )
+      )}
+      <GeneralStoryImageRemovableContext value={!edit}>
+        <CollapsedListItemsProvider>
+          <GeneralStoryRegisterErrorsContext value={shownErrors}>
+            <GeneralStoryFormTabs
+              ref={tabsRef}
+              initialTab={reviewErrors.fieldErrors[0]?.tab}
+              values={textValues}
+              onChange={(field: GeneralStoryTextField, value: string) =>
+                setTextValues((previous) => ({ ...previous, [field]: value }))
+              }
+              cover={cover}
+              onCoverChange={setCover}
+              descriptionRatio={descriptionRatio}
+              onDescriptionRatioChange={setDescriptionRatio}
+              panels={{
+                protagonist: (
+                  <GeneralStoryCharacterFields
+                    idPrefix="general-story-protagonist"
+                    labelPrefix="주인공"
+                    character={protagonist}
+                    namePlaceholder={
+                      GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
+                    }
+                    featurePlaceholder={
+                      GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
+                    }
+                    basicInfoDescription={
+                      GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
+                    }
+                    featureDescription={
+                      GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
+                    }
+                    featureRequired
+                    registerErrorKeys={{
+                      name: REGISTER_ERROR_KEY.protagonist('name'),
+                      gender: REGISTER_ERROR_KEY.protagonist('gender'),
+                      feature: REGISTER_ERROR_KEY.protagonist('feature'),
+                    }}
+                    onChange={setProtagonist}
+                  />
+                ),
+                supporting: (
+                  <GeneralStorySupportingCharacterList
+                    protagonistName={protagonist.name}
+                    characters={supporting}
+                    onChange={setSupporting}
+                  />
+                ),
+                start: (
+                  <GeneralStoryStartSettingPanel
+                    startSettings={startSettings}
+                    onChange={setStartSettings}
+                  />
+                ),
+                event: (
+                  <GeneralStoryMainEventPanel
+                    mainEvents={mainEvents}
+                    onChange={setMainEvents}
+                  />
+                ),
+                publish: (
+                  <GeneralStoryRegisterPanel
+                    genres={genres}
+                    onGenresChange={setGenres}
+                    storyDescription={storyDescription}
+                    onStoryDescriptionChange={setStoryDescription}
+                    storyVisibility={storyVisibility}
+                    onStoryVisibilityChange={setStoryVisibility}
+                  />
+                ),
+              }}
+              registerErrors={registerErrors}
+              onRegisterAttempt={() => setHasTriedRegister(true)}
+              onRegister={handleRegister}
+              isRegistering={isReviewing}
+              readOnly={isLocked}
+              registerLabel={edit ? GENERAL_STORY_EDIT_COPY.save : undefined}
+              registeringLabel={
+                edit ? GENERAL_STORY_EDIT_COPY.saving : undefined
+              }
+              onTabChange={saveDraft}
+            />
+          </GeneralStoryRegisterErrorsContext>
+        </CollapsedListItemsProvider>
+      </GeneralStoryImageRemovableContext>
       <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
@@ -755,7 +952,7 @@ export function GeneralStoryCreateForm({
             <AlertDialogAction
               type="button"
               variant="destructive"
-              onClick={leaveToStudio}>
+              onClick={leave}>
               {copy.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>

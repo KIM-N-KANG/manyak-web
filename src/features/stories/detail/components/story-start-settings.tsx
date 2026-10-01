@@ -62,7 +62,7 @@ export function StoryStartSettings({
               label: setting.name ?? `시작 상황 ${index + 1}`,
             }))}>
             <SelectTrigger className="w-full" aria-label="채팅 시작 상황 선택">
-              <SelectValue />
+              <SelectValue className="block min-w-0 truncate" />
             </SelectTrigger>
             {/* 팝업이 트리거를 덮지 않고 같은 너비로 바로 아래에 뜨도록 한다 */}
             <SelectContent alignItemWithTrigger={false}>
@@ -70,8 +70,10 @@ export function StoryStartSettings({
                 <SelectItem
                   key={startSettingValue(setting, index)}
                   value={startSettingValue(setting, index)}
-                  className="rounded-[var(--radius)]">
-                  {setting.name ?? `시작 상황 ${index + 1}`}
+                  className="h-auto min-h-10 rounded-[var(--radius)] py-2">
+                  <span className="min-w-0 wrap-anywhere whitespace-normal">
+                    {setting.name ?? `시작 상황 ${index + 1}`}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -116,7 +118,7 @@ export function StoryStartSettings({
               {endings.map((ending, index) => (
                 <div
                   key={`${ending}-${index}`}
-                  className="flex min-h-10 items-center rounded-md bg-muted px-3.5 py-2 text-sm">
+                  className="flex min-h-10 items-center rounded-md bg-muted px-3.5 py-2 text-sm wrap-anywhere">
                   {ending}
                 </div>
               ))}

@@ -96,7 +96,7 @@ function StoryListToolbarView({ query, onChange }: StoryListToolbarViewProps) {
   )?.label;
 
   return (
-    <div className="flex shrink-0 items-center gap-2 bg-background py-2 pr-4">
+    <div className="flex shrink-0 items-center gap-2 bg-background pr-4 pb-2">
       <div
         role="group"
         aria-label={STORY_LIST_COPY.filterGroupLabel}
@@ -104,8 +104,7 @@ function StoryListToolbarView({ query, onChange }: StoryListToolbarViewProps) {
         {STORY_LIST_FILTER_OPTIONS.map((option) => (
           <ToggleChip
             key={option.value}
-            size="sm"
-            className="h-9 shrink-0 rounded-full bg-background px-4 text-sm aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            className="shrink-0 rounded-full aria-pressed:bg-primary aria-pressed:text-primary-foreground"
             pressed={query.filter === option.value}
             onPressedChange={(pressed) => {
               if (pressed) {

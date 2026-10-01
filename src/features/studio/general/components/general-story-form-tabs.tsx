@@ -102,6 +102,12 @@ type GeneralStoryFormTabsProps = {
   onRegister?: () => void;
   /** 등록 요청·검토 중이면 등록하기에 스피너를 두고 탭과 입력을 잠근다. */
   isRegistering?: boolean;
+  /** 검토 중인 수정처럼 고칠 수 없을 때 참이다. 탭은 옮겨 볼 수 있고 입력과 등록하기를 잠근다. */
+  readOnly?: boolean;
+  /** 등록하기 버튼 문구다. 스토리 수정은 저장 문구를 쓴다. */
+  registerLabel?: string;
+  /** 등록 중 버튼 문구다. */
+  registeringLabel?: string;
   /** 다른 탭으로 옮길 때마다 호출한다(탭 누르기·이전·다음·등록 오류 이동). */
   onTabChange?: () => void;
   /** 처음 여는 탭이다. 없으면 첫 탭이다. */
@@ -121,6 +127,9 @@ export function GeneralStoryFormTabs({
   onRegisterAttempt,
   onRegister,
   isRegistering = false,
+  readOnly = false,
+  registerLabel = GENERAL_STORY_CREATE_COPY.register,
+  registeringLabel = GENERAL_STORY_CREATE_COPY.registering,
   onTabChange,
   initialTab = GENERAL_STORY_TABS[0].value,
   ref,
@@ -242,7 +251,7 @@ export function GeneralStoryFormTabs({
       </TabsList>
       <div
         ref={scrollAreaRef}
-        inert={isRegistering}
+        inert={isRegistering || readOnly}
         className="relative min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain">
         {GENERAL_STORY_TABS.map(({ value, fields }) => (
           <TabsContent
@@ -308,13 +317,13 @@ export function GeneralStoryFormTabs({
           <Button
             type="button"
             size="lg"
-            disabled={isRegistering}
+            disabled={isRegistering || readOnly}
             className={cn('relative', isRegistering && 'disabled:opacity-100')}
             onClick={handleRegister}>
             <LoadingButtonContent
               isLoading={isRegistering}
-              loadingLabel={GENERAL_STORY_CREATE_COPY.registering}>
-              {GENERAL_STORY_CREATE_COPY.register}
+              loadingLabel={registeringLabel}>
+              {registerLabel}
             </LoadingButtonContent>
           </Button>
         )}

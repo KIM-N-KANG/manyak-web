@@ -19,6 +19,7 @@ export const APP_PATH = {
   MY_LINK_CONTINUE: '/my/link/continue',
   MY_NOTIFICATIONS: '/my/notifications',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
+  STORY_EDIT: (id: number | string) => `/stories/${id}/edit`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,
   SHARE_VIEW: (shareId: string) => `/share/${shareId}`,
   STUDIO: {
