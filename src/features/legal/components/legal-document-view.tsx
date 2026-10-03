@@ -1,6 +1,6 @@
 'use client';
 
-import { HomeLogoHeader } from '@/components/layout/home-logo-header';
+import { LogoHeader } from '@/components/layout/logo-header';
 import { useTrackOnView } from '@/observability/analytics';
 
 import type { LegalDocument } from '../types';
@@ -15,7 +15,7 @@ export function LegalDocumentView({ doc, viewEvent }: LegalDocumentViewProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <HomeLogoHeader />
+      <LogoHeader />
       <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
         <article className="flex flex-col gap-8">
           <header className="flex flex-col gap-1">
