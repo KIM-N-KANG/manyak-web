@@ -192,6 +192,25 @@ test.describe('스토리 상세', () => {
     expect(headerGradientCount).toBe(0);
   });
 
+  test('썸네일이 없어도 헤더는 처음에 히어로 위에 투명하게 겹친다 (STORY-DETAIL-03)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(storyDetail),
+      });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('img', { name: '스토리 썸네일 없음' }),
+    ).toBeVisible();
+    await expect(page.locator('header')).toHaveCSS('--story-header-alpha', '0');
+  });
+
   test('주변 인물 이름·소개·인물 이미지를 보여준다 (KNK-1058, KNK-1467)', async ({
     page,
   }) => {
