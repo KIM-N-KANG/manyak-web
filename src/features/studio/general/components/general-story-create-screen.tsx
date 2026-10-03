@@ -13,6 +13,7 @@ import {
   getGetEditFormQueryKey,
   getGetStoryDetailQueryKey,
   useCreateGeneralStory,
+  useDeleteThumbnail,
   useUpdateStory,
 } from '@/api/generated/endpoints/stories/stories';
 import {
@@ -112,7 +113,6 @@ import {
   type GeneralStoryFormTabsHandle,
   type GeneralStoryTextValues,
 } from './general-story-form-tabs';
-import { GeneralStoryImageRemovableContext } from './general-story-image-field';
 import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
 import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
 import { GeneralStoryRegisterPanel } from './general-story-register-panel';
@@ -302,6 +302,7 @@ export function GeneralStoryCreateForm({
   const createGeneralStory = useCreateGeneralStory();
   const resubmitGeneralStory = useResubmit();
   const updateStory = useUpdateStory();
+  const deleteThumbnail = useDeleteThumbnail();
   const { startChatFor } = useStartChat('', {
     // 스토리는 이미 만들어졌으므로 채팅을 열지 못하면 상세로 보내 거기서 시작하게 한다.
     onError: (storyId) => router.replace(APP_PATH.STORY_DETAIL(storyId)),
@@ -580,8 +581,15 @@ export function GeneralStoryCreateForm({
         sendAllRef.current,
       );
 
+    // 표지 삭제는 PATCH로 보낼 수 없어 표지 삭제 API로 따로 지운다.
+    const isCoverRemoved = Boolean(edit && initial?.cover && !cover);
+
     // 바뀐 것이 없으면 검수를 돌리지 않도록 요청하지 않고 상세로 돌아간다.
-    if (editRequest && Object.keys(editRequest).length === 0) {
+    if (
+      editRequest &&
+      Object.keys(editRequest).length === 0 &&
+      !isCoverRemoved
+    ) {
       leave();
 
       return;
@@ -630,12 +638,19 @@ export function GeneralStoryCreateForm({
 
     try {
       if (edit && editRequest) {
-        const response = await updateStory.mutateAsync({
-          storyId: edit.storyId,
-          data: editRequest,
-        });
+        if (isCoverRemoved)
+          await deleteThumbnail.mutateAsync({ storyId: edit.storyId });
 
-        if (response.status === 200) {
+        // 표지만 지웠으면 PATCH 없이 마친다.
+        const response =
+          Object.keys(editRequest).length > 0
+            ? await updateStory.mutateAsync({
+                storyId: edit.storyId,
+                data: editRequest,
+              })
+            : null;
+
+        if (!response || response.status === 200) {
           track('client_storyEdit_completed', { story_id: edit.storyId });
           finishEdit(edit.storyId, TOAST_MESSAGE.STORY_EDITED);
 
@@ -858,91 +873,87 @@ export function GeneralStoryCreateForm({
           />
         )
       )}
-      <GeneralStoryImageRemovableContext value={!edit}>
-        <CollapsedListItemsProvider>
-          <GeneralStoryRegisterErrorsContext value={shownErrors}>
-            <GeneralStoryFormTabs
-              ref={tabsRef}
-              initialTab={reviewErrors.fieldErrors[0]?.tab}
-              values={textValues}
-              onChange={(field: GeneralStoryTextField, value: string) =>
-                setTextValues((previous) => ({ ...previous, [field]: value }))
-              }
-              cover={cover}
-              onCoverChange={setCover}
-              descriptionRatio={descriptionRatio}
-              onDescriptionRatioChange={setDescriptionRatio}
-              panels={{
-                protagonist: (
-                  <GeneralStoryCharacterFields
-                    idPrefix="general-story-protagonist"
-                    labelPrefix="주인공"
-                    character={protagonist}
-                    namePlaceholder={
-                      GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
-                    }
-                    featurePlaceholder={
-                      GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
-                    }
-                    basicInfoDescription={
-                      GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
-                    }
-                    featureDescription={
-                      GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
-                    }
-                    featureRequired
-                    registerErrorKeys={{
-                      name: REGISTER_ERROR_KEY.protagonist('name'),
-                      gender: REGISTER_ERROR_KEY.protagonist('gender'),
-                      feature: REGISTER_ERROR_KEY.protagonist('feature'),
-                    }}
-                    onChange={setProtagonist}
-                  />
-                ),
-                supporting: (
-                  <GeneralStorySupportingCharacterList
-                    protagonistName={protagonist.name}
-                    characters={supporting}
-                    onChange={setSupporting}
-                  />
-                ),
-                start: (
-                  <GeneralStoryStartSettingPanel
-                    startSettings={startSettings}
-                    onChange={setStartSettings}
-                  />
-                ),
-                event: (
-                  <GeneralStoryMainEventPanel
-                    mainEvents={mainEvents}
-                    onChange={setMainEvents}
-                  />
-                ),
-                publish: (
-                  <GeneralStoryRegisterPanel
-                    genres={genres}
-                    onGenresChange={setGenres}
-                    storyDescription={storyDescription}
-                    onStoryDescriptionChange={setStoryDescription}
-                    storyVisibility={storyVisibility}
-                    onStoryVisibilityChange={setStoryVisibility}
-                  />
-                ),
-              }}
-              registerErrors={registerErrors}
-              onRegisterAttempt={() => setHasTriedRegister(true)}
-              onRegister={handleRegister}
-              isRegistering={isReviewing}
-              readOnly={isLocked}
-              registerLabel={edit ? GENERAL_STORY_EDIT_COPY.save : undefined}
-              registeringLabel={
-                edit ? GENERAL_STORY_EDIT_COPY.saving : undefined
-              }
-              onTabChange={saveDraft}
-            />
-          </GeneralStoryRegisterErrorsContext>
-        </CollapsedListItemsProvider>
-      </GeneralStoryImageRemovableContext>
+      <CollapsedListItemsProvider>
+        <GeneralStoryRegisterErrorsContext value={shownErrors}>
+          <GeneralStoryFormTabs
+            ref={tabsRef}
+            initialTab={reviewErrors.fieldErrors[0]?.tab}
+            values={textValues}
+            onChange={(field: GeneralStoryTextField, value: string) =>
+              setTextValues((previous) => ({ ...previous, [field]: value }))
+            }
+            cover={cover}
+            onCoverChange={setCover}
+            descriptionRatio={descriptionRatio}
+            onDescriptionRatioChange={setDescriptionRatio}
+            panels={{
+              protagonist: (
+                <GeneralStoryCharacterFields
+                  idPrefix="general-story-protagonist"
+                  labelPrefix="주인공"
+                  character={protagonist}
+                  namePlaceholder={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistNamePlaceholder
+                  }
+                  featurePlaceholder={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistFeaturePlaceholder
+                  }
+                  basicInfoDescription={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistBasicInfoDescription
+                  }
+                  featureDescription={
+                    GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
+                  }
+                  featureRequired
+                  registerErrorKeys={{
+                    name: REGISTER_ERROR_KEY.protagonist('name'),
+                    gender: REGISTER_ERROR_KEY.protagonist('gender'),
+                    feature: REGISTER_ERROR_KEY.protagonist('feature'),
+                  }}
+                  onChange={setProtagonist}
+                />
+              ),
+              supporting: (
+                <GeneralStorySupportingCharacterList
+                  protagonistName={protagonist.name}
+                  characters={supporting}
+                  onChange={setSupporting}
+                />
+              ),
+              start: (
+                <GeneralStoryStartSettingPanel
+                  startSettings={startSettings}
+                  onChange={setStartSettings}
+                />
+              ),
+              event: (
+                <GeneralStoryMainEventPanel
+                  mainEvents={mainEvents}
+                  onChange={setMainEvents}
+                />
+              ),
+              publish: (
+                <GeneralStoryRegisterPanel
+                  genres={genres}
+                  onGenresChange={setGenres}
+                  storyDescription={storyDescription}
+                  onStoryDescriptionChange={setStoryDescription}
+                  storyVisibility={storyVisibility}
+                  onStoryVisibilityChange={setStoryVisibility}
+                />
+              ),
+            }}
+            registerErrors={registerErrors}
+            onRegisterAttempt={() => setHasTriedRegister(true)}
+            onRegister={handleRegister}
+            isRegistering={isReviewing}
+            readOnly={isLocked}
+            registerLabel={edit ? GENERAL_STORY_EDIT_COPY.save : undefined}
+            registeringLabel={edit ? GENERAL_STORY_EDIT_COPY.saving : undefined}
+            onTabChange={saveDraft}
+          />
+        </GeneralStoryRegisterErrorsContext>
+      </CollapsedListItemsProvider>
       <AlertDialog open={isExitOpen} onOpenChange={setIsExitOpen}>
         <AlertDialogContent size="sm">
           <AlertDialogHeader>

@@ -255,6 +255,27 @@ describe('buildStoryEditRequest', () => {
     });
   });
 
+  it('대표 이미지를 지우면 그 이미지만 빼고 나머지 이미지는 id로 남긴다', () => {
+    const request = requestAfter((form) => ({
+      ...form,
+      supporting: form.supporting.map((character) => ({
+        ...character,
+        image: null,
+      })),
+    }));
+
+    expect(request.characters?.[0]).toEqual({
+      id: 'char-ha',
+      name: '도하람',
+      description: '보관소 관리인',
+      images: [{ id: 'img-2' }],
+    });
+  });
+
+  it('표지를 지우면 PATCH 본문에는 싣지 않는다', () => {
+    expect(requestAfter((form) => ({ ...form, cover: null }))).toEqual({});
+  });
+
   it('표지를 바꾸면 새 객체 키만 보낸다', () => {
     expect(
       requestAfter((form) => ({

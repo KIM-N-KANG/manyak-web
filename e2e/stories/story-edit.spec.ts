@@ -175,6 +175,25 @@ async function openEditFromDetail(page: Page) {
   await expect(page).toHaveURL(new RegExp(`${APP_PATH.STORY_EDIT(STORY_ID)}$`));
 }
 
+/** 표지 삭제 요청을 204로 받고 받은 메서드를 모은다. */
+async function mockThumbnailDelete(page: Page) {
+  const deletes: string[] = [];
+
+  await page.route(`**/api/v1/stories/${STORY_ID}/thumbnail`, (route) => {
+    deletes.push(route.request().method());
+
+    return route.fulfill({ status: 204 });
+  });
+
+  return deletes;
+}
+
+const coverRemoveButton = (page: Page) =>
+  page.getByRole('button', {
+    name: GENERAL_STORY_COVER_COPY.remove,
+    exact: true,
+  });
+
 const titleInput = (page: Page) =>
   page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label);
 
@@ -199,16 +218,79 @@ test.describe('스토리 수정', () => {
       page.getByRole('heading', { name: GENERAL_STORY_EDIT_COPY.title }),
     ).toBeVisible();
     await expect(titleInput(page)).toHaveValue(EDIT_FORM.title);
-    // 수정 화면은 이미지를 바꾸기만 해 삭제 버튼을 두지 않는다.
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.change }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('button', {
-        name: GENERAL_STORY_COVER_COPY.remove,
-        exact: true,
-      }),
-    ).toHaveCount(0);
+    await expect(coverRemoveButton(page)).toBeVisible();
+  });
+
+  test('표지와 주변 인물 이미지를 지우고 저장하면 표지 삭제 API를 부르고 인물 이미지를 빼서 보낸다 (STORY-EDIT-17)', async ({
+    page,
+  }) => {
+    const patches = await setup(page, {
+      editForm: {
+        ...EDIT_FORM,
+        characters: [
+          {
+            ...EDIT_FORM.characters[0],
+            images: [
+              {
+                id: 'img-1',
+                objectKey: null,
+                imageName: '도하람_기본',
+                imageUrl: COVER_URL,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const deletes = await mockThumbnailDelete(page);
+
+    await openEditFromDetail(page);
+    await coverRemoveButton(page).click();
+    await page.getByRole('tab', { name: SUPPORTING_TAB, exact: true }).click();
+    await page
+      .getByRole('button', {
+        name: new RegExp(
+          `${GENERAL_STORY_CHARACTER_COPY.imageLabel} ${GENERAL_STORY_COVER_COPY.remove}$`,
+        ),
+      })
+      .click();
+    await save(page);
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_EDITED)).toBeVisible();
+    expect(deletes).toEqual(['DELETE']);
+    expect(patches).toEqual([
+      {
+        characters: [
+          {
+            id: 'char-1',
+            name: '도하람',
+            description: '보관소 관리인',
+            images: [],
+          },
+        ],
+      },
+    ]);
+  });
+
+  test('표지만 지우고 저장하면 PATCH 없이 표지만 지우고 상세로 돌아간다 (STORY-EDIT-17)', async ({
+    page,
+  }) => {
+    const patches = await setup(page);
+    const deletes = await mockThumbnailDelete(page);
+
+    await openEditFromDetail(page);
+    await coverRemoveButton(page).click();
+    await save(page);
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_EDITED)).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STORY_DETAIL(STORY_ID)}$`),
+    );
+    expect(deletes).toEqual(['DELETE']);
+    expect(patches).toEqual([]);
   });
 
   test('제작 탭 내 스토리 카드의 옵션 맨 위 수정하기로 수정 화면을 연다 (STORY-LIST-39)', async ({
