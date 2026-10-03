@@ -12,7 +12,7 @@ export type GetPublicStoriesParams = {
    */
   filter?: string;
   /**
-   * 정렬. latest(기본), likes 또는 chats
+   * 정렬. popular(기본), latest, likes 또는 chats
    */
   sort?: string;
   /**

@@ -1,5 +1,3 @@
-import { createContext, use } from 'react';
-
 import { ImageUpload01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
@@ -24,9 +22,6 @@ import { cn } from '@/lib/utils';
 
 import { GeneralStoryImageCropSheet } from './general-story-image-crop-sheet';
 import { useRegisterError } from './general-story-register-errors';
-
-/** 이미지 칸에 삭제 버튼을 둘지다. 스토리 수정은 이미지를 바꾸기만 하고 지우기는 이미지 편집에서 다룬다. */
-export const GeneralStoryImageRemovableContext = createContext(true);
 
 type GeneralStoryImageFieldProps = {
   id: string;
@@ -62,7 +57,6 @@ export function GeneralStoryImageField({
   onChange,
 }: GeneralStoryImageFieldProps) {
   const error = useRegisterError(registerErrorKey);
-  const removable = use(GeneralStoryImageRemovableContext);
   const { isUploading, previewUrl, open, remove, crop, inputProps } =
     useDraftImagePicker({ kind, image, onChange });
   const {
@@ -125,7 +119,7 @@ export function GeneralStoryImageField({
               <HugeiconsIcon icon={ImageUpload01Icon} aria-hidden="true" />
               {uploadLabel}
             </Button>
-            {image && removable && (
+            {image && (
               <Button
                 type="button"
                 variant="ghost"

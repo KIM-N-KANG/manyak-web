@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { Image01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import { AnimatePresence, m } from 'motion/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -15,6 +13,7 @@ import {
 } from '@/api/generated/endpoints/stories/stories';
 import { FullscreenImageViewer } from '@/components/common/fullscreen-image-viewer';
 import { RetryListStatus } from '@/components/common/retry-list-status';
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
@@ -202,8 +201,8 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                       role="img"
                       aria-label="스토리 썸네일 없음"
                       className="flex size-full items-center justify-center">
-                      <HugeiconsIcon
-                        icon={Image01Icon}
+                      <ManyakSymbolIcon
+                        aria-hidden="true"
                         className="size-8 text-foreground-tertiary"
                       />
                     </div>

@@ -1,10 +1,9 @@
 'use client';
 
-import { Image01Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
@@ -72,10 +71,7 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
           <div
             aria-hidden="true"
             className="flex size-full items-center justify-center">
-            <HugeiconsIcon
-              icon={Image01Icon}
-              className="size-8 text-foreground-tertiary"
-            />
+            <ManyakSymbolIcon className="size-8 text-foreground-tertiary" />
           </div>
         )}
         {story.isOriginal && (

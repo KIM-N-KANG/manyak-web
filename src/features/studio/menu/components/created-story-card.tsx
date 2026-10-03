@@ -8,7 +8,6 @@ import {
   Calendar04Icon,
   Delete02Icon,
   Edit02Icon,
-  Image01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
@@ -21,6 +20,7 @@ import {
   type CardOptionsSheetItem,
 } from '@/components/common/card-options-sheet';
 import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryGenreBadges } from '@/features/stories/_shared/components/story-genre-badges';
@@ -189,10 +189,7 @@ function CreatedStoryCardBody({
           <div
             aria-hidden="true"
             className="flex size-full items-center justify-center">
-            <HugeiconsIcon
-              icon={Image01Icon}
-              className={cn('text-foreground-tertiary', 'size-8')}
-            />
+            <ManyakSymbolIcon className="size-8 text-foreground-tertiary" />
           </div>
         )}
       </AspectRatio>

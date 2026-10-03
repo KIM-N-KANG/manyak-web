@@ -6,10 +6,10 @@ import {
 } from '@/features/stories/list/utils/story-list-query';
 
 describe('parseStoryListQuery', () => {
-  it('쿼리가 없으면 전체와 최신순이다', () => {
+  it('쿼리가 없으면 전체와 인기순이다', () => {
     expect(parseStoryListQuery(new URLSearchParams())).toEqual({
       filter: 'all',
-      sort: 'latest',
+      sort: 'popular',
     });
   });
 
@@ -21,15 +21,15 @@ describe('parseStoryListQuery', () => {
 
   it('알 수 없는 값은 기본값으로 대체한다', () => {
     expect(
-      parseStoryListQuery(new URLSearchParams('filter=mine&sort=popular')),
-    ).toEqual({ filter: 'all', sort: 'latest' });
+      parseStoryListQuery(new URLSearchParams('filter=mine&sort=hot')),
+    ).toEqual({ filter: 'all', sort: 'popular' });
   });
 });
 
 describe('toStoryListSearch', () => {
   it('기본값은 생략한다', () => {
-    expect(toStoryListSearch({ filter: 'all', sort: 'latest' })).toBe('');
-    expect(toStoryListSearch({ filter: 'original', sort: 'latest' })).toBe(
+    expect(toStoryListSearch({ filter: 'all', sort: 'popular' })).toBe('');
+    expect(toStoryListSearch({ filter: 'original', sort: 'popular' })).toBe(
       '?filter=original',
     );
     expect(toStoryListSearch({ filter: 'all', sort: 'likes' })).toBe(
