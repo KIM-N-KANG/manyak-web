@@ -4,25 +4,35 @@ import { LinkSquare01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Link from 'next/link';
 
-import { HomeLogoHeader } from '@/components/layout/home-logo-header';
+import { LogoHeader } from '@/components/layout/logo-header';
 import { APP_PATH } from '@/constants/app-path';
 import { useTrackOnView } from '@/observability/analytics';
 
-import { SERVICE_GUEST_INFO, SERVICE_INFO_TITLE } from '../constants';
+import {
+  SERVICE_FEEDBACK_GUIDE,
+  SERVICE_GUEST_INFO,
+  SERVICE_GUEST_INFO_SCOPE,
+  SERVICE_INFO_TITLE,
+} from '../constants';
 
 export function ServiceInfoView() {
   useTrackOnView('client_serviceInfo_viewed');
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <HomeLogoHeader />
+      <LogoHeader />
       <main className="min-h-0 flex-1 scroll-fade-b overflow-y-auto overscroll-contain p-4">
         <article className="flex flex-col gap-8">
           <header>
             <h1 className="text-xl font-bold">{SERVICE_INFO_TITLE}</h1>
           </header>
           <section className="flex flex-col gap-4">
-            <h2 className="text-lg font-bold">게스트 이용 안내</h2>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-bold">게스트 이용 안내</h2>
+              <p className="text-sm text-foreground-secondary">
+                {SERVICE_GUEST_INFO_SCOPE}
+              </p>
+            </div>
             <ul className="flex list-disc flex-col pl-5">
               {SERVICE_GUEST_INFO.map((item) => (
                 <li key={item}>{item}</li>
@@ -42,15 +52,7 @@ export function ServiceInfoView() {
           <section className="flex flex-col gap-4">
             <h2 className="text-lg font-bold">문의</h2>
             <ul className="flex list-disc flex-col pl-5">
-              <li>
-                서비스 개선 의견은{' '}
-                <Link
-                  href={APP_PATH.MY_FEEDBACK}
-                  className="underline underline-offset-4">
-                  피드백
-                </Link>
-                으로 보내주세요.
-              </li>
+              <li>{SERVICE_FEEDBACK_GUIDE}</li>
             </ul>
           </section>
           <section className="flex flex-col gap-4">

@@ -1,6 +1,8 @@
 import { formatDocumentTitle } from '@/constants/site';
 import {
+  SERVICE_FEEDBACK_GUIDE,
   SERVICE_GUEST_INFO,
+  SERVICE_GUEST_INFO_SCOPE,
   SERVICE_INFO_TITLE,
 } from '@/features/about/constants';
 
@@ -37,9 +39,7 @@ test.describe('서비스 안내', () => {
       }),
     ).toBeVisible();
     await expect(
-      serviceInfoPage
-        .getByRole('banner')
-        .getByRole('link', { name: '홈으로 이동' }),
+      serviceInfoPage.getByRole('banner').getByRole('img', { name: '마냑' }),
     ).toBeVisible();
     await expect(
       serviceInfoPage.getByRole('button', {
@@ -101,7 +101,8 @@ test.describe('서비스 안내', () => {
     ).toBeVisible();
   });
 
-  test('게스트가 직접 진입한 뒤 로고를 누르면 홈으로 이동한다', async ({
+  // Android 앱이 같은 페이지를 WebView로 열기 때문에 앱 밖 웹 화면으로 가는 링크를 두지 않는다(KNK-1534).
+  test('로고와 피드백 안내는 링크가 아니고 게스트 안내는 웹 전용임을 밝힌다', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -110,12 +111,9 @@ test.describe('서비스 안내', () => {
     await expect(
       page.getByRole('heading', { name: 'AI 콘텐츠 안내' }),
     ).toBeVisible();
-
-    await page
-      .getByRole('banner')
-      .getByRole('link', { name: '홈으로 이동' })
-      .click();
-
-    await expect(page).toHaveURL('/');
+    await expect(page.getByRole('banner').getByRole('link')).toHaveCount(0);
+    await expect(page.getByText(SERVICE_GUEST_INFO_SCOPE)).toBeVisible();
+    await expect(page.getByText(SERVICE_FEEDBACK_GUIDE)).toBeVisible();
+    await expect(page.getByRole('link', { name: '피드백' })).toHaveCount(0);
   });
 });
