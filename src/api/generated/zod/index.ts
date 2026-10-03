@@ -1902,11 +1902,11 @@ export const GetMyChatsQueryParams = zod.object({
 export const GetMyChatsResponse = zod.unknown();
 
 /**
- * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 latest(기본, 등록 최신순)·likes(좋아요 많은 순)·chats(누적 턴 수 많은 순)이고, filter는 all(기본)과 original(마냑 공식 계정 소유만)입니다. 다음 페이지는 응답의 nextCursor를 **같은 filter·sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
+ * 발행·공개 상태의 회원 스토리 카드를 커서 페이지네이션으로 반환합니다(KNK-149). 인증은 필요 없고 요청자 신원도 쓰지 않습니다. 정렬은 popular(기본, 인기순)·latest(등록 최신순)·likes(좋아요 많은 순)·chats(누적 턴 수 많은 순)이고, filter는 all(기본)과 original(마냑 공식 계정 소유만)입니다. 다음 페이지는 응답의 nextCursor를 **같은 filter·sort로** 다시 넘겨 읽습니다. 소프트 삭제·비공개·초안과 게스트 제작 스토리(소유자 없음)는 제외합니다.
  * @summary 공개 스토리 목록 조회
  */
 export const getPublicStoriesQueryFilterDefault = `all`;
-export const getPublicStoriesQuerySortDefault = `latest`;
+export const getPublicStoriesQuerySortDefault = `popular`;
 export const getPublicStoriesQueryLimitDefault = 20;
 
 export const GetPublicStoriesQueryParams = zod.object({
@@ -1917,7 +1917,7 @@ export const GetPublicStoriesQueryParams = zod.object({
   sort: zod
     .string()
     .default(getPublicStoriesQuerySortDefault)
-    .describe('정렬. latest(기본), likes 또는 chats'),
+    .describe('정렬. popular(기본), latest, likes 또는 chats'),
   limit: zod
     .number()
     .default(getPublicStoriesQueryLimitDefault)
@@ -2074,7 +2074,7 @@ export const StatusHeader = zod.object({
 export const StatusResponse = zod.unknown();
 
 /**
- * 업로드·생성 표지 URL을 지워 프리셋 표지로 되돌립니다(KNK-1126). 프리셋 키는 건드리지 않으므로 표지가 사라지는 것이 아니라 자동 연결된 프리셋으로 내려갑니다. 표지가 없어도 204입니다(멱등). S3 객체는 지우지 않습니다 — 지난 채팅 카드가 그 URL을 가리킬 수 있습니다.
+ * 표지 URL과 프리셋 키를 모두 지워 표지를 null로 만듭니다. 표지가 없어도 204입니다(멱등). 검수 중에는 409입니다. S3 객체는 지난 채팅 카드에서 참조할 수 있어 지우지 않습니다.
  * @summary 표지 삭제
  */
 export const DeleteThumbnailParams = zod.object({

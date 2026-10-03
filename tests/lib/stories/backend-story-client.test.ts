@@ -102,7 +102,7 @@ describe('fetchPublicStoriesOnServer', () => {
       fetchPublicStoriesOnServer(DEFAULT_STORY_LIST_QUERY),
     ).resolves.toEqual(page);
     expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://backend.example.com/api/v1/stories?filter=all&sort=latest',
+      'https://backend.example.com/api/v1/stories?filter=all&sort=popular',
     );
   });
 });

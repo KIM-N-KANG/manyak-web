@@ -7,7 +7,6 @@ import {
   BubbleChatIcon,
   Calendar04Icon,
   Delete02Icon,
-  Image01Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
@@ -18,6 +17,7 @@ import {
   CardOptionsSheet,
   type CardOptionsSheetItem,
 } from '@/components/common/card-options-sheet';
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
@@ -166,10 +166,7 @@ function ChatCardBody({ chat, action }: ChatCardBodyProps) {
           <div
             aria-hidden="true"
             className="flex size-full items-center justify-center">
-            <HugeiconsIcon
-              icon={Image01Icon}
-              className={cn('text-foreground-tertiary', 'size-5')}
-            />
+            <ManyakSymbolIcon className="size-5 text-foreground-tertiary" />
           </div>
         )}
       </AspectRatio>
