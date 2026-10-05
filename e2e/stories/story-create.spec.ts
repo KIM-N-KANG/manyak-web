@@ -3,6 +3,7 @@ import { type Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 import {
   PENDING_CREATION_REQUEST_STORAGE_KEY,
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
@@ -11,7 +12,9 @@ import {
   buildStoryCompletionCreditCostLabel,
   GENRE_CATEGORY,
   PROTAGONIST_CATEGORY,
+  SELECTED_TAGS_TRIGGER_LABEL,
   STORY_COMPLETION_CREDIT_COST_LABEL,
+  STORYLINE_GENERATE_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
 import {
@@ -19,6 +22,8 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
+import { GENRE_CATALOG_FIXTURE } from '../fixtures/api-mock';
+import { readCreationStorage } from '../fixtures/storage';
 import {
   seedPendingCreationRequests,
   seedStoryCompletionRequests,
@@ -146,6 +151,12 @@ test.describe('스토리 생성', () => {
     });
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    // 장르는 제공 장르만 골라 직접 추가가 없고, 인물 특징에서 직접 추가한다.
+    await expect(page.getByRole('button', { name: '키워드 추가' })).toHaveCount(
+      0,
+    );
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     const dialog = page.getByRole('dialog');
@@ -162,6 +173,110 @@ test.describe('스토리 생성', () => {
     await expect(validationError).toBeHidden();
     await addButton.click();
     await expect(page.getByRole('button', { name: '타임루프' })).toBeVisible();
+  });
+
+  test('장르는 검색으로 고르고, 대표 밖 장르는 칩 끝에 붙어 해제해도 남으며 요청에는 제공 장르 id만 싣는다 (KNK-1542)', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({ json: tags });
+    });
+
+    const bodies: Record<string, unknown>[] = [];
+
+    await page.route(STORYLINES, async (route) => {
+      bodies.push(route.request().postDataJSON());
+      await route.fulfill({ status: 201, json: storylinesResponse });
+    });
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+
+    const search = page.getByRole('combobox');
+    const chips = page
+      .getByRole('tabpanel', { name: GENRE_CATEGORY.label })
+      .locator('button[aria-pressed]');
+    const modernFantasyChip = page.getByRole('button', {
+      name: '현대판타지',
+      exact: true,
+    });
+
+    await expect(search).toHaveAttribute(
+      'placeholder',
+      GENRE_SEARCH_COPY.placeholder,
+    );
+    await expect(chips).toHaveText(['판타지', '로맨스']);
+
+    // 빈 검색어로 열면 제공 장르 전체를 보이고, 검색어를 넣으면 서버 결과로 바꾼다.
+    await search.click();
+    await expect(page.getByRole('option')).toHaveCount(
+      GENRE_CATALOG_FIXTURE.genres.length,
+    );
+    await search.fill('현대');
+    await expect(page.getByRole('option')).toHaveText(['현대판타지']);
+    await page.getByRole('option', { name: '현대판타지' }).click();
+
+    // 고르면 목록을 닫고 검색어를 비우며, 대표 밖 장르는 칩 끝에 선택된 채 붙는다.
+    await expect(page.getByRole('listbox')).toBeHidden();
+    await expect(search).toHaveValue('');
+    await expect(chips).toHaveText(['판타지', '로맨스', '현대판타지']);
+    await expect(modernFantasyChip).toHaveAttribute('aria-pressed', 'true');
+
+    // 검색 목록에서 다시 누르면 해제되지만 칩은 그 자리에 남는다.
+    await search.click();
+    await expect(
+      page.getByRole('option', { name: '현대판타지' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await page.getByRole('option', { name: '현대판타지' }).click();
+    await expect(chips).toHaveText(['판타지', '로맨스', '현대판타지']);
+    await expect(modernFantasyChip).toHaveAttribute('aria-pressed', 'false');
+
+    await modernFantasyChip.click();
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: STORYLINE_GENERATE_LABEL }).click();
+
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0].genreTagIds).toEqual([103, 1]);
+    expect(bodies[0]).not.toHaveProperty('customGenreTags');
+
+    // 선택한 키워드 드로어는 대표 밖 장르 이름도 제공 장르 목록에서 찾아 보인다.
+    await page
+      .getByRole('button', { name: SELECTED_TAGS_TRIGGER_LABEL })
+      .click();
+    await expect(
+      page.getByRole('dialog').getByText('현대판타지', { exact: true }),
+    ).toBeVisible();
+  });
+
+  test('장르를 3개 고르면 검색 목록의 다른 장르는 고를 수 없고 고른 장르는 해제할 수 있다 (KNK-1542)', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({ json: tags });
+    });
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await page.getByRole('button', { name: '로맨스', exact: true }).click();
+
+    const search = page.getByRole('combobox');
+
+    await search.fill('bl');
+    await page.getByRole('option', { name: 'BL' }).click();
+    await search.click();
+
+    await expect(page.getByRole('option', { name: '호러' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await page.getByRole('option', { name: 'BL' }).click();
+    await expect(
+      page.getByRole('button', { name: 'BL', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'false');
+    await expect(
+      page.getByRole('button', { name: '로맨스판타지', exact: true }),
+    ).toHaveCount(0);
   });
 
   test('필수 키워드 없이 다음을 누르면 오류를 표시하고 선택하면 해제한다', async ({
@@ -424,12 +539,11 @@ test.describe('스토리 생성', () => {
     ).toBeHidden();
     await expect
       .poll(() =>
-        page.evaluate(
-          (keys) => keys.map((key) => localStorage.getItem(key)),
+        Promise.all(
           [
             PENDING_CREATION_REQUEST_STORAGE_KEY,
             STORY_COMPLETION_REQUESTS_STORAGE_KEY,
-          ],
+          ].map((key) => readCreationStorage(page, key)),
         ),
       )
       .toEqual([null, null]);
@@ -521,12 +635,11 @@ test.describe('스토리 생성', () => {
       expect(chatCount).toBe(0);
       await expect
         .poll(() =>
-          page.evaluate(
-            (keys) => keys.map((key) => localStorage.getItem(key)),
+          Promise.all(
             [
               PENDING_CREATION_REQUEST_STORAGE_KEY,
               STORY_COMPLETION_REQUESTS_STORAGE_KEY,
-            ],
+            ].map((key) => readCreationStorage(page, key)),
           ),
         )
         .toEqual([null, null]);
@@ -606,10 +719,10 @@ test.describe('스토리 생성', () => {
       }),
     ).toHaveCount(1);
     expect(
-      await page.evaluate(
-        (key) => JSON.parse(localStorage.getItem(key) ?? '[]'),
+      await readCreationStorage(
+        page,
         PENDING_CREATION_REQUEST_STORAGE_KEY,
-      ),
+      ).then((raw) => JSON.parse(raw ?? '[]')),
     ).toMatchObject([{ stage: 'KEYWORD_DRAFT', requestId: 'keyword-other' }]);
   });
 

@@ -1,6 +1,7 @@
 import { BubbleChatIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { formatCompactCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
 
 type StoryTurnCountProps = {
@@ -27,7 +28,7 @@ export function StoryTurnCount({
       />
       <p>
         <span className="sr-only">누적 턴 수 </span>
-        {turnCount.toLocaleString()}
+        {formatCompactCount(turnCount)}
       </p>
     </div>
   );

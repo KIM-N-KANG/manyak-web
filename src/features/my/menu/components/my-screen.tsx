@@ -6,6 +6,7 @@ import {
   InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
+  Notification01Icon,
   UserRemove01Icon,
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
@@ -15,6 +16,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { clearLocalMemberState } from '@/features/auth/_shared/utils/clear-local-member-state';
 import { InviteMenuItem } from '@/features/my/_shared/components/invite-menu-item';
 import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
+import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
 import { track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
@@ -31,15 +33,15 @@ export function MyScreen() {
     track('client_account_viewed');
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
     track('client_account_logoutButton_clicked');
-    clearLocalMemberState();
+    await clearLocalMemberState();
     void signOut({ redirectTo: APP_PATH.MAIN.MY });
   };
 
   return (
-    <main className="flex flex-1 flex-col pb-4">
+    <main className="flex flex-1 flex-col">
       <ProfileHeader />
       <CreditBalanceCard />
       {isAuthenticated && (
@@ -56,6 +58,18 @@ export function MyScreen() {
         </div>
         <ThemeMenuItem />
       </section>
+      {isAuthenticated && (
+        <section className="flex flex-col py-4">
+          <div className="mb-2 px-4">
+            <Label>알림</Label>
+          </div>
+          <MyMenuItem
+            icon={Notification01Icon}
+            label={PUSH_SETTINGS_COPY.menuLabel}
+            href={APP_PATH.MY_NOTIFICATIONS}
+          />
+        </section>
+      )}
       <section className="flex flex-col py-4">
         <div className="mb-2 px-4">
           <Label>기타</Label>

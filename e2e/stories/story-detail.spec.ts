@@ -3,8 +3,15 @@ import type { Page, Route } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+import { START_SETTING_INFO_COPY } from '@/features/stories/detail/constants/start-setting-copy';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
 
 import { mockMemberSession } from '../fixtures/auth';
+import {
+  findOverflowingTexts,
+  SPACED_LONG_TEXT,
+  UNBROKEN_TEXT,
+} from '../fixtures/layout';
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
@@ -54,19 +61,32 @@ const fulfillStoryDetail = async (route: Route) => {
 
 const THUMBNAIL_URL = 'https://cdn.manyak.app/thumbnails/dragon.png';
 
-// 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 이미지 생성에 실패한
-// 인물은 imageUrl이 null로 내려오므로 이름만 남는 경우도 함께 덮는다.
+// 인물 이미지는 채팅과 같은 CDN 인물 경로 계약을 따른다. 일반 제작에서 올린 이미지는
+// `characters/uploaded/` 아래로 온다(KNK-1503). 이미지 생성에 실패한 인물은 imageUrl이
+// null로 내려오므로 이름만 남는 경우도 함께 덮는다. 소개 없이 만든 인물은
+// description이 null이다(KNK-1467).
 const STORY_CHARACTERS = [
   {
     name: '이무기',
     imageUrl: 'https://cdn.manyak.app/characters/generated/s1/imugi.webp',
+    description: '천 년을 기다려 용이 되려는 이무기.',
   },
-  { name: '계곡지기', imageUrl: null },
+  {
+    name: '산신령',
+    imageUrl:
+      'https://cdn.manyak.app/characters/uploaded/moderated/sansin.webp',
+    description: null,
+  },
+  {
+    name: '계곡지기',
+    imageUrl: null,
+    description: '계곡 입구를 지키는 과묵한 노인.',
+  },
 ];
 
-// 1x1 투명 PNG. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+// 60×60 투명 PNG. 뷰어의 srcset 밀도로 나눠도 naturalWidth가 0으로 반올림되지 않게 1×1보다 크게 둔다. 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAJElEQVR4nO3BMQEAAADCoPVP7WkJoAAAAAAAAAAAAAAAAAAAbjh8AAFOgZ4bAAAAAElFTkSuQmCC',
   'base64',
 );
 
@@ -81,7 +101,7 @@ test.describe('스토리 상세', () => {
     ).toBeVisible();
     await expect(page.getByText('잃어버린 용을 찾는 모험')).toBeVisible();
     await expect(page.getByText('깊은 계곡 속 전설의 이야기')).toBeVisible();
-    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
     await expect(page.getByText('제작자')).toBeVisible();
     await expect(page.getByText('마냑', { exact: true })).toBeVisible();
     await expect(page.getByText('생성일')).toBeVisible();
@@ -93,6 +113,36 @@ test.describe('스토리 상세', () => {
       .locator('xpath=ancestor::nav');
 
     await expect(cta).toHaveCSS('padding-top', '0px');
+  });
+
+  test('내가 만든 스토리에만 생성일 아래 공개 범위를 보여준다 (STORY-DETAIL-48)', async ({
+    page,
+  }) => {
+    let detail: object = {
+      ...storyDetail,
+      isOwner: true,
+      visibility: 'PRIVATE',
+    };
+
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(detail),
+      });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(page.getByText('생성일').locator('../..')).toHaveText(
+      `제작자마냑생성일2026-06-24${STORY_VISIBILITY_COPY.label}${STORY_VISIBILITY_COPY.PRIVATE}`,
+    );
+
+    detail = { ...storyDetail, isOwner: false, visibility: 'PUBLIC' };
+    await page.reload();
+
+    await expect(page.getByText('생성일')).toBeVisible();
+    await expect(page.getByText(STORY_VISIBILITY_COPY.label)).toHaveCount(0);
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
@@ -125,7 +175,7 @@ test.describe('스토리 상세', () => {
     await expect(
       page.getByRole('img', { name: '스토리 썸네일' }),
     ).toBeVisible();
-    await expect(page.getByText('누적 턴 수 1,280')).toBeVisible();
+    await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
 
     const header = page.locator('header');
 
@@ -143,7 +193,26 @@ test.describe('스토리 상세', () => {
     expect(headerGradientCount).toBe(0);
   });
 
-  test('주변 인물 이름과 인물 이미지를 보여준다 (KNK-1058)', async ({
+  test('썸네일이 없어도 헤더는 처음에 히어로 위에 투명하게 겹친다 (STORY-DETAIL-03)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(storyDetail),
+      });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(
+      page.getByRole('img', { name: '스토리 썸네일 없음' }),
+    ).toBeVisible();
+    await expect(page.locator('header')).toHaveCSS('--story-header-alpha', '0');
+  });
+
+  test('주변 인물 이름·소개·인물 이미지를 보여준다 (KNK-1058, KNK-1467)', async ({
     page,
   }) => {
     await page.route(STORY_DETAIL, async (route) => {
@@ -159,18 +228,84 @@ test.describe('스토리 상세', () => {
 
     await page.goto('/stories/s1');
 
+    const [imugi, sansin, gyegok] = STORY_CHARACTERS;
+    const section = page
+      .getByRole('heading', { name: '주변 인물' })
+      .locator('..');
+    const picker = page.getByRole('group', { name: '주변 인물 선택' });
+
+    // 인물 선택 줄에 모든 인물이 있고, 첫 인물만 선택된 채 크게 보인다
+    await expect(picker.getByRole('button')).toHaveCount(3);
     await expect(
-      page.getByRole('heading', { name: '주변 인물' }),
-    ).toBeVisible();
-    await expect(page.getByRole('heading', { name: '이무기' })).toBeVisible();
+      picker.getByRole('button', { name: imugi.name }),
+    ).toHaveAttribute('aria-pressed', 'true');
     await expect(
       page.getByRole('img', { name: '이무기 인물 이미지' }),
     ).toBeVisible();
+    await expect(section).toHaveText(
+      `주변 인물${imugi.name}${imugi.description}`,
+    );
 
-    // 이미지가 없는 인물도 이름은 남는다
-    await expect(page.getByRole('heading', { name: '계곡지기' })).toBeVisible();
+    // 첫 인물에서는 이전 화살표가 없고, 다음 화살표로 다음 인물을 고른다. 소개가 null인 인물은 이름만 보인다
+    await expect(page.getByRole('button', { name: '이전 인물' })).toHaveCount(
+      0,
+    );
+    await page.getByRole('button', { name: '다음 인물' }).click();
     await expect(
-      page.getByRole('img', { name: '계곡지기 인물 이미지' }),
+      picker.getByRole('button', { name: sansin.name }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      picker.getByRole('button', { name: imugi.name }),
+    ).toHaveAttribute('aria-pressed', 'false');
+    await expect(
+      page.getByRole('img', { name: '산신령 인물 이미지' }),
+    ).toBeVisible();
+    await expect(section).toHaveText(`주변 인물${sansin.name}`);
+
+    // 이미지가 없는 인물은 기본 심벌 이미지와 이름, 소개를 보인다
+    await picker.getByRole('button', { name: gyegok.name }).click();
+    await expect(
+      page.getByRole('img', { name: '계곡지기 인물 이미지 없음' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: '계곡지기 인물 이미지', exact: true }),
+    ).toHaveCount(0);
+    await expect(section).toHaveText(
+      `주변 인물${gyegok.name}${gyegok.description}`,
+    );
+
+    // 마지막 인물에서는 다음 화살표가 없고, 이전 화살표로 앞 인물을 고른다
+    await expect(page.getByRole('button', { name: '다음 인물' })).toHaveCount(
+      0,
+    );
+    await page.getByRole('button', { name: '이전 인물' }).click();
+    await expect(
+      picker.getByRole('button', { name: sansin.name }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('주변 인물이 한 명이면 인물 선택 줄 없이 그 인물을 보여준다', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...storyDetail,
+          characters: STORY_CHARACTERS.slice(0, 1),
+        }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(page.getByRole('heading', { name: '이무기' })).toBeVisible();
+    await expect(
+      page.getByRole('group', { name: '주변 인물 선택' }),
     ).toHaveCount(0);
   });
 
@@ -204,6 +339,37 @@ test.describe('스토리 상세', () => {
     await viewer.getByRole('button', { name: '닫기' }).click();
     await expect(viewer).not.toBeVisible();
     await expect(page).toHaveURL(/\/stories\/s1$/);
+
+    // 정사각형 이미지라 세로 화면에서는 가운데만 그림이고 위아래는 검은 여백이다.
+    // 그림을 탭하면 그대로 두고, 여백을 탭해야 닫힌다(KNK-1427).
+    await page
+      .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
+      .click();
+    await expect(viewer).toBeVisible();
+
+    const viewport = page.viewportSize();
+
+    if (!viewport) throw new Error('뷰포트 크기를 알 수 없다');
+
+    // 이미지를 더블 탭하면 2.5배로 커지고, 다시 더블 탭하면 원래 크기로 돌아온다.
+    const viewerImage = viewer.getByRole('img', { name: '이무기 인물 이미지' });
+    const imageWidth = async () => (await viewerImage.boundingBox())?.width;
+
+    // 로드 전에는 그림 영역을 알 수 없어 어느 탭이든 배경 탭으로 닫힌다.
+    await expect
+      .poll(() =>
+        viewerImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0);
+    await page.mouse.dblclick(viewport.width / 2, viewport.height / 2);
+    await expect.poll(imageWidth).toBeCloseTo(viewport.width * 2.5, 0);
+    await page.mouse.dblclick(viewport.width / 2, viewport.height / 2);
+    await expect.poll(imageWidth).toBeCloseTo(viewport.width, 0);
+
+    await page.mouse.click(viewport.width / 2, viewport.height / 2);
+    await expect(viewer).toBeVisible();
+    await page.mouse.click(viewport.width / 2, 40);
+    await expect(viewer).not.toBeVisible();
 
     await page
       .getByRole('button', { name: '이무기 인물 이미지 크게 보기' })
@@ -362,15 +528,21 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('잃어버린 용과의 재회')).toBeVisible();
     await expect(page.getByText('두 존재가 다시 만난다')).not.toBeVisible();
 
+    await page.getByRole('button', { name: '상황 이름 안내' }).click();
+    await expect(
+      page.getByText(START_SETTING_INFO_COPY.situation),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+
     await page.getByRole('button', { name: '엔딩 안내' }).click();
-    await expect(page.getByText('엔딩은 시작 상황마다 달라져요')).toBeVisible();
+    await expect(page.getByText(START_SETTING_INFO_COPY.ending)).toBeVisible();
     await page.keyboard.press('Escape');
 
     await trigger.click();
 
     const secondOption = page.getByRole('option', { name: '용의 둥지' });
 
-    await expect(secondOption).toHaveCSS('border-radius', '10px');
+    await expect(secondOption).toHaveCSS('border-radius', '12px');
     await secondOption.click();
 
     await expect(trigger).toContainText('용의 둥지');
@@ -378,6 +550,39 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('새로운 수호자')).toBeVisible();
     await expect(page.getByText('용의 흔적을 따라왔다')).not.toBeVisible();
     await expect(page.getByText('잃어버린 용과의 재회')).not.toBeVisible();
+  });
+
+  test('시작 상황의 장면 이미지 마커를 이미지로 표시한다 (KNK-1545)', async ({
+    page,
+  }) => {
+    const sceneImageUrl =
+      'https://cdn.manyak.app/scenes/originals/s1/valley_1a2b3c4d.webp';
+
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...storyDetail,
+          startSettings: [
+            {
+              ...storyDetail.startSettings[0],
+              startSituation: `용의 흔적을 따라왔다\n\n[[${sceneImageUrl}]]\n\n안개가 걷힌다`,
+            },
+          ],
+        }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(page.getByText('용의 흔적을 따라왔다')).toBeVisible();
+    await expect(page.getByRole('img', { name: '장면 이미지' })).toBeVisible();
+    await expect(page.getByText('안개가 걷힌다')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(sceneImageUrl);
   });
 
   test('"채팅 시작하기"를 누르면 선택한 시작 설정으로 채팅 화면에 이동한다 (US-4-2)', async ({
@@ -643,5 +848,38 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
 
     await expect(page.getByText(TOAST_MESSAGE.STORY_DELETED)).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+  });
+});
+
+test.describe('스토리 상세 긴 글', () => {
+  test('긴 제목·소개·주요 내용·본 엔딩·상황 이름도 화면 폭 안에서 줄바꿈하거나 말줄임한다 (STORY-DETAIL-46)', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, (route) =>
+      route.fulfill({
+        json: {
+          ...storyDetail,
+          title: `제목${UNBROKEN_TEXT}`,
+          oneLineIntro: `소개${UNBROKEN_TEXT}`,
+          description: `줄거리${UNBROKEN_TEXT}`,
+          reachedEndings: [SPACED_LONG_TEXT],
+          startSettings: [
+            {
+              ...storyDetail.startSettings[0],
+              name: SPACED_LONG_TEXT,
+              startSituation: `상황${UNBROKEN_TEXT}`,
+            },
+          ],
+        },
+      }),
+    );
+
+    await page.goto('/stories/s1');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
+
+    await page.getByRole('combobox', { name: '채팅 시작 상황 선택' }).click();
+    await expect(page.getByRole('option')).toHaveCount(1);
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 });

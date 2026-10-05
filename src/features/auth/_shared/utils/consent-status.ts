@@ -6,11 +6,11 @@ import type {
 /** 필수 동의 항목 키. 서버 응답·요청 필드와 같은 이름을 쓴다. */
 export type ConsentKey = keyof UserConsentRequest;
 
-/** 시트에 표시하는 순서. 이용약관 → 개인정보 처리방침 → 만 14세 이상 확인. */
+/** 시트에 표시하는 순서. 만 14세 이상 확인 → 이용약관 → 개인정보 처리방침(Android와 동일). */
 export const CONSENT_KEYS: readonly ConsentKey[] = [
+  'age14',
   'terms',
   'privacy',
-  'age14',
 ];
 
 /** 현재 동의가 필요한 항목과 서버가 요구하는 버전. */

@@ -6,6 +6,7 @@ import {
   CREDIT_PRODUCTS_FIXTURE,
   EXHAUSTED_TRIALS,
   GUEST_CONSENT_VERSION_FIXTURE,
+  isPublicStoriesUrl,
   mockApi,
   mockChatShareCreate,
   mockChatShareView,
@@ -15,7 +16,12 @@ import {
   mockGuestConsents,
   mockHandoffSession,
   mockHandoffStatus,
+  mockPublicStories,
+  mockPushSettings,
+  mockPushTokens,
+  mockSignupConsent,
   mockTrials,
+  PUSH_SETTINGS_FIXTURE,
   TRIALS_FIXTURE,
 } from './api-mock';
 
@@ -40,7 +46,11 @@ export {
   skipChatTour,
   skipOnboarding,
 } from './storage';
-export { mockGuestSession, mockMemberSession } from './auth';
+export {
+  mockGuestSession,
+  mockMemberSession,
+  mockSignupConsentSignIn,
+} from './auth';
 export {
   CONSENTS_FIXTURE,
   CREDIT_POLICY_FIXTURE,
@@ -49,12 +59,18 @@ export {
   GUEST_CONSENT_VERSION_FIXTURE,
   mockChatShareCreate,
   mockChatShareView,
+  isPublicStoriesUrl,
   mockConsents,
   mockGuestConsents,
   mockCreditPolicies,
   mockCreditProducts,
   mockHandoffSession,
   mockHandoffStatus,
+  mockPublicStories,
+  mockPushSettings,
+  mockPushTokens,
+  mockSignupConsent,
   mockTrials,
+  PUSH_SETTINGS_FIXTURE,
   TRIALS_FIXTURE,
 };

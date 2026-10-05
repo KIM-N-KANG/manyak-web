@@ -16,6 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ChatCharacterImage } from '@/features/chats/_shared/components/chat-character-image';
+import {
+  getChatImageAlt,
+  parseChatMessageSegments,
+} from '@/features/chats/_shared/utils/chat-message-segments';
+import { START_SETTING_INFO_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 
 type StoryStartSettingsProps = {
   startSettings: StoryStartSettingResponse[];
@@ -35,6 +41,38 @@ export const startSettingValue = (
   index: number,
 ) => setting?.id ?? String(index);
 
+function InfoHeading({ title, children }: { title: string; children: string }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      <h3 className="font-semibold">{title}</h3>
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label={`${title} 안내`}
+              className="text-foreground-secondary"
+            />
+          }>
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-4"
+            aria-hidden="true"
+          />
+        </PopoverTrigger>
+        <PopoverContent
+          side="bottom"
+          align="start"
+          className="w-auto max-w-60 gap-0 px-3 py-2">
+          {children}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 export function StoryStartSettings({
   startSettings,
   value,
@@ -53,7 +91,9 @@ export function StoryStartSettings({
       <h2 className="text-lg font-bold">채팅 시작 상황</h2>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
-          <h3 className="font-semibold">상황 이름</h3>
+          <InfoHeading title="상황 이름">
+            {START_SETTING_INFO_COPY.situation}
+          </InfoHeading>
           <Select
             value={value}
             onValueChange={(next) => onValueChange(next as string)}
@@ -62,7 +102,7 @@ export function StoryStartSettings({
               label: setting.name ?? `시작 상황 ${index + 1}`,
             }))}>
             <SelectTrigger className="w-full" aria-label="채팅 시작 상황 선택">
-              <SelectValue />
+              <SelectValue className="block min-w-0 truncate" />
             </SelectTrigger>
             {/* 팝업이 트리거를 덮지 않고 같은 너비로 바로 아래에 뜨도록 한다 */}
             <SelectContent alignItemWithTrigger={false}>
@@ -70,8 +110,10 @@ export function StoryStartSettings({
                 <SelectItem
                   key={startSettingValue(setting, index)}
                   value={startSettingValue(setting, index)}
-                  className="rounded-[var(--radius)]">
-                  {setting.name ?? `시작 상황 ${index + 1}`}
+                  className="h-auto min-h-10 py-2">
+                  <span className="min-w-0 wrap-anywhere whitespace-normal">
+                    {setting.name ?? `시작 상황 ${index + 1}`}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -80,43 +122,35 @@ export function StoryStartSettings({
         {selected ? (
           <div className="flex flex-col gap-4">
             <h3 className="font-semibold">상황 설명</h3>
-            <TextContent>{selected.startSituation ?? ''}</TextContent>
+            {/* 오리지널 스토리의 시작 상황에는 채팅 본문과 같은 이미지 마커가 들어 있다(KNK-1545) */}
+            <div className="flex flex-col gap-7">
+              {parseChatMessageSegments(selected.startSituation ?? '').map(
+                (segment, index) =>
+                  segment.type === 'text' ? (
+                    <TextContent key={`text-${index}`}>
+                      {segment.content}
+                    </TextContent>
+                  ) : (
+                    <ChatCharacterImage
+                      key={`image-${index}`}
+                      alt={getChatImageAlt(segment)}
+                      imageUrl={segment.imageUrl}
+                    />
+                  ),
+              )}
+            </div>
           </div>
         ) : null}
         {endings.length > 0 ? (
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-0.5">
-              <h3 className="font-semibold">엔딩</h3>
-              <Popover>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label="엔딩 안내"
-                      className="text-foreground-secondary"
-                    />
-                  }>
-                  <HugeiconsIcon
-                    icon={InformationCircleIcon}
-                    className="size-4"
-                    aria-hidden="true"
-                  />
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="start"
-                  className="w-auto max-w-60 gap-0 border border-border bg-input px-3 py-2 shadow-xs ring-0">
-                  엔딩은 시작 상황마다 달라져요
-                </PopoverContent>
-              </Popover>
-            </div>
+            <InfoHeading title="엔딩">
+              {START_SETTING_INFO_COPY.ending}
+            </InfoHeading>
             <div className="flex flex-col gap-2">
               {endings.map((ending, index) => (
                 <div
                   key={`${ending}-${index}`}
-                  className="flex min-h-10 items-center rounded-md bg-muted px-3.5 py-2 text-sm">
+                  className="flex min-h-10 items-center rounded-md bg-muted px-3.5 py-2 text-sm wrap-anywhere">
                   {ending}
                 </div>
               ))}

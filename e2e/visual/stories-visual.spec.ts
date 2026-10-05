@@ -8,7 +8,13 @@ import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 import { mockMemberSession } from '../fixtures/auth';
 import { oneLine } from '../fixtures/copy';
 import { seedStoryCompletionRequests } from '../fixtures/storage';
-import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
+import {
+  expect,
+  mockPublicStories,
+  seedStoryIds,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
   waitForDarkTheme,
@@ -21,7 +27,6 @@ import {
  */
 
 const STORIES_BATCH = '**/api/v1/stories/batch';
-const STORIES_ORIGINALS = '**/api/v1/stories/originals';
 const STORY_DETAIL = '**/api/v1/stories/s1';
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
@@ -87,8 +92,7 @@ const tags = [
   { id: 4, name: '든든한', category: 'SUPPORTING_CHARACTER' },
 ];
 
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다. UI를 되살릴 때 skip을 제거한다.
-test.describe.skip('스토리 좋아요 비주얼', () => {
+test.describe('스토리 좋아요 비주얼', () => {
   test('좋아요 로그인 바텀 시트', async ({ page }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
     await page.route(STORY_DETAIL, (route) =>
@@ -286,18 +290,12 @@ test.describe('스토리 비주얼', () => {
 
   test('홈 오리지널 목록 (STORY-LIST)', async ({ page }) => {
     await seedStoryIds(page, ['s1']);
-    await page.route(STORIES_ORIGINALS, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([
-          {
-            ...story('o1', '마냑의 첫 이야기'),
-            author: { id: 1, nickname: '마냑', profileImageUrl: null },
-          },
-        ]),
-      });
-    });
+    await mockPublicStories(page, [
+      {
+        ...story('o1', '마냑의 첫 이야기'),
+        author: { id: 1, nickname: '마냑', profileImageUrl: null },
+      },
+    ]);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
         status: 200,
@@ -400,6 +398,9 @@ test.describe('스토리 오버레이 비주얼', () => {
     // 퍼널 오버레이는 회원 전용 제작 화면 안에 있다.
     await mockMemberSession(page);
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    // 장르는 직접 추가가 없어 주인공 특징의 키워드 추가를 연다.
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     await expect(

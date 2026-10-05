@@ -7,7 +7,7 @@
  */
 
 /**
- * 스토리 인물(이름과 인물 이미지). 외형 필드·인물 식별자는 노출하지 않는다.
+ * 스토리 인물(이름·이미지·소개). 외형 필드·인물 식별자는 노출하지 않는다.
  */
 export interface StoryCharacterResponse {
   /** 인물 이름 */
@@ -17,4 +17,9 @@ export interface StoryCharacterResponse {
    * @nullable
    */
   imageUrl?: string | null;
+  /**
+   * 인물 소개. 소개 없는 컴파일·기존 스토리·일반 제작이나 수정으로 추가한 인물은 null이다.
+   * @nullable
+   */
+  description?: string | null;
 }

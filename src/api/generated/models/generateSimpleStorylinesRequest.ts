@@ -21,11 +21,8 @@ export interface GenerateSimpleStorylinesRequest {
    */
   genreTagIds?: number[];
   /**
-   * 사용자가 직접 입력한 장르 이름 목록
-   * @minItems 0
-   * @maxItems 20
-   * @items.minLength 0
-   * @items.maxLength 30
+   * 종료된 장르 직접 입력. 누락 또는 빈 배열만 허용
+   * @deprecated
    */
   customGenreTags?: string[];
   /** 주인공 입력 */

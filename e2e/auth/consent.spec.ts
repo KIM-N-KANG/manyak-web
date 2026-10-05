@@ -2,12 +2,19 @@ import { type Page } from '@playwright/test';
 
 import type { UserConsentResponse } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
+import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
+import { PUSH_CONSENT_NOTICE_COPY } from '@/features/my/_shared/constants/push-copy';
+import type { SignupConsentSummary } from '@/lib/auth/signup-consent';
 
 import {
   CONSENTS_FIXTURE,
   expect,
   mockMemberSession,
+  mockSignupConsent,
+  mockSignupConsentSignIn,
+  PUSH_SETTINGS_FIXTURE,
   seedPendingLogin,
   seedStoryIds,
   skipOnboarding,
@@ -245,8 +252,17 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     await submitButton(page).click();
 
     await expect(dialog).toBeHidden();
-    expect(recordBodies).toEqual([{ terms: 'v1.3', age14: '1' }]);
+    expect(recordBodies).toEqual([{ age14: '1', terms: 'v1.3' }]);
     await expect(page).toHaveURL('/stories/s1?setting=ss2#endings');
+
+    // 전체 동의는 광고 동의도 켜므로 처리 결과 다이얼로그가 따라온다. 닫아야 화면을 쓸 수 있다.
+    const notice = page.getByRole('alertdialog');
+
+    await expect(notice).toContainText(PUSH_CONSENT_NOTICE_COPY.title);
+    await notice
+      .getByRole('button', { name: PUSH_CONSENT_NOTICE_COPY.close })
+      .click();
+    await expect(notice).toBeHidden();
 
     // 동의를 마친 뒤에야 회원 기능(채팅 시작)이 실제 요청으로 이어진다. 자동 재실행은 없다.
     expect(createChatCount).toBe(0);
@@ -495,5 +511,311 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     await expect(dialog).toBeHidden();
     await myStories;
     expect(consentsCount).toBe(2);
+  });
+});
+
+test.describe('필수 동의 시트의 광고성 알림 수신 동의(선택)', () => {
+  test('체크하지 않아도 제출할 수 있고 광고 동의는 저장하지 않는다', async ({
+    page,
+  }) => {
+    let pushSettingsPutCount = 0;
+
+    await mockMemberSession(page);
+    await seedPendingLogin(page);
+    await page.route(CONSENTS, async (route) => {
+      await route.fulfill({
+        json:
+          route.request().method() === 'POST'
+            ? CONSENTS_FIXTURE
+            : PENDING_CONSENTS,
+      });
+    });
+    await page.route('**/api/v1/users/me/push-settings', async (route) => {
+      if (route.request().method() === 'PUT') {
+        pushSettingsPutCount += 1;
+      }
+
+      await route.fulfill({ json: PUSH_SETTINGS_FIXTURE });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const dialog = consentDialog(page);
+    const marketing = dialog.getByRole('checkbox', {
+      name: CONSENT_SHEET_COPY.marketing,
+    });
+
+    await expect(marketing).toBeVisible();
+    await expect(marketing).not.toBeChecked();
+    // 전체 동의는 선택 항목까지 켜지만, 선택만 다시 끄면 전체 동의가 풀리고 제출은 가능하다.
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .click();
+    await expect(marketing).toBeChecked();
+    await marketing.click();
+    await expect(marketing).not.toBeChecked();
+    await expect(
+      dialog.getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll }),
+    ).not.toBeChecked();
+    await expect(submitButton(page)).toBeEnabled();
+    await submitButton(page).click();
+
+    await expect(dialog).toBeHidden();
+    await page.waitForTimeout(500);
+    expect(pushSettingsPutCount).toBe(0);
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
+  test('체크한 채 동의하면 필수 동의 저장 뒤 광고만 켠 전체 교체 PUT과 처리 결과 통지가 이어진다', async ({
+    page,
+  }) => {
+    const putBodies: unknown[] = [];
+
+    await mockMemberSession(page);
+    await seedPendingLogin(page);
+    await page.route(CONSENTS, async (route) => {
+      await route.fulfill({
+        json:
+          route.request().method() === 'POST'
+            ? CONSENTS_FIXTURE
+            : PENDING_CONSENTS,
+      });
+    });
+    await page.route('**/api/v1/users/me/push-settings', async (route) => {
+      if (route.request().method() === 'PUT') {
+        putBodies.push(route.request().postDataJSON());
+        await route.fulfill({ body: route.request().postData() ?? '{}' });
+
+        return;
+      }
+
+      await route.fulfill({ json: PUSH_SETTINGS_FIXTURE });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const dialog = consentDialog(page);
+
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .click();
+    await expect(
+      dialog.getByRole('checkbox', { name: CONSENT_SHEET_COPY.marketing }),
+    ).toBeChecked();
+    await submitButton(page).click();
+
+    await expect(dialog).toBeHidden();
+    await expect.poll(() => putBodies.length).toBe(1);
+    expect(putBodies[0]).toEqual({
+      servicePush: true,
+      marketingPush: true,
+      marketingNightPush: false,
+    });
+
+    const notice = page.getByRole('alertdialog');
+
+    await expect(notice).toContainText(PUSH_CONSENT_NOTICE_COPY.title);
+    await expect(notice).toContainText(
+      PUSH_CONSENT_NOTICE_COPY.result.marketingOn,
+    );
+  });
+});
+
+/** 세 항목 모두 동의가 필요한, 세션 없는 가입 대기. */
+const SIGNUP_PENDING: SignupConsentSummary = {
+  consents: PENDING_CONSENTS,
+  expiresAt: '2099-01-01T00:00:00.000Z',
+};
+
+const readPendingLogin = (page: Page) =>
+  page.evaluate(
+    (key) => sessionStorage.getItem(key),
+    PENDING_LOGIN_STORAGE_KEY,
+  );
+
+/**
+ * 가입 동의 시트(FE-SCREEN-010, 웹 사용자 모델 로그인과 회원 이관, QA AUTH-CONSENT).
+ * 필수 동의가 남은 소셜 인증은 세션 없이 대기 쿠키만 남기고, 동의 제출이 Credentials로
+ * 가입을 완료해야 세션이 생긴다. OAuth 복귀는 탭 표시와 BFF 대기 조회 목으로 대신한다.
+ */
+test.describe('동의 전 가입 대기(세션 없음)', () => {
+  test.beforeEach(async ({ page }) => {
+    await skipOnboarding(page);
+  });
+
+  test('가입 동의를 마쳐야 세션이 생기고, 그 뒤에 회원 기능이 시작된다', async ({
+    page,
+  }) => {
+    await seedPendingLogin(page);
+    await mockSignupConsent(page, SIGNUP_PENDING);
+
+    const signIn = await mockSignupConsentSignIn(page);
+    let memberRequests = 0;
+    let consentRecords = 0;
+
+    await page.route(MY_STORIES, (route) => {
+      memberRequests += 1;
+
+      return route.fallback();
+    });
+    await page.route(CONSENTS, (route) => {
+      if (route.request().method() === 'POST') {
+        consentRecords += 1;
+      }
+
+      return route.fallback();
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const dialog = consentDialog(page);
+
+    await expect(dialog).toBeVisible();
+    expect(memberRequests).toBe(0);
+
+    const myStories = page.waitForRequest(MY_STORIES);
+
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .check();
+    await submitButton(page).click();
+
+    await myStories;
+    await expect(dialog).toBeHidden();
+    expect(signIn.bodies).toHaveLength(1);
+    expect(signIn.bodies[0].get('terms')).toBe('v1.2');
+    expect(signIn.bodies[0].get('privacy')).toBe('v1.4');
+    expect(signIn.bodies[0].get('age14')).toBe('1');
+    // 가입 완료가 동의를 함께 저장하므로 회원 동의 기록 API는 부르지 않는다.
+    expect(consentRecords).toBe(0);
+    await expect.poll(() => readPendingLogin(page)).toBeNull();
+  });
+
+  for (const [code, toast] of [
+    ['expired', TOAST_MESSAGE.SIGNUP_CONSENT_EXPIRED],
+    ['outdated', TOAST_MESSAGE.SIGNUP_CONSENT_OUTDATED],
+  ] as const) {
+    test(`완료가 ${code}로 거절되면 시트를 닫고 다시 로그인을 안내한다`, async ({
+      page,
+    }) => {
+      await seedPendingLogin(page);
+      await mockSignupConsent(page, SIGNUP_PENDING);
+
+      const signIn = await mockSignupConsentSignIn(page, { error: code });
+
+      await page.goto(APP_PATH.MAIN.STUDIO);
+
+      const dialog = consentDialog(page);
+
+      await dialog
+        .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+        .check();
+      await submitButton(page).click();
+
+      await expect(page.getByText(toast)).toBeVisible();
+      await expect(dialog).toBeHidden();
+      expect(signIn.bodies).toHaveLength(1);
+      await expect.poll(() => readPendingLogin(page)).toBeNull();
+      await expect(
+        page.getByRole('banner').getByRole('link', { name: '로그인' }),
+      ).toBeVisible();
+    });
+  }
+
+  test('일시 실패면 시트와 체크를 유지하고 같은 대기로 다시 제출할 수 있다', async ({
+    page,
+  }) => {
+    await seedPendingLogin(page);
+    await mockSignupConsent(page, SIGNUP_PENDING);
+
+    const signIn = await mockSignupConsentSignIn(page, { error: 'retryable' });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const dialog = consentDialog(page);
+
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .check();
+    await submitButton(page).click();
+
+    await expect(dialog.getByRole('alert')).toHaveText(
+      CONSENT_SHEET_COPY.error.retryable,
+    );
+    await expect(dialog).toBeVisible();
+    await expect(submitButton(page)).toBeEnabled();
+    await submitButton(page).click();
+    await expect.poll(() => signIn.bodies.length).toBe(2);
+  });
+
+  test('시트가 열린 채 뒤로가기를 누르면 가입을 취소하고 로그아웃 없이 게스트로 남는다', async ({
+    page,
+  }) => {
+    await seedPendingLogin(page);
+
+    const signupConsent = await mockSignupConsent(page, SIGNUP_PENDING);
+    const signOut = await mockSignOut(page);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await expect(consentDialog(page)).toBeVisible();
+
+    await page.goBack();
+
+    await expect(consentDialog(page)).toBeHidden();
+    await expect.poll(() => signupConsent.delete).toBe(1);
+    expect(signOut.count).toBe(0);
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect.poll(() => readPendingLogin(page)).toBeNull();
+  });
+
+  test('이 탭에서 시작한 로그인이 아니면 가입 대기를 조회하지 않고 시트도 띄우지 않는다', async ({
+    page,
+  }) => {
+    const signupConsent = await mockSignupConsent(page, SIGNUP_PENDING);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: '로그인' }),
+    ).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(signupConsent.get).toBe(0);
+  });
+
+  test('시트의 문서 보기로 연 법적 문서 탭에는 가입 시트를 띄우지 않는다', async ({
+    page,
+  }) => {
+    await seedPendingLogin(page);
+
+    const signupConsent = await mockSignupConsent(page, SIGNUP_PENDING);
+
+    await page.goto(APP_PATH.TERMS);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(signupConsent.get).toBe(0);
+
+    // 양성 대조: 같은 탭에서 일반 화면으로 가면 표시와 대기가 그대로라 시트가 뜬다.
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await expect(consentDialog(page)).toBeVisible();
+  });
+
+  test('가입 대기가 없으면 게스트로 두되 탭 표시는 지우지 않아, 대기가 생긴 뒤 다시 불러오면 시트를 띄운다', async ({
+    page,
+  }) => {
+    await seedPendingLogin(page);
+
+    const signupConsent = await mockSignupConsent(page, null);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await expect.poll(() => signupConsent.get).toBe(1);
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: '로그인' }),
+    ).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect.poll(() => readPendingLogin(page)).toBe('1');
+
+    // 인앱 팝업 로그인처럼 원래 탭이 404를 본 뒤에 서버가 대기를 남긴 경우다.
+    signupConsent.setPending(SIGNUP_PENDING);
+    await page.reload();
+    await expect(consentDialog(page)).toBeVisible();
   });
 });

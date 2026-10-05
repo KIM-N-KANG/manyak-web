@@ -19,9 +19,20 @@ const handoffCookieMock = vi.hoisted(() => ({
   readHandoffCodeOnServer: vi.fn(),
 }));
 
+const signupConsentCookieMock = vi.hoisted(() => ({
+  readPendingSignupConsent: vi.fn(),
+  writePendingSignupConsent: vi.fn(),
+  clearPendingSignupConsent: vi.fn(),
+}));
+
 vi.mock('@/lib/auth/token-cookies', () => tokenCookiesMock);
 vi.mock('@/observability/analytics/identity-server', () => identityServerMock);
 vi.mock('@/lib/auth/handoff-cookie', () => handoffCookieMock);
+// toPendingSignupConsent는 순수 함수라 실제 구현을 쓰고 쿠키 입출력만 목킹한다.
+vi.mock('@/lib/auth/signup-consent-cookie', async (importActual) => ({
+  ...(await importActual<object>()),
+  ...signupConsentCookieMock,
+}));
 // 함수만 목킹하고 BackendAuthError 클래스는 실제 구현을 유지한다
 // (ensureFreshAccessToken의 원인 분류가 instanceof로 판별하기 때문).
 vi.mock('@/lib/auth/backend-client', async (importActual) => {
@@ -30,14 +41,22 @@ vi.mock('@/lib/auth/backend-client', async (importActual) => {
   return {
     ...actual,
     refreshOnServer: vi.fn(),
-    loginWithSocialOnServer: vi.fn(),
+    startSocialAuthOnServer: vi.fn(),
+    completeSocialAuthOnServer: vi.fn(),
     fetchMeOnServer: vi.fn(),
   };
 });
 
 import {
+  BackendAuthError,
+  completeSocialAuthOnServer,
+  fetchMeOnServer,
+  startSocialAuthOnServer,
+} from '@/lib/auth/backend-client';
+import {
+  authenticateSocialLogin,
+  completeSignupConsent,
   ensureFreshAccessToken,
-  establishBackendSession,
 } from '@/lib/auth/backend-session';
 
 beforeEach(() => {
@@ -47,6 +66,7 @@ beforeEach(() => {
   tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
   identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(undefined);
   handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue(undefined);
+  signupConsentCookieMock.readPendingSignupConsent.mockResolvedValue(null);
 });
 
 describe('ensureFreshAccessToken', () => {
@@ -238,47 +258,52 @@ describe('ensureFreshAccessToken', () => {
   });
 });
 
-describe('establishBackendSession', () => {
-  it('login→me 순으로 호출되고, me 검증 후에 writeBackendSessionTokens가 호출되며, 프로필을 반환한다', async () => {
-    const { loginWithSocialOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
+const TOKENS = {
+  accessToken: 'access-1',
+  refreshToken: 'refresh-1',
+  expiresIn: 1800,
+};
 
+const ME = { id: 'user-1', nickname: '만냐', profileImageUrl: null };
+
+const PENDING = {
+  consentToken: 'pending-code',
+  expiresAt: '2099-01-01T00:00:00Z',
+  consents: { terms: { requiredVersion: 'v1.2', needsConsent: true } },
+};
+
+describe('authenticateSocialLogin', () => {
+  it('COMPLETED면 소셜 인증→me 순으로 호출하고, me 검증 후에 토큰 쿠키를 쓰며, 프로필을 반환한다', async () => {
     const callOrder: string[] = [];
 
-    vi.mocked(loginWithSocialOnServer).mockImplementation(async () => {
-      callOrder.push('login');
+    vi.mocked(startSocialAuthOnServer).mockImplementation(async () => {
+      callOrder.push('social');
 
-      return {
-        accessToken: 'access-1',
-        refreshToken: 'refresh-1',
-        expiresIn: 1800,
-        isNewUser: true,
-      };
+      return { status: 'COMPLETED', token: { ...TOKENS, isNewUser: true } };
     });
     vi.mocked(fetchMeOnServer).mockImplementation(async () => {
       callOrder.push('me');
 
-      return {
-        id: 'user-1',
-        nickname: '만냐',
-        profileImageUrl: 'https://example.com/a.png',
-      };
+      return { ...ME, profileImageUrl: 'https://example.com/a.png' };
     });
     tokenCookiesMock.writeBackendSessionTokens.mockImplementation(async () => {
       callOrder.push('write');
     });
 
     await expect(
-      establishBackendSession('google', 'id-token'),
+      authenticateSocialLogin('google', 'id-token'),
     ).resolves.toEqual({
-      userId: 'user-1',
-      nickname: '만냐',
-      profileImageUrl: 'https://example.com/a.png',
-      isNewUser: true,
+      status: 'completed',
+      profile: {
+        userId: 'user-1',
+        nickname: '만냐',
+        profileImageUrl: 'https://example.com/a.png',
+        isNewUser: true,
+      },
     });
 
-    expect(callOrder).toEqual(['login', 'me', 'write']);
-    expect(loginWithSocialOnServer).toHaveBeenCalledWith(
+    expect(callOrder).toEqual(['social', 'me', 'write']);
+    expect(startSocialAuthOnServer).toHaveBeenCalledWith(
       'google',
       'id-token',
       undefined,
@@ -287,143 +312,244 @@ describe('establishBackendSession', () => {
     expect(fetchMeOnServer).toHaveBeenCalledWith('access-1');
   });
 
-  it('요청 쿠키의 Amplitude device_id를 읽어 로그인 호출에 원문 그대로 전달한다', async () => {
-    const { loginWithSocialOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
-
-    // 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데 쓰인다(스펙 §4-3-7).
-    // 전달하지 않으면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의 무료 체험이 0이 된다.
-    identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(
-      'amp-device-raw',
-    );
-    vi.mocked(loginWithSocialOnServer).mockResolvedValue({
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
-    });
-    vi.mocked(fetchMeOnServer).mockResolvedValue({
-      id: 'user-1',
-      nickname: '만냐',
-      profileImageUrl: null,
-    });
-
-    await establishBackendSession('google', 'id-token');
-
-    expect(loginWithSocialOnServer).toHaveBeenCalledWith(
-      'google',
-      'id-token',
-      'amp-device-raw',
-      undefined,
-    );
-  });
-
-  it('핸드오프 쿠키가 있으면 코드를 로그인 호출에 함께 전달한다', async () => {
-    const { loginWithSocialOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
-
-    // 외부 랜딩이 심은 핸드오프 코드를 로그인 호출에 실어야 시드·이관이 함께 수행된다(스펙 §4-3-5).
+  it('요청 쿠키의 Amplitude device_id와 핸드오프 코드를 소셜 인증 호출에 원문 그대로 전달한다', async () => {
+    // 가입 시 게스트 체험 사용량 시드(스펙 §4-3-7)와 핸드오프 이관(§4-3-5)에 쓰인다.
     identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(
       'amp-device-raw',
     );
     handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue('handoff-code');
-    vi.mocked(loginWithSocialOnServer).mockResolvedValue({
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'COMPLETED',
+      token: TOKENS,
     });
-    vi.mocked(fetchMeOnServer).mockResolvedValue({
-      id: 'user-1',
-      nickname: '만냐',
-      profileImageUrl: null,
-    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue(ME);
 
-    await establishBackendSession('google', 'id-token');
+    await authenticateSocialLogin('kakao', 'id-token');
 
-    expect(loginWithSocialOnServer).toHaveBeenCalledWith(
-      'google',
+    expect(startSocialAuthOnServer).toHaveBeenCalledWith(
+      'kakao',
       'id-token',
       'amp-device-raw',
       'handoff-code',
     );
   });
 
-  it('로그인 응답에 isNewUser가 없으면 기존 회원으로 반환한다', async () => {
-    const { loginWithSocialOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
-
-    vi.mocked(loginWithSocialOnServer).mockResolvedValue({
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
+  it('COMPLETED 토큰에 isNewUser가 없으면 기존 회원으로 반환한다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'COMPLETED',
+      token: TOKENS,
     });
-    vi.mocked(fetchMeOnServer).mockResolvedValue({
-      id: 'user-1',
-      nickname: '만냐',
-      profileImageUrl: null,
-    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue(ME);
 
     await expect(
-      establishBackendSession('google', 'id-token'),
-    ).resolves.toEqual({
-      userId: 'user-1',
-      nickname: '만냐',
-      profileImageUrl: null,
-      isNewUser: false,
-    });
+      authenticateSocialLogin('google', 'id-token'),
+    ).resolves.toMatchObject({ profile: { isNewUser: false } });
   });
 
-  it('fetchMeOnServer가 reject되면 throw가 전파되고 writeBackendSessionTokens는 호출되지 않는다', async () => {
-    const { loginWithSocialOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
+  it('COMPLETED 로그인은 이전 로그인이 남긴 대기 쿠키를 지운다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'COMPLETED',
+      token: TOKENS,
+    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue(ME);
 
-    vi.mocked(loginWithSocialOnServer).mockResolvedValue({
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
+    await authenticateSocialLogin('google', 'id-token');
+
+    expect(
+      signupConsentCookieMock.clearPendingSignupConsent,
+    ).toHaveBeenCalledOnce();
+  });
+
+  it('me가 실패하면 throw가 전파되고 토큰 쿠키를 쓰지 않는다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'COMPLETED',
+      token: TOKENS,
     });
     vi.mocked(fetchMeOnServer).mockRejectedValue(new Error('me failed'));
 
-    await expect(establishBackendSession('google', 'id-token')).rejects.toThrow(
+    await expect(authenticateSocialLogin('google', 'id-token')).rejects.toThrow(
       'me failed',
     );
     expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
   });
 
-  it('me.id가 없으면 throw하고 writeBackendSessionTokens는 호출되지 않는다', async () => {
-    const { loginWithSocialOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
-
-    vi.mocked(loginWithSocialOnServer).mockResolvedValue({
-      accessToken: 'access-1',
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
+  it('me.id가 없으면 throw하고 토큰 쿠키를 쓰지 않는다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'COMPLETED',
+      token: TOKENS,
     });
-    vi.mocked(fetchMeOnServer).mockResolvedValue({
-      id: undefined,
-      nickname: '만냐',
-      profileImageUrl: null,
-    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue({ ...ME, id: undefined });
 
-    await expect(establishBackendSession('google', 'id-token')).rejects.toThrow(
+    await expect(authenticateSocialLogin('google', 'id-token')).rejects.toThrow(
       '사용자 정보 응답에 id가 없습니다.',
     );
     expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
   });
 
-  it('tokens.accessToken이 없으면 throw하고 fetchMeOnServer·writeBackendSessionTokens는 호출되지 않는다', async () => {
-    const { loginWithSocialOnServer, fetchMeOnServer } =
-      await import('@/lib/auth/backend-client');
-
-    vi.mocked(loginWithSocialOnServer).mockResolvedValue({
-      accessToken: undefined,
-      refreshToken: 'refresh-1',
-      expiresIn: 1800,
+  it('accessToken이 없으면 throw하고 me 조회·토큰 쿠키 쓰기를 하지 않는다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'COMPLETED',
+      token: { ...TOKENS, accessToken: undefined },
     });
 
-    await expect(establishBackendSession('google', 'id-token')).rejects.toThrow(
+    await expect(authenticateSocialLogin('google', 'id-token')).rejects.toThrow(
       '토큰 응답에 accessToken이 없습니다.',
     );
     expect(fetchMeOnServer).not.toHaveBeenCalled();
+    expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
+  });
+
+  it('COMPLETED에 토큰이 없으면 실패시킨다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'COMPLETED',
+      token: null,
+    });
+
+    await expect(
+      authenticateSocialLogin('google', 'id-token'),
+    ).rejects.toThrow();
+    expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
+  });
+
+  it('CONSENT_REQUIRED면 토큰 쿠키 없이 대기 쿠키만 쓴다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'CONSENT_REQUIRED',
+      isNewUser: true,
+      ...PENDING,
+    });
+
+    await expect(
+      authenticateSocialLogin('google', 'id-token'),
+    ).resolves.toEqual({
+      status: 'consent-required',
+    });
+    expect(
+      signupConsentCookieMock.writePendingSignupConsent,
+    ).toHaveBeenCalledWith(PENDING);
+    expect(fetchMeOnServer).not.toHaveBeenCalled();
+    expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
+  });
+
+  it('CONSENT_REQUIRED에 대기 코드가 없으면 실패시키고 아무 쿠키도 쓰지 않는다', async () => {
+    vi.mocked(startSocialAuthOnServer).mockResolvedValue({
+      status: 'CONSENT_REQUIRED',
+      ...PENDING,
+      consentToken: null,
+    });
+
+    await expect(
+      authenticateSocialLogin('google', 'id-token'),
+    ).rejects.toThrow();
+    expect(
+      signupConsentCookieMock.writePendingSignupConsent,
+    ).not.toHaveBeenCalled();
+    expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
+  });
+});
+
+describe('completeSignupConsent', () => {
+  beforeEach(() => {
+    signupConsentCookieMock.readPendingSignupConsent.mockResolvedValue(PENDING);
+  });
+
+  it('대기 쿠키가 없으면 완료 API를 부르지 않고 expired로 끝낸다', async () => {
+    signupConsentCookieMock.readPendingSignupConsent.mockResolvedValue(null);
+
+    await expect(completeSignupConsent({ terms: 'v1.2' })).resolves.toEqual({
+      ok: false,
+      code: 'expired',
+    });
+    expect(completeSocialAuthOnServer).not.toHaveBeenCalled();
+  });
+
+  it('성공하면 대기 코드로 완료하고 me 검증 뒤 토큰 쿠키를 쓰고 대기 쿠키를 지운다', async () => {
+    identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(
+      'amp-device-raw',
+    );
+    vi.mocked(completeSocialAuthOnServer).mockResolvedValue({
+      ...TOKENS,
+      isNewUser: true,
+    });
+    vi.mocked(fetchMeOnServer).mockResolvedValue(ME);
+
+    await expect(completeSignupConsent({ terms: 'v1.2' })).resolves.toEqual({
+      ok: true,
+      profile: {
+        userId: 'user-1',
+        nickname: '만냐',
+        profileImageUrl: null,
+        isNewUser: true,
+      },
+    });
+    expect(completeSocialAuthOnServer).toHaveBeenCalledWith(
+      'pending-code',
+      { terms: 'v1.2' },
+      'amp-device-raw',
+    );
+    expect(tokenCookiesMock.writeBackendSessionTokens).toHaveBeenCalledOnce();
+    expect(
+      signupConsentCookieMock.clearPendingSignupConsent,
+    ).toHaveBeenCalledOnce();
+  });
+
+  it('401은 expired로 끝내고 대기 쿠키를 지운다', async () => {
+    vi.mocked(completeSocialAuthOnServer).mockRejectedValue(
+      new BackendAuthError(
+        401,
+        JSON.stringify({ code: 'CONSENT_TOKEN_INVALID' }),
+      ),
+    );
+
+    await expect(completeSignupConsent({ terms: 'v1.2' })).resolves.toEqual({
+      ok: false,
+      code: 'expired',
+    });
+    expect(
+      signupConsentCookieMock.clearPendingSignupConsent,
+    ).toHaveBeenCalledOnce();
+  });
+
+  it.each(['CONSENT_VERSION_MISMATCH', 'CONSENT_REQUIRED_MISSING'])(
+    '400 %s는 outdated로 끝내고 대기 쿠키를 지운다',
+    async (code) => {
+      vi.mocked(completeSocialAuthOnServer).mockRejectedValue(
+        new BackendAuthError(400, JSON.stringify({ code })),
+      );
+
+      await expect(completeSignupConsent({ terms: 'v1.2' })).resolves.toEqual({
+        ok: false,
+        code: 'outdated',
+      });
+      expect(
+        signupConsentCookieMock.clearPendingSignupConsent,
+      ).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each([
+    new BackendAuthError(503),
+    new BackendAuthError(400, JSON.stringify({ code: 'BAD_REQUEST' })),
+    new TypeError('network'),
+  ])('그 밖의 실패(%s)는 retryable이고 대기 쿠키를 유지한다', async (error) => {
+    vi.mocked(completeSocialAuthOnServer).mockRejectedValue(error);
+
+    await expect(completeSignupConsent({ terms: 'v1.2' })).resolves.toEqual({
+      ok: false,
+      code: 'retryable',
+    });
+    expect(
+      signupConsentCookieMock.clearPendingSignupConsent,
+    ).not.toHaveBeenCalled();
+  });
+
+  it('완료 뒤 me가 실패하면 토큰 쿠키를 쓰지 않고 retryable로 끝낸다', async () => {
+    vi.mocked(completeSocialAuthOnServer).mockResolvedValue(TOKENS);
+    vi.mocked(fetchMeOnServer).mockRejectedValue(new Error('me failed'));
+
+    await expect(completeSignupConsent({ terms: 'v1.2' })).resolves.toEqual({
+      ok: false,
+      code: 'retryable',
+    });
     expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
   });
 });

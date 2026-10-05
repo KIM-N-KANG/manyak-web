@@ -1,5 +1,10 @@
 import type { Page } from '@playwright/test';
 
+import {
+  SIGNUP_CONSENT_PROVIDER_ID,
+  type SignupConsentErrorCode,
+} from '@/lib/auth/signup-consent';
+
 type MemberSessionOptions = {
   userId?: string;
   nickname?: string;
@@ -83,4 +88,60 @@ export async function mockGuestSession(page: Page): Promise<void> {
       body: 'null',
     });
   });
+}
+
+/**
+ * 가입 동의 Credentials 제출(`signIn('signup-consent')`)을 목킹한다. 성공이면 그 시점에
+ * 세션을 회원으로 바꾸고, 실패면 Auth.js처럼 error·code가 실린 URL을 응답한다.
+ * 소셜 로그인 버튼이 함께 동작하도록 Google·Kakao 프로바이더도 목록에 둔다.
+ *
+ * @param page 대상 페이지
+ * @param options.error 완료 실패 code(없으면 성공)
+ * @returns 제출 본문 목록
+ */
+export async function mockSignupConsentSignIn(
+  page: Page,
+  { error }: { error?: SignupConsentErrorCode } = {},
+): Promise<{ bodies: URLSearchParams[] }> {
+  const state = { bodies: [] as URLSearchParams[] };
+
+  await page.route('**/api/auth/providers', (route) =>
+    route.fulfill({
+      json: {
+        google: { id: 'google', name: 'Google', type: 'oidc' },
+        kakao: { id: 'kakao', name: 'Kakao', type: 'oidc' },
+        [SIGNUP_CONSENT_PROVIDER_ID]: {
+          id: SIGNUP_CONSENT_PROVIDER_ID,
+          name: 'Credentials',
+          type: 'credentials',
+        },
+      },
+    }),
+  );
+  await page.route('**/api/auth/csrf', (route) =>
+    route.fulfill({ json: { csrfToken: 'test-csrf' } }),
+  );
+  await page.route(
+    `**/api/auth/callback/${SIGNUP_CONSENT_PROVIDER_ID}*`,
+    async (route) => {
+      state.bodies.push(new URLSearchParams(route.request().postData() ?? ''));
+
+      const { origin } = new URL(route.request().url());
+
+      if (error) {
+        await route.fulfill({
+          json: {
+            url: `${origin}/api/auth/error?error=CredentialsSignin&code=${error}`,
+          },
+        });
+
+        return;
+      }
+
+      await mockMemberSession(page);
+      await route.fulfill({ json: { url: `${origin}/` } });
+    },
+  );
+
+  return state;
 }

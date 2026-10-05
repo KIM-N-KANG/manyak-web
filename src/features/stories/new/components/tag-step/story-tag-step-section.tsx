@@ -4,6 +4,9 @@ import { LoadingButtonContent } from '@/components/common/loading-button-content
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { GenreSearchCombobox } from '@/features/stories/_shared/components/genre-search-combobox';
+import { TagChipGrid } from '@/features/stories/_shared/components/tag-chip-grid';
+import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 
 import {
   CHARACTER_NAME_DUPLICATE_FOOTER_ERROR,
@@ -20,10 +23,8 @@ import { getGenerateStorylinesErrorMessage } from '../../utils/generate-storylin
 import { StickyTabsList } from '../shared/sticky-tabs-list';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
-import { AddTagDialog } from './add-tag-dialog';
 import { CharacterForm } from './character-form';
 import { SupportingCharacterList } from './supporting-character-list';
-import { TagChipGrid } from './tag-chip-grid';
 
 type StoryTagStepSectionProps = {
   controller: StoryTagStepController;
@@ -40,9 +41,11 @@ export function StoryTagStepSection({
     activeCategory,
     changeCategory,
     selectedGenreTagIds,
-    selectedCustomGenreTagIds,
-    customGenreTags,
+    genreChips,
     isGenreMaxReached,
+    needsGenreReselection,
+    showGenreSkeleton,
+    hasGenreCatalogError,
     protagonist,
     supportingCharacters,
     canAddSupportingCharacter,
@@ -60,8 +63,6 @@ export function StoryTagStepSection({
     goToNextCategory,
     goToPreviousCategory,
     toggleGenreTag,
-    toggleCustomGenreTag,
-    addCustomGenreTag,
     toggleFeatureTag,
     toggleCustomFeatureTag,
     addCustomFeatureTag,
@@ -145,34 +146,36 @@ export function StoryTagStepSection({
         <TabsContent value="GENRE" className="px-4 pt-4 pb-4">
           <FieldGroup className="gap-8">
             <Field className="gap-2" aria-labelledby="genre-label">
-              <FieldLabel id="genre-label" className="gap-0.5">
+              <FieldLabel
+                id="genre-label"
+                htmlFor="genre-search"
+                className="gap-0.5">
                 {GENRE_SECTION_LABEL}
                 {GENRE_CATEGORY.required && (
                   <span className="text-destructive">*</span>
                 )}
               </FieldLabel>
+              <GenreSearchCombobox
+                id="genre-search"
+                selectedIds={selectedGenreTagIds}
+                isMaxSelectionReached={isGenreMaxReached}
+                disabled={isGeneratingStorylines}
+                onToggle={toggleGenreTag}
+              />
+              {needsGenreReselection && (
+                <p className="text-sm break-keep text-foreground-secondary">
+                  {GENRE_SEARCH_COPY.reselect}
+                </p>
+              )}
               <TagChipGrid
                 keyPrefix="GENRE"
-                predefinedTags={tagsByCategory.GENRE}
-                customTags={customGenreTags}
+                predefinedTags={genreChips}
                 selectedTagIds={selectedGenreTagIds}
-                selectedCustomTagIds={selectedCustomGenreTagIds}
                 isMaxSelectionReached={isGenreMaxReached}
-                isLoadingTags={showTagsSkeleton}
-                hasTagsError={simpleStoryTags.isError}
+                isLoadingTags={showGenreSkeleton}
+                hasTagsError={hasGenreCatalogError}
                 disabled={isGeneratingStorylines}
-                addTagTrigger={
-                  <AddTagDialog
-                    category="GENRE"
-                    categoryLabel={GENRE_CATEGORY.label}
-                    fieldId="GENRE"
-                    placeholder={GENRE_CATEGORY.placeholder}
-                    disabled={isGeneratingStorylines || isGenreMaxReached}
-                    onAddTag={addCustomGenreTag}
-                  />
-                }
                 onTogglePredefinedTag={toggleGenreTag}
-                onToggleCustomTag={toggleCustomGenreTag}
               />
             </Field>
           </FieldGroup>

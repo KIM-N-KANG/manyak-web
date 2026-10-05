@@ -1,14 +1,22 @@
 import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
+import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
+import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
-import { STORY_CREATE_BACK_DIALOG_COPY } from '@/features/stories/new/components/header/story-create-back-dialog';
-import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
+import {
+  PROTAGONIST_CATEGORY,
+  STORYLINE_GENERATE_LABEL,
+} from '@/features/stories/new/constants';
 import {
   CREATE_STORY_FAB_COPY,
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
+import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
+import { readCreationStorage } from '../fixtures/storage';
 import { seedPendingCreationRequests } from '../fixtures/storage';
 import {
   expect,
@@ -16,8 +24,9 @@ import {
   skipOnboarding,
   test,
 } from '../fixtures/test';
+import { waitForToastToClose } from '../fixtures/toast';
 
-// 편집 자동 저장(draft): 마지막 변경 300ms 뒤 제작 상태를 저장하고
+// 편집 임시 저장(draft): 임시 저장 버튼·단계 이동·화면 숨김 때 제작 상태를 저장하고
 // 제작 탭 진행 카드의 "이어서 만들기"로 이어 만드는 흐름. 초안은 여러 건 공존하고
 // 새 제작·딥링크 진입은 묻지 않고 새 세션으로 시작한다.
 const TAGS = '**/api/v1/stories/simple/tags';
@@ -26,14 +35,20 @@ const STORYLINES = '**/api/v1/stories/simple/storylines';
 const STORAGE_KEY = 'manyak:pending-creation-request';
 
 /** 저장된 편집 초안 목록의 stage 배열을 읽는다. */
-const readDraftStages = (page: Page) =>
-  page.evaluate((key) => {
-    const raw = localStorage.getItem(key);
+const readDraftStages = async (page: Page) => {
+  const raw = await readCreationStorage(page, STORAGE_KEY);
 
-    return raw
-      ? (JSON.parse(raw) as { stage: string }[]).map(({ stage }) => stage)
-      : [];
-  }, STORAGE_KEY);
+  return raw
+    ? (JSON.parse(raw) as { stage: string }[]).map(({ stage }) => stage)
+    : [];
+};
+
+const saveButton = (page: Page) =>
+  page.getByRole('button', { name: DRAFT_SAVE_BUTTON_LABEL, exact: true });
+const savedToast = (page: Page) =>
+  page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVED);
+const closeButton = (page: Page) =>
+  page.getByRole('button', { name: '스토리 만들기 닫기' });
 
 const tags = [
   { id: 1, name: '판타지', category: 'GENRE' },
@@ -96,53 +111,71 @@ test.describe('스토리 임시 저장·재개', () => {
     });
   });
 
-  test('키워드 단계에서 브라우저 뒤로 가기를 하면 제작 탭으로 이동한다 (KNK-988)', async ({
+  test('키워드 단계에서 입력 없이 브라우저 뒤로 가기를 하면 묻지 않고 제작 탭으로 이동한다 (KNK-988)', async ({
     page,
   }) => {
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     // 퍼널이 마운트돼야 브라우저 뒤로가기용 더미 히스토리가 설치된다.
     await expect(page.getByText('키워드를 선택해주세요')).toBeVisible();
+    await expect(saveButton(page)).toBeDisabled();
     await expect
       .poll(() => page.evaluate(() => window.history.length))
       .toBeGreaterThan(2);
     await page.goBack();
 
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
   });
 
-  test('키워드 입력이 있으면 헤더 X에서 확인 다이얼로그를 거쳐 제작 탭으로 나간다', async ({
+  test('저장하지 않은 키워드 입력은 닫기에서 경고하고, 임시 저장 뒤에는 이어서 만들기 안내를 거쳐 나간다', async ({
     page,
   }) => {
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '판타지' }).click();
-    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    await closeButton(page).click();
 
-    await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+    const exitDialog = page.getByRole('alertdialog');
 
-    const savedDialog = page.getByRole('alertdialog', {
-      name: STORY_CREATE_BACK_DIALOG_COPY.saved.title,
-    });
-
-    await expect(savedDialog).toBeVisible();
-
-    // 닫기는 머무르고 입력을 유지한다.
-    await savedDialog
-      .getByRole('button', { name: STORY_CREATE_BACK_DIALOG_COPY.saved.cancel })
+    await expect(
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.unsavedNew.description),
+    ).toBeVisible();
+    // 닫기는 머무르고 입력을 유지한다. 입력만으로는 저장하지 않는다.
+    await exitDialog
+      .getByRole('button', { name: DRAFT_EXIT_WARNING_COPY.unsavedNew.cancel })
       .click();
-    await expect(savedDialog).toBeHidden();
-    await expect(page).toHaveURL(
-      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
-    );
+    await expect(exitDialog).toBeHidden();
     await expect(page.getByRole('button', { name: '판타지' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
+    expect(await readDraftStages(page)).toEqual([]);
 
-    await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
-    await savedDialog
-      .getByRole('button', {
-        name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm,
-      })
+    // 연타 처리는 공용 버튼이라 일반 제작(STORY-GENERAL-17)에서 확인한다. iPhone 폭에서는 토스트가
+    // 버튼을 덮어 포인터가 토스트 위에 머물면 sonner가 닫힘을 멈추기 때문이다.
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
+    await expect.poll(() => readDraftStages(page)).toEqual(['KEYWORD_DRAFT']);
+
+    // 저장 뒤 고친 내용이 있으면 저장 뒤 편집 경고다.
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('마냑');
+    await closeButton(page).click();
+    await expect(
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.unsaved.description),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', { name: DRAFT_EXIT_WARNING_COPY.unsaved.cancel })
+      .click();
+
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
+    await waitForToastToClose(page, savedToast(page));
+    await closeButton(page).click();
+    await expect(
+      exitDialog.getByText(DRAFT_EXIT_WARNING_COPY.saved.description),
+    ).toBeVisible();
+    await exitDialog
+      .getByRole('button', { name: DRAFT_EXIT_WARNING_COPY.saved.confirm })
       .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
@@ -150,18 +183,17 @@ test.describe('스토리 임시 저장·재개', () => {
     ).toBeVisible();
   });
 
-  test('키워드 입력을 자동 저장하고 새로고침 후 첫 탭에서 복원한다', async ({
+  test('임시 저장한 키워드 입력을 이어서 만들기로 첫 탭에서 복원한다', async ({
     page,
   }) => {
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
 
     await page.getByRole('button', { name: '판타지' }).click();
-    await expect(page.getByText('임시 저장중', { exact: true })).toBeVisible();
-    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('textbox', { name: '주인공 이름' }).fill('마냑');
     await page.getByRole('button', { name: '용감한' }).click();
-    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
 
     // 새로고침·딥링크는 새 세션이므로 제작 탭 카드로 재개한다.
     await page.goto(APP_PATH.MAIN.STUDIO);
@@ -188,7 +220,43 @@ test.describe('스토리 임시 저장·재개', () => {
       'aria-pressed',
       'true',
     );
-    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    // 이어서 연 저장본은 바뀐 것이 없으니 닫기는 저장본 안내다.
+    await closeButton(page).click();
+    await expect(
+      page
+        .getByRole('alertdialog')
+        .getByText(DRAFT_EXIT_WARNING_COPY.saved.description),
+    ).toBeVisible();
+  });
+
+  test('화면이 가려지면 저장하지 않은 입력을 알림 없이 임시 저장한다', async ({
+    page,
+  }) => {
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지' }).click();
+    // 탭 전환·앱 전환처럼 문서는 남은 채 화면만 가려진 상황을 흉내 낸다.
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect.poll(() => readDraftStages(page)).toEqual(['KEYWORD_DRAFT']);
+    await expect(savedToast(page)).toHaveCount(0);
+  });
+
+  test('저장하지 않은 입력이 있으면 새로고침·탭 닫기 때 브라우저 확인창을 띄운다', async ({
+    page,
+  }) => {
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지' }).click();
+
+    const dialog = page.waitForEvent('dialog');
+
+    void page.close({ runBeforeUnload: true });
+    expect((await dialog).type()).toBe('beforeunload');
+    await (await dialog).dismiss();
   });
 
   test('스토리라인 생성 후 뒤로 가기로 나가면 임시 저장되고 배너로 복원한다', async ({
@@ -201,7 +269,7 @@ test.describe('스토리 임시 저장·재개', () => {
         body: JSON.stringify(storylinesResponse),
       });
     });
-    // 처음 임시 저장 시각(키워드 자동 저장)이 단계 전환 뒤에도 카드 날짜로 남는지 보기 위해
+    // 처음 임시 저장 시각(키워드 임시 저장)이 단계 전환 뒤에도 카드 날짜로 남는지 보기 위해
     // 키워드 저장과 스토리라인 생성 사이에 시계를 옮긴다.
     await page.clock.setFixedTime(new Date('2026-09-22T04:30:00.000Z'));
 
@@ -209,12 +277,16 @@ test.describe('스토리 임시 저장·재개', () => {
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
       .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
+      .click();
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
     );
 
     await page.getByRole('button', { name: '판타지' }).click();
-    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
     await page.clock.setFixedTime(new Date('2026-09-22T05:45:00.000Z'));
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '용감한' }).click();
@@ -224,19 +296,19 @@ test.describe('스토리 임시 저장·재개', () => {
 
     // 생성 성공 시 이미 저장돼 있으므로 소실 경고가 아니라 이어서 만들 수 있다는
     // 확인 다이얼로그를 띄우고, 확정하면 저장 토스트 없이 나간다.
-    await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+    await closeButton(page).click();
 
     const savedDialog = page.getByRole('alertdialog', {
-      name: STORY_CREATE_BACK_DIALOG_COPY.saved.title,
+      name: DRAFT_EXIT_WARNING_COPY.saved.title,
     });
 
     await expect(savedDialog).toBeVisible();
     await expect(
-      savedDialog.getByText(STORY_CREATE_BACK_DIALOG_COPY.saved.description),
+      savedDialog.getByText(DRAFT_EXIT_WARNING_COPY.saved.description),
     ).toBeVisible();
     await savedDialog
       .getByRole('button', {
-        name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.saved.confirm,
       })
       .click();
     await expect(page.getByText('스토리가 임시 저장되었어요')).toHaveCount(0);
@@ -257,13 +329,11 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(page.getByRole('button', { name: '선택하기' })).toBeVisible();
 
     await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
+      .poll(() => readCreationStorage(page, STORAGE_KEY))
       .toContain('"stage":"STORY_DRAFT"');
   });
 
-  test('추가 정보 편집을 자동 저장하고 새로고침 뒤 입력과 추천을 복원한다', async ({
+  test('스토리라인을 고르면 알림 없이 저장하고, 임시 저장한 추가 정보 입력과 추천을 이어서 만들기로 복원한다', async ({
     page,
   }) => {
     await page.route(STORYLINES, async (route) => {
@@ -280,6 +350,11 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
     await page.getByRole('button', { name: '선택하기' }).click();
+    // 단계를 옮기면 옮겨 간 단계를 알림 없이 저장한다.
+    await expect
+      .poll(() => readCreationStorage(page, STORAGE_KEY))
+      .toContain('"step":"additional-info"');
+    await expect(savedToast(page)).toHaveCount(0);
 
     const additionalInfoInput = page.locator(
       'textarea[aria-label="추가 정보 1"]',
@@ -290,7 +365,8 @@ test.describe('스토리 임시 저장·재개', () => {
 
     await additionalInfoInput.fill('사라진 왕국의 비밀');
     await recommendation.click();
-    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
 
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
@@ -304,9 +380,7 @@ test.describe('스토리 임시 저장·재개', () => {
       page.getByRole('button', { name: '주인공은 비밀을 품고 있다' }),
     ).toHaveAttribute('aria-pressed', 'true');
     await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
+      .poll(() => readCreationStorage(page, STORAGE_KEY))
       .toContain('"stage":"STORY_DRAFT"');
   });
 
@@ -318,6 +392,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
       .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+    await page
+      .getByRole('link', { name: STORY_MODE_SELECT_COPY.simple.title })
       .click();
 
     await expect(page).toHaveURL(
@@ -348,20 +425,22 @@ test.describe('스토리 임시 저장·재개', () => {
 
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
     await page.getByRole('button', { name: '판타지' }).click();
-    await expect(page.getByText('임시 저장됨', { exact: true })).toBeVisible();
+    await saveButton(page).click();
+    await expect(savedToast(page)).toBeVisible();
 
     await expect
       .poll(() => readDraftStages(page))
       .toEqual(['STORY_DRAFT', 'KEYWORD_DRAFT']);
+    await waitForToastToClose(page, savedToast(page));
 
     // 시드 initScript가 새 문서 로드마다 다시 심으므로 클라이언트 전환으로 제작 탭에 간다.
-    await page.getByRole('button', { name: '스토리 만들기 닫기' }).click();
+    await closeButton(page).click();
     await page
       .getByRole('alertdialog', {
-        name: STORY_CREATE_BACK_DIALOG_COPY.saved.title,
+        name: DRAFT_EXIT_WARNING_COPY.saved.title,
       })
       .getByRole('button', {
-        name: STORY_CREATE_BACK_DIALOG_COPY.saved.confirm,
+        name: DRAFT_EXIT_WARNING_COPY.saved.confirm,
       })
       .click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
@@ -370,6 +449,72 @@ test.describe('스토리 임시 저장·재개', () => {
         name: CREATION_PROGRESS_CARD_COPY.draftTitle,
       }),
     ).toHaveCount(2);
+  });
+
+  test('직접 입력을 받던 때의 장르는 정식 이름과 같으면 제공 장르로 고르고, 아니면 빼고 다시 고르라고 안내한다 (KNK-1542)', async ({
+    page,
+  }) => {
+    const bodies: Record<string, unknown>[] = [];
+
+    await page.route(STORYLINES, async (route) => {
+      bodies.push(route.request().postDataJSON());
+      await route.fulfill({ status: 201, json: storylinesResponse });
+    });
+    await seedPendingCreationRequests(page, [
+      {
+        stage: 'KEYWORD_DRAFT',
+        requestId: '55555555-5555-4555-8555-555555555555',
+        createdAt: DRAFT_CREATED_AT,
+        snapshot: {
+          selectedGenreTagIds: [],
+          customGenreTags: [
+            { name: '현대 판타지', selected: true },
+            { name: '유실물', selected: true },
+          ],
+          protagonist: {
+            name: '',
+            gender: null,
+            selectedTagIds: [2],
+            customTags: [],
+          },
+          supportingCharacters: [],
+        },
+      },
+    ]);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
+
+    await expect(page.getByText(GENRE_SEARCH_COPY.reselect)).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '현대판타지', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.getByRole('button', { name: '유실물', exact: true }),
+    ).toHaveCount(0);
+    // 장르를 바꾸기 전에는 복원한 그대로라 저장하지 않은 내용으로 보지 않는다.
+    await closeButton(page).click();
+    await expect(
+      page
+        .getByRole('alertdialog')
+        .getByText(DRAFT_EXIT_WARNING_COPY.saved.description),
+    ).toBeVisible();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: DRAFT_EXIT_WARNING_COPY.saved.cancel })
+      .click();
+
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await expect(page.getByText(GENRE_SEARCH_COPY.reselect)).toHaveCount(0);
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: STORYLINE_GENERATE_LABEL }).click();
+
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0].genreTagIds).toEqual([103, 1]);
+    expect(bodies[0]).not.toHaveProperty('customGenreTags');
   });
 
   test('초안이 두 개면 각 카드의 이어서 만들기가 자기 내용을 복원한다', async ({
@@ -470,16 +615,14 @@ test.describe('스토리 임시 저장·재개', () => {
         name: CREATION_PROGRESS_CARD_COPY.resume,
         exact: true,
       }),
-    ).toHaveClass(/bg-primary/);
+    ).toHaveClass(/\bbg-muted\b/);
     await expect(
       card.getByRole('button', {
         name: CREATION_PROGRESS_CARD_COPY.optionsTrigger,
       }),
     ).toBeVisible();
     await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
+      .poll(() => readCreationStorage(page, STORAGE_KEY))
       .not.toBeNull();
   });
 
@@ -509,10 +652,6 @@ test.describe('스토리 임시 저장·재개', () => {
         .getByRole('article')
         .getByText(CREATION_PROGRESS_CARD_COPY.draftTitle),
     ).toBeHidden();
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-      )
-      .toBeNull();
+    await expect.poll(() => readCreationStorage(page, STORAGE_KEY)).toBeNull();
   });
 });

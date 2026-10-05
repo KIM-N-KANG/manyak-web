@@ -7,7 +7,10 @@ import type {
   PendingCreationRequest,
   StorylineGenerationRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
-import { findPendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  findPendingCreationRequest,
+  initializeCreationStorage,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   clearDraftResumeIntent,
   peekDraftResumeIntent,
@@ -46,43 +49,50 @@ export function useStoryCreateDraft({
   onRestore,
   onRestorePending,
 }: UseStoryCreateDraftArgs) {
-  // 마운트 시 한 번만 판정한다. 진입 이후의 목록 변화(새 생성 시작 등)는 재개
-  // 대상이 아니므로 스토리지 구독 대신 일회성 판정을 쓴다.
-  const [entryRecord] = useState(() => {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-
-    const requestId = peekDraftResumeIntent();
-
-    return requestId === null ? null : findPendingCreationRequest(requestId);
-  });
-  const [isEntryResolved, setIsEntryResolved] = useState(entryRecord === null);
+  const [isEntryResolved, setIsEntryResolved] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const callbacksRef = useRef({ onRestore, onRestorePending });
 
   useEffect(() => {
     callbacksRef.current = { onRestore, onRestorePending };
   });
-
-  // 복원은 부모 상태를 갱신하므로 렌더 중이 아닌 커밋 이후에 수행한다. 의도 플래그는
-  // 어떤 경로로 들어왔든 한 번 쓰고 지워 다음 진입에 새지 않게 한다.
   useEffect(() => {
-    clearDraftResumeIntent();
+    let active = true;
 
-    if (entryRecord === null) {
-      return;
-    }
+    void (async () => {
+      try {
+        await initializeCreationStorage();
 
-    const current = findPendingCreationRequest(entryRecord.requestId);
+        const requestId = peekDraftResumeIntent();
+        const current =
+          requestId === null
+            ? null
+            : await findPendingCreationRequest(requestId);
 
-    if (isDraftCreationRecord(current)) {
-      callbacksRef.current.onRestore(current);
-    } else if (current?.stage === 'STORYLINE_GENERATION') {
-      callbacksRef.current.onRestorePending(current);
-    }
+        if (!active) return;
 
-    queueMicrotask(() => setIsEntryResolved(true));
-  }, [entryRecord]);
+        if (isDraftCreationRecord(current))
+          callbacksRef.current.onRestore(current);
+        else if (current?.stage === 'STORYLINE_GENERATION')
+          callbacksRef.current.onRestorePending(current);
 
-  return { isEntryResolved };
+        clearDraftResumeIntent();
+        setIsError(false);
+        setIsEntryResolved(true);
+      } catch {
+        if (active) setIsError(true);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [attempt]);
+
+  return {
+    isEntryResolved,
+    isError,
+    retry: () => setAttempt((value) => value + 1),
+  };
 }

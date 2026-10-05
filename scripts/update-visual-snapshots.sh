@@ -14,7 +14,9 @@ echo "Using image: ${IMAGE}"
 # CI는 clean checkout이라 gitignore된 env 파일이 없다. 작업 폴더를 통째로 마운트하면
 # 로컬 .env.local이 빌드에 섞여 기준 이미지가 CI 렌더링과 달라질 수 있으므로,
 # Next가 프로덕션 빌드에서 읽는 env 파일 중 git이 추적하지 않는 것은 빈 파일로 가린다.
-EMPTY_ENV="$(mktemp)"
+# 시스템 임시 경로(/private/var/...)는 일부 컨테이너 런타임(ArcBox 등)이 마운트하지 못하므로
+# 작업 폴더 안에 만든다. trap이 지우며 .gitignore가 무시한다.
+EMPTY_ENV="$(mktemp "$PWD/.env-mask.XXXXXX")"
 trap 'rm -f "$EMPTY_ENV"' EXIT
 
 ENV_MASKS=()

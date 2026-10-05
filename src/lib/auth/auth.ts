@@ -1,12 +1,24 @@
-import NextAuth from 'next-auth';
+import NextAuth, { type Account, CredentialsSignin } from 'next-auth';
 import type { OIDCConfig } from 'next-auth/providers';
+import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 
+import type { UserConsentRequest } from '@/api/generated/models';
+import { APP_PATH } from '@/constants/app-path';
+
 import { logoutOnServer } from './backend-client';
-import { establishBackendSession } from './backend-session';
+import {
+  authenticateSocialLogin,
+  type BackendProfile,
+  completeSignupConsent,
+} from './backend-session';
 import { parseLinkProviderId } from './link-account';
 import { processLinkCallback } from './link-callback';
-import { restoreSessionClaims } from './session-token';
+import { readAuthCallbackUrl, restoreSessionClaims } from './session-token';
+import {
+  SIGNUP_CONSENT_PROVIDER_ID,
+  type SignupConsentErrorCode,
+} from './signup-consent';
 import { isSocialLoginProvider } from './social-provider';
 import { SESSION_COOKIE_MAX_AGE_SECONDS } from './token-cookie-policy';
 import { clearBackendSession, readRefreshTokenCookie } from './token-cookies';
@@ -46,6 +58,62 @@ const LinkGoogle = Google({
 
 const LinkKakao: OIDCConfig<{ sub: string }> = { ...Kakao, id: 'link-kakao' };
 
+/** 가입 동의 완료 실패를 `signIn` 결과의 code로 클라이언트에 전달하는 에러. */
+class SignupConsentSignInError extends CredentialsSignin {
+  constructor(code: SignupConsentErrorCode) {
+    super();
+    this.code = code;
+  }
+}
+
+/** Credentials 본문에서 받는 필수 동의 항목. 그 밖의 키(csrfToken 등)는 백엔드로 보내지 않는다. */
+const CONSENT_FIELDS = ['terms', 'privacy', 'age14'] as const;
+
+/**
+ * Credentials 본문에서 비어 있지 않은 문자열 동의 버전만 골라 완료 요청 본문을 만든다.
+ *
+ * @param credentials signIn이 보낸 폼 값
+ * @returns 동의한 항목과 버전
+ */
+function toConsentRequest(
+  credentials: Partial<Record<string, unknown>>,
+): UserConsentRequest {
+  return Object.fromEntries(
+    CONSENT_FIELDS.flatMap((key) => {
+      const value = credentials[key];
+
+      return typeof value === 'string' && value ? [[key, value]] : [];
+    }),
+  );
+}
+
+/**
+ * 가입 동의 완료 프로바이더. 동의 시트가 동의한 버전을 보내면 대기 쿠키의 대기 코드로
+ * 완료 API를 호출하고, 성공했을 때만 Auth.js 세션을 만든다. 동의 전에는 세션이 없다.
+ */
+const SignupConsent = Credentials({
+  id: SIGNUP_CONSENT_PROVIDER_ID,
+  credentials: { terms: {}, privacy: {}, age14: {} },
+  async authorize(credentials) {
+    const result = await completeSignupConsent(toConsentRequest(credentials));
+
+    if (!result.ok) {
+      throw new SignupConsentSignInError(result.code);
+    }
+
+    const { userId, nickname, profileImageUrl, isNewUser } = result.profile;
+
+    return { id: userId, name: nickname, image: profileImageUrl, isNewUser };
+  },
+});
+
+/**
+ * signIn 콜백이 수립한 로그인 프로필을 같은 OAuth 콜백의 jwt 콜백에 넘긴다.
+ * @auth/core 0.41.2(`lib/actions/callback`)는 두 콜백에 같은 account 객체를 넘긴다.
+ * next-auth·@auth/core를 올릴 때 이 전제가 유지되는지 확인한다.
+ */
+const loginProfiles = new WeakMap<Account, BackendProfile>();
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     // 팝업 여부와 무관한 보안 정책이다. PKCE와 state에 OIDC nonce 검증을 더한다.
@@ -53,6 +121,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Kakao,
     LinkGoogle,
     LinkKakao,
+    SignupConsent,
   ],
   // BFF 토큰 쿠키 수명(14일)과 정렬 — 불일치 창 제거. 기본 30일이면 14~30일
   // 사이 재방문 사용자가 회원 UI를 보면서 API 호출은 전부 익명 처리된다.
@@ -60,7 +129,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   pages: { signIn: '/login', error: '/login' },
   callbacks: {
-    async jwt({ token, account, trigger, session }) {
+    async signIn({ account }) {
+      // 연동과 가입 완료는 각자의 경로(jwt 연동 분기, Credentials authorize)에서 처리한다.
+      if (!account || !isSocialLoginProvider(account.provider)) {
+        return true;
+      }
+
+      if (!account.id_token) {
+        throw new Error(`${account.provider} 응답에 id_token이 없습니다.`);
+      }
+
+      // 소셜 인증 실패는 여기서 던져 로그인 자체를 실패시킨다(Auth.js가 AccessDenied로
+      // /login에 돌려보낸다). "NextAuth 세션만 있고 백엔드 세션은 없는" 반쪽 상태를 만들지 않는다.
+      const result = await authenticateSocialLogin(
+        account.provider,
+        account.id_token,
+      );
+
+      if (result.status === 'completed') {
+        loginProfiles.set(account, result.profile);
+
+        return true;
+      }
+
+      // 필수 동의가 남았다. 문자열을 반환하면 Auth.js가 세션 없이 그 URL로 보내므로,
+      // 원래 화면으로 돌아가 대기 쿠키를 읽은 동의 게이트가 가입 동의 시트를 띄운다.
+      return (await readAuthCallbackUrl()) ?? APP_PATH.MAIN.STORIES;
+    },
+    async jwt({ token, account, user, trigger, session }) {
       // 클라이언트는 온보딩 완료 신호(false)만 소비할 수 있다. true 업데이트는
       // 신규 가입 응답으로만 설정해 기존 회원이 임의로 온보딩을 다시 열지 못하게 한다.
       if (
@@ -102,23 +198,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return restored;
       }
 
+      if (account.provider === SIGNUP_CONSENT_PROVIDER_ID) {
+        // 가입 동의 완료다. authorize가 백엔드 세션을 수립하고 돌려준 회원으로 클레임을 만든다.
+        token.userId = user.id;
+        token.nickname = user.name ?? '';
+        token.profileImageUrl = user.image ?? null;
+        token.inviteOnboardingPending = user.isNewUser === true;
+
+        return token;
+      }
+
       if (!isSocialLoginProvider(account.provider)) {
         throw new Error(
           `지원하지 않는 로그인 provider입니다: ${account.provider}`,
         );
       }
 
-      if (!account.id_token) {
-        throw new Error(`${account.provider} 응답에 id_token이 없습니다.`);
+      // signIn 콜백이 백엔드 세션을 수립했을 때만 프로필이 있다. 없으면 세션을 만들지 않는다.
+      const profile = loginProfiles.get(account);
+
+      if (!profile) {
+        throw new Error('로그인 프로필을 찾지 못했습니다.');
       }
 
-      // 백엔드 로그인 실패는 여기서 던져 NextAuth 로그인 자체를 실패시킨다.
-      // "NextAuth 세션만 있고 백엔드 세션은 없는" 반쪽 상태를 만들지 않는다.
-      const profile = await establishBackendSession(
-        account.provider,
-        account.id_token,
-      );
-
+      loginProfiles.delete(account);
       token.userId = profile.userId;
       token.nickname = profile.nickname;
       token.profileImageUrl = profile.profileImageUrl;

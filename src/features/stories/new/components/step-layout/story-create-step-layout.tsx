@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from 'react';
 
-import { StoryCreateStepFooter } from './story-create-step-footer';
+import { StepFooter } from '@/components/common/step-footer';
+
 import { StoryCreateStepScrollArea } from './story-create-step-scroll-area';
 import { StoryCreateStepTitle } from './story-create-step-title';
 
@@ -41,9 +42,9 @@ export function StoryCreateStepLayout({
       </StoryCreateStepScrollArea>
 
       {footer != null && (
-        <StoryCreateStepFooter top={footerTop} message={footerMessage}>
+        <StepFooter top={footerTop} message={footerMessage}>
           {footer}
-        </StoryCreateStepFooter>
+        </StepFooter>
       )}
     </>
   );

@@ -11,6 +11,8 @@ export const API_ERROR_CODE = {
   GUEST_TRIAL_LIMIT_EXCEEDED: 'GUEST_TRIAL_LIMIT_EXCEEDED',
   /** 동의 기록의 버전이 서버 요구 버전과 다름(400). 최신 상태를 다시 조회해 재동의받는다. */
   CONSENT_VERSION_MISMATCH: 'CONSENT_VERSION_MISMATCH',
+  /** 가입 완료 요청에 현재 필요한 필수 항목이 빠짐(400). 약관 개정과 같이 다시 로그인해 받는다. */
+  CONSENT_REQUIRED_MISSING: 'CONSENT_REQUIRED_MISSING',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODE)[keyof typeof API_ERROR_CODE];

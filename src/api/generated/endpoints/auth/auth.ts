@@ -25,6 +25,7 @@ import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
   AccountLinkRequest,
+  ApiErrorResponse,
   LinkCodeResponse,
   LoginHandoffCreateRequest,
   LoginHandoffCreateResponse,
@@ -35,9 +36,11 @@ import type {
   MigrationRequest,
   MigrationResponse,
   RefreshTokenRequest,
+  SocialAuthResponse,
   SocialLoginRequest,
   SocialReauthRequest,
   TokenResponse,
+  UserConsentRequest,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -151,6 +154,236 @@ export const useRefresh = <TError = ErrorType<void>, TContext = unknown>(
   TContext
 > => {
   return useMutation(getRefreshMutationOptions(options), queryClient);
+};
+export type startResponse200 = {
+  data: SocialAuthResponse;
+  status: 200;
+};
+
+export type startResponse400 = {
+  data: ApiErrorResponse;
+  status: 400;
+};
+
+export type startResponse401 = {
+  data: ApiErrorResponse;
+  status: 401;
+};
+
+export type startResponseSuccess = startResponse200 & {
+  headers: Headers;
+};
+export type startResponseError = (startResponse400 | startResponse401) & {
+  headers: Headers;
+};
+
+export type startResponse = startResponseSuccess | startResponseError;
+
+export const getStartUrl = (provider: 'google' | 'kakao') => {
+  return `/api/v1/auth/social/${provider}`;
+};
+
+/**
+ * Google 또는 Kakao ID 토큰을 검증합니다. 동의가 필요하면 계정과 정식 토큰을 만들지 않고 대기 코드를 발급합니다.
+ * @summary 소셜 인증과 필수 동의 확인
+ */
+export const start = async (
+  provider: 'google' | 'kakao',
+  socialLoginRequest: SocialLoginRequest,
+  options?: RequestInit,
+): Promise<startResponse> => {
+  return customInstance<startResponse>(getStartUrl(provider), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(socialLoginRequest),
+  });
+};
+
+export const getStartMutationOptions = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof start>>,
+    TError,
+    { provider: 'google' | 'kakao'; data: BodyType<SocialLoginRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof start>>,
+  TError,
+  { provider: 'google' | 'kakao'; data: BodyType<SocialLoginRequest> },
+  TContext
+> => {
+  const mutationKey = ['start'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof start>>,
+    { provider: 'google' | 'kakao'; data: BodyType<SocialLoginRequest> }
+  > = (props) => {
+    const { provider, data } = props ?? {};
+
+    return start(provider, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StartMutationResult = NonNullable<
+  Awaited<ReturnType<typeof start>>
+>;
+export type StartMutationBody = BodyType<SocialLoginRequest>;
+export type StartMutationError = ErrorType<ApiErrorResponse>;
+
+/**
+ * @summary 소셜 인증과 필수 동의 확인
+ */
+export const useStart = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof start>>,
+      TError,
+      { provider: 'google' | 'kakao'; data: BodyType<SocialLoginRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof start>>,
+  TError,
+  { provider: 'google' | 'kakao'; data: BodyType<SocialLoginRequest> },
+  TContext
+> => {
+  return useMutation(getStartMutationOptions(options), queryClient);
+};
+export type completeResponse200 = {
+  data: TokenResponse;
+  status: 200;
+};
+
+export type completeResponse400 = {
+  data: ApiErrorResponse;
+  status: 400;
+};
+
+export type completeResponse401 = {
+  data: ApiErrorResponse;
+  status: 401;
+};
+
+export type completeResponseSuccess = completeResponse200 & {
+  headers: Headers;
+};
+export type completeResponseError = (
+  | completeResponse400
+  | completeResponse401
+) & {
+  headers: Headers;
+};
+
+export type completeResponse = completeResponseSuccess | completeResponseError;
+
+export const getCompleteUrl = () => {
+  return `/api/v1/auth/social/complete`;
+};
+
+/**
+ * 현행 필수 항목을 모두 제출합니다. 계정과 동의를 함께 저장한 뒤 토큰을 발급하며 성공 시에만 대기 코드를 소비합니다. 정지 회원도 이 경로로 로그인할 수 있습니다.
+ * @summary 필수 동의와 소셜 가입 완료
+ */
+export const complete = async (
+  userConsentRequest: UserConsentRequest,
+  options?: RequestInit,
+): Promise<completeResponse> => {
+  return customInstance<completeResponse>(getCompleteUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(userConsentRequest),
+  });
+};
+
+export const getCompleteMutationOptions = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof complete>>,
+    TError,
+    { data: BodyType<UserConsentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof complete>>,
+  TError,
+  { data: BodyType<UserConsentRequest> },
+  TContext
+> => {
+  const mutationKey = ['complete'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof complete>>,
+    { data: BodyType<UserConsentRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return complete(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CompleteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof complete>>
+>;
+export type CompleteMutationBody = BodyType<UserConsentRequest>;
+export type CompleteMutationError = ErrorType<ApiErrorResponse>;
+
+/**
+ * @summary 필수 동의와 소셜 가입 완료
+ */
+export const useComplete = <
+  TError = ErrorType<ApiErrorResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof complete>>,
+      TError,
+      { data: BodyType<UserConsentRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof complete>>,
+  TError,
+  { data: BodyType<UserConsentRequest> },
+  TContext
+> => {
+  return useMutation(getCompleteMutationOptions(options), queryClient);
 };
 export type migrateResponse200 = {
   data: MigrationResponse;

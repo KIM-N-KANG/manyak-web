@@ -33,13 +33,14 @@ const createQueryClient = () =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  storageMock.markPendingStoryCreated.mockResolvedValue(true);
 });
 
 describe('applyStoryCompletedEffects', () => {
-  it('게스트로 확정됐을 때만 로컬 서재에 스토리 ID를 남긴다', () => {
+  it('게스트로 확정됐을 때만 로컬 서재에 스토리 ID를 남긴다', async () => {
     const queryClient = createQueryClient();
 
-    applyStoryCompletedEffects(
+    await applyStoryCompletedEffects(
       'req-1',
       'story-1',
       'unauthenticated',
@@ -52,10 +53,10 @@ describe('applyStoryCompletedEffects', () => {
     });
   });
 
-  it('회원이면 로컬에 남기지 않고 내 스토리 목록을 무효화한다', () => {
+  it('회원이면 로컬에 남기지 않고 내 스토리 목록을 무효화한다', async () => {
     const queryClient = createQueryClient();
 
-    applyStoryCompletedEffects(
+    await applyStoryCompletedEffects(
       'req-1',
       'story-1',
       'authenticated',
@@ -68,10 +69,15 @@ describe('applyStoryCompletedEffects', () => {
     });
   });
 
-  it('세션 판정 전(loading)에는 게스트로 취급하지 않아 회원 스토리 ID가 로컬에 남지 않는다', () => {
+  it('세션 판정 전(loading)에는 게스트로 취급하지 않아 회원 스토리 ID가 로컬에 남지 않는다', async () => {
     const queryClient = createQueryClient();
 
-    applyStoryCompletedEffects('req-1', 'story-1', 'loading', queryClient);
+    await applyStoryCompletedEffects(
+      'req-1',
+      'story-1',
+      'loading',
+      queryClient,
+    );
 
     expect(storageMock.saveCreatedStoryId).not.toHaveBeenCalled();
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
@@ -80,11 +86,12 @@ describe('applyStoryCompletedEffects', () => {
     expect(storageMock.markPendingStoryCreated).toHaveBeenCalledWith(
       'req-1',
       'story-1',
+      0,
     );
   });
 
-  it('채팅 생성과 무관하게 스토리 완성 분석 이벤트를 발화한다', () => {
-    applyStoryCompletedEffects(
+  it('채팅 생성과 무관하게 스토리 완성 분석 이벤트를 발화한다', async () => {
+    await applyStoryCompletedEffects(
       'req-1',
       'story-1',
       'authenticated',

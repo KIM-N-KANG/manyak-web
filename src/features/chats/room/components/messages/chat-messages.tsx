@@ -12,8 +12,8 @@ import {
   MessageScrollerViewport,
   useMessageScroller,
 } from '@/components/ui/message-scroller';
+import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
 import { AiMessageBubble } from '@/features/chats/_shared/components/chat-message-bubble';
-import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,10 @@ import type { ChoicesStatus } from '../../hooks/use-chat-choices';
 import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled';
 import { useSpacerCollapse } from '../../hooks/use-spacer-collapse';
 import type { StreamingTurn } from '../../types';
+import {
+  EDITABLE_SELECTOR,
+  isHeaderToggleTap,
+} from '../../utils/header-toggle-tap';
 import { isStreamingTurnSuperseded } from '../../utils/streaming-turn';
 import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
@@ -57,6 +61,8 @@ type ChatMessagesProps = {
   onRegenerate: (turn: ChatTurnResponse) => void;
   onRetryChoices: () => void;
   onCharacterImageZoom: () => void;
+  /** 메시지 영역의 빈 곳을 탭했을 때 호출한다. 입력 중 키보드를 닫으려는 탭은 제외한다. */
+  onBackgroundTap: () => void;
 };
 
 export function ChatMessages({
@@ -73,10 +79,12 @@ export function ChatMessages({
   onRegenerate,
   onRetryChoices,
   onCharacterImageZoom,
+  onBackgroundTap,
 }: ChatMessagesProps) {
   const [startedEmpty] = useState(() => turns.length === 0 && !streamingTurn);
   const [hasSent, setHasSent] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const wasEditingRef = useRef(false);
   const settled = useInitialScrollSettled(viewportRef, { skip: startedEmpty });
 
   const activeStreamingTurn =
@@ -108,10 +116,17 @@ export function ChatMessages({
         )}>
         <MessageScrollerViewport
           ref={viewportRef}
-          className={cn(
-            regeneratingTurnId != null && '[overflow-anchor:none]',
-          )}>
-          <MessageScrollerContent className="gap-0">
+          className={cn(regeneratingTurnId != null && '[overflow-anchor:none]')}
+          onPointerDown={() => {
+            wasEditingRef.current =
+              document.activeElement?.matches(EDITABLE_SELECTOR) ?? false;
+          }}
+          onClick={(event) => {
+            if (!wasEditingRef.current && isHeaderToggleTap(event.target)) {
+              onBackgroundTap();
+            }
+          }}>
+          <MessageScrollerContent className="gap-0 pt-(--chat-header-height)">
             <MessageScrollerItem>
               <p className="px-4 text-center text-xs text-foreground-secondary">
                 {CHAT_AI_NOTICE}
@@ -120,9 +135,7 @@ export function ChatMessages({
             {prologue ? (
               <MessageScrollerItem>
                 <AiMessageBubble>
-                  <ChatMessageContent className="px-4">
-                    {prologue}
-                  </ChatMessageContent>
+                  <ChatAiMessageContent content={prologue} />
                 </AiMessageBubble>
               </MessageScrollerItem>
             ) : null}

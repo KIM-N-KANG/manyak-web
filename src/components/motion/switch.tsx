@@ -21,6 +21,8 @@ export interface SwitchProps {
   disabled?: boolean;
   label?: string;
   ariaLabel?: string;
+  /** 스위치를 설명하는 요소의 id다. */
+  ariaDescribedBy?: string;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export function Switch({
   disabled,
   label,
   ariaLabel,
+  ariaDescribedBy,
   className,
 }: SwitchProps) {
   const id = useId();
@@ -62,6 +65,7 @@ export function Switch({
           role="switch"
           aria-checked={checked}
           aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
           disabled={disabled}
           onClick={() => !disabled && onCheckedChange(!checked)}
           onPointerDown={(e) => {
@@ -83,6 +87,8 @@ export function Switch({
           <m.div
             ref={thumbRef}
             layout
+            // React Compiler가 손잡이 다시 그리기를 건너뛰면 layout 애니메이션이 이전 위치를 못 잡으므로 값이 바뀔 때마다 다시 그린다.
+            layoutDependency={checked}
             animate={{ scale: squish ? 0.9 : 1 }}
             className="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-md">
             {/* Stretch toward the destination while active. */}

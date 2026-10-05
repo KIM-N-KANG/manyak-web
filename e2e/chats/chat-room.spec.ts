@@ -17,6 +17,7 @@ import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   CREDIT_POLICY_FIXTURE,
   enableRealtimeImage,
@@ -41,6 +42,8 @@ const PLAY_FILLED_PATH =
   'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
 const CHARACTER_IMAGE_URL =
   'https://dev-cdn.manyak.app/characters/originals/story-id/serin.webp';
+const SCENE_IMAGE_URL =
+  'https://dev-cdn.manyak.app/scenes/originals/story-id/platform_1a2b3c4d.webp';
 
 // 1x1 투명 PNG. 인물 이미지 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
@@ -375,6 +378,31 @@ test.describe('채팅 스트리밍', () => {
     await expect(prologueContent).toHaveCSS('padding-bottom', '20px');
     await expect(firstChoice).toHaveCSS('line-height', '24.5px');
     await expect(choices).toHaveCSS('padding-top', '12px');
+  });
+
+  test('프롤로그의 장면 이미지 마커를 대사 줄 없이 이미지로 표시한다 (KNK-1545)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...chatDetail(),
+          prologue: `*열차가 멈췄다.*\n\n[[${SCENE_IMAGE_URL}]]\n\n*불이 꺼진다.*`,
+        }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText('열차가 멈췄다.')).toBeVisible();
+    await expect(page.getByRole('img', { name: '장면 이미지' })).toBeVisible();
+    await expect(page.getByText('불이 꺼진다.')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[[');
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
@@ -1015,6 +1043,38 @@ test.describe('채팅 헤더', () => {
     await page.mouse.wheel(0, 150);
 
     await expect(header.getByText('용의 계곡')).toBeVisible();
+  });
+
+  test('메시지 영역을 탭하면 헤더가 사라지고 다시 탭하면 나타나며, 버튼 탭은 헤더를 바꾸지 않는다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+
+    const header = page.getByRole('banner');
+    const prologue = page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.');
+
+    await expect(header).toBeVisible();
+
+    await prologue.click();
+    await expect(header).toBeHidden();
+
+    await prologue.click();
+    await expect(header).toBeVisible();
+
+    await page
+      .getByRole('button', { name: '입력창에 넣어 수정' })
+      .first()
+      .click();
+    await expect(header).toBeVisible();
   });
 });
 
@@ -2128,5 +2188,20 @@ test.describe('실시간 이미지 기본값과 안내 (KNK-1508)', () => {
         CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
       ),
     ).toBe('1');
+  });
+});
+
+test.describe('추천 입력 긴 글', () => {
+  test('공백 없는 긴 추천 입력도 버튼 폭 안에서 줄바꿈한다 (CHAT-INPUT-21)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, (route) =>
+      route.fulfill({ json: chatDetail([], [`추천${UNBROKEN_TEXT}`]) }),
+    );
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText(`추천${UNBROKEN_TEXT}`)).toBeVisible();
+    expect(await findOverflowingTexts(page)).toEqual([]);
   });
 });

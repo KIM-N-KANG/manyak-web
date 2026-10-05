@@ -44,7 +44,7 @@ test.describe('약관·개인정보 처리방침', () => {
     ).toBeVisible();
   });
 
-  test('헤더에는 뒤로가기와 문서 제목 대신 홈 로고가 보인다', async ({
+  test('헤더에는 뒤로가기와 문서 제목 대신 링크 없는 로고가 보인다', async ({
     page,
   }) => {
     await skipOnboarding(page);
@@ -52,23 +52,12 @@ test.describe('약관·개인정보 처리방침', () => {
 
     const header = page.getByRole('banner');
 
-    await expect(
-      header.getByRole('link', { name: '홈으로 이동' }),
-    ).toBeVisible();
+    await expect(header.getByRole('img', { name: '마냑' })).toBeVisible();
+    // Android 앱 WebView에서 웹 홈으로 넘어가지 않도록 로고를 링크로 두지 않는다(KNK-1534).
+    await expect(header.getByRole('link')).toHaveCount(0);
     await expect(
       header.getByRole('button', { name: '이전 페이지로 돌아가기 버튼' }),
     ).toHaveCount(0);
     await expect(header.getByText('개인정보 처리방침')).toHaveCount(0);
-  });
-
-  test('게스트가 /terms에 직접 진입한 뒤 헤더 로고를 누르면 홈으로 이동한다', async ({
-    page,
-  }) => {
-    await skipOnboarding(page);
-    await page.goto('/terms');
-
-    await page.getByRole('link', { name: '홈으로 이동' }).click();
-
-    await expect(page).toHaveURL('/');
   });
 });

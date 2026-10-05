@@ -11,12 +11,20 @@ import type { CharacterImageResponseModerationStatus } from './characterImageRes
  * 인물 이미지
  */
 export interface CharacterImageResponse {
-  /** 이미지 ID(공개 식별자). 삭제 요청에 쓴다 */
-  id?: string;
+  /**
+   * 이미지 ID(공개 식별자). 삭제 요청에 쓴다
+   * @nullable
+   */
+  id?: string | null;
   /** 이미지 이름 */
   imageName?: string;
   /** 서빙 URL */
   imageUrl?: string;
   /** 검수 상태(APPROVED · PENDING · REJECTED) */
   moderationStatus?: CharacterImageResponseModerationStatus;
+  /**
+   * 미승인 새 이미지의 업로드 객체 키
+   * @nullable
+   */
+  objectKey?: string | null;
 }

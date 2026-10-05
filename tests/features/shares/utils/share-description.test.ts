@@ -31,4 +31,11 @@ describe('truncateForDescription', () => {
   it('앞뒤 공백과 줄바꿈은 정리한다', () => {
     expect(truncateForDescription('  첫 줄\n둘째 줄  ')).toBe('첫 줄 둘째 줄');
   });
+
+  it('이미지 마커 줄은 지운다', () => {
+    const prologue =
+      '*지문*\n\n[[https://dev-cdn.manyak.app/scenes/originals/story/a_12345678.webp]]\n\n*다음 지문*';
+
+    expect(truncateForDescription(prologue)).toBe('*지문* *다음 지문*');
+  });
 });

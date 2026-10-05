@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -12,6 +10,7 @@ import {
   InputGroupAddon,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
+import { useDiscardConfirm } from '@/hooks/use-discard-confirm';
 import { cn } from '@/lib/utils';
 
 import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
@@ -55,7 +54,8 @@ export function ChatBlockInput({
   realtimeImageEnabled,
   onLockedTap,
 }: ChatBlockInputProps) {
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const { request: requestDiscard, dialogProps } =
+    useDiscardConfirm(onRemoveBlock);
 
   const hasInput = blocks.some((block) => block.value.trim().length > 0);
   const canSend =
@@ -72,23 +72,8 @@ export function ChatBlockInput({
     onSendRandomSuggestion();
   };
 
-  const requestRemoveBlock = (block: InputBlock) => {
-    if (block.value.trim().length > 0) {
-      setPendingDeleteId(block.id);
-
-      return;
-    }
-
-    onRemoveBlock(block.id);
-  };
-
-  const confirmRemoveBlock = () => {
-    if (pendingDeleteId !== null) {
-      onRemoveBlock(pendingDeleteId);
-    }
-
-    setPendingDeleteId(null);
-  };
+  const requestRemoveBlock = (block: InputBlock) =>
+    requestDiscard(block.id, block.value.trim().length > 0);
 
   return (
     <section className="flex flex-col bg-background pb-[env(safe-area-inset-bottom)]">
@@ -183,19 +168,7 @@ export function ChatBlockInput({
         </div>
       </div>
 
-      <ConfirmAlertDialog
-        open={pendingDeleteId !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPendingDeleteId(null);
-          }
-        }}
-        onConfirm={confirmRemoveBlock}
-        title="작성한 내용을 삭제할까요?"
-        description="삭제하면 작성한 내용이 사라져요"
-        cancelLabel="그대로 두기"
-        confirmLabel="삭제하기"
-      />
+      <ConfirmAlertDialog {...dialogProps} />
     </section>
   );
 }

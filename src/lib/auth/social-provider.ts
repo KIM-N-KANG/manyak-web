@@ -1,6 +1,6 @@
 /**
  * 앱이 지원하는 소셜 로그인 provider. NextAuth 프로바이더 id 및 백엔드
- * `POST /auth/login/{provider}` 경로 세그먼트와 값이 일치한다(스펙 §3-8).
+ * `POST /auth/social/{provider}` 경로 세그먼트와 값이 일치한다(스펙 §4-3-5).
  */
 export type SocialLoginProvider = 'google' | 'kakao';
 

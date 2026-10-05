@@ -2,14 +2,20 @@
 
 import { useState } from 'react';
 
-import { Alert02Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import {
+  Alert02Icon,
+  Delete02Icon,
+  Edit02Icon,
+} from '@hugeicons/core-free-icons';
 import type { VariantProps } from 'class-variance-authority';
+import { useRouter } from 'next/navigation';
 
 import {
   CardOptionsSheet,
   type CardOptionsSheetItem,
 } from '@/components/common/card-options-sheet';
 import type { buttonVariants } from '@/components/ui/button';
+import { APP_PATH } from '@/constants/app-path';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
@@ -18,14 +24,17 @@ import type { ReportSource } from '@/observability/analytics';
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
 /**
- * 스토리 더보기 메뉴(옵션 바텀 시트)의 props. 신고하기(회원만)와 삭제하기(내가 만든 스토리만)를
- * 담고, 둘 다 없으면 트리거도 그리지 않는다. 신고 항목은 파괴적 항목인 삭제하기 위에 둔다.
+ * 스토리 더보기 메뉴(옵션 바텀 시트)의 props. 수정하기(회원이 만든 스토리만), 신고하기(회원만),
+ * 삭제하기(내가 만든 스토리만)를 담고, 셋 다 없으면 트리거도 그리지 않는다. 수정하기를 맨 위에,
+ * 파괴적 항목인 삭제하기를 맨 아래에 둔다.
  */
 type StoryOptionsMenuProps = {
   storyId: string;
   /** 시트 머리글에 보일 스토리 제목 */
   title: string;
   source: ReportSource;
+  /** 수정하기 노출 여부(회원이 만든 스토리만) */
+  canEdit?: boolean;
   canReport: boolean;
   canDelete: boolean;
   onDeleteSuccess?: () => void;
@@ -37,12 +46,14 @@ export function StoryOptionsMenu({
   storyId,
   title,
   source,
+  canEdit = false,
   canReport,
   canDelete,
   onDeleteSuccess,
   size = 'icon-xs',
   triggerClassName,
 }: StoryOptionsMenuProps) {
+  const router = useRouter();
   const [isReportOpen, setIsReportOpen] = useState(false);
   const { deleteStory, isPending } = useDeleteCreatedStory(
     storyId,
@@ -50,6 +61,14 @@ export function StoryOptionsMenu({
   );
 
   const items: CardOptionsSheetItem[] = [];
+
+  if (canEdit) {
+    items.push({
+      icon: Edit02Icon,
+      label: '수정하기',
+      onSelect: () => router.push(APP_PATH.STORY_EDIT(storyId)),
+    });
+  }
 
   if (canReport) {
     items.push({

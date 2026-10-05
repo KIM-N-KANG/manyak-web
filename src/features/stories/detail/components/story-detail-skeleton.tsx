@@ -30,7 +30,7 @@ export function StoryDetailSkeleton() {
         </div>
         <div>
           {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="flex h-8 items-center">
+            <div key={index} className="flex h-6 items-center">
               <Skeleton
                 className={index === 2 ? 'h-4 w-[55%]' : 'h-4 w-full'}
               />

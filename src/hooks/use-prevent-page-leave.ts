@@ -1,0 +1,143 @@
+import { useEffect, useRef } from 'react';
+
+type UsePreventPageLeaveOptions = {
+  /** 새로고침·탭 닫기·주소창 이동 시 브라우저 기본 확인창을 띄울지 */
+  warnOnUnload: boolean;
+  /** 브라우저·모바일 뒤로가기를 더미 히스토리 항목으로 흡수할지 */
+  interceptBack: boolean;
+  /** 상위 오버레이가 뒤로가기를 처리하는 동안 화면 이탈 처리를 건너뛴다. */
+  ignoreBack?: boolean;
+  onBackAttempt: () => void;
+};
+
+/**
+ * 퍼널처럼 단일 URL에서 진행되는 화면의 이탈을 가로채는 훅.
+ *
+ * - `warnOnUnload`: `beforeunload`로 브라우저 기본 확인창을 띄운다.
+ *   (브라우저 보안 정책상 커스텀 다이얼로그는 표시할 수 없다.)
+ * - `interceptBack`: 더미 히스토리 항목으로 뒤로가기를 흡수하고 `onBackAttempt`를
+ *   호출해 커스텀 처리(다이얼로그·대체 이동)를 할 수 있게 한다.
+ *
+ * 두 가드는 따로 켠다. 지울 내용이 없어 경고가 불필요한 스텝에서도, 돌아갈 앱 내
+ * 히스토리가 없으면 뒤로가기만은 흡수해야 하기 때문이다.
+ *
+ * `interceptBack`인 동안 더미 항목은 항상 1개만 유지된다(popstate마다 다시 쌓음).
+ * 따라서 실제 이탈 시 `confirmLeave`는 더미 + 현재 페이지를 건너뛰어야 한다.
+ *
+ * @param warnOnUnload 새로고침·탭 닫기 경고를 띄울지 여부
+ * @param interceptBack 뒤로가기를 흡수할지 여부
+ * @param ignoreBack 상위 오버레이에 뒤로가기 처리를 맡길지 여부
+ * @param onBackAttempt 뒤로가기를 흡수했을 때 호출되는 콜백
+ * @returns 이탈 확정(`confirmLeave`)과 정리 후 이동(`leaveAfterCleanup`) 함수
+ */
+export function usePreventPageLeave({
+  warnOnUnload,
+  interceptBack,
+  ignoreBack = false,
+  onBackAttempt,
+}: UsePreventPageLeaveOptions) {
+  const onBackAttemptRef = useRef(onBackAttempt);
+  const ignoreBackRef = useRef(ignoreBack);
+  const teardownRef = useRef<(() => void) | null>(null);
+  /**
+   * 이 화면이 쌓은 더미 항목이 히스토리에 남아 있는지다. 개발 모드의 StrictMode가 효과를 정리 후 다시
+   * 실행해도(정리는 더미를 빼지 않음) 더미를 한 번만 쌓아, 더미가 1개라는 `confirmLeave`의 전제를 지킨다.
+   */
+  const hasDummyRef = useRef(false);
+
+  useEffect(() => {
+    onBackAttemptRef.current = onBackAttempt;
+    ignoreBackRef.current = ignoreBack;
+  }, [onBackAttempt, ignoreBack]);
+
+  useEffect(() => {
+    if (!warnOnUnload) {
+      return;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // preventDefault만으로 브라우저 기본 확인창을 띄운다(모던 브라우저 기준).
+      event.preventDefault();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [warnOnUnload]);
+
+  useEffect(() => {
+    if (!interceptBack) {
+      return;
+    }
+
+    const handlePopState = () => {
+      if (ignoreBackRef.current) return;
+
+      // 뒤로가기로 더미 항목을 빠져나왔으므로 다시 쌓아 현재 위치를 유지한다.
+      window.history.pushState(null, '', window.location.href);
+      onBackAttemptRef.current();
+    };
+
+    // 브라우저/모바일 뒤로가기를 흡수할 더미 히스토리 항목
+    if (!hasDummyRef.current) {
+      window.history.pushState(null, '', window.location.href);
+      hasDummyRef.current = true;
+    }
+
+    window.addEventListener('popstate', handlePopState);
+
+    const teardown = () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+
+    teardownRef.current = teardown;
+
+    return () => {
+      teardown();
+      teardownRef.current = null;
+    };
+  }, [interceptBack]);
+
+  /**
+   * 사용자가 이탈을 확정했을 때. 가드를 해제하고 더미 항목과 현재 페이지를
+   * 건너뛰어 퍼널 진입 직전 화면으로 돌아간다.
+   */
+  const confirmLeave = () => {
+    teardownRef.current?.();
+    teardownRef.current = null;
+    hasDummyRef.current = false;
+    window.history.go(-2);
+  };
+
+  /**
+   * 정상 흐름(예: 생성 완료 후 채팅방 이동)으로 떠나기 전, 더미 항목만 정리한 뒤
+   * 전달받은 이동 동작을 실행한다. 더미를 정리하지 않으면 이동 후 히스토리에
+   * 더미가 남아 뒤로가기 동선이 꼬인다.
+   */
+  const leaveAfterCleanup = (navigate: () => void) => {
+    const teardown = teardownRef.current;
+
+    if (!teardown) {
+      navigate();
+
+      return;
+    }
+
+    teardown();
+    teardownRef.current = null;
+    hasDummyRef.current = false;
+
+    const handlePopStateOnce = () => {
+      window.removeEventListener('popstate', handlePopStateOnce);
+      navigate();
+    };
+
+    // 더미 항목을 소비(같은 URL이라 화면 변화 없음)한 뒤 실제 이동을 수행한다.
+    window.addEventListener('popstate', handlePopStateOnce);
+    window.history.back();
+  };
+
+  return { confirmLeave, leaveAfterCleanup };
+}

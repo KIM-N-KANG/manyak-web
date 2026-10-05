@@ -62,3 +62,26 @@ export const isHoveringPointer = (event: {
   pointerType: string;
   buttons: number;
 }) => event.pointerType !== 'touch' && event.buttons === 0;
+
+/**
+ * 제스처 동안 포인터를 요소에 붙잡는다. 캡처는 편의 기능이라, 브라우저가 거부하거나
+ * 지원하지 않아도 제스처가 멈추지 않게 예외를 삼킨다.
+ */
+export function capturePointer(element: Element, pointerId: number) {
+  try {
+    element.setPointerCapture?.(pointerId);
+  } catch {
+    // 캡처 없이도 요소 위의 이동은 계속 받는다.
+  }
+}
+
+/** [capturePointer]로 붙잡은 포인터를 놓는다. 이미 풀렸으면 아무것도 하지 않는다. */
+export function releasePointer(element: Element, pointerId: number) {
+  try {
+    if (element.hasPointerCapture?.(pointerId)) {
+      element.releasePointerCapture(pointerId);
+    }
+  } catch {
+    // 이미 풀린 캡처는 무시한다.
+  }
+}

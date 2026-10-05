@@ -7,27 +7,29 @@ import {
   BubbleChatIcon,
   Calendar04Icon,
   Delete02Icon,
-  Image01Icon,
+  Edit02Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import {
   CardOptionsSheet,
   type CardOptionsSheetItem,
 } from '@/components/common/card-options-sheet';
-// KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
-// import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
+import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryGenreBadges } from '@/features/stories/_shared/components/story-genre-badges';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
-// import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
+import { formatCompactCount } from '@/lib/format-count';
 import { formatSameDayTimeOrDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
@@ -94,11 +96,22 @@ function CreatedStoryCardOptions({
   storyId,
 }: CreatedStoryCardOptionsProps) {
   const { status } = useSession();
+  const router = useRouter();
   const [isReportOpen, setIsReportOpen] = useState(false);
   const { deleteStory, isPending } = useDeleteCreatedStory(storyId);
-  const canReport = status === 'authenticated';
+  const isMember = status === 'authenticated';
+  const canReport = isMember;
 
   const items: CardOptionsSheetItem[] = [];
+
+  // 수정은 회원만 할 수 있어(게스트 스토리 PATCH 401) 회원 카드에만 맨 위에 둔다.
+  if (isMember) {
+    items.push({
+      icon: Edit02Icon,
+      label: '수정하기',
+      onSelect: () => router.push(APP_PATH.STORY_EDIT(storyId)),
+    });
+  }
 
   if (canReport) {
     items.push({
@@ -176,10 +189,7 @@ function CreatedStoryCardBody({
           <div
             aria-hidden="true"
             className="flex size-full items-center justify-center">
-            <HugeiconsIcon
-              icon={Image01Icon}
-              className={cn('text-foreground-tertiary', 'size-8')}
-            />
+            <ManyakSymbolIcon className="size-8 text-foreground-tertiary" />
           </div>
         )}
       </AspectRatio>
@@ -192,7 +202,7 @@ function CreatedStoryCardBody({
           <div className="flex items-start gap-2">
             <p
               className={cn(
-                'line-clamp-2 min-w-0 flex-1 font-semibold break-keep',
+                'line-clamp-2 min-w-0 flex-1 font-semibold wrap-break-word break-keep',
                 'leading-6',
               )}>
               {title}
@@ -204,7 +214,7 @@ function CreatedStoryCardBody({
           {introduction ? (
             <p
               className={cn(
-                'mt-1 break-keep text-foreground-secondary',
+                'mt-1 wrap-break-word break-keep text-foreground-secondary',
                 'line-clamp-2 text-sm leading-5',
               )}>
               {story.oneLineIntro}
@@ -221,18 +231,13 @@ function CreatedStoryCardBody({
             'mt-1 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-foreground-secondary',
             'text-sm',
           )}>
-          {/* KNK-1260: 스토리 게시·공유 기능 전까지 좋아요 UI를 숨긴다.
           <div className="flex items-center gap-1 whitespace-nowrap">
-            <HeartOutlineIcon
-              className={'size-3.5'}
-              aria-hidden="true"
-            />
+            <HeartOutlineIcon className={'size-3.5'} aria-hidden="true" />
             <p>
               <span className="sr-only">{STORY_LIKE_COPY.count} </span>
-              {(story.likeCount ?? 0).toLocaleString()}
+              {formatCompactCount(story.likeCount ?? 0)}
             </p>
           </div>
-          */}
           <div className="flex items-center gap-1 whitespace-nowrap">
             <HugeiconsIcon
               icon={BubbleChatIcon}
@@ -241,7 +246,7 @@ function CreatedStoryCardBody({
             />
             <p>
               <span className="sr-only">누적 턴 수 </span>
-              {(story.turnCount ?? 0).toLocaleString()}
+              {formatCompactCount(story.turnCount ?? 0)}
             </p>
           </div>
           {story.createdAt ? (

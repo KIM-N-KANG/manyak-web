@@ -3,6 +3,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
 import { GUEST_CONSENT_COPY as COPY } from '@/features/auth/_shared/constants/guest-consent';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
+import { CHAT_TOUR_SEEN_STORAGE_KEY } from '@/features/chats/room/constants';
 
 import { oneLine } from '../fixtures/copy';
 import { prepareStoryGeneration } from '../fixtures/story-generation';
@@ -609,4 +610,42 @@ test('기존 브라우저 동의 기록이 있어도 서버가 미동의면 다�
   await expect(
     page.getByRole('dialog').getByRole('heading', { name: COPY.title }),
   ).toBeVisible();
+});
+
+test('첫 진입에는 전송 전에 투어가 먼저 뜨고, 투어를 닫고 보낸 전송의 동의 시트에는 투어가 겹치지 않는다', async ({
+  page,
+}) => {
+  // beforeEach의 투어 열람 표시를 지워 첫 진입 자동 노출 조건을 만든다.
+  await page.addInitScript(
+    (key) => localStorage.removeItem(key),
+    CHAT_TOUR_SEEN_STORAGE_KEY,
+  );
+  await page.route('**/api/v1/chats/c1/turns/stream', (route) =>
+    route.fulfill({
+      status: 200,
+      headers: { 'content-type': 'text/event-stream' },
+      body: 'event: done\ndata: {}\n\n',
+    }),
+  );
+  await page.goto(APP_PATH.CHAT_ROOM('c1'));
+
+  const tour = page.getByRole('dialog', { name: '채팅 화면 안내' });
+
+  // 화면이 준비되면 사용자가 아무것도 보내기 전에 투어가 먼저 열린다.
+  await expect(tour).toBeVisible();
+  await tour.getByRole('button', { name: '건너뛰기' }).click();
+  await expect(tour).toHaveCount(0);
+
+  await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('문을 연다');
+  await page.getByRole('button', { name: '전송', exact: true }).click();
+
+  const sheet = page.getByRole('dialog', { name: COPY.title });
+
+  await expect(sheet).toBeVisible();
+  await expect(tour).toHaveCount(0);
+
+  await sheet.getByRole('button', { name: COPY.agree, exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+  await page.waitForTimeout(500);
+  await expect(tour).toHaveCount(0);
 });

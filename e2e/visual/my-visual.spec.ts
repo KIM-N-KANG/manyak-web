@@ -280,7 +280,7 @@ test.describe('마이 비주얼', () => {
       page.getByRole('heading', { level: 1, name: '서비스 안내' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('banner').getByRole('link', { name: '홈으로 이동' }),
+      page.getByRole('banner').getByRole('img', { name: '마냑' }),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: '게스트 이용 안내' }),

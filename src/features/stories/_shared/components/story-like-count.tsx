@@ -1,5 +1,6 @@
 import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+import { formatCompactCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
 
 type StoryLikeCountProps = {
@@ -25,7 +26,7 @@ export function StoryLikeCount({
       />
       <p>
         <span className="sr-only">{STORY_LIKE_COPY.count} </span>
-        {likeCount.toLocaleString()}
+        {formatCompactCount(likeCount)}
       </p>
     </div>
   );

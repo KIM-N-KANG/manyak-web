@@ -3,9 +3,15 @@ import type { Page } from '@playwright/test';
 import type {
   CreditPolicyResponse,
   CreditProductResponse,
+  GenreCatalogResponse,
+  PushSettingsResponse,
   TrialsResponse,
   UserConsentResponse,
 } from '@/api/generated/models';
+import {
+  SIGNUP_CONSENT_ENDPOINT,
+  type SignupConsentSummary,
+} from '@/lib/auth/signup-consent';
 
 /**
  * 모든 백엔드 호출은 /api/[...path] 프록시를 거친다.
@@ -45,6 +51,18 @@ export async function mockApi(page: Page): Promise<void> {
   // 회원 시나리오가 동의 시트 없이 진행되게 한다. 동의 시나리오는 이 목을 override한다.
   await mockConsents(page);
   await mockGuestConsents(page);
+
+  // 가입 동의 대기는 기본으로 없다(404). catch-all의 `[]`가 대기 요약으로 읽히지 않게 한다.
+  await mockSignupConsent(page, null);
+
+  // 제작 화면의 장르 칩과 검색은 제공 장르 조회를 따라간다. 스펙의 간편 제작 태그 목과 같은 id 1 판타지를
+  // 대표로 두고, 나머지는 인물 특징 태그 id와 겹치지 않게 둔다. 다른 목록은 스펙에서 override한다.
+  await mockGenreCatalog(page);
+
+  // 회원 세션은 루트의 토큰 동기화·프롬프트가 알림 API를 부를 수 있다. 기본 설정과 204를
+  // 응답해 어떤 시나리오도 catch-all의 `[]`로 깨지지 않게 한다. 설정 시나리오는 override한다.
+  await mockPushTokens(page);
+  await mockPushSettings(page);
 }
 
 export const GUEST_CONSENT_VERSION_FIXTURE = 'guest-v1';
@@ -367,6 +385,174 @@ export async function mockChatShareCreate(
         turnCount: 1,
         createdAt: '2026-07-29T00:00:00Z',
       }),
+    });
+  });
+}
+
+/** 디바이스 푸시 토큰 등록·삭제(PUT/DELETE /api/v1/users/me/push-tokens) 라우트 글롭. */
+const PUSH_TOKENS_ROUTE = '**/api/v1/users/me/push-tokens';
+
+/** 알림 설정 조회·갱신(GET/PUT /api/v1/users/me/push-settings) 라우트 글롭. */
+const PUSH_SETTINGS_ROUTE = '**/api/v1/users/me/push-settings';
+
+/** E2E가 응답할 알림 설정 기본값. 서비스 켜짐, 광고·야간 꺼짐(서버 기본과 같다). */
+export const PUSH_SETTINGS_FIXTURE = {
+  servicePush: true,
+  marketingPush: false,
+  marketingNightPush: false,
+} as const satisfies Required<PushSettingsResponse>;
+
+/**
+ * 푸시 토큰 등록·삭제를 204로 목킹한다.
+ *
+ * @param page 대상 페이지
+ */
+export async function mockPushTokens(page: Page): Promise<void> {
+  await page.route(PUSH_TOKENS_ROUTE, async (route) => {
+    await route.fulfill({ status: 204 });
+  });
+}
+
+/**
+ * 알림 설정 조회·갱신을 목킹한다. GET은 픽스처(덮어쓰기 가능)를, PUT은 요청 본문을 그대로
+ * 돌려줘 전체 교체 계약을 재현한다. `status`를 넘기면 GET을 그 상태로 실패시킨다.
+ *
+ * @param page 대상 페이지
+ * @param overrides 기본 픽스처 위에 덮어쓸 항목
+ * @param status GET 응답 상태(기본 200)
+ */
+export async function mockPushSettings(
+  page: Page,
+  overrides: Partial<PushSettingsResponse> = {},
+  status = 200,
+): Promise<void> {
+  await page.route(PUSH_SETTINGS_ROUTE, async (route) => {
+    if (route.request().method() === 'PUT') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: route.request().postData() ?? '{}',
+      });
+
+      return;
+    }
+
+    await route.fulfill({
+      status,
+      contentType: 'application/json',
+      body:
+        status === 200
+          ? JSON.stringify({ ...PUSH_SETTINGS_FIXTURE, ...overrides })
+          : '{}',
+    });
+  });
+}
+
+/** 홈 공개 스토리 목록(`GET /stories`) 요청. 하위 경로(`/stories/{id}` 등)와 구분하려고 경로를 정확히 비교한다. */
+export const isPublicStoriesUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories';
+
+/**
+ * 홈 공개 스토리 목록을 한 페이지(다음 커서 없음)로 목킹한다.
+ *
+ * @param page 대상 페이지
+ * @param items 응답할 스토리 요약 목록
+ */
+export async function mockPublicStories(
+  page: Page,
+  items: unknown[],
+): Promise<void> {
+  await page.route(isPublicStoriesUrl, async (route) => {
+    await route.fulfill({ json: { items, nextCursor: null } });
+  });
+}
+
+/**
+ * 가입 동의 대기 BFF(`/api/auth/signup-consent`)를 목킹한다. 요약이 없으면 대기가 없는
+ * 404를 응답하고, 취소(DELETE)는 대기를 지운 뒤 204를 응답한다.
+ *
+ * @param page 대상 페이지
+ * @param summary 대기 중인 가입 동의 요약(없으면 null)
+ * @returns 조회·취소 요청 수와, 소셜 인증이 대기를 남기는 시점을 재현할 설정 함수
+ */
+export async function mockSignupConsent(
+  page: Page,
+  summary: SignupConsentSummary | null,
+): Promise<{
+  get: number;
+  delete: number;
+  setPending: (next: SignupConsentSummary | null) => void;
+}> {
+  let pending = summary;
+  const requests = {
+    get: 0,
+    delete: 0,
+    setPending: (next: SignupConsentSummary | null) => {
+      pending = next;
+    },
+  };
+
+  await page.route(`**${SIGNUP_CONSENT_ENDPOINT}`, async (route) => {
+    if (route.request().method() === 'DELETE') {
+      requests.delete += 1;
+      pending = null;
+      await route.fulfill({ status: 204 });
+
+      return;
+    }
+
+    requests.get += 1;
+    await route.fulfill(pending ? { json: pending } : { status: 404 });
+  });
+
+  return requests;
+}
+
+/** 제공 장르 조회 기본 응답이다. 대표 장르는 판타지와 로맨스다. */
+export const GENRE_CATALOG_FIXTURE = {
+  genres: [
+    { id: 1, name: '판타지' },
+    { id: 101, name: '로맨스' },
+    { id: 102, name: '로맨스판타지' },
+    { id: 103, name: '현대판타지' },
+    { id: 104, name: 'BL' },
+    { id: 105, name: '호러' },
+  ],
+  featuredGenres: [
+    { id: 1, name: '판타지' },
+    { id: 101, name: '로맨스' },
+  ],
+} satisfies GenreCatalogResponse;
+
+/** 제공 장르 조회(`GET /stories/genres`) 요청. 검색어는 쿼리 문자열이라 경로만 비교한다. */
+export const isGenreCatalogUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories/genres';
+
+/**
+ * 제공 장르 조회와 검색을 목킹한다. 검색어가 있으면 공백·대소문자를 무시한 부분 일치로 거른다.
+ * 서버의 초성·별칭 해석은 흉내 내지 않는다.
+ *
+ * @param page 대상 페이지
+ * @param catalog 응답할 제공 장르 목록
+ */
+export async function mockGenreCatalog(
+  page: Page,
+  catalog: typeof GENRE_CATALOG_FIXTURE = GENRE_CATALOG_FIXTURE,
+): Promise<void> {
+  const toKey = (value: string) => value.replace(/\s/g, '').toLowerCase();
+
+  await page.route(isGenreCatalogUrl, async (route) => {
+    const query = toKey(
+      new URL(route.request().url()).searchParams.get('query') ?? '',
+    );
+
+    await route.fulfill({
+      json: {
+        genres: catalog.genres.filter(({ name }) =>
+          toKey(name).includes(query),
+        ),
+        featuredGenres: catalog.featuredGenres,
+      },
     });
   });
 }

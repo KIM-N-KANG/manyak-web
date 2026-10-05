@@ -1,0 +1,60 @@
+/**
+ * 광고 알림 동의 재질문 시트와 처리 뒤 안내의 사용자 문구 정본. Android 재질문 시트와 같다.
+ * 첫 질문은 필수 동의 시트의 선택 항목(`CONSENT_SHEET_COPY.marketing`)이다.
+ */
+export const MARKETING_CONSENT_COPY = {
+  title: '이벤트·혜택 소식을 알림으로 받아 볼까요?',
+  description:
+    '새로운 이벤트와 혜택 소식, 출석 리마인드를 광고 알림으로 보내드려요',
+  accept: '광고 알림 받기',
+  decline: '닫기',
+  deviceDisabledHint:
+    '브라우저 알림이 꺼져 있어 알림 설정에서 켜야 받을 수 있어요',
+} as const;
+
+/** 알림 설정 화면의 사용자 문구 정본. Android 알림 설정 화면과 같은 문구를 쓴다. */
+export const PUSH_SETTINGS_COPY = {
+  title: '알림 설정',
+  menuLabel: '알림 설정',
+  bannerDisabled: '브라우저 알림 설정이 꺼져 있어요',
+  bannerDenied: '브라우저 알림이 차단되어 있어요',
+  bannerInstall:
+    '홈 화면에 추가한 마냑에서만 알림을 받을 수 있어요. 공유 버튼을 누른 뒤 "홈 화면에 추가"를 선택해 주세요',
+  bannerUnsupported: '이 브라우저에서는 알림을 지원하지 않아요',
+  enable: '알림 켜기',
+  deniedGuide: '방법 보기',
+  deniedGuideTitle: '브라우저에서 알림을 허용해 주세요',
+  deniedGuideDescription:
+    '한 번 차단한 알림은 브라우저가 다시 묻지 않아요. 주소창의 사이트 설정(자물쇠 아이콘)에서 알림을 "허용"으로 바꾼 뒤 이 화면을 다시 열어 주세요. 홈 화면에 추가한 앱이라면 기기의 앱 알림 설정에서 허용해 주세요',
+  deniedGuideClose: '확인',
+  service: '서비스 알림',
+  serviceDescription: '스토리 완성처럼 내 활동의 결과를 알려드려요',
+  marketing: '광고 알림',
+  marketingDescription: '이벤트·혜택 소식과 출석 리마인드를 받아요',
+  marketingNight: '야간 광고 허용',
+  marketingNightDescription: '밤 9시부터 아침 8시 사이에도 광고 알림을 받아요',
+  privacyPolicy: '개인정보 처리방침 보기',
+  loadFailed: '알림 설정을 불러오지 못했어요',
+} as const;
+
+/**
+ * 광고·야간 동의를 켜거나 끌 때 즉시 표시하는 처리 결과 통지 문구(정보통신망법 제50조).
+ * 전송자·의사 표시 일시·처리 내용을 담는다. 일시는 의사 표시 시점의 기기 시각이다.
+ */
+export const PUSH_CONSENT_NOTICE_COPY = {
+  title: '알림 수신 동의 처리 안내',
+  sender: '마냑 운영자 강동우(팀명 김앤강)',
+  senderLabel: '전송자',
+  dateLabel: '일시',
+  resultLabel: '처리 내용',
+  close: '확인',
+  result: {
+    marketingOn: '광고 알림 수신 동의 완료',
+    marketingOff: '광고 알림 수신 동의 철회 완료',
+    nightOn: '야간 광고 알림 수신 동의 완료',
+    nightOff: '야간 광고 알림 수신 동의 철회 완료',
+  },
+} as const;
+
+export type PushConsentNoticeResult =
+  keyof typeof PUSH_CONSENT_NOTICE_COPY.result;

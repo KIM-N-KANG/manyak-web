@@ -15,6 +15,8 @@ import { StoryOptionsMenu } from '@/features/stories/_shared/components/story-op
 type StoryDetailHeaderProps = {
   storyId: string;
   title: string;
+  /** 수정하기 노출 여부(회원이 만든 스토리만) */
+  canEdit: boolean;
   /** 신고하기 노출 여부(회원만) */
   canReport: boolean;
   /** 삭제하기 노출 여부(내가 만든 스토리만) */
@@ -29,6 +31,7 @@ type StoryDetailHeaderProps = {
 export function StoryDetailHeader({
   storyId,
   title,
+  canEdit,
   canReport,
   canDelete,
   onDeleteSuccess,
@@ -56,7 +59,7 @@ export function StoryDetailHeader({
     const scrollContainer = scrollContainerElement;
     const hero = heroElement;
 
-    if (!header || !scrollContainer || !hero || !hasHeroImage) {
+    if (!header || !scrollContainer || !hero) {
       header?.style.setProperty('--story-header-alpha', '1');
       header?.style.setProperty('--story-header-color', 'var(--foreground)');
 
@@ -76,9 +79,12 @@ export function StoryDetailHeader({
       const imageColorWeight = Math.round((1 - alpha) * 100);
 
       header.style.setProperty('--story-header-alpha', String(alpha));
+      // 썸네일이 없으면 밝은 기본 심벌 위라 처음부터 기본 전경색을 쓴다.
       header.style.setProperty(
         '--story-header-color',
-        `color-mix(in oklab, white ${imageColorWeight}%, var(--foreground))`,
+        hasHeroImage
+          ? `color-mix(in oklab, white ${imageColorWeight}%, var(--foreground))`
+          : 'var(--foreground)',
       );
     };
 
@@ -113,7 +119,7 @@ export function StoryDetailHeader({
       className="absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-2 px-2 text-[var(--story-header-color)]"
       style={
         {
-          '--story-header-alpha': hasHeroImage ? 0 : 1,
+          '--story-header-alpha': heroElement ? 0 : 1,
           '--story-header-color': hasHeroImage ? 'white' : 'var(--foreground)',
         } as CSSProperties
       }>
@@ -144,6 +150,7 @@ export function StoryDetailHeader({
         storyId={storyId}
         title={title}
         source="storyDetail"
+        canEdit={canEdit}
         canReport={canReport}
         canDelete={canDelete}
         onDeleteSuccess={onDeleteSuccess}

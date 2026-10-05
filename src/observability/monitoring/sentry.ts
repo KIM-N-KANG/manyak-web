@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 
 import { FetchError } from '@/lib/api-error';
+import { SIGNUP_CONSENT_COOKIE_NAME } from '@/lib/auth/signup-consent';
 import { redactShareId } from '@/lib/shares/share-url-redaction';
 
 /** 이 미만(4xx)은 사용자가 복구할 수 있는 검증 오류로 보고 Sentry로 보내지 않는다(스펙 §AN-2-8). */
@@ -23,8 +24,9 @@ export const SENTRY_IGNORE_ERRORS: (string | RegExp)[] = [
   'ResizeObserver loop completed with undelivered notifications',
   // SNS 인앱 브라우저(인스타그램·쓰레드·카카오톡 등)가 웹뷰에 주입하는 네이티브 브릿지
   // 스크립트(sendDataToNative)가 페이지 이탈 시점에 던지는 오류다. 앱 코드와 무관하다.
+  // Android 브릿지는 호출한 메서드명(postMessage 등)과 실패 유형만 바뀌어 들어오므로 둘 다 열어 둔다.
   "undefined is not an object (evaluating 'window.webkit.messageHandlers')",
-  'Error invoking postMessage: Java object is gone',
+  /Error invoking \w+: Java (object is gone|exception was raised)/,
 ];
 
 /**
@@ -72,6 +74,34 @@ export function captureApiError(
 }
 
 /**
+ * 요청 정보에서 가입 동의 대기 쿠키를 지운다. 쿠키 객체와 cookie 헤더(대소문자 무관)를 함께 본다.
+ *
+ * @param request Sentry 이벤트의 요청 정보
+ */
+function dropSecretCookies(
+  request: NonNullable<Sentry.ErrorEvent['request']>,
+): void {
+  if (request.cookies) {
+    delete request.cookies[SIGNUP_CONSENT_COOKIE_NAME];
+  }
+
+  for (const key of Object.keys(request.headers ?? {})) {
+    const value = request.headers?.[key];
+
+    if (key.toLowerCase() === 'cookie' && typeof value === 'string') {
+      request.headers![key] = value
+        .split(';')
+        .map((pair) => pair.trim())
+        .filter(
+          (pair) =>
+            pair !== '' && !pair.startsWith(`${SIGNUP_CONSENT_COOKIE_NAME}=`),
+        )
+        .join('; ');
+    }
+  }
+}
+
+/**
  * Sentry beforeSend 훅. 자동 캡처·unhandledrejection 등 captureApiError를 거치지 않은
  * 경로로 유입되는 복구 가능한 4xx 응답을 최종적으로 걸러내고, 남는 이벤트에서 공유
  * 열람 토큰을 가린다.
@@ -79,6 +109,9 @@ export function captureApiError(
  * 공유 열람 화면(`/share/{shareId}`)에서 오류가 나면 Sentry가 request URL·breadcrumb에
  * 주소를 그대로 싣는데, shareId는 곧 열람 수단이라 그대로 두면 관측 저장소에서 비공개
  * 대화로 들어갈 수 있다(6-analytics.md §6-4-2-14).
+ *
+ * 서버 요청 오류는 `sendDefaultPii`로 요청 쿠키가 함께 실린다. 가입 동의 대기 코드는
+ * 남의 가입을 완료할 수 있는 단일 사용 코드라 쿠키 객체와 cookie 헤더에서 지운다.
  *
  * @param event Sentry로 전송될 오류 이벤트
  * @param hint 원본 예외 등을 담은 이벤트 힌트
@@ -92,6 +125,10 @@ export function dropRecoverableApiError(
 
   if (event.request?.url) {
     event.request.url = redactShareId(event.request.url);
+  }
+
+  if (event.request) {
+    dropSecretCookies(event.request);
   }
 
   if (typeof event.tags?.api_url === 'string') {
