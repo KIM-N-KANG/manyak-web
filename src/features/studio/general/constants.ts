@@ -198,7 +198,7 @@ export const GENERAL_STORY_CHARACTER_COPY = {
   ].join('\n'),
   /** 주변 인물만 받는 인물 소개(`characters[].description`)다. 서버가 줄바꿈을 받지 않아 한 줄로 받는다. */
   introductionLabel: '인물 소개',
-  introductionMaxLength: 80,
+  introductionMaxLength: 150,
   introductionPlaceholder: '예: 유실물 보관소를 지키는 무뚝뚝한 관리인',
   introductionDescription:
     '스토리 상세에서 이름 아래에 보이는 소개 글이에요. 어떤 인물인지 한 문장으로 적어주세요',
