@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useCreate } from '@/api/generated/endpoints/credits/credits';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 
+import { leaveForPayment } from '../utils/payment-return-history';
 import { savePendingCreditOrder } from '../utils/pending-credit-order-storage';
 
 /**
@@ -33,7 +34,7 @@ export function useCreateCreditOrder() {
         }
 
         // 결제창은 외부(그로블) 페이지라 앱 라우터 대신 전체 이동한다.
-        window.location.assign(response.data.paymentUrl);
+        leaveForPayment(response.data.paymentUrl);
       },
       onError: () => {
         toast.error(TOAST_MESSAGE.CREDIT_ORDER_FAILED);
