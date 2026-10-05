@@ -30,7 +30,12 @@ export function isPopupAttempt(value: unknown): value is string {
 export function isPopupLoginMessage(
   data: unknown,
   attempt: string,
-): data is { type: string; attempt: string; authenticated: boolean } {
+): data is {
+  type: string;
+  attempt: string;
+  authenticated: boolean;
+  consentRequired?: boolean;
+} {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
