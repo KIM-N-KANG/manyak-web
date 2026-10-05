@@ -3,6 +3,7 @@ import type { Page, Route } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+import { START_SETTING_INFO_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -227,31 +228,85 @@ test.describe('스토리 상세', () => {
 
     await page.goto('/stories/s1');
 
+    const [imugi, sansin, gyegok] = STORY_CHARACTERS;
+    const section = page
+      .getByRole('heading', { name: '주변 인물' })
+      .locator('..');
+    const picker = page.getByRole('group', { name: '주변 인물 선택' });
+
+    // 인물 선택 줄에 모든 인물이 있고, 첫 인물만 선택된 채 크게 보인다
+    await expect(picker.getByRole('button')).toHaveCount(3);
     await expect(
-      page.getByRole('heading', { name: '주변 인물' }),
-    ).toBeVisible();
-    await expect(page.getByRole('heading', { name: '이무기' })).toBeVisible();
+      picker.getByRole('button', { name: imugi.name }),
+    ).toHaveAttribute('aria-pressed', 'true');
     await expect(
       page.getByRole('img', { name: '이무기 인물 이미지' }),
     ).toBeVisible();
+    await expect(section).toHaveText(
+      `주변 인물${imugi.name}${imugi.description}`,
+    );
+
+    // 첫 인물에서는 이전 화살표가 없고, 다음 화살표로 다음 인물을 고른다. 소개가 null인 인물은 이름만 보인다
+    await expect(page.getByRole('button', { name: '이전 인물' })).toHaveCount(
+      0,
+    );
+    await page.getByRole('button', { name: '다음 인물' }).click();
+    await expect(
+      picker.getByRole('button', { name: sansin.name }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      picker.getByRole('button', { name: imugi.name }),
+    ).toHaveAttribute('aria-pressed', 'false');
     await expect(
       page.getByRole('img', { name: '산신령 인물 이미지' }),
     ).toBeVisible();
+    await expect(section).toHaveText(`주변 인물${sansin.name}`);
 
-    // 이미지가 없는 인물도 이름은 남는다
-    await expect(page.getByRole('heading', { name: '계곡지기' })).toBeVisible();
+    // 이미지가 없는 인물은 기본 심벌 이미지와 이름, 소개를 보인다
+    await picker.getByRole('button', { name: gyegok.name }).click();
     await expect(
-      page.getByRole('img', { name: '계곡지기 인물 이미지' }),
+      page.getByRole('img', { name: '계곡지기 인물 이미지 없음' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: '계곡지기 인물 이미지', exact: true }),
     ).toHaveCount(0);
-
-    // 소개는 해당 인물 이름 바로 아래에 오고, 소개가 null인 산신령은 이름 다음에 소개 없이 다음 인물로 넘어간다
-    const [imugi, sansin, gyegok] = STORY_CHARACTERS;
-
-    await expect(
-      page.getByRole('heading', { name: '주변 인물' }).locator('..'),
-    ).toHaveText(
-      `주변 인물${imugi.name}${imugi.description}${sansin.name}${gyegok.name}${gyegok.description}`,
+    await expect(section).toHaveText(
+      `주변 인물${gyegok.name}${gyegok.description}`,
     );
+
+    // 마지막 인물에서는 다음 화살표가 없고, 이전 화살표로 앞 인물을 고른다
+    await expect(page.getByRole('button', { name: '다음 인물' })).toHaveCount(
+      0,
+    );
+    await page.getByRole('button', { name: '이전 인물' }).click();
+    await expect(
+      picker.getByRole('button', { name: sansin.name }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('주변 인물이 한 명이면 인물 선택 줄 없이 그 인물을 보여준다', async ({
+    page,
+  }) => {
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...storyDetail,
+          characters: STORY_CHARACTERS.slice(0, 1),
+        }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(page.getByRole('heading', { name: '이무기' })).toBeVisible();
+    await expect(
+      page.getByRole('group', { name: '주변 인물 선택' }),
+    ).toHaveCount(0);
   });
 
   test('인물 이미지를 탭하면 풀스크린 뷰어가 열리고 페이지 이동 없이 닫힌다 (KNK-1276)', async ({
@@ -473,8 +528,14 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('잃어버린 용과의 재회')).toBeVisible();
     await expect(page.getByText('두 존재가 다시 만난다')).not.toBeVisible();
 
+    await page.getByRole('button', { name: '상황 이름 안내' }).click();
+    await expect(
+      page.getByText(START_SETTING_INFO_COPY.situation),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+
     await page.getByRole('button', { name: '엔딩 안내' }).click();
-    await expect(page.getByText('엔딩은 시작 상황마다 달라져요')).toBeVisible();
+    await expect(page.getByText(START_SETTING_INFO_COPY.ending)).toBeVisible();
     await page.keyboard.press('Escape');
 
     await trigger.click();

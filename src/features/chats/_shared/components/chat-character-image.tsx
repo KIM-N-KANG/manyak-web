@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -18,6 +18,8 @@ type ChatCharacterImageProps = {
   className?: string;
   /** 이미지를 탭해 뷰어가 열릴 때 호출된다(화면별 분석 이벤트용). */
   onZoom?: () => void;
+  /** 이미지를 보일 수 없을 때(허용 밖 URL·로드 실패) 대신 렌더한다. 없으면 아무것도 그리지 않는다. */
+  fallback?: ReactNode;
 };
 
 export function ChatCharacterImage({
@@ -26,12 +28,13 @@ export function ChatCharacterImage({
   loading = 'lazy',
   className,
   onZoom,
+  fallback = null,
 }: ChatCharacterImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   if (hasError || !isAllowedChatCharacterImageUrl(imageUrl)) {
-    return null;
+    return fallback;
   }
 
   return (
