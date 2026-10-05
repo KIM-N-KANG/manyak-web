@@ -160,7 +160,9 @@ export const ResubmitBody = zod
       .min(1)
       .max(resubmitBodyGenresMax)
       .optional()
-      .describe('장르 태그 목록(1~8개, 각 30자 이내)'),
+      .describe(
+        '활성 제공 장르의 정식 이름 목록(1~8개, 각 30자 이내). 검색 별칭은 제출할 수 없습니다.',
+      ),
     storySettings: zod
       .object({
         worldSetting: zod.string().min(1).describe('세계관 설정'),
@@ -471,7 +473,7 @@ export const RecordConsentsBody = zod
     age14: zod.string().nullish().describe('만 14세 이상 확인 버전(1 고정)'),
   })
   .describe(
-    '명시적으로 수락한 버전만 제출. 최소 한 항목 필수이며 누락·null은 미제출',
+    '명시적으로 수락한 버전만 제출. 누락·null은 미제출. 회원 동의 API는 최소 한 항목, 인증 완료는 현재 필요한 모든 항목 필수',
   );
 
 export const RecordConsentsResponse = zod.unknown();
@@ -618,12 +620,6 @@ export const GenerateSimpleStorylinesHeader = zod.object({
 export const generateSimpleStorylinesBodyGenreTagIdsMin = 0;
 export const generateSimpleStorylinesBodyGenreTagIdsMax = 20;
 
-export const generateSimpleStorylinesBodyCustomGenreTagsItemMin = 0;
-export const generateSimpleStorylinesBodyCustomGenreTagsItemMax = 30;
-
-export const generateSimpleStorylinesBodyCustomGenreTagsMin = 0;
-export const generateSimpleStorylinesBodyCustomGenreTagsMax = 20;
-
 export const generateSimpleStorylinesBodyProtagonistNameMin = 0;
 export const generateSimpleStorylinesBodyProtagonistNameMax = 30;
 
@@ -653,17 +649,9 @@ export const GenerateSimpleStorylinesBody = zod
       .optional()
       .describe('사용자가 선택한 사전 정의 장르 태그 ID 목록'),
     customGenreTags: zod
-      .array(
-        zod
-          .string()
-          .min(generateSimpleStorylinesBodyCustomGenreTagsItemMin)
-          .max(generateSimpleStorylinesBodyCustomGenreTagsItemMax)
-          .describe('직접 입력한 장르 이름'),
-      )
-      .min(generateSimpleStorylinesBodyCustomGenreTagsMin)
-      .max(generateSimpleStorylinesBodyCustomGenreTagsMax)
+      .array(zod.string())
       .optional()
-      .describe('사용자가 직접 입력한 장르 이름 목록'),
+      .describe('종료된 장르 직접 입력. 누락 또는 빈 배열만 허용'),
     protagonist: zod
       .object({
         name: zod
@@ -845,7 +833,9 @@ export const CreateGeneralStoryBody = zod
       .min(1)
       .max(createGeneralStoryBodyGenresMax)
       .optional()
-      .describe('장르 태그 목록(1~8개, 각 30자 이내)'),
+      .describe(
+        '활성 제공 장르의 정식 이름 목록(1~8개, 각 30자 이내). 검색 별칭은 제출할 수 없습니다.',
+      ),
     storySettings: zod
       .object({
         worldSetting: zod.string().min(1).describe('세계관 설정'),
@@ -1292,6 +1282,171 @@ export const RefreshBody = zod
 export const RefreshResponse = zod.unknown();
 
 /**
+ * Google 또는 Kakao ID 토큰을 검증합니다. 동의가 필요하면 계정과 정식 토큰을 만들지 않고 대기 코드를 발급합니다.
+ * @summary 소셜 인증과 필수 동의 확인
+ */
+export const StartParams = zod.object({
+  provider: zod.enum(['google', 'kakao']),
+});
+
+export const StartHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
+export const StartBody = zod
+  .object({
+    idToken: zod
+      .string()
+      .min(1)
+      .describe(
+        '소셜 provider에서 발급받은 OIDC ID 토큰(JWT). 서버가 provider 공개키로 검증한다.',
+      ),
+    handoffCode: zod
+      .string()
+      .nullish()
+      .describe(
+        '인앱 브라우저에서 만든 로그인 핸드오프 코드(스펙 §4-3-5). 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가 X-Manyak-Device-Id 헤더보다 우선)와 게스트 데이터 이관을 함께 수행한다. 무효·만료면 헤더 디바이스 ID로 폴백하고 로그인은 정상 진행한다.',
+      ),
+  })
+  .describe('소셜 로그인 요청(Google·Kakao 공통)');
+
+export const StartResponse = zod
+  .object({
+    status: zod.enum(['COMPLETED', 'CONSENT_REQUIRED']).optional(),
+    token: zod
+      .union([
+        zod
+          .object({
+            accessToken: zod
+              .string()
+              .optional()
+              .describe(
+                'access 토큰(HS256 JWT). Authorization: Bearer <accessToken> 로 보낸다.',
+              ),
+            refreshToken: zod
+              .string()
+              .optional()
+              .describe(
+                'refresh 토큰(불투명 랜덤 문자열). access 만료 시 \/token\/refresh 로 회전한다. 1회용이며 회전 후 폐기된다.',
+              ),
+            expiresIn: zod
+              .number()
+              .optional()
+              .describe('access 토큰 만료까지 남은 시간(초)'),
+            tokenType: zod
+              .string()
+              .optional()
+              .describe('토큰 타입. 항상 Bearer.'),
+            isNewUser: zod.boolean().optional(),
+          })
+          .describe('토큰 발급\/회전 응답'),
+        zod.null(),
+      ])
+      .optional(),
+    consentToken: zod
+      .string()
+      .nullish()
+      .describe('완료 API 전용 불투명 코드. Bearer 토큰이 아님'),
+    expiresAt: zod.iso.datetime({ offset: true }).nullish(),
+    consents: zod
+      .union([
+        zod
+          .object({
+            terms: zod
+              .object({
+                requiredVersion: zod
+                  .string()
+                  .optional()
+                  .describe('동의가 필요한 현행 버전'),
+                needsConsent: zod
+                  .boolean()
+                  .optional()
+                  .describe('현행 버전의 동의 이력이 없으면 true'),
+              })
+              .optional()
+              .describe('문서의 현행 버전과 해당 버전에 대한 동의 필요 여부'),
+            privacy: zod
+              .object({
+                requiredVersion: zod
+                  .string()
+                  .optional()
+                  .describe('동의가 필요한 현행 버전'),
+                needsConsent: zod
+                  .boolean()
+                  .optional()
+                  .describe('현행 버전의 동의 이력이 없으면 true'),
+              })
+              .optional()
+              .describe('문서의 현행 버전과 해당 버전에 대한 동의 필요 여부'),
+            age14: zod
+              .object({
+                requiredVersion: zod
+                  .string()
+                  .optional()
+                  .describe('동의가 필요한 현행 버전'),
+                needsConsent: zod
+                  .boolean()
+                  .optional()
+                  .describe('현행 버전의 동의 이력이 없으면 true'),
+              })
+              .optional()
+              .describe('문서의 현행 버전과 해당 버전에 대한 동의 필요 여부'),
+          })
+          .describe('이용약관·개인정보 처리방침·만 14세 이상 확인 동의 상태'),
+        zod.null(),
+      ])
+      .optional(),
+    isNewUser: zod.boolean().nullish(),
+  })
+  .describe(
+    'COMPLETED이면 token, CONSENT_REQUIRED이면 대기 코드와 필수 동의 상태만 반환',
+  );
+
+/**
+ * 현행 필수 항목을 모두 제출합니다. 계정과 동의를 함께 저장한 뒤 토큰을 발급하며 성공 시에만 대기 코드를 소비합니다. 정지 회원도 이 경로로 로그인할 수 있습니다.
+ * @summary 필수 동의와 소셜 가입 완료
+ */
+export const CompleteHeader = zod.object({
+  'X-Manyak-Consent-Token': zod
+    .string()
+    .describe('완료 API 전용 코드. URL과 본문으로 보내지 않음'),
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
+export const CompleteBody = zod
+  .object({
+    terms: zod.string().nullish().describe('수락한 이용약관 버전'),
+    privacy: zod.string().nullish().describe('수락한 개인정보 처리방침 버전'),
+    age14: zod.string().nullish().describe('만 14세 이상 확인 버전(1 고정)'),
+  })
+  .describe(
+    '명시적으로 수락한 버전만 제출. 누락·null은 미제출. 회원 동의 API는 최소 한 항목, 인증 완료는 현재 필요한 모든 항목 필수',
+  );
+
+export const CompleteResponse = zod
+  .object({
+    accessToken: zod
+      .string()
+      .optional()
+      .describe(
+        'access 토큰(HS256 JWT). Authorization: Bearer <accessToken> 로 보낸다.',
+      ),
+    refreshToken: zod
+      .string()
+      .optional()
+      .describe(
+        'refresh 토큰(불투명 랜덤 문자열). access 만료 시 \/token\/refresh 로 회전한다. 1회용이며 회전 후 폐기된다.',
+      ),
+    expiresIn: zod
+      .number()
+      .optional()
+      .describe('access 토큰 만료까지 남은 시간(초)'),
+    tokenType: zod.string().optional().describe('토큰 타입. 항상 Bearer.'),
+    isNewUser: zod.boolean().optional(),
+  })
+  .describe('토큰 발급\/회전 응답');
+
+/**
  * 로그인 직후, 기기(localStorage)에 쌓인 게스트 스토리·채팅의 공개 ID 목록을 제출받아 요청자 계정으로 소유권을 이관(클레임)합니다. user_id가 NULL인 행에만 설정하며, 항목별 결과를 status로 반환합니다. 효과는 멱등하고, 일부 항목이 충돌해도 전체를 롤백하지 않습니다.
  * @summary 게스트 데이터 마이그레이션
  */
@@ -1635,7 +1790,10 @@ export const UpdateStoryBody = zod
       )
       .min(1)
       .max(updateStoryBodyGenresMax)
-      .nullish(),
+      .nullish()
+      .describe(
+        '활성 제공 장르의 정식 이름 또는 이 스토리에 이미 저장된 장르. 생략\/null은 유지',
+      ),
     storySettings: zod
       .union([
         zod
@@ -2001,6 +2159,16 @@ export const GetLorebooksQueryParams = zod.object({
 });
 
 export const GetLorebooksResponse = zod.unknown();
+
+/**
+ * 게스트 허용. query 원문 30자 이하, 공백과 대소문자를 무시하고 초성 및 별칭 검색. 빈 질의는 전체, 대표 목록은 항상 반환합니다.
+ * @summary 제공 장르 조회와 검색
+ */
+export const Get2QueryParams = zod.object({
+  query: zod.string().optional(),
+});
+
+export const Get2Response = zod.unknown();
 
 /**
  * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목은 열람자가 그 스토리를 읽을 수 있을 때만 조회 시점의 값이고, 비공개로 전환됐거나 삭제됐으면 채팅 시작 시점의 스냅샷입니다(KNK-1059). 프롤로그도 같은 규칙입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.
