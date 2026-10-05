@@ -65,9 +65,7 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
   const hasPicker = characters.length > 1;
   const imageAlt = `${selected.name ?? ''} 인물 이미지`;
   const imageFallback = (
-    <AspectRatio
-      ratio={4 / 3}
-      className="overflow-hidden rounded-xl border border-border">
+    <AspectRatio ratio={4 / 3}>
       <CharacterImageFallback label={`${imageAlt} 없음`} />
     </AspectRatio>
   );
@@ -113,8 +111,8 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
             ))}
           </div>
         ) : null}
-        <div className="flex flex-col gap-3">
-          <div className="relative">
+        <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+          <div className="relative **:data-[slot=chat-character-image]:rounded-none **:data-[slot=chat-character-image]:border-0">
             {selected.imageUrl ? (
               <ChatCharacterImage
                 key={selectedIndex}
@@ -157,11 +155,13 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
               </button>
             ) : null}
           </div>
-          <div className="flex flex-col gap-2">
-            <h3 className="font-semibold">{selected.name}</h3>
+          <div className="border-t border-border px-4 py-3.5 break-keep">
+            <h3 className="leading-6 font-semibold">{selected.name}</h3>
             {/* 소개 없이 만든 기존·일반 제작 인물은 description이 null이라 생략한다 */}
             {selected.description ? (
-              <TextContent>{selected.description}</TextContent>
+              <div className="mt-1">
+                <TextContent size="sm">{selected.description}</TextContent>
+              </div>
             ) : null}
           </div>
         </div>
