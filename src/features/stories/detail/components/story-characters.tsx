@@ -97,14 +97,17 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
                 aria-label={character.name}
                 aria-pressed={index === selectedIndex}
                 className={cn(
-                  'w-[calc((100%-1.5rem)/3.5)] shrink-0 rounded-lg opacity-50 transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                  'w-[calc((100%-1.5rem)/3.5)] shrink-0 rounded-lg ring-2 ring-transparent transition-shadow outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
                   index === selectedIndex &&
-                    'opacity-100 ring-2 ring-foreground focus-visible:ring-2 focus-visible:ring-foreground',
+                    'ring-foreground focus-visible:ring-2 focus-visible:ring-foreground',
                 )}
                 onClick={() => selectCharacter(index)}>
                 <AspectRatio
                   ratio={4 / 3}
-                  className="overflow-hidden rounded-lg border border-border">
+                  className={cn(
+                    'overflow-hidden rounded-lg border border-border opacity-50 transition-opacity',
+                    index === selectedIndex && 'opacity-100',
+                  )}>
                   <CharacterThumbnail imageUrl={character.imageUrl} />
                 </AspectRatio>
               </button>
