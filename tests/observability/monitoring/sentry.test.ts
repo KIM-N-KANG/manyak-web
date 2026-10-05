@@ -93,6 +93,31 @@ describe('dropRecoverableApiError', () => {
       }),
     ).toBe(event);
   });
+
+  it('요청 쿠키에서 가입 동의 대기 코드를 지우고 다른 쿠키는 남긴다', () => {
+    const pending = encodeURIComponent(
+      JSON.stringify({ consentToken: 'secret-pending-code' }),
+    );
+    const result = dropRecoverableApiError(
+      {
+        type: undefined,
+        request: {
+          cookies: {
+            manyak_signup_consent: pending,
+            theme: 'dark',
+          },
+          headers: {
+            cookie: `theme=dark; manyak_signup_consent=${pending}; lang=ko`,
+          },
+        },
+      } as Parameters<typeof dropRecoverableApiError>[0],
+      { originalException: new Error('render failed') },
+    );
+
+    expect(result?.request?.cookies).toEqual({ theme: 'dark' });
+    expect(result?.request?.headers?.cookie).toBe('theme=dark; lang=ko');
+    expect(JSON.stringify(result)).not.toContain('secret-pending-code');
+  });
 });
 
 describe('identifyUser', () => {
