@@ -95,6 +95,27 @@ test.describe('공유된 채팅 열람', () => {
     await expect(page).toHaveURL(/\/share\/share-1$/);
   });
 
+  test('프롤로그의 장면 이미지 마커를 공유 화면에서도 이미지로 표시한다 (KNK-1545)', async ({
+    page,
+  }) => {
+    const sceneImageUrl =
+      'https://cdn.manyak.app/scenes/originals/story-1/library_1a2b3c4d.webp';
+
+    await mockChatShareView(page, {
+      ...SHARE_BODY,
+      prologue: `*문이 열렸다.*\n\n[[${sceneImageUrl}]]\n\n*먼지가 날린다.*`,
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+    await page.goto('/share/share-1');
+
+    await expect(page.getByText('문이 열렸다.')).toBeVisible();
+    await expect(page.getByRole('img', { name: '장면 이미지' })).toBeVisible();
+    await expect(page.getByText('먼지가 날린다.')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(sceneImageUrl);
+  });
+
   test('외부 호스트의 마커 모양 문자열은 공유 화면에서 이미지로 해석하지 않는다', async ({
     page,
   }) => {

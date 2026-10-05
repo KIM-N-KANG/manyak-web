@@ -16,6 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ChatCharacterImage } from '@/features/chats/_shared/components/chat-character-image';
+import {
+  getChatImageAlt,
+  parseChatMessageSegments,
+} from '@/features/chats/_shared/utils/chat-message-segments';
 
 type StoryStartSettingsProps = {
   startSettings: StoryStartSettingResponse[];
@@ -82,7 +87,23 @@ export function StoryStartSettings({
         {selected ? (
           <div className="flex flex-col gap-4">
             <h3 className="font-semibold">상황 설명</h3>
-            <TextContent>{selected.startSituation ?? ''}</TextContent>
+            {/* 오리지널 스토리의 시작 상황에는 채팅 본문과 같은 이미지 마커가 들어 있다(KNK-1545) */}
+            <div className="flex flex-col gap-4">
+              {parseChatMessageSegments(selected.startSituation ?? '').map(
+                (segment, index) =>
+                  segment.type === 'text' ? (
+                    <TextContent key={`text-${index}`}>
+                      {segment.content}
+                    </TextContent>
+                  ) : (
+                    <ChatCharacterImage
+                      key={`image-${index}`}
+                      alt={getChatImageAlt(segment)}
+                      imageUrl={segment.imageUrl}
+                    />
+                  ),
+              )}
+            </div>
           </div>
         ) : null}
         {endings.length > 0 ? (

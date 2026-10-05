@@ -12,8 +12,8 @@ import {
   MessageScrollerViewport,
   useMessageScroller,
 } from '@/components/ui/message-scroller';
+import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
 import { AiMessageBubble } from '@/features/chats/_shared/components/chat-message-bubble';
-import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { cn } from '@/lib/utils';
 
@@ -135,9 +135,7 @@ export function ChatMessages({
             {prologue ? (
               <MessageScrollerItem>
                 <AiMessageBubble>
-                  <ChatMessageContent className="px-4">
-                    {prologue}
-                  </ChatMessageContent>
+                  <ChatAiMessageContent content={prologue} />
                 </AiMessageBubble>
               </MessageScrollerItem>
             ) : null}
