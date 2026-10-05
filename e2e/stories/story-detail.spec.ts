@@ -3,6 +3,7 @@ import type { Page, Route } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+import { START_SETTING_INFO_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -238,10 +239,13 @@ test.describe('스토리 상세', () => {
       page.getByRole('img', { name: '산신령 인물 이미지' }),
     ).toBeVisible();
 
-    // 이미지가 없는 인물도 이름은 남는다
+    // 이미지가 없는 인물은 기본 심벌 이미지와 이름을 보인다
     await expect(page.getByRole('heading', { name: '계곡지기' })).toBeVisible();
     await expect(
-      page.getByRole('img', { name: '계곡지기 인물 이미지' }),
+      page.getByRole('img', { name: '계곡지기 인물 이미지 없음' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: '계곡지기 인물 이미지', exact: true }),
     ).toHaveCount(0);
 
     // 소개는 해당 인물 이름 바로 아래에 오고, 소개가 null인 산신령은 이름 다음에 소개 없이 다음 인물로 넘어간다
@@ -473,8 +477,14 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('잃어버린 용과의 재회')).toBeVisible();
     await expect(page.getByText('두 존재가 다시 만난다')).not.toBeVisible();
 
+    await page.getByRole('button', { name: '상황 이름 안내' }).click();
+    await expect(
+      page.getByText(START_SETTING_INFO_COPY.situation),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+
     await page.getByRole('button', { name: '엔딩 안내' }).click();
-    await expect(page.getByText('엔딩은 시작 상황마다 달라져요')).toBeVisible();
+    await expect(page.getByText(START_SETTING_INFO_COPY.ending)).toBeVisible();
     await page.keyboard.press('Escape');
 
     await trigger.click();

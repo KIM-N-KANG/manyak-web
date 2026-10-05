@@ -83,16 +83,16 @@ export function StoryInfoSection({
         </div>
       )}
 
-      {characters.length > 0 && (
-        <StoryCharacters storyId={storyId} characters={characters} />
-      )}
-
       {startSettings.length > 0 && (
         <StoryStartSettings
           startSettings={startSettings}
           value={startSettingValue}
           onValueChange={onStartSettingValueChange}
         />
+      )}
+
+      {characters.length > 0 && (
+        <StoryCharacters storyId={storyId} characters={characters} />
       )}
 
       {(authorNickname || story.createdAt || visibilityLabel) && (
