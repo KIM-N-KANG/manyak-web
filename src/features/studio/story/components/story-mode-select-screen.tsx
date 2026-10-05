@@ -56,6 +56,8 @@ export function StoryModeSelectScreen() {
             <Link
               key={method}
               href={href}
+              // 고른 뒤에는 선택 화면이 끝난 단계라, 제작을 나가거나 마친 뒤 뒤로가기로 다시 열리지 않게 바꿔 연다.
+              replace
               onClick={(event) => {
                 track('client_storyCreate_methodOption_selected', { method });
 

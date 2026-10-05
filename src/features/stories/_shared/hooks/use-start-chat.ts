@@ -21,6 +21,11 @@ type UseStartChatOptions = {
   onStart?: () => void;
   /** 채팅 생성에 실패해 토스트를 띄운 뒤 채팅을 만들려던 스토리 id로 호출한다. */
   onError?: (storyId: string) => void;
+  /**
+   * 채팅방에서 브라우저 뒤로가기로 돌아갈 화면이다. 생략하면 지금 화면을 채팅방으로 바꿔 그 아래 화면으로
+   * 돌아간다. 제작을 마친 화면처럼 아래에 끝난 단계가 남는 곳에서 쓴다.
+   */
+  backTo?: string;
 };
 
 /**
@@ -34,7 +39,7 @@ type UseStartChatOptions = {
  */
 export function useStartChat(
   storyId: string,
-  { startSettingId, onStart, onError }: UseStartChatOptions = {},
+  { startSettingId, onStart, onError, backTo }: UseStartChatOptions = {},
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -58,6 +63,17 @@ export function useStartChat(
         }
 
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
+
+        if (backTo) {
+          // 지금 화면을 돌아갈 화면으로 바꾼 뒤 그 위에 채팅방을 쌓는다. 두 이동을 연달아 부르면 Next가
+          // 앞의 이동을 버려 히스토리에 남지 않으므로, 바꾼 주소가 반영된 뒤에 채팅방을 쌓는다.
+          router.replace(backTo);
+          await waitForPathname(backTo);
+          router.push(APP_PATH.CHAT_ROOM(chatId));
+
+          return;
+        }
+
         router.replace(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: (_error, variables) => {
@@ -81,4 +97,15 @@ export function useStartChat(
     isStarting: createChat.isPending || createChat.isSuccess,
     isError: createChat.isError,
   };
+}
+
+/** 주소가 pathname 이 될 때까지 기다린다. 이동이 늦어도 timeoutMillis 뒤에는 돌려준다. */
+async function waitForPathname(pathname: string, timeoutMillis = 5000) {
+  const startedAt = performance.now();
+
+  while (
+    window.location.pathname !== pathname &&
+    performance.now() - startedAt < timeoutMillis
+  )
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 }
