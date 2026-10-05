@@ -80,3 +80,29 @@ export async function restoreSessionClaims(): Promise<JWT | null> {
 
   return null;
 }
+
+/** Auth.js가 로그인 시작 때 복귀 URL을 기록하는 쿠키 이름. HTTPS에서는 `__Secure-` 접두가 붙는다. */
+const CALLBACK_URL_COOKIE_NAMES = [
+  '__Secure-authjs.callback-url',
+  'authjs.callback-url',
+] as const;
+
+/**
+ * Auth.js가 로그인 시작 때 기록한 복귀 URL을 읽는다. 값은 Auth.js가 기록할 때 같은
+ * 출처로 검증했고, signIn 콜백이 이 값을 반환하면 redirect 콜백이 다시 검증한다.
+ *
+ * @returns 복귀 URL, 쿠키가 없으면 null
+ */
+export async function readAuthCallbackUrl(): Promise<string | null> {
+  const store = await cookies();
+
+  for (const name of CALLBACK_URL_COOKIE_NAMES) {
+    const value = store.get(name)?.value;
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+}

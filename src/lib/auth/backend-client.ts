@@ -1,18 +1,20 @@
 import {
+  getCompleteUrl,
   getConfirmUrl,
   getLinkUrl,
-  getLoginWithGoogleUrl,
-  getLoginWithKakaoUrl,
   getLogoutUrl,
   getMeUrl,
   getReauthenticateUrl,
   getRefreshUrl,
+  getStartUrl,
 } from '@/api/generated/endpoints/auth/auth';
 import type {
   LinkCodeResponse,
   LoginHandoffSummaryResponse,
   MeResponse,
+  SocialAuthResponse,
   TokenResponse,
+  UserConsentRequest,
 } from '@/api/generated/models';
 import { SocialReauthRequestProvider } from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
@@ -109,43 +111,60 @@ const postJson = <T>(
     body: JSON.stringify(body),
   });
 
-/** provider별 백엔드 로그인 경로 빌더. 생성된 URL 빌더를 재사용해 드리프트를 막는다. */
-const SOCIAL_LOGIN_URL_BUILDERS: Record<SocialLoginProvider, () => string> = {
-  google: getLoginWithGoogleUrl,
-  kakao: getLoginWithKakaoUrl,
-};
+/** 가입 완료 API가 대기 코드를 받는 헤더. 코드는 URL, 쿼리, 본문에 넣지 않는다(스펙 동의 후 가입 완료 흐름). */
+export const CONSENT_TOKEN_HEADER = 'X-Manyak-Consent-Token';
 
 /**
- * 소셜 provider의 OIDC ID 토큰으로 로그인해 백엔드 토큰 쌍을 발급받는다.
- * 요청·응답 계약은 provider와 무관하게 동일하다(스펙 §4-5 — 경로만 다름).
+ * 소셜 provider의 OIDC ID 토큰으로 소셜 인증을 요청한다. 현행 필수 동의가 모두 있는
+ * 회원이면 `COMPLETED`와 토큰을, 아니면 계정을 만들지 않고 `CONSENT_REQUIRED`와 대기
+ * 코드를 받는다(스펙 §4-3-5 인증 API, 동의 후 가입 완료 흐름).
  *
  * deviceId는 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데 쓰인다(스펙 §4-3-7).
  * 서버가 pepper를 붙여 내부에서 해시하므로 반드시 원문 그대로 전달한다 — 클라이언트에서
  * 해시하면 이중 해시가 되어 게스트 사용량 키와 일치하지 않는다. 헤더가 없으면 백엔드가
  * 한도 소진 상태로 시드하는 우회 차단 폴백을 타므로, 값이 있으면 반드시 실어야 한다.
  *
- * handoffCode가 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가
- * deviceId 헤더보다 우선)와 게스트 데이터 이관을 함께 원자적으로 수행한다(스펙 §4-3-5).
- * 시드는 로그인 호출에 실려야 하며, 미루면 백엔드가 소진 시드를 비가역으로 확정한다.
- * 무효·만료 코드는 백엔드가 헤더 deviceId로 폴백하고 로그인은 정상 진행한다.
+ * handoffCode가 유효하면 로그인이 완료되는 시점(바로 완료 또는 가입 완료)에 회원 체험
+ * 시드(핸드오프의 원본 디바이스 ID 우선)와 게스트 데이터 이관이 함께 수행된다. 대기
+ * 단계는 핸드오프를 소비하지 않는다.
  *
  * @param provider 로그인에 사용한 소셜 provider
  * @param idToken provider에서 발급한 OIDC ID 토큰
  * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
  * @param handoffCode 인앱 핸드오프 코드 원문(없으면 body에서 생략)
- * @returns 발급된 백엔드 토큰 응답
+ * @returns 소셜 인증 응답(완료 토큰 또는 동의 대기 정보)
  */
-export const loginWithSocialOnServer = (
+export const startSocialAuthOnServer = (
   provider: SocialLoginProvider,
   idToken: string,
   deviceId?: string,
   handoffCode?: string,
-): Promise<TokenResponse> =>
-  postJson<TokenResponse>(
-    SOCIAL_LOGIN_URL_BUILDERS[provider](),
+): Promise<SocialAuthResponse> =>
+  postJson<SocialAuthResponse>(
+    getStartUrl(provider),
     { idToken, ...(handoffCode ? { handoffCode } : {}) },
     deviceId ? { [DEVICE_ID_HEADER]: deviceId } : undefined,
   );
+
+/**
+ * 대기 코드와 사용자가 동의한 필수 항목 버전을 제출해 가입(또는 재동의 로그인)을 완료하고
+ * 토큰을 발급받는다. 대기 코드는 헤더로만 보낸다. 생성된 `complete()`에는 헤더 인자가 없어
+ * URL 빌더만 재사용한다.
+ *
+ * @param consentToken 소셜 인증이 발급한 대기 코드
+ * @param consents 동의한 필수 항목과 버전
+ * @param deviceId Amplitude device_id 원문(없으면 헤더 생략, 서버는 대기 코드의 값을 우선한다)
+ * @returns 발급된 백엔드 토큰 응답
+ */
+export const completeSocialAuthOnServer = (
+  consentToken: string,
+  consents: UserConsentRequest,
+  deviceId?: string,
+): Promise<TokenResponse> =>
+  postJson<TokenResponse>(getCompleteUrl(), consents, {
+    [CONSENT_TOKEN_HEADER]: consentToken,
+    ...(deviceId ? { [DEVICE_ID_HEADER]: deviceId } : {}),
+  });
 
 /**
  * refresh 토큰을 회전해 새 토큰 쌍을 발급받는다. 실패(401)는 family 폐기를 뜻할 수 있다.

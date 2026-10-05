@@ -9,12 +9,21 @@ declare module 'next-auth' {
     user: { id: string } & DefaultSession['user'];
     inviteOnboardingPending: boolean;
   }
+
+  /** 가입 동의 Credentials의 authorize가 jwt 콜백에 넘기는 신규 가입 여부. */
+  interface User {
+    isNewUser?: boolean;
+  }
 }
 
 declare module '@auth/core/types' {
   interface Session {
     user: { id: string } & DefaultSession['user'];
     inviteOnboardingPending: boolean;
+  }
+
+  interface User {
+    isNewUser?: boolean;
   }
 }
 

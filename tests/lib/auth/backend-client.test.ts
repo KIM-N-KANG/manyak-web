@@ -2,12 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   BackendAuthError,
+  completeSocialAuthOnServer,
   confirmHandoffOnServer,
+  CONSENT_TOKEN_HEADER,
   linkAccountOnServer,
-  loginWithSocialOnServer,
   logoutOnServer,
   parseBackendErrorCode,
   reauthenticateOnServer,
+  startSocialAuthOnServer,
 } from '@/lib/auth/backend-client';
 import { HANDOFF_CODE_HEADER } from '@/lib/auth/handoff-header';
 import { LINK_CODE_HEADER } from '@/lib/auth/link-header';
@@ -29,7 +31,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('loginWithSocialOnServer', () => {
+describe('startSocialAuthOnServer', () => {
   it('백엔드 요청에 기본 타임아웃을 적용한다', async () => {
     vi.useFakeTimers();
     fetchMock.mockImplementation(
@@ -44,7 +46,7 @@ describe('loginWithSocialOnServer', () => {
     );
 
     try {
-      const promise = loginWithSocialOnServer('google', 'id-token');
+      const promise = startSocialAuthOnServer('google', 'id-token');
       const assertion = expect(promise).rejects.toMatchObject({
         name: 'TimeoutError',
       });
@@ -63,36 +65,36 @@ describe('loginWithSocialOnServer', () => {
     }
   });
 
-  it('idToken을 /api/v1/auth/login/google로 POST하고 토큰 응답을 반환한다', async () => {
+  it('idToken을 /api/v1/auth/social/google로 POST하고 소셜 인증 응답을 반환한다', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
     await expect(
-      loginWithSocialOnServer('google', 'id-token'),
+      startSocialAuthOnServer('google', 'id-token'),
     ).resolves.toEqual({
       accessToken: 'a',
     });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
-    expect(url).toBe('https://backend.example.com/api/v1/auth/login/google');
+    expect(url).toBe('https://backend.example.com/api/v1/auth/social/google');
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
   });
 
-  it('kakao provider는 /api/v1/auth/login/kakao로 POST한다', async () => {
+  it('kakao provider는 /api/v1/auth/social/kakao로 POST한다', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await expect(loginWithSocialOnServer('kakao', 'id-token')).resolves.toEqual(
+    await expect(startSocialAuthOnServer('kakao', 'id-token')).resolves.toEqual(
       { accessToken: 'a' },
     );
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
-    expect(url).toBe('https://backend.example.com/api/v1/auth/login/kakao');
+    expect(url).toBe('https://backend.example.com/api/v1/auth/social/kakao');
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body as string)).toEqual({ idToken: 'id-token' });
   });
@@ -103,7 +105,7 @@ describe('loginWithSocialOnServer', () => {
     );
 
     // 서버가 pepper를 붙여 내부에서 해시하므로 클라이언트 측 가공(해시) 없이 원문이어야 한다.
-    await loginWithSocialOnServer('google', 'id-token', 'raw-device-id-1234');
+    await startSocialAuthOnServer('google', 'id-token', 'raw-device-id-1234');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
@@ -117,7 +119,7 @@ describe('loginWithSocialOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithSocialOnServer('google', 'id-token');
+    await startSocialAuthOnServer('google', 'id-token');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
@@ -130,7 +132,7 @@ describe('loginWithSocialOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithSocialOnServer(
+    await startSocialAuthOnServer(
       'google',
       'id-token',
       'raw-device-id',
@@ -150,7 +152,7 @@ describe('loginWithSocialOnServer', () => {
       new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
     );
 
-    await loginWithSocialOnServer('google', 'id-token', 'raw-device-id');
+    await startSocialAuthOnServer('google', 'id-token', 'raw-device-id');
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
@@ -163,14 +165,54 @@ describe('loginWithSocialOnServer', () => {
     );
 
     await expect(
-      loginWithSocialOnServer('google', 'bad'),
+      startSocialAuthOnServer('google', 'bad'),
     ).rejects.toMatchObject({
       status: 401,
       body: '유효하지 않은 Google ID 토큰입니다.',
     });
     await expect(
-      loginWithSocialOnServer('google', 'bad'),
+      startSocialAuthOnServer('google', 'bad'),
     ).rejects.toBeInstanceOf(BackendAuthError);
+  });
+});
+
+describe('completeSocialAuthOnServer', () => {
+  it('대기 코드는 헤더로만 보내고 동의 버전을 본문으로 POST한다', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ accessToken: 'a' }), { status: 200 }),
+    );
+
+    await expect(
+      completeSocialAuthOnServer(
+        'pending-code',
+        { terms: 'v1.2', age14: '1' },
+        'raw-device-id',
+      ),
+    ).resolves.toEqual({ accessToken: 'a' });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+
+    expect(url).toBe('https://backend.example.com/api/v1/auth/social/complete');
+    expect(init.method).toBe('POST');
+    expect(headers.get(CONSENT_TOKEN_HEADER)).toBe('pending-code');
+    expect(headers.get(DEVICE_ID_HEADER)).toBe('raw-device-id');
+    expect(JSON.parse(init.body as string)).toEqual({
+      terms: 'v1.2',
+      age14: '1',
+    });
+    expect(url).not.toContain('pending-code');
+    expect(init.body).not.toContain('pending-code');
+  });
+
+  it('deviceId가 없으면 X-Manyak-Device-Id 헤더를 보내지 않는다', async () => {
+    fetchMock.mockResolvedValue(new Response('{}', { status: 200 }));
+
+    await completeSocialAuthOnServer('pending-code', { terms: 'v1.2' });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(new Headers(init.headers).get(DEVICE_ID_HEADER)).toBeNull();
   });
 });
 
