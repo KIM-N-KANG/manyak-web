@@ -1,12 +1,30 @@
+import {
+  SocialAuthResponseStatus,
+  type TokenResponse,
+  type UserConsentRequest,
+} from '@/api/generated/models';
+import { API_ERROR_CODE } from '@/constants/api-error-code';
 import { readAmplitudeDeviceIdOnServer } from '@/observability/analytics/identity-server';
 
 import {
   BackendAuthError,
+  completeSocialAuthOnServer,
   fetchMeOnServer,
-  loginWithSocialOnServer,
+  parseBackendErrorCode,
+  startSocialAuthOnServer,
 } from './backend-client';
 import { readHandoffCodeOnServer } from './handoff-cookie';
 import { refreshWithDedup } from './refresh-dedup';
+import {
+  SIGNUP_CONSENT_ERROR,
+  type SignupConsentErrorCode,
+} from './signup-consent';
+import {
+  clearPendingSignupConsent,
+  readPendingSignupConsent,
+  toPendingSignupConsent,
+  writePendingSignupConsent,
+} from './signup-consent-cookie';
 import type { SocialLoginProvider } from './social-provider';
 import { shouldRefreshAccessToken } from './token-cookie-policy';
 import {
@@ -124,9 +142,16 @@ export async function ensureFreshAccessToken(
   }
 }
 
+/** 세션에 담을 백엔드 회원 프로필. */
+export type BackendProfile = {
+  userId: string;
+  nickname: string;
+  profileImageUrl: string | null;
+  isNewUser: boolean;
+};
+
 /**
- * 소셜 provider의 id_token으로 백엔드 세션을 수립하고 세션에 담을 프로필을 반환한다.
- * NextAuth jwt 콜백(최초 로그인)에서 호출한다. 실패 시 던져서 로그인 자체를 실패시킨다.
+ * 발급받은 토큰으로 백엔드 세션을 수립하고 세션에 담을 프로필을 반환한다.
  *
  * 검증 후 쓰기: BFF 세션 쿠키(writeBackendSessionTokens)는 토큰·사용자 정보 검증을
  * 모두 통과한 마지막 단계에서만 기록한다. 검증 전에 먼저 쓰면, 이후 단계(사용자
@@ -135,37 +160,13 @@ export async function ensureFreshAccessToken(
  * 지속)이 발생할 수 있다. 공유 기기에서는 다음 게스트의 활동이 실패한 계정에
  * 귀속되는 문제로 이어진다.
  *
- * @param provider 로그인에 사용한 소셜 provider
- * @param idToken provider에서 발급한 OIDC ID 토큰
- * @returns 세션에 담을 사용자 프로필(userId, nickname, profileImageUrl, isNewUser)
+ * @param tokens 소셜 인증 또는 가입 완료가 발급한 토큰 응답
+ * @returns 세션에 담을 사용자 프로필
  * @throws 토큰 응답에 accessToken이 없거나 사용자 정보에 id가 없으면 에러
  */
-export async function establishBackendSession(
-  provider: SocialLoginProvider,
-  idToken: string,
-): Promise<{
-  userId: string;
-  nickname: string;
-  profileImageUrl: string | null;
-  isNewUser: boolean;
-}> {
-  // OAuth 콜백은 내비게이션 요청이라 분석 헤더가 없으므로 쿠키에서 device_id를 읽어
-  // 로그인 요청에 싣는다. 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데
-  // 쓰이며(스펙 §4-3-7), 빠뜨리면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의
-  // 무료 체험이 0이 된다(1회성 시드라 비가역).
-  const deviceId = await readAmplitudeDeviceIdOnServer();
-  // 외부 랜딩이 심은 핸드오프 쿠키를 로그인 호출 전에 읽는다. 유효하면 이 호출이
-  // 회원 체험 시드(핸드오프의 원본 디바이스 ID 우선)와 게스트 데이터 이관을 함께
-  // 수행한다(스펙 §4-3-5). 코드는 비밀값이라 로그·분석에 남기지 않는다.
-  const handoffCode = await readHandoffCodeOnServer();
-
-  const tokens = await loginWithSocialOnServer(
-    provider,
-    idToken,
-    deviceId,
-    handoffCode,
-  );
-
+async function establishSessionFromTokens(
+  tokens: TokenResponse,
+): Promise<BackendProfile> {
   if (!tokens.accessToken) {
     throw new Error('토큰 응답에 accessToken이 없습니다.');
   }
@@ -184,4 +185,139 @@ export async function establishBackendSession(
     profileImageUrl: me.profileImageUrl ?? null,
     isNewUser: tokens.isNewUser === true,
   };
+}
+
+/** 소셜 인증 결과. 동의가 남았으면 세션 없이 대기 쿠키만 남긴다. */
+export type SocialLoginResult =
+  | { status: 'completed'; profile: BackendProfile }
+  | { status: 'consent-required' };
+
+/**
+ * 소셜 provider의 id_token으로 소셜 인증을 하고, 현행 필수 동의가 모두 있으면 백엔드
+ * 세션을 수립한다. 동의가 남았으면 세션을 만들지 않고 대기 코드를 HttpOnly 쿠키에 담는다.
+ * NextAuth signIn 콜백(최초 로그인)에서 호출한다. 실패 시 던져서 로그인 자체를 실패시킨다.
+ *
+ * @param provider 로그인에 사용한 소셜 provider
+ * @param idToken provider에서 발급한 OIDC ID 토큰
+ * @returns 완료 프로필 또는 동의 대기
+ * @throws 응답을 해석할 수 없거나 세션 수립이 실패하면 에러
+ */
+export async function authenticateSocialLogin(
+  provider: SocialLoginProvider,
+  idToken: string,
+): Promise<SocialLoginResult> {
+  // OAuth 콜백은 내비게이션 요청이라 분석 헤더가 없으므로 쿠키에서 device_id를 읽어
+  // 소셜 인증 요청에 싣는다. 가입 시 게스트 체험 사용량을 회원 카운터로 시드하는 데
+  // 쓰이며(스펙 §4-3-7), 빠뜨리면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의
+  // 무료 체험이 0이 된다(1회성 시드라 비가역).
+  const deviceId = await readAmplitudeDeviceIdOnServer();
+  // 외부 랜딩이 심은 핸드오프 쿠키를 읽는다. 서버가 대기 코드에 함께 보관해 로그인이
+  // 완료되는 시점에 시드와 이관을 수행한다(스펙 §4-3-5). 코드는 비밀값이라 로그·분석에
+  // 남기지 않는다.
+  const handoffCode = await readHandoffCodeOnServer();
+  const response = await startSocialAuthOnServer(
+    provider,
+    idToken,
+    deviceId,
+    handoffCode,
+  );
+
+  if (response.status === SocialAuthResponseStatus.COMPLETED) {
+    if (!response.token) {
+      throw new Error('소셜 인증 응답에 토큰이 없습니다.');
+    }
+
+    const profile = await establishSessionFromTokens(response.token);
+
+    // 이 브라우저에서 끝내지 않은 이전 가입 대기가 새 로그인 뒤에 시트를 띄우지 않게 한다.
+    await clearPendingSignupConsent();
+
+    return { status: 'completed', profile };
+  }
+
+  const pending =
+    response.status === SocialAuthResponseStatus.CONSENT_REQUIRED
+      ? toPendingSignupConsent(response)
+      : null;
+
+  if (!pending) {
+    throw new Error('소셜 인증 응답을 해석하지 못했습니다.');
+  }
+
+  await writePendingSignupConsent(pending);
+
+  return { status: 'consent-required' };
+}
+
+/** 가입 동의 완료 결과. 실패는 시트가 처리를 고를 code로 돌려준다. */
+export type SignupConsentResult =
+  | { ok: true; profile: BackendProfile }
+  | { ok: false; code: SignupConsentErrorCode };
+
+/**
+ * 완료 API 실패를 가입 동의 실패 코드로 분류한다. 401은 대기 코드 없음·만료·소비,
+ * 버전 불일치와 필수 항목 누락은 약관 개정으로 다시 로그인해야 하는 경우다.
+ *
+ * @param error 완료 API 호출에서 잡힌 에러
+ * @returns 가입 동의 실패 코드
+ */
+function classifyCompleteError(error: unknown): SignupConsentErrorCode {
+  if (error instanceof BackendAuthError && error.status === 401) {
+    return SIGNUP_CONSENT_ERROR.EXPIRED;
+  }
+
+  const code = parseBackendErrorCode(error);
+
+  return code === API_ERROR_CODE.CONSENT_VERSION_MISMATCH ||
+    code === API_ERROR_CODE.CONSENT_REQUIRED_MISSING
+    ? SIGNUP_CONSENT_ERROR.OUTDATED
+    : SIGNUP_CONSENT_ERROR.RETRYABLE;
+}
+
+/**
+ * 대기 쿠키의 대기 코드로 가입(또는 재동의 로그인)을 완료하고 백엔드 세션을 수립한다.
+ * 가입 동의 Credentials 프로바이더의 authorize에서 호출한다. 다시 로그인해야 하는
+ * 실패(만료, 약관 개정)는 대기 쿠키를 지우고, 일시 실패는 재제출할 수 있게 남긴다.
+ *
+ * @param consents 사용자가 동의한 필수 항목과 버전
+ * @returns 완료 프로필 또는 실패 code
+ */
+export async function completeSignupConsent(
+  consents: UserConsentRequest,
+): Promise<SignupConsentResult> {
+  const pending = await readPendingSignupConsent();
+
+  if (!pending) {
+    return { ok: false, code: SIGNUP_CONSENT_ERROR.EXPIRED };
+  }
+
+  let tokens: TokenResponse;
+
+  try {
+    tokens = await completeSocialAuthOnServer(
+      pending.consentToken,
+      consents,
+      await readAmplitudeDeviceIdOnServer(),
+    );
+  } catch (error) {
+    const code = classifyCompleteError(error);
+
+    if (code !== SIGNUP_CONSENT_ERROR.RETRYABLE) {
+      await clearPendingSignupConsent();
+    }
+
+    return { ok: false, code };
+  }
+
+  try {
+    const profile = await establishSessionFromTokens(tokens);
+
+    await clearPendingSignupConsent();
+
+    return { ok: true, profile };
+  } catch {
+    // 서버는 대기 코드를 이미 소비했다. 재제출은 401 expired로 이어지고, 다시 로그인하면
+    // 동의가 저장돼 있으므로 COMPLETED로 끝난다.
+    return { ok: false, code: SIGNUP_CONSENT_ERROR.RETRYABLE };
+  }
 }

@@ -33,7 +33,7 @@ export interface CreateGeneralStoryRequest {
    */
   description?: string | null;
   /**
-   * 장르 태그 목록(1~8개, 각 30자 이내)
+   * 활성 제공 장르의 정식 이름 목록(1~8개, 각 30자 이내). 검색 별칭은 제출할 수 없습니다.
    * @minItems 1
    * @maxItems 8
    * @items.minLength 0

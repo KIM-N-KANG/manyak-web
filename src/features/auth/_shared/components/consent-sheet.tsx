@@ -28,6 +28,7 @@ import {
   type RequiredConsent,
 } from '@/features/auth/_shared/utils/consent-status';
 import { signOutBeforeConsent } from '@/features/auth/_shared/utils/sign-out-before-consent';
+import { submitSignupConsent } from '@/features/auth/_shared/utils/signup-consent-client';
 import {
   hasAskedPushPermission,
   markPushPermissionAsked,
@@ -41,16 +42,29 @@ import {
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { useCloseOnBack } from '@/hooks/use-close-on-back';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
+import { SIGNUP_CONSENT_ERROR } from '@/lib/auth/signup-consent';
 import { FetchError, getApiErrorCode } from '@/lib/custom-fetch';
 
 type ConsentNotice = keyof typeof CONSENT_SHEET_COPY.error | null;
 
+/**
+ * 가입 동의 시트의 결과. 성공(`completed`)이면 새 세션의 회원과 광고 동의 답을 넘기고,
+ * 다시 로그인해야 하는 실패(`expired`, `outdated`)와 뒤로가기 취소(`cancelled`)는
+ * 게이트가 대기를 비우고 게스트로 돌린다.
+ */
+export type SignupSettlement =
+  | { type: 'completed'; userId: string; marketingAccepted: boolean }
+  | { type: 'expired' | 'outdated' | 'cancelled' };
+
 type UseConsentFormOptions = {
   required: RequiredConsent[];
+  /** 세션 없이 가입 동의를 받는 모드. 제출은 가입 완료, 뒤로가기는 가입 취소다. */
+  isSignup: boolean;
   onRecorded: (
     recorded: UserConsentResponse,
     marketingAccepted: boolean,
   ) => void;
+  onSignupSettled: (settlement: SignupSettlement) => void;
   onReload: () => void;
 };
 
@@ -84,7 +98,8 @@ const DOCUMENT_LINKS: Partial<
 };
 
 /**
- * 필수 동의 시트의 체크·제출·로그아웃 상태를 관리하는 훅.
+ * 필수 동의 시트의 체크·제출·로그아웃 상태를 관리하는 훅. 가입 모드에서는 제출이
+ * 가입 완료(Credentials)로, 뒤로가기가 로그아웃 대신 가입 취소로 바뀐다.
  * 체크 상태는 서버가 요구하는 버전 묶음에 매여 있어, 버전 불일치로 다시 조회해 요구
  * 버전이 바뀌면 체크가 저절로 초기화된다(자동 재전송 없음). 기록 응답에서 필수 항목의
  * `needsConsent`가 모두 false일 때만 완료로 반영한다. 시트가 열린 동안 뒤로가기는 동의하지 않은
@@ -95,7 +110,9 @@ const DOCUMENT_LINKS: Partial<
  */
 function useConsentForm({
   required,
+  isSignup,
   onRecorded,
+  onSignupSettled,
   onReload,
 }: UseConsentFormOptions) {
   const versionKey = required
@@ -109,6 +126,7 @@ function useConsentForm({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [marketingChecked, setMarketingChecked] = useState(false);
   const [isAskingPermission, setIsAskingPermission] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const checked: ReadonlySet<ConsentKey> =
     checkedState.versionKey === versionKey
       ? checkedState.keys
@@ -174,7 +192,34 @@ function useConsentForm({
     setMarketingChecked(isChecked);
   };
 
-  const isLocked = record.isPending || isLoggingOut || isAskingPermission;
+  const isLocked =
+    record.isPending || isLoggingOut || isAskingPermission || isSigningUp;
+
+  const submitSignup = async () => {
+    setIsSigningUp(true);
+
+    const result = await submitSignupConsent(buildConsentRequest(required));
+
+    setIsSigningUp(false);
+
+    if (result.ok) {
+      onSignupSettled({
+        type: 'completed',
+        userId: result.userId,
+        marketingAccepted: marketingChecked,
+      });
+
+      return;
+    }
+
+    if (result.code === SIGNUP_CONSENT_ERROR.RETRYABLE) {
+      setNotice('retryable');
+
+      return;
+    }
+
+    onSignupSettled({ type: result.code });
+  };
 
   const submit = () => {
     if (isLocked || !isEveryRequiredChecked(required, checked)) {
@@ -185,12 +230,26 @@ function useConsentForm({
     setIsAskingPermission(true);
     void askPushPermissionBeforeSubmit().finally(() => {
       setIsAskingPermission(false);
+
+      if (isSignup) {
+        void submitSignup();
+
+        return;
+      }
+
       record.mutate({ data: buildConsentRequest(required) });
     });
   };
 
+  // 뒤로가기는 동의하지 않은 것으로 본다. 가입 모드는 세션이 없으므로 가입만 취소한다.
   const logout = () => {
     if (isLocked) {
+      return;
+    }
+
+    if (isSignup) {
+      onSignupSettled({ type: 'cancelled' });
+
       return;
     }
 
@@ -203,7 +262,7 @@ function useConsentForm({
     isAllChecked: isEveryRequiredChecked(required, checked) && marketingChecked,
     isEveryRequiredChecked: isEveryRequiredChecked(required, checked),
     notice,
-    isSubmitting: record.isPending || isAskingPermission,
+    isSubmitting: record.isPending || isAskingPermission || isSigningUp,
     isLoggingOut,
     isLocked,
     marketingChecked,
@@ -222,6 +281,7 @@ type ConsentSheetProps = {
     recorded: UserConsentResponse,
     marketingAccepted: boolean,
   ) => void;
+  onSignupSettled: (settlement: SignupSettlement) => void;
   onReload: () => void;
 };
 
@@ -229,22 +289,30 @@ export function ConsentSheet({
   phase,
   required,
   onRecorded,
+  onSignupSettled,
   onReload,
 }: ConsentSheetProps) {
   const container = useAppFrameContainer();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const form = useConsentForm({ required, onRecorded, onReload });
-  const isOpen =
-    phase === 'required' || phase === 'load-error' || phase === 'forbidden';
+  const isSignup = phase === 'signup-required' || phase === 'signup-load-error';
+  const form = useConsentForm({
+    required,
+    isSignup,
+    onRecorded,
+    onSignupSettled,
+    onReload,
+  });
+  const isConsentStep = phase === 'required' || phase === 'signup-required';
+  const isLoadError = phase === 'load-error' || phase === 'signup-load-error';
+  const isOpen = isConsentStep || isLoadError || phase === 'forbidden';
 
   useCloseOnBack({ open: isOpen && container !== null, onClose: form.logout });
 
-  const errorHeader =
-    phase === 'load-error'
-      ? CONSENT_SHEET_COPY.loadError
-      : phase === 'forbidden'
-        ? CONSENT_SHEET_COPY.forbidden
-        : null;
+  const errorHeader = isLoadError
+    ? CONSENT_SHEET_COPY.loadError
+    : phase === 'forbidden'
+      ? CONSENT_SHEET_COPY.forbidden
+      : null;
 
   return (
     <Drawer
@@ -270,7 +338,7 @@ export function ConsentSheet({
         </DrawerHeader>
 
         <div className="flex min-h-0 w-full flex-col gap-8 overflow-y-auto overscroll-contain px-4 pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {phase === 'required' && (
+          {isConsentStep && (
             <div className="flex flex-col gap-2">
               <Checkbox
                 className="min-h-12"
@@ -339,7 +407,7 @@ export function ConsentSheet({
           )}
 
           <div className="flex flex-col gap-2">
-            {phase === 'required' && (
+            {isConsentStep && (
               <Button
                 type="button"
                 size="lg"
@@ -353,7 +421,7 @@ export function ConsentSheet({
                 </LoadingButtonContent>
               </Button>
             )}
-            {phase === 'load-error' && (
+            {isLoadError && (
               <Button
                 type="button"
                 size="lg"

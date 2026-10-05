@@ -10,10 +10,10 @@ import type { JsonNodeNodeType } from './jsonNodeNodeType';
 export interface JsonNode {
   string?: boolean;
   container?: boolean;
-  floatingPointNumber?: boolean;
+  number?: boolean;
   missingNode?: boolean;
   integralNumber?: boolean;
-  number?: boolean;
+  floatingPointNumber?: boolean;
   nodeType?: JsonNodeNodeType;
   int?: boolean;
   long?: boolean;

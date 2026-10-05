@@ -24,8 +24,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
+  ApiErrorResponse,
   BatchStoryRequest,
   CreateGeneralStoryRequest,
+  GenreCatalogResponse,
+  Get2Params,
   GetLorebooksParams,
   GetPublicStoriesParams,
   ImagePresignRequest,
@@ -2259,6 +2262,179 @@ export function useGetLorebooks<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetLorebooksQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type get2Response200 = {
+  data: GenreCatalogResponse;
+  status: 200;
+};
+
+export type get2Response400 = {
+  data: ApiErrorResponse;
+  status: 400;
+};
+
+export type get2ResponseSuccess = get2Response200 & {
+  headers: Headers;
+};
+export type get2ResponseError = get2Response400 & {
+  headers: Headers;
+};
+
+export type get2Response = get2ResponseSuccess | get2ResponseError;
+
+export const getGet2Url = (params?: Get2Params) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/stories/genres?${stringifiedParams}`
+    : `/api/v1/stories/genres`;
+};
+
+/**
+ * 게스트 허용. query 원문 30자 이하, 공백과 대소문자를 무시하고 초성 및 별칭 검색. 빈 질의는 전체, 대표 목록은 항상 반환합니다.
+ * @summary 제공 장르 조회와 검색
+ */
+export const get2 = async (
+  params?: Get2Params,
+  options?: RequestInit,
+): Promise<get2Response> => {
+  return customInstance<get2Response>(getGet2Url(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGet2QueryKey = (params?: Get2Params) => {
+  return [`/api/v1/stories/genres`, ...(params ? [params] : [])] as const;
+};
+
+export const getGet2QueryOptions = <
+  TData = Awaited<ReturnType<typeof get2>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  params?: Get2Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGet2QueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof get2>>> = ({
+    signal,
+  }) => get2(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof get2>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type Get2QueryResult = NonNullable<Awaited<ReturnType<typeof get2>>>;
+export type Get2QueryError = ErrorType<ApiErrorResponse>;
+
+export function useGet2<
+  TData = Awaited<ReturnType<typeof get2>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  params: undefined | Get2Params,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof get2>>,
+          TError,
+          Awaited<ReturnType<typeof get2>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGet2<
+  TData = Awaited<ReturnType<typeof get2>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  params?: Get2Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof get2>>,
+          TError,
+          Awaited<ReturnType<typeof get2>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGet2<
+  TData = Awaited<ReturnType<typeof get2>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  params?: Get2Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 제공 장르 조회와 검색
+ */
+
+export function useGet2<
+  TData = Awaited<ReturnType<typeof get2>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  params?: Get2Params,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGet2QueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

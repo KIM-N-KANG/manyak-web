@@ -7,6 +7,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { isPopupLoginMessage } from '@/lib/auth/popup-login';
 
 import { resolveLoginCallbackUrl } from './login-callback-url';
+import { fetchPendingSignupConsent } from './signup-consent-client';
 
 const POPUP_TIMEOUT_MS = 5 * 60 * 1_000;
 
@@ -115,6 +116,13 @@ export function startGooglePopupLogin(
           } else if (failIfGuest) {
             finish('failed');
           }
+        } else if (
+          (await fetchPendingSignupConsent().catch(() => null)) !== null
+        ) {
+          // 세션 없이 가입 동의가 대기 중이다. 원래 화면으로 돌아가 동의 시트를 이어 간다.
+          if (!settled) {
+            finish('redirected');
+          }
         } else if (failIfGuest) {
           finish('failed');
         }
@@ -133,6 +141,13 @@ export function startGooglePopupLogin(
         event.source !== popup ||
         !isPopupLoginMessage(event.data, attempt)
       ) {
+        return;
+      }
+
+      if (event.data.consentRequired === true) {
+        // 세션 없이 가입 동의가 대기 중이다. 원래 화면으로 돌아가 동의 시트를 이어 간다.
+        finish('redirected');
+
         return;
       }
 

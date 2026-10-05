@@ -7,6 +7,10 @@ import type {
   TrialsResponse,
   UserConsentResponse,
 } from '@/api/generated/models';
+import {
+  SIGNUP_CONSENT_ENDPOINT,
+  type SignupConsentSummary,
+} from '@/lib/auth/signup-consent';
 
 /**
  * 모든 백엔드 호출은 /api/[...path] 프록시를 거친다.
@@ -46,6 +50,9 @@ export async function mockApi(page: Page): Promise<void> {
   // 회원 시나리오가 동의 시트 없이 진행되게 한다. 동의 시나리오는 이 목을 override한다.
   await mockConsents(page);
   await mockGuestConsents(page);
+
+  // 가입 동의 대기는 기본으로 없다(404). catch-all의 `[]`가 대기 요약으로 읽히지 않게 한다.
+  await mockSignupConsent(page, null);
 
   // 회원 세션은 루트의 토큰 동기화·프롬프트가 알림 API를 부를 수 있다. 기본 설정과 204를
   // 응답해 어떤 시나리오도 catch-all의 `[]`로 깨지지 않게 한다. 설정 시나리오는 override한다.
@@ -453,4 +460,45 @@ export async function mockPublicStories(
   await page.route(isPublicStoriesUrl, async (route) => {
     await route.fulfill({ json: { items, nextCursor: null } });
   });
+}
+
+/**
+ * 가입 동의 대기 BFF(`/api/auth/signup-consent`)를 목킹한다. 요약이 없으면 대기가 없는
+ * 404를 응답하고, 취소(DELETE)는 대기를 지운 뒤 204를 응답한다.
+ *
+ * @param page 대상 페이지
+ * @param summary 대기 중인 가입 동의 요약(없으면 null)
+ * @returns 조회·취소 요청 수와, 소셜 인증이 대기를 남기는 시점을 재현할 설정 함수
+ */
+export async function mockSignupConsent(
+  page: Page,
+  summary: SignupConsentSummary | null,
+): Promise<{
+  get: number;
+  delete: number;
+  setPending: (next: SignupConsentSummary | null) => void;
+}> {
+  let pending = summary;
+  const requests = {
+    get: 0,
+    delete: 0,
+    setPending: (next: SignupConsentSummary | null) => {
+      pending = next;
+    },
+  };
+
+  await page.route(`**${SIGNUP_CONSENT_ENDPOINT}`, async (route) => {
+    if (route.request().method() === 'DELETE') {
+      requests.delete += 1;
+      pending = null;
+      await route.fulfill({ status: 204 });
+
+      return;
+    }
+
+    requests.get += 1;
+    await route.fulfill(pending ? { json: pending } : { status: 404 });
+  });
+
+  return requests;
 }

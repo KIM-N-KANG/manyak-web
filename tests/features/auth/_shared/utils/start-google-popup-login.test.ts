@@ -5,11 +5,17 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   me: vi.fn(),
   error: vi.fn(),
+  fetchPendingSignupConsent: vi.fn(),
+  cancelPendingSignupConsent: vi.fn(),
 }));
 
 vi.mock('next-auth/react', () => mocks);
 vi.mock('@/api/generated/endpoints/auth/auth', () => ({ me: mocks.me }));
 vi.mock('sonner', () => ({ toast: { error: mocks.error } }));
+vi.mock('@/features/auth/_shared/utils/signup-consent-client', () => ({
+  fetchPendingSignupConsent: mocks.fetchPendingSignupConsent,
+  cancelPendingSignupConsent: mocks.cancelPendingSignupConsent,
+}));
 
 import { startGooglePopupLogin } from '@/features/auth/_shared/utils/start-google-popup-login';
 import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
@@ -34,6 +40,8 @@ beforeEach(() => {
     error: null,
   });
   mocks.getSession.mockReset().mockResolvedValue(null);
+  mocks.fetchPendingSignupConsent.mockReset().mockResolvedValue(null);
+  mocks.cancelPendingSignupConsent.mockReset().mockResolvedValue(undefined);
   mocks.me
     .mockReset()
     .mockResolvedValue({ status: 200, data: { id: 'user-1' } });
@@ -136,6 +144,54 @@ describe('Auth.js Google 팝업 로그인', () => {
     sendCompletion();
     await expect(result).resolves.toBe('failed');
     expect(browser.location.assign).not.toHaveBeenCalled();
+  });
+
+  it('가입 동의가 필요하다는 알림이면 원래 창의 callbackUrl로 돌아가 동의를 이어 간다', async () => {
+    const result = startGooglePopupLogin('/stories/42?setting=1#detail');
+
+    await vi.advanceTimersByTimeAsync(0);
+    sendCompletion({
+      data: {
+        type: POPUP_LOGIN_MESSAGE_TYPE,
+        attempt: new URL(
+          mocks.signIn.mock.calls[0][1].redirectTo,
+        ).searchParams.get('attempt'),
+        authenticated: false,
+        consentRequired: true,
+      },
+    });
+    await expect(result).resolves.toBe('redirected');
+    expect(browser.location.assign).toHaveBeenCalledWith(
+      '/stories/42?setting=1#detail',
+    );
+    expect(mocks.me).not.toHaveBeenCalled();
+  });
+
+  it('COOP로 참조가 끊긴 뒤 세션이 없어도 가입 동의 대기가 있으면 돌아간다', async () => {
+    const result = startGooglePopupLogin('/my');
+
+    await vi.advanceTimersByTimeAsync(0);
+    popup.closed = true;
+    mocks.fetchPendingSignupConsent.mockResolvedValue({
+      consents: { terms: { requiredVersion: 'v1.2', needsConsent: true } },
+      expiresAt: '2099-01-01T00:00:00Z',
+    });
+    browser.dispatchEvent(new Event('focus'));
+    await expect(result).resolves.toBe('redirected');
+    expect(browser.location.assign).toHaveBeenCalledWith('/my');
+  });
+
+  it('가입 동의 대기 조회가 실패해도 미인증 포커스 복귀를 취소로 단정하지 않는다', async () => {
+    const result = startGooglePopupLogin('/my');
+    const settled = vi.fn();
+
+    void result.then(settled);
+    await vi.advanceTimersByTimeAsync(0);
+    popup.closed = true;
+    mocks.fetchPendingSignupConsent.mockRejectedValue(new Error('network'));
+    browser.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(500);
+    expect(settled).not.toHaveBeenCalled();
   });
 
   it('팝업이 차단되면 OAuth 요청이나 현재 창 이동을 하지 않는다', async () => {
@@ -340,6 +396,22 @@ describe('인앱 소셜 로그인 진입', () => {
         redirectTo: '/chats/1?setting=2#end',
       });
       expect(open).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(['Mozilla Android Chrome', 'Android KAKAOTALK'])(
+    '%s에서 OAuth를 떠나기 전에 이전 시도가 남긴 가입 대기를 비운다',
+    async (userAgent) => {
+      vi.stubGlobal('navigator', { userAgent });
+
+      // 인앱 Google은 팝업 결과를 기다리므로 시작 요청까지만 진행시킨다.
+      void startSocialLogin({ provider: 'google', redirectTo: '/' });
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(mocks.cancelPendingSignupConsent).toHaveBeenCalledOnce();
+      expect(
+        mocks.cancelPendingSignupConsent.mock.invocationCallOrder[0],
+      ).toBeLessThan(mocks.signIn.mock.invocationCallOrder[0]);
     },
   );
 

@@ -30,6 +30,7 @@ export interface UpdateStoryRequest {
   /** @nullable */
   description?: string | null;
   /**
+   * 활성 제공 장르의 정식 이름 또는 이 스토리에 이미 저장된 장르. 생략/null은 유지
    * @minItems 1
    * @maxItems 8
    * @nullable

@@ -8,6 +8,7 @@ import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
 import { markPendingLogin } from './pending-login-storage';
+import { cancelPendingSignupConsent } from './signup-consent-client';
 import { startGooglePopupLogin } from './start-google-popup-login';
 
 type StartSocialLoginOptions = {
@@ -40,6 +41,9 @@ export async function startSocialLogin({
 
   // 팝업도 원래 탭의 동의 게이트에서 이어가므로 인증 시작 전에 표시한다.
   markPendingLogin();
+  // 이 브라우저에 남은 이전 시도의 가입 대기가 이번 로그인의 실패·취소 뒤 시트로 뜨지 않게
+  // 비운다. 팝업은 사용자 제스처 안에서 먼저 열려야 하므로 기다리지 않는다.
+  void cancelPendingSignupConsent();
 
   if (provider === 'google' && inAppBrowser) {
     const outcome = await startGooglePopupLogin(redirectTo);

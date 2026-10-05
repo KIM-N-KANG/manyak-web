@@ -3,11 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   readBackendSessionTokens: vi.fn(),
+  readPendingSignupConsent: vi.fn(),
 }));
 
 vi.mock('@/lib/auth/auth', () => ({ auth: mocks.auth }));
 vi.mock('@/lib/auth/token-cookies', () => ({
   readBackendSessionTokens: mocks.readBackendSessionTokens,
+}));
+vi.mock('@/lib/auth/signup-consent-cookie', () => ({
+  readPendingSignupConsent: mocks.readPendingSignupConsent,
 }));
 
 import { GET } from '@/app/api/auth/popup-complete/route';
@@ -22,6 +26,7 @@ beforeEach(() => {
     refreshToken: 'secret-refresh',
     expiresAt: Date.now() + 60_000,
   });
+  mocks.readPendingSignupConsent.mockReset().mockResolvedValue(null);
 });
 
 describe('팝업 인증 완료 응답', () => {
@@ -52,8 +57,31 @@ describe('팝업 인증 완료 응답', () => {
         `https://manyak.example/api/auth/popup-complete?attempt=${attempt}`,
       ),
     );
+    const body = await response.text();
 
-    expect(await response.text()).toContain('"authenticated":false');
+    expect(body).toContain('"authenticated":false,"consentRequired":false');
+    expect(body).toContain(POPUP_LOGIN_COPY.failed);
+  });
+
+  it('세션 없이 가입 동의가 대기 중이면 동의 필요를 알리고 대기 코드는 노출하지 않는다', async () => {
+    mocks.auth.mockResolvedValue(null);
+    mocks.readBackendSessionTokens.mockResolvedValue(null);
+    mocks.readPendingSignupConsent.mockResolvedValue({
+      consentToken: 'secret-pending-code',
+      expiresAt: '2099-01-01T00:00:00Z',
+      consents: {},
+    });
+
+    const response = await GET(
+      new Request(
+        `https://manyak.example/api/auth/popup-complete?attempt=${attempt}`,
+      ),
+    );
+    const body = await response.text();
+
+    expect(body).toContain('"authenticated":false,"consentRequired":true');
+    expect(body).toContain(POPUP_LOGIN_COPY.complete);
+    expect(body).not.toContain('secret-pending-code');
   });
 
   it('유효하지 않은 시도 식별자는 HTML에 삽입하지 않는다', async () => {

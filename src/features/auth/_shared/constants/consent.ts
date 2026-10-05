@@ -1,6 +1,6 @@
 import type { ConsentKey } from '@/features/auth/_shared/utils/consent-status';
 
-/** 로그인 직후 필수 동의 바텀 시트의 문구. 스펙 FE-SCREEN-010 동의 모델이 소유한다. */
+/** 가입 동의와 회원 재동의에 함께 쓰는 필수 동의 바텀 시트의 문구. 스펙 FE-SCREEN-010 동의 모델이 소유한다. */
 export const CONSENT_SHEET_COPY = {
   title: '서비스 이용을 위해 동의가 필요해요',
   agreeAll: '전체 동의',
@@ -23,7 +23,7 @@ export const CONSENT_SHEET_COPY = {
   logoutPending: '로그아웃 중',
   retry: '다시 시도',
   error: {
-    retryable: '동의를 저장하지 못했어요. 잠시 후 다시 시도해주세요',
+    retryable: '약관 동의 내역을 저장하지 못했어요',
     versionMismatch: '약관이 갱신되어 최신 내용으로 다시 확인해주세요',
     forbidden: '지금 계정으로는 서비스를 이용할 수 없어요',
   },

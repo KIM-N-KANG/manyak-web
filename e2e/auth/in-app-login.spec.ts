@@ -12,13 +12,29 @@ import { POPUP_LOGIN_MESSAGE_TYPE } from '@/lib/auth/popup-login';
 import {
   CONSENTS_FIXTURE,
   expect,
+  mockSignupConsent,
+  mockSignupConsentSignIn,
   seedStoryIds,
   skipOnboarding,
   test,
 } from '../fixtures/test';
 
-/** 공급자 인증만 목킹하고 앱의 팝업, 메시지 수신과 세션 재확인을 실행한다. */
-async function mockGooglePopup(page: Page, coop = false) {
+/**
+ * 공급자 인증만 목킹하고 앱의 팝업, 메시지 수신과 세션 재확인을 실행한다.
+ * `consentRequired`면 서버가 세션 없이 가입 동의 대기를 남긴 결과를 알린다.
+ */
+async function mockGooglePopup(
+  page: Page,
+  {
+    coop = false,
+    consentRequired = false,
+    onComplete,
+  }: {
+    coop?: boolean;
+    consentRequired?: boolean;
+    onComplete?: () => void;
+  } = {},
+) {
   const requests = { session: 0, member: 0, signIn: 0 };
   let authenticated = false;
 
@@ -69,12 +85,14 @@ async function mockGooglePopup(page: Page, coop = false) {
   await page
     .context()
     .route(`**${APP_PATH.LOGIN_POPUP_COMPLETE}?*`, (route) => {
-      authenticated = true;
+      authenticated = !consentRequired;
+      onComplete?.();
 
       const message = JSON.stringify({
         type: POPUP_LOGIN_MESSAGE_TYPE,
         attempt: new URL(route.request().url()).searchParams.get('attempt'),
-        authenticated: true,
+        authenticated,
+        consentRequired,
       });
 
       // 창을 스스로 닫지 않아 정상 경로가 closed 폴링 없이 메시지로 완료되는지 확인한다.
@@ -181,37 +199,41 @@ test.describe('인앱 소셜 로그인', () => {
     expect(session.user.id).toBe('user-1');
   });
 
-  test('팝업 로그인 후 원래 탭에서 필수 동의를 마쳐야 게스트 데이터를 이관한다', async ({
+  test('팝업 로그인에 동의가 남으면 원래 탭에서 가입 동의를 마쳐야 세션을 만들고 게스트 데이터를 이관한다', async ({
     page,
     context,
   }) => {
     await skipOnboarding(page);
     await seedStoryIds(page, ['11111111-1111-4111-8111-111111111111']);
-    await mockGooglePopup(page);
 
-    let recorded = false;
+    // 로그인 시작 때 이전 대기를 비우고, 팝업 인증이 끝나야 서버가 대기를 남긴다. 그 전까지
+    // 원래 탭의 대기 조회는 404인데, 이때 탭 표시를 지우면 복귀 뒤 시트가 뜨지 않는다.
+    const signupConsent = await mockSignupConsent(page, null);
+
+    await mockGooglePopup(page, {
+      consentRequired: true,
+      onComplete: () =>
+        signupConsent.setPending({
+          consents: {
+            ...CONSENTS_FIXTURE,
+            terms: { ...CONSENTS_FIXTURE.terms, needsConsent: true },
+          },
+          expiresAt: '2099-01-01T00:00:00.000Z',
+        }),
+    });
+
     let migrationCount = 0;
-    let earlyMigrationCount = 0;
+    let consentRecords = 0;
 
-    await page.route(`**${getGetConsentsUrl()}`, async (route) => {
+    await page.route(`**${getGetConsentsUrl()}`, (route) => {
       if (route.request().method() === 'POST') {
-        expect(route.request().postDataJSON()).toEqual({
-          terms: CONSENTS_FIXTURE.terms.requiredVersion,
-        });
-        recorded = true;
+        consentRecords++;
       }
 
-      await route.fulfill({
-        json: {
-          ...CONSENTS_FIXTURE,
-          terms: { ...CONSENTS_FIXTURE.terms, needsConsent: !recorded },
-        },
-      });
+      return route.fallback();
     });
     await page.route(`**${getMigrateUrl()}`, async (route) => {
       migrationCount++;
-
-      if (!recorded) earlyMigrationCount++;
 
       await route.fulfill({
         json: { stories: [], chats: [], migrationClosed: false },
@@ -237,19 +259,13 @@ test.describe('인앱 소셜 로그인', () => {
 
     await expect(dialog).toBeVisible();
     expect(migrationCount).toBe(0);
-    await expect
-      .poll(() =>
-        page.evaluate(
-          (key) => sessionStorage.getItem(key),
-          PENDING_LOGIN_STORAGE_KEY,
-        ),
-      )
-      .toBe('1');
 
-    // 같은 탭의 새로고침에서도 동의와 이관 순서를 유지한다.
+    // 같은 탭의 새로고침에서도 세션 없이 가입 동의를 이어 간다.
     await page.reload();
     await expect(dialog).toBeVisible();
     expect(migrationCount).toBe(0);
+
+    await mockSignupConsentSignIn(page);
     await dialog
       .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
       .check();
@@ -259,7 +275,7 @@ test.describe('인앱 소셜 로그인', () => {
 
     await expect(dialog).toBeHidden();
     await expect.poll(() => migrationCount).toBe(1);
-    expect(earlyMigrationCount).toBe(0);
+    expect(consentRecords).toBe(0);
     await expect(page).toHaveURL(callbackUrl);
     await expect
       .poll(() =>
@@ -294,7 +310,7 @@ test.describe('인앱 소셜 로그인', () => {
       };
     });
 
-    const requests = await mockGooglePopup(page, true);
+    const requests = await mockGooglePopup(page, { coop: true });
 
     await page.goto(APP_PATH.LOGIN);
 

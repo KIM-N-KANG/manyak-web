@@ -12,7 +12,10 @@ const headersMock = vi.hoisted(() => ({
 
 vi.mock('next/headers', () => headersMock);
 
-import { restoreSessionClaims } from '@/lib/auth/session-token';
+import {
+  readAuthCallbackUrl,
+  restoreSessionClaims,
+} from '@/lib/auth/session-token';
 
 const SECRET = 'test-secret';
 
@@ -101,5 +104,32 @@ describe('restoreSessionClaims', () => {
     mockCookies({ 'authjs.session-token': 'broken-token' });
 
     await expect(restoreSessionClaims()).resolves.toBeNull();
+  });
+});
+
+describe('readAuthCallbackUrl', () => {
+  it('HTTPS의 __Secure- 쿠키를 먼저 읽는다', async () => {
+    mockCookies({
+      '__Secure-authjs.callback-url': 'https://manyak.example/stories/s1',
+      'authjs.callback-url': 'http://localhost:3000/',
+    });
+
+    await expect(readAuthCallbackUrl()).resolves.toBe(
+      'https://manyak.example/stories/s1',
+    );
+  });
+
+  it('__Secure- 쿠키가 없으면 일반 쿠키를 읽는다', async () => {
+    mockCookies({ 'authjs.callback-url': 'http://localhost:3000/my' });
+
+    await expect(readAuthCallbackUrl()).resolves.toBe(
+      'http://localhost:3000/my',
+    );
+  });
+
+  it('쿠키가 없으면 null이다', async () => {
+    mockCookies({});
+
+    await expect(readAuthCallbackUrl()).resolves.toBeNull();
   });
 });
