@@ -481,7 +481,7 @@ test.describe('스토리 상세', () => {
 
     const secondOption = page.getByRole('option', { name: '용의 둥지' });
 
-    await expect(secondOption).toHaveCSS('border-radius', '10px');
+    await expect(secondOption).toHaveCSS('border-radius', '12px');
     await secondOption.click();
 
     await expect(trigger).toContainText('용의 둥지');
