@@ -1074,6 +1074,44 @@ test.describe('일반 제작 등록', () => {
     );
   });
 
+  test('승인 뒤 채팅방에서 브라우저 뒤로가기를 하면 제작 화면이 아니라 채팅 목록으로 간다 (STORY-GENERAL-30)', async ({
+    page,
+  }) => {
+    await mockRegisterAccepted(page);
+    await page.route(SUBMISSION_API, (route) =>
+      route.fulfill({
+        json: {
+          submissionId: 'submission-1',
+          status: 'APPROVED',
+          storyId: 'story-1',
+        },
+      }),
+    );
+    await page.route('**/api/v1/chats', (route) =>
+      route.fulfill({ status: 201, json: { id: 'chat-1' } }),
+    );
+    await page.route('**/api/v1/stories/simple/tags', (route) =>
+      route.fulfill({ json: [{ id: 1, name: '판타지', category: 'GENRE' }] }),
+    );
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    // 제작 탭 FAB 로 들어온 것처럼 제작 방식 선택 화면을 히스토리에 남긴다.
+    await page.goto(APP_PATH.STUDIO.STORY.SELECT);
+    await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toBeVisible();
+    await fillRequiredForm(page);
+
+    await registerButton(page).click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.CHAT_ROOM('chat-1')}$`),
+    );
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CHATS}$`));
+  });
+
   test('검토를 통과하지 못하면 안내하고 입력을 두며, 다시 등록하면 같은 제출본을 재제출한다 (STORY-GENERAL-25)', async ({
     page,
   }) => {
