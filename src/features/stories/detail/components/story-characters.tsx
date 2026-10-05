@@ -1,69 +1,170 @@
 'use client';
 
+import { useRef, useState } from 'react';
+
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import Image from 'next/image';
+
 import type { StoryCharacterResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ChatCharacterImage } from '@/features/chats/_shared/components/chat-character-image';
+import { isAllowedChatCharacterImageUrl } from '@/features/chats/_shared/utils/chat-message-segments';
+import { useDragScroll } from '@/hooks/use-drag-scroll';
+import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
+
+const ARROW_CLASS_NAME =
+  'absolute top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 
 type StoryCharactersProps = {
   storyId: string;
   characters: StoryCharacterResponse[];
 };
 
+function CharacterImageFallback({ label }: { label?: string }) {
+  return (
+    <div
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      className="flex size-full items-center justify-center bg-muted">
+      <ManyakSymbolIcon
+        aria-hidden="true"
+        className="size-8 text-foreground-tertiary"
+      />
+    </div>
+  );
+}
+
+function CharacterThumbnail({ imageUrl }: { imageUrl?: string | null }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!imageUrl || hasError || !isAllowedChatCharacterImageUrl(imageUrl)) {
+    return <CharacterImageFallback />;
+  }
+
+  return (
+    <Image
+      src={imageUrl}
+      alt=""
+      fill
+      sizes="120px"
+      className="object-cover"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
 export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const dragScrollProps = useDragScroll();
+  const selected = characters[selectedIndex] ?? characters[0];
+  const hasPicker = characters.length > 1;
+  const imageAlt = `${selected.name ?? ''} 인물 이미지`;
+  const imageFallback = (
+    <AspectRatio
+      ratio={4 / 3}
+      className="overflow-hidden rounded-xl border border-border">
+      <CharacterImageFallback label={`${imageAlt} 없음`} />
+    </AspectRatio>
+  );
+
+  const selectCharacter = (index: number) => {
+    setSelectedIndex(index);
+    pickerRef.current?.children[index]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-bold">주변 인물</h2>
-      <div className="flex flex-col gap-6">
-        {characters.map((character, index) => {
-          const imageAlt = `${character.name ?? ''} 인물 이미지`;
-          // 이미지가 없거나(생성 실패로 null) 보일 수 없으면 스토리 썸네일처럼 기본 심벌을 둔다
-          const imageFallback = (
-            <AspectRatio
-              ratio={4 / 3}
-              className="overflow-hidden rounded-xl border border-border bg-muted">
-              <div
-                role="img"
-                aria-label={`${imageAlt} 없음`}
-                className="flex size-full items-center justify-center">
-                <ManyakSymbolIcon
+      <div className="flex flex-col gap-1.5">
+        {hasPicker ? (
+          <div
+            ref={pickerRef}
+            {...dragScrollProps}
+            role="group"
+            aria-label="주변 인물 선택"
+            className="-mx-4 scrollbar-none flex scroll-fade-x scroll-px-4 gap-2 overflow-x-auto overscroll-x-contain px-4 py-0.5">
+            {characters.map((character, index) => (
+              <button
+                key={`${character.name}-${index}`}
+                type="button"
+                aria-label={character.name}
+                aria-pressed={index === selectedIndex}
+                className={cn(
+                  'w-[calc((100%-1.5rem)/3.5)] shrink-0 rounded-lg opacity-50 transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                  index === selectedIndex &&
+                    'opacity-100 ring-2 ring-foreground focus-visible:ring-2 focus-visible:ring-foreground',
+                )}
+                onClick={() => selectCharacter(index)}>
+                <AspectRatio
+                  ratio={4 / 3}
+                  className="overflow-hidden rounded-lg border border-border">
+                  <CharacterThumbnail imageUrl={character.imageUrl} />
+                </AspectRatio>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-3">
+          <div className="relative">
+            {selected.imageUrl ? (
+              <ChatCharacterImage
+                key={selectedIndex}
+                alt={imageAlt}
+                imageUrl={selected.imageUrl}
+                fallback={imageFallback}
+                onZoom={() =>
+                  track('client_storyDetail_characterImage_clicked', {
+                    story_id: storyId,
+                  })
+                }
+              />
+            ) : (
+              imageFallback
+            )}
+            {hasPicker && selectedIndex > 0 ? (
+              <button
+                type="button"
+                aria-label="이전 인물"
+                className={cn(ARROW_CLASS_NAME, 'left-2')}
+                onClick={() => selectCharacter(selectedIndex - 1)}>
+                <HugeiconsIcon
+                  icon={ArrowLeft01Icon}
+                  className="size-5"
                   aria-hidden="true"
-                  className="size-8 text-foreground-tertiary"
                 />
-              </div>
-            </AspectRatio>
-          );
-
-          return (
-            <div
-              key={`${character.name}-${index}`}
-              className="flex flex-col gap-3">
-              {character.imageUrl ? (
-                <ChatCharacterImage
-                  alt={imageAlt}
-                  imageUrl={character.imageUrl}
-                  fallback={imageFallback}
-                  onZoom={() =>
-                    track('client_storyDetail_characterImage_clicked', {
-                      story_id: storyId,
-                    })
-                  }
+              </button>
+            ) : null}
+            {hasPicker && selectedIndex < characters.length - 1 ? (
+              <button
+                type="button"
+                aria-label="다음 인물"
+                className={cn(ARROW_CLASS_NAME, 'right-2')}
+                onClick={() => selectCharacter(selectedIndex + 1)}>
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  className="size-5"
+                  aria-hidden="true"
                 />
-              ) : (
-                imageFallback
-              )}
-              <div className="flex flex-col gap-2">
-                <h3 className="font-semibold">{character.name}</h3>
-                {/* 소개 없이 만든 기존·일반 제작 인물은 description이 null이라 생략한다 */}
-                {character.description ? (
-                  <TextContent>{character.description}</TextContent>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
+              </button>
+            ) : null}
+          </div>
+          <div className="flex flex-col gap-2">
+            <h3 className="font-semibold">{selected.name}</h3>
+            {/* 소개 없이 만든 기존·일반 제작 인물은 description이 null이라 생략한다 */}
+            {selected.description ? (
+              <TextContent>{selected.description}</TextContent>
+            ) : null}
+          </div>
+        </div>
       </div>
     </div>
   );
