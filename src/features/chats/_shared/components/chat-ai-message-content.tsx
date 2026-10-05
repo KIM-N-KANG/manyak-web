@@ -1,7 +1,10 @@
 import { cn } from '@/lib/utils';
 
 import type { ChatMessageSegment } from '../utils/chat-message-segments';
-import { parseChatMessageSegments } from '../utils/chat-message-segments';
+import {
+  getChatImageAlt,
+  parseChatMessageSegments,
+} from '../utils/chat-message-segments';
 import { ChatCharacterImage } from './chat-character-image';
 import { ChatMessageContent } from './chat-message-content';
 
@@ -36,8 +39,8 @@ export function ChatAiMessageContent({
           </ChatMessageContent>
         ) : (
           <ChatCharacterImage
-            key={`character-image-${index}`}
-            name={segment.name}
+            key={`image-${index}`}
+            alt={getChatImageAlt(segment)}
             imageUrl={segment.imageUrl}
             loading={imageLoading}
             onZoom={onCharacterImageZoom}

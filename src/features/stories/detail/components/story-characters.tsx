@@ -27,7 +27,7 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
             {/* 이미지 생성에 실패한 인물은 imageUrl이 null이라 이미지를 생략한다 */}
             {character.imageUrl ? (
               <ChatCharacterImage
-                name={character.name ?? ''}
+                alt={`${character.name ?? ''} 인물 이미지`}
                 imageUrl={character.imageUrl}
                 onZoom={() =>
                   track('client_storyDetail_characterImage_clicked', {

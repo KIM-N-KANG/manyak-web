@@ -11,7 +11,6 @@ import {
   AiMessageBubble,
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
-import { ChatMessageContent } from '@/features/chats/_shared/components/chat-message-content';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { track, useTrackOnView } from '@/observability/analytics';
@@ -64,7 +63,7 @@ export function SharedChatView({
         </p>
         {prologue ? (
           <AiMessageBubble>
-            <ChatMessageContent className="px-4">{prologue}</ChatMessageContent>
+            <ChatAiMessageContent content={prologue} />
           </AiMessageBubble>
         ) : null}
         {turns.map((turn, index) => (

@@ -491,6 +491,39 @@ test.describe('스토리 상세', () => {
     await expect(page.getByText('잃어버린 용과의 재회')).not.toBeVisible();
   });
 
+  test('시작 상황의 장면 이미지 마커를 이미지로 표시한다 (KNK-1545)', async ({
+    page,
+  }) => {
+    const sceneImageUrl =
+      'https://cdn.manyak.app/scenes/originals/s1/valley_1a2b3c4d.webp';
+
+    await page.route(STORY_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...storyDetail,
+          startSettings: [
+            {
+              ...storyDetail.startSettings[0],
+              startSituation: `용의 흔적을 따라왔다\n\n[[${sceneImageUrl}]]\n\n안개가 걷힌다`,
+            },
+          ],
+        }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/stories/s1');
+
+    await expect(page.getByText('용의 흔적을 따라왔다')).toBeVisible();
+    await expect(page.getByRole('img', { name: '장면 이미지' })).toBeVisible();
+    await expect(page.getByText('안개가 걷힌다')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(sceneImageUrl);
+  });
+
   test('"채팅 시작하기"를 누르면 선택한 시작 설정으로 채팅 화면에 이동한다 (US-4-2)', async ({
     page,
   }) => {

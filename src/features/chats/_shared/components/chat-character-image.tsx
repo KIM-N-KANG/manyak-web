@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils';
 import { isAllowedChatCharacterImageUrl } from '../utils/chat-message-segments';
 
 type ChatCharacterImageProps = {
-  name: string;
+  /** 대체 텍스트. 버튼·뷰어 이름은 뒤에 "크게 보기"를 붙인다. */
+  alt: string;
   imageUrl: string;
   loading?: 'eager' | 'lazy';
   className?: string;
@@ -20,7 +21,7 @@ type ChatCharacterImageProps = {
 };
 
 export function ChatCharacterImage({
-  name,
+  alt,
   imageUrl,
   loading = 'lazy',
   className,
@@ -32,8 +33,6 @@ export function ChatCharacterImage({
   if (hasError || !isAllowedChatCharacterImageUrl(imageUrl)) {
     return null;
   }
-
-  const alt = `${name} 인물 이미지`;
 
   return (
     <>

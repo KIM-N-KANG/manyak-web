@@ -42,6 +42,8 @@ const PLAY_FILLED_PATH =
   'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
 const CHARACTER_IMAGE_URL =
   'https://dev-cdn.manyak.app/characters/originals/story-id/serin.webp';
+const SCENE_IMAGE_URL =
+  'https://dev-cdn.manyak.app/scenes/originals/story-id/platform_1a2b3c4d.webp';
 
 // 1x1 투명 PNG. 인물 이미지 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
 const TINY_PNG = Buffer.from(
@@ -376,6 +378,31 @@ test.describe('채팅 스트리밍', () => {
     await expect(prologueContent).toHaveCSS('padding-bottom', '20px');
     await expect(firstChoice).toHaveCSS('line-height', '24.5px');
     await expect(choices).toHaveCSS('padding-top', '12px');
+  });
+
+  test('프롤로그의 장면 이미지 마커를 대사 줄 없이 이미지로 표시한다 (KNK-1545)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...chatDetail(),
+          prologue: `*열차가 멈췄다.*\n\n[[${SCENE_IMAGE_URL}]]\n\n*불이 꺼진다.*`,
+        }),
+      });
+    });
+    await page.route('**/_next/image**', async (route) => {
+      await route.fulfill({ contentType: 'image/png', body: TINY_PNG });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText('열차가 멈췄다.')).toBeVisible();
+    await expect(page.getByRole('img', { name: '장면 이미지' })).toBeVisible();
+    await expect(page.getByText('불이 꺼진다.')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('[[');
   });
 
   test('브라우저 탭 제목이 스토리 제목 - 마냑이 된다', async ({ page }) => {
