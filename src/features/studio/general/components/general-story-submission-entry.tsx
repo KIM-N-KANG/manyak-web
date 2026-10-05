@@ -5,12 +5,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import { useGet as useGetStorySubmission } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
-import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
+import {
+  EMPTY_GENRE_CATALOG,
+  type GenreCatalog,
+} from '@/features/stories/_shared/utils/genre-catalog';
 import {
   readStorySubmission,
   type StorySubmission,
@@ -31,7 +34,7 @@ export function GeneralStorySubmissionEntry({
   const query = useGetStorySubmission(submissionId, {
     query: { refetchOnMount: 'always', retry: false },
   });
-  const tags = useGetSimpleStoryTags();
+  const genreCatalog = useGenreCatalog();
   const submission =
     query.data?.status === 200 ? readStorySubmission(query.data.data) : null;
   const canEdit =
@@ -66,11 +69,11 @@ export function GeneralStorySubmissionEntry({
   }, [redirect, router]);
 
   // 장르 이름을 제공 장르로 되돌리도록 장르 목록을 기다린다. 받지 못하면 모두 직접 추가한 장르로 둔다.
-  if (submission && canEdit && !tags.isPending) {
+  if (submission && canEdit && !genreCatalog.isPending) {
     return (
       <SubmissionForm
         submission={submission}
-        tags={tags.data?.status === 200 ? tags.data.data : []}
+        catalog={genreCatalog.catalog ?? EMPTY_GENRE_CATALOG}
       />
     );
   }
@@ -84,12 +87,12 @@ export function GeneralStorySubmissionEntry({
 
 type SubmissionFormProps = {
   submission: StorySubmission;
-  tags: SimpleStoryTagListItemResponse[];
+  catalog: GenreCatalog;
 };
 
-function SubmissionForm({ submission, tags }: SubmissionFormProps) {
+function SubmissionForm({ submission, catalog }: SubmissionFormProps) {
   const [initial] = useState(() =>
-    submissionToFormInitial(submission.payload, tags),
+    submissionToFormInitial(submission.payload, catalog),
   );
 
   return <GeneralStoryCreateForm initial={initial} submission={submission} />;

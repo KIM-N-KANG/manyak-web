@@ -6,9 +6,9 @@ import {
   resolveGenreNames,
 } from '@/features/studio/general/utils/build-general-story-request';
 
-const TAGS = [
-  { id: 1, name: '미스터리', category: 'GENRE' as const },
-  { id: 2, name: '호러', category: 'GENRE' as const },
+const GENRES = [
+  { id: 1, name: '미스터리' },
+  { id: 2, name: '호러' },
 ];
 
 const INPUT: GeneralStoryRequestInput = {
@@ -76,7 +76,7 @@ const INPUT: GeneralStoryRequestInput = {
 
 describe('resolveGenreNames', () => {
   it('고른 순서대로 제공 장르와 직접 추가한 장르의 이름을 반환한다', () => {
-    expect(resolveGenreNames(INPUT.genres, TAGS)).toEqual(['지하철', '호러']);
+    expect(resolveGenreNames(INPUT.genres, GENRES)).toEqual(['지하철', '호러']);
   });
 
   it('제공 장르의 이름을 찾지 못하면 null을 반환한다', () => {

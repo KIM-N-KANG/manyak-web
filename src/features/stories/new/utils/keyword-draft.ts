@@ -18,6 +18,7 @@ export function hasKeywordDraftInput(snapshot: KeywordDraftSnapshot): boolean {
 
   return (
     snapshot.selectedGenreTagIds.length > 0 ||
+    (snapshot.addedGenreTagIds?.length ?? 0) > 0 ||
     snapshot.customGenreTags.length > 0 ||
     hasCharacterInput(snapshot.protagonist) ||
     snapshot.supportingCharacters.some(hasCharacterInput)

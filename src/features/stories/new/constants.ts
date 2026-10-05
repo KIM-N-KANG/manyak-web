@@ -92,7 +92,6 @@ export const STORYLINE_RATING_SYNC_DEBOUNCE_MS = 300;
 export const GENRE_CATEGORY = {
   value: 'GENRE',
   label: '장르',
-  placeholder: '예: 타임루프, 영지물, 먼치킨',
   required: true,
   maxSelectionCount: GENRE_MAX_SELECTION_COUNT,
 } satisfies TagCategoryConfig;

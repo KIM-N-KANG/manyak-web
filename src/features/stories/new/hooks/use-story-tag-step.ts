@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { GenerateSimpleStorylinesRequest } from '@/api/generated/models';
+import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
 import type {
   KeywordCharacterSnapshot,
   KeywordDraftSnapshot,
@@ -57,7 +58,8 @@ export function useStoryTagStep({
   isGeneratingStorylines,
   onGenerateStorylines,
 }: UseStoryTagStepArgs) {
-  const genreSelection = useGenreSelection();
+  const genreCatalog = useGenreCatalog();
+  const genreSelection = useGenreSelection(genreCatalog.catalog);
   const characterInputs = useCharacterInputs();
   const [validationErrorCategory, setValidationErrorCategory] =
     useState<TagCategory | null>(null);
@@ -87,6 +89,7 @@ export function useStoryTagStep({
 
   const simpleStoryTags = useGetSimpleStoryTags();
   const showTagsSkeleton = useDelayedLoading(simpleStoryTags.isLoading);
+  const showGenreSkeleton = useDelayedLoading(genreCatalog.isPending);
   const tagsByCategory = getTagsByCategory(simpleStoryTags.data?.data ?? []);
 
   const clearValidationErrorOnSelection = (
@@ -105,16 +108,6 @@ export function useStoryTagStep({
   const toggleGenreTag = (tagId: number, pressed: boolean) => {
     clearValidationErrorOnSelection('GENRE', pressed);
     genreSelection.toggleGenreTag(tagId, pressed);
-  };
-
-  const toggleCustomGenreTag = (tagId: string, pressed: boolean) => {
-    clearValidationErrorOnSelection('GENRE', pressed);
-    genreSelection.toggleCustomGenreTag(tagId, pressed);
-  };
-
-  const addCustomGenreTag = (name: string) => {
-    clearValidationErrorOnSelection('GENRE');
-    genreSelection.addCustomGenreTag(name);
   };
 
   const toggleFeatureTag = (
@@ -173,8 +166,8 @@ export function useStoryTagStep({
     GenerateSimpleStorylinesRequest,
     'requestId'
   > => ({
+    // 장르는 제공 장르만 싣는다. 직접 입력 장르(`customGenreTags`)는 서버가 새 요청에서 받지 않는다.
     genreTagIds: genreSelection.selectedGenreTagIds,
-    customGenreTags: genreSelection.getSubmittedCustomGenreTags(),
     protagonist: toCharacterRequest(characterInputs.protagonist),
     // 비워 둔 인물도 한 명으로 세어 AI가 그 자리를 채우므로 걸러내지 않는다.
     supportingCharacters:
@@ -194,11 +187,7 @@ export function useStoryTagStep({
   };
 
   const keywordDraftSnapshot: KeywordDraftSnapshot = {
-    selectedGenreTagIds: genreSelection.selectedGenreTagIds,
-    customGenreTags: genreSelection.customGenreTags.map(({ id, name }) => ({
-      name,
-      selected: genreSelection.selectedCustomGenreTagIds.includes(id),
-    })),
+    ...genreSelection.genreSnapshot,
     protagonist: toKeywordCharacterSnapshot(characterInputs.protagonist),
     supportingCharacters: characterInputs.supportingCharacters.map(
       toKeywordCharacterSnapshot,
@@ -221,9 +210,11 @@ export function useStoryTagStep({
     activeCategory: navigation.activeCategory,
     changeCategory: navigation.changeCategory,
     selectedGenreTagIds: genreSelection.selectedGenreTagIds,
-    selectedCustomGenreTagIds: genreSelection.selectedCustomGenreTagIds,
-    customGenreTags: genreSelection.customGenreTags,
+    genreChips: genreSelection.genreChips,
     isGenreMaxReached: genreSelection.isGenreMaxReached,
+    needsGenreReselection: genreSelection.needsGenreReselection,
+    showGenreSkeleton,
+    hasGenreCatalogError: genreCatalog.isError,
     protagonist: characterInputs.protagonist,
     supportingCharacters: characterInputs.supportingCharacters,
     canAddSupportingCharacter: characterInputs.canAddSupportingCharacter,
@@ -243,8 +234,6 @@ export function useStoryTagStep({
     goToNextCategory,
     goToPreviousCategory: navigation.goToPreviousCategory,
     toggleGenreTag,
-    toggleCustomGenreTag,
-    addCustomGenreTag,
     toggleFeatureTag,
     toggleCustomFeatureTag,
     addCustomFeatureTag,

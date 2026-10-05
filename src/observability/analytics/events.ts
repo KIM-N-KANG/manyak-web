@@ -94,7 +94,8 @@ export type AnalyticsEventProps = {
   };
   client_storyCreate_selectedTagsButton_clicked: { creation_id: string };
   client_storyCreate_addTag_submitted: {
-    category: SimpleStoryTagListItemResponseCategory;
+    /** 장르는 제공 장르만 골라 직접 추가가 없다. */
+    category: Exclude<SimpleStoryTagListItemResponseCategory, 'GENRE'>;
   };
   client_storyCreate_regenerateButton_clicked: { creation_id: string };
   client_storyCreate_storylineTab_selected: {

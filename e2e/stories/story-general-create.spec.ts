@@ -6,6 +6,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
 import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
+import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
   GENERAL_STORY_CHARACTER_COPY,
@@ -529,7 +530,7 @@ test.describe('일반 제작 이름 중복', () => {
 });
 
 test.describe('일반 제작 하단 버튼과 등록 탭', () => {
-  test('프로필 탭은 다음만, 가운데 탭은 이전과 다음, 등록 탭은 이전과 켜진 등록하기를 두고, 장르는 키워드를 고르거나 직접 추가한다 (STORY-GENERAL-14)', async ({
+  test('프로필 탭은 다음만, 가운데 탭은 이전과 다음, 등록 탭은 이전과 켜진 등록하기를 두고, 장르는 대표 칩이나 검색으로 고른다 (STORY-GENERAL-14)', async ({
     page,
   }) => {
     await page.route('**/api/v1/stories/simple/tags', (route) =>
@@ -570,14 +571,16 @@ test.describe('일반 제작 하단 버튼과 등록 탭', () => {
       page.getByRole('button', { name: '용감한', exact: true }),
     ).toHaveCount(0);
 
-    await page.getByRole('button', { name: '키워드 추가' }).click();
-
-    const dialog = page.getByRole('dialog');
-
-    await dialog.getByRole('textbox').fill('유실물');
-    await dialog.getByRole('button', { name: '추가하기' }).click();
+    await expect(page.getByRole('button', { name: '키워드 추가' })).toHaveCount(
+      0,
+    );
+    await page.getByRole('combobox').fill('로판');
+    await expect(page.getByRole('option')).toHaveCount(0);
+    await expect(page.getByText(GENRE_SEARCH_COPY.empty)).toBeVisible();
+    await page.getByRole('combobox').fill('호러');
+    await page.getByRole('option', { name: '호러' }).click();
     await expect(
-      page.getByRole('button', { name: '유실물', exact: true }),
+      page.getByRole('button', { name: '호러', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
   });
 });

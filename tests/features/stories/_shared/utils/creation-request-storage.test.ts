@@ -120,6 +120,25 @@ describe('parsePendingCreationRequest', () => {
     ).toEqual(keywordDraftRecord);
   });
 
+  it('키워드 draft의 대표 밖 장르 목록은 없어도 되지만 숫자 배열이 아니면 null로 처리한다', async () => {
+    const withAdded = {
+      ...keywordDraftRecord,
+      snapshot: { ...keywordDraftRecord.snapshot, addedGenreTagIds: [4] },
+    };
+
+    expect(parsePendingCreationRequest(JSON.stringify(withAdded))).toEqual(
+      withAdded,
+    );
+    expect(
+      parsePendingCreationRequest(
+        JSON.stringify({
+          ...keywordDraftRecord,
+          snapshot: { ...keywordDraftRecord.snapshot, addedGenreTagIds: ['4'] },
+        }),
+      ),
+    ).toBeNull();
+  });
+
   it('저장값이 없으면 null을 반환한다', async () => {
     expect(parsePendingCreationRequest(null)).toBeNull();
     expect(parsePendingCreationRequest('')).toBeNull();

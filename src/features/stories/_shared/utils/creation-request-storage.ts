@@ -40,6 +40,9 @@ export type KeywordCharacterSnapshot = {
 /** 키워드 단계 전체 입력의 저장 스냅숏. 활성 탭은 복원하지 않는다. */
 export type KeywordDraftSnapshot = {
   selectedGenreTagIds: number[];
+  /** 대표 밖에서 처음 고른 순서대로 놓인 장르 id다. 제공 장르 검색 도입 전 레코드에는 없다. */
+  addedGenreTagIds?: number[];
+  /** 직접 입력을 받던 때 저장한 장르다. 제공 장르 검색 도입 뒤에는 새로 쌓이지 않는다. */
   customGenreTags: KeywordCustomTagSnapshot[];
   protagonist: KeywordCharacterSnapshot;
   supportingCharacters: KeywordCharacterSnapshot[];
@@ -230,6 +233,8 @@ function isKeywordDraftSnapshot(value: unknown): value is KeywordDraftSnapshot {
   return (
     isPlainObject(value) &&
     isNumberArray(value.selectedGenreTagIds) &&
+    (value.addedGenreTagIds === undefined ||
+      isNumberArray(value.addedGenreTagIds)) &&
     Array.isArray(value.customGenreTags) &&
     value.customGenreTags.every(isKeywordCustomTagSnapshot) &&
     isKeywordCharacterSnapshot(value.protagonist) &&

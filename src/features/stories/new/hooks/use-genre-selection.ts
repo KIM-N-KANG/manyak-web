@@ -3,97 +3,69 @@
 import { useState } from 'react';
 
 import type { KeywordDraftSnapshot } from '@/features/stories/_shared/utils/creation-request-storage';
-import { createClientId } from '@/lib/create-client-id';
+import {
+  type GenreCatalog,
+  getGenreChips,
+} from '@/features/stories/_shared/utils/genre-catalog';
 
-import type { CustomTag } from '../types';
+import {
+  EMPTY_SIMPLE_GENRE_SELECTION,
+  resolveSimpleGenreSelection,
+  type SimpleGenreSelection,
+  toggleSimpleGenre,
+} from '../utils/genre-selection';
 import { getMaxSelectionCount } from '../utils/tag-categories';
 
 /**
  * 키워드 스텝의 장르 선택 상태를 관리하는 훅.
- * 제공 태그와 직접 추가 키워드를 함께 세어 상한(3개)을 판정한다.
+ * 제공 장르만 고르며 상한은 3개다. 화면과 요청은 제공 장르 목록에 맞춰 정리한 선택을 쓰고,
+ * 정리한 값은 사용자가 장르를 바꿀 때 상태에 반영한다.
  *
- * @returns 선택한 장르 태그·직접 추가 키워드와 토글·추가 함수
+ * @param catalog 제공 장르 목록. 받기 전이면 undefined
+ * @returns 고른 장르와 칩, 저장 스냅숏, 토글·복원 함수
  */
-export function useGenreSelection() {
-  const [selectedGenreTagIds, setSelectedGenreTagIds] = useState<number[]>([]);
-  const [selectedCustomGenreTagIds, setSelectedCustomGenreTagIds] = useState<
-    string[]
-  >([]);
-  const [customGenreTags, setCustomGenreTags] = useState<CustomTag[]>([]);
-
-  const selectedCount =
-    selectedGenreTagIds.length + selectedCustomGenreTagIds.length;
-  const isGenreMaxReached = selectedCount >= getMaxSelectionCount('GENRE');
+export function useGenreSelection(catalog: GenreCatalog | undefined) {
+  const [selection, setSelection] = useState<SimpleGenreSelection>(
+    EMPTY_SIMPLE_GENRE_SELECTION,
+  );
+  const resolved = resolveSimpleGenreSelection(selection, catalog);
+  const view = resolved.selection;
 
   const toggleGenreTag = (tagId: number, pressed: boolean) => {
-    setSelectedGenreTagIds((previous) => {
-      if (!pressed) {
-        return previous.filter((selectedId) => selectedId !== tagId);
-      }
+    if (!catalog) return;
 
-      if (previous.includes(tagId) || isGenreMaxReached) {
-        return previous;
-      }
+    const next = toggleSimpleGenre(view, catalog, tagId, pressed);
 
-      return [...previous, tagId];
-    });
+    if (next !== view) setSelection(next);
   };
 
-  const toggleCustomGenreTag = (tagId: string, pressed: boolean) => {
-    setSelectedCustomGenreTagIds((previous) => {
-      if (!pressed) {
-        return previous.filter((selectedId) => selectedId !== tagId);
-      }
-
-      if (previous.includes(tagId) || isGenreMaxReached) {
-        return previous;
-      }
-
-      return [...previous, tagId];
-    });
-  };
-
-  const addCustomGenreTag = (name: string) => {
-    if (isGenreMaxReached) {
-      return;
-    }
-
-    const customTag: CustomTag = { id: createClientId(), name };
-
-    setCustomGenreTags((previous) => [...previous, customTag]);
-    setSelectedCustomGenreTagIds((previous) => [...previous, customTag.id]);
-  };
-
-  /** 키워드 저장본으로 장르 제공 태그와 직접 추가 키워드를 복원한다. */
+  /** 키워드 저장본으로 장르 선택을 복원한다. 제공 장르 목록에 맞춘 정리는 화면이 그릴 때 한다. */
   const restoreGenreSelection = (snapshot: KeywordDraftSnapshot) => {
-    const restoredCustomTags = snapshot.customGenreTags.map(({ name }) => ({
-      id: createClientId(),
-      name,
-    }));
-
-    setSelectedGenreTagIds(snapshot.selectedGenreTagIds);
-    setCustomGenreTags(restoredCustomTags);
-    setSelectedCustomGenreTagIds(
-      restoredCustomTags
-        .filter((_, index) => snapshot.customGenreTags[index]?.selected)
-        .map(({ id }) => id),
-    );
+    setSelection({
+      selectedIds: snapshot.selectedGenreTagIds,
+      addedIds: snapshot.addedGenreTagIds ?? [],
+      legacyTags: snapshot.customGenreTags,
+    });
   };
 
   return {
-    selectedGenreTagIds,
-    selectedCustomGenreTagIds,
-    customGenreTags,
-    isGenreMaxReached,
-    hasGenreTag: selectedCount > 0,
-    // 선택 상태인 직접 추가 키워드만 요청에 싣는다.
-    getSubmittedCustomGenreTags: () =>
-      customGenreTags
-        .filter((customTag) => selectedCustomGenreTagIds.includes(customTag.id))
-        .map((customTag) => customTag.name),
+    selectedGenreTagIds: view.selectedIds,
+    genreChips: catalog
+      ? getGenreChips(catalog, view.addedIds, view.selectedIds)
+      : [],
+    isGenreMaxReached: view.selectedIds.length >= getMaxSelectionCount('GENRE'),
+    hasGenreTag: view.selectedIds.length > 0,
+    needsGenreReselection: resolved.needsReselection,
+    // 저장본은 정리 전 상태로 만들어, 제공 장르 목록을 받은 것만으로 저장할 변경이 생기지 않게 한다.
+    genreSnapshot: {
+      selectedGenreTagIds: selection.selectedIds,
+      addedGenreTagIds: selection.addedIds,
+      customGenreTags: selection.legacyTags,
+    } satisfies Pick<
+      KeywordDraftSnapshot,
+      'selectedGenreTagIds' | 'addedGenreTagIds' | 'customGenreTags'
+    >,
     toggleGenreTag,
-    toggleCustomGenreTag,
-    addCustomGenreTag,
     restoreGenreSelection,
   };
 }
