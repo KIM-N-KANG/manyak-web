@@ -41,7 +41,7 @@ export function MyScreen() {
   };
 
   return (
-    <main className="flex flex-1 flex-col pb-4">
+    <main className="flex flex-1 flex-col">
       <ProfileHeader />
       <CreditBalanceCard />
       {isAuthenticated && (
