@@ -8,7 +8,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import {
   getGetEditFormQueryKey,
   getGetStoryDetailQueryKey,
@@ -51,6 +50,7 @@ import {
   type DraftExitDialog,
 } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
+import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
 import {
   savePendingCreationRequest,
@@ -85,7 +85,10 @@ import {
   buildStoryEditRequest,
   type StoryEditBase,
 } from '@/features/studio/general/utils/edit-form';
-import { EMPTY_GENRE_SELECTION } from '@/features/studio/general/utils/genre-selection';
+import {
+  EMPTY_GENRE_SELECTION,
+  resolveGeneralGenres,
+} from '@/features/studio/general/utils/genre-selection';
 import type { GeneralStoryMainEventDraft } from '@/features/studio/general/utils/main-event-draft';
 import {
   getRegisterErrors,
@@ -298,7 +301,10 @@ export function GeneralStoryCreateForm({
     ? TOAST_MESSAGE.STORY_EDIT_FAILED
     : TOAST_MESSAGE.STORY_REGISTER_FAILED;
   const queryClient = useQueryClient();
-  const tags = useGetSimpleStoryTags();
+  const genreCatalog = useGenreCatalog();
+  const genreView = edit
+    ? { selection: genres, needsReselection: false }
+    : resolveGeneralGenres(genres, genreCatalog.catalog);
   const createGeneralStory = useCreateGeneralStory();
   const resubmitGeneralStory = useResubmit();
   const updateStory = useUpdateStory();
@@ -372,7 +378,7 @@ export function GeneralStoryCreateForm({
     supporting,
     startSettings,
     mainEvents,
-    genreCount: genres.selected.length,
+    genreCount: genreView.selection.selected.length,
     description: storyDescription,
   });
 
@@ -544,8 +550,10 @@ export function GeneralStoryCreateForm({
     if (isReviewingRef.current || isLocked) return;
 
     const genreNames = resolveGenreNames(
-      genres,
-      tags.data?.status === 200 ? tags.data.data : [],
+      edit
+        ? genres
+        : resolveGeneralGenres(genres, genreCatalog.catalog).selection,
+      genreCatalog.catalog?.genres ?? [],
     );
 
     // 제공 장르 목록을 아직 받지 못해 장르 이름을 만들 수 없으면 요청하지 않는다.
@@ -934,7 +942,9 @@ export function GeneralStoryCreateForm({
               ),
               publish: (
                 <GeneralStoryRegisterPanel
-                  genres={genres}
+                  genres={genreView.selection}
+                  needsGenreReselection={genreView.needsReselection}
+                  allowsStoredGenres={Boolean(edit)}
                   onGenresChange={setGenres}
                   storyDescription={storyDescription}
                   onStoryDescriptionChange={setStoryDescription}

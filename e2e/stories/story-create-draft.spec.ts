@@ -4,8 +4,12 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
 import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
+import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
-import { PROTAGONIST_CATEGORY } from '@/features/stories/new/constants';
+import {
+  PROTAGONIST_CATEGORY,
+  STORYLINE_GENERATE_LABEL,
+} from '@/features/stories/new/constants';
 import {
   CREATE_STORY_FAB_COPY,
   CREATION_PROGRESS_CARD_COPY,
@@ -445,6 +449,72 @@ test.describe('스토리 임시 저장·재개', () => {
         name: CREATION_PROGRESS_CARD_COPY.draftTitle,
       }),
     ).toHaveCount(2);
+  });
+
+  test('직접 입력을 받던 때의 장르는 정식 이름과 같으면 제공 장르로 고르고, 아니면 빼고 다시 고르라고 안내한다 (KNK-1542)', async ({
+    page,
+  }) => {
+    const bodies: Record<string, unknown>[] = [];
+
+    await page.route(STORYLINES, async (route) => {
+      bodies.push(route.request().postDataJSON());
+      await route.fulfill({ status: 201, json: storylinesResponse });
+    });
+    await seedPendingCreationRequests(page, [
+      {
+        stage: 'KEYWORD_DRAFT',
+        requestId: '55555555-5555-4555-8555-555555555555',
+        createdAt: DRAFT_CREATED_AT,
+        snapshot: {
+          selectedGenreTagIds: [],
+          customGenreTags: [
+            { name: '현대 판타지', selected: true },
+            { name: '유실물', selected: true },
+          ],
+          protagonist: {
+            name: '',
+            gender: null,
+            selectedTagIds: [2],
+            customTags: [],
+          },
+          supportingCharacters: [],
+        },
+      },
+    ]);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
+
+    await expect(page.getByText(GENRE_SEARCH_COPY.reselect)).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '현대판타지', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.getByRole('button', { name: '유실물', exact: true }),
+    ).toHaveCount(0);
+    // 장르를 바꾸기 전에는 복원한 그대로라 저장하지 않은 내용으로 보지 않는다.
+    await closeButton(page).click();
+    await expect(
+      page
+        .getByRole('alertdialog')
+        .getByText(DRAFT_EXIT_WARNING_COPY.saved.description),
+    ).toBeVisible();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: DRAFT_EXIT_WARNING_COPY.saved.cancel })
+      .click();
+
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await expect(page.getByText(GENRE_SEARCH_COPY.reselect)).toHaveCount(0);
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: STORYLINE_GENERATE_LABEL }).click();
+
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(bodies[0].genreTagIds).toEqual([103, 1]);
+    expect(bodies[0]).not.toHaveProperty('customGenreTags');
   });
 
   test('초안이 두 개면 각 카드의 이어서 만들기가 자기 내용을 복원한다', async ({

@@ -2,6 +2,7 @@ import type { Page, Route } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import {
   GENERAL_STORY_CHARACTER_COPY,
@@ -440,6 +441,30 @@ test.describe('스토리 수정', () => {
       new RegExp(`${APP_PATH.STORY_DETAIL(STORY_ID)}$`),
     );
     expect(patches).toEqual([]);
+  });
+
+  test('이미 저장된 제공 목록 밖 장르는 고른 칩으로 보이고, 검색으로 장르를 더하면 함께 보낸다 (KNK-1542)', async ({
+    page,
+  }) => {
+    const patches = await setup(page, {
+      editForm: { ...EDIT_FORM, genres: ['판타지', '유실물'] },
+    });
+
+    await openEditFromDetail(page);
+    await page.getByRole('tab', { name: PUBLISH_TAB, exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: '유실물', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText(GENRE_SEARCH_COPY.reselect)).toHaveCount(0);
+
+    await page.getByRole('combobox').fill('호러');
+    await page.getByRole('option', { name: '호러' }).click();
+    await page
+      .getByRole('button', { name: GENERAL_STORY_EDIT_COPY.save })
+      .click();
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_EDITED)).toBeVisible();
+    expect(patches).toEqual([{ genres: ['판타지', '유실물', '호러'] }]);
   });
 
   test('반려되면 칸에 사유를 보이고 다시 저장할 때 모든 필드를 보낸다 (STORY-EDIT-05)', async ({

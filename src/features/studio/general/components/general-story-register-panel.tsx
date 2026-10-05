@@ -1,7 +1,6 @@
 import { AlertCircleIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
-import { useGetSimpleStoryTags } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { Switch } from '@/components/motion/switch';
 import {
@@ -11,11 +10,16 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
-import { AddTagDialog } from '@/features/stories/_shared/components/add-tag-dialog';
+import { GenreSearchCombobox } from '@/features/stories/_shared/components/genre-search-combobox';
 import { TagChipGrid } from '@/features/stories/_shared/components/tag-chip-grid';
+import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
+import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
+import { getGenreChips } from '@/features/stories/_shared/utils/genre-catalog';
 import { GENERAL_STORY_REGISTER_COPY } from '@/features/studio/general/constants';
 import {
+  type GeneralStoryGenreKey,
   type GeneralStoryGenreSelection,
+  getSelectedGenreTagIds,
   toggleGenre,
 } from '@/features/studio/general/utils/genre-selection';
 import { REGISTER_ERROR_KEY } from '@/features/studio/general/utils/register-validation';
@@ -27,8 +31,12 @@ const { genre, description, visibility, notice } = GENERAL_STORY_REGISTER_COPY;
 
 const VISIBILITY_DESCRIPTION_ID = 'general-story-visibility-description';
 
+const GENRE_SEARCH_ID = 'general-story-genre';
+
 type GeneralStoryRegisterPanelProps = {
   genres: GeneralStoryGenreSelection;
+  needsGenreReselection: boolean;
+  allowsStoredGenres: boolean;
   onGenresChange: (genres: GeneralStoryGenreSelection) => void;
   storyDescription: string;
   onStoryDescriptionChange: (value: string) => void;
@@ -38,31 +46,25 @@ type GeneralStoryRegisterPanelProps = {
 
 export function GeneralStoryRegisterPanel({
   genres,
+  needsGenreReselection,
+  allowsStoredGenres,
   onGenresChange,
   storyDescription,
   onStoryDescriptionChange,
   storyVisibility,
   onStoryVisibilityChange,
 }: GeneralStoryRegisterPanelProps) {
-  const tags = useGetSimpleStoryTags();
-  const genreTags =
-    tags.data?.status === 200
-      ? tags.data.data.filter(({ category }) => category === 'GENRE')
-      : [];
+  const { catalog, isPending, isError } = useGenreCatalog();
+  const selectedTagIds = getSelectedGenreTagIds(genres);
   const isGenreMaxReached = genres.selected.length >= genre.maxCount;
   const genreError = useRegisterError(REGISTER_ERROR_KEY.genre);
 
-  const addCustomGenre = (name: string) => {
-    if (isGenreMaxReached) {
-      return;
+  const changeGenre = (key: GeneralStoryGenreKey, pressed: boolean) => {
+    if (catalog) {
+      onGenresChange(
+        toggleGenre(genres, key, pressed, genre.maxCount, catalog),
+      );
     }
-
-    const id = crypto.randomUUID();
-
-    onGenresChange({
-      customTags: [...genres.customTags, { id, name }],
-      selected: [...genres.selected, { kind: 'custom', id }],
-    });
   };
 
   return (
@@ -71,49 +73,44 @@ export function GeneralStoryRegisterPanel({
         className="gap-2"
         data-invalid={genreError ? true : undefined}
         data-register-error={genreError ? true : undefined}>
-        <FieldLabel className="gap-0.5">
+        <FieldLabel htmlFor={GENRE_SEARCH_ID} className="gap-0.5">
           {genre.label} {genre.maxCountLabel(genre.maxCount)}
           <span className="text-destructive" aria-hidden="true">
             *
           </span>
         </FieldLabel>
+        <GenreSearchCombobox
+          id={GENRE_SEARCH_ID}
+          selectedIds={selectedTagIds}
+          isMaxSelectionReached={isGenreMaxReached}
+          onToggle={(id, pressed) => changeGenre({ kind: 'tag', id }, pressed)}
+        />
+        {needsGenreReselection && (
+          <p className="text-sm break-keep text-foreground-secondary">
+            {GENRE_SEARCH_COPY.reselect}
+          </p>
+        )}
         <TagChipGrid
           keyPrefix="general-story-genre"
-          predefinedTags={genreTags}
-          customTags={genres.customTags}
-          selectedTagIds={genres.selected.flatMap((item) =>
-            item.kind === 'tag' ? [item.id] : [],
-          )}
+          predefinedTags={
+            catalog
+              ? getGenreChips(catalog, genres.addedTagIds ?? [], selectedTagIds)
+              : []
+          }
+          customTags={allowsStoredGenres ? genres.customTags : []}
+          selectedTagIds={selectedTagIds}
           selectedCustomTagIds={genres.selected.flatMap((item) =>
             item.kind === 'custom' ? [item.id] : [],
           )}
           isMaxSelectionReached={isGenreMaxReached}
-          isLoadingTags={tags.isPending}
-          hasTagsError={tags.isError}
+          isLoadingTags={isPending}
+          hasTagsError={isError}
           disabled={false}
-          addTagTrigger={
-            <AddTagDialog
-              categoryLabel={genre.label}
-              fieldId="general-story-genre"
-              placeholder={genre.addPlaceholder}
-              disabled={isGenreMaxReached}
-              onAddTag={addCustomGenre}
-            />
-          }
           onTogglePredefinedTag={(id, pressed) =>
-            onGenresChange(
-              toggleGenre(genres, { kind: 'tag', id }, pressed, genre.maxCount),
-            )
+            changeGenre({ kind: 'tag', id }, pressed)
           }
           onToggleCustomTag={(id, pressed) =>
-            onGenresChange(
-              toggleGenre(
-                genres,
-                { kind: 'custom', id },
-                pressed,
-                genre.maxCount,
-              ),
-            )
+            changeGenre({ kind: 'custom', id }, pressed)
           }
         />
         {genreError ? (

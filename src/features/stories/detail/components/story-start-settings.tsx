@@ -70,7 +70,7 @@ export function StoryStartSettings({
                 <SelectItem
                   key={startSettingValue(setting, index)}
                   value={startSettingValue(setting, index)}
-                  className="h-auto min-h-10 rounded-[var(--radius)] py-2">
+                  className="h-auto min-h-10 py-2">
                   <span className="min-w-0 wrap-anywhere whitespace-normal">
                     {setting.name ?? `시작 상황 ${index + 1}`}
                   </span>
@@ -109,7 +109,7 @@ export function StoryStartSettings({
                 <PopoverContent
                   side="bottom"
                   align="start"
-                  className="w-auto max-w-60 gap-0 border border-border bg-input px-3 py-2 shadow-xs ring-0">
+                  className="w-auto max-w-60 gap-0 px-3 py-2">
                   엔딩은 시작 상황마다 달라져요
                 </PopoverContent>
               </Popover>

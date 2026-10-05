@@ -9,9 +9,9 @@ type TagChipGridProps = {
   /** 스켈레톤·칩 key를 화면 안에서 유일하게 만들기 위한 접두사 */
   keyPrefix: string;
   predefinedTags: SimpleStoryTagListItemResponse[];
-  customTags: { id: string; name: string }[];
+  customTags?: { id: string; name: string }[];
   selectedTagIds: number[];
-  selectedCustomTagIds: string[];
+  selectedCustomTagIds?: string[];
   isMaxSelectionReached: boolean;
   isLoadingTags: boolean;
   hasTagsError: boolean;
@@ -19,15 +19,15 @@ type TagChipGridProps = {
   /** 직접 추가를 허용하는 카테고리에서만 넘긴다. */
   addTagTrigger?: ReactNode;
   onTogglePredefinedTag: (tagId: number, pressed: boolean) => void;
-  onToggleCustomTag: (tagId: string, pressed: boolean) => void;
+  onToggleCustomTag?: (tagId: string, pressed: boolean) => void;
 };
 
 export function TagChipGrid({
   keyPrefix,
   predefinedTags,
-  customTags,
+  customTags = [],
   selectedTagIds,
-  selectedCustomTagIds,
+  selectedCustomTagIds = [],
   isMaxSelectionReached,
   isLoadingTags,
   hasTagsError,
@@ -83,7 +83,7 @@ export function TagChipGrid({
               className="aria-pressed:bg-primary/10"
               disabled={disabled || (!isSelected && isMaxSelectionReached)}
               onPressedChange={(pressed) =>
-                onToggleCustomTag(customTag.id, pressed)
+                onToggleCustomTag?.(customTag.id, pressed)
               }>
               {customTag.name}
             </ToggleChip>

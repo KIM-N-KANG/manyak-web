@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import type {
   CreditPolicyResponse,
   CreditProductResponse,
+  GenreCatalogResponse,
   PushSettingsResponse,
   TrialsResponse,
   UserConsentResponse,
@@ -53,6 +54,10 @@ export async function mockApi(page: Page): Promise<void> {
 
   // 가입 동의 대기는 기본으로 없다(404). catch-all의 `[]`가 대기 요약으로 읽히지 않게 한다.
   await mockSignupConsent(page, null);
+
+  // 제작 화면의 장르 칩과 검색은 제공 장르 조회를 따라간다. 스펙의 간편 제작 태그 목과 같은 id 1 판타지를
+  // 대표로 두고, 나머지는 인물 특징 태그 id와 겹치지 않게 둔다. 다른 목록은 스펙에서 override한다.
+  await mockGenreCatalog(page);
 
   // 회원 세션은 루트의 토큰 동기화·프롬프트가 알림 API를 부를 수 있다. 기본 설정과 204를
   // 응답해 어떤 시나리오도 catch-all의 `[]`로 깨지지 않게 한다. 설정 시나리오는 override한다.
@@ -501,4 +506,53 @@ export async function mockSignupConsent(
   });
 
   return requests;
+}
+
+/** 제공 장르 조회 기본 응답이다. 대표 장르는 판타지와 로맨스다. */
+export const GENRE_CATALOG_FIXTURE = {
+  genres: [
+    { id: 1, name: '판타지' },
+    { id: 101, name: '로맨스' },
+    { id: 102, name: '로맨스판타지' },
+    { id: 103, name: '현대판타지' },
+    { id: 104, name: 'BL' },
+    { id: 105, name: '호러' },
+  ],
+  featuredGenres: [
+    { id: 1, name: '판타지' },
+    { id: 101, name: '로맨스' },
+  ],
+} satisfies GenreCatalogResponse;
+
+/** 제공 장르 조회(`GET /stories/genres`) 요청. 검색어는 쿼리 문자열이라 경로만 비교한다. */
+export const isGenreCatalogUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories/genres';
+
+/**
+ * 제공 장르 조회와 검색을 목킹한다. 검색어가 있으면 공백·대소문자를 무시한 부분 일치로 거른다.
+ * 서버의 초성·별칭 해석은 흉내 내지 않는다.
+ *
+ * @param page 대상 페이지
+ * @param catalog 응답할 제공 장르 목록
+ */
+export async function mockGenreCatalog(
+  page: Page,
+  catalog: typeof GENRE_CATALOG_FIXTURE = GENRE_CATALOG_FIXTURE,
+): Promise<void> {
+  const toKey = (value: string) => value.replace(/\s/g, '').toLowerCase();
+
+  await page.route(isGenreCatalogUrl, async (route) => {
+    const query = toKey(
+      new URL(route.request().url()).searchParams.get('query') ?? '',
+    );
+
+    await route.fulfill({
+      json: {
+        genres: catalog.genres.filter(({ name }) =>
+          toKey(name).includes(query),
+        ),
+        featuredGenres: catalog.featuredGenres,
+      },
+    });
+  });
 }

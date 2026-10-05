@@ -31,6 +31,10 @@ describe('hasKeywordDraftInput', () => {
       snapshot: { ...emptySnapshot, selectedGenreTagIds: [1] },
     },
     {
+      name: '선택 해제한 대표 밖 장르',
+      snapshot: { ...emptySnapshot, addedGenreTagIds: [4] },
+    },
+    {
       name: '선택 해제한 직접 추가 장르',
       snapshot: {
         ...emptySnapshot,

@@ -50,9 +50,10 @@ const payload = readStorySubmission({
 
 describe('submissionToFormInitial', () => {
   it('설정 글을 칸으로 나누고 이미지와 인물 소개는 같은 이름의 인물에 붙인다', () => {
-    const form = submissionToFormInitial(payload, [
-      { id: 7, name: '호러', category: 'GENRE' },
-    ]);
+    const form = submissionToFormInitial(payload, {
+      genres: [{ id: 7, name: '호러' }],
+      featuredGenres: [],
+    });
 
     expect(form.texts).toEqual({
       title: '유실역',

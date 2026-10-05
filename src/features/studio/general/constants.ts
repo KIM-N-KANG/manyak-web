@@ -335,14 +335,13 @@ export const GENERAL_STORY_EVENT_COPY = {
   },
 } as const;
 
-/** 등록 탭의 문구·예시와 제한이다. 장르는 간편 제작의 키워드 선택을 쓰며 예시는 유실역 설정을 잇는다. */
+/** 등록 탭의 문구·예시와 제한이다. 장르는 간편 제작과 같은 제공 장르 검색을 쓰며 예시는 유실역 설정을 잇는다. */
 export const GENERAL_STORY_REGISTER_COPY = {
   genre: {
     label: '장르',
     maxCount: 8,
     maxCountLabel: (maxCount: number) => `(최대 ${maxCount}개)`,
     description: '스토리 목록과 상세에 보이는 장르예요',
-    addPlaceholder: '예: 타임루프, 영지물, 먼치킨',
   },
   description: {
     label: '주요 내용',

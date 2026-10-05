@@ -39,6 +39,7 @@ import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storag
 import { DRAFT_SAVE_TOAST_ID } from '@/features/stories/_shared/components/draft-save-button';
 import type { DraftExitDialog } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
+import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
 import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import {
   resolveErrorSettlement,
@@ -244,6 +245,7 @@ export function useStoryCreateFunnel() {
   };
 
   const simpleStoryTags = useGetSimpleStoryTags();
+  const genreCatalog = useGenreCatalog();
 
   const failToAdditionalInfo = (stage: 'story' | 'chat') => {
     track('client_storyCreate_completeError_shown', { stage });
@@ -508,10 +510,11 @@ export function useStoryCreateFunnel() {
   });
 
   const storylines = getGeneratedStorylines(generationResult);
-  const selectedTagGroups = getSelectedKeywordGroups(
-    generationRequest,
-    simpleStoryTags.data?.data ?? [],
-  );
+  // 대표 밖 장르의 이름은 간편 제작 태그 목록에 없어 제공 장르 전체 목록에서 찾는다.
+  const selectedTagGroups = getSelectedKeywordGroups(generationRequest, [
+    ...(simpleStoryTags.data?.data ?? []),
+    ...(genreCatalog.catalog?.genres ?? []),
+  ]);
   const activeStoryline =
     storylines[activeStorylineIndex] ?? storylines[0] ?? null;
   const simpleCreationId = generationResult?.simpleCreationId;
@@ -697,8 +700,11 @@ export function useStoryCreateFunnel() {
     parentCreationId: string | null = null,
     reusedRequestId: string | null = null,
   ) => {
+    // 직접 입력 장르는 서버가 새 requestId에서 받지 않아, 같은 요청을 다시 보낼 때만 남긴다.
+    const { customGenreTags, ...rest } = input;
     const request: GenerateSimpleStorylinesRequest = {
-      ...input,
+      ...rest,
+      ...(reusedRequestId !== null && customGenreTags && { customGenreTags }),
       requestId: reusedRequestId ?? createClientId(),
       parentCreationId:
         reusedRequestId === null

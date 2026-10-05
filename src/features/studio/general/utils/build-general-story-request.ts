@@ -1,8 +1,8 @@
 import type {
   CreateGeneralStoryRequest,
   CreateGeneralStoryRequestVisibility,
-  SimpleStoryTagListItemResponse,
 } from '@/api/generated/models';
+import type { Genre } from '@/features/stories/_shared/utils/genre-catalog';
 import {
   buildCharacterSetting,
   buildUserRoleSetting,
@@ -50,16 +50,16 @@ export type GeneralStoryRequestInput = {
  * 고른 장르를 고른 순서대로 이름으로 바꾼다.
  *
  * @param genres 장르 선택
- * @param tags 제공 장르 태그 목록
+ * @param catalogGenres 제공 장르 전체 목록
  * @returns 장르 이름 목록. 제공 장르의 이름을 찾지 못하면 null
  */
 export function resolveGenreNames(
   genres: GeneralStoryGenreSelection,
-  tags: SimpleStoryTagListItemResponse[],
+  catalogGenres: Genre[],
 ): string[] | null {
   const names = genres.selected.map((key) =>
     key.kind === 'tag'
-      ? tags.find(({ id }) => id === key.id)?.name
+      ? catalogGenres.find(({ id }) => id === key.id)?.name
       : genres.customTags.find(({ id }) => id === key.id)?.name,
   );
 

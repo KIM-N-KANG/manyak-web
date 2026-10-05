@@ -24,7 +24,8 @@ export type StorylineRating =
 export type TagCategoryConfig = {
   value: TagCategory;
   label: string;
-  placeholder: string;
+  /** 직접 추가 다이얼로그의 예시다. 제공 장르만 고르는 장르에는 없다. */
+  placeholder?: string;
   namePlaceholder?: string;
   required: boolean;
   maxSelectionCount: number;

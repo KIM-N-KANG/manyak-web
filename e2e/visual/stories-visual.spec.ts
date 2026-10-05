@@ -398,6 +398,9 @@ test.describe('스토리 오버레이 비주얼', () => {
     // 퍼널 오버레이는 회원 전용 제작 화면 안에 있다.
     await mockMemberSession(page);
     await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    // 장르는 직접 추가가 없어 주인공 특징의 키워드 추가를 연다.
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '키워드 추가' }).click();
 
     await expect(

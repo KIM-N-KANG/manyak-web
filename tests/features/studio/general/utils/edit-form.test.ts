@@ -9,7 +9,7 @@ import {
 import { createStartSettingDraft } from '@/features/studio/general/utils/start-setting-draft';
 import type { GeneralStoryFormInitial } from '@/features/studio/general/utils/submission-form';
 
-const TAGS = [{ id: 7, name: '호러', category: 'GENRE' as const }];
+const CATALOG = { genres: [{ id: 7, name: '호러' }], featuredGenres: [] };
 
 const EDIT_FORM: StoryEditFormResponse = {
   title: '유실역',
@@ -75,7 +75,7 @@ function requestAfter(
   data: StoryEditFormResponse = EDIT_FORM,
   sendAll?: boolean,
 ) {
-  const edit = readStoryEdit(data, TAGS);
+  const edit = readStoryEdit(data, CATALOG);
 
   return buildStoryEditRequest(
     buildStoryEditCandidate(change(edit.initial), ['호러'], edit.base),
@@ -86,7 +86,7 @@ function requestAfter(
 
 describe('readStoryEdit', () => {
   it('시작 설정과 짝지은 주변 인물의 폼 id를 서버 id로 두고 현재 이미지를 미리보기로 보인다', () => {
-    const { initial, base, submission } = readStoryEdit(EDIT_FORM, TAGS);
+    const { initial, base, submission } = readStoryEdit(EDIT_FORM, CATALOG);
 
     expect(initial.startSettings.map(({ id }) => id)).toEqual(['start-1']);
     expect(initial.supporting).toHaveLength(1);
@@ -121,7 +121,7 @@ describe('readStoryEdit', () => {
           errorCode: null,
         },
       },
-      TAGS,
+      CATALOG,
     );
 
     expect(submission).toMatchObject({
@@ -142,7 +142,7 @@ describe('readStoryEdit', () => {
           characterSetting: '# 등장인물\n\n## 도하늘\n관리인',
         },
       },
-      TAGS,
+      CATALOG,
     );
 
     expect(initial.supporting[0]).toMatchObject({
@@ -158,7 +158,7 @@ describe('readStoryEdit', () => {
         ...EDIT_FORM,
         submission: { submissionId: 'sub-1', status: 'APPROVED' },
       },
-      TAGS,
+      CATALOG,
     );
 
     expect(submission).toBeNull();

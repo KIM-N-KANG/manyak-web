@@ -1,10 +1,10 @@
 import type {
   GeneralCharacterImageInput,
   GeneralCharacterInput,
-  SimpleStoryTagListItemResponse,
   StoryEditFormResponse,
   UpdateStoryRequest,
 } from '@/api/generated/models';
+import type { GenreCatalog } from '@/features/stories/_shared/utils/genre-catalog';
 import {
   readStorySubmission,
   readStorySubmissionPayload,
@@ -198,16 +198,16 @@ export function buildStoryEditRequest(
  * 주변 인물은 이름이 같은 서버 인물과 짝지어 그 첫 이미지를 보인다. 기존 이미지의 객체 키는 빈 문자열이다.
  *
  * @param data 수정 폼 응답
- * @param tags 제공 장르 태그 목록
+ * @param catalog 제공 장르 목록
  * @returns 폼 초기 입력, 서버 값, 미승인 제출본
  */
 export function readStoryEdit(
   data: StoryEditFormResponse,
-  tags: SimpleStoryTagListItemResponse[],
+  catalog: GenreCatalog,
 ): StoryEdit {
   const parsed = submissionToFormInitial(
     readStorySubmissionPayload(data),
-    tags,
+    catalog,
   );
   const characters: StoryEditServerCharacter[] = (data.characters ?? []).map(
     (character) => ({
@@ -276,7 +276,7 @@ export function readStoryEdit(
       characters,
       baseline: buildStoryEditCandidate(
         initial,
-        resolveGenreNames(initial.genres, tags) ?? [],
+        resolveGenreNames(initial.genres, catalog.genres) ?? [],
         { startSettingIds, characters },
       ),
       sendAll:
