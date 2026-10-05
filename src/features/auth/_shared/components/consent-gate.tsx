@@ -2,9 +2,10 @@
 
 import { type ReactNode, useEffect, useRef } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
 import {
   getGetConsentsQueryKey,
@@ -12,7 +13,11 @@ import {
 } from '@/api/generated/endpoints/user/user';
 import type { UserConsentResponse } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
-import { ConsentSheet } from '@/features/auth/_shared/components/consent-sheet';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import {
+  ConsentSheet,
+  type SignupSettlement,
+} from '@/features/auth/_shared/components/consent-sheet';
 import { MemberAccessContext } from '@/features/auth/_shared/hooks/use-member-access';
 import {
   getRequiredConsents,
@@ -23,8 +28,13 @@ import {
   hasPendingLogin,
 } from '@/features/auth/_shared/utils/pending-login-storage';
 import { signOutBeforeConsent } from '@/features/auth/_shared/utils/sign-out-before-consent';
+import {
+  cancelPendingSignupConsent,
+  fetchPendingSignupConsent,
+} from '@/features/auth/_shared/utils/signup-consent-client';
 import { submitMarketingConsentAnswer } from '@/features/my/_shared/utils/marketing-consent-store';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
+import type { SignupConsentSummary } from '@/lib/auth/signup-consent';
 import { FetchError } from '@/lib/custom-fetch';
 
 /**
@@ -38,6 +48,9 @@ import { FetchError } from '@/lib/custom-fetch';
  * - `satisfied`: 필수 동의까지 마친 회원.
  * - `load-error`: 조회가 네트워크·5xx로 실패했다. 시트에서 재시도한다.
  * - `forbidden`: 조회가 403이다(정지 계정 등). 회원 기능을 열지 않고 안내만 한다.
+ * - `signup-required`: 이 탭에서 시작한 로그인이 세션 없이 가입 동의를 기다린다. 시트에서
+ *   동의를 마쳐야 가입이 완료되고 세션이 생긴다.
+ * - `signup-load-error`: 가입 대기 조회가 네트워크·5xx로 실패했다. 시트에서 재시도한다.
  */
 export type ConsentGatePhase =
   | 'guest'
@@ -47,7 +60,12 @@ export type ConsentGatePhase =
   | 'blocked'
   | 'satisfied'
   | 'load-error'
-  | 'forbidden';
+  | 'forbidden'
+  | 'signup-required'
+  | 'signup-load-error';
+
+/** 가입 대기 조회 쿼리 키. 결과는 페이지 로드당 한 번 읽고 정산 때 직접 비운다. */
+const SIGNUP_CONSENT_QUERY_KEY = ['signup-consent'] as const;
 
 /**
  * 동의 시트에서 연 문서를 새 탭으로 읽는 동안 원래 탭이 로그아웃되지 않도록, 공개 법적
@@ -65,6 +83,12 @@ type ResolvePhaseInput = {
   consent: UserConsentResponse | undefined;
   error: unknown;
   isPublicLegalPath: boolean;
+  /** 비로그인 상태의 가입 대기 조회. 이 탭 로그인 표시가 있을 때만 켠다. */
+  signup: {
+    enabled: boolean;
+    summary: SignupConsentSummary | null | undefined;
+    error: unknown;
+  };
 };
 
 /**
@@ -80,9 +104,24 @@ function resolvePhase({
   consent,
   error,
   isPublicLegalPath,
+  signup,
 }: ResolvePhaseInput): ConsentGatePhase {
   if (sessionStatus === 'unauthenticated') {
-    return 'guest';
+    if (!signup.enabled) {
+      return 'guest';
+    }
+
+    if (signup.error) {
+      return 'signup-load-error';
+    }
+
+    if (signup.summary === undefined) {
+      return 'checking';
+    }
+
+    return signup.summary && hasPendingConsent(signup.summary.consents)
+      ? 'signup-required'
+      : 'guest';
   }
 
   if (sessionStatus === 'loading') {
@@ -117,7 +156,8 @@ function resolvePhase({
 }
 
 /**
- * 로그인 직후 필수 동의를 한 번 판정해 회원 접근 상태를 하위 트리에 내려주는 게이트 훅.
+ * 필수 동의를 한 번 판정해 회원 접근 상태를 하위 트리에 내려주는 게이트 훅. 세션이 없고
+ * 이 탭에서 로그인을 시작했으면 가입 대기를 조회해 가입 동의 시트를 띄운다.
  * 동의 조회는 인증 확정 후 사용자별 키로 한 번만 하고(`staleTime: Infinity`), 이후 갱신은
  * 시트의 기록 성공(`applyRecordedConsent`)과 명시 재조회(`reload`)로만 일어난다.
  * 회원 기능과 로그인 후 부수 효과는 전부 `useMemberAccess().isMember`로 이 판정을 재사용한다.
@@ -141,12 +181,30 @@ function useConsentGate() {
   });
   const consent =
     consentsQuery.data?.status === 200 ? consentsQuery.data.data : undefined;
+  const isPublicLegalPath = PUBLIC_LEGAL_PATHS.includes(pathname);
+  // 대기 조회가 404여도 탭 표시는 지우지 않는다. 인앱 팝업 로그인 중인 원래 탭이 팝업의
+  // 동의 필요 알림으로 다시 불러와진 뒤 시트를 이어 가야 한다.
+  const signupQuery = useQuery({
+    queryKey: SIGNUP_CONSENT_QUERY_KEY,
+    queryFn: fetchPendingSignupConsent,
+    enabled:
+      status === 'unauthenticated' && !isPublicLegalPath && hasPendingLogin(),
+    staleTime: Infinity,
+    retry: false,
+  });
   const phase = resolvePhase({
     sessionStatus: status,
     consent,
     error: consentsQuery.error,
-    isPublicLegalPath: PUBLIC_LEGAL_PATHS.includes(pathname),
+    isPublicLegalPath,
+    signup: {
+      enabled: signupQuery.isEnabled,
+      summary: signupQuery.data,
+      error: signupQuery.error,
+    },
   });
+  const isSignupPhase =
+    phase === 'signup-required' || phase === 'signup-load-error';
   const signingOutRef = useRef(false);
 
   useEffect(() => {
@@ -194,18 +252,56 @@ function useConsentGate() {
     }
   };
 
+  /**
+   * 가입 동의 시트의 결과를 정산한다. 성공은 세션이 회원으로 바뀌어 기존 회원 경로가
+   * 이어 가므로 광고 동의 답만 넘긴다. 그 밖에는 탭 표시와 대기 조회를 비워 게스트로 돌린다.
+   */
+  const settleSignup = (settlement: SignupSettlement) => {
+    if (settlement.type === 'completed') {
+      submitMarketingConsentAnswer(
+        settlement.userId,
+        settlement.marketingAccepted,
+      );
+
+      return;
+    }
+
+    if (settlement.type === 'cancelled') {
+      void cancelPendingSignupConsent();
+    } else {
+      toast.error(
+        settlement.type === 'expired'
+          ? TOAST_MESSAGE.SIGNUP_CONSENT_EXPIRED
+          : TOAST_MESSAGE.SIGNUP_CONSENT_OUTDATED,
+      );
+    }
+
+    clearPendingLogin();
+    queryClient.setQueryData(SIGNUP_CONSENT_QUERY_KEY, null);
+  };
+
   return {
     phase,
-    required: getRequiredConsents(consent),
+    required: getRequiredConsents(
+      isSignupPhase ? signupQuery.data?.consents : consent,
+    ),
     applyRecordedConsent,
-    reload: () => void consentsQuery.refetch(),
+    settleSignup,
+    reload: () =>
+      void (isSignupPhase ? signupQuery.refetch() : consentsQuery.refetch()),
     sheetKey: userId ?? 'guest',
   };
 }
 
 export function ConsentGate({ children }: { children: ReactNode }) {
-  const { phase, required, applyRecordedConsent, reload, sheetKey } =
-    useConsentGate();
+  const {
+    phase,
+    required,
+    applyRecordedConsent,
+    settleSignup,
+    reload,
+    sheetKey,
+  } = useConsentGate();
 
   return (
     <MemberAccessContext.Provider
@@ -216,6 +312,7 @@ export function ConsentGate({ children }: { children: ReactNode }) {
         phase={phase}
         required={required}
         onRecorded={applyRecordedConsent}
+        onSignupSettled={settleSignup}
         onReload={reload}
       />
     </MemberAccessContext.Provider>

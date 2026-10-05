@@ -19,6 +19,7 @@ import {
   mockPublicStories,
   mockPushSettings,
   mockPushTokens,
+  mockSignupConsent,
   mockTrials,
   PUSH_SETTINGS_FIXTURE,
   TRIALS_FIXTURE,
@@ -45,7 +46,11 @@ export {
   skipChatTour,
   skipOnboarding,
 } from './storage';
-export { mockGuestSession, mockMemberSession } from './auth';
+export {
+  mockGuestSession,
+  mockMemberSession,
+  mockSignupConsentSignIn,
+} from './auth';
 export {
   CONSENTS_FIXTURE,
   CREDIT_POLICY_FIXTURE,
@@ -64,6 +69,7 @@ export {
   mockPublicStories,
   mockPushSettings,
   mockPushTokens,
+  mockSignupConsent,
   mockTrials,
   PUSH_SETTINGS_FIXTURE,
   TRIALS_FIXTURE,
