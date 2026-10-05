@@ -330,7 +330,7 @@ export const ResubmitBody = zod
               .string()
               .nullish()
               .describe(
-                '인물 소개. 앞뒤 공백 제거 후 80자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
+                '인물 소개. 앞뒤 공백 제거 후 150자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
               ),
           })
           .describe('인물 입력(제작·수정 공용)'),
@@ -1011,7 +1011,7 @@ export const CreateGeneralStoryBody = zod
               .string()
               .nullish()
               .describe(
-                '인물 소개. 앞뒤 공백 제거 후 80자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
+                '인물 소개. 앞뒤 공백 제거 후 150자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
               ),
           })
           .describe('인물 입력(제작·수정 공용)'),
@@ -1960,7 +1960,7 @@ export const UpdateStoryBody = zod
               .string()
               .nullish()
               .describe(
-                '인물 소개. 앞뒤 공백 제거 후 80자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
+                '인물 소개. 앞뒤 공백 제거 후 150자 이하, CR·LF·탭 금지. 수정 시 생략·null은 유지하고 빈 문자열·공백만 보내면 삭제한다.',
               ),
           })
           .describe('인물 입력(제작·수정 공용)'),

@@ -174,6 +174,8 @@ export function GeneralStorySupportingCharacterList({
                   <GeneralStoryInputField
                     id={`general-story-supporting-${character.id}-description`}
                     label={introductionLabel}
+                    multiline
+                    heightClassName="min-h-12 max-h-40"
                     maxLength={introductionMaxLength}
                     placeholder={introductionPlaceholder}
                     description={introductionDescription}
