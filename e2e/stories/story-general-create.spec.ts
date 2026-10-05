@@ -1074,7 +1074,7 @@ test.describe('일반 제작 등록', () => {
     );
   });
 
-  test('승인 뒤 채팅방에서 브라우저 뒤로가기를 하면 제작 화면이 아니라 채팅 목록으로 간다 (STORY-GENERAL-30)', async ({
+  test('승인 뒤 채팅방에서 브라우저로 뒤로 가면 끝난 제작 선택·폼이 아니라 채팅 목록, 그다음 제작 탭으로 간다 (STORY-GENERAL-30)', async ({
     page,
   }) => {
     await mockRegisterAccepted(page);
@@ -1095,9 +1095,14 @@ test.describe('일반 제작 등록', () => {
     );
     await skipOnboarding(page);
     await mockMemberSession(page);
-    // 제작 탭 FAB 로 들어온 것처럼 제작 방식 선택 화면을 히스토리에 남긴다.
+    // 제작 탭에서 제작 방식 선택을 거쳐 일반 제작을 고른다.
+    await page.goto(APP_PATH.MAIN.STUDIO);
     await page.goto(APP_PATH.STUDIO.STORY.SELECT);
-    await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
+    await page
+      .getByRole('link', {
+        name: new RegExp(STORY_MODE_SELECT_COPY.general.title),
+      })
+      .click();
     await expect(
       page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
     ).toBeVisible();
@@ -1110,6 +1115,8 @@ test.describe('일반 제작 등록', () => {
 
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CHATS}$`));
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 
   test('검토를 통과하지 못하면 안내하고 입력을 두며, 다시 등록하면 같은 제출본을 재제출한다 (STORY-GENERAL-25)', async ({
