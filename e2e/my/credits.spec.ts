@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {
@@ -34,6 +35,8 @@ const ORDERS_API = '**/api/v1/users/me/credits/orders';
 const ORDER_API = '**/api/v1/users/me/credits/orders/order-1';
 /** 그로블 결제창을 대신하는 외부 주소. 이동만 확인하면 되므로 빈 문서를 응답한다. */
 const PAYMENT_URL = 'https://pay.example.test/checkout?ref=order-1';
+/** 그로블 결제 완료 화면을 대신하는 외부 주소. */
+const PAYMENT_COMPLETE_URL = 'https://pay.example.test/complete?ref=order-1';
 
 type Transaction = {
   type: 'EARN' | 'SPEND' | 'EXPIRE';
@@ -285,6 +288,92 @@ test.describe('이프 충전 (/my/credits)', () => {
 
     await expect(priceButton).toBeEnabled();
     await expect(priceButton).toHaveText(formatKrwPrice(first.webPriceKrw));
+  });
+
+  test('결제를 마치고 돌아오면 결제 전 충전 화면으로 되감아 뒤로가기가 결제창으로 가지 않는다', async ({
+    page,
+    baseURL,
+  }) => {
+    await prepareMember(page);
+
+    const returnUrl = new URL(APP_PATH.MY_CREDITS_RETURN, baseURL).href;
+    let paid = false;
+
+    await page.route(ORDERS_API, (route) =>
+      route.fulfill({
+        status: 201,
+        json: { orderId: 'order-1', paymentUrl: PAYMENT_URL },
+      }),
+    );
+    // 그로블처럼 결제창과 완료 화면이 각각 히스토리 칸을 쌓고, 완료 화면 버튼이 복귀 화면으로 보낸다.
+    await page.route(PAYMENT_URL, (route) =>
+      route.fulfill({
+        contentType: 'text/html',
+        body: `<meta charset="utf-8"><a href="${PAYMENT_COMPLETE_URL}">결제하기</a>`,
+      }),
+    );
+    await page.route(PAYMENT_COMPLETE_URL, (route) => {
+      paid = true;
+
+      return route.fulfill({
+        contentType: 'text/html',
+        body: `<meta charset="utf-8"><a href="${returnUrl}">이프 확인하기</a>`,
+      });
+    });
+    await page.route(ORDER_API, (route) =>
+      route.fulfill({
+        json: {
+          orderId: 'order-1',
+          status: paid ? 'COMPLETED' : 'PENDING',
+          totalCredits: 1_100,
+        },
+      }),
+    );
+
+    await page.goto(APP_PATH.MAIN.MY);
+    await page
+      .getByRole('button', { name: CREDIT_CHARGE_COPY.entryButton })
+      .click();
+    await page
+      .getByRole('button', {
+        name: formatKrwPrice(CREDIT_PRODUCTS_FIXTURE[0].webPriceKrw),
+      })
+      .click();
+    await expect(page).toHaveURL(PAYMENT_URL);
+
+    await page.getByRole('link', { name: '결제하기' }).click();
+    await page.getByRole('link', { name: '이프 확인하기' }).click();
+
+    // 복귀 화면 칸을 지나 결제 전 충전 화면으로 돌아와 확인 카드를 그린다.
+    await expect(page).toHaveURL(/\/my\/credits$/);
+    await expect(
+      page
+        .getByRole('status', { name: CREDIT_ORDER_COPY.title })
+        .getByText(CREDIT_ORDER_COPY.completed(formatCreditAmount(1_100))),
+    ).toBeVisible();
+
+    // 기기 뒤로가기와 앱 바 뒤로가기 모두 마이로 간다.
+    await page.goBack();
+    await expect(page).toHaveURL(/\/my$/);
+    await page.goForward();
+    await expect(page).toHaveURL(/\/my\/credits$/);
+    await page
+      .getByRole('banner')
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(/\/my$/);
+  });
+
+  test('되감을 기록 없이 복귀 화면에 오면 충전 화면으로 바꿔 끼운다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+    await page.goto(APP_PATH.MY_CREDITS_RETURN);
+
+    await expect(page).toHaveURL(/\/my\/credits$/);
+    await expect(
+      page.getByRole('banner').getByText(CREDIT_CHARGE_COPY.title),
+    ).toBeVisible();
   });
 
   test('주문 생성이 실패하면 안내 토스트를 띄우고 다시 누를 수 있다', async ({

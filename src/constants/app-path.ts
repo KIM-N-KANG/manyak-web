@@ -14,6 +14,8 @@ export const APP_PATH = {
   ABOUT: '/about',
   MY_ACCOUNT_DELETION: '/my/account-deletion',
   MY_CREDITS: '/my/credits',
+  /** 그로블 결제창의 이동 페이지·진입 페이지로 등록하는 복귀 화면이다. */
+  MY_CREDITS_RETURN: '/my/credits/return',
   MY_FEEDBACK: '/my/feedback',
   MY_INVITE: '/my/invite',
   MY_LINK_CONTINUE: '/my/link/continue',
