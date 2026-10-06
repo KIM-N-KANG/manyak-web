@@ -80,9 +80,12 @@ type Reveal = {
 };
 
 const DONE: Reveal = { elapsed: () => Number.POSITIVE_INFINITY, millis: 0 };
-const BLACK: Rgb = [0, 0, 0];
-const WHITE: Rgb = [255, 255, 255];
 const PI = Math.PI;
+/**
+ * 무대 소품과 마스코트를 그릴 때 무대 가운데를 붙잡고 줄이는 배율이다. 썸네일 자리는 말풍선 폭을 그대로 쓰되
+ * 안의 연기는 작게 보여 대화 흐름에서 튀지 않게 한다. 바탕 점은 줄이지 않는다.
+ */
+const CONTENT_SCALE = 0.72;
 /** 그림이 도화지에서 빨랫줄까지 날아가는 시간이다. */
 const FLIGHT_MILLIS = 600;
 /** 새 도화지가 이젤에 튀어나오는 시간이다. */
@@ -134,6 +137,15 @@ export function drawRealtimeImageStage(
 
   ctx.clearRect(0, 0, width, height);
   drawDots(ctx, width, height, palette.ink);
+
+  // 투명도를 입히는 소품 캔버스도 같은 배율로 줄여야 합성할 때 자리가 맞는다.
+  for (const target of [ctx, layer]) {
+    target.save();
+    target.translate(width / 2, height / 2);
+    target.scale(CONTENT_SCALE, CONTENT_SCALE);
+    target.translate(-width / 2, -height / 2);
+  }
+
   drawGallery(stage, loopMillis);
   drawEasel(stage);
   drawEaselPaper(stage, act, actMillis, loopMillis, reveal);
@@ -143,7 +155,7 @@ export function drawRealtimeImageStage(
   ctx.globalAlpha = clamp01(
     (PAPER.left - 0.01 - (pose.x + MASCOT_HALF_WIDTH)) / 0.05,
   );
-  drawShadow(ctx, pose, unit, MASCOT_SIZE, FLOOR, palette.brand);
+  drawShadow(ctx, pose, unit, MASCOT_SIZE, FLOOR, palette.ink);
   ctx.restore();
 
   drawMascot(
@@ -153,11 +165,27 @@ export function drawRealtimeImageStage(
     MASCOT_SIZE,
     palette.brand,
     blinkOpenness(millis),
-    lookAt,
+    lookAt && toContent(lookAt, height / width),
   );
   drawGear(stage, act, actMillis, pose);
   drawActProps(stage, act, actMillis, pose);
   drawFlights(stage, loopMillis);
+  ctx.restore();
+  layer.restore();
+}
+
+/**
+ * 썸네일 위 포인터 자리를 줄여 그린 무대의 좌표로 바꾼다.
+ *
+ * @param at 썸네일 폭 단위 포인터 자리
+ * @param aspect 썸네일 높이 / 폭
+ * @returns 무대 좌표
+ */
+function toContent(at: Point, aspect: number): Point {
+  return point(
+    0.5 + (at.x - 0.5) / CONTENT_SCALE,
+    aspect / 2 + (at.y - aspect / 2) / CONTENT_SCALE,
+  );
 }
 
 // ---- 도화지와 그림 ----
@@ -228,12 +256,13 @@ function drawSheet(
 }
 
 /**
- * 검은 도화지 색을 반환한다. 테마와 상관없이 밤하늘처럼 어두운, 브랜드 색이 살짝 도는 검정이다.
+ * 뒤집은 도화지 뒷면 색을 반환한다. 무대에서 튀지 않도록 종이보다 한 톤 짙은 옅은 회색이다.
  *
  * @param palette 테마 색
- * @returns 검은 도화지 색
+ * @returns 뒷면 색
  */
-const nightColor = (palette: StagePalette) => mix(palette.brand, BLACK, 0.82);
+const nightColor = (palette: StagePalette) =>
+  mix(palette.paper, palette.pencil, 0.14);
 
 /**
  * 이젤 다리와 받침이다. 도화지가 날아가도 이젤은 남는다.
@@ -584,9 +613,9 @@ function drawWatercolor(
   const spread = smooth((reveal.elapsed('HALO') - 60) / 700);
 
   if (spread > 0) {
-    drawWobblyBlob(ctx, WATERCOLOR_HALO, 28 * spread, rgba(brand, 0.14), 0);
-    drawWobblyBlob(ctx, point(48, 40), 19 * spread, rgba(brand, 0.1), 2);
-    ctx.fillStyle = rgba(mix(paper, brand, 0.45));
+    drawWobblyBlob(ctx, WATERCOLOR_HALO, 28 * spread, rgba(brand, 0.07), 0);
+    drawWobblyBlob(ctx, point(48, 40), 19 * spread, rgba(brand, 0.05), 2);
+    ctx.fillStyle = rgba(mix(paper, lead, 0.3));
     SPECKLES.forEach(([x, y, radius], index) => {
       const pop = easeOutBack(
         clamp01((reveal.elapsed('HALO') - 160 - index * 70) / 240),
@@ -608,7 +637,7 @@ function drawWatercolor(
     ctx.bezierCurveTo(38, 64, 56, 64, 67, 70);
     ctx.bezierCurveTo(60, 77, 44, 79, 30, 76);
     ctx.closePath();
-    ctx.fillStyle = rgba(brand, 0.35 * scarf);
+    ctx.fillStyle = rgba(brand, 0.1 * scarf);
     ctx.fill();
   }
 
@@ -641,7 +670,7 @@ function drawWatercolor(
   const blush = easeOutBack(clamp01(reveal.elapsed('CHEEK') / 260));
 
   if (blush > 0) {
-    ctx.fillStyle = rgba(mix(paper, brand, 0.5));
+    ctx.fillStyle = rgba(mix(paper, brand, 0.3));
     ctx.beginPath();
     ctx.ellipse(
       WATERCOLOR_CHEEK.x,
@@ -661,7 +690,7 @@ function drawWatercolor(
     WATERCOLOR_BOB,
     progressOf(reveal, 'BOB'),
     5.5,
-    brand,
+    mix(paper, lead, 0.75),
     brushPressure,
   );
   drawStroke(
@@ -669,10 +698,17 @@ function drawWatercolor(
     WATERCOLOR_SCARF,
     scarf,
     5,
-    mix(paper, brand, 0.6),
+    mix(paper, brand, 0.3),
     brushPressure,
   );
-  drawStroke(ctx, SCARF_TAIL, (scarf - 0.5) * 2, 4, brand, brushPressure);
+  drawStroke(
+    ctx,
+    SCARF_TAIL,
+    (scarf - 0.5) * 2,
+    4,
+    mix(paper, brand, 0.4),
+    brushPressure,
+  );
 }
 
 // ---- 셋째 그림: 별자리 ----
@@ -699,7 +735,7 @@ function drawConstellation(
   palette: StagePalette,
   reveal: Reveal,
 ) {
-  const star = mix(palette.brand, WHITE, 0.88);
+  const star = palette.pencil;
   const twinkle = (index: number) =>
     0.7 + 0.3 * Math.sin(reveal.millis / 190 + index * 1.7);
 
@@ -717,7 +753,7 @@ function drawConstellation(
   );
   let drawn = connect * total;
 
-  ctx.strokeStyle = rgba(mix(palette.brand, WHITE, 0.55), 0.7);
+  ctx.strokeStyle = rgba(palette.pencil, 0.45);
   ctx.lineWidth = 0.8;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
@@ -784,8 +820,8 @@ function drawStar(
   const glow = radius * (2.2 + 2.5 * flash) * pop;
   const gradient = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, glow);
 
-  gradient.addColorStop(0, rgba(palette.brand, 0.55 * twinkle));
-  gradient.addColorStop(1, rgba(palette.brand, 0));
+  gradient.addColorStop(0, rgba(palette.pencil, 0.25 * twinkle));
+  gradient.addColorStop(1, rgba(palette.pencil, 0));
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(at.x, at.y, glow, 0, PI * 2);
@@ -812,27 +848,19 @@ function drawStar(
 // ---- 베레모와 붓 ----
 
 /**
- * 막에 맞는 붓털 색이다. 처음엔 깨끗하고, 크로키는 먹색, 수채는 초록, 검은 종이를 뒤집은 뒤로는 별빛이다.
+ * 막에 맞는 붓털 색이다. 처음엔 깨끗하고, 크로키와 별자리는 연필 회색, 수채는 옅은 초록이다.
  *
  * @param palette 테마 색
  * @param act 지금 막
- * @param actMillis 막 안의 시각
  * @returns 붓털 색
  */
-function paintColor(
-  palette: StagePalette,
-  act: RealtimeImageAct,
-  actMillis: number,
-): Rgb {
+function paintColor(palette: StagePalette, act: RealtimeImageAct): Rgb {
   if (act === 'SKETCH' || act === 'RELIEF') return palette.pencil;
 
-  if (act === 'WATERCOLOR' || act === 'DAYDREAM') return palette.brand;
+  if (act === 'WATERCOLOR' || act === 'DAYDREAM')
+    return mix(palette.paper, palette.brand, 0.4);
 
-  if (act === 'CONSTELLATION' && cueProgress('FLIP', actMillis) < 0.5)
-    return palette.brand;
-
-  if (act === 'CONSTELLATION' || act === 'RESET')
-    return mix(palette.brand, WHITE, 0.88);
+  if (act === 'CONSTELLATION' || act === 'RESET') return palette.pencil;
 
   return mix(palette.paper, palette.pencil, 0.25);
 }
@@ -863,7 +891,7 @@ function drawGear(
     point(hat.x, hat.y - 0.62 * (1 - fall * fall)),
     HAT_TILT + pose.rotation + 22 * Math.sin(fall * PI * 2.5) * (1 - fall),
     pose.scaleX,
-    () => drawBeret(ctx, palette),
+    () => drawBeret(ctx, palette, true),
   );
 
   const held = onBody(pose, BRUSH_GRIP, MASCOT_SIZE);
@@ -886,7 +914,7 @@ function drawGear(
   const angle = flight >= 1 ? heldAngle : -450 + (heldAngle + 450) * flight;
 
   inViewport(ctx, unit, MASCOT_SIZE, grip, angle, 1, () =>
-    drawBrush(ctx, palette, paintColor(palette, act, actMillis)),
+    drawBrush(ctx, palette, paintColor(palette, act)),
   );
 }
 
@@ -962,7 +990,7 @@ function drawEffort(stage: Stage, actMillis: number, pose: MascotPose) {
           point(center.x + direction.x * inner, center.y + direction.y * inner),
           point(center.x + direction.x * outer, center.y + direction.y * outer),
           0.008,
-          palette.brand,
+          palette.ink,
           unit,
         );
       });
@@ -991,7 +1019,7 @@ function drawEffort(stage: Stage, actMillis: number, pose: MascotPose) {
           from.y + Math.sin(angle) * length,
         ),
         0.007 * (1 - burst * 0.6),
-        palette.brand,
+        palette.ink,
         unit,
       );
     }
@@ -1062,7 +1090,7 @@ function drawRelief(stage: Stage, actMillis: number, pose: MascotPose) {
     const x = pose.x + halfWidth + 0.014 + 0.01 * fall;
     const y = top + 0.035 + slide + 0.06 * fall * fall;
 
-    ctx.fillStyle = rgba(mix(palette.brand, palette.paper, 0.3));
+    ctx.fillStyle = rgba(mix(palette.paper, palette.pencil, 0.35));
     ctx.beginPath();
     ctx.moveTo(x * unit, (y - size * 2.3) * unit);
     ctx.quadraticCurveTo(
@@ -1182,10 +1210,10 @@ function drawDaydream(stage: Stage, actMillis: number) {
     point(mark.x, mark.y - 0.032 * size),
     point(mark.x, mark.y + 0.004 * size),
     0.013 * size,
-    palette.brand,
+    palette.pencil,
     unit,
   );
-  ctx.fillStyle = rgba(palette.brand);
+  ctx.fillStyle = rgba(palette.pencil);
   ctx.beginPath();
   ctx.arc(
     mark.x * unit,
@@ -1212,7 +1240,7 @@ function drawDaydream(stage: Stage, actMillis: number) {
         mark.y - 0.008 + Math.sin(angle) * outer,
       ),
       0.006,
-      palette.brand,
+      palette.pencil,
       unit,
     );
   }
