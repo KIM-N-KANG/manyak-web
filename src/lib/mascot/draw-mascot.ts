@@ -143,7 +143,7 @@ export function drawDots(
   const left = (width - columns * DOT_GAP) / 2;
   const top = (height - rows * DOT_GAP) / 2;
 
-  ctx.fillStyle = rgba(ink, 0.45);
+  ctx.fillStyle = rgba(ink, 0.25);
 
   for (let row = 0; row <= rows; row += 1) {
     for (let column = 0; column <= columns; column += 1) {
