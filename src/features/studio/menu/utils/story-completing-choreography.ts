@@ -7,19 +7,27 @@
  * 빼도 이음매에서 마스코트가 순간이동하지 않는다. Android 와 같은 값을 쓴다.
  */
 
-export type Point = { x: number; y: number };
-
-/** 마스코트 한 프레임의 자세다. x·y 는 발끝 가운데다. */
-export type MascotPose = {
-  x: number;
-  y: number;
-  scaleX: number;
-  scaleY: number;
-  rotation: number;
-  look: Point;
-  /** 0 은 뜬 눈, 1 은 지그시 감은 눈이다. */
-  squint: number;
-};
+import {
+  type Act,
+  brush,
+  createChoreography,
+  crouch,
+  cubic,
+  easeOutBack,
+  idle,
+  leap,
+  MASCOT_HEIGHT_RATIO,
+  MASCOT_WIDTH_RATIO,
+  type MascotPose,
+  type Move,
+  type Point,
+  point,
+  pose,
+  stand,
+  stretch,
+  stroll,
+  withCue,
+} from '@/lib/mascot/mascot-choreography';
 
 export type CompletingAct =
   | 'KEYWORDS'
@@ -46,22 +54,7 @@ export type Cue =
   | 'BLOOM'
   | 'SIGNATURE';
 
-export type CompletingMoment = {
-  act: CompletingAct;
-  actMillis: number;
-  pose: MascotPose;
-};
-
 // ---- 무대 ----
-
-/** 심벌 viewport(64) 안에서 몸이 차지하는 폭·높이와, 회전축(몸 가운데)이 발에서 떨어진 거리다. */
-export const MASCOT_VIEWPORT = 64;
-export const MASCOT_CENTER = 32;
-export const MASCOT_BOTTOM = 59.8;
-
-const MASCOT_WIDTH_RATIO = (55.8 - 8.2) / 64;
-const MASCOT_HEIGHT_RATIO = (59.8 - 4.2) / 64;
-const MASCOT_CENTER_TO_FEET_RATIO = (59.8 - 32) / 64;
 
 export const STAGE_HEIGHT = 4 / 3;
 export const MASCOT_SIZE = 0.24;
@@ -72,79 +65,6 @@ export const MASCOT_HEIGHT = MASCOT_SIZE * MASCOT_HEIGHT_RATIO;
 const WALL_GAP = 0.05;
 
 export const HOME: Point = { x: 0.5, y: FLOOR };
-
-const point = (x: number, y: number): Point => ({ x, y });
-const ZERO = point(0, 0);
-
-const pose = (
-  x: number,
-  y: number,
-  rest: Partial<MascotPose> = {},
-): MascotPose => ({
-  x,
-  y,
-  scaleX: 1,
-  scaleY: 1,
-  rotation: 0,
-  look: ZERO,
-  squint: 0,
-  ...rest,
-});
-
-/** 3차 베지어 곡선이다. 붓질의 길과 그 길을 그리는 선이 같은 값을 쓴다. */
-export type Cubic = {
-  start: Point;
-  control1: Point;
-  control2: Point;
-  end: Point;
-};
-
-export function cubicAt(curve: Cubic, t: number): Point {
-  const u = 1 - t;
-  const a = u * u * u;
-  const b = 3 * u * u * t;
-  const c = 3 * u * t * t;
-  const d = t * t * t;
-
-  return point(
-    curve.start.x * a +
-      curve.control1.x * b +
-      curve.control2.x * c +
-      curve.end.x * d,
-    curve.start.y * a +
-      curve.control1.y * b +
-      curve.control2.y * c +
-      curve.end.y * d,
-  );
-}
-
-function cubicTangent(curve: Cubic, t: number): Point {
-  const u = 1 - t;
-  const a = 3 * u * u;
-  const b = 6 * u * t;
-  const c = 3 * t * t;
-
-  return point(
-    (curve.control1.x - curve.start.x) * a +
-      (curve.control2.x - curve.control1.x) * b +
-      (curve.end.x - curve.control2.x) * c,
-    (curve.control1.y - curve.start.y) * a +
-      (curve.control2.y - curve.control1.y) * b +
-      (curve.end.y - curve.control2.y) * c,
-  );
-}
-
-const cubic = (
-  start: Point,
-  control1: Point,
-  control2: Point,
-  end: Point,
-): Cubic => ({
-  start,
-  control1,
-  control2,
-  end,
-});
 
 // ---- 소품 자리 ----
 
@@ -209,153 +129,7 @@ export const BLOOM_CENTER = point(0.66, 0.27);
 
 // ---- 낱동작 ----
 
-type Move = { millis: number; cue?: Cue; pose: (f: number) => MascotPose };
-
-type Act = { kind: CompletingAct; moves: Move[] };
-
-const sign = Math.sign;
 const PI = Math.PI;
-
-const withCue = (move: Move, cue: Cue): Move => ({ ...move, cue });
-
-/** 제자리에서 숨 쉬듯 살짝 오르내린다. */
-const stand = (millis: number, at: Point, look: Point = ZERO): Move => ({
-  millis,
-  pose: (f) =>
-    pose(at.x, at.y, { scaleY: 1 + 0.015 * Math.sin(2 * PI * f), look }),
-});
-
-/** 가만히 서서 천천히 숨 쉬며 glances 쪽을 차례로 둘러보고, 끝에는 다시 앞을 본다. */
-const idle = (
-  millis: number,
-  at: Point,
-  glances: Point[] = [point(-0.8, -0.2), point(0.8, -0.2)],
-): Move => ({
-  millis,
-  pose: (f) => {
-    const keys = [ZERO, ...glances, ZERO];
-    const position = f * (keys.length - 1);
-    const index = Math.min(Math.floor(position), keys.length - 2);
-    const raw = Math.min(Math.max((position - index - 0.6) / 0.4, 0), 1);
-    const shift = raw * raw * (3 - 2 * raw);
-    const breath = Math.sin(
-      2 * PI * f * Math.max(Math.round(millis / 1600), 1),
-    );
-    const from = keys[index];
-    const to = keys[index + 1];
-
-    return pose(at.x, at.y, {
-      scaleX: 1 - 0.01 * breath,
-      scaleY: 1 + 0.02 * breath,
-      look: point(
-        from.x + (to.x - from.x) * shift,
-        from.y + (to.y - from.y) * shift,
-      ),
-    });
-  },
-});
-
-/** 작은 걸음으로 통통 튀며 천천히 걸어간다. 공중에서는 좌우로 번갈아 기운다. */
-const stroll = (
-  millis: number,
-  from: Point,
-  to: Point,
-  hops: number,
-): Move => ({
-  millis,
-  pose: (f) => {
-    const step = f * hops;
-    const index = Math.min(Math.floor(step), hops - 1);
-    const phase = step - index;
-    const contact = 0.28;
-    const squash = phase < contact ? Math.sin((PI * phase) / contact) : 0;
-    const air = phase < contact ? 0 : (phase - contact) / (1 - contact);
-    const sway = index % 2 === 0 ? 1 : -1;
-
-    return pose(
-      from.x + (to.x - from.x) * f,
-      from.y - 4 * air * (1 - air) * 0.035,
-      {
-        scaleX: 1 + 0.08 * squash,
-        scaleY: 1 - 0.1 * squash + 0.03 * Math.sin(PI * air),
-        rotation: sway * 5 * Math.sin(PI * air),
-        look: point(sign(to.x - from.x) * 0.7, 0),
-        squint: 0.13 * squash,
-      },
-    );
-  },
-});
-
-/** 기지개를 켠다. 위로 쭉 늘어나며 눈을 지그시 감았다가 돌아온다. */
-const stretch = (millis: number, at: Point): Move => ({
-  millis,
-  pose: (f) => {
-    const reach = Math.sin(PI * f) ** 2;
-
-    return pose(at.x, at.y, {
-      scaleX: 1 - 0.1 * reach,
-      scaleY: 1 + 0.14 * reach,
-      rotation: 5 * Math.sin(2 * PI * f) * reach,
-      squint: reach,
-    });
-  },
-});
-
-/** 바닥을 누르듯 옆으로 퍼진다. 착지와 도약 준비를 같이 맡는다. */
-const crouch = (
-  millis: number,
-  at: Point,
-  depth = 1,
-  look: Point = ZERO,
-): Move => ({
-  millis,
-  pose: (f) => {
-    const squash = Math.sin(PI * f) * depth;
-
-    return pose(at.x, at.y, {
-      scaleX: 1 + 0.16 * squash,
-      scaleY: 1 - 0.2 * squash,
-      look,
-      squint: 0.33 * squash,
-    });
-  },
-});
-
-/**
- * from 에서 to 까지 포물선으로 난다. 시간에 고르게 나눈 2차 베지어가 곧 포물선이라 따로 중력을 풀지 않는다.
- * 빠르게 오르내릴수록 길게 늘어나고, spins 바퀴만큼 공중제비를 돈다.
- */
-const leap = (
-  millis: number,
-  from: Point,
-  to: Point,
-  lift: number,
-  spins = 0,
-): Move => ({
-  millis,
-  pose: (f) => {
-    const control = point(
-      (from.x + to.x) / 2,
-      Math.min(from.y, to.y) - 2 * lift,
-    );
-    const u = 1 - f;
-    const y = from.y * u * u + control.y * 2 * f * u + to.y * f * f;
-    const x = from.x * u * u + control.x * 2 * f * u + to.x * f * f;
-    const velocityY = (control.y - from.y) * 2 * u + (to.y - control.y) * 2 * f;
-    const fastest =
-      Math.max(Math.abs(control.y - from.y), Math.abs(to.y - control.y)) * 2;
-    const stretchAmount =
-      fastest > 0 ? (0.08 * Math.abs(velocityY)) / fastest : 0;
-    const turn = f * f * (3 - 2 * f);
-
-    return pose(x, y, {
-      scaleX: 1 - stretchAmount * 0.6,
-      scaleY: 1 + stretchAmount,
-      rotation: spins * 360 * turn,
-      look: point(sign(to.x - from.x) * 0.8, sign(velocityY) * 0.6),
-    });
-  },
-});
 
 /** 벽에 철썩 붙어 미끄러지다가 다시 웅크려 튀어 나간다. 벽 쪽 가장자리가 벽에 닿도록 발끝을 옮긴다. */
 const cling = (
@@ -384,37 +158,6 @@ const cling = (
         squint: 0.27 * impact,
       },
     );
-  },
-});
-
-/** 몸 가운데를 축으로 도는 마스코트를 발을 축으로 돈 것처럼 보이게 놓는다. */
-function pinnedAtFeet(feet: Point, rotation: number): MascotPose {
-  const radians = (rotation * PI) / 180;
-  const toCenter = MASCOT_SIZE * MASCOT_CENTER_TO_FEET_RATIO;
-
-  return pose(
-    feet.x + toCenter * Math.sin(radians),
-    feet.y + toCenter * (1 - Math.cos(radians)),
-    {
-      rotation,
-    },
-  );
-}
-
-/** 붓 끝인 발로 곡선을 따라 긋는다. 곡선의 기울기만큼 몸을 기울이되 양 끝에서는 0 으로 모은다. */
-const brush = (millis: number, curve: Cubic): Move => ({
-  millis,
-  pose: (f) => {
-    const tangent = cubicTangent(curve, f);
-    const slope = (Math.atan2(tangent.y, Math.abs(tangent.x)) * 180) / PI;
-    const envelope = Math.min(1, f / 0.12, (1 - f) / 0.12);
-    const rotation =
-      Math.min(Math.max(-slope * 0.45, -20), 20) * sign(tangent.x) * envelope;
-
-    return {
-      ...pinnedAtFeet(cubicAt(curve, f), rotation),
-      look: point(sign(tangent.x) * 0.8, 0.5),
-    };
   },
 });
 
@@ -455,9 +198,18 @@ const strolledLeft = point(0.26, FLOOR);
 const wallLeft = WALL_GAP + MASCOT_HALF_WIDTH;
 const wallRight = 1 - WALL_GAP - MASCOT_HALF_WIDTH;
 
-const interlude = (...moves: Move[]): Act => ({ kind: 'INTERLUDE', moves });
+/**
+ * 소품 없이 쉬는 막을 만든다.
+ *
+ * @param moves 쉬는 동안의 동작
+ * @returns 쉼 막
+ */
+const interlude = (...moves: Move[]): Act<CompletingAct, Cue> => ({
+  kind: 'INTERLUDE',
+  moves,
+});
 
-const ACTS: Act[] = [
+const ACTS: Act<CompletingAct, Cue>[] = [
   {
     kind: 'KEYWORDS',
     moves: [
@@ -517,13 +269,13 @@ const ACTS: Act[] = [
       stand(320, HOME, point(0, -1)),
       crouch(140, HOME),
       leap(420, HOME, STROKE_1.start, 0.12),
-      withCue(brush(820, STROKE_1), 'STROKE_1'),
+      withCue(brush(820, STROKE_1, MASCOT_SIZE), 'STROKE_1'),
       leap(260, STROKE_1.end, STROKE_2.start, 0.05),
-      withCue(brush(720, STROKE_2), 'STROKE_2'),
+      withCue(brush(720, STROKE_2, MASCOT_SIZE), 'STROKE_2'),
       leap(400, STROKE_2.end, BLOOM_CENTER, 0.08),
       withCue(crouch(240, BLOOM_CENTER, 1.3), 'BLOOM'),
       leap(340, BLOOM_CENTER, SIGNATURE.start, 0.06),
-      withCue(brush(380, SIGNATURE), 'SIGNATURE'),
+      withCue(brush(380, SIGNATURE, MASCOT_SIZE), 'SIGNATURE'),
       leap(420, SIGNATURE.end, HOME, 0.08),
       crouch(160, HOME),
       stand(560, HOME, point(0, -1)),
@@ -565,85 +317,20 @@ const ACTS: Act[] = [
   interlude(idle(1400, HOME, [point(0.8, 0), point(-0.8, 0), point(0, 0.8)])),
 ];
 
-const actMillis = (act: Act) =>
-  act.moves.reduce((sum, move) => sum + move.millis, 0);
+const choreography = createChoreography(ACTS);
 
-export const COMPLETING_LOOP_MILLIS = ACTS.reduce(
-  (sum, act) => sum + actMillis(act),
-  0,
-);
-
-const CUE_SPANS = new Map<Cue, { start: number; millis: number }>();
-
-for (const act of ACTS) {
-  let start = 0;
-
-  for (const move of act.moves) {
-    if (move.cue) CUE_SPANS.set(move.cue, { start, millis: move.millis });
-
-    start += move.millis;
-  }
-}
-
-/** 한 바퀴 안의 시각에 마스코트가 어느 막에서 어떤 자세인지 반환한다. */
-export function completingMoment(timeMillis: number): CompletingMoment {
-  const time =
-    ((timeMillis % COMPLETING_LOOP_MILLIS) + COMPLETING_LOOP_MILLIS) %
-    COMPLETING_LOOP_MILLIS;
-  let actStart = 0;
-
-  for (const act of ACTS) {
-    const length = actMillis(act);
-
-    if (time < actStart + length) {
-      const inAct = time - actStart;
-      let moveStart = 0;
-
-      for (const move of act.moves) {
-        if (inAct < moveStart + move.millis)
-          return {
-            act: act.kind,
-            actMillis: inAct,
-            pose: move.pose((inAct - moveStart) / move.millis),
-          };
-
-        moveStart += move.millis;
-      }
-    }
-
-    actStart += length;
-  }
-
-  throw new Error(`${time} is outside the loop`);
-}
-
-/** 막의 길이를 반환한다. 소품이 막 끝에서 사라질 때 쓴다. 쉼 막에는 소품이 없다. */
-export function completingActMillis(
+export const COMPLETING_LOOP_MILLIS = choreography.loopMillis;
+export const completingMoment = choreography.momentAt;
+/**
+ * 막의 길이를 반환한다. 소품이 막 끝에서 사라질 때 쓴다. 쉼 막에는 소품이 없다.
+ *
+ * @param kind 소품이 있는 막
+ * @returns 막 길이(ms)
+ */
+export const completingActMillis = (
   kind: Exclude<CompletingAct, 'INTERLUDE'>,
-): number {
-  return actMillis(ACTS.find((act) => act.kind === kind)!);
-}
-
-const cueSpan = (cue: Cue) => {
-  const span = CUE_SPANS.get(cue);
-
-  if (!span) throw new Error(`${cue} is not attached to a move`);
-
-  return span;
-};
-
-/** cue 동작이 막 안에서 시작하는 시각이다. */
-export const cueStart = (cue: Cue) => cueSpan(cue).start;
-
-/** cue 동작의 길이다. */
-export const cueMillis = (cue: Cue) => cueSpan(cue).millis;
-
-/** cue 동작이 actMillis 에 얼마나 진행했는지(0..1) 반환한다. */
-export function cueProgress(cue: Cue, inAct: number): number {
-  const span = cueSpan(cue);
-
-  return Math.min(Math.max((inAct - span.start) / span.millis, 0), 1);
-}
+) => choreography.actMillis(kind);
+export const { cueStart, cueMillis, cueProgress } = choreography;
 
 /** 몇 번째 키를 누르는지와, 그 안에서 얼마나 진행했는지(0..1) 반환한다. */
 export function keystrokeAt(inAct: number): [number, number] {
@@ -657,17 +344,6 @@ export function keystrokeAt(inAct: number): [number, number] {
     (typing % KEYSTROKE_MILLIS) / KEYSTROKE_MILLIS,
   ];
 }
-
-/** 2.9초마다 한 번 깜빡인다. */
-export function blinkOpenness(millis: number): number {
-  const phase = millis % 2900;
-
-  return phase < 2760 ? 1 : 1 - 0.9 * Math.sin((PI * (phase - 2760)) / 140);
-}
-
-/** 살짝 넘쳤다가 자리를 잡는 등장 곡선이다. */
-export const easeOutBack = (t: number) =>
-  1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
 
 /**
  * 소품이 막 시작에 살짝 넘치며 나타나고 막 끝에 사라지는 정도다. 1 을 넘는 값은 등장 때의 넘침이다.

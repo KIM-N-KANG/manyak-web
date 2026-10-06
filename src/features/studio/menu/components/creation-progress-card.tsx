@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';
+import { MascotStage } from '@/components/common/mascot-stage';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { TextShimmer } from '@/components/motion/text-shimmer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -29,7 +30,7 @@ import { SCREEN, track, useImpression } from '@/observability/analytics';
 
 import { CREATION_PROGRESS_CARD_COPY } from '../constants';
 import { useCreationProgressPolling } from '../hooks/use-creation-progress-polling';
-import { StoryCompletingStage } from './story-completing-stage';
+import { drawStoryCompletingStage } from '../utils/draw-story-completing-stage';
 
 type CreationProgressCardProps = {
   record: CreationProgressRecord;
@@ -249,8 +250,9 @@ export function CreationProgressCardBody({
           'w-32',
         )}>
         {isCompleting ? (
-          <StoryCompletingStage
+          <MascotStage
             label={CREATION_PROGRESS_CARD_COPY.completingState}
+            draw={drawStoryCompletingStage}
           />
         ) : typeof cover === 'string' ? (
           <Image src={cover} alt="" fill unoptimized className="object-cover" />
