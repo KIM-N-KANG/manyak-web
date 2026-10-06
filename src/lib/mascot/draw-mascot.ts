@@ -1,9 +1,14 @@
 import {
+  BRUSH_HANDLE_LENGTH,
+  BRUSH_TIP_LENGTH,
   MASCOT_BOTTOM,
   MASCOT_CENTER,
   MASCOT_VIEWPORT,
+  mascotPointOffset,
   type MascotPose,
   type Point,
+  point,
+  type Stroke,
 } from './mascot-choreography';
 
 /** sRGB 0..255 세 값이다. 색을 섞어야 해서 CSS 문자열 대신 수로 들고 다닌다. */
@@ -28,6 +33,9 @@ export type Stage = {
 };
 
 export type Rect = { left: number; top: number; right: number; bottom: number };
+
+const BLACK: Rgb = [0, 0, 0];
+const WHITE: Rgb = [255, 255, 255];
 
 const DOT_GAP = 10;
 const DOT_RADIUS = 1;
@@ -240,11 +248,21 @@ export function drawMascot(
   ctx.lineJoin = 'round';
   ctx.stroke(mascotBody);
 
-  if (pose.eyes === 'round') {
-    const openness = Math.max(blink * (1 - 0.9 * pose.squint), 0.1);
+  const openness = Math.max(blink * (1 - 0.9 * pose.squint), 0.1);
 
-    for (const eyeX of [25, 39]) {
-      ctx.beginPath();
+  ctx.lineWidth = 3.4;
+
+  for (const [eyeX, side] of [
+    [25, -1],
+    [39, 1],
+  ]) {
+    // 윙크는 왼눈만 뜨고 오른눈은 웃으며 감는다.
+    const shape =
+      pose.eyes === 'wink' ? (side < 0 ? 'round' : 'smile') : pose.eyes;
+
+    ctx.beginPath();
+
+    if (shape === 'round') {
       ctx.ellipse(
         eyeX + look.x * 2,
         24 + look.y * 2,
@@ -255,30 +273,175 @@ export function drawMascot(
         Math.PI * 2,
       );
       ctx.fill();
-    }
-  } else {
-    // 힘줄 때는 바깥에서 안쪽으로 모이는 `> <`, 웃을 때는 위로 둥근 `^ ^` 다.
-    ctx.lineWidth = 3.4;
-    ctx.beginPath();
+    } else if (shape === 'focus') {
+      ctx.moveTo(eyeX + side * 4, 20);
+      ctx.lineTo(eyeX - side * 3, 24);
+      ctx.lineTo(eyeX + side * 4, 28);
+      ctx.stroke();
+    } else if (shape === 'smile' || shape === 'sleepy') {
+      const bend = shape === 'smile' ? -7 : 5;
 
-    for (const [eyeX, side] of [
-      [25, -1],
-      [39, 1],
-    ]) {
-      if (pose.eyes === 'focus') {
-        ctx.moveTo(eyeX + side * 4, 20);
-        ctx.lineTo(eyeX - side * 3, 24);
-        ctx.lineTo(eyeX + side * 4, 28);
-      } else {
-        ctx.moveTo(eyeX - 4.5, 26);
-        ctx.quadraticCurveTo(eyeX, 19, eyeX + 4.5, 26);
+      ctx.moveTo(eyeX - 4.5, 25 - bend / 3);
+      ctx.quadraticCurveTo(eyeX, 25 + bend, eyeX + 4.5, 25 - bend / 3);
+      ctx.stroke();
+    } else if (shape === 'sparkle') {
+      for (let corner = 0; corner < 8; corner += 1) {
+        const radius = corner % 2 === 0 ? 6 : 1.7;
+        const angle = (corner * Math.PI) / 4;
+
+        ctx.lineTo(
+          eyeX + Math.sin(angle) * radius,
+          24 - Math.cos(angle) * radius,
+        );
       }
-    }
 
-    ctx.stroke();
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      for (let step = 0; step <= 24; step += 1) {
+        const t = step / 24;
+        const angle = t * Math.PI * 4 * side;
+
+        ctx.lineTo(
+          eyeX + Math.cos(angle) * (0.5 + 4.3 * t),
+          24 + Math.sin(angle) * (0.5 + 4.3 * t),
+        );
+      }
+
+      ctx.lineWidth = 1.9;
+      ctx.stroke();
+      ctx.lineWidth = 3.4;
+    }
   }
 
   ctx.restore();
+}
+
+/**
+ * 마스코트 몸의 한 점(심벌 viewport 좌표)이 무대 어디에 있는지 반환한다.
+ *
+ * @param pose 마스코트 자세
+ * @param at 심벌 viewport 좌표
+ * @param size 마스코트 크기(무대 폭 단위)
+ * @returns 무대 좌표
+ */
+export function onBody(pose: MascotPose, at: Point, size: number): Point {
+  const offset = mascotPointOffset(
+    at,
+    pose.rotation,
+    pose.scaleX,
+    pose.scaleY,
+    size,
+  );
+
+  return point(pose.x + offset.x, pose.y + offset.y);
+}
+
+/**
+ * 무대의 at 자리로 옮겨 angle 만큼 돌리고 심벌 viewport 단위로 늘린 뒤 그린다. 마스코트가 든 소품을 몸과 같은
+ * 크기로 그릴 때 쓴다.
+ *
+ * @param ctx 캔버스
+ * @param unit 무대 폭(픽셀)
+ * @param size 마스코트 크기(무대 폭 단위)
+ * @param at 소품 원점 자리(무대 좌표)
+ * @param angle 회전(도)
+ * @param scaleX 가로 배율
+ * @param draw viewport 단위로 그리는 함수
+ */
+export function inViewport(
+  ctx: CanvasRenderingContext2D,
+  unit: number,
+  size: number,
+  at: Point,
+  angle: number,
+  scaleX: number,
+  draw: () => void,
+) {
+  const cell = (size * unit) / MASCOT_VIEWPORT;
+
+  ctx.save();
+  ctx.translate(at.x * unit, at.y * unit);
+  ctx.rotate((angle * Math.PI) / 180);
+  ctx.scale(cell * scaleX, cell);
+  draw();
+  ctx.restore();
+}
+
+/**
+ * 살짝 한쪽으로 처진 화가 베레모다. 꼭지와 띠를 단다. 심벌 viewport 단위로 얹힐 자리를 원점으로 그린다.
+ * 브랜드 색을 바탕 밝기의 반대쪽으로 섞어 테마마다 바탕과 갈리게 한다.
+ *
+ * @param ctx 얹힐 자리로 옮긴 캔버스
+ * @param palette 테마 색
+ */
+export function drawBeret(
+  ctx: CanvasRenderingContext2D,
+  palette: StagePalette,
+) {
+  const [red, green, blue] = palette.paper;
+  const shade = red + green + blue > 384 ? BLACK : WHITE;
+  const felt = mix(palette.brand, shade, 0.45);
+
+  ctx.fillStyle = rgba(felt);
+  ctx.beginPath();
+  ctx.moveTo(-17, 1.5);
+  ctx.bezierCurveTo(-19.5, -6, -8, -10.5, 2, -10.5);
+  ctx.bezierCurveTo(12, -10.5, 20.5, -6, 17.5, 0.5);
+  ctx.bezierCurveTo(15, 3.6, -13, 4.6, -17, 1.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = rgba(mix(palette.brand, shade, 0.65));
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-15.5, 2);
+  ctx.quadraticCurveTo(0, 5, 16, 1);
+  ctx.stroke();
+  ctx.strokeStyle = rgba(felt);
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.moveTo(1, -10);
+  ctx.lineTo(2.4, -14);
+  ctx.stroke();
+}
+
+/**
+ * 붓이다. 쥔 자리를 원점으로, 붓털 끝이 아래(+y)로 가게 심벌 viewport 단위로 그린다. 위로 자루, 쥔 자리 아래로
+ * 쇠테, 그 아래로 물감 묻은 붓털이 뾰족하게 모인다.
+ *
+ * @param ctx 쥔 자리로 옮긴 캔버스
+ * @param palette 테마 색
+ * @param paint 붓털 색
+ */
+export function drawBrush(
+  ctx: CanvasRenderingContext2D,
+  palette: StagePalette,
+  paint: Rgb,
+) {
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = rgba(palette.pencil);
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, -BRUSH_HANDLE_LENGTH);
+  ctx.lineTo(0, -2);
+  ctx.stroke();
+  ctx.strokeStyle = rgba(palette.ink);
+  ctx.lineWidth = 5.2;
+  ctx.beginPath();
+  ctx.moveTo(0, -2);
+  ctx.lineTo(0, 4);
+  ctx.stroke();
+  ctx.fillStyle = rgba(paint);
+  ctx.strokeStyle = rgba(palette.pencil);
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-2.8, 4);
+  ctx.bezierCurveTo(-4.4, 8.5, -2, 12.5, 0, BRUSH_TIP_LENGTH);
+  ctx.bezierCurveTo(2, 12.5, 4.4, 8.5, 2.8, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
 }
 
 /**
@@ -358,4 +521,122 @@ export function line(
   ctx.lineCap = 'round';
   ctx.strokeStyle = rgba(color);
   ctx.stroke();
+}
+
+// ---- 붓질 ----
+
+/**
+ * 붓길을 progress 만큼 긋는다. 마디마다 굵기를 바꿔 붓이 눌렸다 들리는 결을 내고, offset 이 있으면 결을 따라
+ * 옆으로 비껴 긋는다.
+ *
+ * @param ctx 격자 좌표로 옮긴 캔버스
+ * @param stroke 붓길
+ * @param progress 0..1 그은 길이 비율
+ * @param width 가장 굵은 자리의 굵기(격자 단위)
+ * @param color 색
+ * @param pressure 길이 비율 → 굵기 비율
+ * @param offset 길이(격자 단위) → 옆으로 비낄 거리
+ */
+export function drawStroke(
+  ctx: CanvasRenderingContext2D,
+  stroke: Stroke,
+  progress: number,
+  width: number,
+  color: Rgb,
+  pressure: (s: number) => number,
+  offset?: (length: number) => number,
+) {
+  if (progress <= 0) return;
+
+  const end = Math.min(progress, 1) * stroke.total;
+  const shift = (at: Point, index: number) => {
+    if (!offset) return at;
+
+    const from = stroke.points[Math.max(index - 1, 0)];
+    const to = stroke.points[Math.min(index + 1, stroke.points.length - 1)];
+    const length = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    const away = offset(stroke.lengths[index]);
+
+    return point(
+      at.x - ((to.y - from.y) / length) * away,
+      at.y + ((to.x - from.x) / length) * away,
+    );
+  };
+
+  ctx.strokeStyle = rgba(color);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  for (let i = 1; i < stroke.points.length; i += 1) {
+    if (stroke.lengths[i - 1] >= end) break;
+
+    const span = stroke.lengths[i] - stroke.lengths[i - 1];
+    const t = span > 0 ? Math.min((end - stroke.lengths[i - 1]) / span, 1) : 1;
+    const from = shift(stroke.points[i - 1], i - 1);
+    const next = shift(stroke.points[i], i);
+    const to = point(
+      from.x + (next.x - from.x) * t,
+      from.y + (next.y - from.y) * t,
+    );
+
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.lineWidth =
+      width * pressure((stroke.lengths[i - 1] + span * t * 0.5) / stroke.total);
+    ctx.stroke();
+  }
+}
+
+/**
+ * 연필 결이다. 양 끝만 살짝 가늘고 중간은 고르되 손떨림처럼 조금씩 굵기가 바뀐다.
+ *
+ * @param s 0..1 길이 비율
+ * @returns 굵기 비율
+ */
+export const pencilPressure = (s: number) =>
+  (0.55 + 0.45 * Math.sin(Math.PI * s) ** 0.3) *
+  (0.85 + 0.15 * Math.sin(s * 37));
+
+/**
+ * 붓 결이다. 양 끝은 가늘고 가운데가 눌려 굵다.
+ *
+ * @param s 0..1 길이 비율
+ * @returns 굵기 비율
+ */
+export const brushPressure = (s: number) =>
+  0.2 + 0.8 * Math.sin(Math.PI * s) ** 0.6;
+
+/**
+ * 가장자리가 물에 번진 듯 울퉁불퉁한 둥근 얼룩을 칠한다.
+ *
+ * @param ctx 격자 좌표로 옮긴 캔버스
+ * @param center 가운데(격자 좌표)
+ * @param radius 반지름(격자 단위)
+ * @param color 칠할 색
+ * @param seed 울퉁불퉁한 모양을 바꾸는 값
+ */
+export function drawWobblyBlob(
+  ctx: CanvasRenderingContext2D,
+  center: Point,
+  radius: number,
+  color: string,
+  seed: number,
+) {
+  ctx.beginPath();
+
+  for (let step = 0; step <= 32; step += 1) {
+    const angle = (step / 32) * Math.PI * 2;
+    const wobble =
+      1 + 0.05 * Math.sin(5 * angle + seed) + 0.04 * Math.sin(3 * angle + 1);
+    const x = center.x + Math.cos(angle) * radius * wobble;
+    const y = center.y + Math.sin(angle) * radius * wobble;
+
+    if (step === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
 }
