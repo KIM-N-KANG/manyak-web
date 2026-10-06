@@ -1,10 +1,18 @@
 import {
+  brushPressure,
   clamp01,
+  drawBeret,
+  drawBrush,
   drawDots,
   drawMascot,
   drawShadow,
+  drawStroke,
+  drawWobblyBlob,
+  inViewport,
   line,
   mix,
+  onBody,
+  pencilPressure,
   type Rgb,
   rgba,
   type Stage,
@@ -13,8 +21,11 @@ import {
 } from '@/lib/mascot/draw-mascot';
 import {
   blinkOpenness,
+  BRUSH_GRIP,
+  BRUSH_TILT,
   easeOutBack,
-  mascotPointOffset,
+  HAT_ANCHOR,
+  HAT_TILT,
   type MascotPose,
   type Point,
   point,
@@ -23,11 +34,7 @@ import {
 import {
   actStart,
   BRUSH_CATCH,
-  BRUSH_GRIP,
-  BRUSH_HANDLE_LENGTH,
   BRUSH_ON_FLOOR,
-  BRUSH_TILT,
-  BRUSH_TIP_LENGTH,
   CLOTHESLINE,
   clotheslineY,
   CONSTELLATION_EYE,
@@ -37,8 +44,6 @@ import {
   cueStart,
   FLOOR,
   HANG_SLOTS,
-  HAT_ANCHOR,
-  HAT_TILT,
   HOME,
   HUNG_WIDTH,
   loopTime,
@@ -56,7 +61,6 @@ import {
   SKETCH_HATCH,
   SKETCH_LASH,
   STARS,
-  type Stroke,
   strokeAt,
   WATERCOLOR_BOB,
   WATERCOLOR_CHEEK,
@@ -463,86 +467,6 @@ function drawFlights(stage: Stage, loopMillis: number) {
 // ---- 붓질 ----
 
 /**
- * 붓길을 progress 만큼 긋는다. 마디마다 굵기를 바꿔 붓이 눌렸다 들리는 결을 내고, offset 이 있으면 결을 따라
- * 옆으로 비껴 긋는다.
- *
- * @param ctx 격자 좌표로 옮긴 캔버스
- * @param stroke 붓길
- * @param progress 0..1 그은 길이 비율
- * @param width 가장 굵은 자리의 굵기(격자 단위)
- * @param color 색
- * @param pressure 길이 비율 → 굵기 비율
- * @param offset 길이(격자 단위) → 옆으로 비낄 거리
- */
-function drawStroke(
-  ctx: CanvasRenderingContext2D,
-  stroke: Stroke,
-  progress: number,
-  width: number,
-  color: Rgb,
-  pressure: (s: number) => number,
-  offset?: (length: number) => number,
-) {
-  if (progress <= 0) return;
-
-  const end = Math.min(progress, 1) * stroke.total;
-  const shift = (at: Point, index: number) => {
-    if (!offset) return at;
-
-    const from = stroke.points[Math.max(index - 1, 0)];
-    const to = stroke.points[Math.min(index + 1, stroke.points.length - 1)];
-    const length = Math.hypot(to.x - from.x, to.y - from.y) || 1;
-    const away = offset(stroke.lengths[index]);
-
-    return point(
-      at.x - ((to.y - from.y) / length) * away,
-      at.y + ((to.x - from.x) / length) * away,
-    );
-  };
-
-  ctx.strokeStyle = rgba(color);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  for (let i = 1; i < stroke.points.length; i += 1) {
-    if (stroke.lengths[i - 1] >= end) break;
-
-    const span = stroke.lengths[i] - stroke.lengths[i - 1];
-    const t = span > 0 ? Math.min((end - stroke.lengths[i - 1]) / span, 1) : 1;
-    const from = shift(stroke.points[i - 1], i - 1);
-    const next = shift(stroke.points[i], i);
-    const to = point(
-      from.x + (next.x - from.x) * t,
-      from.y + (next.y - from.y) * t,
-    );
-
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.lineWidth =
-      width * pressure((stroke.lengths[i - 1] + span * t * 0.5) / stroke.total);
-    ctx.stroke();
-  }
-}
-
-/**
- * 연필 결이다. 양 끝만 살짝 가늘고 중간은 고르되 손떨림처럼 조금씩 굵기가 바뀐다.
- *
- * @param s 0..1 길이 비율
- * @returns 굵기 비율
- */
-const pencil = (s: number) =>
-  (0.55 + 0.45 * Math.sin(PI * s) ** 0.3) * (0.85 + 0.15 * Math.sin(s * 37));
-
-/**
- * 붓 결이다. 양 끝은 가늘고 가운데가 눌려 굵다.
- *
- * @param s 0..1 길이 비율
- * @returns 굵기 비율
- */
-const brushPressure = (s: number) => 0.2 + 0.8 * Math.sin(PI * s) ** 0.6;
-
-/**
  * 0..1 을 부드럽게 시작하고 멈추는 곡선으로 바꾼다.
  *
  * @param t 진행
@@ -590,22 +514,22 @@ function drawSketch(
     contour,
     0.8,
     ghost,
-    pencil,
+    pencilPressure,
     (length) => Math.sin(length * 0.21) * 1.1,
   );
-  drawStroke(ctx, SKETCH_CONTOUR, contour, 1.7, palette.pencil, pencil);
+  drawStroke(ctx, SKETCH_CONTOUR, contour, 1.7, palette.pencil, pencilPressure);
   drawStroke(
     ctx,
     SKETCH_HATCH,
     progressOf(reveal, 'HATCH'),
     1.1,
     mix(palette.paper, palette.pencil, 0.6),
-    pencil,
+    pencilPressure,
   );
 
   const lash = progressOf(reveal, 'LASH');
 
-  drawStroke(ctx, SKETCH_LASH, lash, 1.2, palette.pencil, pencil);
+  drawStroke(ctx, SKETCH_LASH, lash, 1.2, palette.pencil, pencilPressure);
 
   if (lash < 1) return;
 
@@ -689,11 +613,11 @@ function drawWatercolor(
   }
 
   for (const stroke of WATERCOLOR_BODY)
-    drawStroke(ctx, stroke, scarf, 1.1, lead, pencil);
+    drawStroke(ctx, stroke, scarf, 1.1, lead, pencilPressure);
 
   const face = progressOf(reveal, 'FACE');
 
-  drawStroke(ctx, WATERCOLOR_FACE, face, 1.2, lead, pencil);
+  drawStroke(ctx, WATERCOLOR_FACE, face, 1.2, lead, pencilPressure);
 
   if (face >= 1) {
     const open = easeOutBack(clamp01(reveal.elapsed('FACE') / 200 - 2.1));
@@ -749,40 +673,6 @@ function drawWatercolor(
     brushPressure,
   );
   drawStroke(ctx, SCARF_TAIL, (scarf - 0.5) * 2, 4, brand, brushPressure);
-}
-
-/**
- * 가장자리가 물에 번진 듯 울퉁불퉁한 둥근 얼룩을 칠한다.
- *
- * @param ctx 격자 좌표로 옮긴 캔버스
- * @param center 가운데(격자 좌표)
- * @param radius 반지름(격자 단위)
- * @param color 칠할 색
- * @param seed 울퉁불퉁한 모양을 바꾸는 값
- */
-function drawWobblyBlob(
-  ctx: CanvasRenderingContext2D,
-  center: Point,
-  radius: number,
-  color: string,
-  seed: number,
-) {
-  ctx.beginPath();
-
-  for (let step = 0; step <= 32; step += 1) {
-    const angle = (step / 32) * PI * 2;
-    const wobble =
-      1 + 0.05 * Math.sin(5 * angle + seed) + 0.04 * Math.sin(3 * angle + 1);
-    const x = center.x + Math.cos(angle) * radius * wobble;
-    const y = center.y + Math.sin(angle) * radius * wobble;
-
-    if (step === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
 }
 
 // ---- 셋째 그림: 별자리 ----
@@ -922,25 +812,6 @@ function drawStar(
 // ---- 베레모와 붓 ----
 
 /**
- * 마스코트 몸의 한 점(심벌 viewport 좌표)이 무대 어디에 있는지 반환한다.
- *
- * @param pose 마스코트 자세
- * @param at 심벌 viewport 좌표
- * @returns 무대 좌표
- */
-function onBody(pose: MascotPose, at: Point): Point {
-  const offset = mascotPointOffset(
-    at,
-    pose.rotation,
-    pose.scaleX,
-    pose.scaleY,
-    MASCOT_SIZE,
-  );
-
-  return point(pose.x + offset.x, pose.y + offset.y);
-}
-
-/**
  * 막에 맞는 붓털 색이다. 처음엔 깨끗하고, 크로키는 먹색, 수채는 초록, 검은 종이를 뒤집은 뒤로는 별빛이다.
  *
  * @param palette 테마 색
@@ -982,22 +853,20 @@ function drawGear(
   pose: MascotPose,
 ) {
   const { ctx, unit, palette } = stage;
-  const cell = (MASCOT_SIZE * unit) / 64;
   const fall = act === 'GEAR_UP' ? cueProgress('HAT', actMillis) : 1;
-  const hat = onBody(pose, HAT_ANCHOR);
+  const hat = onBody(pose, HAT_ANCHOR, MASCOT_SIZE);
 
-  ctx.save();
-  ctx.translate(hat.x * unit, (hat.y - 0.62 * (1 - fall * fall)) * unit);
-  ctx.rotate(
-    ((HAT_TILT + pose.rotation + 22 * Math.sin(fall * PI * 2.5) * (1 - fall)) *
-      PI) /
-      180,
+  inViewport(
+    ctx,
+    unit,
+    MASCOT_SIZE,
+    point(hat.x, hat.y - 0.62 * (1 - fall * fall)),
+    HAT_TILT + pose.rotation + 22 * Math.sin(fall * PI * 2.5) * (1 - fall),
+    pose.scaleX,
+    () => drawBeret(ctx, palette),
   );
-  ctx.scale(cell * pose.scaleX, cell);
-  drawBeret(ctx, palette);
-  ctx.restore();
 
-  const held = onBody(pose, BRUSH_GRIP);
+  const held = onBody(pose, BRUSH_GRIP, MASCOT_SIZE);
   const heldAngle = BRUSH_TILT + pose.rotation;
   const flight =
     act === 'GEAR_UP'
@@ -1016,85 +885,9 @@ function drawGear(
         );
   const angle = flight >= 1 ? heldAngle : -450 + (heldAngle + 450) * flight;
 
-  ctx.save();
-  ctx.translate(grip.x * unit, grip.y * unit);
-  ctx.rotate((angle * PI) / 180);
-  ctx.scale(cell, cell);
-  drawBrush(ctx, palette, paintColor(palette, act, actMillis));
-  ctx.restore();
-}
-
-/**
- * 살짝 한쪽으로 처진 화가 베레모다. 꼭지와 띠를 단다. 심벌 viewport 단위로 얹힐 자리를 원점으로 그린다.
- * 브랜드 색을 바탕 밝기의 반대쪽으로 섞어 테마마다 바탕과 갈리게 한다.
- *
- * @param ctx 얹힐 자리로 옮긴 캔버스
- * @param palette 테마 색
- */
-function drawBeret(ctx: CanvasRenderingContext2D, palette: StagePalette) {
-  const [red, green, blue] = palette.paper;
-  const shade = red + green + blue > 384 ? BLACK : WHITE;
-  const felt = mix(palette.brand, shade, 0.45);
-
-  ctx.fillStyle = rgba(felt);
-  ctx.beginPath();
-  ctx.moveTo(-17, 1.5);
-  ctx.bezierCurveTo(-19.5, -6, -8, -10.5, 2, -10.5);
-  ctx.bezierCurveTo(12, -10.5, 20.5, -6, 17.5, 0.5);
-  ctx.bezierCurveTo(15, 3.6, -13, 4.6, -17, 1.5);
-  ctx.closePath();
-  ctx.fill();
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = rgba(mix(palette.brand, shade, 0.65));
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  ctx.moveTo(-15.5, 2);
-  ctx.quadraticCurveTo(0, 5, 16, 1);
-  ctx.stroke();
-  ctx.strokeStyle = rgba(felt);
-  ctx.lineWidth = 2.8;
-  ctx.beginPath();
-  ctx.moveTo(1, -10);
-  ctx.lineTo(2.4, -14);
-  ctx.stroke();
-}
-
-/**
- * 붓이다. 쥔 자리를 원점으로, 붓털 끝이 아래(+y)로 가게 심벌 viewport 단위로 그린다. 위로 자루, 쥔 자리 아래로
- * 쇠테, 그 아래로 물감 묻은 붓털이 뾰족하게 모인다.
- *
- * @param ctx 쥔 자리로 옮긴 캔버스
- * @param palette 테마 색
- * @param paint 붓털 색
- */
-function drawBrush(
-  ctx: CanvasRenderingContext2D,
-  palette: StagePalette,
-  paint: Rgb,
-) {
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = rgba(palette.pencil);
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(0, -BRUSH_HANDLE_LENGTH);
-  ctx.lineTo(0, -2);
-  ctx.stroke();
-  ctx.strokeStyle = rgba(palette.ink);
-  ctx.lineWidth = 5.2;
-  ctx.beginPath();
-  ctx.moveTo(0, -2);
-  ctx.lineTo(0, 4);
-  ctx.stroke();
-  ctx.fillStyle = rgba(paint);
-  ctx.strokeStyle = rgba(palette.pencil);
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(-2.8, 4);
-  ctx.bezierCurveTo(-4.4, 8.5, -2, 12.5, 0, BRUSH_TIP_LENGTH);
-  ctx.bezierCurveTo(2, 12.5, 4.4, 8.5, 2.8, 4);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  inViewport(ctx, unit, MASCOT_SIZE, grip, angle, 1, () =>
+    drawBrush(ctx, palette, paintColor(palette, act, actMillis)),
+  );
 }
 
 // ---- 마스코트 둘레 소품 ----

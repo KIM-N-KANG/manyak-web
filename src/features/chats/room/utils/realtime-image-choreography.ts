@@ -11,6 +11,7 @@
 
 import {
   type Act,
+  brushTipOffset as brushTipOffsetFor,
   createChoreography,
   crouch,
   easeOutBack,
@@ -18,16 +19,21 @@ import {
   leap,
   MASCOT_HEIGHT_RATIO,
   MASCOT_WIDTH_RATIO,
-  mascotPointOffset,
   type Move,
+  paintAlong,
+  parseStroke,
   type Point,
   point,
   pose,
   stand,
+  type Stroke,
+  strokeAt,
   stroll,
   withCue,
   withEyes,
 } from '@/lib/mascot/mascot-choreography';
+
+export { parseStroke, type Stroke, strokeAt };
 
 export type RealtimeImageAct =
   | 'GEAR_UP'
@@ -74,24 +80,6 @@ export const HOME = point(0.22, FLOOR);
 /** 첫 그림을 마치고 뛰어내려 숨을 고르는 자리다. */
 const RELIEF_SPOT = point(0.33, FLOOR);
 
-/** 화가 베레모가 얹히는 자리(심벌 viewport 좌표)와 기울기(도)다. */
-export const HAT_ANCHOR = point(30, 5.5);
-export const HAT_TILT = -12;
-
-/**
- * 몸 오른쪽에 쥔 붓이다. 쥔 자리(심벌 viewport 좌표), 붓털 끝이 향하는 쪽의 캔버스 회전(도, 0 은 바로 아래),
- * 쥔 자리에서 붓털 끝과 자루 끝까지의 길이(viewport)다.
- */
-export const BRUSH_GRIP = point(64, 38);
-export const BRUSH_TILT = -38;
-export const BRUSH_TIP_LENGTH = 16;
-export const BRUSH_HANDLE_LENGTH = 18;
-
-const BRUSH_TIP = point(
-  BRUSH_GRIP.x - Math.sin((BRUSH_TILT * Math.PI) / 180) * BRUSH_TIP_LENGTH,
-  BRUSH_GRIP.y + Math.cos((BRUSH_TILT * Math.PI) / 180) * BRUSH_TIP_LENGTH,
-);
-
 /** 붓을 집기 전 바닥에 누운 붓의 쥔 자리(무대 좌표)다. 붓털이 오른쪽을 향한다. */
 export const BRUSH_ON_FLOOR = point(0.33, FLOOR - 0.005);
 
@@ -104,7 +92,7 @@ export const BRUSH_ON_FLOOR = point(0.33, FLOOR - 0.005);
  * @returns 발끝 가운데로부터의 거리(무대 폭 단위)
  */
 export const brushTipOffset = (rotation = 0, scaleX = 1, scaleY = 1) =>
-  mascotPointOffset(BRUSH_TIP, rotation, scaleX, scaleY, MASCOT_SIZE);
+  brushTipOffsetFor(MASCOT_SIZE, rotation, scaleX, scaleY);
 
 /** 이젤에 세운 3:4 도화지다. 격자 한 칸은 무대 폭의 0.005 다. */
 export const PAPER_GRID = 84;
@@ -148,140 +136,6 @@ export function clotheslineY(x: number): number {
   const t = (x - CLOTHESLINE.left) / (CLOTHESLINE.right - CLOTHESLINE.left);
 
   return CLOTHESLINE.y + 4 * CLOTHESLINE.sag * t * (1 - t);
-}
-
-// ---- 붓길 ----
-
-/** 격자 좌표 꺾은선과 누적 길이다. 곡선은 잘게 나눠 길이에 고르게 따라갈 수 있게 한다. */
-export type Stroke = { points: Point[]; lengths: number[]; total: number };
-
-const CURVE_STEPS = 14;
-
-/**
- * SVG path 문자열(M·L·Q·C 절대 좌표)을 꺾은선으로 바꾼다.
- *
- * @param path 격자 좌표 path
- * @returns 꺾은선과 누적 길이
- * @throws 지원하지 않는 명령이 있으면 던진다
- */
-export function parseStroke(path: string): Stroke {
-  const tokens = path.match(/[MLQC]|-?\d*\.?\d+/g) ?? [];
-  const points: Point[] = [];
-  let index = 0;
-  let command = '';
-  const read = () => Number(tokens[index++]);
-  const readPoint = () => point(read(), read());
-
-  while (index < tokens.length) {
-    if (/[A-Z]/.test(tokens[index])) command = tokens[index++];
-
-    const from = points[points.length - 1];
-
-    if (command === 'M' || command === 'L') {
-      points.push(readPoint());
-    } else if (command === 'Q') {
-      const control = readPoint();
-      const end = readPoint();
-
-      for (let step = 1; step <= CURVE_STEPS; step += 1) {
-        const t = step / CURVE_STEPS;
-        const u = 1 - t;
-
-        points.push(
-          point(
-            from.x * u * u + control.x * 2 * t * u + end.x * t * t,
-            from.y * u * u + control.y * 2 * t * u + end.y * t * t,
-          ),
-        );
-      }
-    } else if (command === 'C') {
-      const control1 = readPoint();
-      const control2 = readPoint();
-      const end = readPoint();
-
-      for (let step = 1; step <= CURVE_STEPS; step += 1) {
-        const t = step / CURVE_STEPS;
-        const u = 1 - t;
-        const a = u * u * u;
-        const b = 3 * u * u * t;
-        const c = 3 * u * t * t;
-        const d = t * t * t;
-
-        points.push(
-          point(
-            from.x * a + control1.x * b + control2.x * c + end.x * d,
-            from.y * a + control1.y * b + control2.y * c + end.y * d,
-          ),
-        );
-      }
-    } else {
-      throw new Error(`Unsupported path command: ${command}`);
-    }
-  }
-
-  const lengths = [0];
-
-  for (let i = 1; i < points.length; i += 1)
-    lengths.push(
-      lengths[i - 1] +
-        Math.hypot(
-          points[i].x - points[i - 1].x,
-          points[i].y - points[i - 1].y,
-        ),
-    );
-
-  return { points, lengths, total: lengths[lengths.length - 1] };
-}
-
-/**
- * 붓길 길이의 f 만큼 간 자리를 반환한다.
- *
- * @param stroke 붓길
- * @param f 0..1 길이 비율
- * @returns 격자 좌표
- */
-export function strokeAt(stroke: Stroke, f: number): Point {
-  const target = Math.min(Math.max(f, 0), 1) * stroke.total;
-  let i = 1;
-
-  while (i < stroke.points.length - 1 && stroke.lengths[i] < target) i += 1;
-
-  const from = stroke.points[i - 1];
-  const to = stroke.points[i];
-  const span = stroke.lengths[i] - stroke.lengths[i - 1];
-  const t = span > 0 ? (target - stroke.lengths[i - 1]) / span : 0;
-
-  return point(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
-}
-
-/**
- * f 앞뒤로 붓길이 나아가는 방향의 평균을 반환한다. 꺾이거나 되돌아가는 자리에서도 값이 끊기지 않고 지나가도록
- * 짧은 마디 방향을 고르게 평균 내며, 되돌아가는 자리에서는 길이가 0 에 가까워진다.
- *
- * @param stroke 붓길
- * @param f 0..1 길이 비율
- * @returns 길이 1 이하의 평균 방향
- */
-function strokeHeading(stroke: Stroke, f: number): Point {
-  const samples = 12;
-  const reach = 0.025;
-  let x = 0;
-  let y = 0;
-  let previous = strokeAt(stroke, f - reach);
-
-  for (let step = 1; step <= samples; step += 1) {
-    const next = strokeAt(stroke, f - reach + (2 * reach * step) / samples);
-    const length = Math.hypot(next.x - previous.x, next.y - previous.y);
-
-    if (length > 0) {
-      x += (next.x - previous.x) / length;
-      y += (next.y - previous.y) / length;
-    }
-
-    previous = next;
-  }
-
-  return point(x / samples, y / samples);
 }
 
 /**
@@ -463,35 +317,15 @@ const ponder = (millis: number, at: Point): Move => ({
 });
 
 /**
- * 붓털 끝으로 붓길을 따라 긋는다. 붓털 끝을 붓길에 붙잡은 채 나아가는 쪽으로 몸을 기울이되 양 끝에서는 바로
- * 서고, 눈은 붓끝을 본다. scribble 이면 지그재그를 휘갈기듯 몸을 좌우로 빠르게 비튼다.
+ * 도화지 붓길을 붓털 끝으로 따라 긋는다.
  *
  * @param millis 길이
- * @param stroke 붓길
+ * @param stroke 도화지 격자 좌표 붓길
  * @param scribble 휘갈기기면 true
  * @returns 동작
  */
-const trace = (millis: number, stroke: Stroke, scribble = false): Move => ({
-  millis,
-  pose: (f) => {
-    const direction = strokeHeading(stroke, f);
-    const envelope = Math.min(1, f / 0.08, (1 - f) / 0.08);
-    const wiggle = scribble ? Math.sin(2 * PI * f * 9) * envelope : 0;
-    const rotation = (12 * direction.x + 6 * wiggle) * envelope;
-    const scaleX = 1 + 0.06 * wiggle;
-    const scaleY = 1 - 0.05 * wiggle;
-    const target = onPaper(strokeAt(stroke, f));
-    const offset = brushTipOffset(rotation, scaleX, scaleY);
-
-    return pose(target.x - offset.x, target.y - offset.y, {
-      scaleX,
-      scaleY,
-      rotation,
-      look: point(0.7, 0.6),
-      eyes: scribble ? 'focus' : 'round',
-    });
-  },
-});
+const trace = (millis: number, stroke: Stroke, scribble = false) =>
+  paintAlong(millis, stroke, onPaper, MASCOT_SIZE, scribble);
 
 /**
  * 붓길 사이를 짧게 건너뛴다.

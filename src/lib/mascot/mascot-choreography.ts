@@ -7,8 +7,18 @@
 
 export type Point = { x: number; y: number };
 
-/** 눈 모양이다. round 는 동그란 눈, focus 는 힘주는 `> <`, smile 은 웃으며 감은 `^ ^` 이다. */
-export type MascotEyes = 'round' | 'focus' | 'smile';
+/**
+ * 눈 모양이다. round 는 동그란 눈, focus 는 힘주는 `> <`, smile 은 웃으며 감은 `^ ^`, sleepy 는 졸려 감긴
+ * `‿ ‿`, sparkle 은 반짝이는 별 눈, wink 는 한쪽만 웃으며 감은 눈, dizzy 는 빙글빙글 도는 어지러운 눈이다.
+ */
+export type MascotEyes =
+  | 'round'
+  | 'focus'
+  | 'smile'
+  | 'sleepy'
+  | 'sparkle'
+  | 'wink'
+  | 'dizzy';
 
 /** 마스코트 한 프레임의 자세다. x·y 는 발끝 가운데다. */
 export type MascotPose = {
@@ -417,6 +427,42 @@ export function mascotPointOffset(
   );
 }
 
+// ---- 화가 소품 ----
+
+/** 화가 베레모가 얹히는 자리(심벌 viewport 좌표)와 기울기(도)다. */
+export const HAT_ANCHOR = point(30, 5.5);
+export const HAT_TILT = -12;
+
+/**
+ * 몸 오른쪽에 쥔 붓이다. 쥔 자리(심벌 viewport 좌표), 붓털 끝이 향하는 쪽의 캔버스 회전(도, 0 은 바로 아래),
+ * 쥔 자리에서 붓털 끝과 자루 끝까지의 길이(viewport)다.
+ */
+export const BRUSH_GRIP = point(64, 38);
+export const BRUSH_TILT = -38;
+export const BRUSH_TIP_LENGTH = 16;
+export const BRUSH_HANDLE_LENGTH = 18;
+
+const BRUSH_TIP = point(
+  BRUSH_GRIP.x - Math.sin((BRUSH_TILT * Math.PI) / 180) * BRUSH_TIP_LENGTH,
+  BRUSH_GRIP.y + Math.cos((BRUSH_TILT * Math.PI) / 180) * BRUSH_TIP_LENGTH,
+);
+
+/**
+ * 붓털 끝이 발끝 가운데에서 얼마나 떨어져 있는지 반환한다.
+ *
+ * @param size 마스코트 크기(무대 폭 단위)
+ * @param rotation 몸 회전(도)
+ * @param scaleX 가로 찌그러짐
+ * @param scaleY 세로 찌그러짐
+ * @returns 발끝 가운데로부터의 거리(무대 폭 단위)
+ */
+export const brushTipOffset = (
+  size: number,
+  rotation = 0,
+  scaleX = 1,
+  scaleY = 1,
+) => mascotPointOffset(BRUSH_TIP, rotation, scaleX, scaleY, size);
+
 /**
  * 붓 끝인 발로 곡선을 따라 긋는다. 곡선의 기울기만큼 몸을 기울이되 양 끝에서는 0 으로 모은다.
  *
@@ -438,6 +484,179 @@ export const brush = (millis: number, curve: Cubic, size: number): Move => ({
       ...pinnedAtFeet(cubicAt(curve, f), rotation, size),
       look: point(sign(tangent.x) * 0.8, 0.5),
     };
+  },
+});
+
+// ---- 붓길 ----
+
+/** 격자 좌표 꺾은선과 누적 길이다. 곡선은 잘게 나눠 길이에 고르게 따라갈 수 있게 한다. */
+export type Stroke = { points: Point[]; lengths: number[]; total: number };
+
+const CURVE_STEPS = 14;
+
+/**
+ * SVG path 문자열(M·L·Q·C 절대 좌표)을 꺾은선으로 바꾼다.
+ *
+ * @param path 격자 좌표 path
+ * @returns 꺾은선과 누적 길이
+ * @throws 지원하지 않는 명령이 있으면 던진다
+ */
+export function parseStroke(path: string): Stroke {
+  const tokens = path.match(/[MLQC]|-?\d*\.?\d+/g) ?? [];
+  const points: Point[] = [];
+  let index = 0;
+  let command = '';
+  const read = () => Number(tokens[index++]);
+  const readPoint = () => point(read(), read());
+
+  while (index < tokens.length) {
+    if (/[A-Z]/.test(tokens[index])) command = tokens[index++];
+
+    const from = points[points.length - 1];
+
+    if (command === 'M' || command === 'L') {
+      points.push(readPoint());
+    } else if (command === 'Q') {
+      const control = readPoint();
+      const end = readPoint();
+
+      for (let step = 1; step <= CURVE_STEPS; step += 1) {
+        const t = step / CURVE_STEPS;
+        const u = 1 - t;
+
+        points.push(
+          point(
+            from.x * u * u + control.x * 2 * t * u + end.x * t * t,
+            from.y * u * u + control.y * 2 * t * u + end.y * t * t,
+          ),
+        );
+      }
+    } else if (command === 'C') {
+      const control1 = readPoint();
+      const control2 = readPoint();
+      const end = readPoint();
+
+      for (let step = 1; step <= CURVE_STEPS; step += 1) {
+        const t = step / CURVE_STEPS;
+        const u = 1 - t;
+        const a = u * u * u;
+        const b = 3 * u * u * t;
+        const c = 3 * u * t * t;
+        const d = t * t * t;
+
+        points.push(
+          point(
+            from.x * a + control1.x * b + control2.x * c + end.x * d,
+            from.y * a + control1.y * b + control2.y * c + end.y * d,
+          ),
+        );
+      }
+    } else {
+      throw new Error(`Unsupported path command: ${command}`);
+    }
+  }
+
+  const lengths = [0];
+
+  for (let i = 1; i < points.length; i += 1)
+    lengths.push(
+      lengths[i - 1] +
+        Math.hypot(
+          points[i].x - points[i - 1].x,
+          points[i].y - points[i - 1].y,
+        ),
+    );
+
+  return { points, lengths, total: lengths[lengths.length - 1] };
+}
+
+/**
+ * 붓길 길이의 f 만큼 간 자리를 반환한다.
+ *
+ * @param stroke 붓길
+ * @param f 0..1 길이 비율
+ * @returns 격자 좌표
+ */
+export function strokeAt(stroke: Stroke, f: number): Point {
+  const target = Math.min(Math.max(f, 0), 1) * stroke.total;
+  let i = 1;
+
+  while (i < stroke.points.length - 1 && stroke.lengths[i] < target) i += 1;
+
+  const from = stroke.points[i - 1];
+  const to = stroke.points[i];
+  const span = stroke.lengths[i] - stroke.lengths[i - 1];
+  const t = span > 0 ? (target - stroke.lengths[i - 1]) / span : 0;
+
+  return point(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
+}
+
+/**
+ * f 앞뒤로 붓길이 나아가는 방향의 평균을 반환한다. 꺾이거나 되돌아가는 자리에서도 값이 끊기지 않고 지나가도록
+ * 짧은 마디 방향을 고르게 평균 내며, 되돌아가는 자리에서는 길이가 0 에 가까워진다.
+ *
+ * @param stroke 붓길
+ * @param f 0..1 길이 비율
+ * @returns 길이 1 이하의 평균 방향
+ */
+export function strokeHeading(stroke: Stroke, f: number): Point {
+  const samples = 12;
+  const reach = 0.025;
+  let x = 0;
+  let y = 0;
+  let previous = strokeAt(stroke, f - reach);
+
+  for (let step = 1; step <= samples; step += 1) {
+    const next = strokeAt(stroke, f - reach + (2 * reach * step) / samples);
+    const length = Math.hypot(next.x - previous.x, next.y - previous.y);
+
+    if (length > 0) {
+      x += (next.x - previous.x) / length;
+      y += (next.y - previous.y) / length;
+    }
+
+    previous = next;
+  }
+
+  return point(x / samples, y / samples);
+}
+
+/**
+ * 붓털 끝으로 붓길을 따라 긋는다. 붓털 끝을 붓길에 붙잡은 채 나아가는 쪽으로 몸을 기울이되 양 끝에서는 바로
+ * 서고, 눈은 붓끝을 본다. scribble 이면 지그재그를 휘갈기듯 몸을 좌우로 빠르게 비튼다.
+ *
+ * @param millis 길이
+ * @param stroke 붓길(그림 격자 좌표)
+ * @param toStage 그림 격자 좌표를 무대 좌표로 바꾸는 함수
+ * @param size 마스코트 크기(무대 폭 단위)
+ * @param scribble 휘갈기기면 true
+ * @returns 동작
+ */
+export const paintAlong = (
+  millis: number,
+  stroke: Stroke,
+  toStage: (at: Point) => Point,
+  size: number,
+  scribble = false,
+): Move => ({
+  millis,
+  pose: (f) => {
+    const direction = strokeHeading(stroke, f);
+    const envelope = Math.min(1, f / 0.08, (1 - f) / 0.08);
+    const wiggle = scribble ? Math.sin(2 * PI * f * 9) * envelope : 0;
+    const rotation = (12 * direction.x + 6 * wiggle) * envelope;
+    const scaleX = 1 + 0.06 * wiggle;
+    const scaleY = 1 - 0.05 * wiggle;
+    const target = toStage(strokeAt(stroke, f));
+    const offset = brushTipOffset(size, rotation, scaleX, scaleY);
+
+    return pose(target.x - offset.x, target.y - offset.y, {
+      scaleX,
+      scaleY,
+      rotation,
+      look: point(0.7, 0.6),
+      eyes: scribble ? 'focus' : 'round',
+    });
   },
 });
 
