@@ -11,6 +11,7 @@ import {
   CHAT_MENU_COPY,
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_SETTINGS_COPY,
+  CHAT_STREAM_LOADING_COPY,
   REALTIME_IMAGE_NUDGE_DELAY_MS,
 } from '@/features/chats/room/constants';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
@@ -564,6 +565,82 @@ test.describe('채팅 스트리밍', () => {
     await expect(
       sendButton.getByRole('status', { name: '응답을 받는 중' }),
     ).toBeHidden();
+  });
+
+  test('실시간 이미지를 켠 턴은 응답 전까지 마스코트가 그림을 그리는 장면 썸네일을 보인다 (CHAT-SEND-18)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+
+    const completedTurn = {
+      id: 1,
+      userInput: '앞으로 나아간다',
+      aiOutput: '문이 열린다.',
+      choices: [],
+      createdAt: '2026-06-01T00:00:00Z',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1 ? chatDetail() : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    // 스트림 응답을 늦춰 로딩 썸네일이 그려지는 동안을 관찰한다.
+    await page.route(CHAT_STREAM, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"문이 열린다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"문이 열린다."}\n\n',
+        ]),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page
+      .getByPlaceholder('이야기를 어떻게 이어갈까요?')
+      .fill('앞으로 나아간다');
+    await page.getByRole('button', { name: '전송', exact: true }).click();
+
+    const stage = page.getByRole('img', {
+      name: CHAT_STREAM_LOADING_COPY.sceneLabel,
+    });
+
+    await expect(stage).toBeVisible();
+    await expect(stage).toHaveJSProperty('tagName', 'CANVAS');
+
+    // 4:3 자리 안에서 마스코트가 실제로 그려지고 있어야 한다(빈 캔버스가 아님).
+    await expect
+      .poll(() =>
+        stage.evaluate((canvas: HTMLCanvasElement) => {
+          const { data } = canvas
+            .getContext('2d')!
+            .getImageData(0, 0, canvas.width, canvas.height);
+
+          return data.some((value, index) => index % 4 === 3 && value > 0);
+        }),
+      )
+      .toBe(true);
+    expect(
+      await stage.evaluate(
+        (canvas: HTMLCanvasElement) => canvas.clientWidth / canvas.clientHeight,
+      ),
+    ).toBeCloseTo(4 / 3, 1);
+
+    await expect(page.getByText('문이 열린다.')).toBeVisible();
+    await expect(stage).toBeHidden();
   });
 
   test('메시지를 전송하면 응답이 스트리밍되어 누적된다 (US-6-2·6-3)', async ({

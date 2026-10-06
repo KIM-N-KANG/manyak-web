@@ -1,14 +1,34 @@
 import {
+  clamp01,
+  drawCard,
+  drawDots,
+  drawMascot,
+  drawShadow,
+  line,
+  mix,
+  type Rect,
+  type Rgb,
+  rgba,
+  scaled,
+  type Stage,
+  type StagePalette,
+  withAlpha,
+} from '@/lib/mascot/draw-mascot';
+import {
   blinkOpenness,
+  type Cubic,
+  cubicAt,
+  easeOutBack,
+  type Point,
+} from '@/lib/mascot/mascot-choreography';
+
+import {
   BLOOM_CENTER,
   CHIP_HEIGHT,
   completingMoment,
-  type Cubic,
-  cubicAt,
   cueMillis,
   cueProgress,
   cueStart,
-  easeOutBack,
   FLOOR,
   KEY_COLUMNS,
   KEY_COUNT,
@@ -16,14 +36,9 @@ import {
   keystrokeAt,
   KEYSTROKES,
   KEYWORD_CHIPS,
-  MASCOT_BOTTOM,
-  MASCOT_CENTER,
   MASCOT_SIZE,
-  MASCOT_VIEWPORT,
-  type MascotPose,
   PICKED_CHIPS,
   PICKED_STORYLINE,
-  type Point,
   propVisibility,
   SIGNATURE,
   STORYLINE_BOTTOM,
@@ -34,37 +49,16 @@ import {
   STROKE_2,
 } from './story-completing-choreography';
 
-/** sRGB 0..255 세 값이다. 색을 섞어야 해서 CSS 문자열 대신 수로 들고 다닌다. */
-export type Rgb = [number, number, number];
-
-export type StagePalette = {
-  brand: Rgb;
-  paper: Rgb;
-  ink: Rgb;
-  key: Rgb;
-};
-
-type Rect = { left: number; top: number; right: number; bottom: number };
-
-const rgba = ([r, g, b]: Rgb, alpha = 1) => `rgba(${r}, ${g}, ${b}, ${alpha})`;
-const mix = (a: Rgb, b: Rgb, t: number): Rgb => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-  a[2] + (b[2] - a[2]) * t,
-];
-const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
-
-const DOT_GAP = 10;
-const DOT_RADIUS = 1;
-const MASCOT_PATH =
-  'M30,44H24A12,12 0 0 1 12,32V20A12,12 0 0 1 24,8H40A12,12 0 0 1 52,20V44C52,51 50,56 44,56H16';
-let mascotBody: Path2D | undefined;
-
 /**
  * 완성 중 표지 한 프레임을 그린다. 바탕에 옅은 점을 깔고, 막에 맞는 소품과 그림자, 마스코트를 차례로 얹는다.
  * 크기와 자리는 표지 폭(unit)에 대한 비율이라 표지 폭이 바뀌어도 구도가 같다.
  *
+ * @param ctx 표지 캔버스
  * @param layer 소품 묶음을 한 장으로 그린 뒤 투명도를 입힐 때 쓰는 같은 크기의 캔버스다.
+ * @param width 표지 폭(픽셀)
+ * @param height 표지 높이(픽셀)
+ * @param millis 안무 시작부터 흐른 시간
+ * @param palette 테마 색
  * @param lookAt 포인터가 표지 위에 있으면 그 자리(폭 단위 좌표)다. 마스코트가 그쪽을 본다.
  */
 export function drawStoryCompletingStage(
@@ -93,224 +87,20 @@ export function drawStoryCompletingStage(
   if (act === 'PAINTING') drawPainting(stage, actMillis);
 
   // 칩을 밟고 있을 때는 바닥 그림자가 허공에 뜬 것처럼 보여 두지 않는다.
-  if (act !== 'KEYWORDS') drawShadow(ctx, pose, unit, palette.brand);
+  if (act !== 'KEYWORDS')
+    drawShadow(ctx, pose, unit, MASCOT_SIZE, FLOOR, palette.brand);
 
-  drawMascot(ctx, pose, unit, palette.brand, blinkOpenness(millis), lookAt);
+  drawMascot(
+    ctx,
+    pose,
+    unit,
+    MASCOT_SIZE,
+    palette.brand,
+    blinkOpenness(millis),
+    lookAt,
+  );
 
   if (act === 'TYPING') drawKeyboard(stage, actMillis);
-}
-
-type Stage = {
-  ctx: CanvasRenderingContext2D;
-  layer: CanvasRenderingContext2D;
-  unit: number;
-  palette: StagePalette;
-};
-
-/**
- * 소품 묶음을 따로 그린 뒤 투명도를 한 번에 입힌다. 겹치는 붓질·둥근 선 끝을 각각 반투명하게 그리면 겹친
- * 자리만 진해지므로, 소품은 불투명하게 그리고 투명도는 여기서 준다.
- */
-function withAlpha(
-  stage: Stage,
-  alpha: number,
-  draw: (ctx: CanvasRenderingContext2D) => void,
-) {
-  if (alpha <= 0) return;
-
-  if (alpha >= 1) {
-    draw(stage.ctx);
-
-    return;
-  }
-
-  const { layer, ctx } = stage;
-
-  layer.save();
-  layer.setTransform(1, 0, 0, 1, 0, 0);
-  layer.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
-  layer.restore();
-  draw(layer);
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(layer.canvas, 0, 0);
-  ctx.restore();
-}
-
-/** pivot 을 붙잡고 scale 배로 키운 채 그린다. */
-function scaled(
-  ctx: CanvasRenderingContext2D,
-  scale: number,
-  pivot: Point,
-  draw: () => void,
-) {
-  ctx.save();
-  ctx.translate(pivot.x, pivot.y);
-  ctx.scale(scale, scale);
-  ctx.translate(-pivot.x, -pivot.y);
-  draw();
-  ctx.restore();
-}
-
-function drawDots(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  ink: Rgb,
-) {
-  const columns = Math.floor(width / DOT_GAP);
-  const rows = Math.floor(height / DOT_GAP);
-  const left = (width - columns * DOT_GAP) / 2;
-  const top = (height - rows * DOT_GAP) / 2;
-
-  ctx.fillStyle = rgba(ink, 0.45);
-
-  for (let row = 0; row <= rows; row += 1) {
-    for (let column = 0; column <= columns; column += 1) {
-      ctx.beginPath();
-      ctx.arc(
-        left + column * DOT_GAP,
-        top + row * DOT_GAP,
-        DOT_RADIUS,
-        0,
-        Math.PI * 2,
-      );
-      ctx.fill();
-    }
-  }
-}
-
-/** 바닥에 깔리는 그림자다. 높이 뜰수록 작고 옅어진다. */
-function drawShadow(
-  ctx: CanvasRenderingContext2D,
-  pose: MascotPose,
-  unit: number,
-  brand: Rgb,
-) {
-  const height = clamp01((FLOOR - pose.y) / 0.9);
-  const width = MASCOT_SIZE * 0.62 * (1 - 0.5 * height) * pose.scaleX * unit;
-
-  ctx.fillStyle = rgba(brand, 0.16 * (1 - 0.7 * height));
-  ctx.beginPath();
-  ctx.ellipse(
-    pose.x * unit,
-    FLOOR * unit,
-    width / 2,
-    0.012 * unit,
-    0,
-    0,
-    Math.PI * 2,
-  );
-  ctx.fill();
-}
-
-/**
- * 로고 심벌을 움직이는 마스코트로 그린다. 찌그러뜨림은 발을 붙잡고, 회전은 몸 가운데를 축으로 한다.
- * 포인터가 표지 위에 있으면 눈이 포인터 쪽을 본다.
- */
-function drawMascot(
-  ctx: CanvasRenderingContext2D,
-  pose: MascotPose,
-  unit: number,
-  brand: Rgb,
-  blink: number,
-  lookAt: Point | null,
-) {
-  mascotBody ??= new Path2D(MASCOT_PATH);
-
-  const cell = (MASCOT_SIZE * unit) / MASCOT_VIEWPORT;
-  const look = lookAt ? lookToward(pose, lookAt) : pose.look;
-
-  ctx.save();
-  ctx.translate(
-    pose.x * unit - MASCOT_CENTER * cell,
-    pose.y * unit - MASCOT_BOTTOM * cell,
-  );
-  ctx.translate(MASCOT_CENTER * cell, MASCOT_CENTER * cell);
-  ctx.rotate((pose.rotation * Math.PI) / 180);
-  ctx.translate(-MASCOT_CENTER * cell, -MASCOT_CENTER * cell);
-  ctx.translate(MASCOT_CENTER * cell, MASCOT_BOTTOM * cell);
-  ctx.scale(pose.scaleX, pose.scaleY);
-  ctx.translate(-MASCOT_CENTER * cell, -MASCOT_BOTTOM * cell);
-  ctx.scale(cell, cell);
-  ctx.strokeStyle = rgba(brand);
-  ctx.fillStyle = rgba(brand);
-  ctx.lineWidth = 7.6;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke(mascotBody);
-
-  const openness = Math.max(blink * (1 - 0.9 * pose.squint), 0.1);
-
-  for (const eyeX of [25, 39]) {
-    ctx.beginPath();
-    ctx.ellipse(
-      eyeX + look.x * 2,
-      24 + look.y * 2,
-      4,
-      4 * openness,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
-/** 눈 가운데에서 포인터로 향하는 방향을 길이 1 이하로 반환한다. */
-function lookToward(pose: MascotPose, target: Point): Point {
-  const eyeY = pose.y - MASCOT_SIZE * ((MASCOT_BOTTOM - 24) / MASCOT_VIEWPORT);
-  const dx = target.x - pose.x;
-  const dy = target.y - eyeY;
-  const length = Math.hypot(dx, dy);
-
-  return length < 0.02
-    ? { x: 0, y: 0 }
-    : { x: dx / Math.max(length, 0.15), y: dy / Math.max(length, 0.15) };
-}
-
-/** 원고·키보드·카드·칩·액자가 함께 쓰는 종이다. 다크 테마에서도 바탕과 갈리도록 진한 경계로 두른다. */
-function drawCard(
-  ctx: CanvasRenderingContext2D,
-  rect: Rect,
-  unit: number,
-  outline: Rgb,
-  fill: Rgb,
-  corner = 0.04,
-) {
-  ctx.beginPath();
-  ctx.roundRect(
-    rect.left * unit,
-    rect.top * unit,
-    (rect.right - rect.left) * unit,
-    (rect.bottom - rect.top) * unit,
-    corner * unit,
-  );
-  ctx.fillStyle = rgba(fill);
-  ctx.fill();
-  ctx.lineWidth = 0.008 * unit;
-  ctx.strokeStyle = rgba(outline);
-  ctx.stroke();
-}
-
-function line(
-  ctx: CanvasRenderingContext2D,
-  from: Point,
-  to: Point,
-  width: number,
-  color: Rgb,
-  unit: number,
-) {
-  ctx.beginPath();
-  ctx.moveTo(from.x * unit, from.y * unit);
-  ctx.lineTo(to.x * unit, to.y * unit);
-  ctx.lineWidth = width * unit;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = rgba(color);
-  ctx.stroke();
 }
 
 // ---- 키워드와 스토리라인 ----
