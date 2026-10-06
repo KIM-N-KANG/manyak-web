@@ -39,6 +39,11 @@ export interface PullToRefreshProps {
   /** Runs after the user pulls beyond the threshold and releases. */
   onRefresh: () => void | Promise<void>;
   children: ReactNode;
+  /**
+   * 콘텐츠 위에 두되 당김에 함께 밀리지 않는 영역이다. 표시자는 이 영역 바로 아래에 나타난다.
+   * 스크롤러 안에 있으므로 sticky 같은 배치는 넘기는 쪽이 정한다.
+   */
+  header?: ReactNode;
   /** 스크롤러 요소 ref. 무한 스크롤의 교차 관찰 root처럼 바깥이 스크롤러를 알아야 할 때 쓴다. */
   ref?: Ref<HTMLElement>;
   /** 스크롤러의 scroll 이벤트. 헤더·FAB의 스크롤 상태 판정에 쓴다. */
@@ -73,11 +78,13 @@ const EMPTY_GESTURE: Gesture = {
   startY: 0,
 };
 
-// This character needs a compact repeating rhythm rather than a settling
-// spring: a small orbit and blink that read as activity without feeling busy.
-const CHARACTER_LOOP = {
-  duration: 0.9,
-  ease: EASE_IN_OUT,
+/**
+ * 새로고침 중 마스코트가 살짝 뛰어올라 한 바퀴 돌고 내려앉는 한 주기다.
+ * 주기 끝의 쉼(repeatDelay)은 회전이 끝난 자세라, 이 구간에서 멈추면 0도로 되돌려도 티가 나지 않는다.
+ */
+const JUMP_SPIN = {
+  duration: 0.7,
+  repeatDelay: 0.25,
   repeat: Number.POSITIVE_INFINITY,
 } as const;
 const CALM_PULSE = {
@@ -91,7 +98,17 @@ function resistedDistance(distance: number, maxPull: number) {
   return maxPull * (1 - Math.exp(-Math.max(0, distance) / maxPull));
 }
 
-/** 당김 진행에 맞춰 살아나고 새로고침 중에는 까딱이는 마냑 심볼. */
+/**
+ * 새로고침 표시를 끝내기 전에 더 기다릴 시간(ms)을 반환한다.
+ * 애니메이션을 최소 한 주기는 보여 주고, 주기 중간에 끊기지 않도록 다음 주기 경계까지 기다린다.
+ */
+export function remainingRefreshCycleMs(elapsedMs: number, cycleMs: number) {
+  const cycles = Math.max(1, Math.ceil(elapsedMs / cycleMs));
+
+  return cycles * cycleMs - elapsedMs;
+}
+
+/** 당김 진행에 맞춰 살아나고 새로고침 중에는 뛰어올라 한 바퀴 도는 마냑 심볼. */
 function RefreshSymbol({
   progress,
   status,
@@ -117,13 +134,22 @@ function RefreshSymbol({
           refreshing
             ? reduce
               ? { opacity: [0.55, 1, 0.55] }
-              : { y: [0, -2, 0], rotate: [-8, 8, -8] }
+              : { y: [0, -12, 0], rotate: [0, -360] }
             : reduce
               ? { opacity: 1 }
               : { y: 0, rotate: 0, scale: ready ? 1.08 : 1 }
         }
         transition={
-          refreshing ? (reduce ? CALM_PULSE : CHARACTER_LOOP) : SPRING_SWAP
+          refreshing
+            ? reduce
+              ? CALM_PULSE
+              : {
+                  // 오를 때 감속하고 내려올 때 가속해 가볍게 튀는 느낌을 준다.
+                  y: { ...JUMP_SPIN, ease: ['easeOut', 'easeIn'] },
+                  rotate: { ...JUMP_SPIN, ease: EASE_IN_OUT },
+                }
+            : // 주기 경계에서 멈추므로 -360도와 0도는 같은 자세다. 되감기지 않게 회전은 즉시 되돌린다.
+              { ...SPRING_SWAP, rotate: { duration: 0 } }
         }>
         <ManyakSymbolIcon aria-hidden="true" className="h-full w-full" />
       </m.span>
@@ -134,6 +160,7 @@ function RefreshSymbol({
 export function PullToRefresh({
   onRefresh,
   children,
+  header,
   ref,
   onScroll,
   refreshing = false,
@@ -215,9 +242,24 @@ export function PullToRefresh({
     setStatus('refreshing');
     settle(restingDistance);
 
+    const startedAt = performance.now();
+
     try {
       await onRefresh();
     } finally {
+      const cycleSeconds = reduce
+        ? CALM_PULSE.duration
+        : JUMP_SPIN.duration + JUMP_SPIN.repeatDelay;
+
+      await new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          remainingRefreshCycleMs(
+            performance.now() - startedAt,
+            cycleSeconds * 1000,
+          ),
+        ),
+      );
       setInternalRefreshing(false);
 
       if (!externalRefreshingRef.current) {
@@ -360,51 +402,56 @@ export function PullToRefresh({
       data-state={status}
       data-disabled={disabled || undefined}
       className={cn(
-        'relative w-full overflow-y-auto overscroll-contain bg-background',
+        'relative flex w-full flex-col overflow-y-auto overscroll-contain bg-background',
         TOUCH_GESTURE_CONTENT_CLASS,
         (status === 'pulling' || status === 'ready') && 'select-none',
         className,
       )}>
-      <m.div
-        aria-live="polite"
-        aria-atomic="true"
-        style={
-          reduce
-            ? { opacity: indicatorOpacity }
-            : { opacity: indicatorOpacity, scale: indicatorScale }
-        }
-        className={cn(
-          'pointer-events-none absolute inset-x-0 top-0 z-20 flex h-17 flex-col items-center justify-center gap-0.5 bg-linear-to-b from-background via-background/95 to-transparent text-[11px] font-medium text-muted-foreground',
-          indicatorClassName,
-        )}>
-        <RefreshSymbol
-          progress={progress}
-          status={status}
-          reduce={Boolean(reduce)}
-        />
-        <span className="relative h-4 min-w-24 text-center">
-          <AnimatePresence initial={false} mode="wait">
-            <m.span
-              key={status}
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 3 }}
-              animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -3 }}
-              transition={LABEL_SWAP}
-              className="absolute inset-x-0 whitespace-nowrap">
-              {label}
-            </m.span>
-          </AnimatePresence>
-        </span>
-      </m.div>
+      {header}
 
-      <m.div
-        style={reduce ? undefined : { y }}
-        className={cn(
-          'relative z-10 min-h-full bg-inherit will-change-transform',
-          contentClassName,
-        )}>
-        {children}
-      </m.div>
+      {/* 표시자의 기준 상자다. 헤더 바로 아래에서 시작하므로 표시자가 헤더에 가려지지 않는다. */}
+      <div className="relative flex flex-1 flex-col bg-inherit">
+        <m.div
+          aria-live="polite"
+          aria-atomic="true"
+          style={
+            reduce
+              ? { opacity: indicatorOpacity }
+              : { opacity: indicatorOpacity, scale: indicatorScale }
+          }
+          className={cn(
+            'pointer-events-none absolute inset-x-0 top-0 z-20 flex h-17 flex-col items-center justify-center gap-0.5 bg-linear-to-b from-background via-background/95 to-transparent text-[11px] font-medium text-muted-foreground',
+            indicatorClassName,
+          )}>
+          <RefreshSymbol
+            progress={progress}
+            status={status}
+            reduce={Boolean(reduce)}
+          />
+          <span className="relative h-4 min-w-24 text-center">
+            <AnimatePresence initial={false} mode="wait">
+              <m.span
+                key={status}
+                initial={reduce ? { opacity: 0 } : { opacity: 0, y: 3 }}
+                animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, y: -3 }}
+                transition={LABEL_SWAP}
+                className="absolute inset-x-0 whitespace-nowrap">
+                {label}
+              </m.span>
+            </AnimatePresence>
+          </span>
+        </m.div>
+
+        <m.div
+          style={reduce ? undefined : { y }}
+          className={cn(
+            'relative z-10 flex-1 bg-inherit will-change-transform',
+            contentClassName,
+          )}>
+          {children}
+        </m.div>
+      </div>
     </section>
   );
 }
