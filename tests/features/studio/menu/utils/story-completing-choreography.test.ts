@@ -6,11 +6,16 @@ import {
   completingMoment,
   type Cue,
   cueMillis,
+  cueStart,
   HOME,
   MASCOT_HALF_WIDTH,
   MASCOT_HEIGHT,
+  MASCOT_SIZE,
+  onCanvas,
+  PORTRAIT_HAIR,
   STAGE_HEIGHT,
 } from '@/features/studio/menu/utils/story-completing-choreography';
+import { brushTipOffset, strokeAt } from '@/lib/mascot/mascot-choreography';
 
 const turn = (a: number, b: number) => {
   const difference = Math.abs(a - b) % 360;
@@ -71,6 +76,7 @@ describe('story-completing-choreography', () => {
       new Set([
         'KEYWORDS',
         'STORYLINE',
+        'ENERGY',
         'TYPING',
         'PAINTING',
         'BOUNCING',
@@ -78,6 +84,30 @@ describe('story-completing-choreography', () => {
         'INTERLUDE',
       ]),
     );
+  });
+
+  it('인물화를 그리는 동안 붓털 끝이 붓길 위에 있다', () => {
+    let painting = 0;
+
+    while (completingMoment(painting).act !== 'PAINTING') painting += 10;
+
+    while (completingMoment(painting - 1).act === 'PAINTING') painting -= 1;
+
+    const start = painting + cueStart('HAIR');
+
+    for (const f of [0, 0.4, 0.8]) {
+      const { pose } = completingMoment(start + f * cueMillis('HAIR'));
+      const offset = brushTipOffset(
+        MASCOT_SIZE,
+        pose.rotation,
+        pose.scaleX,
+        pose.scaleY,
+      );
+      const target = onCanvas(strokeAt(PORTRAIT_HAIR, f));
+
+      expect(pose.x + offset.x, `f=${f}`).toBeCloseTo(target.x, 5);
+      expect(pose.y + offset.y, `f=${f}`).toBeCloseTo(target.y, 5);
+    }
   });
 
   it('모든 소품 신호가 동작에 연결돼 있다', () => {
@@ -89,18 +119,28 @@ describe('story-completing-choreography', () => {
       'STORYLINE_1_LOOK',
       'STORYLINE_3_LOOK',
       'STORYLINE_PICK',
+      'DOZE',
+      'CAN_DROP',
+      'CAN_CATCH',
+      'DRINK',
+      'POWER_UP',
       'TYPING',
       'TYPING_DONE',
-      'STROKE_1',
-      'STROKE_2',
-      'BLOOM',
+      'HAT',
+      'BRUSH',
+      'MOON',
+      'HAIR',
+      'FACE',
+      'BLUSH',
+      'SCARF',
       'SIGNATURE',
+      'TOSS',
     ];
 
     for (const cue of cues) expect(cueMillis(cue), cue).toBeGreaterThan(0);
   });
 
-  it('Android 와 같은 약 32초 주기로 돈다', () => {
-    expect(COMPLETING_LOOP_MILLIS).toBe(31970);
+  it('약 38초 주기로 돈다', () => {
+    expect(COMPLETING_LOOP_MILLIS).toBe(37710);
   });
 });
