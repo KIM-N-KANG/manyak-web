@@ -39,6 +39,11 @@ export interface PullToRefreshProps {
   /** Runs after the user pulls beyond the threshold and releases. */
   onRefresh: () => void | Promise<void>;
   children: ReactNode;
+  /**
+   * 콘텐츠 위에 두되 당김에 함께 밀리지 않는 영역이다. 표시자는 이 영역 바로 아래에 나타난다.
+   * 스크롤러 안에 있으므로 sticky 같은 배치는 넘기는 쪽이 정한다.
+   */
+  header?: ReactNode;
   /** 스크롤러 요소 ref. 무한 스크롤의 교차 관찰 root처럼 바깥이 스크롤러를 알아야 할 때 쓴다. */
   ref?: Ref<HTMLElement>;
   /** 스크롤러의 scroll 이벤트. 헤더·FAB의 스크롤 상태 판정에 쓴다. */
@@ -134,6 +139,7 @@ function RefreshSymbol({
 export function PullToRefresh({
   onRefresh,
   children,
+  header,
   ref,
   onScroll,
   refreshing = false,
@@ -360,51 +366,56 @@ export function PullToRefresh({
       data-state={status}
       data-disabled={disabled || undefined}
       className={cn(
-        'relative w-full overflow-y-auto overscroll-contain bg-background',
+        'relative flex w-full flex-col overflow-y-auto overscroll-contain bg-background',
         TOUCH_GESTURE_CONTENT_CLASS,
         (status === 'pulling' || status === 'ready') && 'select-none',
         className,
       )}>
-      <m.div
-        aria-live="polite"
-        aria-atomic="true"
-        style={
-          reduce
-            ? { opacity: indicatorOpacity }
-            : { opacity: indicatorOpacity, scale: indicatorScale }
-        }
-        className={cn(
-          'pointer-events-none absolute inset-x-0 top-0 z-20 flex h-17 flex-col items-center justify-center gap-0.5 bg-linear-to-b from-background via-background/95 to-transparent text-[11px] font-medium text-muted-foreground',
-          indicatorClassName,
-        )}>
-        <RefreshSymbol
-          progress={progress}
-          status={status}
-          reduce={Boolean(reduce)}
-        />
-        <span className="relative h-4 min-w-24 text-center">
-          <AnimatePresence initial={false} mode="wait">
-            <m.span
-              key={status}
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 3 }}
-              animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -3 }}
-              transition={LABEL_SWAP}
-              className="absolute inset-x-0 whitespace-nowrap">
-              {label}
-            </m.span>
-          </AnimatePresence>
-        </span>
-      </m.div>
+      {header}
 
-      <m.div
-        style={reduce ? undefined : { y }}
-        className={cn(
-          'relative z-10 min-h-full bg-inherit will-change-transform',
-          contentClassName,
-        )}>
-        {children}
-      </m.div>
+      {/* 표시자의 기준 상자다. 헤더 바로 아래에서 시작하므로 표시자가 헤더에 가려지지 않는다. */}
+      <div className="relative flex flex-1 flex-col bg-inherit">
+        <m.div
+          aria-live="polite"
+          aria-atomic="true"
+          style={
+            reduce
+              ? { opacity: indicatorOpacity }
+              : { opacity: indicatorOpacity, scale: indicatorScale }
+          }
+          className={cn(
+            'pointer-events-none absolute inset-x-0 top-0 z-20 flex h-17 flex-col items-center justify-center gap-0.5 bg-linear-to-b from-background via-background/95 to-transparent text-[11px] font-medium text-muted-foreground',
+            indicatorClassName,
+          )}>
+          <RefreshSymbol
+            progress={progress}
+            status={status}
+            reduce={Boolean(reduce)}
+          />
+          <span className="relative h-4 min-w-24 text-center">
+            <AnimatePresence initial={false} mode="wait">
+              <m.span
+                key={status}
+                initial={reduce ? { opacity: 0 } : { opacity: 0, y: 3 }}
+                animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, y: -3 }}
+                transition={LABEL_SWAP}
+                className="absolute inset-x-0 whitespace-nowrap">
+                {label}
+              </m.span>
+            </AnimatePresence>
+          </span>
+        </m.div>
+
+        <m.div
+          style={reduce ? undefined : { y }}
+          className={cn(
+            'relative z-10 flex-1 bg-inherit will-change-transform',
+            contentClassName,
+          )}>
+          {children}
+        </m.div>
+      </div>
     </section>
   );
 }
