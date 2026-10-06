@@ -38,8 +38,6 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
   }
 
   return (
-    // 문구가 먼저 올라오고, 썸네일 자리가 한 박자 늦게 살짝 커지며 떠오른다.
-    // 문구는 제작 퍼널 로딩과 같은 순환 표현(4초 전환·4초 쉬머)을 쓴다.
     <div role="status" className="flex flex-col gap-5">
       <m.div
         initial={reduce ? false : { opacity: 0, y: 8 }}
@@ -57,7 +55,7 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
         initial={reduce ? false : { opacity: 0, y: 16, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.15 }}>
-        <div className="aspect-4/3 overflow-hidden rounded-xl border border-border bg-muted">
+        <div className="aspect-4/3 overflow-hidden rounded-xl bg-muted/60">
           <MascotStage
             label={CHAT_STREAM_LOADING_COPY.sceneLabel}
             draw={drawRealtimeImageStage}

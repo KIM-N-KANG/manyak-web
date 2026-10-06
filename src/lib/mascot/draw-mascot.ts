@@ -374,14 +374,16 @@ export function inViewport(
  *
  * @param ctx 얹힐 자리로 옮긴 캔버스
  * @param palette 테마 색
+ * @param muted 무대에서 튀지 않게 연필 회색으로 칠하려면 true
  */
 export function drawBeret(
   ctx: CanvasRenderingContext2D,
   palette: StagePalette,
+  muted = false,
 ) {
   const [red, green, blue] = palette.paper;
   const shade = red + green + blue > 384 ? BLACK : WHITE;
-  const felt = mix(palette.brand, shade, 0.45);
+  const felt = muted ? palette.pencil : mix(palette.brand, shade, 0.45);
 
   ctx.fillStyle = rgba(felt);
   ctx.beginPath();
@@ -392,7 +394,9 @@ export function drawBeret(
   ctx.closePath();
   ctx.fill();
   ctx.lineCap = 'round';
-  ctx.strokeStyle = rgba(mix(palette.brand, shade, 0.65));
+  ctx.strokeStyle = rgba(
+    muted ? mix(felt, shade, 0.35) : mix(palette.brand, shade, 0.65),
+  );
   ctx.lineWidth = 2.2;
   ctx.beginPath();
   ctx.moveTo(-15.5, 2);
