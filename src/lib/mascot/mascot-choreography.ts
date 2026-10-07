@@ -31,6 +31,10 @@ export type MascotPose = {
   /** 0 은 뜬 눈, 1 은 지그시 감은 눈이다. */
   squint: number;
   eyes: MascotEyes;
+  /** 몸에 쥔 붓을 몸 기준으로 더 돌린 각도(도)다. 0 이면 `BRUSH_TILT` 그대로다. */
+  brush: number;
+  /** 붓털을 누른 정도다. 0 은 뾰족한 붓털, 1 은 눌려 넓게 퍼진 붓털이다. */
+  press: number;
 };
 
 /** 심벌 viewport(64) 안에서 몸이 차지하는 폭·높이와, 회전축(몸 가운데)이 발에서 떨어진 거리다. */
@@ -73,6 +77,8 @@ export const pose = (
   look: ZERO,
   squint: 0,
   eyes: 'round',
+  brush: 0,
+  press: 0,
   ...rest,
 });
 
@@ -442,26 +448,33 @@ export const BRUSH_TILT = -38;
 export const BRUSH_TIP_LENGTH = 16;
 export const BRUSH_HANDLE_LENGTH = 18;
 
-const BRUSH_TIP = point(
-  BRUSH_GRIP.x - Math.sin((BRUSH_TILT * Math.PI) / 180) * BRUSH_TIP_LENGTH,
-  BRUSH_GRIP.y + Math.cos((BRUSH_TILT * Math.PI) / 180) * BRUSH_TIP_LENGTH,
-);
-
 /**
- * 붓털 끝이 발끝 가운데에서 얼마나 떨어져 있는지 반환한다.
+ * 붓털 끝이 발끝 가운데에서 얼마나 떨어져 있는지 반환한다. 쥔 자리는 몸과 함께 찌그러지고 돌지만, 붓은 찌그러지지
+ * 않고 몸 회전과 붓 회전만큼 돈다. 그리기도 같은 순서로 붓을 놓는다.
  *
  * @param size 마스코트 크기(무대 폭 단위)
  * @param rotation 몸 회전(도)
  * @param scaleX 가로 찌그러짐
  * @param scaleY 세로 찌그러짐
+ * @param brush 몸 기준 붓 회전(도)
  * @returns 발끝 가운데로부터의 거리(무대 폭 단위)
  */
-export const brushTipOffset = (
+export function brushTipOffset(
   size: number,
   rotation = 0,
   scaleX = 1,
   scaleY = 1,
-) => mascotPointOffset(BRUSH_TIP, rotation, scaleX, scaleY, size);
+  brush = 0,
+): Point {
+  const grip = mascotPointOffset(BRUSH_GRIP, rotation, scaleX, scaleY, size);
+  const radians = ((BRUSH_TILT + rotation + brush) * PI) / 180;
+  const length = (BRUSH_TIP_LENGTH * size) / MASCOT_VIEWPORT;
+
+  return point(
+    grip.x - Math.sin(radians) * length,
+    grip.y + Math.cos(radians) * length,
+  );
+}
 
 /**
  * 붓 끝인 발로 곡선을 따라 긋는다. 곡선의 기울기만큼 몸을 기울이되 양 끝에서는 0 으로 모은다.
@@ -621,15 +634,23 @@ export function strokeHeading(stroke: Stroke, f: number): Point {
   return point(x / samples, y / samples);
 }
 
+/** 붓질 선택 값이다. scribble 은 휘갈기기, lean 은 끌림의 가장 큰 붓 회전(도), press 는 가장 큰 누름이다. */
+export type PaintOptions = {
+  scribble?: boolean;
+  lean?: number;
+  press?: number;
+};
+
 /**
  * 붓털 끝으로 붓길을 따라 긋는다. 붓털 끝을 붓길에 붙잡은 채 나아가는 쪽으로 몸을 기울이되 양 끝에서는 바로
- * 서고, 눈은 붓끝을 본다. scribble 이면 지그재그를 휘갈기듯 몸을 좌우로 빠르게 비튼다.
+ * 서고, 눈은 붓끝을 본다. scribble 이면 지그재그를 휘갈기듯 몸을 좌우로 빠르게 비튼다. lean 이 있으면 붓털 끝이
+ * 진행 반대쪽으로 끌리게 붓을 눕히고, press 가 있으면 붓털을 누른다. 둘 다 양 끝에서 0 으로 모은다.
  *
  * @param millis 길이
  * @param stroke 붓길(그림 격자 좌표)
  * @param toStage 그림 격자 좌표를 무대 좌표로 바꾸는 함수
  * @param size 마스코트 크기(무대 폭 단위)
- * @param scribble 휘갈기기면 true
+ * @param options 붓질 선택 값
  * @returns 동작
  */
 export const paintAlong = (
@@ -637,7 +658,7 @@ export const paintAlong = (
   stroke: Stroke,
   toStage: (at: Point) => Point,
   size: number,
-  scribble = false,
+  { scribble = false, lean = 0, press = 0 }: PaintOptions = {},
 ): Move => ({
   millis,
   pose: (f) => {
@@ -647,8 +668,9 @@ export const paintAlong = (
     const rotation = (12 * direction.x + 6 * wiggle) * envelope;
     const scaleX = 1 + 0.06 * wiggle;
     const scaleY = 1 - 0.05 * wiggle;
+    const brush = lean * direction.x * envelope;
     const target = toStage(strokeAt(stroke, f));
-    const offset = brushTipOffset(size, rotation, scaleX, scaleY);
+    const offset = brushTipOffset(size, rotation, scaleX, scaleY, brush);
 
     return pose(target.x - offset.x, target.y - offset.y, {
       scaleX,
@@ -656,6 +678,8 @@ export const paintAlong = (
       rotation,
       look: point(0.7, 0.6),
       eyes: scribble ? 'focus' : 'round',
+      brush,
+      press: press * envelope,
     });
   },
 });
@@ -779,10 +803,11 @@ export function blinkOpenness(millis: number): number {
 }
 
 /**
- * 살짝 넘쳤다가 자리를 잡는 등장 곡선이다.
+ * 살짝 넘쳤다가 자리를 잡는 등장 곡선이다. 시작 전(0 이하)은 정확히 0 이라, 부동소수 오차로 아직 나오지 않은
+ * 소품이 점처럼 그려지지 않는다.
  *
  * @param t 0..1 진행
  * @returns 1 을 살짝 넘었다 돌아오는 값
  */
 export const easeOutBack = (t: number) =>
-  1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
+  t <= 0 ? 0 : 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;

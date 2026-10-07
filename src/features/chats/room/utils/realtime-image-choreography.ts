@@ -1,8 +1,12 @@
 /**
- * 채팅 실시간 이미지를 기다리는 동안 마스코트가 연기하는 안무다. 처음 한 번 화가 베레모를 쓰고 붓을 집어
- * 든 뒤, 힘을 모으고(아자아자), 붓으로 인물을 휘갈겨 그리고, 휴 하고 안도한 뒤, 수채로 다른 인물을 그리고,
- * 딴짓하다 번뜩여 검은 종이에 별자리 인물을 찍는다. 다 그린 그림은 빨랫줄에 걸리고, 응답이 늦으면 아자아자부터
- * 다시 그린다. 그림은 몸 오른쪽에 든 붓의 끝으로 긋는다.
+ * 채팅 실시간 이미지를 기다리는 동안 마스코트가 연기하는 안무다. 처음 한 번 화가 베레모를 쓰고 붓을 집어 든 뒤,
+ * 4:3 가로 도화지에 밤 창가에서 달을 보는 인물 한 장을 밑그림, 밑칠, 인물, 마무리 순서로 천천히 그린다. 획은
+ * 적게, 붓끝은 느리게 움직여 대화 화면에서 정신없지 않게 한다. 밑그림을 마치면 휴 하고 숨을 고르고, 인물을
+ * 마치면 그림을 올려다보며 딴짓하다 번뜩이며, 물감 색을 바꿀 때마다 물그릇에 붓을 헹군다. 무대 시작부터 15초에
+ * 사인을 마치고, 완성 그림을 감상한 뒤 종이를 넘겨 밑그림부터 같은 그림을 다시 그린다.
+ *
+ * 그림은 몸 오른쪽에 든 붓의 털 끝으로 긋는다. 붓은 몸에 고정되지 않고, 그을 때는 털 끝이 진행 반대쪽으로
+ * 끌리고, 밑칠에서는 털이 눌려 퍼지고, 획을 마치면 톡 튕기고, 쉬는 막에서는 치켜들거나 돌린다.
  *
  * 좌표는 무대 폭을 1 로 둔 값이다(4:3 이라 높이는 3/4). 도화지 안의 그림은 도화지 폭을 84칸으로 둔 격자
  * 좌표로 적고, 붓길은 SVG path 문자열(M·L·Q·C 절대 좌표)로 적어 그리는 쪽과 마스코트가 같은 길을 쓴다.
@@ -21,6 +25,7 @@ import {
   MASCOT_WIDTH_RATIO,
   type Move,
   paintAlong,
+  type PaintOptions,
   parseStroke,
   type Point,
   point,
@@ -28,7 +33,6 @@ import {
   stand,
   type Stroke,
   strokeAt,
-  stroll,
   withCue,
   withEyes,
 } from '@/lib/mascot/mascot-choreography';
@@ -37,35 +41,40 @@ export { parseStroke, type Stroke, strokeAt };
 
 export type RealtimeImageAct =
   | 'GEAR_UP'
-  | 'HYPE'
   | 'SKETCH'
   | 'RELIEF'
-  | 'WATERCOLOR'
+  | 'WASH'
+  | 'FIGURE'
   | 'DAYDREAM'
-  | 'CONSTELLATION'
-  | 'RESET';
+  | 'FINISH'
+  | 'SHOWCASE'
+  | 'PAGE_TURN';
 
-/** 소품이 마스코트의 동작에 맞춰 바뀌는 순간이다. */
+type LoopAct = Exclude<RealtimeImageAct, 'GEAR_UP'>;
+
+/** 소품과 그림이 마스코트의 동작에 맞춰 바뀌는 순간이다. 그림 cue 는 그 획을 긋는 동작에 붙는다. */
 export type RealtimeImageCue =
   | 'HAT'
   | 'BRUSH'
-  | 'CHARGE'
-  | 'PUMP_1'
-  | 'PUMP_2'
-  | 'CONTOUR'
-  | 'HATCH'
-  | 'LASH'
+  | 'WINDOW'
+  | 'MULLION_V'
+  | 'MULLION_H'
+  | 'OUTLINE'
   | 'EXHALE'
-  | 'HALO'
-  | 'BOB'
+  | 'RINSE_1'
+  | 'NIGHT'
+  | 'HAIR'
   | 'FACE'
-  | 'CHEEK'
-  | 'SCARF'
+  | 'EYE'
   | 'PONDER'
   | 'IDEA'
-  | 'FLIP'
-  | StarCue
-  | 'CONNECT';
+  | 'RINSE_2'
+  | 'BEAM'
+  | 'CHEEK'
+  | 'SIGN'
+  | 'SHOWCASE'
+  | 'TURN'
+  | 'RINSE_3';
 
 // ---- 무대 ----
 
@@ -75,10 +84,7 @@ export const FLOOR = STAGE_HEIGHT - 0.07;
 export const MASCOT_HALF_WIDTH = (MASCOT_SIZE * MASCOT_WIDTH_RATIO) / 2;
 export const MASCOT_HEIGHT = MASCOT_SIZE * MASCOT_HEIGHT_RATIO;
 
-export const HOME = point(0.22, FLOOR);
-
-/** 첫 그림을 마치고 뛰어내려 숨을 고르는 자리다. */
-const RELIEF_SPOT = point(0.33, FLOOR);
+export const HOME = point(0.2, FLOOR);
 
 /** 붓을 집기 전 바닥에 누운 붓의 쥔 자리(무대 좌표)다. 붓털이 오른쪽을 향한다. */
 export const BRUSH_ON_FLOOR = point(0.33, FLOOR - 0.005);
@@ -89,19 +95,25 @@ export const BRUSH_ON_FLOOR = point(0.33, FLOOR - 0.005);
  * @param rotation 몸 회전(도)
  * @param scaleX 가로 찌그러짐
  * @param scaleY 세로 찌그러짐
+ * @param brush 몸 기준 붓 회전(도)
  * @returns 발끝 가운데로부터의 거리(무대 폭 단위)
  */
-export const brushTipOffset = (rotation = 0, scaleX = 1, scaleY = 1) =>
-  brushTipOffsetFor(MASCOT_SIZE, rotation, scaleX, scaleY);
+export const brushTipOffset = (
+  rotation = 0,
+  scaleX = 1,
+  scaleY = 1,
+  brush = 0,
+) => brushTipOffsetFor(MASCOT_SIZE, rotation, scaleX, scaleY, brush);
 
-/** 이젤에 세운 3:4 도화지다. 격자 한 칸은 무대 폭의 0.005 다. */
+/** 이젤에 세운 4:3 가로 도화지다. 격자는 폭 84칸, 높이 63칸이다. */
 export const PAPER_GRID = 84;
-export const PAPER_WIDTH = 0.42;
+export const GRID_HEIGHT = 63;
+export const PAPER_WIDTH = 0.54;
 export const PAPER = {
-  left: 0.45,
-  top: 0.07,
-  right: 0.45 + PAPER_WIDTH,
-  bottom: 0.07 + (PAPER_WIDTH * 4) / 3,
+  left: 0.38,
+  top: 0.1,
+  right: 0.38 + PAPER_WIDTH,
+  bottom: 0.1 + (PAPER_WIDTH * GRID_HEIGHT) / PAPER_GRID,
 };
 
 /**
@@ -116,38 +128,6 @@ export const onPaper = (at: Point): Point =>
     PAPER.top + (at.y / PAPER_GRID) * PAPER_WIDTH,
   );
 
-/** 다 그린 그림을 거는 빨랫줄이다. 가운데가 sag 만큼 처진다. */
-export const CLOTHESLINE = { left: 0.04, right: 0.39, y: 0.115, sag: 0.03 };
-/** 빨랫줄에 걸린 그림의 폭(무대 폭 단위)과 걸리는 자리·기울기다. */
-export const HUNG_WIDTH = 0.07;
-export const HANG_SLOTS = [
-  { x: 0.115, tilt: -5 },
-  { x: 0.215, tilt: 3 },
-  { x: 0.315, tilt: -2 },
-];
-
-/**
- * 빨랫줄 위 x 자리의 높이를 반환한다.
- *
- * @param x 무대 폭 단위 가로 좌표
- * @returns 빨랫줄 높이
- */
-export function clotheslineY(x: number): number {
-  const t = (x - CLOTHESLINE.left) / (CLOTHESLINE.right - CLOTHESLINE.left);
-
-  return CLOTHESLINE.y + 4 * CLOTHESLINE.sag * t * (1 - t);
-}
-
-/**
- * 붓길의 시작점이나 끝점을 무대 좌표로 반환한다.
- *
- * @param stroke 붓길
- * @param end 끝점이면 true
- * @returns 무대 좌표
- */
-const tip = (stroke: Stroke, end = false) =>
-  brushAt(strokeAt(stroke, end ? 1 : 0));
-
 /**
  * 바로 선 마스코트의 붓털 끝이 도화지 격자 at 에 닿는 발끝 자리를 반환한다.
  *
@@ -161,64 +141,64 @@ function brushAt(at: Point): Point {
   return point(target.x - offset.x, target.y - offset.y);
 }
 
-/** 첫 그림. 연필 한 줄로 어깨에서 목·턱·입술·코·이마를 지나 머리 뒤로 흘러내리는 긴 머리 옆얼굴이다. */
-export const SKETCH_CONTOUR = parseStroke(
-  'M70,96 Q60,82 48,78 L48,65.5 L52,64.5 Q58,62 56,57.5 Q58.5,55.5 56.5,53 Q58.5,51 56,48.5 L60,46 L54,35 Q55,28 50,22 C44,12 28,12 22,24 C16,38 20,52 15,64 C11,76 18,86 13,98',
-);
-/** 머리카락 한 가닥을 아래에서 위로 쓸어 올린 뒤, 머리카락 결을 지그재그로 휘갈긴다. */
-export const SKETCH_HATCH = parseStroke(
-  'M20,94 C24,84 18,74 21,64 C24,54 20,40 26,30 L34,24 L22,34 L35,30 L21,42 L34,39 L20,50 L31,48 L19,57',
-);
-/** 감은 눈의 속눈썹이다. */
-export const SKETCH_LASH = parseStroke('M46,40 Q49.5,42.6 53,40.2');
+/**
+ * 붓길의 시작점이나 끝점을 그리는 발끝 자리로 반환한다.
+ *
+ * @param stroke 붓길
+ * @param end 끝점이면 true
+ * @returns 무대 좌표
+ */
+const tip = (stroke: Stroke, end = false) =>
+  brushAt(strokeAt(stroke, end ? 1 : 0));
 
-/** 둘째 그림. 반대쪽을 보는 단발 인물의 머리 윤곽을 굵은 붓으로 한 번에 쓴다. */
-export const WATERCOLOR_HALO = point(44, 46);
-export const WATERCOLOR_BOB = parseStroke(
-  'M32,62 C28,63 25,60 26,54 C19,36 26,19 44,19 C60,19 69,33 64,54 C65,60 62,63 58,62',
-);
-export const WATERCOLOR_FACE = parseStroke(
-  'M31,33 Q30,40 26,45 L31,47 Q30,52 34,55 Q38,61 45,61 Q54,61 58,54',
-);
-export const WATERCOLOR_CHEEK = point(39, 49);
-export const WATERCOLOR_SCARF = parseStroke('M27,71 C38,64 56,64 67,70');
+// ---- 그림 ----
 
-/** 셋째 그림. 검은 종이에 별을 밟아 찍는 순서와 그 순간이다. 첫 별은 종이를 뒤집으며 내려앉는 자리다. */
-export type StarCue =
-  | 'STAR_B'
-  | 'STAR_D'
-  | 'STAR_G'
-  | 'STAR_H'
-  | 'STAR_I'
-  | 'STAR_N'
-  | 'STAR_M'
-  | 'STAR_J'
-  | 'STAR_K'
-  | 'STAR_L';
-export type Star = { at: Point; cue: StarCue | 'FLIP'; big: boolean };
-export const STARS: Star[] = [
-  { at: point(44, 18), cue: 'FLIP', big: true },
-  { at: point(28, 27), cue: 'STAR_B', big: false },
-  { at: point(19, 45), cue: 'STAR_D', big: true },
-  { at: point(26, 61), cue: 'STAR_G', big: true },
-  { at: point(33, 68), cue: 'STAR_H', big: false },
-  { at: point(18, 90), cue: 'STAR_I', big: false },
-  { at: point(66, 90), cue: 'STAR_N', big: false },
-  { at: point(54, 64), cue: 'STAR_M', big: false },
-  { at: point(62, 30), cue: 'STAR_J', big: false },
-  { at: point(66, 42), cue: 'STAR_K', big: true },
-  { at: point(76, 66), cue: 'STAR_L', big: true },
-];
-/** 별을 다 찍은 뒤 잇는 선이다. 옆얼굴, 머리 뒤, 포니테일 순서로 긋는다. */
-export const CONSTELLATION_LINES = [
-  parseStroke(
-    'M44,18 Q32,18 28,27 Q26,31 27,36 L19,45 L25,47.5 Q22.5,50 24.5,52 Q22.5,54.5 25,56 Q24,59 26,61 Q29,65 33,68 L18,90',
-  ),
-  parseStroke('M44,18 Q56,19 62,30 Q65,35 66,42 Q62,55 54,64 L66,90'),
-  parseStroke('M66,42 Q79,47 76,66'),
-];
-/** 별자리를 이을 때 깜빡 떠오르는 눈 별이다. */
-export const CONSTELLATION_EYE = point(29, 39);
+/** 밑그림. 창턱을 긋고 오른쪽 창틀을 올라 아치를 넘어 왼쪽 창틀로 내려온다. */
+export const WINDOW = parseStroke(
+  'M4,54 L47,54 L47,26 C47,15 38,9 28,9 C18,9 9,15 9,26 L9,54',
+);
+/** 창살 십자다. */
+export const MULLION_V = parseStroke('M28,10 L28,53');
+export const MULLION_H = parseStroke('M10,32 L46,32');
+/**
+ * 창 쪽 어깨에서 턱 밑을 지나 얼굴 앞선을 타고 이마, 정수리, 뒤통수, 목덜미를 거쳐 등 쪽 어깨로 흐르는 인물
+ * 윤곽이다. 동그란 머리와 대칭 어깨로 그리면 사람 아이콘처럼 보여 옆모습의 비대칭 선으로 잡는다.
+ */
+export const OUTLINE = parseStroke(
+  'M53,63 C54,53 59,46 63,44 C61,40 58,36 58,30 C58,21 63,16 68,16 C74,16 76,22 75,28 C74,34 70,38 71,41 C77,44 80,52 81,63',
+);
+
+/** 밑칠. 창틀 안쪽이다. 밤은 이 안에만 칠한다. */
+export const PANE =
+  'M10,53 L10,26 C10,16 18,10 28,10 C38,10 46,16 46,26 L46,53 Z';
+/** 칠하지 않고 남겨 둔 달과, 그 위를 밤 색으로 덮어 초승달로 만드는 원이다. */
+export const MOON = { at: point(20, 21), radius: 4.2 };
+export const MOON_SHADOW = { at: point(22.2, 19.6), radius: 3.6 };
+/** 창 안을 위에서 아래로 넓은 붓으로 세 번 쓸어 내리는 지그재그다. */
+export const NIGHT = parseStroke('M15,17 L41,14 L11,30 L45,28 L11,46 L45,45');
+
+/** 인물. 이마에서 정수리를 넘어 등 뒤로 흘러내리는 머리카락이다. */
+export const HAIR = parseStroke(
+  'M59,20 C61,14 71,13 74,19 C77,25 74,33 77,40 C79,46 77,50 80,54',
+);
+/** 창 쪽을 보는 옆얼굴의 이마, 코, 입술, 턱이다. */
+export const FACE = parseStroke(
+  'M59.5,21 Q57,24.5 58,27.5 L55.5,29.5 Q57.5,30.5 57.5,31.5 Q57,33 58.5,33.5 Q59.5,37 63.5,38.5',
+);
+/** 감은 눈이다. */
+export const EYE = parseStroke('M59.2,25.8 Q60.8,27 62.4,26');
+
+/** 마무리. 창 위쪽에서 인물 쪽으로 쏟아지는 달빛의 가운데 줄과 가장자리다. */
+export const BEAM = parseStroke('M40,13 L69,63');
+export const BEAM_EDGES = {
+  top: [point(36, 13), point(44, 13)],
+  bottom: [point(56, 63), point(82, 63)],
+};
+export const CHEEK_AT = point(61, 31);
+/** 오른쪽 아래 사인이다. */
+export const SIGN = parseStroke(
+  'M71,59.5 Q72.5,56.5 74,59 Q75.5,61 77,58.5 L79,59.8',
+);
 
 // ---- 낱동작 ----
 
@@ -237,28 +217,31 @@ const smooth = (t: number) => {
 };
 
 /**
- * 바닥에 깊게 웅크려 부르르 떨며 힘을 모았다가 풀린다. 눈은 `> <` 로 힘준다.
+ * 동작의 붓 회전만 바꾼다.
  *
- * @param millis 길이
- * @param at 서 있는 자리
- * @returns 동작
+ * @param move 동작
+ * @param brush 진행 → 몸 기준 붓 회전(도)
+ * @returns 붓 회전을 바꾼 동작
  */
-const charge = (millis: number, at: Point): Move => ({
-  millis,
-  pose: (f) => {
-    const hold = f < 0.25 ? smooth(f / 0.25) : 1 - smooth((f - 0.82) / 0.18);
-    const shiver = Math.sin((2 * PI * f * millis) / 45) * 0.0035 * hold;
-
-    return pose(at.x + shiver, at.y, {
-      scaleX: 1 + 0.14 * hold,
-      scaleY: 1 - 0.17 * hold,
-      eyes: 'focus',
-    });
-  },
+const withBrush = <C extends string>(
+  move: Move<C>,
+  brush: (f: number) => number,
+): Move<C> => ({
+  ...move,
+  pose: (f) => ({ ...move.pose(f), brush: brush(f) }),
 });
 
 /**
- * 숨을 내쉬듯 천천히 납작해지며 웃는 눈으로 감는다.
+ * 획을 마치고 붓을 뗄 때 털 끝이 위로 톡 튀었다가 스프링처럼 제자리로 돌아오는 붓 회전이다.
+ *
+ * @param amount 가장 크게 튀는 각도(도)
+ * @returns 진행 → 붓 회전
+ */
+const flick = (amount: number) => (f: number) =>
+  -amount * Math.exp(-5 * f) * Math.sin(3 * PI * f);
+
+/**
+ * 숨을 내쉬듯 천천히 납작해지며 웃는 눈으로 감는다. 그동안 붓은 어깨에 기대듯 위로 세웠다가 내린다.
  *
  * @param millis 길이
  * @param at 서 있는 자리
@@ -275,6 +258,7 @@ const exhale = (millis: number, at: Point): Move => ({
       rotation: -3 * Math.sin(PI * f),
       look: point(-0.4, 0.2),
       eyes: 'smile',
+      brush: -140 * smooth(f / 0.3) * (1 - smooth((f - 0.7) / 0.3)),
     });
   },
 });
@@ -300,7 +284,7 @@ const perk = (millis: number, at: Point): Move => ({
 });
 
 /**
- * 빨랫줄의 그림을 올려다보며 고개를 왼쪽, 오른쪽으로 갸웃거린다.
+ * 도화지를 올려다보며 고개를 왼쪽, 오른쪽으로 갸웃거린다.
  *
  * @param millis 길이
  * @param at 서 있는 자리
@@ -308,27 +292,71 @@ const perk = (millis: number, at: Point): Move => ({
  */
 const ponder = (millis: number, at: Point): Move => ({
   millis,
-  pose: (f) =>
-    pose(at.x, at.y, {
+  pose: (f) => {
+    const sway = Math.sin(2 * PI * f);
+
+    // 물그릇 쪽(오른쪽)으로는 얕게 기울여 붓털이 물그릇에 닿지 않게 한다.
+    return pose(at.x, at.y, {
       scaleY: 1 + 0.015 * Math.sin(4 * PI * f),
-      rotation: -10 * Math.sin(2 * PI * f),
-      look: point(-0.5 + 0.3 * Math.sin(2 * PI * f), -0.9),
-    }),
+      rotation: sway > 0 ? -8 * sway : -3 * sway,
+      look: point(0.6 + 0.3 * sway, -0.9),
+    });
+  },
 });
+
+/** 헹굴 때 붓을 기울이는 각도와 몸이 찌그러지는 정도다. 붓털 끝이 발치 물그릇에 잠긴다. */
+const RINSE_BRUSH = 60;
+const RINSE_SCALE_X = 1.08;
+const RINSE_SCALE_Y = 0.9;
+
+/**
+ * 집 자리에서 몸을 낮추며 붓털 끝을 발치 물그릇에 담그고 좌우로 두 번 흔든 뒤 든다.
+ *
+ * @param millis 길이
+ * @returns 동작
+ */
+const rinse = (millis: number): Move => ({
+  millis,
+  pose: (f) => {
+    const dip = Math.sin(PI * f);
+    const swish = Math.sin(4 * PI * f) * dip;
+
+    return pose(HOME.x, HOME.y, {
+      scaleX: 1 + (RINSE_SCALE_X - 1) * dip,
+      scaleY: 1 - (1 - RINSE_SCALE_Y) * dip,
+      look: point(0.9, 0.9),
+      brush: RINSE_BRUSH * dip + 6 * swish,
+    });
+  },
+});
+
+const RINSE_TIP = brushTipOffset(0, RINSE_SCALE_X, RINSE_SCALE_Y, RINSE_BRUSH);
+
+/** 집 자리 발치의 물그릇이다. 헹굴 때 붓털 끝이 닿는 자리를 가운데로 두고, rim 아래가 물이다. */
+export const BOWL = {
+  x: HOME.x + RINSE_TIP.x,
+  halfWidth: 0.024,
+  rim: FLOOR - 0.017,
+};
 
 /**
  * 도화지 붓길을 붓털 끝으로 따라 긋는다.
  *
  * @param millis 길이
  * @param stroke 도화지 격자 좌표 붓길
- * @param scribble 휘갈기기면 true
+ * @param options 붓질 선택 값
  * @returns 동작
  */
-const trace = (millis: number, stroke: Stroke, scribble = false) =>
-  paintAlong(millis, stroke, onPaper, MASCOT_SIZE, scribble);
+const trace = (millis: number, stroke: Stroke, options: PaintOptions) =>
+  paintAlong(millis, stroke, onPaper, MASCOT_SIZE, options);
+
+/** 연필처럼 가는 선, 넓게 눌러 칠하는 밑칠, 굵은 붓결이다. 천천히 그어 끌림도 얕게 둔다. */
+const PENCIL: PaintOptions = { lean: 14 };
+const WASH: PaintOptions = { lean: 20, press: 1 };
+const BRUSHY: PaintOptions = { lean: 18, press: 0.7 };
 
 /**
- * 붓길 사이를 짧게 건너뛴다.
+ * 붓길 사이를 짧게 건너뛰며 뗀 붓을 톡 튕긴다.
  *
  * @param millis 길이
  * @param from 뛰는 자리(무대 좌표)
@@ -336,31 +364,50 @@ const trace = (millis: number, stroke: Stroke, scribble = false) =>
  * @returns 동작
  */
 const hop = (millis: number, from: Point, to: Point) =>
-  leap(millis, from, to, 0.025);
+  withBrush(leap(millis, from, to, 0.02), flick(16));
+
+/**
+ * 붓털 끝으로 도화지를 콕 찍는다. 몸을 낮추는 동안 붓털이 눌린다.
+ *
+ * @param millis 길이
+ * @param at 발끝 자리(무대 좌표)
+ * @returns 동작
+ */
+const dab = (millis: number, at: Point): Move => {
+  const move = crouch(millis, at, 0.9, point(0.7, 0.6));
+
+  return {
+    millis,
+    pose: (f) => ({ ...move.pose(f), press: Math.sin(PI * f) }),
+  };
+};
+
+/**
+ * 완성한 그림을 반짝이는 눈으로 올려다보며 붓을 높이 들었다 내린다.
+ *
+ * @param millis 길이
+ * @param at 서 있는 자리
+ * @returns 동작
+ */
+const admire = (millis: number, at: Point): Move => ({
+  millis,
+  pose: (f) => {
+    const lift = Math.sin(PI * f);
+
+    return pose(at.x, at.y, {
+      scaleX: 1 - 0.04 * lift,
+      scaleY: 1 + 0.06 * lift,
+      look: point(0.7, -0.8),
+      eyes: 'sparkle',
+      brush: -150 * smooth(f / 0.3) * (1 - smooth((f - 0.75) / 0.25)),
+    });
+  },
+});
 
 // ---- 막 ----
 
-const halo = brushAt(WATERCOLOR_HALO);
-const cheek = brushAt(WATERCOLOR_CHEEK);
-const starAt = STARS.map((star) => brushAt(star.at));
+const cheek = brushAt(CHEEK_AT);
 const lookAtPaper = point(0.8, -0.2);
-const lookAtLine = point(-0.5, -0.9);
-
-/**
- * 별을 차례로 밟아 찍는 짧은 점프들이다. 첫 별에서 시작해 마지막 별에 내려앉는다.
- *
- * @returns 동작 목록
- */
-function starHops(): Move<RealtimeImageCue>[] {
-  const millis = [140, 150, 150, 120, 150, 260, 140, 170, 120, 160];
-
-  return STARS.slice(1).map((star, index) =>
-    withCue(
-      hop(millis[index], starAt[index], starAt[index + 1]),
-      star.cue as StarCue,
-    ),
-  );
-}
 
 /** 처음 한 번만 연기하는 준비 막이다. 떨어지는 베레모를 머리로 받고, 발치의 붓을 뛰어올라 낚아챈다. */
 const INTRO_ACTS: Act<RealtimeImageAct, RealtimeImageCue>[] = [
@@ -380,95 +427,109 @@ const INTRO_ACTS: Act<RealtimeImageAct, RealtimeImageCue>[] = [
 /** 붓을 낚아채는 순간이다. 점프의 이 비율에서 붓이 손에 들어온다. */
 export const BRUSH_CATCH = 0.65;
 
-const ACTS: Act<RealtimeImageAct, RealtimeImageCue>[] = [
-  {
-    kind: 'HYPE',
-    moves: [
-      withCue(charge(400, HOME), 'CHARGE'),
-      withEyes(withCue(leap(260, HOME, HOME, 0.05), 'PUMP_1'), 'focus'),
-      withEyes(crouch(110, HOME, 0.8), 'focus'),
-      withEyes(withCue(leap(320, HOME, HOME, 0.09), 'PUMP_2'), 'focus'),
-      withEyes(crouch(140, HOME, 1.1), 'focus'),
-      stand(70, HOME, lookAtPaper),
-    ],
-  },
+const ACTS: Act<LoopAct, RealtimeImageCue>[] = [
   {
     kind: 'SKETCH',
     moves: [
       stand(100, HOME, lookAtPaper),
-      crouch(130, HOME),
-      leap(360, HOME, tip(SKETCH_CONTOUR), 0.06),
-      withCue(trace(1220, SKETCH_CONTOUR), 'CONTOUR'),
-      hop(170, tip(SKETCH_CONTOUR, true), tip(SKETCH_HATCH)),
-      withCue(trace(760, SKETCH_HATCH, true), 'HATCH'),
-      hop(170, tip(SKETCH_HATCH, true), tip(SKETCH_LASH)),
-      withCue(trace(190, SKETCH_LASH), 'LASH'),
-      leap(400, tip(SKETCH_LASH, true), RELIEF_SPOT, 0.05),
+      crouch(140, HOME),
+      leap(420, HOME, tip(WINDOW), 0.045),
+      withCue(trace(1100, WINDOW, PENCIL), 'WINDOW'),
+      hop(260, tip(WINDOW, true), tip(MULLION_V)),
+      withCue(trace(340, MULLION_V, PENCIL), 'MULLION_V'),
+      hop(240, tip(MULLION_V, true), tip(MULLION_H)),
+      withCue(trace(300, MULLION_H, PENCIL), 'MULLION_H'),
+      hop(280, tip(MULLION_H, true), tip(OUTLINE)),
+      withCue(trace(720, OUTLINE, PENCIL), 'OUTLINE'),
+      withBrush(leap(420, tip(OUTLINE, true), HOME, 0.04), flick(24)),
     ],
   },
   {
     kind: 'RELIEF',
     moves: [
-      crouch(150, RELIEF_SPOT, 1.1),
-      withCue(exhale(650, RELIEF_SPOT), 'EXHALE'),
-      perk(200, RELIEF_SPOT),
-      stroll(350, RELIEF_SPOT, HOME, 2),
+      crouch(150, HOME, 1.1),
+      withCue(exhale(560, HOME), 'EXHALE'),
+      perk(200, HOME),
+      withCue(rinse(460), 'RINSE_1'),
     ],
   },
   {
-    kind: 'WATERCOLOR',
+    kind: 'WASH',
     moves: [
-      crouch(100, HOME),
-      leap(460, HOME, halo, 0.1, 1),
-      withCue(crouch(240, halo, 1.2), 'HALO'),
-      hop(150, halo, tip(WATERCOLOR_BOB)),
-      withCue(trace(640, WATERCOLOR_BOB), 'BOB'),
-      hop(170, tip(WATERCOLOR_BOB, true), tip(WATERCOLOR_FACE)),
-      withCue(trace(420, WATERCOLOR_FACE), 'FACE'),
-      hop(140, tip(WATERCOLOR_FACE, true), cheek),
-      withCue(crouch(170, cheek, 0.9), 'CHEEK'),
-      hop(150, cheek, tip(WATERCOLOR_SCARF)),
-      withCue(trace(320, WATERCOLOR_SCARF), 'SCARF'),
-      leap(420, tip(WATERCOLOR_SCARF, true), HOME, 0.08, -1),
       crouch(120, HOME),
+      leap(440, HOME, tip(NIGHT), 0.06),
+      withCue(trace(1140, NIGHT, WASH), 'NIGHT'),
+    ],
+  },
+  {
+    kind: 'FIGURE',
+    moves: [
+      hop(320, tip(NIGHT, true), tip(HAIR)),
+      withCue(trace(480, HAIR, BRUSHY), 'HAIR'),
+      hop(260, tip(HAIR, true), tip(FACE)),
+      withCue(trace(330, FACE, { lean: 8 }), 'FACE'),
+      hop(220, tip(FACE, true), tip(EYE)),
+      withCue(trace(220, EYE, { lean: 6 }), 'EYE'),
+      withBrush(leap(440, tip(EYE, true), HOME, 0.05), flick(24)),
+      crouch(130, HOME),
     ],
   },
   {
     kind: 'DAYDREAM',
     moves: [
-      withCue(ponder(760, HOME), 'PONDER'),
-      stand(120, HOME, lookAtLine),
-      withCue(leap(280, HOME, HOME, 0.07), 'IDEA'),
-      crouch(140, HOME),
-      stand(100, HOME, lookAtPaper),
-    ],
-  },
-  {
-    kind: 'CONSTELLATION',
-    moves: [
-      stand(70, HOME, lookAtPaper),
-      crouch(100, HOME, 1.1),
-      withCue(leap(520, HOME, starAt[0], 0.07, 1), 'FLIP'),
-      ...starHops(),
+      withCue(ponder(640, HOME), 'PONDER'),
+      stand(90, HOME, lookAtPaper),
+      // 번뜩여 뛰어오르며 붓을 손끝에서 한 바퀴 돌린다.
       withCue(
-        stand(400, starAt[starAt.length - 1], point(-0.6, 0.6)),
-        'CONNECT',
+        withBrush(leap(320, HOME, HOME, 0.06), (f) => -360 * smooth(f)),
+        'IDEA',
       ),
-      leap(420, starAt[starAt.length - 1], HOME, 0.06),
-      crouch(130, HOME, 1.1),
+      crouch(130, HOME),
+      withCue(rinse(460), 'RINSE_2'),
     ],
   },
   {
-    kind: 'RESET',
-    moves: [withEyes(idle(1000, HOME, [lookAtLine]), 'smile')],
+    kind: 'FINISH',
+    moves: [
+      crouch(110, HOME, 1.1),
+      leap(440, HOME, tip(BEAM), 0.05),
+      withCue(trace(560, BEAM, WASH), 'BEAM'),
+      hop(280, tip(BEAM, true), cheek),
+      withCue(dab(220, cheek), 'CHEEK'),
+      hop(280, cheek, tip(SIGN)),
+      withCue(trace(380, SIGN, { lean: 12 }), 'SIGN'),
+    ],
+  },
+  {
+    kind: 'SHOWCASE',
+    moves: [
+      withBrush(leap(460, tip(SIGN, true), HOME, 0.06), flick(30)),
+      crouch(150, HOME, 1.1),
+      withCue(admire(900, HOME), 'SHOWCASE'),
+    ],
+  },
+  {
+    kind: 'PAGE_TURN',
+    moves: [
+      withCue(idle(760, HOME, [point(0.7, -0.9)]), 'TURN'),
+      withCue(rinse(460), 'RINSE_3'),
+    ],
   },
 ];
 
 const intro = createChoreography(INTRO_ACTS);
 const loop = createChoreography(ACTS);
 const INTRO_CUES = new Set<RealtimeImageCue>(['HAT', 'BRUSH']);
+const ORDER = ACTS.map((act) => act.kind);
+const CUE_ACT = new Map<RealtimeImageCue, LoopAct>(
+  ACTS.flatMap((act) =>
+    act.moves.flatMap((move) =>
+      move.cue ? [[move.cue, act.kind] as const] : [],
+    ),
+  ),
+);
 
-/** 준비 막의 길이다. 이 시간이 지나면 아자아자부터 한 바퀴를 반복한다. */
+/** 준비 막의 길이다. 이 시간이 지나면 밑그림부터 한 바퀴를 반복한다. */
 export const REALTIME_IMAGE_INTRO_MILLIS = intro.loopMillis;
 export const REALTIME_IMAGE_LOOP_MILLIS = loop.loopMillis;
 
@@ -482,18 +543,6 @@ export function realtimeImageMoment(millis: number) {
   return millis < REALTIME_IMAGE_INTRO_MILLIS
     ? intro.momentAt(millis)
     : loop.momentAt(millis - REALTIME_IMAGE_INTRO_MILLIS);
-}
-
-/**
- * 반복하는 한 바퀴 안의 시각을 반환한다. 준비 막 동안에는 -1 이다.
- *
- * @param millis 무대가 시작된 뒤 흐른 시간
- * @returns 한 바퀴 안의 시각(ms)
- */
-export function loopTime(millis: number): number {
-  return millis < REALTIME_IMAGE_INTRO_MILLIS
-    ? -1
-    : (millis - REALTIME_IMAGE_INTRO_MILLIS) % REALTIME_IMAGE_LOOP_MILLIS;
 }
 
 /**
@@ -536,7 +585,7 @@ export const cueProgress = (cue: RealtimeImageCue, inAct: number) =>
  * @param kind 반복하는 막
  * @returns 시작 시각(ms)
  */
-export function actStart(kind: Exclude<RealtimeImageAct, 'GEAR_UP'>): number {
+export function actStart(kind: LoopAct): number {
   let start = 0;
 
   for (const act of ACTS) {
@@ -548,6 +597,79 @@ export function actStart(kind: Exclude<RealtimeImageAct, 'GEAR_UP'>): number {
   return start;
 }
 
-/** 동작 줄이기에서 멈춰 보일 장면이다. 크로키를 마치고 도화지 옆에 내려선 순간이다. */
+/**
+ * 그림 cue 의 획이 지금 얼마나 그려졌는지 알 수 있도록, 그 동작이 시작된 뒤 흐른 시간을 반환한다. 지난 막의
+ * 획은 다 그린 것으로 보고, 아직 오지 않은 막과 준비 막에서는 시작 전으로 본다. 한 장의 그림이 여러 막에
+ * 걸쳐 쌓이게 한다.
+ *
+ * @param cue 반복하는 막의 소품 신호
+ * @param act 지금 막
+ * @param actMillis 막 안의 시각
+ * @returns 흐른 시간(ms). 다 그렸으면 Infinity, 시작 전이면 -Infinity
+ */
+export function paintedFor(
+  cue: RealtimeImageCue,
+  act: RealtimeImageAct,
+  actMillis: number,
+): number {
+  const at = ORDER.indexOf(CUE_ACT.get(cue)!);
+  const now = act === 'GEAR_UP' ? -1 : ORDER.indexOf(act);
+
+  if (at < now) return Number.POSITIVE_INFINITY;
+
+  if (at > now) return Number.NEGATIVE_INFINITY;
+
+  return actMillis - loop.cueStart(cue);
+}
+
+export type PaintColor = 'PENCIL' | 'GRAY' | 'GREEN';
+
+/** 막마다 붓에 묻은 물감과, 그 막에서 헹군 뒤 바뀌는 물감이다. */
+const PAINT_BY_ACT: Record<
+  RealtimeImageAct,
+  [PaintColor] | [PaintColor, RealtimeImageCue, PaintColor]
+> = {
+  GEAR_UP: ['PENCIL'],
+  SKETCH: ['PENCIL'],
+  RELIEF: ['PENCIL', 'RINSE_1', 'GRAY'],
+  WASH: ['GRAY'],
+  FIGURE: ['GRAY'],
+  DAYDREAM: ['GRAY', 'RINSE_2', 'GREEN'],
+  FINISH: ['GREEN'],
+  SHOWCASE: ['GREEN'],
+  PAGE_TURN: ['GREEN', 'RINSE_3', 'PENCIL'],
+};
+
+/**
+ * 붓털에 묻은 물감을 반환한다. 헹구는 동작의 한가운데를 지나면 다음 층의 물감으로 바뀐다.
+ *
+ * @param act 지금 막
+ * @param actMillis 막 안의 시각
+ * @returns 붓털 물감
+ */
+export function paintColorAt(
+  act: RealtimeImageAct,
+  actMillis: number,
+): PaintColor {
+  const [before, rinseCue, after] = PAINT_BY_ACT[act];
+
+  if (!rinseCue || !after) return before;
+
+  return actMillis >= loop.cueStart(rinseCue) + loop.cueMillis(rinseCue) / 2
+    ? after
+    : before;
+}
+
+/** 무대 시작부터 사인을 마치는 시각이다. */
+export const REALTIME_IMAGE_FINISH_MILLIS =
+  REALTIME_IMAGE_INTRO_MILLIS +
+  actStart('FINISH') +
+  cueStart('SIGN') +
+  cueMillis('SIGN');
+
+/** 동작 줄이기에서 멈춰 보일 장면이다. 완성한 그림을 반짝이는 눈으로 올려다보는 순간이다. */
 export const REALTIME_IMAGE_STILL_MILLIS =
-  REALTIME_IMAGE_INTRO_MILLIS + actStart('RELIEF') + 150;
+  REALTIME_IMAGE_INTRO_MILLIS +
+  actStart('SHOWCASE') +
+  cueStart('SHOWCASE') +
+  cueMillis('SHOWCASE') * 0.5;
