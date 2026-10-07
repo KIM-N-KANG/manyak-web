@@ -22,6 +22,7 @@ import {
   buildLoginUrl,
   resolveLoginCallbackUrl,
 } from '@/features/auth/_shared/utils/login-callback-url';
+import { abandonPendingLogin } from '@/features/auth/_shared/utils/signup-consent-client';
 import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { track } from '@/observability/analytics';
@@ -44,6 +45,7 @@ export function LoginScreen() {
       return;
     }
 
+    abandonPendingLogin();
     track('client_login_oauthError_shown', {
       error_code: errorCode,
       provider: null,

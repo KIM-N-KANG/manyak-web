@@ -44,12 +44,13 @@ import { useCloseOnBack } from '@/hooks/use-close-on-back';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
 import { SIGNUP_CONSENT_ERROR } from '@/lib/auth/signup-consent';
 import { FetchError, getApiErrorCode } from '@/lib/custom-fetch';
+import { cn } from '@/lib/utils';
 
 type ConsentNotice = keyof typeof CONSENT_SHEET_COPY.error | null;
 
 /**
  * 가입 동의 시트의 결과. 성공(`completed`)이면 새 세션의 회원과 광고 동의 답을 넘기고,
- * 다시 로그인해야 하는 실패(`expired`, `outdated`)와 뒤로가기 취소(`cancelled`)는
+ * 다시 로그인해야 하는 실패(`expired`, `outdated`)와 로그아웃·뒤로가기 취소(`cancelled`)는
  * 게이트가 대기를 비우고 게스트로 돌린다.
  */
 export type SignupSettlement =
@@ -99,11 +100,11 @@ const DOCUMENT_LINKS: Partial<
 
 /**
  * 필수 동의 시트의 체크·제출·로그아웃 상태를 관리하는 훅. 가입 모드에서는 제출이
- * 가입 완료(Credentials)로, 뒤로가기가 로그아웃 대신 가입 취소로 바뀐다.
+ * 가입 완료(Credentials)로, 로그아웃이 가입 취소로 바뀐다.
  * 체크 상태는 서버가 요구하는 버전 묶음에 매여 있어, 버전 불일치로 다시 조회해 요구
  * 버전이 바뀌면 체크가 저절로 초기화된다(자동 재전송 없음). 기록 응답에서 필수 항목의
- * `needsConsent`가 모두 false일 때만 완료로 반영한다. 시트가 열린 동안 뒤로가기는 동의하지 않은
- * 것으로 보고 `logout`으로 이어진다(제출 중에는 무시).
+ * `needsConsent`가 모두 false일 때만 완료로 반영한다. 시트가 열린 동안 로그아웃 버튼과 뒤로가기는
+ * 동의하지 않은 것으로 보고 `logout`으로 이어진다(제출 중에는 무시).
  *
  * @param options 필요 항목, 기록 성공 반영 콜백, 최신 상태 재조회 콜백
  * @returns 체크 상태·토글·제출·로그아웃 핸들러와 진행·오류 상태
@@ -241,7 +242,7 @@ function useConsentForm({
     });
   };
 
-  // 뒤로가기는 동의하지 않은 것으로 본다. 가입 모드는 세션이 없으므로 가입만 취소한다.
+  // 로그아웃 버튼과 뒤로가기는 동의하지 않은 것으로 본다. 가입 모드는 세션이 없으므로 가입만 취소한다.
   const logout = () => {
     if (isLocked) {
       return;
@@ -431,12 +432,15 @@ export function ConsentSheet({
                 {CONSENT_SHEET_COPY.retry}
               </Button>
             )}
-            {phase === 'forbidden' && (
+            {isOpen && (
               <Button
                 type="button"
-                variant="outline"
+                variant={phase === 'forbidden' ? 'outline' : 'ghost'}
                 size="lg"
-                className="relative w-full"
+                className={cn(
+                  'relative w-full',
+                  phase !== 'forbidden' && 'text-foreground-secondary',
+                )}
                 disabled={form.isLocked}
                 onClick={form.logout}>
                 <LoadingButtonContent
