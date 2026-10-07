@@ -174,46 +174,46 @@ export const usePurchase = <
 > => {
   return useMutation(getPurchaseMutationOptions(options), queryClient);
 };
-export type createResponse201 = {
+export type create1Response201 = {
   data: CreateCreditOrderResponse;
   status: 201;
 };
 
-export type createResponse400 = {
+export type create1Response400 = {
   data: ApiErrorResponse;
   status: 400;
 };
 
-export type createResponse401 = {
+export type create1Response401 = {
   data: ApiErrorResponse;
   status: 401;
 };
 
-export type createResponse403 = {
+export type create1Response403 = {
   data: ApiErrorResponse;
   status: 403;
 };
 
-export type createResponse503 = {
+export type create1Response503 = {
   data: ApiErrorResponse;
   status: 503;
 };
 
-export type createResponseSuccess = createResponse201 & {
+export type create1ResponseSuccess = create1Response201 & {
   headers: Headers;
 };
-export type createResponseError = (
-  | createResponse400
-  | createResponse401
-  | createResponse403
-  | createResponse503
+export type create1ResponseError = (
+  | create1Response400
+  | create1Response401
+  | create1Response403
+  | create1Response503
 ) & {
   headers: Headers;
 };
 
-export type createResponse = createResponseSuccess | createResponseError;
+export type create1Response = create1ResponseSuccess | create1ResponseError;
 
-export const getCreateUrl = () => {
+export const getCreate1Url = () => {
   return `/api/v1/users/me/credits/orders`;
 };
 
@@ -221,11 +221,11 @@ export const getCreateUrl = () => {
  * PENDING 주문과 그로블 결제창 URL을 반환합니다. 주문 생성만으로 이프를 적립하지 않습니다.
  * @summary 웹 이프 충전 주문 생성
  */
-export const create = async (
+export const create1 = async (
   createCreditOrderRequest: CreateCreditOrderRequest,
   options?: RequestInit,
-): Promise<createResponse> => {
-  return customInstance<createResponse>(getCreateUrl(), {
+): Promise<create1Response> => {
+  return customInstance<create1Response>(getCreate1Url(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -233,24 +233,24 @@ export const create = async (
   });
 };
 
-export const getCreateMutationOptions = <
+export const getCreate1MutationOptions = <
   TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof create1>>,
     TError,
     { data: BodyType<CreateCreditOrderRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof create1>>,
   TError,
   { data: BodyType<CreateCreditOrderRequest> },
   TContext
 > => {
-  const mutationKey = ['create'];
+  const mutationKey = ['create1'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -260,33 +260,33 @@ export const getCreateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof create1>>,
     { data: BodyType<CreateCreditOrderRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return create(data, requestOptions);
+    return create1(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof create>>
+export type Create1MutationResult = NonNullable<
+  Awaited<ReturnType<typeof create1>>
 >;
-export type CreateMutationBody = BodyType<CreateCreditOrderRequest>;
-export type CreateMutationError = ErrorType<ApiErrorResponse>;
+export type Create1MutationBody = BodyType<CreateCreditOrderRequest>;
+export type Create1MutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 웹 이프 충전 주문 생성
  */
-export const useCreate = <
+export const useCreate1 = <
   TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof create>>,
+      Awaited<ReturnType<typeof create1>>,
       TError,
       { data: BodyType<CreateCreditOrderRequest> },
       TContext
@@ -295,12 +295,12 @@ export const useCreate = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof create1>>,
   TError,
   { data: BodyType<CreateCreditOrderRequest> },
   TContext
 > => {
-  return useMutation(getCreateMutationOptions(options), queryClient);
+  return useMutation(getCreate1MutationOptions(options), queryClient);
 };
 export type claimAttendanceResponse200 = {
   data: CreditAttendanceResponse;

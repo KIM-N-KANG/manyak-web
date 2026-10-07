@@ -68,4 +68,6 @@ export interface UpdateStoryRequest {
    * @nullable
    */
   characters?: GeneralCharacterInput[] | null;
+  /** @nullable */
+  protagonistName?: string | null;
 }

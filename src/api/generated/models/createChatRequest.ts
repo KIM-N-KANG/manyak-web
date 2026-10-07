@@ -17,4 +17,6 @@ export interface CreateChatRequest {
    * @nullable
    */
   startSettingId?: string | null;
+  /** @nullable */
+  personaId?: string | null;
 }
