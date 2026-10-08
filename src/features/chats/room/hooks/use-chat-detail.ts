@@ -39,7 +39,6 @@ export function useChatDetail(chatId: string) {
     prologue: detail?.prologue ?? '',
     turns: (detail?.turns ?? []) as ChatTurnResponse[],
     suggestedInputs: detail?.suggestedInputs ?? [],
-    personaName: detail?.persona?.name?.trim() || null,
     isLoading: query.isPending,
     isError: query.isError,
     isForbidden,
