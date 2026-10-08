@@ -45,6 +45,15 @@ const consentDialog = (page: Page) =>
 const submitButton = (page: Page) =>
   consentDialog(page).getByRole('button', { name: CONSENT_SHEET_COPY.submit });
 
+const logoutButton = (page: Page) =>
+  consentDialog(page).getByRole('button', { name: CONSENT_SHEET_COPY.logout });
+
+/** 동의하지 않고 시트를 떠나는 두 경로. 둘 다 같은 결과여야 한다. */
+const LEAVE_SHEET = [
+  ['뒤로가기를 누르면', (page: Page) => page.goBack()],
+  ['로그아웃 버튼을 누르면', (page: Page) => logoutButton(page).click()],
+] as const;
+
 /**
  * next-auth signOut 파이프라인(csrf → signout)을 목킹하고, 로그아웃 뒤에는 세션 조회가
  * 게스트(null)를 응답하게 한다. 회원 세션 목보다 나중에 등록해야 우선한다.
@@ -163,10 +172,8 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     }
 
     await expect(submitButton(page)).toBeDisabled();
-    // 동의 없이 나가는 버튼은 두지 않는다. 탭을 닫으면 다음 진입에서 로그아웃된다.
-    await expect(
-      dialog.getByRole('button', { name: CONSENT_SHEET_COPY.logout }),
-    ).toHaveCount(0);
+    // 동의하지 않는 출구는 제출 아래의 로그아웃 버튼이다.
+    await expect(logoutButton(page)).toBeEnabled();
     await expect(
       dialog.locator('[data-slot="drawer-swipe-handle"]'),
     ).toHaveCount(0);
@@ -299,35 +306,39 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     ).toBe(true);
   });
 
-  test('동의 시트가 열린 채 뒤로가기를 누르면 동의하지 않은 것으로 보고 새로고침 없이 로그아웃한다', async ({
-    page,
-  }) => {
-    await mockMemberSession(page);
-    await seedPendingLogin(page);
-    await page.route(CONSENTS, (route) =>
-      route.fulfill({ json: PENDING_CONSENTS }),
-    );
+  for (const [action, leave] of LEAVE_SHEET) {
+    test(`동의 시트가 열린 채 ${action} 동의하지 않은 것으로 보고 새로고침 없이 로그아웃한다`, async ({
+      page,
+    }) => {
+      await mockMemberSession(page);
+      await seedPendingLogin(page);
+      await page.route(CONSENTS, (route) =>
+        route.fulfill({ json: PENDING_CONSENTS }),
+      );
 
-    const signOut = await mockSignOut(page);
+      const signOut = await mockSignOut(page);
 
-    await page.goto(APP_PATH.MAIN.STUDIO);
-    await expect(consentDialog(page)).toBeVisible();
-    await page.evaluate(() => {
-      (window as { keepAlive?: boolean }).keepAlive = true;
+      await page.goto(APP_PATH.MAIN.STUDIO);
+      await expect(consentDialog(page)).toBeVisible();
+      await page.evaluate(() => {
+        (window as { keepAlive?: boolean }).keepAlive = true;
+      });
+
+      await leave(page);
+
+      await expect.poll(() => signOut.count).toBe(1);
+      await expect(consentDialog(page)).toBeHidden();
+      await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+      await expect(
+        page.getByRole('banner').getByRole('link', { name: '로그인' }),
+      ).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => (window as { keepAlive?: boolean }).keepAlive,
+        ),
+      ).toBe(true);
     });
-
-    await page.goBack();
-
-    await expect.poll(() => signOut.count).toBe(1);
-    await expect(consentDialog(page)).toBeHidden();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-    await expect(
-      page.getByRole('banner').getByRole('link', { name: '로그인' }),
-    ).toBeVisible();
-    expect(
-      await page.evaluate(() => (window as { keepAlive?: boolean }).keepAlive),
-    ).toBe(true);
-  });
+  }
 
   test('버전 불일치면 자동 재전송 없이 최신 버전을 다시 표시하고 체크를 초기화한다', async ({
     page,
@@ -504,6 +515,10 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     });
 
     await expect(dialog).toBeVisible();
+    // 재시도 외에 동의하지 않고 떠날 출구도 둔다.
+    await expect(
+      dialog.getByRole('button', { name: CONSENT_SHEET_COPY.logout }),
+    ).toBeEnabled();
     await dialog
       .getByRole('button', { name: CONSENT_SHEET_COPY.retry })
       .click();
@@ -748,24 +763,76 @@ test.describe('동의 전 가입 대기(세션 없음)', () => {
     await expect.poll(() => signIn.bodies.length).toBe(2);
   });
 
-  test('시트가 열린 채 뒤로가기를 누르면 가입을 취소하고 로그아웃 없이 게스트로 남는다', async ({
+  for (const [action, leave] of LEAVE_SHEET) {
+    test(`시트가 열린 채 ${action} 가입을 취소하고 로그아웃 없이 게스트로 남는다`, async ({
+      page,
+    }) => {
+      await seedPendingLogin(page);
+
+      const signupConsent = await mockSignupConsent(page, SIGNUP_PENDING);
+      const signOut = await mockSignOut(page);
+
+      await page.goto(APP_PATH.MAIN.STUDIO);
+      await expect(consentDialog(page)).toBeVisible();
+
+      await leave(page);
+
+      await expect(consentDialog(page)).toBeHidden();
+      await expect.poll(() => signupConsent.delete).toBe(1);
+      expect(signOut.count).toBe(0);
+      await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+      await expect.poll(() => readPendingLogin(page)).toBeNull();
+    });
+  }
+
+  test('시트를 마치지 않고 떠났다가 뒤로가기로 돌아오면 가입을 취소하고 시트를 다시 띄우지 않는다', async ({
     page,
   }) => {
+    // Chrome은 사용자 조작 없이 시트를 연 화면을 뒤로가기 버튼에서 건너뛰어 OAuth 화면으로 보낸다.
+    // 그 화면에서 다시 돌아오는 히스토리 이동 재진입을 재현한다. 탭 표시는 init script가 다시 심는다.
     await seedPendingLogin(page);
 
     const signupConsent = await mockSignupConsent(page, SIGNUP_PENDING);
-    const signOut = await mockSignOut(page);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
     await expect(consentDialog(page)).toBeVisible();
+    await page.goto('about:blank');
 
     await page.goBack();
 
-    await expect(consentDialog(page)).toBeHidden();
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: '로그인' }),
+    ).toBeVisible();
     await expect.poll(() => signupConsent.delete).toBe(1);
-    expect(signOut.count).toBe(0);
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-    await expect.poll(() => readPendingLogin(page)).toBeNull();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            performance.getEntriesByType(
+              'navigation',
+            )[0] as PerformanceNavigationTiming
+          ).type,
+      ),
+    ).toBe('back_forward');
+  });
+
+  test('OAuth 오류로 로그인 화면이 열리면 남은 가입 대기를 비워 실패 안내만 띄운다', async ({
+    page,
+  }) => {
+    // 지난 Google 화면에서 계정을 다시 골라 PKCE 확인에 실패한 경우다. 앞선 콜백의 대기가 남아 있다.
+    await seedPendingLogin(page);
+
+    const signupConsent = await mockSignupConsent(page, SIGNUP_PENDING);
+
+    await page.goto(`${APP_PATH.LOGIN}?error=Configuration`);
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.LOGIN_FAILED).first(),
+    ).toBeVisible();
+    await expect.poll(() => signupConsent.delete).toBe(1);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(signupConsent.get).toBe(0);
   });
 
   test('이 탭에서 시작한 로그인이 아니면 가입 대기를 조회하지 않고 시트도 띄우지 않는다', async ({

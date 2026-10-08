@@ -1571,7 +1571,13 @@ test.describe('입력 출처(userSource) 전달', () => {
 
     await routeChatWithTurnChoices(page);
     await setPlainInputMode(page);
+    await page.clock.install();
     await page.goto('/chats/c1');
+
+    await expect(
+      page.getByRole('button', { name: '입력창에 넣어 수정' }).nth(1),
+    ).toBeVisible();
+    await page.clock.pauseAt(new Date(Date.now() + 1_000));
 
     await page
       .getByRole('button', { name: '입력창에 넣어 수정' })
@@ -1581,7 +1587,11 @@ test.describe('입력 출처(userSource) 전달', () => {
     const input = page.getByPlaceholder(PLAIN_INPUT);
 
     await expect(input).toHaveValue(SUGGESTION);
-    await input.fill(edited);
+    await input.selectText();
+    await page.clock.runFor(32);
+    await page.keyboard.insertText(edited);
+    await expect(input).toHaveValue(edited);
+    await page.clock.resume();
 
     const body = await captureStreamBody(page, () =>
       page.getByRole('button', { name: '전송' }).click(),
