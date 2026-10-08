@@ -43,6 +43,7 @@ export function StoryDetailCta({
       clearCreatedPersona();
       track('client_storyDetail_chatStartButton_clicked', {
         story_id: storyId,
+        persona_type: personaId ? 'persona' : 'default',
       });
     },
   });

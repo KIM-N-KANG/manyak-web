@@ -20,6 +20,7 @@ import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access
 import { PERSONA_MAX_COUNT } from '@/features/my/_shared/constants/persona';
 import { markPersonaCreationOrigin } from '@/features/stories/_shared/utils/created-persona-selection';
 import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
+import { track } from '@/observability/analytics';
 
 import { StoryInfoHeading } from './story-info-heading';
 
@@ -45,6 +46,10 @@ export function StoryPersonaSelect({
   const personas = isMember && data?.status === 200 ? data.data : [];
 
   const handleCreate = () => {
+    track('client_storyDetail_personaCreateButton_clicked', {
+      story_id: storyId,
+    });
+
     if (isGuest) {
       setIsLoginOpen(true);
 
@@ -72,7 +77,17 @@ export function StoryPersonaSelect({
       return;
     }
 
-    onValueChange(next === DEFAULT_PROTAGONIST_VALUE ? null : next);
+    const nextPersonaId = next === DEFAULT_PROTAGONIST_VALUE ? null : next;
+
+    if (nextPersonaId === value) {
+      return;
+    }
+
+    track('client_storyDetail_persona_selected', {
+      story_id: storyId,
+      persona_type: nextPersonaId ? 'persona' : 'default',
+    });
+    onValueChange(nextPersonaId);
   };
 
   return (

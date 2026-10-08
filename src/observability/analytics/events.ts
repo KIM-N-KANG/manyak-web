@@ -22,6 +22,9 @@ export type CreditShortageTrigger = 'story_create' | 'chat_turn';
 /** 스토리 카드가 속한 섹션. 오리지널 노출·클릭 기여를 내가 만든 스토리와 분리해 본다. */
 export type StoryCardSection = 'original' | 'created';
 
+/** 채팅을 시작할 주인공. 페르소나 이름과 소개는 사용자 입력 원문이라 싣지 않는다(스펙 §6-7). */
+export type PersonaType = 'default' | 'persona';
+
 /** 신고 시트를 연 화면. 네 화면이 시트 하나를 공유하므로 이벤트 대신 프로퍼티로 구분한다(스펙 §6-4-2). */
 export type ReportSource = 'storyDetail' | 'studio' | 'chatList' | 'chat';
 
@@ -166,7 +169,15 @@ export type AnalyticsEventProps = {
   };
   // storyDetail
   client_storyDetail_viewed: { story_id: string };
-  client_storyDetail_chatStartButton_clicked: { story_id: string };
+  client_storyDetail_chatStartButton_clicked: {
+    story_id: string;
+    persona_type: PersonaType;
+  };
+  client_storyDetail_persona_selected: {
+    story_id: string;
+    persona_type: PersonaType;
+  };
+  client_storyDetail_personaCreateButton_clicked: { story_id: string };
   client_storyDetail_thumbnail_clicked: { story_id: string };
   client_storyDetail_characterImage_clicked: { story_id: string };
   // chatList
@@ -234,6 +245,10 @@ export type AnalyticsEventProps = {
   // feedback
   client_feedback_viewed: void;
   client_feedback_form_submitted: void;
+  // persona create (KNK-1469)
+  client_personaCreate_viewed: void;
+  client_personaCreate_form_submitted: void;
+  client_personaCreate_completed: void;
   // invite (친구 초대 페이지)
   client_invite_viewed: void;
   client_invite_copyButton_clicked: void;

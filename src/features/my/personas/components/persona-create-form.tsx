@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { APP_PATH } from '@/constants/app-path';
 import { cn } from '@/lib/utils';
+import { track } from '@/observability/analytics';
 
 import {
   PERSONA_CREATE_COPY,
@@ -60,6 +61,10 @@ const RequiredMark = () => (
 export function PersonaCreateForm() {
   const router = useRouter();
   const { status } = useSession();
+
+  useEffect(() => {
+    track('client_personaCreate_viewed');
+  }, []);
 
   useEffect(() => {
     if (status === 'unauthenticated') {

@@ -14,6 +14,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { selectCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
 import { FetchError } from '@/lib/custom-fetch';
+import { track } from '@/observability/analytics';
 
 import { PERSONA_CREATE_ERROR_COPY } from '../constants';
 import {
@@ -46,6 +47,7 @@ export function usePersonaCreateForm() {
         const personaId =
           response.status === 201 ? response.data.id : undefined;
 
+        track('client_personaCreate_completed');
         toast.success(TOAST_MESSAGE.PERSONA_CREATED);
         await queryClient.invalidateQueries({
           queryKey: getPersonasQueryKey(),
@@ -91,6 +93,7 @@ export function usePersonaCreateForm() {
       return;
     }
 
+    track('client_personaCreate_form_submitted');
     createPersona.mutate({
       data: {
         name: name.trim(),
