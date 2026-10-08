@@ -181,7 +181,7 @@ export const GENERAL_STORY_CHARACTER_COPY = {
   supportingFeaturePlaceholder: [
     '예:',
     '### 성격',
-    '말수가 적고 무뚝뚝하지만, 맡겨진 물건은 하나도 허투루 다루지 않는다.',
+    '말수가 적고 무뚝뚝하지만 일에는 꼼꼼하다.',
     '',
     '### 말투',
     '짧고 건조한 반말을 쓴다.',
