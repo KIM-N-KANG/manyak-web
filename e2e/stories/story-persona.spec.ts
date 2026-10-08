@@ -208,7 +208,7 @@ test.describe('스토리 상세 페르소나 선택', () => {
 });
 
 test.describe('페르소나 생성', () => {
-  test('필수 입력을 채워 생성하면 상세로 돌아와 새 페르소나를 고를 수 있다 (KNK-1469)', async ({
+  test('필수 입력을 채워 생성하면 상세로 돌아와 새 페르소나가 선택된다 (KNK-1469)', async ({
     page,
   }) => {
     await mockMemberSession(page);
@@ -265,8 +265,8 @@ test.describe('페르소나 생성', () => {
       },
     ]);
 
-    await personaSelect(page).click();
-    await expect(page.getByRole('option', { name: '윤해솔' })).toBeVisible();
+    // 돌아온 상세에서는 새 페르소나가 선택되어 있다
+    await expect(personaSelect(page)).toContainText('윤해솔');
   });
 
   test('서버가 개수 상한으로 거절하면 상한 안내를 띄우고 머문다 (KNK-1469)', async ({

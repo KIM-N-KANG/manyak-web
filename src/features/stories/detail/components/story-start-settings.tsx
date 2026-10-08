@@ -18,6 +18,7 @@ import { StoryInfoHeading } from './story-info-heading';
 import { StoryPersonaSelect } from './story-persona-select';
 
 type StoryStartSettingsProps = {
+  storyId: string;
   startSettings: StoryStartSettingResponse[];
   value: string;
   onValueChange: (value: string) => void;
@@ -38,6 +39,7 @@ export const startSettingValue = (
 ) => setting?.id ?? String(index);
 
 export function StoryStartSettings({
+  storyId,
   startSettings,
   value,
   onValueChange,
@@ -57,6 +59,7 @@ export function StoryStartSettings({
       <h2 className="text-lg font-bold">채팅 시작 상황</h2>
       <div className="flex flex-col gap-6">
         <StoryPersonaSelect
+          storyId={storyId}
           value={personaId}
           onValueChange={onPersonaIdChange}
         />

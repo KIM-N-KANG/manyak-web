@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
+import { clearCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
 import { useStoryLike } from '@/features/stories/detail/hooks/use-story-like';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
@@ -38,10 +39,12 @@ export function StoryDetailCta({
   const { startChat, isStarting } = useStartChat(storyId, {
     startSettingId,
     personaId,
-    onStart: () =>
+    onStart: () => {
+      clearCreatedPersona();
       track('client_storyDetail_chatStartButton_clicked', {
         story_id: storyId,
-      }),
+      });
+    },
   });
 
   return (

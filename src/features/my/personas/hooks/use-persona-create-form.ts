@@ -12,6 +12,7 @@ import {
 } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { selectCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
 import { FetchError } from '@/lib/custom-fetch';
 
 import { PERSONA_CREATE_ERROR_COPY } from '../constants';
@@ -26,7 +27,8 @@ type PersonaFormErrors = Partial<Record<PersonaField, string>>;
 
 /**
  * 페르소나 생성 폼의 입력 상태와 제출을 관리하는 훅.
- * 생성에 성공하면 목록 조회를 무효화하고 들어온 화면으로 돌아간다.
+ * 생성에 성공하면 목록 조회를 무효화하고, 스토리 상세에서 왔으면 새 페르소나를 그 상세의 선택으로 남긴 뒤
+ * 들어온 화면으로 돌아간다.
  *
  * @returns 입력값과 변경 함수, 필드별 오류, 제출 핸들러, 제출 중 여부
  */
@@ -40,11 +42,18 @@ export function usePersonaCreateForm() {
 
   const createPersona = useCreatePersona({
     mutation: {
-      onSuccess: async () => {
+      onSuccess: async (response) => {
+        const personaId =
+          response.status === 201 ? response.data.id : undefined;
+
         toast.success(TOAST_MESSAGE.PERSONA_CREATED);
         await queryClient.invalidateQueries({
           queryKey: getPersonasQueryKey(),
         });
+
+        if (personaId) {
+          selectCreatedPersona(personaId);
+        }
 
         if (window.history.length > 1) {
           router.back();

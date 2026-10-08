@@ -19,6 +19,10 @@ import { APP_PATH } from '@/constants/app-path';
 import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
+import {
+  clearCreatedPersona,
+  useCreatedPersonaId,
+} from '@/features/stories/_shared/utils/created-persona-selection';
 import { useStoryFooterBackground } from '@/features/stories/detail/hooks/use-story-footer-background';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useDocumentTitle } from '@/hooks/use-document-title';
@@ -82,7 +86,14 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
       startSettingValue(setting, index) === activeStartSetting,
   )?.id;
 
-  const [personaId, setPersonaId] = useState<string | null>(null);
+  const createdPersonaId = useCreatedPersonaId(storyId);
+  const [pickedPersonaId, setPickedPersonaId] = useState<string | null>(null);
+  const personaId = createdPersonaId ?? pickedPersonaId;
+
+  const handlePersonaIdChange = (next: string | null) => {
+    clearCreatedPersona();
+    setPickedPersonaId(next);
+  };
 
   const [isThumbnailViewerOpen, setIsThumbnailViewerOpen] = useState(false);
 
@@ -224,7 +235,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                   startSettingValue={activeStartSetting}
                   onStartSettingValueChange={setSelectedStartSetting}
                   personaId={personaId}
-                  onPersonaIdChange={setPersonaId}
+                  onPersonaIdChange={handlePersonaIdChange}
                 />
               </div>
             </main>

@@ -90,6 +90,7 @@ export function StoryInfoSection({
 
         {startSettings.length > 0 && (
           <StoryStartSettings
+            storyId={storyId}
             startSettings={startSettings}
             value={startSettingValue}
             onValueChange={onStartSettingValueChange}

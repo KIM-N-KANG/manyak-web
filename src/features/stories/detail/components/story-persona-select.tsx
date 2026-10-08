@@ -18,6 +18,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { PERSONA_MAX_COUNT } from '@/features/my/_shared/constants/persona';
+import { markPersonaCreationOrigin } from '@/features/stories/_shared/utils/created-persona-selection';
 import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 
 import { StoryInfoHeading } from './story-info-heading';
@@ -26,12 +27,14 @@ const DEFAULT_PROTAGONIST_VALUE = 'default-protagonist';
 const CREATE_PERSONA_VALUE = 'create-persona';
 
 type StoryPersonaSelectProps = {
+  storyId: string;
   /** 선택한 페르소나 ID. null이면 기본 주인공이다. */
   value: string | null;
   onValueChange: (personaId: string | null) => void;
 };
 
 export function StoryPersonaSelect({
+  storyId,
   value,
   onValueChange,
 }: StoryPersonaSelectProps) {
@@ -58,6 +61,7 @@ export function StoryPersonaSelect({
       return;
     }
 
+    markPersonaCreationOrigin(storyId);
     router.push(APP_PATH.MY_PERSONA_NEW);
   };
 
