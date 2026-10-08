@@ -365,6 +365,7 @@ export const GENERAL_STORY_REGISTER_COPY = {
 /** 등록하기를 눌렀을 때 칸 이름으로 만들지 않는 오류 문구다. 빈 글 칸은 "{칸 이름}을 입력해 주세요"로 만든다. */
 export const GENERAL_STORY_REGISTER_ERROR_COPY = {
   gender: '성별을 선택해 주세요',
+  protagonistNameForToken: '{username}을 쓰려면 이름을 입력해 주세요',
   genre: '장르를 1개 이상 선택해 주세요',
   suggestedInput: '추천 입력을 모두 채워 주세요',
   invalidTab: '입력이 필요한 항목이 있어요',

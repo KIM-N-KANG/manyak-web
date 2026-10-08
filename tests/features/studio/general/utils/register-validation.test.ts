@@ -93,6 +93,22 @@ describe('getRegisterErrors', () => {
     });
   });
 
+  it('주인공 이름은 비워도 되지만 글에 {username}을 쓰면 이름을 요청한다', () => {
+    const form = validForm();
+
+    form.protagonist.name = ' ';
+    expect(getRegisterErrors(form)).toEqual([]);
+
+    form.startSettings[0].prologue = '{username}이(가) 잠에서 깼다.';
+    expect(messages(form)).toEqual({
+      [REGISTER_ERROR_KEY.protagonist('name')]:
+        GENERAL_STORY_REGISTER_ERROR_COPY.protagonistNameForToken,
+    });
+
+    form.protagonist.name = '해';
+    expect(getRegisterErrors(form)).toEqual([]);
+  });
+
   it('선택 칸은 비워도 되지만 쓰면 2자 이상이어야 한다', () => {
     const form = validForm();
 

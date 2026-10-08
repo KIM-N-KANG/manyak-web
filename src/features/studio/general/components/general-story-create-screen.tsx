@@ -915,6 +915,7 @@ export function GeneralStoryCreateForm({
                     GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
                   }
                   featureRequired
+                  nameRequired={false}
                   registerErrorKeys={{
                     name: REGISTER_ERROR_KEY.protagonist('name'),
                     gender: REGISTER_ERROR_KEY.protagonist('gender'),

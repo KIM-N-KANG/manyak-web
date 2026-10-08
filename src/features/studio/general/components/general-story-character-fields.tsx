@@ -56,6 +56,8 @@ type GeneralStoryCharacterFieldsProps = {
   basicInfoDescription: string;
   featureDescription: string;
   featureRequired: boolean;
+  /** 이름이 필수인지다. 기본 주인공 이름은 선택이라 비워도 되고 최소 글자 수도 보지 않는다. */
+  nameRequired?: boolean;
   /** 있으면 최소 글자 수 오류보다 먼저 기본 정보 설명 대신 보이는 이름 오류다. */
   nameError?: string | null;
   /** 등록하기를 누른 뒤 이름·성별·특징의 오류를 찾는 키다(`REGISTER_ERROR_KEY`). */
@@ -75,6 +77,7 @@ export function GeneralStoryCharacterFields({
   basicInfoDescription,
   featureDescription,
   featureRequired,
+  nameRequired = true,
   nameError,
   registerErrorKeys,
   afterBasicInfo,
@@ -96,7 +99,9 @@ export function GeneralStoryCharacterFields({
   const shownNameError =
     nameError ??
     registerNameError ??
-    (touched.name ? getMinLengthError(nameLabel, character.name) : null);
+    (nameRequired && touched.name
+      ? getMinLengthError(nameLabel, character.name)
+      : null);
   const basicInfoError = shownNameError ?? genderError;
   const featureError =
     registerFeatureError ??
@@ -119,7 +124,7 @@ export function GeneralStoryCharacterFields({
               id={`${idPrefix}-name`}
               ref={nameInputRef}
               aria-label={`${labelPrefix} ${nameLabel}`}
-              aria-required
+              aria-required={nameRequired}
               aria-invalid={shownNameError ? true : undefined}
               aria-describedby={shownNameError ? nameErrorId : undefined}
               maxLength={nameMaxLength}

@@ -117,6 +117,14 @@ function resolveTarget(
     };
   }
 
+  if (path === 'protagonistName') {
+    return {
+      key: REGISTER_ERROR_KEY.protagonist('name'),
+      tab: 'protagonist',
+      valueOf: (form) => form.protagonist.name,
+    };
+  }
+
   if (path === 'storySettings.userRoleSetting') {
     return {
       key: REGISTER_ERROR_KEY.protagonist('feature'),

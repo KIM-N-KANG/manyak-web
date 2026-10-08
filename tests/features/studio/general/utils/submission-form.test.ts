@@ -11,11 +11,12 @@ const payload = readStorySubmission({
     oneLineIntro: '막차',
     description: '줄거리',
     genres: ['호러', '지하철'],
+    protagonistName: '윤해솔',
     visibility: 'PUBLIC',
     storySettings: {
       worldSetting: '# 세계관\n폐역',
       ruleSetting: '# 전개 규칙\n긴장감\n\n# 분량 배분\n묘사 7 : 대사 3',
-      userRoleSetting: '# 주인공\n## 호칭\n윤해솔\n## 성별\n여성\n회사원',
+      userRoleSetting: '# 주인공\n## 성별\n여성\n회사원',
       characterSetting:
         '# 등장인물\n\n## 도하람\n### 성별\n남성\n관리인\n\n## 서은결\n### 성별\n여성',
     },

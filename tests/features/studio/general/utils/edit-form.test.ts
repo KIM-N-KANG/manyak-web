@@ -16,11 +16,12 @@ const EDIT_FORM: StoryEditFormResponse = {
   oneLineIntro: '막차',
   description: '줄거리',
   genres: ['호러'],
+  protagonistName: '윤해솔',
   visibility: 'PRIVATE',
   storySettings: {
     worldSetting: '# 세계관\n폐역',
     ruleSetting: '# 전개 규칙\n긴장감\n\n# 분량 배분\n묘사 7 : 대사 3',
-    userRoleSetting: '# 주인공\n## 호칭\n윤해솔\n## 성별\n여성\n회사원',
+    userRoleSetting: '# 주인공\n## 성별\n여성\n회사원',
     characterSetting: '# 등장인물\n\n## 도하람\n### 성별\n남성\n관리인',
   },
   startSettings: [
@@ -180,6 +181,17 @@ describe('buildStoryEditRequest', () => {
     ).toEqual({ title: '새 제목' });
   });
 
+  it('주인공 이름을 바꾸면 이름만 보내고, 비우면 싣지 않는다', () => {
+    const rename = (name: string) =>
+      requestAfter((form) => ({
+        ...form,
+        protagonist: { ...form.protagonist, name },
+      }));
+
+    expect(rename('윤해담')).toEqual({ protagonistName: '윤해담' });
+    expect(rename('')).toEqual({});
+  });
+
   it('주요 내용을 지우면 빈 문자열을 보낸다', () => {
     expect(requestAfter((form) => ({ ...form, description: '' }))).toEqual({
       description: '',
@@ -316,6 +328,7 @@ describe('buildStoryEditRequest', () => {
         'genres',
         'mainEvents',
         'oneLineIntro',
+        'protagonistName',
         'startSettings',
         'storySettings',
         'title',

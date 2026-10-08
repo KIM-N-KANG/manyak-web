@@ -1004,6 +1004,38 @@ test.describe('일반 제작 등록', () => {
     return requests;
   }
 
+  test('글에 {username}을 쓰고 주인공 이름을 비우면 등록하지 않고 주인공 이름 칸에 오류를 보인다 (KNK-1469)', async ({
+    page,
+  }) => {
+    const registerRequests = await mockRegisterAccepted(page);
+
+    await openWithGenreTags(page);
+    await fillRequiredForm(page);
+    await tab(page, 'protagonist').click();
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('');
+    await tab(page, 'start').click();
+    await page
+      .getByLabel(GENERAL_STORY_START_COPY.prologue.label)
+      .fill('{username}이(가) 불 꺼진 승강장에 내렸다');
+    await tab(page, 'publish').click();
+    await registerButton(page).click();
+
+    await expect(tab(page, 'protagonist')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(
+      page.getByText(GENERAL_STORY_REGISTER_ERROR_COPY.protagonistNameForToken),
+    ).toBeVisible();
+    expect(registerRequests).toHaveLength(0);
+
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('윤해솔');
+    await tab(page, 'publish').click();
+    await registerButton(page).click();
+    await expect.poll(() => registerRequests.length).toBe(1);
+    expect(registerRequests[0]).toMatchObject({ protagonistName: '윤해솔' });
+  });
+
   test('필수 항목을 채워 등록하면 검토 중을 안내하고, 승인되면 임시 저장본을 지운 뒤 채팅방으로 간다 (STORY-GENERAL-21)', async ({
     page,
   }) => {
@@ -1048,6 +1080,7 @@ test.describe('일반 제작 등록', () => {
     expect(registerRequests[0]).toMatchObject({
       title: '노선도에 없는 역',
       oneLineIntro: '막차에서 내린 곳',
+      protagonistName: '윤해솔',
       genres: ['판타지'],
       visibility: 'PRIVATE',
       characters: [

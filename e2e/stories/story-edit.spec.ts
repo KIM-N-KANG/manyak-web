@@ -60,13 +60,13 @@ const EDIT_FORM = {
   oneLineIntro: '막차에서 내린 곳',
   description: '',
   genres: ['판타지'],
+  protagonistName: '윤해솔',
   visibility: 'PRIVATE',
   storySettings: {
     worldSetting: '# 세계관\n막차 뒤에만 열리는 역',
     ruleSetting:
       '# 전개 규칙\n긴장감 있게 전개한다\n\n# 분량 배분\n묘사 5 : 대사 5',
-    userRoleSetting:
-      '# 주인공\n## 호칭\n윤해솔\n## 성별\n여성\n겁이 많은 회사원',
+    userRoleSetting: '# 주인공\n## 성별\n여성\n겁이 많은 회사원',
     characterSetting: '# 등장인물\n\n## 도하람\n### 성별\n여성',
   },
   startSettings: [
