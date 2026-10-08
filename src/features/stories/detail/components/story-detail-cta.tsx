@@ -19,6 +19,8 @@ type StoryDetailCtaProps = {
   storyId: string;
   canLike: boolean;
   isLiked: boolean;
+  /** 공개 초기 데이터를 브라우저 조회 응답으로 갱신할 때까지 시작을 막는다. */
+  isLoading?: boolean;
   /** 선택한 시작 설정 ID. 없으면 백엔드가 첫 시작 설정을 사용한다. */
   startSettingId?: string;
 };
@@ -27,6 +29,7 @@ export function StoryDetailCta({
   storyId,
   canLike,
   isLiked,
+  isLoading = false,
   startSettingId,
 }: StoryDetailCtaProps) {
   const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
@@ -80,7 +83,7 @@ export function StoryDetailCta({
             size="lg"
             className="relative min-w-0 flex-1"
             aria-busy={isStarting}
-            disabled={isStarting}
+            disabled={isStarting || isLoading}
             onClick={startChat}>
             <LoadingButtonContent
               isLoading={isStarting}
