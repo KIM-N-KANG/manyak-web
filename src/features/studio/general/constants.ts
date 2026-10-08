@@ -152,7 +152,7 @@ export const GENERAL_STORY_LENGTH_RATIO_COPY = {
 export const GENERAL_STORY_CHARACTER_COPY = {
   basicInfoLabel: '기본 정보',
   protagonistBasicInfoDescription:
-    '스토리 속에서 내가 사용할 이름과 성별이에요',
+    '스토리 속에서 기본으로 쓰이는 이름과 성별이에요',
   supportingBasicInfoDescription: '이 이름과 성별로 스토리에 등장해요',
   nameLabel: '이름',
   genderLabel: '성별',
@@ -229,11 +229,11 @@ export const GENERAL_STORY_START_COPY = {
     maxLength: 1000,
     placeholder: [
       '예: 막차 문이 닫히는 소리에 잠에서 깼다.',
-      '열차는 이미 떠났고, 승강장에는 나 혼자 남았다.',
+      '"{username} 님, 종점입니다." 안내 방송이 끝나자 승강장에는 나 혼자 남았다.',
       '역명판에는 처음 보는 이름이 적혀 있었다. 유실역.',
     ].join('\n'),
     description:
-      '채팅을 시작하면 첫 화면에 보이는 도입 글이에요. 주인공(나)이 스토리 속으로 들어서는 순간을 적어주세요',
+      '채팅을 시작하면 첫 화면에 보이는 도입 글이에요. {username}을 쓰면 사용자의 페르소나 이름으로 바뀌어요',
   },
   situation: {
     label: '상황 설명',
