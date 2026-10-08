@@ -61,7 +61,7 @@ function PersonaRow({ persona }: { persona: UserPersonaResponse }) {
   };
 
   return (
-    <li className="flex items-start gap-2 px-4 py-3">
+    <li className="flex items-start gap-2 px-4 py-2">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <p className="truncate font-semibold">{name}</p>
         <p className="line-clamp-2 text-sm wrap-anywhere text-foreground-secondary">
