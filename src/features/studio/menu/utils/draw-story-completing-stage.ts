@@ -1,14 +1,58 @@
 import {
+  brushPressure,
+  clamp01,
+  drawBeret,
+  drawBrush,
+  drawCard,
+  drawDots,
+  drawMascot,
+  drawShadow,
+  drawStroke,
+  drawWobblyBlob,
+  inViewport,
+  line,
+  mix,
+  onBody,
+  pencilPressure,
+  type Rect,
+  type Rgb,
+  rgba,
+  scaled,
+  type Stage,
+  type StagePalette,
+  withAlpha,
+} from '@/lib/mascot/draw-mascot';
+import {
   blinkOpenness,
-  BLOOM_CENTER,
+  BRUSH_GRIP,
+  BRUSH_TILT,
+  easeOutBack,
+  HAT_ANCHOR,
+  HAT_TILT,
+  type MascotPose,
+  parseStroke,
+  type Point,
+  point,
+} from '@/lib/mascot/mascot-choreography';
+
+import {
+  BRUSH_CATCH,
+  BRUSH_ON_FLOOR,
+  CAN_CATCH,
+  CAN_DROP_FROM,
+  CAN_GRIP,
+  CAN_SIP,
+  CAN_SIP_TILT,
+  CANVAS,
+  CANVAS_GRID,
+  CANVAS_WIDTH,
   CHIP_HEIGHT,
+  type CompletingAct,
   completingMoment,
-  type Cubic,
-  cubicAt,
+  type Cue,
   cueMillis,
   cueProgress,
   cueStart,
-  easeOutBack,
   FLOOR,
   KEY_COLUMNS,
   KEY_COUNT,
@@ -16,55 +60,36 @@ import {
   keystrokeAt,
   KEYSTROKES,
   KEYWORD_CHIPS,
-  MASCOT_BOTTOM,
-  MASCOT_CENTER,
+  MASCOT_HEIGHT,
   MASCOT_SIZE,
-  MASCOT_VIEWPORT,
-  type MascotPose,
   PICKED_CHIPS,
   PICKED_STORYLINE,
-  type Point,
+  PORTRAIT_BLUSH,
+  PORTRAIT_FACE,
+  PORTRAIT_HAIR,
+  PORTRAIT_MOON,
+  PORTRAIT_SCARF,
+  PORTRAIT_SIGNATURE,
   propVisibility,
-  SIGNATURE,
   STORYLINE_BOTTOM,
   STORYLINE_LEFTS,
   STORYLINE_TOP,
   STORYLINE_WIDTH,
-  STROKE_1,
-  STROKE_2,
 } from './story-completing-choreography';
 
-/** sRGB 0..255 세 값이다. 색을 섞어야 해서 CSS 문자열 대신 수로 들고 다닌다. */
-export type Rgb = [number, number, number];
-
-export type StagePalette = {
-  brand: Rgb;
-  paper: Rgb;
-  ink: Rgb;
-  key: Rgb;
-};
-
-type Rect = { left: number; top: number; right: number; bottom: number };
-
-const rgba = ([r, g, b]: Rgb, alpha = 1) => `rgba(${r}, ${g}, ${b}, ${alpha})`;
-const mix = (a: Rgb, b: Rgb, t: number): Rgb => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-  a[2] + (b[2] - a[2]) * t,
-];
-const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
-
-const DOT_GAP = 10;
-const DOT_RADIUS = 1;
-const MASCOT_PATH =
-  'M30,44H24A12,12 0 0 1 12,32V20A12,12 0 0 1 24,8H40A12,12 0 0 1 52,20V44C52,51 50,56 44,56H16';
-let mascotBody: Path2D | undefined;
+const PI = Math.PI;
 
 /**
- * 완성 중 표지 한 프레임을 그린다. 바탕에 옅은 점을 깔고, 막에 맞는 소품과 그림자, 마스코트를 차례로 얹는다.
- * 크기와 자리는 표지 폭(unit)에 대한 비율이라 표지 폭이 바뀌어도 구도가 같다.
+ * 완성 중 표지 한 프레임을 그린다. 바탕에 옅은 점을 깔고, 막에 맞는 소품과 그림자, 마스코트, 마스코트가 든
+ * 소품(캔·베레모·붓)과 표정 소품(물음표·졸음·번개·어지러운 별)을 차례로 얹는다. 크기와 자리는 표지
+ * 폭(unit)에 대한 비율이라 표지 폭이 바뀌어도 구도가 같다.
  *
+ * @param ctx 표지 캔버스
  * @param layer 소품 묶음을 한 장으로 그린 뒤 투명도를 입힐 때 쓰는 같은 크기의 캔버스다.
+ * @param width 표지 폭(픽셀)
+ * @param height 표지 높이(픽셀)
+ * @param millis 안무 시작부터 흐른 시간
+ * @param palette 테마 색
  * @param lookAt 포인터가 표지 위에 있으면 그 자리(폭 단위 좌표)다. 마스코트가 그쪽을 본다.
  */
 export function drawStoryCompletingStage(
@@ -90,227 +115,29 @@ export function drawStoryCompletingStage(
 
   if (act === 'TYPING') drawManuscript(stage, actMillis);
 
-  if (act === 'PAINTING') drawPainting(stage, actMillis);
+  if (act === 'PAINTING') drawEasel(stage, actMillis);
 
   // 칩을 밟고 있을 때는 바닥 그림자가 허공에 뜬 것처럼 보여 두지 않는다.
-  if (act !== 'KEYWORDS') drawShadow(ctx, pose, unit, palette.brand);
+  if (act !== 'KEYWORDS')
+    drawShadow(ctx, pose, unit, MASCOT_SIZE, FLOOR, palette.brand);
 
-  drawMascot(ctx, pose, unit, palette.brand, blinkOpenness(millis), lookAt);
+  drawMascot(
+    ctx,
+    pose,
+    unit,
+    MASCOT_SIZE,
+    palette.brand,
+    blinkOpenness(millis),
+    lookAt,
+  );
+
+  if (act === 'PAINTING') drawPainterGear(stage, actMillis, pose, millis);
+
+  if (act === 'ENERGY') drawEnergyDrink(stage, actMillis, pose);
+
+  drawMoodProps(stage, act, actMillis, pose, millis);
 
   if (act === 'TYPING') drawKeyboard(stage, actMillis);
-}
-
-type Stage = {
-  ctx: CanvasRenderingContext2D;
-  layer: CanvasRenderingContext2D;
-  unit: number;
-  palette: StagePalette;
-};
-
-/**
- * 소품 묶음을 따로 그린 뒤 투명도를 한 번에 입힌다. 겹치는 붓질·둥근 선 끝을 각각 반투명하게 그리면 겹친
- * 자리만 진해지므로, 소품은 불투명하게 그리고 투명도는 여기서 준다.
- */
-function withAlpha(
-  stage: Stage,
-  alpha: number,
-  draw: (ctx: CanvasRenderingContext2D) => void,
-) {
-  if (alpha <= 0) return;
-
-  if (alpha >= 1) {
-    draw(stage.ctx);
-
-    return;
-  }
-
-  const { layer, ctx } = stage;
-
-  layer.save();
-  layer.setTransform(1, 0, 0, 1, 0, 0);
-  layer.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
-  layer.restore();
-  draw(layer);
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(layer.canvas, 0, 0);
-  ctx.restore();
-}
-
-/** pivot 을 붙잡고 scale 배로 키운 채 그린다. */
-function scaled(
-  ctx: CanvasRenderingContext2D,
-  scale: number,
-  pivot: Point,
-  draw: () => void,
-) {
-  ctx.save();
-  ctx.translate(pivot.x, pivot.y);
-  ctx.scale(scale, scale);
-  ctx.translate(-pivot.x, -pivot.y);
-  draw();
-  ctx.restore();
-}
-
-function drawDots(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  ink: Rgb,
-) {
-  const columns = Math.floor(width / DOT_GAP);
-  const rows = Math.floor(height / DOT_GAP);
-  const left = (width - columns * DOT_GAP) / 2;
-  const top = (height - rows * DOT_GAP) / 2;
-
-  ctx.fillStyle = rgba(ink, 0.45);
-
-  for (let row = 0; row <= rows; row += 1) {
-    for (let column = 0; column <= columns; column += 1) {
-      ctx.beginPath();
-      ctx.arc(
-        left + column * DOT_GAP,
-        top + row * DOT_GAP,
-        DOT_RADIUS,
-        0,
-        Math.PI * 2,
-      );
-      ctx.fill();
-    }
-  }
-}
-
-/** 바닥에 깔리는 그림자다. 높이 뜰수록 작고 옅어진다. */
-function drawShadow(
-  ctx: CanvasRenderingContext2D,
-  pose: MascotPose,
-  unit: number,
-  brand: Rgb,
-) {
-  const height = clamp01((FLOOR - pose.y) / 0.9);
-  const width = MASCOT_SIZE * 0.62 * (1 - 0.5 * height) * pose.scaleX * unit;
-
-  ctx.fillStyle = rgba(brand, 0.16 * (1 - 0.7 * height));
-  ctx.beginPath();
-  ctx.ellipse(
-    pose.x * unit,
-    FLOOR * unit,
-    width / 2,
-    0.012 * unit,
-    0,
-    0,
-    Math.PI * 2,
-  );
-  ctx.fill();
-}
-
-/**
- * 로고 심벌을 움직이는 마스코트로 그린다. 찌그러뜨림은 발을 붙잡고, 회전은 몸 가운데를 축으로 한다.
- * 포인터가 표지 위에 있으면 눈이 포인터 쪽을 본다.
- */
-function drawMascot(
-  ctx: CanvasRenderingContext2D,
-  pose: MascotPose,
-  unit: number,
-  brand: Rgb,
-  blink: number,
-  lookAt: Point | null,
-) {
-  mascotBody ??= new Path2D(MASCOT_PATH);
-
-  const cell = (MASCOT_SIZE * unit) / MASCOT_VIEWPORT;
-  const look = lookAt ? lookToward(pose, lookAt) : pose.look;
-
-  ctx.save();
-  ctx.translate(
-    pose.x * unit - MASCOT_CENTER * cell,
-    pose.y * unit - MASCOT_BOTTOM * cell,
-  );
-  ctx.translate(MASCOT_CENTER * cell, MASCOT_CENTER * cell);
-  ctx.rotate((pose.rotation * Math.PI) / 180);
-  ctx.translate(-MASCOT_CENTER * cell, -MASCOT_CENTER * cell);
-  ctx.translate(MASCOT_CENTER * cell, MASCOT_BOTTOM * cell);
-  ctx.scale(pose.scaleX, pose.scaleY);
-  ctx.translate(-MASCOT_CENTER * cell, -MASCOT_BOTTOM * cell);
-  ctx.scale(cell, cell);
-  ctx.strokeStyle = rgba(brand);
-  ctx.fillStyle = rgba(brand);
-  ctx.lineWidth = 7.6;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke(mascotBody);
-
-  const openness = Math.max(blink * (1 - 0.9 * pose.squint), 0.1);
-
-  for (const eyeX of [25, 39]) {
-    ctx.beginPath();
-    ctx.ellipse(
-      eyeX + look.x * 2,
-      24 + look.y * 2,
-      4,
-      4 * openness,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
-/** 눈 가운데에서 포인터로 향하는 방향을 길이 1 이하로 반환한다. */
-function lookToward(pose: MascotPose, target: Point): Point {
-  const eyeY = pose.y - MASCOT_SIZE * ((MASCOT_BOTTOM - 24) / MASCOT_VIEWPORT);
-  const dx = target.x - pose.x;
-  const dy = target.y - eyeY;
-  const length = Math.hypot(dx, dy);
-
-  return length < 0.02
-    ? { x: 0, y: 0 }
-    : { x: dx / Math.max(length, 0.15), y: dy / Math.max(length, 0.15) };
-}
-
-/** 원고·키보드·카드·칩·액자가 함께 쓰는 종이다. 다크 테마에서도 바탕과 갈리도록 진한 경계로 두른다. */
-function drawCard(
-  ctx: CanvasRenderingContext2D,
-  rect: Rect,
-  unit: number,
-  outline: Rgb,
-  fill: Rgb,
-  corner = 0.04,
-) {
-  ctx.beginPath();
-  ctx.roundRect(
-    rect.left * unit,
-    rect.top * unit,
-    (rect.right - rect.left) * unit,
-    (rect.bottom - rect.top) * unit,
-    corner * unit,
-  );
-  ctx.fillStyle = rgba(fill);
-  ctx.fill();
-  ctx.lineWidth = 0.008 * unit;
-  ctx.strokeStyle = rgba(outline);
-  ctx.stroke();
-}
-
-function line(
-  ctx: CanvasRenderingContext2D,
-  from: Point,
-  to: Point,
-  width: number,
-  color: Rgb,
-  unit: number,
-) {
-  ctx.beginPath();
-  ctx.moveTo(from.x * unit, from.y * unit);
-  ctx.lineTo(to.x * unit, to.y * unit);
-  ctx.lineWidth = width * unit;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = rgba(color);
-  ctx.stroke();
 }
 
 // ---- 키워드와 스토리라인 ----
@@ -611,25 +438,31 @@ function drawKeyboard(stage: Stage, actMillis: number) {
   });
 }
 
-// ---- 그림 ----
+// ---- 인물화 ----
 
-const FRAME: Rect = { left: 0.12, top: 0.12, right: 0.88, bottom: 0.74 };
-/** 붓질 하나를 나누는 마디 수다. 마디마다 굵기를 바꿔 붓이 눌렸다 들리는 결을 낸다. */
-const BRUSH_STEPS = 40;
-/** 물감을 찍은 자리 둘레에 튀는 작은 방울의 거리와 반지름이다. */
-const SPECKLES: [number, number, number][] = [
-  [-0.12, 0.03, 0.009],
-  [0.11, -0.06, 0.007],
-  [0.08, 0.1, 0.011],
-  [-0.07, -0.09, 0.006],
-  [0.15, 0.04, 0.005],
-];
+/** 목도리를 두르면 함께 드러나는 목과 어깨선이다. */
+const PORTRAIT_BODY = [
+  'M33,66 L34,76 Q22,82 16,100',
+  'M45,76 Q58,80 70,98',
+].map(parseStroke);
+const SCARF_TAIL = parseStroke('M31,77 C25,85 19,84 13,92');
 
 /**
- * 액자 그림이다. 먼 능선을 옅게, 가까운 능선을 진하게 긋고, 하늘에 물감을 찍어 번지게 한 뒤 구석에 서명한다.
- * 아이콘처럼 정해진 모양을 따라 그리지 않고, 붓이 눌렸다 들리는 굵기와 수채 번짐으로 그린다.
+ * 막 안의 시각 기준으로 cue 동작이 얼마나 진행했는지 반환한다.
+ *
+ * @param cue 소품 신호
+ * @param actMillis 막 안의 시각
+ * @returns 0..1 진행
  */
-function drawPainting(stage: Stage, actMillis: number) {
+const progressOf = (cue: Cue, actMillis: number) => cueProgress(cue, actMillis);
+
+/**
+ * 이젤에 세운 세로 캔버스와 그 위의 주인공 인물화다. 막 시작에 튀어나오고 막 끝에 사라진다.
+ *
+ * @param stage 무대
+ * @param actMillis 막 안의 시각
+ */
+function drawEasel(stage: Stage, actMillis: number) {
   const { unit, palette } = stage;
   const visibility = propVisibility('PAINTING', actMillis);
 
@@ -637,144 +470,538 @@ function drawPainting(stage: Stage, actMillis: number) {
     scaled(
       ctx,
       0.8 + 0.2 * visibility,
-      { x: 0.5 * unit, y: FRAME.bottom * unit },
+      { x: 0.5 * unit, y: FLOOR * unit },
       () => {
-        drawCard(ctx, FRAME, unit, palette.ink, palette.paper);
+        for (const [top, bottom] of [
+          [point(0.3, CANVAS.bottom - 0.02), point(0.26, FLOOR + 0.01)],
+          [point(0.7, CANVAS.bottom - 0.02), point(0.74, FLOOR + 0.01)],
+        ])
+          line(ctx, top, bottom, 0.012, palette.ink, unit);
 
-        const sinceBloom = actMillis - cueStart('BLOOM');
-        const wash = clamp01(sinceBloom / 700);
+        const cell = (CANVAS_WIDTH / CANVAS_GRID) * unit;
 
-        if (wash > 0) drawWash(ctx, wash, unit, palette.brand);
-
-        drawBloom(ctx, sinceBloom, unit, palette);
-        drawBrushStroke(
-          ctx,
-          STROKE_1,
-          cueProgress('STROKE_1', actMillis),
-          0.04,
-          mix(palette.paper, palette.brand, 0.5),
-          unit,
-        );
-        drawBrushStroke(
-          ctx,
-          STROKE_2,
-          cueProgress('STROKE_2', actMillis),
-          0.05,
-          palette.brand,
-          unit,
-        );
-        drawBrushStroke(
-          ctx,
-          SIGNATURE,
-          cueProgress('SIGNATURE', actMillis),
-          0.014,
-          palette.brand,
-          unit,
-        );
+        ctx.save();
+        ctx.translate(CANVAS.left * unit, CANVAS.top * unit);
+        ctx.scale(cell, cell);
+        ctx.beginPath();
+        ctx.roundRect(0, 0, CANVAS_GRID, (CANVAS_GRID * 4) / 3, 4);
+        ctx.fillStyle = rgba(palette.paper);
+        ctx.fill();
+        ctx.lineWidth = 1.12;
+        ctx.strokeStyle = rgba(palette.ink);
+        ctx.stroke();
+        drawPortrait(ctx, palette, actMillis);
+        ctx.restore();
       },
     );
   });
 }
 
-/** 붓질 하나를 progress 만큼 긋는다. 굵기는 곡선 위의 자리로 정해져 양 끝은 가늘고 가운데가 굵다. */
-function drawBrushStroke(
+/**
+ * 주인공 인물화를 캔버스 격자 좌표로 그린다. 달을 찍어 번지게 하고, 바람에 날리는 머리를 굵은 붓으로 쓸고,
+ * 옆얼굴을 가늘게 긋고 눈을 뜨게 한 뒤, 볼을 찍고 목도리를 두르고 서명한다.
+ *
+ * @param ctx 캔버스 격자 좌표로 옮긴 캔버스
+ * @param palette 테마 색
+ * @param actMillis 막 안의 시각
+ */
+function drawPortrait(
   ctx: CanvasRenderingContext2D,
-  curve: Cubic,
-  progress: number,
-  maxWidth: number,
-  color: Rgb,
-  unit: number,
+  palette: StagePalette,
+  actMillis: number,
 ) {
-  if (progress <= 0) return;
+  const { brand, paper, pencil } = palette;
+  const moonSince = actMillis - cueStart('MOON');
+  const spread = clamp01((moonSince - 60) / 700);
 
-  let previous = cubicAt(curve, 0);
+  if (spread > 0) {
+    const eased = 1 - (1 - spread) ** 3;
 
-  for (let step = 1; step <= Math.ceil(BRUSH_STEPS * progress); step += 1) {
-    const t = Math.min(step / BRUSH_STEPS, progress);
-    const next = cubicAt(curve, t);
-    const middle = clamp01(t - 0.5 / BRUSH_STEPS);
-    const pressure = 0.18 + 0.82 * Math.sin(Math.PI * middle) ** 0.7;
+    drawWobblyBlob(ctx, PORTRAIT_MOON, 22 * eased, rgba(brand, 0.13), 1);
+    ctx.fillStyle = rgba(mix(paper, brand, 0.3));
+    ctx.beginPath();
+    ctx.arc(PORTRAIT_MOON.x, PORTRAIT_MOON.y, 12.5 * eased, 0, PI * 2);
+    ctx.fill();
 
-    line(ctx, previous, next, maxWidth * pressure, color, unit);
-    previous = next;
+    const twinkle = easeOutBack(clamp01((moonSince - 300) / 260));
+
+    if (twinkle > 0) drawSparkle(ctx, point(74, 15), 3.2 * twinkle, brand);
   }
-}
 
-function bezierTo(ctx: CanvasRenderingContext2D, curve: Cubic, unit: number) {
-  ctx.bezierCurveTo(
-    curve.control1.x * unit,
-    curve.control1.y * unit,
-    curve.control2.x * unit,
-    curve.control2.y * unit,
-    curve.end.x * unit,
-    curve.end.y * unit,
+  const scarf = progressOf('SCARF', actMillis);
+
+  for (const stroke of PORTRAIT_BODY)
+    drawStroke(ctx, stroke, scarf, 1.4, pencil, pencilPressure);
+
+  drawStroke(
+    ctx,
+    PORTRAIT_HAIR,
+    progressOf('HAIR', actMillis),
+    6,
+    brand,
+    brushPressure,
+  );
+
+  const face = progressOf('FACE', actMillis);
+
+  drawStroke(ctx, PORTRAIT_FACE, face, 1.5, pencil, pencilPressure);
+
+  if (face >= 1) {
+    const open = easeOutBack(
+      clamp01((actMillis - cueStart('FACE') - cueMillis('FACE')) / 220),
+    );
+
+    if (open > 0) {
+      // 앞을 똑바로 보는 뜬 눈과 눈썹으로, 그림 속 주인공에게 또렷한 표정을 준다.
+      ctx.strokeStyle = rgba(pencil);
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(47.5, 43.6);
+      ctx.quadraticCurveTo(51, 43.6 - 2.4 * open, 54.5, 43.6);
+      ctx.moveTo(47, 39.6);
+      ctx.quadraticCurveTo(51, 39.6 - 1.8 * open, 55, 39.2);
+      ctx.stroke();
+      ctx.fillStyle = rgba(pencil);
+      ctx.beginPath();
+      ctx.arc(52.4, 44.4, 1.5 * open, 0, PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const blush = easeOutBack(clamp01((actMillis - cueStart('BLUSH')) / 260));
+
+  if (blush > 0) {
+    ctx.fillStyle = rgba(mix(paper, brand, 0.5));
+    ctx.beginPath();
+    ctx.ellipse(
+      PORTRAIT_BLUSH.x,
+      PORTRAIT_BLUSH.y,
+      3.6 * blush,
+      2.2 * blush,
+      0,
+      0,
+      PI * 2,
+    );
+    ctx.fill();
+  }
+
+  drawStroke(
+    ctx,
+    PORTRAIT_SCARF,
+    scarf,
+    6,
+    mix(paper, brand, 0.6),
+    brushPressure,
+  );
+  drawStroke(ctx, SCARF_TAIL, (scarf - 0.5) * 2, 4.5, brand, brushPressure);
+  drawStroke(
+    ctx,
+    PORTRAIT_SIGNATURE,
+    progressOf('SIGNATURE', actMillis),
+    1.3,
+    brand,
+    brushPressure,
   );
 }
 
-/** 두 능선 사이를 수채 물로 옅게 적신다. 가장자리를 두 붓질이 감싸 네모난 테두리 없이 물이 고인 모양이 된다. */
-function drawWash(
+/**
+ * 네 갈래로 뻗은 반짝임 별을 칠한다.
+ *
+ * @param ctx 캔버스
+ * @param at 가운데
+ * @param radius 갈래 길이
+ * @param color 색
+ */
+function drawSparkle(
   ctx: CanvasRenderingContext2D,
-  amount: number,
-  unit: number,
-  brand: Rgb,
+  at: Point,
+  radius: number,
+  color: Rgb,
 ) {
+  ctx.fillStyle = rgba(color);
   ctx.beginPath();
-  ctx.moveTo(STROKE_1.start.x * unit, STROKE_1.start.y * unit);
-  bezierTo(ctx, STROKE_1, unit);
-  ctx.lineTo(STROKE_2.start.x * unit, STROKE_2.start.y * unit);
-  bezierTo(ctx, STROKE_2, unit);
+
+  for (let corner = 0; corner < 8; corner += 1) {
+    const reach = corner % 2 === 0 ? radius : radius * 0.28;
+    const angle = (corner * PI) / 4;
+
+    ctx.lineTo(at.x + Math.sin(angle) * reach, at.y - Math.cos(angle) * reach);
+  }
+
   ctx.closePath();
-
-  const gradient = ctx.createLinearGradient(0, 0.42 * unit, 0, 0.7 * unit);
-
-  gradient.addColorStop(0, rgba(brand, 0.24 * amount));
-  gradient.addColorStop(1, rgba(brand, 0.06 * amount));
-  ctx.fillStyle = gradient;
   ctx.fill();
 }
 
-/** 물감을 찍은 자리가 둥글게 번지고, 가운데 물감 자국 둘레로 작은 방울이 차례로 튄다. */
-function drawBloom(
-  ctx: CanvasRenderingContext2D,
-  sinceBloom: number,
-  unit: number,
-  palette: StagePalette,
+// ---- 화가 소품 ----
+
+/**
+ * 베레모와 붓이다. 막 처음에 베레모가 흔들리며 떨어져 얹히고, 바닥의 붓이 점프에 맞춰 한 바퀴 돌며 손에
+ * 들어온다. 그림을 마치고 뛰어오르는 순간에는 둘 다 졸업 모자처럼 하늘로 던져 화면 위로 사라진다.
+ *
+ * @param stage 무대
+ * @param actMillis 막 안의 시각
+ * @param pose 마스코트 자세
+ * @param millis 안무 시작부터 흐른 시간
+ */
+function drawPainterGear(
+  stage: Stage,
+  actMillis: number,
+  pose: MascotPose,
+  millis: number,
 ) {
-  const spread = clamp01((sinceBloom - 60) / 700);
+  const { ctx, unit, palette } = stage;
+  const tossed = (actMillis - cueStart('TOSS')) / 1000;
+  const facing = actMillis - cueStart('FACE');
+  const paint =
+    facing >= 0 && facing < cueMillis('FACE') ? palette.pencil : palette.brand;
 
-  if (spread <= 0) return;
+  if (tossed >= 0) {
+    // 던지는 순간의 자리에서 출발해 마스코트보다 빠르게 솟구치며 돈다.
+    const from = completingMoment(millis - tossed * 1000).pose;
+    const hat = onBody(from, HAT_ANCHOR, MASCOT_SIZE);
+    const grip = onBody(from, BRUSH_GRIP, MASCOT_SIZE);
 
-  const eased = 1 - (1 - spread) ** 3;
-  const x = BLOOM_CENTER.x * unit;
-  const y = BLOOM_CENTER.y * unit;
-  const glow = 0.12 * eased * unit;
-  const gradient = ctx.createRadialGradient(x, y, 0, x, y, glow);
-
-  gradient.addColorStop(0, rgba(palette.brand, 0.42));
-  gradient.addColorStop(0.5, rgba(palette.brand, 0.14));
-  gradient.addColorStop(1, rgba(palette.brand, 0));
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(x, y, glow, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = rgba(mix(palette.paper, palette.brand, 0.55));
-  ctx.beginPath();
-  ctx.arc(x, y, 0.035 * eased * unit, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = rgba(mix(palette.paper, palette.brand, 0.6));
-  SPECKLES.forEach(([dx, dy, radius], index) => {
-    const pop = easeOutBack(clamp01((sinceBloom - 140 - index * 60) / 260));
-
-    if (pop <= 0) return;
-
-    ctx.beginPath();
-    ctx.arc(
-      (BLOOM_CENTER.x + dx) * unit,
-      (BLOOM_CENTER.y + dy) * unit,
-      radius * pop * unit,
-      0,
-      Math.PI * 2,
+    inViewport(
+      ctx,
+      unit,
+      MASCOT_SIZE,
+      point(hat.x - 0.25 * tossed, hat.y - 2.2 * tossed + tossed * tossed),
+      HAT_TILT - 540 * tossed,
+      1,
+      () => drawBeret(ctx, palette),
     );
+    inViewport(
+      ctx,
+      unit,
+      MASCOT_SIZE,
+      point(
+        grip.x + 0.3 * tossed,
+        grip.y - 2.6 * tossed + 1.2 * tossed * tossed,
+      ),
+      BRUSH_TILT - 720 * tossed,
+      1,
+      () => drawBrush(ctx, palette, paint),
+    );
+
+    return;
+  }
+
+  const fall = cueProgress('HAT', actMillis);
+  const hat = onBody(pose, HAT_ANCHOR, MASCOT_SIZE);
+
+  inViewport(
+    ctx,
+    unit,
+    MASCOT_SIZE,
+    point(hat.x, hat.y - 1.2 * (1 - fall * fall)),
+    HAT_TILT + pose.rotation + 22 * Math.sin(fall * PI * 2.5) * (1 - fall),
+    pose.scaleX,
+    () => drawBeret(ctx, palette),
+  );
+
+  const held = onBody(pose, BRUSH_GRIP, MASCOT_SIZE);
+  const heldAngle = BRUSH_TILT + pose.rotation;
+  const flight = clamp01(
+    (actMillis - cueStart('BRUSH')) / (cueMillis('BRUSH') * BRUSH_CATCH),
+  );
+  const grip =
+    flight >= 1
+      ? held
+      : point(
+          BRUSH_ON_FLOOR.x + (held.x - BRUSH_ON_FLOOR.x) * flight,
+          BRUSH_ON_FLOOR.y +
+            (held.y - BRUSH_ON_FLOOR.y) * flight -
+            0.12 * Math.sin(PI * flight),
+        );
+
+  inViewport(
+    ctx,
+    unit,
+    MASCOT_SIZE,
+    grip,
+    flight >= 1 ? heldAngle : -450 + (heldAngle + 450) * flight,
+    1,
+    () =>
+      drawBrush(
+        ctx,
+        palette,
+        flight >= 1 ? paint : mix(palette.paper, palette.pencil, 0.25),
+      ),
+  );
+}
+
+// ---- 에너지 드링크 ----
+
+/**
+ * 에너지 드링크 캔이다. 위에서 돌며 떨어져 점프한 손에 들어오고, 얼굴 앞으로 들어 기울여 세 모금 마신 뒤,
+ * 힘이 차오르는 순간 빙글 돌며 화면 밖으로 날아간다. 힘이 차오르는 동안 몸 둘레로 번개가 차례로 튄다.
+ *
+ * @param stage 무대
+ * @param actMillis 막 안의 시각
+ * @param pose 마스코트 자세
+ */
+function drawEnergyDrink(stage: Stage, actMillis: number, pose: MascotPose) {
+  const { ctx, unit, palette } = stage;
+  const dropStart = cueStart('CAN_DROP');
+  const catchAt = cueStart('CAN_CATCH') + cueMillis('CAN_CATCH') * CAN_CATCH;
+  const drinkStart = cueStart('DRINK');
+  const powerStart = cueStart('POWER_UP');
+
+  if (actMillis < dropStart) return;
+
+  let at: Point;
+  let angle: number;
+
+  if (actMillis < catchAt) {
+    const fall = (actMillis - dropStart) / (catchAt - dropStart);
+    const held = onBody(pose, CAN_GRIP, MASCOT_SIZE);
+
+    at = point(
+      CAN_DROP_FROM.x + (held.x - CAN_DROP_FROM.x) * fall,
+      CAN_DROP_FROM.y + (held.y - CAN_DROP_FROM.y) * fall * fall,
+    );
+    angle = 200 * (1 - fall) + pose.rotation * fall;
+  } else if (actMillis < powerStart) {
+    const sip = cueProgress('DRINK', actMillis);
+    const raise = actMillis < drinkStart ? 0 : sipRaise(sip);
+    const gulp =
+      sip > 0.2 && sip < 0.88 ? Math.sin(((sip - 0.2) / 0.68) * PI * 6) : 0;
+
+    at = onBody(
+      pose,
+      point(
+        CAN_GRIP.x + (CAN_SIP.x - CAN_GRIP.x) * raise,
+        CAN_GRIP.y + (CAN_SIP.y - CAN_GRIP.y) * raise,
+      ),
+      MASCOT_SIZE,
+    );
+    angle = CAN_SIP_TILT * raise + 8 * gulp + pose.rotation;
+  } else {
+    const flown = (actMillis - powerStart) / 1000;
+    const from = onBody(pose, CAN_SIP, MASCOT_SIZE);
+
+    at = point(
+      from.x + 0.9 * flown,
+      from.y - 1.8 * flown + 0.8 * flown * flown,
+    );
+    angle = CAN_SIP_TILT + 900 * flown;
+
+    drawBolts(stage, cueProgress('POWER_UP', actMillis), pose, actMillis);
+  }
+
+  if (at.x > 1.2 || at.y < -0.2) return;
+
+  inViewport(ctx, unit, MASCOT_SIZE, at, angle, 1, () => drawCan(ctx, palette));
+}
+
+/**
+ * 마시는 동안 캔을 얼굴 앞으로 들어 올린 정도다. 처음에 들어 올리고 끝까지 든다.
+ *
+ * @param sip 마시기 진행
+ * @returns 0..1 들어 올린 정도
+ */
+function sipRaise(sip: number): number {
+  const t = clamp01(sip / 0.2);
+
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * 번개 마크 캔이다. 가운데를 원점으로 심벌 viewport 단위로 그린다.
+ *
+ * @param ctx 캔 가운데로 옮긴 캔버스
+ * @param palette 테마 색
+ */
+function drawCan(ctx: CanvasRenderingContext2D, palette: StagePalette) {
+  ctx.beginPath();
+  ctx.roundRect(-7.5, -12, 15, 24, 3);
+  ctx.fillStyle = rgba(palette.brand);
+  ctx.fill();
+  ctx.lineWidth = 0.9;
+  ctx.strokeStyle = rgba(palette.ink);
+  ctx.stroke();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 2.6;
+  ctx.strokeStyle = rgba(mix(palette.paper, palette.pencil, 0.35));
+  ctx.beginPath();
+  ctx.moveTo(-6, -12.5);
+  ctx.lineTo(6, -12.5);
+  ctx.stroke();
+  ctx.fillStyle = rgba(palette.paper);
+  ctx.beginPath();
+  ctx.moveTo(1.8, -8);
+  ctx.lineTo(-3.6, 1.2);
+  ctx.lineTo(-0.2, 1.2);
+  ctx.lineTo(-1.8, 8);
+  ctx.lineTo(3.8, -1.6);
+  ctx.lineTo(0.3, -1.6);
+  ctx.closePath();
+  ctx.fill();
+}
+
+const BOLT_ANGLES = [-70, -32, 30, 68, 112, -112];
+
+/**
+ * 힘이 차오르는 동안 몸 둘레로 번개가 차례로 튀어나와 깜빡이다가 사라진다.
+ *
+ * @param stage 무대
+ * @param progress 힘이 차오르는 진행
+ * @param pose 마스코트 자세
+ * @param actMillis 막 안의 시각
+ */
+function drawBolts(
+  stage: Stage,
+  progress: number,
+  pose: MascotPose,
+  actMillis: number,
+) {
+  const { ctx, unit, palette } = stage;
+  const center = point(pose.x, pose.y - MASCOT_HEIGHT * pose.scaleY * 0.55);
+
+  BOLT_ANGLES.forEach((degrees, index) => {
+    const pop = easeOutBack(clamp01((progress - index * 0.07) / 0.15));
+    const fade = 1 - clamp01((progress - 0.82) / 0.18);
+    const flicker = Math.floor(actMillis / 70 + index) % 3 === 0 ? 0.75 : 1;
+    const size = 0.055 * pop * fade * flicker;
+
+    if (size <= 0) return;
+
+    const angle = (degrees * PI) / 180;
+    const reach = 0.15;
+
+    ctx.save();
+    ctx.translate(
+      (center.x + Math.sin(angle) * reach) * unit,
+      (center.y - Math.cos(angle) * reach) * unit,
+    );
+    ctx.rotate(angle);
+    ctx.scale(size * unit, size * unit);
+    ctx.fillStyle = rgba(palette.brand);
+    ctx.beginPath();
+    ctx.moveTo(0.1, -1);
+    ctx.lineTo(-0.4, 0.08);
+    ctx.lineTo(0.02, 0.08);
+    ctx.lineTo(-0.15, 1);
+    ctx.lineTo(0.45, -0.18);
+    ctx.lineTo(0.05, -0.18);
+    ctx.closePath();
     ctx.fill();
+    ctx.restore();
   });
+}
+
+// ---- 표정 소품 ----
+
+/**
+ * 표정을 거드는 소품이다. 카드를 올려다볼 때 머리 위 물음표, 꾸벅 졸 때 피어오르는 Z, 어지러울 때 머리 위를
+ * 도는 별을 그린다.
+ *
+ * @param stage 무대
+ * @param act 지금 막
+ * @param actMillis 막 안의 시각
+ * @param pose 마스코트 자세
+ * @param millis 안무 시작부터 흐른 시간
+ */
+function drawMoodProps(
+  stage: Stage,
+  act: CompletingAct,
+  actMillis: number,
+  pose: MascotPose,
+  millis: number,
+) {
+  const { ctx, unit, palette } = stage;
+  const top = pose.y - MASCOT_HEIGHT * pose.scaleY;
+
+  if (act === 'STORYLINE') {
+    for (const cue of ['STORYLINE_1_LOOK', 'STORYLINE_3_LOOK'] as const) {
+      const shown = Math.sin(PI * cueProgress(cue, actMillis));
+
+      if (shown > 0)
+        drawQuestion(
+          ctx,
+          point(pose.x + 0.075, top - 0.06),
+          0.04 * easeOutBack(Math.min(shown * 1.6, 1)),
+          palette.pencil,
+          unit,
+        );
+    }
+  }
+
+  if (act === 'ENERGY') {
+    const dozing = actMillis - cueStart('DOZE');
+
+    for (let index = 0; index < 3; index += 1) {
+      const life = (dozing - index * 300) / 650;
+
+      if (life <= 0 || life >= 1 || dozing > cueMillis('DOZE')) continue;
+
+      const size = 0.018 + 0.016 * life;
+      const at = point(pose.x + 0.08 + 0.05 * life, top - 0.02 - 0.12 * life);
+
+      ctx.save();
+      ctx.globalAlpha = Math.sin(PI * life);
+      ctx.beginPath();
+      ctx.moveTo((at.x - size) * unit, (at.y - size) * unit);
+      ctx.lineTo((at.x + size) * unit, (at.y - size) * unit);
+      ctx.lineTo((at.x - size) * unit, (at.y + size) * unit);
+      ctx.lineTo((at.x + size) * unit, (at.y + size) * unit);
+      ctx.lineWidth = 0.009 * unit;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = rgba(palette.pencil);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  if (pose.eyes === 'dizzy') {
+    for (let index = 0; index < 3; index += 1) {
+      const angle = millis / 160 + (index * 2 * PI) / 3;
+
+      ctx.save();
+      ctx.translate(
+        (pose.x + Math.cos(angle) * 0.075) * unit,
+        (top - 0.03 + Math.sin(angle) * 0.022) * unit,
+      );
+      ctx.scale(unit, unit);
+      drawSparkle(ctx, point(0, 0), 0.02, palette.brand);
+      ctx.restore();
+    }
+  }
+}
+
+/**
+ * 물음표를 긋는다. 둥근 고리와 짧은 기둥, 아래 점으로 이룬다.
+ *
+ * @param ctx 캔버스
+ * @param at 가운데 자리(표지 좌표)
+ * @param size 크기(표지 폭 단위)
+ * @param color 색
+ * @param unit 표지 폭(픽셀)
+ */
+function drawQuestion(
+  ctx: CanvasRenderingContext2D,
+  at: Point,
+  size: number,
+  color: Rgb,
+  unit: number,
+) {
+  if (size <= 0) return;
+
+  ctx.save();
+  ctx.translate(at.x * unit, at.y * unit);
+  ctx.scale(size * unit, size * unit);
+  ctx.strokeStyle = rgba(color);
+  ctx.fillStyle = rgba(color);
+  ctx.lineWidth = 0.3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(0, -0.45, 0.45, PI * 1.1, PI * 2.35);
+  ctx.quadraticCurveTo(0, -0.05, 0, 0.25);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0.72, 0.17, 0, PI * 2);
+  ctx.fill();
+  ctx.restore();
 }

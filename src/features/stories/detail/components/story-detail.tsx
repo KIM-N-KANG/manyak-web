@@ -11,6 +11,7 @@ import {
   getStoryDetail,
   useGetStoryDetail,
 } from '@/api/generated/endpoints/stories/stories';
+import type { StoryDetailResponse } from '@/api/generated/models';
 import { FullscreenImageViewer } from '@/components/common/fullscreen-image-viewer';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
@@ -26,6 +27,7 @@ import { useInView } from '@/hooks/use-in-view';
 import { FetchError } from '@/lib/custom-fetch';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
 import { queryFnWithoutAbortSignal } from '@/lib/query-client';
+import type { PublicStoryDetail } from '@/lib/stories/backend-story-client';
 import { track } from '@/observability/analytics';
 
 import { StoryDetailCta } from './story-detail-cta';
@@ -36,9 +38,10 @@ import { startSettingValue } from './story-start-settings';
 
 type StoryDetailProps = {
   storyId: string;
+  initialStory?: PublicStoryDetail;
 };
 
-export function StoryDetail({ storyId }: StoryDetailProps) {
+export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
   useEffect(() => {
     track('client_storyDetail_viewed', { story_id: storyId });
   }, [storyId]);
@@ -52,8 +55,10 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
     },
   );
 
-  const showSkeleton = useDelayedLoading(isPending, { delay: 300 });
-  const story = data?.status === 200 ? data.data : undefined;
+  const fetchedStory = data?.status === 200 ? data.data : undefined;
+  const story: StoryDetailResponse | undefined =
+    fetchedStory ?? (isPending ? initialStory : undefined);
+  const showSkeleton = useDelayedLoading(isPending && !story, { delay: 300 });
   const isNotFound = error instanceof FetchError && error.status === 404;
 
   const router = useRouter();
@@ -61,11 +66,11 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   const createdStoryIds = useCreatedStoryIds();
   const isMember = sessionStatus === 'authenticated';
   const canDelete =
-    story !== undefined &&
+    fetchedStory !== undefined &&
     (isMember
-      ? story.isOwner === true
+      ? fetchedStory.isOwner === true
       : (createdStoryIds?.includes(storyId) ?? false));
-  const canEdit = isMember && story?.isOwner === true;
+  const canEdit = isMember && fetchedStory?.isOwner === true;
 
   useDocumentTitle(story?.title ?? '');
 
@@ -123,7 +128,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
         storyId={storyId}
         title={story?.title ?? ''}
         canEdit={canEdit}
-        canReport={isMember && story !== undefined}
+        canReport={isMember && fetchedStory !== undefined}
         canDelete={canDelete}
         onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STUDIO)}
         showTitle={showTitle}
@@ -227,8 +232,10 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
 
             <StoryDetailCta
               storyId={storyId}
+              isLoading={!fetchedStory}
               startSettingId={activeStartSettingId}
               canLike={
+                fetchedStory !== undefined &&
                 sessionStatus !== 'loading' &&
                 (isMember || createdStoryIds !== null) &&
                 !canDelete &&

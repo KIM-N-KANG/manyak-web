@@ -35,7 +35,7 @@ export function CreditFreeChargeTab({
     <PullToRefresh
       onRefresh={refreshActiveQueries}
       className="h-full scroll-fade-b"
-      contentClassName="flex min-h-full flex-col gap-8 pt-4 pb-2">
+      contentClassName="flex flex-col gap-8 pt-4 pb-2">
       <section className="mx-4 flex flex-col gap-4 rounded-lg bg-muted p-4">
         <h2
           className={cn(

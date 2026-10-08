@@ -2,19 +2,21 @@
 
 import { m, useReducedMotion } from 'motion/react';
 
-import { ImageGeneration } from '@/components/agents/image-generation';
 import { ReasoningText } from '@/components/agents/loading-states/reasoning-text';
+import { MascotStage } from '@/components/common/mascot-stage';
 import { TextShimmer } from '@/components/motion/text-shimmer';
 import { Marker, MarkerContent } from '@/components/ui/marker';
 import { EASE_OUT } from '@/lib/ease';
 
 import { CHAT_STREAM_LOADING_COPY } from '../../constants';
+import { drawRealtimeImageStage } from '../../utils/draw-realtime-image-stage';
+import { REALTIME_IMAGE_STILL_MILLIS } from '../../utils/realtime-image-choreography';
 
 /** 로딩 문구는 채팅 버블 본문과 같은 글꼴·크기·행간으로 그린다. */
 const BUBBLE_TEXT_CLASS_NAME = 'font-maruburi text-base leading-7 font-normal';
 
 type ChatStreamLoadingProps = {
-  /** 실시간 이미지가 켜진 턴이면 4:3 장면 썸네일 자리를 문구 위에 함께 보인다 */
+  /** 실시간 이미지가 켜진 턴이면 마스코트가 인물을 그리는 4:3 장면 썸네일 자리를 문구 아래에 함께 보인다 */
   realtimeImage?: boolean;
 };
 
@@ -36,8 +38,6 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
   }
 
   return (
-    // 문구가 먼저 올라오고, 썸네일 자리가 한 박자 늦게 살짝 커지며 떠오른다.
-    // 문구는 제작 퍼널 로딩과 같은 순환 표현(4초 전환·4초 쉬머)을 쓴다.
     <div role="status" className="flex flex-col gap-5">
       <m.div
         initial={reduce ? false : { opacity: 0, y: 8 }}
@@ -55,15 +55,13 @@ export function ChatStreamLoading({ realtimeImage }: ChatStreamLoadingProps) {
         initial={reduce ? false : { opacity: 0, y: 16, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.15 }}>
-        <ImageGeneration
-          status="generating"
-          label={CHAT_STREAM_LOADING_COPY.sceneLabel}
-          aspectRatio="4 / 3"
-          size="fluid"
-          showStatus={false}
-          resolution=""
-          className="overflow-hidden rounded-xl border border-border bg-muted"
-        />
+        <div className="aspect-4/3 overflow-hidden rounded-xl bg-muted/60">
+          <MascotStage
+            label={CHAT_STREAM_LOADING_COPY.sceneLabel}
+            draw={drawRealtimeImageStage}
+            stillMillis={REALTIME_IMAGE_STILL_MILLIS}
+          />
+        </div>
       </m.div>
     </div>
   );

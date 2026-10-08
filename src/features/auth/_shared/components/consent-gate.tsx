@@ -29,6 +29,7 @@ import {
 } from '@/features/auth/_shared/utils/pending-login-storage';
 import { signOutBeforeConsent } from '@/features/auth/_shared/utils/sign-out-before-consent';
 import {
+  abandonPendingLogin,
   cancelPendingSignupConsent,
   fetchPendingSignupConsent,
 } from '@/features/auth/_shared/utils/signup-consent-client';
@@ -77,6 +78,20 @@ const PUBLIC_LEGAL_PATHS: readonly string[] = [
   APP_PATH.TERMS,
   APP_PATH.PRIVACY,
 ];
+
+/**
+ * 이 문서를 뒤로가기·앞으로가기로 불러왔는지 판정한다.
+ *
+ * @returns 히스토리 이동으로 불러온 문서면 true
+ */
+function isHistoryTraversalLoad(): boolean {
+  const [entry] = performance.getEntriesByType('navigation');
+
+  return (
+    entry instanceof PerformanceNavigationTiming &&
+    entry.type === 'back_forward'
+  );
+}
 
 type ResolvePhaseInput = {
   sessionStatus: 'authenticated' | 'loading' | 'unauthenticated';
@@ -162,7 +177,8 @@ function resolvePhase({
  * 시트의 기록 성공(`applyRecordedConsent`)과 명시 재조회(`reload`)로만 일어난다.
  * 회원 기능과 로그인 후 부수 효과는 전부 `useMemberAccess().isMember`로 이 판정을 재사용한다.
  * fail-closed 로그아웃은 페이지를 다시 불러오지 않고 세션만 비우므로, 같은 탭에서 다시 로그인해
- * 다시 판정할 수 있도록 `stale-login`을 벗어나면 진행 표시를 되돌린다.
+ * 다시 판정할 수 있도록 `stale-login`을 벗어나면 진행 표시를 되돌린다. 뒤로가기·앞으로가기로
+ * 다시 불러온 문서에 남은 탭 표시는 마치지 않고 떠난 로그인으로 보고 정리한다.
  *
  * @returns 판정 단계, 필요 항목, 기록 결과 반영·재조회 함수, 시트 상태를 초기화할 사용자 키
  */
@@ -206,6 +222,29 @@ function useConsentGate() {
   const isSignupPhase =
     phase === 'signup-required' || phase === 'signup-load-error';
   const signingOutRef = useRef(false);
+
+  // 히스토리 이동으로 돌아온 문서에 남은 탭 표시는 시트를 마치지 않고 떠난 로그인이다. Chrome은
+  // 사용자 조작 없이 시트를 연 화면을 뒤로가기 버튼에서 건너뛰어 시트의 취소가 실행되지 않는다.
+  // 마운트 시점은 세션 조회 전이라 표시를 지우면 이후 판정이 게스트·stale-login 경로를 따른다.
+  // bfcache 복원은 이전 판정을 그대로 들고 있으므로 정리한 뒤 다시 불러온다.
+  useEffect(() => {
+    if (hasPendingLogin() && isHistoryTraversalLoad()) {
+      abandonPendingLogin();
+    }
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted || !hasPendingLogin()) {
+        return;
+      }
+
+      abandonPendingLogin();
+      window.location.reload();
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
 
   useEffect(() => {
     if (phase === 'satisfied') {

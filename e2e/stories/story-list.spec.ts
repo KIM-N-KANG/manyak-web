@@ -556,6 +556,43 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(filterGroup).toBeVisible();
   });
 
+  test('당겨도 필터 바는 제자리에 있고 표시자는 바 아래에 나타난다 (KNK-1570)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
+
+    await page.goto('/');
+    await expect(
+      page.getByRole('link', { name: '마냑의 첫 이야기 상세 보기' }),
+    ).toBeVisible();
+
+    const filterGroup = page.getByRole('group', {
+      name: STORY_LIST_COPY.filterGroupLabel,
+    });
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+    const restingFilterBox = await filterGroup.boundingBox();
+    const box = await scroller.boundingBox();
+
+    if (!restingFilterBox || !box)
+      throw new Error('필터 바 또는 스크롤 영역을 찾지 못했다');
+
+    const x = box.x + box.width / 2;
+
+    await dispatchTouch(scroller, 'touchstart', x, box.y + 8);
+    await dispatchTouch(scroller, 'touchmove', x, box.y + 208);
+
+    const releaseLabel = page.getByText(PULL_TO_REFRESH_COPY.release);
+
+    await expect(releaseLabel).toBeVisible();
+    expect((await filterGroup.boundingBox())?.y).toBe(restingFilterBox.y);
+    expect((await releaseLabel.boundingBox())?.y).toBeGreaterThan(
+      restingFilterBox.y + restingFilterBox.height,
+    );
+  });
+
   test('필터·정렬을 바꾸면 URL과 요청에 반영하고 상세에서 돌아와도 유지한다 (KNK-1421)', async ({
     page,
   }) => {

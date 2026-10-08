@@ -1,29 +1,44 @@
 /**
- * 스토리 완성 중 표지에서 마스코트가 연기하는 안무다. 키워드를 고르고, 스토리라인을 고르고, 원고를 쓰고,
- * 그림을 그린 뒤 신나서 뛰어다니는 순서로 제작 과정을 따라가고, 바쁜 막 사이마다 쉰다.
+ * 스토리 완성 중 표지에서 마스코트가 연기하는 안무다. 키워드를 고르고, 스토리라인을 고르고, 졸다가 에너지
+ * 드링크를 마시고 원고를 터보로 쓴 뒤, 베레모를 쓰고 붓으로 주인공 인물화를 그리고 소품을 하늘로 던지며
+ * 뛰어다니는 순서로 제작 과정을 따라가고, 바쁜 막 사이마다 쉰다.
  *
  * 좌표는 표지 폭을 1 로 둔 값이다(3:4 라 높이는 4/3). 시간 → 자세가 순수 함수라 그리는 쪽은 매 프레임 이
  * 값을 읽기만 한다. 막은 모두 바닥 가운데(`HOME`)에서 시작해 같은 자리로 돌아와, 막의 순서를 바꾸거나 막을
- * 빼도 이음매에서 마스코트가 순간이동하지 않는다. Android 와 같은 값을 쓴다.
+ * 빼도 이음매에서 마스코트가 순간이동하지 않는다. 인물화의 붓길은 캔버스 폭을 84칸으로 둔 격자의 SVG path
+ * 문자열로 적는다. Android 와 같은 값을 쓴다.
  */
 
-export type Point = { x: number; y: number };
-
-/** 마스코트 한 프레임의 자세다. x·y 는 발끝 가운데다. */
-export type MascotPose = {
-  x: number;
-  y: number;
-  scaleX: number;
-  scaleY: number;
-  rotation: number;
-  look: Point;
-  /** 0 은 뜬 눈, 1 은 지그시 감은 눈이다. */
-  squint: number;
-};
+import {
+  type Act,
+  brushTipOffset,
+  createChoreography,
+  crouch,
+  easeOutBack,
+  idle,
+  leap,
+  MASCOT_HEIGHT_RATIO,
+  MASCOT_WIDTH_RATIO,
+  type MascotPose,
+  type Move,
+  paintAlong,
+  parseStroke,
+  type Point,
+  point,
+  pose,
+  stand,
+  stretch,
+  type Stroke,
+  strokeAt,
+  stroll,
+  withCue,
+  withEyes,
+} from '@/lib/mascot/mascot-choreography';
 
 export type CompletingAct =
   | 'KEYWORDS'
   | 'STORYLINE'
+  | 'ENERGY'
   | 'TYPING'
   | 'PAINTING'
   | 'BOUNCING'
@@ -39,29 +54,24 @@ export type Cue =
   | 'STORYLINE_1_LOOK'
   | 'STORYLINE_3_LOOK'
   | 'STORYLINE_PICK'
+  | 'DOZE'
+  | 'CAN_DROP'
+  | 'CAN_CATCH'
+  | 'DRINK'
+  | 'POWER_UP'
   | 'TYPING'
   | 'TYPING_DONE'
-  | 'STROKE_1'
-  | 'STROKE_2'
-  | 'BLOOM'
-  | 'SIGNATURE';
-
-export type CompletingMoment = {
-  act: CompletingAct;
-  actMillis: number;
-  pose: MascotPose;
-};
+  | 'HAT'
+  | 'BRUSH'
+  | 'MOON'
+  | 'HAIR'
+  | 'FACE'
+  | 'BLUSH'
+  | 'SCARF'
+  | 'SIGNATURE'
+  | 'TOSS';
 
 // ---- 무대 ----
-
-/** 심벌 viewport(64) 안에서 몸이 차지하는 폭·높이와, 회전축(몸 가운데)이 발에서 떨어진 거리다. */
-export const MASCOT_VIEWPORT = 64;
-export const MASCOT_CENTER = 32;
-export const MASCOT_BOTTOM = 59.8;
-
-const MASCOT_WIDTH_RATIO = (55.8 - 8.2) / 64;
-const MASCOT_HEIGHT_RATIO = (59.8 - 4.2) / 64;
-const MASCOT_CENTER_TO_FEET_RATIO = (59.8 - 32) / 64;
 
 export const STAGE_HEIGHT = 4 / 3;
 export const MASCOT_SIZE = 0.24;
@@ -72,79 +82,6 @@ export const MASCOT_HEIGHT = MASCOT_SIZE * MASCOT_HEIGHT_RATIO;
 const WALL_GAP = 0.05;
 
 export const HOME: Point = { x: 0.5, y: FLOOR };
-
-const point = (x: number, y: number): Point => ({ x, y });
-const ZERO = point(0, 0);
-
-const pose = (
-  x: number,
-  y: number,
-  rest: Partial<MascotPose> = {},
-): MascotPose => ({
-  x,
-  y,
-  scaleX: 1,
-  scaleY: 1,
-  rotation: 0,
-  look: ZERO,
-  squint: 0,
-  ...rest,
-});
-
-/** 3차 베지어 곡선이다. 붓질의 길과 그 길을 그리는 선이 같은 값을 쓴다. */
-export type Cubic = {
-  start: Point;
-  control1: Point;
-  control2: Point;
-  end: Point;
-};
-
-export function cubicAt(curve: Cubic, t: number): Point {
-  const u = 1 - t;
-  const a = u * u * u;
-  const b = 3 * u * u * t;
-  const c = 3 * u * t * t;
-  const d = t * t * t;
-
-  return point(
-    curve.start.x * a +
-      curve.control1.x * b +
-      curve.control2.x * c +
-      curve.end.x * d,
-    curve.start.y * a +
-      curve.control1.y * b +
-      curve.control2.y * c +
-      curve.end.y * d,
-  );
-}
-
-function cubicTangent(curve: Cubic, t: number): Point {
-  const u = 1 - t;
-  const a = 3 * u * u;
-  const b = 6 * u * t;
-  const c = 3 * t * t;
-
-  return point(
-    (curve.control1.x - curve.start.x) * a +
-      (curve.control2.x - curve.control1.x) * b +
-      (curve.end.x - curve.control2.x) * c,
-    (curve.control1.y - curve.start.y) * a +
-      (curve.control2.y - curve.control1.y) * b +
-      (curve.end.y - curve.control2.y) * c,
-  );
-}
-
-const cubic = (
-  start: Point,
-  control1: Point,
-  control2: Point,
-  end: Point,
-): Cubic => ({
-  start,
-  control1,
-  control2,
-  end,
-});
 
 // ---- 소품 자리 ----
 
@@ -167,6 +104,12 @@ export const PICKED_CHIPS: [number, Cue][] = [
   [1, 'KEYWORD_3'],
 ];
 
+/**
+ * 칩 윗변 가운데, 마스코트가 칩을 밟고 서는 자리를 반환한다.
+ *
+ * @param chip 키워드 칩
+ * @returns 발끝 가운데 자리
+ */
 const standingOn = (chip: KeywordChip) =>
   point((chip.left + chip.right) / 2, chip.top);
 
@@ -180,184 +123,94 @@ export const PICKED_STORYLINE = 1;
 /** 점프 꼭대기에서 머리가 카드 아래 변에 닿는 높이다. 머리가 닿는 순간은 점프의 한가운데다. */
 const HEADBUTT_LIFT = FLOOR - STORYLINE_BOTTOM - MASCOT_HEIGHT;
 
-/** 타자. 두 줄 7칸과 스페이스 바다. */
-export const KEYSTROKE_MILLIS = 120;
+/**
+ * 에너지 드링크 캔. 몸 오른쪽에 쥐는 자리와, 마실 때 얼굴 앞으로 들어 기울이는 자리·기울기(심벌 viewport
+ * 좌표, 도)다. 캔은 위에서 떨어지고, 점프의 CAN_CATCH 비율에서 손에 들어온다.
+ */
+export const CAN_GRIP = point(64, 40);
+export const CAN_SIP = point(42, 20);
+export const CAN_SIP_TILT = -125;
+export const CAN_CATCH = 0.55;
+export const CAN_DROP_FROM = point(HOME.x + 0.14, -0.12);
+
+/** 타자. 에너지 드링크를 마셔 빠르게 두드리는 두 줄 7칸과 스페이스 바다. */
+export const KEYSTROKE_MILLIS = 80;
 export const KEYSTROKES = 20;
 export const KEY_COLUMNS = 7;
 export const KEY_COUNT = KEY_COLUMNS * 2 + 1;
 
-/** 그림. 붓질 두 번, 물감 한 번, 구석에 서명한다. */
-export const STROKE_1 = cubic(
-  point(0.18, 0.54),
-  point(0.36, 0.36),
-  point(0.58, 0.68),
-  point(0.82, 0.46),
+/** 인물화를 그리는 이젤 위 세로 캔버스다. 격자 한 칸은 표지 폭의 0.6/84 다. */
+export const CANVAS_GRID = 84;
+export const CANVAS_WIDTH = 0.6;
+export const CANVAS = {
+  left: 0.2,
+  top: 0.1,
+  right: 0.2 + CANVAS_WIDTH,
+  bottom: 0.1 + (CANVAS_WIDTH * 4) / 3,
+};
+
+/**
+ * 캔버스 격자 좌표를 표지 좌표로 바꾼다.
+ *
+ * @param at 캔버스 격자 좌표
+ * @returns 표지 좌표
+ */
+export const onCanvas = (at: Point): Point =>
+  point(
+    CANVAS.left + (at.x / CANVAS_GRID) * CANVAS_WIDTH,
+    CANVAS.top + (at.y / CANVAS_GRID) * CANVAS_WIDTH,
+  );
+
+/** 붓을 집기 전 바닥에 누운 붓의 쥔 자리다. 붓털이 오른쪽을 향한다. */
+export const BRUSH_ON_FLOOR = point(0.68, FLOOR - 0.008);
+/** 붓을 낚아채는 순간이다. 점프의 이 비율에서 붓이 손에 들어온다. */
+export const BRUSH_CATCH = 0.65;
+
+/**
+ * 주인공 인물화. 오른쪽을 보는 옆얼굴이 큰 달을 등지고, 머리카락과 목도리가 바람에 왼쪽으로 날린다. 달을
+ * 찍어 번지게 하고, 머리를 굵은 붓으로 쓸고, 얼굴 옆선을 가늘게 긋고, 볼을 찍고, 목도리를 두르고, 구석에
+ * 서명한다.
+ */
+export const PORTRAIT_MOON = point(58, 30);
+export const PORTRAIT_HAIR = parseStroke(
+  'M53,33 C48,24 34,22 27,30 C22,34 16,33 12,33 C8,33 8,37 12,38 C16,39 19,41 20,45 C15,49 12,51 10,52 C7,53 7,57 11,57 C15,57 20,58 23,60 C25,63 28,64 31,65',
 );
-export const STROKE_2 = cubic(
-  point(0.8, 0.62),
-  point(0.62, 0.52),
-  point(0.42, 0.7),
-  point(0.2, 0.63),
+export const PORTRAIT_FACE = parseStroke(
+  'M53,33 Q57,37 56,41 L62,48.5 L57,50.5 Q59.5,52.5 57.5,54.5 Q59.5,56.5 57,58 Q58,62 53,63.5 Q49,64.5 46,64 L45,76',
 );
-export const SIGNATURE = cubic(
-  point(0.68, 0.69),
-  point(0.71, 0.63),
-  point(0.75, 0.74),
-  point(0.8, 0.66),
+export const PORTRAIT_BLUSH = point(51, 55);
+export const PORTRAIT_SCARF = parseStroke(
+  'M60,73 C52,80 41,80 33,76 C25,72 18,75 10,72',
 );
-export const BLOOM_CENTER = point(0.66, 0.27);
+export const PORTRAIT_SIGNATURE = parseStroke(
+  'M58,101 C60,97 62,105 65,100 C67,96 69,103 72,99',
+);
 
 // ---- 낱동작 ----
 
-type Move = { millis: number; cue?: Cue; pose: (f: number) => MascotPose };
-
-type Act = { kind: CompletingAct; moves: Move[] };
-
-const sign = Math.sign;
 const PI = Math.PI;
 
-const withCue = (move: Move, cue: Cue): Move => ({ ...move, cue });
+/**
+ * 0..1 을 부드럽게 시작하고 멈추는 곡선으로 바꾼다.
+ *
+ * @param t 진행
+ * @returns 0..1 곡선 값
+ */
+const smooth = (t: number) => {
+  const c = Math.min(Math.max(t, 0), 1);
 
-/** 제자리에서 숨 쉬듯 살짝 오르내린다. */
-const stand = (millis: number, at: Point, look: Point = ZERO): Move => ({
-  millis,
-  pose: (f) =>
-    pose(at.x, at.y, { scaleY: 1 + 0.015 * Math.sin(2 * PI * f), look }),
-});
-
-/** 가만히 서서 천천히 숨 쉬며 glances 쪽을 차례로 둘러보고, 끝에는 다시 앞을 본다. */
-const idle = (
-  millis: number,
-  at: Point,
-  glances: Point[] = [point(-0.8, -0.2), point(0.8, -0.2)],
-): Move => ({
-  millis,
-  pose: (f) => {
-    const keys = [ZERO, ...glances, ZERO];
-    const position = f * (keys.length - 1);
-    const index = Math.min(Math.floor(position), keys.length - 2);
-    const raw = Math.min(Math.max((position - index - 0.6) / 0.4, 0), 1);
-    const shift = raw * raw * (3 - 2 * raw);
-    const breath = Math.sin(
-      2 * PI * f * Math.max(Math.round(millis / 1600), 1),
-    );
-    const from = keys[index];
-    const to = keys[index + 1];
-
-    return pose(at.x, at.y, {
-      scaleX: 1 - 0.01 * breath,
-      scaleY: 1 + 0.02 * breath,
-      look: point(
-        from.x + (to.x - from.x) * shift,
-        from.y + (to.y - from.y) * shift,
-      ),
-    });
-  },
-});
-
-/** 작은 걸음으로 통통 튀며 천천히 걸어간다. 공중에서는 좌우로 번갈아 기운다. */
-const stroll = (
-  millis: number,
-  from: Point,
-  to: Point,
-  hops: number,
-): Move => ({
-  millis,
-  pose: (f) => {
-    const step = f * hops;
-    const index = Math.min(Math.floor(step), hops - 1);
-    const phase = step - index;
-    const contact = 0.28;
-    const squash = phase < contact ? Math.sin((PI * phase) / contact) : 0;
-    const air = phase < contact ? 0 : (phase - contact) / (1 - contact);
-    const sway = index % 2 === 0 ? 1 : -1;
-
-    return pose(
-      from.x + (to.x - from.x) * f,
-      from.y - 4 * air * (1 - air) * 0.035,
-      {
-        scaleX: 1 + 0.08 * squash,
-        scaleY: 1 - 0.1 * squash + 0.03 * Math.sin(PI * air),
-        rotation: sway * 5 * Math.sin(PI * air),
-        look: point(sign(to.x - from.x) * 0.7, 0),
-        squint: 0.13 * squash,
-      },
-    );
-  },
-});
-
-/** 기지개를 켠다. 위로 쭉 늘어나며 눈을 지그시 감았다가 돌아온다. */
-const stretch = (millis: number, at: Point): Move => ({
-  millis,
-  pose: (f) => {
-    const reach = Math.sin(PI * f) ** 2;
-
-    return pose(at.x, at.y, {
-      scaleX: 1 - 0.1 * reach,
-      scaleY: 1 + 0.14 * reach,
-      rotation: 5 * Math.sin(2 * PI * f) * reach,
-      squint: reach,
-    });
-  },
-});
-
-/** 바닥을 누르듯 옆으로 퍼진다. 착지와 도약 준비를 같이 맡는다. */
-const crouch = (
-  millis: number,
-  at: Point,
-  depth = 1,
-  look: Point = ZERO,
-): Move => ({
-  millis,
-  pose: (f) => {
-    const squash = Math.sin(PI * f) * depth;
-
-    return pose(at.x, at.y, {
-      scaleX: 1 + 0.16 * squash,
-      scaleY: 1 - 0.2 * squash,
-      look,
-      squint: 0.33 * squash,
-    });
-  },
-});
+  return c * c * (3 - 2 * c);
+};
 
 /**
- * from 에서 to 까지 포물선으로 난다. 시간에 고르게 나눈 2차 베지어가 곧 포물선이라 따로 중력을 풀지 않는다.
- * 빠르게 오르내릴수록 길게 늘어나고, spins 바퀴만큼 공중제비를 돈다.
+ * 벽에 철썩 붙어 미끄러지다가 다시 웅크려 튀어 나간다. 벽 쪽 가장자리가 벽에 닿도록 발끝을 옮긴다.
+ *
+ * @param millis 길이
+ * @param onLeft 왼쪽 벽이면 true
+ * @param from 붙는 높이
+ * @param to 미끄러져 내려온 높이
+ * @returns 동작
  */
-const leap = (
-  millis: number,
-  from: Point,
-  to: Point,
-  lift: number,
-  spins = 0,
-): Move => ({
-  millis,
-  pose: (f) => {
-    const control = point(
-      (from.x + to.x) / 2,
-      Math.min(from.y, to.y) - 2 * lift,
-    );
-    const u = 1 - f;
-    const y = from.y * u * u + control.y * 2 * f * u + to.y * f * f;
-    const x = from.x * u * u + control.x * 2 * f * u + to.x * f * f;
-    const velocityY = (control.y - from.y) * 2 * u + (to.y - control.y) * 2 * f;
-    const fastest =
-      Math.max(Math.abs(control.y - from.y), Math.abs(to.y - control.y)) * 2;
-    const stretchAmount =
-      fastest > 0 ? (0.08 * Math.abs(velocityY)) / fastest : 0;
-    const turn = f * f * (3 - 2 * f);
-
-    return pose(x, y, {
-      scaleX: 1 - stretchAmount * 0.6,
-      scaleY: 1 + stretchAmount,
-      rotation: spins * 360 * turn,
-      look: point(sign(to.x - from.x) * 0.8, sign(velocityY) * 0.6),
-    });
-  },
-});
-
-/** 벽에 철썩 붙어 미끄러지다가 다시 웅크려 튀어 나간다. 벽 쪽 가장자리가 벽에 닿도록 발끝을 옮긴다. */
 const cling = (
   millis: number,
   onLeft: boolean,
@@ -387,38 +240,99 @@ const cling = (
   },
 });
 
-/** 몸 가운데를 축으로 도는 마스코트를 발을 축으로 돈 것처럼 보이게 놓는다. */
-function pinnedAtFeet(feet: Point, rotation: number): MascotPose {
-  const radians = (rotation * PI) / 180;
-  const toCenter = MASCOT_SIZE * MASCOT_CENTER_TO_FEET_RATIO;
-
-  return pose(
-    feet.x + toCenter * Math.sin(radians),
-    feet.y + toCenter * (1 - Math.cos(radians)),
-    {
-      rotation,
-    },
-  );
-}
-
-/** 붓 끝인 발로 곡선을 따라 긋는다. 곡선의 기울기만큼 몸을 기울이되 양 끝에서는 0 으로 모은다. */
-const brush = (millis: number, curve: Cubic): Move => ({
+/**
+ * 졸린 눈으로 두 번 꾸벅인다. 고개가 천천히 떨어졌다가 화들짝 돌아온다.
+ *
+ * @param millis 길이
+ * @param at 서 있는 자리
+ * @returns 동작
+ */
+const doze = (millis: number, at: Point): Move => ({
   millis,
   pose: (f) => {
-    const tangent = cubicTangent(curve, f);
-    const slope = (Math.atan2(tangent.y, Math.abs(tangent.x)) * 180) / PI;
-    const envelope = Math.min(1, f / 0.12, (1 - f) / 0.12);
-    const rotation =
-      Math.min(Math.max(-slope * 0.45, -20), 20) * sign(tangent.x) * envelope;
+    const phase = (f * 2) % 1;
+    const nod =
+      phase < 0.8 ? smooth(phase / 0.8) : 1 - smooth((phase - 0.8) / 0.2);
 
-    return {
-      ...pinnedAtFeet(cubicAt(curve, f), rotation),
-      look: point(sign(tangent.x) * 0.8, 0.5),
-    };
+    return pose(at.x, at.y, {
+      scaleX: 1 + 0.03 * nod,
+      scaleY: 1 - 0.05 * nod,
+      rotation: 9 * nod,
+      look: point(0.2, 0.8),
+      eyes: 'sleepy',
+    });
   },
 });
 
-/** 누를 키 쪽으로 몸을 숙이며 내리찍는다. 키를 누르는 순간(한 타의 가운데)에 가장 깊다. */
+/**
+ * 캔을 얼굴 앞으로 들어 꿀꺽꿀꺽 세 모금 마신다. 몸을 살짝 젖히고 모금마다 몸이 오르내린다.
+ *
+ * @param millis 길이
+ * @param at 서 있는 자리
+ * @returns 동작
+ */
+const drink = (millis: number, at: Point): Move => ({
+  millis,
+  pose: (f) => {
+    const lean = smooth(f / 0.2) * (1 - smooth((f - 0.9) / 0.1));
+    const gulp =
+      f > 0.2 && f < 0.88 ? Math.sin(((f - 0.2) / 0.68) * PI * 6) : 0;
+
+    return pose(at.x, at.y, {
+      scaleX: 1 - 0.025 * gulp,
+      scaleY: 1 + 0.035 * gulp,
+      rotation: -7 * lean,
+      look: point(0.3, -0.6),
+      eyes: 'smile',
+    });
+  },
+});
+
+/**
+ * 에너지가 차오른다. 쭉 늘어나며 부르르 떨고 눈이 별처럼 반짝인다.
+ *
+ * @param millis 길이
+ * @param at 서 있는 자리
+ * @returns 동작
+ */
+const powerUp = (millis: number, at: Point): Move => ({
+  millis,
+  pose: (f) => {
+    const rise = smooth(f / 0.25) * (1 - smooth((f - 0.75) / 0.25));
+    const shake = Math.sin((2 * PI * f * millis) / 38) * 0.006 * rise;
+
+    return pose(at.x + shake, at.y, {
+      scaleX: 1 - 0.08 * rise,
+      scaleY: 1 + 0.12 * rise,
+      look: point(0, -0.2),
+      eyes: 'sparkle',
+    });
+  },
+});
+
+/**
+ * 어지러워 고개를 좌우로 휘청이다가 차츰 바로 선다.
+ *
+ * @param millis 길이
+ * @param at 서 있는 자리
+ * @returns 동작
+ */
+const wobble = (millis: number, at: Point): Move => ({
+  millis,
+  pose: (f) =>
+    pose(at.x, at.y, {
+      scaleY: 1 - 0.03 * Math.sin(PI * f),
+      rotation: 12 * Math.sin(2 * PI * f * 2) * (1 - f),
+      eyes: 'dizzy',
+    }),
+});
+
+/**
+ * 누를 키 쪽으로 몸을 숙이며 내리찍는다. 키를 누르는 순간(한 타의 가운데)에 가장 깊다.
+ *
+ * @param millis 타자를 시작한 뒤 흐른 시간
+ * @returns 자세
+ */
 function typingPose(millis: number): MascotPose {
   const stroke = Math.floor(millis / KEYSTROKE_MILLIS);
   const dip = Math.sin((PI * (millis % KEYSTROKE_MILLIS)) / KEYSTROKE_MILLIS);
@@ -429,17 +343,71 @@ function typingPose(millis: number): MascotPose {
     scaleY: 1 - 0.07 * dip,
     rotation: side * 8 * dip,
     look: point(side * 0.7, 0.9),
-    squint: 0.2 * dip,
+    eyes: 'focus',
   });
 }
 
-/** 매번 다른 키를 고르되 같은 시간에는 늘 같은 키다. 마지막 칸은 스페이스 바다. */
+/**
+ * 매번 다른 키를 고르되 같은 시간에는 늘 같은 키다. 마지막 칸은 스페이스 바다.
+ *
+ * @param stroke 몇 번째 타
+ * @returns 키 번호
+ */
 export const keyFor = (stroke: number) =>
   (stroke * 11 + stroke * stroke * 3 + 4) % KEY_COUNT;
 
-/** 키가 키보드 가운데에서 얼마나 왼쪽(-1)·오른쪽(1)에 있는지 반환한다. */
+/**
+ * 키가 키보드 가운데에서 얼마나 왼쪽(-1)·오른쪽(1)에 있는지 반환한다.
+ *
+ * @param key 키 번호
+ * @returns -1..1 자리
+ */
 export const keySide = (key: number) =>
   key === KEY_COUNT - 1 ? 0 : ((key % KEY_COLUMNS) - 3) / 3;
+
+/**
+ * 바로 선 마스코트의 붓털 끝이 캔버스 격자 at 에 닿는 발끝 자리를 반환한다.
+ *
+ * @param at 캔버스 격자 좌표
+ * @returns 발끝 가운데 자리
+ */
+function brushAt(at: Point): Point {
+  const target = onCanvas(at);
+  const offset = brushTipOffset(MASCOT_SIZE);
+
+  return point(target.x - offset.x, target.y - offset.y);
+}
+
+/**
+ * 붓길의 시작점이나 끝점에 붓털 끝이 닿는 발끝 자리를 반환한다.
+ *
+ * @param stroke 붓길
+ * @param end 끝점이면 true
+ * @returns 발끝 가운데 자리
+ */
+const tip = (stroke: Stroke, end = false) =>
+  brushAt(strokeAt(stroke, end ? 1 : 0));
+
+/**
+ * 캔버스 붓길을 붓털 끝으로 따라 긋는다.
+ *
+ * @param millis 길이
+ * @param stroke 캔버스 격자 좌표 붓길
+ * @returns 동작
+ */
+const paint = (millis: number, stroke: Stroke) =>
+  paintAlong(millis, stroke, onCanvas, MASCOT_SIZE);
+
+/**
+ * 붓길 사이를 짧게 건너뛴다.
+ *
+ * @param millis 길이
+ * @param from 뛰는 자리
+ * @param to 내려앉는 자리
+ * @returns 동작
+ */
+const hop = (millis: number, from: Point, to: Point) =>
+  leap(millis, from, to, 0.035);
 
 // ---- 막 ----
 
@@ -454,22 +422,34 @@ const strolled = point(0.74, FLOOR);
 const strolledLeft = point(0.26, FLOOR);
 const wallLeft = WALL_GAP + MASCOT_HALF_WIDTH;
 const wallRight = 1 - WALL_GAP - MASCOT_HALF_WIDTH;
+const moon = brushAt(PORTRAIT_MOON);
+const blush = brushAt(PORTRAIT_BLUSH);
+const lookUp = point(0, -1);
 
-const interlude = (...moves: Move[]): Act => ({ kind: 'INTERLUDE', moves });
+/**
+ * 소품 없이 쉬는 막을 만든다.
+ *
+ * @param moves 쉬는 동안의 동작
+ * @returns 쉼 막
+ */
+const interlude = (...moves: Move[]): Act<CompletingAct, Cue> => ({
+  kind: 'INTERLUDE',
+  moves,
+});
 
-const ACTS: Act[] = [
+const ACTS: Act<CompletingAct, Cue>[] = [
   {
     kind: 'KEYWORDS',
     moves: [
-      stand(360, HOME, point(0, -1)),
+      stand(360, HOME, lookUp),
       crouch(140, HOME),
       leap(380, HOME, firstChip, 0.1),
-      withCue(crouch(150, firstChip), 'KEYWORD_1'),
+      withEyes(withCue(crouch(150, firstChip), 'KEYWORD_1'), 'smile'),
       leap(340, firstChip, secondChip, 0.1),
-      withCue(crouch(150, secondChip), 'KEYWORD_2'),
+      withEyes(withCue(crouch(150, secondChip), 'KEYWORD_2'), 'smile'),
       leap(340, secondChip, thirdChip, 0.1),
-      withCue(crouch(170, thirdChip, 1.2), 'KEYWORD_3'),
-      stand(320, thirdChip, point(-0.6, 0.8)),
+      withEyes(withCue(crouch(170, thirdChip, 1.2), 'KEYWORD_3'), 'smile'),
+      withEyes(stand(320, thirdChip, point(-0.6, 0.8)), 'wink'),
       withCue(leap(480, thirdChip, HOME, 0.06), 'KEYWORDS_LEAVE'),
       crouch(160, HOME),
       stand(240, HOME),
@@ -479,72 +459,97 @@ const ACTS: Act[] = [
   {
     kind: 'STORYLINE',
     moves: [
-      stand(460, HOME, point(0, -1)),
+      stand(460, HOME, lookUp),
       leap(320, HOME, underFirst, 0.08),
-      withCue(stand(440, underFirst, point(0, -1)), 'STORYLINE_1_LOOK'),
+      withCue(stand(440, underFirst, lookUp), 'STORYLINE_1_LOOK'),
       leap(440, underFirst, underThird, 0.14),
-      withCue(stand(400, underThird, point(0, -1)), 'STORYLINE_3_LOOK'),
+      withCue(stand(400, underThird, lookUp), 'STORYLINE_3_LOOK'),
       leap(320, underThird, HOME, 0.06),
-      crouch(180, HOME, 1, point(0, -1)),
+      crouch(180, HOME, 1, lookUp),
       withCue(leap(560, HOME, HOME, HEADBUTT_LIFT), 'STORYLINE_PICK'),
-      crouch(160, HOME),
-      stand(560, HOME, point(0, -1)),
+      withEyes(crouch(160, HOME), 'sparkle'),
+      withEyes(stand(560, HOME, lookUp), 'sparkle'),
     ],
   },
   interlude(
-    stroll(1500, HOME, strolled, 4),
+    withEyes(stroll(1500, HOME, strolled, 4), 'smile'),
     idle(1000, strolled, [point(-0.8, -0.3)]),
-    stroll(1150, strolled, HOME, 3),
+    withEyes(stroll(1150, strolled, HOME, 3), 'smile'),
   ),
+  {
+    kind: 'ENERGY',
+    moves: [
+      withCue(doze(1000, HOME), 'DOZE'),
+      withCue(stand(280, HOME, lookUp), 'CAN_DROP'),
+      crouch(110, HOME, 1, point(0.4, -0.8)),
+      withCue(leap(380, HOME, HOME, 0.1), 'CAN_CATCH'),
+      crouch(120, HOME),
+      withCue(drink(1250, HOME), 'DRINK'),
+      withCue(powerUp(800, HOME), 'POWER_UP'),
+    ],
+  },
   {
     kind: 'TYPING',
     moves: [
-      stand(360, HOME, point(0, 0.8)),
+      withEyes(stand(300, HOME, point(0, 0.8)), 'sparkle'),
       {
         millis: KEYSTROKE_MILLIS * KEYSTROKES,
         cue: 'TYPING',
         pose: (f) => typingPose(f * KEYSTROKE_MILLIS * KEYSTROKES),
       },
       withCue(crouch(140, HOME), 'TYPING_DONE'),
-      leap(360, HOME, HOME, 0.16),
-      crouch(120, HOME),
+      withEyes(leap(360, HOME, HOME, 0.16), 'smile'),
+      withEyes(crouch(120, HOME), 'smile'),
     ],
   },
   interlude(stretch(900, HOME), idle(600, HOME, [])),
   {
     kind: 'PAINTING',
     moves: [
-      stand(320, HOME, point(0, -1)),
+      withCue(stand(320, HOME, lookUp), 'HAT'),
+      withEyes(crouch(140, HOME, 1.1), 'smile'),
+      stand(160, HOME, point(0.8, 0.8)),
+      crouch(110, HOME, 1, point(0.8, 0.8)),
+      withCue(leap(360, HOME, HOME, 0.08), 'BRUSH'),
+      crouch(110, HOME),
+      leap(420, HOME, moon, 0.1),
+      withCue(crouch(240, moon, 1.2), 'MOON'),
+      hop(150, moon, tip(PORTRAIT_HAIR)),
+      withCue(paint(800, PORTRAIT_HAIR), 'HAIR'),
+      hop(170, tip(PORTRAIT_HAIR, true), tip(PORTRAIT_FACE)),
+      withCue(paint(560, PORTRAIT_FACE), 'FACE'),
+      hop(140, tip(PORTRAIT_FACE, true), blush),
+      withCue(crouch(180, blush, 0.9), 'BLUSH'),
+      hop(150, blush, tip(PORTRAIT_SCARF)),
+      withCue(paint(420, PORTRAIT_SCARF), 'SCARF'),
+      hop(160, tip(PORTRAIT_SCARF, true), tip(PORTRAIT_SIGNATURE)),
+      withCue(paint(360, PORTRAIT_SIGNATURE), 'SIGNATURE'),
+      leap(420, tip(PORTRAIT_SIGNATURE, true), HOME, 0.08),
       crouch(140, HOME),
-      leap(420, HOME, STROKE_1.start, 0.12),
-      withCue(brush(820, STROKE_1), 'STROKE_1'),
-      leap(260, STROKE_1.end, STROKE_2.start, 0.05),
-      withCue(brush(720, STROKE_2), 'STROKE_2'),
-      leap(400, STROKE_2.end, BLOOM_CENTER, 0.08),
-      withCue(crouch(240, BLOOM_CENTER, 1.3), 'BLOOM'),
-      leap(340, BLOOM_CENTER, SIGNATURE.start, 0.06),
-      withCue(brush(380, SIGNATURE), 'SIGNATURE'),
-      leap(420, SIGNATURE.end, HOME, 0.08),
-      crouch(160, HOME),
-      stand(560, HOME, point(0, -1)),
+      withEyes(stand(260, HOME, point(-0.4, -0.7)), 'wink'),
+      crouch(150, HOME, 1.2),
+      withEyes(withCue(leap(560, HOME, HOME, 0.22), 'TOSS'), 'smile'),
+      withEyes(crouch(160, HOME, 1.1), 'smile'),
+      withEyes(stand(420, HOME, lookUp), 'smile'),
     ],
   },
   interlude(
-    stroll(1150, HOME, strolledLeft, 3),
+    withEyes(stroll(1150, HOME, strolledLeft, 3), 'smile'),
     idle(900, strolledLeft, [point(0.8, -0.6)]),
-    stroll(1150, strolledLeft, HOME, 3),
+    withEyes(stroll(1150, strolledLeft, HOME, 3), 'smile'),
   ),
   {
     kind: 'BOUNCING',
     moves: [
       crouch(140, HOME),
-      leap(420, HOME, hopLeft, 0.28),
+      withEyes(leap(420, HOME, hopLeft, 0.28), 'smile'),
       crouch(130, hopLeft),
-      leap(680, hopLeft, hopRight, 0.85, 1),
-      crouch(170, hopRight, 1.2),
+      withEyes(leap(680, hopLeft, hopRight, 0.85, 1), 'smile'),
+      withEyes(crouch(170, hopRight, 1.2), 'dizzy'),
+      wobble(360, hopRight),
       leap(360, hopRight, HOME, 0.2),
       crouch(120, HOME),
-      leap(240, HOME, HOME, 0.1),
+      withEyes(leap(240, HOME, HOME, 0.1), 'smile'),
       crouch(100, HOME),
       stand(260, HOME),
     ],
@@ -558,94 +563,35 @@ const ACTS: Act[] = [
       leap(440, point(wallLeft, 0.9), point(wallRight, 0.6), 0.16),
       cling(480, false, 0.6, 0.7),
       leap(440, point(wallRight, 0.7), HOME, 0.14, -1),
-      crouch(180, HOME, 1.3),
+      withEyes(crouch(180, HOME, 1.3), 'dizzy'),
+      wobble(420, HOME),
       stand(280, HOME),
     ],
   },
   interlude(idle(1400, HOME, [point(0.8, 0), point(-0.8, 0), point(0, 0.8)])),
 ];
 
-const actMillis = (act: Act) =>
-  act.moves.reduce((sum, move) => sum + move.millis, 0);
+const choreography = createChoreography(ACTS);
 
-export const COMPLETING_LOOP_MILLIS = ACTS.reduce(
-  (sum, act) => sum + actMillis(act),
-  0,
-);
-
-const CUE_SPANS = new Map<Cue, { start: number; millis: number }>();
-
-for (const act of ACTS) {
-  let start = 0;
-
-  for (const move of act.moves) {
-    if (move.cue) CUE_SPANS.set(move.cue, { start, millis: move.millis });
-
-    start += move.millis;
-  }
-}
-
-/** 한 바퀴 안의 시각에 마스코트가 어느 막에서 어떤 자세인지 반환한다. */
-export function completingMoment(timeMillis: number): CompletingMoment {
-  const time =
-    ((timeMillis % COMPLETING_LOOP_MILLIS) + COMPLETING_LOOP_MILLIS) %
-    COMPLETING_LOOP_MILLIS;
-  let actStart = 0;
-
-  for (const act of ACTS) {
-    const length = actMillis(act);
-
-    if (time < actStart + length) {
-      const inAct = time - actStart;
-      let moveStart = 0;
-
-      for (const move of act.moves) {
-        if (inAct < moveStart + move.millis)
-          return {
-            act: act.kind,
-            actMillis: inAct,
-            pose: move.pose((inAct - moveStart) / move.millis),
-          };
-
-        moveStart += move.millis;
-      }
-    }
-
-    actStart += length;
-  }
-
-  throw new Error(`${time} is outside the loop`);
-}
-
-/** 막의 길이를 반환한다. 소품이 막 끝에서 사라질 때 쓴다. 쉼 막에는 소품이 없다. */
-export function completingActMillis(
+export const COMPLETING_LOOP_MILLIS = choreography.loopMillis;
+export const completingMoment = choreography.momentAt;
+/**
+ * 막의 길이를 반환한다. 소품이 막 끝에서 사라질 때 쓴다. 쉼 막에는 소품이 없다.
+ *
+ * @param kind 소품이 있는 막
+ * @returns 막 길이(ms)
+ */
+export const completingActMillis = (
   kind: Exclude<CompletingAct, 'INTERLUDE'>,
-): number {
-  return actMillis(ACTS.find((act) => act.kind === kind)!);
-}
+) => choreography.actMillis(kind);
+export const { cueStart, cueMillis, cueProgress } = choreography;
 
-const cueSpan = (cue: Cue) => {
-  const span = CUE_SPANS.get(cue);
-
-  if (!span) throw new Error(`${cue} is not attached to a move`);
-
-  return span;
-};
-
-/** cue 동작이 막 안에서 시작하는 시각이다. */
-export const cueStart = (cue: Cue) => cueSpan(cue).start;
-
-/** cue 동작의 길이다. */
-export const cueMillis = (cue: Cue) => cueSpan(cue).millis;
-
-/** cue 동작이 actMillis 에 얼마나 진행했는지(0..1) 반환한다. */
-export function cueProgress(cue: Cue, inAct: number): number {
-  const span = cueSpan(cue);
-
-  return Math.min(Math.max((inAct - span.start) / span.millis, 0), 1);
-}
-
-/** 몇 번째 키를 누르는지와, 그 안에서 얼마나 진행했는지(0..1) 반환한다. */
+/**
+ * 몇 번째 키를 누르는지와, 그 안에서 얼마나 진행했는지(0..1) 반환한다.
+ *
+ * @param inAct 막 안의 시각
+ * @returns 타 번호와 그 타의 진행
+ */
 export function keystrokeAt(inAct: number): [number, number] {
   const typing = Math.min(
     Math.max(inAct - cueStart('TYPING'), 0),
@@ -658,20 +604,14 @@ export function keystrokeAt(inAct: number): [number, number] {
   ];
 }
 
-/** 2.9초마다 한 번 깜빡인다. */
-export function blinkOpenness(millis: number): number {
-  const phase = millis % 2900;
-
-  return phase < 2760 ? 1 : 1 - 0.9 * Math.sin((PI * (phase - 2760)) / 140);
-}
-
-/** 살짝 넘쳤다가 자리를 잡는 등장 곡선이다. */
-export const easeOutBack = (t: number) =>
-  1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
-
 /**
  * 소품이 막 시작에 살짝 넘치며 나타나고 막 끝에 사라지는 정도다. 1 을 넘는 값은 등장 때의 넘침이다.
  * enterDelay 만큼 늦게 나타나 여러 소품이 차례로 튀어나온다.
+ *
+ * @param kind 소품이 있는 막
+ * @param inAct 막 안의 시각
+ * @param enterDelay 늦게 나타날 시간
+ * @returns 나타난 정도
  */
 export function propVisibility(
   kind: Exclude<CompletingAct, 'INTERLUDE'>,

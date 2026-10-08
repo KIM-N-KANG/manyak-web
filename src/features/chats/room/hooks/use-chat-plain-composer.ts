@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { insertEmphasisMarkers } from '../utils/insert-emphasis-markers';
 
@@ -20,18 +20,18 @@ export function useChatPlainComposer({
   initialValue = '',
 }: UseChatPlainComposerParams) {
   const [value, setValue] = useState(initialValue);
+  const [selection, setSelection] = useState<[number, number] | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const focusTextEnd = (text: string) => {
-    requestAnimationFrame(() => {
-      const element = textareaRef.current;
+  // 값이 반영된 직후 커서를 옮겨 다음 입력의 선택 영역을 늦게 덮어쓰지 않는다.
+  useLayoutEffect(() => {
+    const element = textareaRef.current;
 
-      if (!element) return;
+    if (!element || !selection) return;
 
-      element.focus();
-      element.setSelectionRange(text.length, text.length);
-    });
-  };
+    element.focus();
+    element.setSelectionRange(...selection);
+  }, [selection]);
 
   const send = async () => {
     if (await submitText(value)) {
@@ -41,7 +41,7 @@ export function useChatPlainComposer({
 
   const fill = (text: string) => {
     setValue(text);
-    focusTextEnd(text);
+    setSelection([text.length, text.length]);
   };
 
   const clear = () => setValue('');
@@ -62,10 +62,7 @@ export function useChatPlainComposer({
     );
 
     setValue(nextValue);
-    requestAnimationFrame(() => {
-      element.focus();
-      element.setSelectionRange(cursorStart, cursorEnd);
-    });
+    setSelection([cursorStart, cursorEnd]);
   };
 
   return {

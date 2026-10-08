@@ -1,6 +1,12 @@
-import { getGetPublicStoriesUrl } from '@/api/generated/endpoints/stories/stories';
+import { cache } from 'react';
+
+import {
+  getGetPublicStoriesUrl,
+  getGetStoryDetailUrl,
+} from '@/api/generated/endpoints/stories/stories';
 import type {
   GetPublicStoriesParams,
+  StoryDetailResponse,
   StoryPageResponse,
   StorySummaryResponse,
 } from '@/api/generated/models';
@@ -109,3 +115,70 @@ export async function fetchOriginalStoriesOnServer(): Promise<
 
   return stories;
 }
+
+/**
+ * 공개 오리지널의 화면에 쓰는 필드만 읽고 한 렌더 요청의 메타데이터와 본문이 공유한다.
+ * 익명 404는 비공개와 미존재를 구분하지 못하므로 인증된 클라이언트 조회를 막지 않는다.
+ */
+export const fetchOriginalStoryOnServer = cache(async (id: string) => {
+  const originals = await fetchOriginalStoriesOnServer();
+  const baseUrl = process.env.API_BASE_URL?.replace(/\/+$/, '');
+
+  if (!baseUrl || !originals?.some((story) => story.id === id)) {
+    return null;
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      `${baseUrl}${getGetStoryDetailUrl(id)}`,
+      { cache: 'no-store' },
+      SERVER_FETCH_TIMEOUT_MS,
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const story = (await response.json()) as StoryDetailResponse;
+
+    // 목록 캐시가 남아 있어도 현재 공개된 작품만 HTML에 싣는다.
+    if (
+      story.id !== id ||
+      story.status !== 'PUBLISHED' ||
+      story.visibility !== 'PUBLIC'
+    ) {
+      return null;
+    }
+
+    // 전체 응답을 넘기면 숨겨진 설정과 개인화 필드도 RSC 페이로드에 노출된다.
+    return {
+      id: story.id,
+      title: story.title,
+      oneLineIntro: story.oneLineIntro,
+      description: story.description,
+      thumbnailUrl: story.thumbnailUrl,
+      genres: story.genres,
+      likeCount: story.likeCount,
+      turnCount: story.turnCount,
+      createdAt: story.createdAt,
+      author: story.author ? { nickname: story.author.nickname } : null,
+      characters: story.characters?.map(({ name, imageUrl, description }) => ({
+        name,
+        imageUrl,
+        description,
+      })),
+      startSettings: story.startSettings?.map((setting) => ({
+        id: setting.id,
+        name: setting.name,
+        startSituation: setting.startSituation,
+        endings: setting.endings?.map(({ name }) => ({ name })),
+      })),
+    };
+  } catch {
+    return null;
+  }
+});
+
+export type PublicStoryDetail = NonNullable<
+  Awaited<ReturnType<typeof fetchOriginalStoryOnServer>>
+>;

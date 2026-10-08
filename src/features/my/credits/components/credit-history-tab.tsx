@@ -79,7 +79,7 @@ export function CreditHistoryTab({ enabled }: CreditHistoryTabProps) {
       ref={setScrollElement}
       onRefresh={refreshActiveQueries}
       className="h-full scroll-fade-b"
-      contentClassName="flex min-h-full flex-col px-4 py-2">
+      contentClassName="flex flex-col px-4 py-2">
       {isPending ? <CreditHistorySkeleton /> : null}
 
       {/* 다음 페이지 실패도 쿼리 전체를 error로 만들므로, 첫 조회 실패는 목록이 비었을 때로 좁힌다. */}

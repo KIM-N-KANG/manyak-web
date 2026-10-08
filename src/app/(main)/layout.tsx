@@ -9,6 +9,7 @@ import { MainHeader } from '@/components/layout/main-header';
 import { MainScrollProvider } from '@/components/layout/main-scroll-context';
 import { PullToRefresh } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryListToolbar } from '@/features/stories/list/components/story-list-toolbar';
 import { useRefreshActiveQueries } from '@/hooks/use-refresh-active-queries';
 
 /**
@@ -79,19 +80,21 @@ export default function MainLayout({
       {/* 스크롤 영역과 같은 박스를 가지는 positioned 래퍼.
           FAB처럼 스크롤·당김을 따라가지 않아야 하는 오버레이가 포털로 여기에 absolute로 붙는다. */}
       <div ref={setOverlayContainer} className="relative min-h-0 flex-1">
-        {/* 홈·채팅·제작은 당겨서 화면이 구독 중인 목록을 다시 읽는다. 마이는 앱과 같이 두지 않는다. */}
-        <PullToRefresh
-          ref={scrollContainerRef}
-          onRefresh={refreshActiveQueries}
-          disabled={pathname === APP_PATH.MAIN.MY}
-          onScroll={isHome || isStudio ? handleContentScroll : undefined}
-          className="h-full"
-          contentClassName="flex min-h-full flex-col">
-          <MainScrollProvider
-            value={{ hasScrolled, isToolbarHidden, overlayContainer }}>
+        <MainScrollProvider
+          value={{ hasScrolled, isToolbarHidden, overlayContainer }}>
+          {/* 홈·채팅·제작은 당겨서 화면이 구독 중인 목록을 다시 읽는다. 마이는 앱과 같이 두지 않는다.
+              홈 필터 바는 당김에 밀리지 않도록 헤더 슬롯에 둬 표시자가 바 아래에 나타나게 한다. */}
+          <PullToRefresh
+            ref={scrollContainerRef}
+            onRefresh={refreshActiveQueries}
+            disabled={pathname === APP_PATH.MAIN.MY}
+            onScroll={isHome || isStudio ? handleContentScroll : undefined}
+            header={isHome ? <StoryListToolbar /> : undefined}
+            className="h-full"
+            contentClassName="flex flex-col">
             {children}
-          </MainScrollProvider>
-        </PullToRefresh>
+          </PullToRefresh>
+        </MainScrollProvider>
       </div>
       <BottomNavigationBar />
     </div>
