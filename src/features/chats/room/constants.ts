@@ -113,3 +113,12 @@ export const CHAT_CHOICES_HINT_SEEN_VALUE = 'true';
  */
 export const buildChatTurnCreditCostLabel = (amount: string) =>
   `${amount} 이프`;
+
+/**
+ * 페르소나를 골라 시작한 채팅의 헤더 제목 아래 보조 줄을 만든다.
+ *
+ * @param name 페르소나 이름
+ * @returns 보조 줄 문구
+ */
+export const buildChatPersonaLabel = (name: string) =>
+  `${name} 페르소나로 채팅 중`;
