@@ -91,6 +91,16 @@ test.describe('페르소나 관리', () => {
     await expect(list.getByText('윤해솔')).toBeVisible();
     await expect(list.getByText('겁이 많지만 끈질기다')).toBeVisible();
     await expect(list.getByText(/##/)).toHaveCount(0);
+
+    const row = list.getByRole('button', { name: /겁이 많지만/ });
+
+    await expect(row).toHaveAttribute('aria-expanded', 'false');
+    await row.click();
+    await expect(row).toHaveAttribute('aria-expanded', 'true');
+    await expect(list.getByText(/## 성격/)).toBeVisible();
+    await row.click();
+    await expect(row).toHaveAttribute('aria-expanded', 'false');
+    await expect(list.getByText(/##/)).toHaveCount(0);
     await expect(list.getByText('자유롭게 쓴 소개')).toBeVisible();
 
     await page.unroute(PERSONAS);

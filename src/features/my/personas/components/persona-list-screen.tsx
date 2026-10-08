@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   Delete02Icon,
@@ -27,6 +27,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { PERSONA_MAX_COUNT } from '@/features/my/_shared/constants/persona';
 import { clearCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
+import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
 import { PERSONA_LIST_COPY } from '../constants';
@@ -38,8 +39,10 @@ function PersonaRow({ persona }: { persona: UserPersonaResponse }) {
   const queryClient = useQueryClient();
   const deletePersona = useDeletePersona();
   const name = persona.name ?? '';
-  const summary = parsePersonaDescription(persona.description)
-    .feature.split('\n')
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { feature } = parsePersonaDescription(persona.description);
+  const summary = feature
+    .split('\n')
     .filter((line) => line.trim() && !line.trim().startsWith('#'))
     .join(' ');
 
@@ -62,12 +65,26 @@ function PersonaRow({ persona }: { persona: UserPersonaResponse }) {
 
   return (
     <li className="flex items-start gap-2 px-4 py-2">
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <p className="truncate font-semibold">{name}</p>
-        <p className="line-clamp-2 text-sm wrap-anywhere text-foreground-secondary">
-          {summary}
-        </p>
-      </div>
+      <button
+        type="button"
+        aria-expanded={isExpanded}
+        className="flex min-w-0 flex-1 flex-col gap-0.5 text-left"
+        onClick={() => setIsExpanded((previous) => !previous)}>
+        <span
+          className={cn(
+            'font-semibold',
+            isExpanded ? 'wrap-anywhere' : 'truncate',
+          )}>
+          {name}
+        </span>
+        <span
+          className={cn(
+            'text-sm wrap-anywhere text-foreground-secondary',
+            isExpanded ? 'whitespace-pre-wrap' : 'line-clamp-2',
+          )}>
+          {isExpanded ? feature : summary}
+        </span>
+      </button>
       <CardOptionsSheet
         kind={PERSONA_LIST_COPY.optionsKind}
         title={name}
