@@ -249,6 +249,12 @@ export type AnalyticsEventProps = {
   client_personaCreate_viewed: void;
   client_personaCreate_form_submitted: void;
   client_personaCreate_completed: void;
+  client_personaList_viewed: void;
+  client_personaList_createButton_clicked: void;
+  client_personaList_persona_deleted: void;
+  client_personaEdit_viewed: void;
+  client_personaEdit_form_submitted: void;
+  client_personaEdit_completed: void;
   // invite (친구 초대 페이지)
   client_invite_viewed: void;
   client_invite_copyButton_clicked: void;

@@ -2,9 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-
+import type { UserPersonaResponse } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,16 +26,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { APP_PATH } from '@/constants/app-path';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
 import {
   PERSONA_CREATE_COPY,
+  PERSONA_EDIT_COPY,
   PERSONA_FEATURE_MAX_LENGTH,
   PERSONA_NAME_MAX_LENGTH,
 } from '../constants';
-import { usePersonaCreateForm } from '../hooks/use-persona-create-form';
+import { useGuestLoginRedirect } from '../hooks/use-guest-login-redirect';
+import { usePersonaForm } from '../hooks/use-persona-form';
 import {
   PERSONA_GENDER_TEXT,
   type PersonaGender,
@@ -58,19 +57,18 @@ const RequiredMark = () => (
   </span>
 );
 
-export function PersonaCreateForm() {
-  const router = useRouter();
-  const { status } = useSession();
+type PersonaFormProps = {
+  /** 수정할 페르소나. 없으면 새로 만든다 */
+  persona?: UserPersonaResponse;
+};
 
-  useEffect(() => {
-    track('client_personaCreate_viewed');
-  }, []);
+export function PersonaForm({ persona }: PersonaFormProps) {
+  const isEdit = persona !== undefined;
 
+  useGuestLoginRedirect();
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace(APP_PATH.LOGIN);
-    }
-  }, [status, router]);
+    track(isEdit ? 'client_personaEdit_viewed' : 'client_personaCreate_viewed');
+  }, [isEdit]);
 
   const {
     name,
@@ -82,7 +80,7 @@ export function PersonaCreateForm() {
     handleFeatureChange,
     handleSubmit,
     isSubmitting,
-  } = usePersonaCreateForm();
+  } = usePersonaForm(persona);
   const basicInfoError = errors.name ?? errors.gender;
 
   return (
@@ -91,7 +89,9 @@ export function PersonaCreateForm() {
         <div className="flex flex-col items-start gap-1 p-4">
           <p className="text-xl font-semibold">{PERSONA_CREATE_COPY.title}</p>
           <p className="text-foreground-secondary">
-            {PERSONA_CREATE_COPY.description}
+            {isEdit
+              ? PERSONA_EDIT_COPY.description
+              : PERSONA_CREATE_COPY.description}
           </p>
         </div>
 
@@ -211,8 +211,12 @@ export function PersonaCreateForm() {
           disabled={isSubmitting}>
           <LoadingButtonContent
             isLoading={isSubmitting}
-            loadingLabel={PERSONA_CREATE_COPY.submitting}>
-            {PERSONA_CREATE_COPY.submit}
+            loadingLabel={
+              isEdit
+                ? PERSONA_EDIT_COPY.submitting
+                : PERSONA_CREATE_COPY.submitting
+            }>
+            {isEdit ? PERSONA_EDIT_COPY.submit : PERSONA_CREATE_COPY.submit}
           </LoadingButtonContent>
         </Button>
       </div>

@@ -9,7 +9,9 @@ import { toast } from 'sonner';
 import {
   getListQueryKey as getPersonasQueryKey,
   useCreate as useCreatePersona,
+  useUpdate as useUpdatePersona,
 } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
+import type { UserPersonaResponse } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { selectCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
@@ -19,6 +21,7 @@ import { track } from '@/observability/analytics';
 import { PERSONA_CREATE_ERROR_COPY } from '../constants';
 import {
   buildPersonaDescription,
+  parsePersonaDescription,
   type PersonaGender,
 } from '../utils/persona-description';
 
@@ -27,19 +30,35 @@ type PersonaField = 'name' | 'gender' | 'feature';
 type PersonaFormErrors = Partial<Record<PersonaField, string>>;
 
 /**
- * 페르소나 생성 폼의 입력 상태와 제출을 관리하는 훅.
- * 생성에 성공하면 목록 조회를 무효화하고, 스토리 상세에서 왔으면 새 페르소나를 그 상세의 선택으로 남긴 뒤
- * 들어온 화면으로 돌아간다.
+ * 페르소나 생성과 수정 폼의 입력 상태와 제출을 관리하는 훅.
+ * 저장에 성공하면 목록 조회를 무효화하고 들어온 화면으로 돌아간다. 새로 만든 페르소나는 스토리 상세에서
+ * 왔으면 그 상세의 선택으로 남긴다.
  *
+ * @param persona 수정할 페르소나. 없으면 새로 만든다
  * @returns 입력값과 변경 함수, 필드별 오류, 제출 핸들러, 제출 중 여부
  */
-export function usePersonaCreateForm() {
+export function usePersonaForm(persona?: UserPersonaResponse) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState<PersonaGender | null>(null);
-  const [feature, setFeature] = useState('');
+  const [initial] = useState(() =>
+    parsePersonaDescription(persona?.description),
+  );
+  const [name, setName] = useState(persona?.name ?? '');
+  const [gender, setGender] = useState<PersonaGender | null>(initial.gender);
+  const [feature, setFeature] = useState(initial.feature);
   const [errors, setErrors] = useState<PersonaFormErrors>({});
+
+  const leave = async () => {
+    await queryClient.invalidateQueries({ queryKey: getPersonasQueryKey() });
+
+    if (window.history.length > 1) {
+      router.back();
+
+      return;
+    }
+
+    router.replace(persona ? APP_PATH.MY_PERSONAS : APP_PATH.MAIN.STORIES);
+  };
 
   const createPersona = useCreatePersona({
     mutation: {
@@ -49,21 +68,12 @@ export function usePersonaCreateForm() {
 
         track('client_personaCreate_completed');
         toast.success(TOAST_MESSAGE.PERSONA_CREATED);
-        await queryClient.invalidateQueries({
-          queryKey: getPersonasQueryKey(),
-        });
 
         if (personaId) {
           selectCreatedPersona(personaId);
         }
 
-        if (window.history.length > 1) {
-          router.back();
-
-          return;
-        }
-
-        router.replace(APP_PATH.MAIN.STORIES);
+        await leave();
       },
       onError: (error) => {
         toast.error(
@@ -71,6 +81,19 @@ export function usePersonaCreateForm() {
             ? TOAST_MESSAGE.PERSONA_LIMIT_REACHED
             : TOAST_MESSAGE.PERSONA_CREATE_FAILED,
         );
+      },
+    },
+  });
+
+  const updatePersona = useUpdatePersona({
+    mutation: {
+      onSuccess: async () => {
+        track('client_personaEdit_completed');
+        toast.success(TOAST_MESSAGE.PERSONA_UPDATED);
+        await leave();
+      },
+      onError: () => {
+        toast.error(TOAST_MESSAGE.PERSONA_UPDATE_FAILED);
       },
     },
   });
@@ -93,14 +116,23 @@ export function usePersonaCreateForm() {
       return;
     }
 
+    const data = {
+      name: name.trim(),
+      description: buildPersonaDescription(gender, feature),
+    };
+
+    if (persona?.id) {
+      track('client_personaEdit_form_submitted');
+      updatePersona.mutate({ personaId: persona.id, data });
+
+      return;
+    }
+
     track('client_personaCreate_form_submitted');
-    createPersona.mutate({
-      data: {
-        name: name.trim(),
-        description: buildPersonaDescription(gender, feature),
-      },
-    });
+    createPersona.mutate({ data });
   };
+
+  const mutation = persona ? updatePersona : createPersona;
 
   return {
     name,
@@ -120,6 +152,6 @@ export function usePersonaCreateForm() {
       clearError('feature');
     },
     handleSubmit,
-    isSubmitting: createPersona.isPending || createPersona.isSuccess,
+    isSubmitting: mutation.isPending || mutation.isSuccess,
   };
 }

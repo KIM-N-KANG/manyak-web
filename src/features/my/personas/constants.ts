@@ -28,6 +28,29 @@ export const PERSONA_CREATE_COPY = {
   submitting: '페르소나 생성 중',
 } as const;
 
+export const PERSONA_EDIT_COPY = {
+  headerTitle: '페르소나 수정',
+  description: '수정한 내용은 새로 시작하는 채팅부터 적용돼요',
+  submit: '저장하기',
+  submitting: '페르소나 저장 중',
+  notFound: '페르소나를 찾을 수 없어요',
+} as const;
+
+export const PERSONA_LIST_COPY = {
+  headerTitle: '페르소나 관리',
+  empty: '아직 만든 페르소나가 없어요',
+  loadFailed: '페르소나를 불러오지 못했어요',
+  loading: '페르소나 불러오는 중',
+  create: '페르소나 추가',
+  optionsKind: '페르소나',
+  optionsTrigger: (name: string) => `${name} 페르소나 옵션`,
+  edit: '수정하기',
+  delete: '삭제하기',
+  deleteConfirmTitle: '페르소나를 삭제할까요?',
+  deleteConfirmDescription:
+    '이 페르소나로 진행 중인 채팅은 그대로 이어갈 수 있어요',
+} as const;
+
 export const PERSONA_CREATE_ERROR_COPY = {
   name: '이름을 입력해 주세요',
   gender: '성별을 선택해 주세요',

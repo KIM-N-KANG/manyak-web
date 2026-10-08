@@ -7,6 +7,7 @@ import {
   Logout03Icon,
   MailEdit01Icon,
   Notification01Icon,
+  UserAccountIcon,
   UserRemove01Icon,
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
@@ -16,6 +17,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { clearLocalMemberState } from '@/features/auth/_shared/utils/clear-local-member-state';
 import { InviteMenuItem } from '@/features/my/_shared/components/invite-menu-item';
 import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
+import { PERSONA_MENU_COPY } from '@/features/my/_shared/constants/persona';
 import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
 import { track } from '@/observability/analytics';
 
@@ -44,6 +46,18 @@ export function MyScreen() {
     <main className="flex flex-1 flex-col">
       <ProfileHeader />
       <CreditBalanceCard />
+      {isAuthenticated && (
+        <section className="flex flex-col py-4">
+          <div className="mb-2 px-4">
+            <Label>{PERSONA_MENU_COPY.sectionLabel}</Label>
+          </div>
+          <MyMenuItem
+            icon={UserAccountIcon}
+            label={PERSONA_MENU_COPY.menuLabel}
+            href={APP_PATH.MY_PERSONAS}
+          />
+        </section>
+      )}
       {isAuthenticated && (
         <section className="flex flex-col py-4">
           <div className="mb-2 px-4">

@@ -24,3 +24,28 @@ export function buildPersonaDescription(
     feature.trim(),
   ].join('\n');
 }
+
+/**
+ * 서버 페르소나 소개 글을 성별과 특징으로 나눈다. 맨 앞의 `# 주인공` 줄과 성별 절만 걷어 내고 나머지는
+ * 특징으로 둔다. 형식이 다른 글은 성별 없이 통째로 특징에 둬 내용을 잃지 않는다.
+ *
+ * @param description 서버 페르소나 소개
+ * @returns 성별(못 읽으면 null)과 특징 본문
+ */
+export function parsePersonaDescription(
+  description: string | null | undefined,
+) {
+  const lines = (description ?? '').trim().split('\n');
+  const body = lines[0]?.trim() === '# 주인공' ? lines.slice(1) : lines;
+  const gender =
+    body[0]?.trim() === '## 성별'
+      ? ((Object.keys(PERSONA_GENDER_TEXT) as PersonaGender[]).find(
+          (key) => PERSONA_GENDER_TEXT[key] === body[1]?.trim(),
+        ) ?? null)
+      : null;
+
+  return {
+    gender,
+    feature: (gender ? body.slice(2) : lines).join('\n').trim(),
+  };
+}
