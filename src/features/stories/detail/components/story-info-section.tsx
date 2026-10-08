@@ -35,6 +35,8 @@ type StoryInfoSectionProps = {
   metadataRef?: Ref<HTMLDivElement>;
   startSettingValue: string;
   onStartSettingValueChange: (value: string) => void;
+  personaId: string | null;
+  onPersonaIdChange: (personaId: string | null) => void;
 };
 
 export function StoryInfoSection({
@@ -44,6 +46,8 @@ export function StoryInfoSection({
   metadataRef,
   startSettingValue,
   onStartSettingValueChange,
+  personaId,
+  onPersonaIdChange,
 }: StoryInfoSectionProps) {
   const genres = story.genres ?? [];
   const reachedEndings = story.reachedEndings ?? [];
@@ -89,6 +93,8 @@ export function StoryInfoSection({
             startSettings={startSettings}
             value={startSettingValue}
             onValueChange={onStartSettingValueChange}
+            personaId={personaId}
+            onPersonaIdChange={onPersonaIdChange}
           />
         )}
 

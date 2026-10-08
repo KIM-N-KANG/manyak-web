@@ -20,6 +20,7 @@ export const APP_PATH = {
   MY_INVITE: '/my/invite',
   MY_LINK_CONTINUE: '/my/link/continue',
   MY_NOTIFICATIONS: '/my/notifications',
+  MY_PERSONA_NEW: '/my/personas/new',
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,
   STORY_EDIT: (id: number | string) => `/stories/${id}/edit`,
   CHAT_ROOM: (id: number | string) => `/chats/${id}`,

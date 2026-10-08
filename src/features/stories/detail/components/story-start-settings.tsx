@@ -1,14 +1,5 @@
-import { InformationCircleIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-
 import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
-import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -23,10 +14,15 @@ import {
 } from '@/features/chats/_shared/utils/chat-message-segments';
 import { START_SETTING_INFO_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 
+import { StoryInfoHeading } from './story-info-heading';
+import { StoryPersonaSelect } from './story-persona-select';
+
 type StoryStartSettingsProps = {
   startSettings: StoryStartSettingResponse[];
   value: string;
   onValueChange: (value: string) => void;
+  personaId: string | null;
+  onPersonaIdChange: (personaId: string | null) => void;
 };
 
 /**
@@ -41,42 +37,12 @@ export const startSettingValue = (
   index: number,
 ) => setting?.id ?? String(index);
 
-function InfoHeading({ title, children }: { title: string; children: string }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      <h3 className="font-semibold">{title}</h3>
-      <Popover>
-        <PopoverTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              aria-label={`${title} 안내`}
-              className="text-foreground-secondary"
-            />
-          }>
-          <HugeiconsIcon
-            icon={InformationCircleIcon}
-            className="size-4"
-            aria-hidden="true"
-          />
-        </PopoverTrigger>
-        <PopoverContent
-          side="bottom"
-          align="start"
-          className="w-auto max-w-60 gap-0 px-3 py-2">
-          {children}
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
 export function StoryStartSettings({
   startSettings,
   value,
   onValueChange,
+  personaId,
+  onPersonaIdChange,
 }: StoryStartSettingsProps) {
   const selected =
     startSettings.find(
@@ -90,10 +56,14 @@ export function StoryStartSettings({
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-bold">채팅 시작 상황</h2>
       <div className="flex flex-col gap-6">
+        <StoryPersonaSelect
+          value={personaId}
+          onValueChange={onPersonaIdChange}
+        />
         <div className="flex flex-col gap-4">
-          <InfoHeading title="상황 이름">
+          <StoryInfoHeading title="상황 이름">
             {START_SETTING_INFO_COPY.situation}
-          </InfoHeading>
+          </StoryInfoHeading>
           <Select
             value={value}
             onValueChange={(next) => onValueChange(next as string)}
@@ -143,9 +113,9 @@ export function StoryStartSettings({
         ) : null}
         {endings.length > 0 ? (
           <div className="flex flex-col gap-4">
-            <InfoHeading title="엔딩">
+            <StoryInfoHeading title="엔딩">
               {START_SETTING_INFO_COPY.ending}
-            </InfoHeading>
+            </StoryInfoHeading>
             <div className="flex flex-col gap-2">
               {endings.map((ending, index) => (
                 <div

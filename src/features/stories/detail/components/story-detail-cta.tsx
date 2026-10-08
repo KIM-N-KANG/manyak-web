@@ -21,6 +21,8 @@ type StoryDetailCtaProps = {
   isLiked: boolean;
   /** 선택한 시작 설정 ID. 없으면 백엔드가 첫 시작 설정을 사용한다. */
   startSettingId?: string;
+  /** 선택한 페르소나 ID. null이면 기본 주인공으로 시작한다. */
+  personaId?: string | null;
 };
 
 export function StoryDetailCta({
@@ -28,12 +30,14 @@ export function StoryDetailCta({
   canLike,
   isLiked,
   startSettingId,
+  personaId,
 }: StoryDetailCtaProps) {
   const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
   const { status } = useSession();
   const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
   const { startChat, isStarting } = useStartChat(storyId, {
     startSettingId,
+    personaId,
     onStart: () =>
       track('client_storyDetail_chatStartButton_clicked', {
         story_id: storyId,

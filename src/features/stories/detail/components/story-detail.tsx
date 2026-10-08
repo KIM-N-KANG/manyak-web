@@ -82,6 +82,8 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
       startSettingValue(setting, index) === activeStartSetting,
   )?.id;
 
+  const [personaId, setPersonaId] = useState<string | null>(null);
+
   const [isThumbnailViewerOpen, setIsThumbnailViewerOpen] = useState(false);
 
   const handleThumbnailClick = () => {
@@ -221,6 +223,8 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
                   metadataRef={setMetadataElement}
                   startSettingValue={activeStartSetting}
                   onStartSettingValueChange={setSelectedStartSetting}
+                  personaId={personaId}
+                  onPersonaIdChange={setPersonaId}
                 />
               </div>
             </main>
@@ -228,6 +232,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
             <StoryDetailCta
               storyId={storyId}
               startSettingId={activeStartSettingId}
+              personaId={personaId}
               canLike={
                 sessionStatus !== 'loading' &&
                 (isMember || createdStoryIds !== null) &&
