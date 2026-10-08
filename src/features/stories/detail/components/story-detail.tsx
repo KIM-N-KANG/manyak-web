@@ -11,11 +11,13 @@ import {
   getStoryDetail,
   useGetStoryDetail,
 } from '@/api/generated/endpoints/stories/stories';
+import { useList as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import { FullscreenImageViewer } from '@/components/common/fullscreen-image-viewer';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
@@ -23,7 +25,9 @@ import {
   clearCreatedPersona,
   useCreatedPersonaId,
 } from '@/features/stories/_shared/utils/created-persona-selection';
+import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 import { useStoryFooterBackground } from '@/features/stories/detail/hooks/use-story-footer-background';
+import { buildChatStartSummary } from '@/features/stories/detail/utils/chat-start-summary';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useInView } from '@/hooks/use-in-view';
@@ -81,14 +85,30 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
   const startSettings = story?.startSettings ?? [];
   const activeStartSetting =
     selectedStartSetting ?? startSettingValue(startSettings[0], 0);
-  const activeStartSettingId = startSettings.find(
+  const activeStartSettingIndex = startSettings.findIndex(
     (setting, index) =>
       startSettingValue(setting, index) === activeStartSetting,
-  )?.id;
+  );
+  const activeStartSettingId = startSettings[activeStartSettingIndex]?.id;
 
   const createdPersonaId = useCreatedPersonaId(storyId);
   const [pickedPersonaId, setPickedPersonaId] = useState<string | null>(null);
   const personaId = createdPersonaId ?? pickedPersonaId;
+  const { isMember: canUsePersonas } = useMemberAccess();
+  const { data: personasData } = usePersonas({
+    query: { enabled: canUsePersonas },
+  });
+  const personaName =
+    personasData?.status === 200
+      ? personasData.data.find(({ id }) => id === personaId)?.name
+      : undefined;
+  const chatStartSummary = buildChatStartSummary(
+    personaName ?? PERSONA_SELECT_COPY.defaultProtagonist,
+    activeStartSettingIndex < 0
+      ? undefined
+      : (startSettings[activeStartSettingIndex].name ??
+          `시작 상황 ${activeStartSettingIndex + 1}`),
+  );
 
   const handlePersonaIdChange = (next: string | null) => {
     clearCreatedPersona();
@@ -244,6 +264,7 @@ export function StoryDetail({ storyId }: StoryDetailProps) {
               storyId={storyId}
               startSettingId={activeStartSettingId}
               personaId={personaId}
+              summary={chatStartSummary}
               canLike={
                 sessionStatus !== 'loading' &&
                 (isMember || createdStoryIds !== null) &&

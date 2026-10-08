@@ -9,6 +9,7 @@ import {
   PERSONA_CREATE_ERROR_COPY,
 } from '@/features/my/personas/constants';
 import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
+import { buildChatStartSummary } from '@/features/stories/detail/utils/chat-start-summary';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { oneLine } from '../fixtures/copy';
@@ -104,6 +105,15 @@ test.describe('스토리 상세 페르소나 선택', () => {
       PERSONA_SELECT_COPY.defaultProtagonist,
     );
 
+    const startButton = page.getByRole('button', { name: '새 채팅 시작하기' });
+
+    await expect(startButton).toContainText(
+      buildChatStartSummary(
+        PERSONA_SELECT_COPY.defaultProtagonist,
+        '계곡 입구',
+      ),
+    );
+
     await page
       .getByRole('button', { name: `${PERSONA_SELECT_COPY.title} 안내` })
       .click();
@@ -116,8 +126,11 @@ test.describe('스토리 상세 페르소나 선택', () => {
     ).toBeVisible();
     await page.getByRole('option', { name: '윤해솔' }).click();
     await expect(personaSelect(page)).toContainText('윤해솔');
+    await expect(startButton).toContainText(
+      buildChatStartSummary('윤해솔', '계곡 입구'),
+    );
 
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await startButton.click();
 
     await expect(page).toHaveURL(/\/chats\/c1$/);
     expect(createChatBody).toMatchObject({

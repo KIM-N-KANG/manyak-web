@@ -24,6 +24,8 @@ type StoryDetailCtaProps = {
   startSettingId?: string;
   /** 선택한 페르소나 ID. null이면 기본 주인공으로 시작한다. */
   personaId?: string | null;
+  /** 버튼 아래 줄에 보이는 고른 페르소나와 시작 상황 요약이다. */
+  summary?: string;
 };
 
 export function StoryDetailCta({
@@ -32,6 +34,7 @@ export function StoryDetailCta({
   isLiked,
   startSettingId,
   personaId,
+  summary,
 }: StoryDetailCtaProps) {
   const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
   const { status } = useSession();
@@ -86,14 +89,21 @@ export function StoryDetailCta({
           <Button
             type="button"
             size="lg"
-            className="relative min-w-0 flex-1"
+            className={cn('relative min-w-0 flex-1', summary && 'py-1.5')}
             aria-busy={isStarting}
             disabled={isStarting}
             onClick={startChat}>
             <LoadingButtonContent
               isLoading={isStarting}
               loadingLabel="새 채팅 시작 중">
-              새 채팅 시작하기
+              <span className="flex min-w-0 flex-col items-center">
+                <span className="text-sm leading-5">새 채팅 시작하기</span>
+                {summary && (
+                  <span className="max-w-full truncate text-[11px] leading-4 text-primary-foreground/80">
+                    {summary}
+                  </span>
+                )}
+              </span>
             </LoadingButtonContent>
           </Button>
         </div>
