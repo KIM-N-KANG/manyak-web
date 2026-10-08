@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useList } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
+import { useList1 } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { readCreateSubmissions } from '@/features/studio/_shared/utils/story-submission';
@@ -25,7 +25,7 @@ const SUBMISSION_LIMIT = 100;
 export function useStorySubmissions() {
   const { isMember } = useMemberAccess();
   const queryClient = useQueryClient();
-  const query = useList(
+  const query = useList1(
     { limit: SUBMISSION_LIMIT },
     {
       query: {

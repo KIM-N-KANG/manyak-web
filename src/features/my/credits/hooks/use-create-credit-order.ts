@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { toast } from 'sonner';
 
-import { useCreate } from '@/api/generated/endpoints/credits/credits';
+import { useCreate1 } from '@/api/generated/endpoints/credits/credits';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 
 import { leaveForPayment } from '../utils/payment-return-history';
@@ -19,7 +19,7 @@ import { savePendingCreditOrder } from '../utils/pending-credit-order-storage';
  * @returns 주문 생성 함수와 진행 중인 상품 ID
  */
 export function useCreateCreditOrder() {
-  const mutation = useCreate({
+  const mutation = useCreate1({
     mutation: {
       onSuccess: (response) => {
         if (response.status !== 201 || !response.data.paymentUrl) {

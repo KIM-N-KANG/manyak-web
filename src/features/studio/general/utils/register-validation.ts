@@ -87,21 +87,41 @@ function getTextError(
   );
 }
 
+/** 주인공 자리에 이름을 넣는 토큰이다. 조사 표기(`{username}이(가)` 등)도 이 글자로 시작한다. */
+const NAME_TOKEN = '{username}';
+
+/**
+ * 주인공 이름 칸을 뺀 글 입력에 이름 토큰이 있는지 반환한다. 서버는 토큰이 있는 글을 기본 주인공 이름 없이 받지 않는다.
+ *
+ * @param form 탭별 입력
+ * @returns 토큰이 있으면 true
+ */
+export function usesNameToken({
+  protagonist,
+  ...rest
+}: GeneralStoryRegisterForm) {
+  return (
+    protagonist.feature.includes(NAME_TOKEN) ||
+    JSON.stringify(rest).includes(NAME_TOKEN)
+  );
+}
+
 /**
  * 등록하기를 눌렀을 때 보일 칸별 오류를 탭 순서와 탭 안의 칸 순서대로 반환한다. 비어 있으면 등록할 수 있다.
  *
  * @param form 탭별 입력
  * @returns 칸별 오류 목록
  */
-export function getRegisterErrors({
-  texts,
-  protagonist,
-  supporting,
-  startSettings,
-  mainEvents,
-  genreCount,
-  description,
-}: GeneralStoryRegisterForm) {
+export function getRegisterErrors(form: GeneralStoryRegisterForm) {
+  const {
+    texts,
+    protagonist,
+    supporting,
+    startSettings,
+    mainEvents,
+    genreCount,
+    description,
+  } = form;
   const errors: GeneralStoryRegisterError[] = [];
   const push = (
     error: Omit<GeneralStoryRegisterError, 'message'>,
@@ -131,7 +151,9 @@ export function getRegisterErrors({
 
   push(
     { key: REGISTER_ERROR_KEY.protagonist('name'), tab: 'protagonist' },
-    getTextError(nameLabel, protagonist.name),
+    !protagonist.name.trim() && usesNameToken(form)
+      ? GENERAL_STORY_REGISTER_ERROR_COPY.protagonistNameForToken
+      : null,
   );
   push(
     { key: REGISTER_ERROR_KEY.protagonist('gender'), tab: 'protagonist' },

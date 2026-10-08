@@ -17,7 +17,7 @@ import {
 } from '@/api/generated/endpoints/stories/stories';
 import {
   get as getStorySubmission,
-  getListQueryKey as getStorySubmissionsQueryKey,
+  getList1QueryKey as getStorySubmissionsQueryKey,
   useResubmit,
 } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
@@ -915,6 +915,7 @@ export function GeneralStoryCreateForm({
                     GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
                   }
                   featureRequired
+                  nameRequired={false}
                   registerErrorKeys={{
                     name: REGISTER_ERROR_KEY.protagonist('name'),
                     gender: REGISTER_ERROR_KEY.protagonist('gender'),

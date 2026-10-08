@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { ChatPersonaResponse } from './chatPersonaResponse';
 import type { ChatTurnResponse } from './chatTurnResponse';
 
 /**
@@ -23,4 +24,5 @@ export interface ChatDetailResponse {
   turns?: ChatTurnResponse[];
   /** 아직 한 번도 이어쓰지 않아 turns가 비어 있을 때, 시작 화면에 노출할 기본 추천 입력 목록입니다. 진행 턴이 있으면(turns가 비어 있지 않으면) 다음 행동은 마지막 턴의 choices로 안내하므로 빈 배열입니다. 시작 설정이나 등록된 추천 입력이 없어도 빈 배열입니다. */
   suggestedInputs?: string[];
+  persona?: ChatPersonaResponse | null;
 }

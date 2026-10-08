@@ -110,6 +110,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     prologue,
     turns,
     suggestedInputs,
+    personaName,
     isLoading,
     isError,
     isForbidden,
@@ -403,6 +404,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           chatId={chatId}
           storyId={storyId}
           storyTitle={storyTitle}
+          personaName={personaName}
           turnCount={turns.length}
           hidden={isHeaderHidden && !tour.isOpen}
         />

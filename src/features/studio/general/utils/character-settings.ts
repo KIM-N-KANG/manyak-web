@@ -1,7 +1,8 @@
 /**
  * 주인공(나)·주변 인물 입력과 서버 글(`userRoleSetting`·`characterSetting`) 사이를 오가는 변환이다.
- * 제목 형식은 간편 제작 AI가 조립하는 글(manyak-ai `story_compile_render.py`)과 같다. 이름·성별만
- * 칸으로 받고 나머지 절(역할·배경·성격, 성격·말투·동기 등)은 특징 칸의 본문으로 둔다.
+ * 제목 형식은 간편 제작 AI가 조립하는 글(manyak-ai `story_compile_render.py`)과 같다. 주인공 이름은
+ * 글에 넣지 않고 `protagonistName`으로 따로 주고받으며, 성별과 주변 인물 이름만 칸으로 받고 역할, 배경, 성격 같은
+ * 나머지 절은 특징 칸의 본문으로 둔다.
  */
 
 export type CharacterGender = 'MALE' | 'FEMALE';
@@ -28,15 +29,18 @@ const SUPPORTING_HEADING = '# 등장인물';
 const joinLines = (parts: (string | false | null)[]) =>
   parts.filter(Boolean).join('\n');
 
-/** 주인공 입력을 `userRoleSetting` 글로 합친다. */
+/**
+ * 주인공 입력을 `userRoleSetting` 글로 합친다. 이름은 `protagonistName`으로 따로 보내므로 넣지 않는다.
+ *
+ * @param protagonist 주인공 성별과 특징
+ * @returns `# 주인공` 아래 성별 절과 특징을 둔 글
+ */
 export function buildUserRoleSetting({
-  name,
   gender,
   feature,
-}: GeneralStoryCharacter) {
+}: Pick<GeneralStoryCharacter, 'gender' | 'feature'>) {
   return joinLines([
     PROTAGONIST_HEADING,
-    name.trim() && `## 호칭\n${name.trim()}`,
     gender && `## 성별\n${GENDER_TEXT[gender]}`,
     feature.trim(),
   ]);
@@ -84,24 +88,25 @@ const takeGender = (lines: string[], heading: string) => {
 };
 
 /**
- * `userRoleSetting` 글을 주인공 입력으로 나눈다. 맨 앞의 호칭·성별 절만 칸으로 옮기고
- * 나머지는 특징 본문으로 둔다. 어떤 글이 와도 예외 없이 내용을 보존한다.
+ * `userRoleSetting` 글을 주인공 성별과 특징으로 나눈다. 성별 절만 칸으로 옮기고 나머지는 특징 본문으로
+ * 둔다. 이름은 `protagonistName`으로 따로 받으므로, 이전 글 맨 앞의 호칭 절은 칸으로 옮기지 않고 특징 맨
+ * 앞에 그대로 남긴다. 어떤 글이 와도 예외 없이 내용을 보존한다.
+ *
+ * @param text 서버 `userRoleSetting` 글
+ * @returns 성별과 특징 본문
  */
 export function parseUserRoleSetting(
   text: string | null | undefined,
-): GeneralStoryCharacter {
+): Pick<GeneralStoryCharacter, 'gender' | 'feature'> {
   const lines = dropLeadingHeading(
     (text ?? '').split('\n'),
     PROTAGONIST_HEADING,
   );
-  const name = takeLeadingSection(lines, '## 호칭');
-  const { gender, rest } = takeGender(name.rest, '## 성별');
+  const honorific = takeLeadingSection(lines, '## 호칭');
+  const kept = lines.slice(0, lines.length - honorific.rest.length);
+  const { gender, rest } = takeGender(honorific.rest, '## 성별');
 
-  return {
-    name: name.value?.trim() ?? '',
-    gender,
-    feature: rest.join('\n').trim(),
-  };
+  return { gender, feature: [...kept, ...rest].join('\n').trim() };
 }
 
 /**

@@ -67,4 +67,6 @@ export interface CreateGeneralStoryRequest {
    * @maxItems 6
    */
   characters?: GeneralCharacterInput[];
+  /** @nullable */
+  protagonistName?: string | null;
 }

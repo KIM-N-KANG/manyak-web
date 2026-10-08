@@ -96,7 +96,10 @@ export function submissionToFormInitial(
     },
     cover: toFormImage(payload.cover),
     descriptionRatio,
-    protagonist: parseUserRoleSetting(payload.storySettings.userRoleSetting),
+    protagonist: {
+      name: payload.protagonistName,
+      ...parseUserRoleSetting(payload.storySettings.userRoleSetting),
+    },
     supporting,
     startSettings:
       payload.startSettings.length === 0

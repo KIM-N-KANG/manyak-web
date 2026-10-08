@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import {
-  getListQueryKey as getStorySubmissionsQueryKey,
+  getList1QueryKey as getStorySubmissionsQueryKey,
   useDelete as useDeleteStorySubmission,
 } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';

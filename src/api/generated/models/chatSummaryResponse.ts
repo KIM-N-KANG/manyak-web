@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { ChatPersonaResponse } from './chatPersonaResponse';
 
 /**
  * 채팅 목록 항목
@@ -29,4 +30,5 @@ export interface ChatSummaryResponse {
   reachedEndings?: string[];
   /** 마지막 진행 시각 */
   updatedAt?: string;
+  persona?: ChatPersonaResponse | null;
 }

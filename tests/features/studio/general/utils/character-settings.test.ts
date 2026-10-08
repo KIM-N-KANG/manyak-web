@@ -23,9 +23,9 @@ const SUPPORTING = [
 ];
 
 describe('buildUserRoleSetting', () => {
-  it('간편 제작과 같은 호칭·성별 절 뒤에 특징을 잇는다', () => {
+  it('이름은 넣지 않고 성별 절 뒤에 특징을 잇는다', () => {
     expect(buildUserRoleSetting(PROTAGONIST)).toBe(
-      `# 주인공\n## 호칭\n윤해솔\n## 성별\n여성\n${PROTAGONIST.feature}`,
+      `# 주인공\n## 성별\n여성\n${PROTAGONIST.feature}`,
     );
   });
 });
@@ -39,40 +39,39 @@ describe('buildCharacterSetting', () => {
 });
 
 describe('parseUserRoleSetting', () => {
-  it('합친 글을 다시 나누면 원래 입력이 나온다', () => {
-    expect(parseUserRoleSetting(buildUserRoleSetting(PROTAGONIST))).toEqual(
-      PROTAGONIST,
-    );
+  it('합친 글을 다시 나누면 원래 성별과 특징이 나온다', () => {
+    expect(parseUserRoleSetting(buildUserRoleSetting(PROTAGONIST))).toEqual({
+      gender: PROTAGONIST.gender,
+      feature: PROTAGONIST.feature,
+    });
   });
 
-  it('간편 제작 글은 호칭·성별만 칸으로 옮기고 나머지 절은 특징으로 둔다', () => {
+  it('이전 글의 호칭 절은 특징 맨 앞에 남기고 그 뒤의 성별 절만 칸으로 옮긴다', () => {
     const text =
       '# 주인공\n## 호칭\n정수현\n## 성별\n남성\n## 역할\n승객\n## 배경\n야근\n## 성격\n침착\n## 입력 선호\n';
 
     expect(parseUserRoleSetting(text)).toEqual({
-      name: '정수현',
       gender: 'MALE',
-      feature: '## 역할\n승객\n## 배경\n야근\n## 성격\n침착\n## 입력 선호',
+      feature:
+        '## 호칭\n정수현\n## 역할\n승객\n## 배경\n야근\n## 성격\n침착\n## 입력 선호',
     });
   });
 
   it('성별 값이 남성·여성이 아니면 성별 절을 특징에 남긴다', () => {
     expect(
       parseUserRoleSetting('# 주인공\n## 호칭\n수현\n## 성별\n미정\n본문'),
-    ).toEqual({ name: '수현', gender: null, feature: '## 성별\n미정\n본문' });
+    ).toEqual({
+      gender: null,
+      feature: '## 호칭\n수현\n## 성별\n미정\n본문',
+    });
   });
 
   it('제목 없는 글과 null을 다룬다', () => {
     expect(parseUserRoleSetting('자유롭게 쓴 주인공 설명')).toEqual({
-      name: '',
       gender: null,
       feature: '자유롭게 쓴 주인공 설명',
     });
-    expect(parseUserRoleSetting(null)).toEqual({
-      name: '',
-      gender: null,
-      feature: '',
-    });
+    expect(parseUserRoleSetting(null)).toEqual({ gender: null, feature: '' });
   });
 });
 

@@ -6,6 +6,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
+  buildChatPersonaLabel,
   buildChatTurnCreditCostLabel,
   CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
   CHAT_MENU_COPY,
@@ -2290,5 +2291,35 @@ test.describe('추천 입력 긴 글', () => {
 
     await expect(page.getByText(`추천${UNBROKEN_TEXT}`)).toBeVisible();
     expect(await findOverflowingTexts(page)).toEqual([]);
+  });
+});
+
+test.describe('채팅 헤더 페르소나 표시', () => {
+  test('페르소나로 시작한 채팅은 제목 아래에 페르소나 이름을, 기본 주인공 채팅은 아무것도 표시하지 않는다 (KNK-1469)', async ({
+    page,
+  }) => {
+    let persona: { name: string } | null = { name: '윤해솔' };
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({ json: { ...chatDetail(), persona } });
+    });
+
+    await page.goto('/chats/c1');
+
+    const header = page.getByRole('banner');
+    const label = header.getByText(buildChatPersonaLabel('윤해솔'));
+
+    await expect(
+      header.getByRole('heading', { name: '용의 계곡' }),
+    ).toBeVisible();
+    await expect(label).toBeVisible();
+    await expect(label).toHaveCSS('font-size', '12px');
+
+    persona = null;
+    await page.reload();
+    await expect(
+      header.getByRole('heading', { name: '용의 계곡' }),
+    ).toBeVisible();
+    await expect(header.getByText(/페르소나로 채팅 중/)).toHaveCount(0);
   });
 });
