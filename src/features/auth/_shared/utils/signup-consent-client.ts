@@ -3,6 +3,7 @@
 import { getSession, signIn } from 'next-auth/react';
 
 import type { UserConsentRequest } from '@/api/generated/models';
+import { APP_PATH } from '@/constants/app-path';
 import {
   isSignupConsentSummary,
   SIGNUP_CONSENT_ENDPOINT,
@@ -23,6 +24,15 @@ import { clearPendingLogin } from './pending-login-storage';
  * @throws 네트워크 오류나 404가 아닌 실패 응답이면 에러
  */
 export async function fetchPendingSignupConsent(): Promise<SignupConsentSummary | null> {
+  // 오류 화면의 정리 effect보다 조회가 먼저 실행돼도 끝난 로그인을 다시 조회하지 않는다.
+  if (
+    typeof window !== 'undefined' &&
+    window.location.pathname === APP_PATH.LOGIN &&
+    new URLSearchParams(window.location.search).has('error')
+  ) {
+    return null;
+  }
+
   const response = await fetch(SIGNUP_CONSENT_ENDPOINT, { cache: 'no-store' });
 
   if (response.status === 404) {
