@@ -13,6 +13,7 @@ import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { markPendingChatOpen } from '@/features/stories/_shared/utils/pending-chat-open';
 import { leaveLayers } from '@/lib/history-layers';
 
 type UseStartChatOptions = {
@@ -25,10 +26,10 @@ type UseStartChatOptions = {
   /** 채팅 생성에 실패해 토스트를 띄운 뒤 채팅을 만들려던 스토리 id로 호출한다. */
   onError?: (storyId: string) => void;
   /**
-   * 채팅을 만든 스토리 id로 채팅방에서 뒤로 돌아갈 화면을 정한다. 생략하면 지금 화면 위에 채팅방을 쌓아 지금
-   * 화면으로 돌아온다. 제작을 마친 화면처럼 아래에 끝난 단계가 남는 곳에서 쓴다.
+   * 지금 화면을 채팅을 만든 스토리의 상세로 바꾸고, 상세가 마운트되면 그 위에 채팅방을 쌓는다. 제작을 마친
+   * 화면처럼 아래에 끝난 단계가 남는 곳에서 써서 채팅방의 뒤로가기가 상세로 돌아오게 한다.
    */
-  backTo?: (storyId: string) => string;
+  viaStoryDetail?: boolean;
   /** 지금 화면을 채팅방으로 바꾼다. 채팅방에서 새 채팅을 열 때처럼 지금 화면으로 돌아오면 안 되는 곳에서 쓴다. */
   replace?: boolean;
 };
@@ -49,7 +50,7 @@ export function useStartChat(
     personaId,
     onStart,
     onError,
-    backTo,
+    viaStoryDetail,
     replace,
   }: UseStartChatOptions = {},
 ) {
@@ -76,18 +77,15 @@ export function useStartChat(
 
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
 
-        if (backTo) {
-          const backPath = backTo(variables.data.storyId ?? storyId);
+        if (viaStoryDetail) {
+          const targetStoryId = variables.data.storyId ?? storyId;
 
-          leaveLayers(() => {
-            void (async () => {
-              // 지금 화면을 돌아갈 화면으로 바꾼 뒤 그 위에 채팅방을 쌓는다. 두 이동을 연달아 부르면 Next가
-              // 앞의 이동을 버려 히스토리에 남지 않으므로, 바꾼 주소가 반영된 뒤에 채팅방을 쌓는다.
-              router.replace(backPath);
-              await waitForPathname(backPath);
-              router.push(APP_PATH.CHAT_ROOM(chatId));
-            })();
-          });
+          // 두 이동을 연달아 부르면 Next가 앞의 이동을 버리므로, 열기 의도를 남기고 상세로만 바꾼다.
+          // 상세가 마운트되면(주소가 확정되면) 의도를 읽어 채팅방을 쌓는다.
+          markPendingChatOpen(targetStoryId, chatId);
+          leaveLayers(() =>
+            router.replace(APP_PATH.STORY_DETAIL(targetStoryId)),
+          );
 
           return;
         }
@@ -122,15 +120,4 @@ export function useStartChat(
     isStarting: createChat.isPending || createChat.isSuccess,
     isError: createChat.isError,
   };
-}
-
-/** 주소가 pathname 이 될 때까지 기다린다. 이동이 늦어도 timeoutMillis 뒤에는 돌려준다. */
-async function waitForPathname(pathname: string, timeoutMillis = 5000) {
-  const startedAt = performance.now();
-
-  while (
-    window.location.pathname !== pathname &&
-    performance.now() - startedAt < timeoutMillis
-  )
-    await new Promise((resolve) => requestAnimationFrame(resolve));
 }
