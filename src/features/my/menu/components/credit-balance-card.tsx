@@ -10,10 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
-import { cn } from '@/lib/utils';
 
 type CreditBalanceCardProps = {
-  /** 바깥 섹션 클래스. 마이 화면 기본 여백을 다른 배치에 맞게 덮어쓸 때 쓴다. */
+  /** 바깥 섹션 클래스. 카드는 바깥 여백을 갖지 않으므로 배치하는 쪽이 여백을 준다. */
   className?: string;
 };
 
@@ -31,7 +30,7 @@ export function CreditBalanceCard({ className }: CreditBalanceCardProps) {
 
   if (status === 'loading') {
     return (
-      <section className={cn('-mt-4 mb-4 p-4 pt-0', className)}>
+      <section className={className}>
         <Skeleton className="h-18 rounded-lg" />
       </section>
     );
@@ -42,7 +41,7 @@ export function CreditBalanceCard({ className }: CreditBalanceCardProps) {
   }
 
   return (
-    <section className={cn('-mt-4 mb-4 p-4 pt-0', className)}>
+    <section className={className}>
       <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-sm text-foreground-secondary">
