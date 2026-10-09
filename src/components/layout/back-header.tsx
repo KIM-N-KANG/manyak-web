@@ -4,10 +4,12 @@ import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
+import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import { Button } from '@/components/ui/button';
 
 type BackHeaderProps = {
   title: string;
+  /** 앱 안에서 이동해 온 화면이 없을 때(주소나 알림으로 바로 연 경우) 대신 열 화면 */
   fallbackHref?: string;
 };
 
@@ -15,7 +17,7 @@ export function BackHeader({ title, fallbackHref }: BackHeaderProps) {
   const router = useRouter();
 
   const handleBack = () => {
-    if (fallbackHref && window.history.length <= 2) {
+    if (fallbackHref && !hasInAppNavigation()) {
       router.replace(fallbackHref);
 
       return;

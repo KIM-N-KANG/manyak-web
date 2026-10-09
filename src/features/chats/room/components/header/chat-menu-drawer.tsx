@@ -39,6 +39,7 @@ import { CreditBalanceCard } from '@/features/my/menu/components/credit-balance-
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
+import { returnToMainTab } from '@/lib/return-to-main-tab';
 
 import { CHAT_MENU_COPY } from '../../constants';
 import { useChatShare } from '../../hooks/use-chat-share';
@@ -68,9 +69,13 @@ export function ChatMenuDrawer({
   const { share, isSharing } = useChatShare(chatId, turnCount);
   const { deleteChat, isPending: isDeleting } = useDeleteCreatedChat(
     chatId,
-    () => router.replace(APP_PATH.MAIN.CHATS),
+    // 상세에서 시작한 방이면 상세도 함께 걷어내고 채팅 탭으로 간다.
+    () => returnToMainTab(router, APP_PATH.MAIN.CHATS),
   );
-  const { startChat, isStarting } = useStartChat(storyId ?? '');
+  // 새 방이 지금 방을 대신해 뒤로가기로 이전 방에 돌아가지 않는다.
+  const { startChat, isStarting } = useStartChat(storyId ?? '', {
+    replace: true,
+  });
 
   const canReport = status === 'authenticated' && storyId !== null;
 

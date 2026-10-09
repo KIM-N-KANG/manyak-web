@@ -10,6 +10,7 @@ import {
   expect,
   seedChatIds,
   seedStoryIds,
+  skipChatTour,
   skipOnboarding,
   test,
 } from '../fixtures/test';
@@ -215,6 +216,48 @@ test.describe('채팅 목록', () => {
 
     await expect(page.getByText(CHAT_LIST_COPY.emptyTitle)).toBeVisible();
     await expect(page.getByRole('main').getByRole('button')).toHaveCount(0);
+  });
+});
+
+test.describe('채팅방 삭제 뒤로가기 (KNK-1610)', () => {
+  test('채팅 목록에서 연 방을 삭제하면 채팅 목록으로 돌아가고 채팅 목록이 두 번 쌓이지 않는다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await skipChatTour(page);
+    await seedChatIds(page, ['c1']);
+    await page.route(CHATS_BATCH, (route) =>
+      route.fulfill({ json: [chat('c1', '용의 계곡')] }),
+    );
+    await page.route('**/api/v1/chats/c1', (route) =>
+      route.request().method() === 'DELETE'
+        ? route.fulfill({ status: 204, body: '' })
+        : route.fulfill({
+            json: {
+              id: 'c1',
+              storyId: 'story-c1',
+              storyTitle: '용의 계곡',
+              prologue: '프롤로그',
+              turns: [],
+              suggestedInputs: [],
+            },
+          }),
+    );
+
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await page.goto(APP_PATH.MAIN.CHATS);
+    await page.getByRole('link', { name: '용의 계곡 채팅 보기' }).click();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    await page.getByRole('button', { name: '채팅 메뉴' }).click();
+    await page.getByRole('button', { name: '삭제하기' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: '삭제하기' })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CHATS}$`));
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
   });
 });
 

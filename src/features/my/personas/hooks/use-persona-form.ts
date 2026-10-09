@@ -12,6 +12,7 @@ import {
   useUpdate as useUpdatePersona,
 } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import type { UserPersonaResponse } from '@/api/generated/models';
+import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { selectCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
@@ -51,13 +52,13 @@ export function usePersonaForm(persona?: UserPersonaResponse) {
   const leave = async () => {
     await queryClient.invalidateQueries({ queryKey: getPersonasQueryKey() });
 
-    if (window.history.length > 1) {
+    if (hasInAppNavigation()) {
       router.back();
 
       return;
     }
 
-    router.replace(persona ? APP_PATH.MY_PERSONAS : APP_PATH.MAIN.STORIES);
+    router.replace(APP_PATH.MY_PERSONAS);
   };
 
   const createPersona = useCreatePersona({

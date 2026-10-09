@@ -24,10 +24,12 @@ type UseStartChatOptions = {
   /** 채팅 생성에 실패해 토스트를 띄운 뒤 채팅을 만들려던 스토리 id로 호출한다. */
   onError?: (storyId: string) => void;
   /**
-   * 채팅방에서 브라우저 뒤로가기로 돌아갈 화면이다. 생략하면 지금 화면을 채팅방으로 바꿔 그 아래 화면으로
-   * 돌아간다. 제작을 마친 화면처럼 아래에 끝난 단계가 남는 곳에서 쓴다.
+   * 채팅을 만든 스토리 id로 채팅방에서 뒤로 돌아갈 화면을 정한다. 생략하면 지금 화면 위에 채팅방을 쌓아 지금
+   * 화면으로 돌아온다. 제작을 마친 화면처럼 아래에 끝난 단계가 남는 곳에서 쓴다.
    */
-  backTo?: string;
+  backTo?: (storyId: string) => string;
+  /** 지금 화면을 채팅방으로 바꾼다. 채팅방에서 새 채팅을 열 때처럼 지금 화면으로 돌아오면 안 되는 곳에서 쓴다. */
+  replace?: boolean;
 };
 
 /**
@@ -36,7 +38,7 @@ type UseStartChatOptions = {
  * 채팅 생성 후 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
  *
  * @param storyId 채팅을 시작할 스토리 id
- * @param options 시작 설정 id와 페르소나 id, 요청 직전과 실패 콜백
+ * @param options 시작 설정 id와 페르소나 id, 요청 직전과 실패 콜백, 채팅방 아래에 둘 화면
  * @returns 채팅 시작 함수(호출 시점에야 id를 아는 경우 `startChatFor`)와 진행/에러 상태
  */
 export function useStartChat(
@@ -47,6 +49,7 @@ export function useStartChat(
     onStart,
     onError,
     backTo,
+    replace,
   }: UseStartChatOptions = {},
 ) {
   const router = useRouter();
@@ -54,7 +57,7 @@ export function useStartChat(
   const { status } = useSession();
   const createChat = useCreateChat({
     mutation: {
-      onSuccess: async (response) => {
+      onSuccess: async (response, variables) => {
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
@@ -73,16 +76,24 @@ export function useStartChat(
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
 
         if (backTo) {
+          const backPath = backTo(variables.data.storyId ?? storyId);
+
           // 지금 화면을 돌아갈 화면으로 바꾼 뒤 그 위에 채팅방을 쌓는다. 두 이동을 연달아 부르면 Next가
           // 앞의 이동을 버려 히스토리에 남지 않으므로, 바꾼 주소가 반영된 뒤에 채팅방을 쌓는다.
-          router.replace(backTo);
-          await waitForPathname(backTo);
+          router.replace(backPath);
+          await waitForPathname(backPath);
           router.push(APP_PATH.CHAT_ROOM(chatId));
 
           return;
         }
 
-        router.replace(APP_PATH.CHAT_ROOM(chatId));
+        if (replace) {
+          router.replace(APP_PATH.CHAT_ROOM(chatId));
+
+          return;
+        }
+
+        router.push(APP_PATH.CHAT_ROOM(chatId));
       },
       onError: (_error, variables) => {
         // 채팅 생성은 이프를 소모하지 않으므로 사유 구분 없이 실패 토스트를 띄운다.

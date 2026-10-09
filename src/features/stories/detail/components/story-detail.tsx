@@ -35,6 +35,7 @@ import { useInView } from '@/hooks/use-in-view';
 import { FetchError } from '@/lib/custom-fetch';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
 import { queryFnWithoutAbortSignal } from '@/lib/query-client';
+import { returnToMainTab } from '@/lib/return-to-main-tab';
 import type { PublicStoryDetail } from '@/lib/stories/backend-story-client';
 import { track } from '@/observability/analytics';
 
@@ -163,7 +164,7 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
         canEdit={canEdit}
         canReport={isMember && fetchedStory !== undefined}
         canDelete={canDelete}
-        onDeleteSuccess={() => router.replace(APP_PATH.MAIN.STUDIO)}
+        onDeleteSuccess={() => returnToMainTab(router, APP_PATH.MAIN.STUDIO)}
         showTitle={showTitle}
         hasHeroImage={Boolean(thumbnailUrl)}
         scrollContainerElement={contentElement}

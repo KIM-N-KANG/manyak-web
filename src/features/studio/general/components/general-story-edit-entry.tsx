@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useGetEditForm } from '@/api/generated/endpoints/stories/stories';
 import type { StoryEditFormResponse } from '@/api/generated/models';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
+import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
@@ -55,11 +56,24 @@ function EditFormLoader({ storyId }: GeneralStoryEditEntryProps) {
   const data = query.data?.status === 200 ? query.data.data : null;
   const failed = query.isError || (query.isSuccess && !data);
 
+  const hasLeftRef = useRef(false);
+
   // 내 스토리가 아니거나(403) 없으면(404) 폼을 열지 않고 상세로 돌려보낸다.
+  // 개발 모드의 StrictMode가 효과를 다시 실행해도 기록을 두 번 되돌리지 않게 한 번만 떠난다.
   useEffect(() => {
-    if (!failed) return;
+    if (!failed || hasLeftRef.current) return;
+
+    hasLeftRef.current = true;
 
     toast(TOAST_MESSAGE.STORY_SUBMISSION_LOAD_FAILED);
+
+    // 수정 화면을 나갈 때처럼 들어온 화면(상세나 제작 탭)으로 돌아가고, 주소로 바로 열었으면 상세로 바꾼다.
+    if (hasInAppNavigation()) {
+      router.back();
+
+      return;
+    }
+
     router.replace(APP_PATH.STORY_DETAIL(storyId));
   }, [failed, router, storyId]);
 

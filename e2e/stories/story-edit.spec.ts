@@ -550,6 +550,26 @@ test.describe('스토리 수정', () => {
     ).toBeDisabled();
   });
 
+  test('수정 폼을 열 수 없으면 들어온 상세로 돌아가고 상세가 두 번 쌓이지 않는다 (KNK-1610)', async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.route(EDIT_FORM_URL, (route) => route.fulfill({ status: 403 }));
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await openOptionsMenu(page);
+    await page.getByRole('menuitem', { name: '수정하기' }).click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_SUBMISSION_LOAD_FAILED),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STORY_DETAIL(STORY_ID)}$`),
+    );
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+  });
+
   test('게스트는 로그인 화면으로 보낸다 (STORY-EDIT-08)', async ({ page }) => {
     await skipOnboarding(page);
     await mockGuestSession(page);
