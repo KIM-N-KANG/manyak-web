@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
+import { leaveLayers } from '@/lib/history-layers';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
 import { markPendingLogin } from './pending-login-storage';
@@ -55,13 +56,16 @@ export async function startSocialLogin({
     return outcome;
   }
 
-  try {
-    await signIn(provider, { redirectTo });
-  } catch {
-    toast.error(TOAST_MESSAGE.LOGIN_FAILED);
-
-    return 'failed';
-  }
-
-  return 'redirected';
+  // 로그인 필요 시트 안에서 시작하면 시트 더미를 먼저 소비해 복귀 뒤 뒤로가기가 한 번에 돌아가게 한다.
+  // 팝업 분기는 사용자 제스처 안에서 바로 열려야 하므로 감싸지 않는다.
+  return new Promise<SocialLoginOutcome>((resolve) => {
+    leaveLayers(() => {
+      signIn(provider, { redirectTo })
+        .then(() => resolve('redirected'))
+        .catch(() => {
+          toast.error(TOAST_MESSAGE.LOGIN_FAILED);
+          resolve('failed');
+        });
+    });
+  });
 }

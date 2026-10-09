@@ -13,6 +13,7 @@ import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { leaveLayers } from '@/lib/history-layers';
 
 type UseStartChatOptions = {
   /** 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용) */
@@ -78,22 +79,25 @@ export function useStartChat(
         if (backTo) {
           const backPath = backTo(variables.data.storyId ?? storyId);
 
-          // 지금 화면을 돌아갈 화면으로 바꾼 뒤 그 위에 채팅방을 쌓는다. 두 이동을 연달아 부르면 Next가
-          // 앞의 이동을 버려 히스토리에 남지 않으므로, 바꾼 주소가 반영된 뒤에 채팅방을 쌓는다.
-          router.replace(backPath);
-          await waitForPathname(backPath);
-          router.push(APP_PATH.CHAT_ROOM(chatId));
+          leaveLayers(() => {
+            void (async () => {
+              // 지금 화면을 돌아갈 화면으로 바꾼 뒤 그 위에 채팅방을 쌓는다. 두 이동을 연달아 부르면 Next가
+              // 앞의 이동을 버려 히스토리에 남지 않으므로, 바꾼 주소가 반영된 뒤에 채팅방을 쌓는다.
+              router.replace(backPath);
+              await waitForPathname(backPath);
+              router.push(APP_PATH.CHAT_ROOM(chatId));
+            })();
+          });
 
           return;
         }
 
-        if (replace) {
-          router.replace(APP_PATH.CHAT_ROOM(chatId));
-
-          return;
-        }
-
-        router.push(APP_PATH.CHAT_ROOM(chatId));
+        // 채팅방 메뉴 드로어처럼 시트 안에서 시작하면 드로어 더미를 먼저 소비한다.
+        leaveLayers(() =>
+          replace
+            ? router.replace(APP_PATH.CHAT_ROOM(chatId))
+            : router.push(APP_PATH.CHAT_ROOM(chatId)),
+        );
       },
       onError: (_error, variables) => {
         // 채팅 생성은 이프를 소모하지 않으므로 사유 구분 없이 실패 토스트를 띄운다.

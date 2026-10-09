@@ -31,6 +31,7 @@ import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-dele
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 import { formatCompactCount } from '@/lib/format-count';
 import { formatSameDayTimeOrDate } from '@/lib/format-date';
+import { leaveLayers } from '@/lib/history-layers';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
@@ -109,7 +110,9 @@ function CreatedStoryCardOptions({
     items.push({
       icon: Edit02Icon,
       label: '수정하기',
-      onSelect: () => router.push(APP_PATH.STORY_EDIT(storyId)),
+      // 옵션 시트의 더미를 먼저 소비해 수정 화면에서 뒤로가기 한 번에 돌아오게 한다.
+      onSelect: () =>
+        leaveLayers(() => router.push(APP_PATH.STORY_EDIT(storyId))),
     });
   }
 

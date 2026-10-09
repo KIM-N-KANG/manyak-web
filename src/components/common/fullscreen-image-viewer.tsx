@@ -14,7 +14,6 @@ import {
   DialogOverlay,
   DialogPortal,
 } from '@/components/ui/dialog';
-import { useCloseOnBack } from '@/hooks/use-close-on-back';
 import { isPointInContainedImage } from '@/lib/contained-image';
 import {
   gestureImageZoom,
@@ -41,8 +40,6 @@ export function FullscreenImageViewer({
   alt,
   title,
 }: FullscreenImageViewerProps) {
-  useCloseOnBack({ open, onClose: () => onOpenChange(false) });
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>

@@ -40,7 +40,7 @@ import {
   requestNotificationPermission,
 } from '@/features/my/_shared/utils/push-permission';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
-import { useCloseOnBack } from '@/hooks/use-close-on-back';
+import { useBackLayer } from '@/hooks/use-back-layer';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
 import { SIGNUP_CONSENT_ERROR } from '@/lib/auth/signup-consent';
 import { FetchError, getApiErrorCode } from '@/lib/custom-fetch';
@@ -307,7 +307,8 @@ export function ConsentSheet({
   const isLoadError = phase === 'load-error' || phase === 'signup-load-error';
   const isOpen = isConsentStep || isLoadError || phase === 'forbidden';
 
-  useCloseOnBack({ open: isOpen && container !== null, onClose: form.logout });
+  // 뒤로가기는 닫기가 아니라 가입 취소·로그아웃이라 래퍼의 기본 닫기를 끄고 직접 받는다.
+  useBackLayer({ open: isOpen && container !== null, onBack: form.logout });
 
   const errorHeader = isLoadError
     ? CONSENT_SHEET_COPY.loadError
@@ -318,6 +319,7 @@ export function ConsentSheet({
   return (
     <Drawer
       open={isOpen && container !== null}
+      closeOnBack={false}
       disablePointerDismissal
       showSwipeHandle={false}
       onOpenChange={() => {}}>

@@ -25,10 +25,7 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import {
-  useGuestConsent,
-  useGuestConsentOpen,
-} from '@/features/auth/_shared/components/guest-consent-provider';
+import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   getTrialRemaining,
@@ -121,7 +118,6 @@ export function useStoryCreateFunnel() {
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
   const requestConsent = useGuestConsent();
-  const guestConsentOpen = useGuestConsentOpen();
   const trials = useTrials();
   const [guestLimitOpen, setGuestLimitOpen] = useState(false);
   const awaitingAccess = useRef(false);
@@ -681,7 +677,6 @@ export function useStoryCreateFunnel() {
   const { leaveAfterCleanup } = usePreventPageLeave({
     warnOnUnload: hasSavedDraft ? !isDraftSaved : hasDraftInput,
     interceptBack: true,
-    ignoreBack: guestConsentOpen,
     onBackAttempt: () => handleBackAttempt(),
   });
 
@@ -969,6 +964,13 @@ export function useStoryCreateFunnel() {
   // 없으면 묻지 않고 나간다. 생성 중 레코드는 생성 요청을 저장한 시점에 저장본으로 맞춰 두었으므로
   // 생성 중에 나가면 이어서 만들 수 있다는 안내다.
   const handleBackAttempt = () => {
+    // 나가기 다이얼로그가 열린 채 뒤로가기를 하면 다이얼로그만 닫는다(일반 제작과 같음).
+    if (backDialog !== null) {
+      setBackDialog(null);
+
+      return;
+    }
+
     const warning = getDraftExitWarning({
       hasInput: hasDraftInput,
       hasSavedDraft,

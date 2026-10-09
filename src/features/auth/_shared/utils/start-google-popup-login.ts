@@ -5,6 +5,7 @@ import { getSession, signIn } from 'next-auth/react';
 import { me } from '@/api/generated/endpoints/auth/auth';
 import { APP_PATH } from '@/constants/app-path';
 import { isPopupLoginMessage } from '@/lib/auth/popup-login';
+import { leaveLayers } from '@/lib/history-layers';
 
 import { resolveLoginCallbackUrl } from './login-callback-url';
 import { fetchPendingSignupConsent } from './signup-consent-client';
@@ -85,8 +86,10 @@ export function startGooglePopupLogin(
       resolve(outcome);
 
       if (outcome === 'redirected') {
-        // 원래 탭을 다시 로드해 Auth.js 세션과 회원 쿼리를 함께 갱신한다.
-        window.location.assign(resolveLoginCallbackUrl(redirectTo));
+        // 원래 탭을 다시 로드해 Auth.js 세션과 회원 쿼리를 함께 갱신한다. 로그인 필요 시트의 더미를 먼저 소비한다.
+        leaveLayers(() => {
+          window.location.assign(resolveLoginCallbackUrl(redirectTo));
+        });
       }
     };
 

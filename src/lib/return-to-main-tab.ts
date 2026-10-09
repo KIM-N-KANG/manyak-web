@@ -1,6 +1,7 @@
 import type { useRouter } from 'next/navigation';
 
 import { APP_PATH, type MainAppPath } from '@/constants/app-path';
+import { leaveLayers } from '@/lib/history-layers';
 
 type HistoryEntry = { url: string | null; sameDocument: boolean };
 
@@ -57,19 +58,22 @@ export function returnToMainTab(
   router: ReturnType<typeof useRouter>,
   tab: MainAppPath,
 ) {
-  const below = findMainTabBelow();
+  // 확인 다이얼로그 같은 레이어의 더미를 먼저 소비해야 아래 탭 기록까지의 거리가 맞는다.
+  leaveLayers(() => {
+    const below = findMainTabBelow();
 
-  if (!below?.sameDocument) {
-    router.replace(tab);
+    if (!below?.sameDocument) {
+      router.replace(tab);
 
-    return;
-  }
+      return;
+    }
 
-  if (below.pathname !== tab) {
-    window.addEventListener('popstate', () => router.push(tab), {
-      once: true,
-    });
-  }
+    if (below.pathname !== tab) {
+      window.addEventListener('popstate', () => router.push(tab), {
+        once: true,
+      });
+    }
 
-  window.history.go(-below.distance);
+    window.history.go(-below.distance);
+  });
 }
