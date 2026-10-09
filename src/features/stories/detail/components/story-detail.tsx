@@ -271,13 +271,9 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
               startSettingId={activeStartSettingId}
               personaId={personaId}
               summary={chatStartSummary}
-              canLike={
-                fetchedStory !== undefined &&
-                sessionStatus !== 'loading' &&
-                (isMember || createdStoryIds !== null) &&
-                !canDelete &&
-                story.isOwner !== true
-              }
+              // 내가 만든 스토리로 판정된 때만 숨긴다. 판정 근거를 기다리며 숨겼다가 붙이면 하트가 뒤늦게
+              // 튀어나와 CTA 폭이 바뀌므로, 미리 보여 주고 조회가 끝날 때까지 CTA처럼 잠근다.
+              canLike={!canDelete && story.isOwner !== true}
               isLiked={story.isLiked === true}
             />
 
