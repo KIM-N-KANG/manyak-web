@@ -27,6 +27,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { PERSONA_MAX_COUNT } from '@/features/my/_shared/constants/persona';
 import { clearCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
+import { leaveLayers } from '@/lib/history-layers';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
@@ -93,9 +94,14 @@ function PersonaRow({ persona }: { persona: UserPersonaResponse }) {
           {
             icon: Edit02Icon,
             label: PERSONA_LIST_COPY.edit,
+            // 옵션 시트의 더미를 먼저 소비해 수정 화면에서 뒤로가기 한 번에 돌아오게 한다.
             onSelect: () => {
-              if (persona.id) {
-                router.push(APP_PATH.MY_PERSONA_EDIT(persona.id));
+              const personaId = persona.id;
+
+              if (personaId) {
+                leaveLayers(() =>
+                  router.push(APP_PATH.MY_PERSONA_EDIT(personaId)),
+                );
               }
             },
           },
