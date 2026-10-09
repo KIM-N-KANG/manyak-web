@@ -17,6 +17,7 @@ import {
 } from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
+  waitForAnimations,
   waitForDarkTheme,
   waitForFonts,
 } from '../fixtures/visual';
@@ -487,6 +488,8 @@ test.describe('스토리 오버레이 비주얼', () => {
       dialog.getByRole('menuitem', { name: '삭제하기' }),
     ).toBeVisible();
     await waitForFonts(page);
+    // 시트가 올라오는 전이 중에 찍으면 실행마다 위치가 달라진다.
+    await waitForAnimations(page);
     await expect(page).toHaveScreenshot('card-options-sheet.png');
   });
 
@@ -513,6 +516,7 @@ test.describe('스토리 오버레이 비주얼', () => {
       sheet.getByRole('button', { name: STORY_REPORT_COPY.submit }),
     ).toBeEnabled();
     await waitForFonts(page);
+    await waitForAnimations(page);
     await expect(page).toHaveScreenshot('story-report-sheet.png');
   });
 });
