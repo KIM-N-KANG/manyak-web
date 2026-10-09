@@ -421,7 +421,7 @@ test.describe('채팅 스트리밍', () => {
 
     // 탭 제목을 클라이언트에서 덮어쓰므로, 화면을 벗어나면 원래대로 돌아오는지도 본다.
     await page
-      .getByRole('button', { name: '채팅 목록으로 돌아가기 버튼' })
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
       .click();
 
     await expect(page).toHaveTitle(DEFAULT_TITLE);
