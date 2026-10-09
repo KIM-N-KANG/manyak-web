@@ -22,6 +22,8 @@ export function BottomNavigationBar() {
               <Link
                 href={item.href}
                 replace
+                // 탭 목록의 스크롤 위치는 레이아웃이 복원하므로 Next가 새 세그먼트를 맨 위로 끌어올리지 않게 한다.
+                scroll={false}
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
                 className="flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-foreground">

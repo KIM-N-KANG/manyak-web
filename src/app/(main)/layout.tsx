@@ -11,6 +11,10 @@ import { PullToRefresh } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryListToolbar } from '@/features/stories/list/components/story-list-toolbar';
 import { useRefreshActiveQueries } from '@/hooks/use-refresh-active-queries';
+import {
+  rememberScrollPosition,
+  useScrollRestoration,
+} from '@/hooks/use-scroll-restoration';
 
 /**
  * 홈 필터 바를 항상 보이게 두는 목록 상단 구간의 높이(px)다. 필터 바 높이보다 크게 둔다.
@@ -37,6 +41,9 @@ export default function MainLayout({
   const [overlayContainer, setOverlayContainer] =
     useState<HTMLDivElement | null>(null);
 
+  // 탭을 오가거나 상세·채팅방에서 돌아올 때 떠날 때의 위치로 되돌린다. 홈 필터·정렬 쿼리는 화면을 다시 그리지 않아 경로만 키로 쓴다.
+  useScrollRestoration(scrollContainerRef, pathname);
+
   useLayoutEffect(() => {
     const scrollTop = scrollContainerRef.current?.scrollTop ?? 0;
 
@@ -48,6 +55,10 @@ export default function MainLayout({
 
   const handleContentScroll = (event: UIEvent<HTMLElement>) => {
     const { scrollTop } = event.currentTarget;
+
+    rememberScrollPosition(pathname, scrollTop);
+
+    if (!isHome && !isStudio) return;
 
     if (isStudio) {
       setHasScrolled(scrollTop > 0);
@@ -88,7 +99,7 @@ export default function MainLayout({
             ref={scrollContainerRef}
             onRefresh={refreshActiveQueries}
             disabled={pathname === APP_PATH.MAIN.MY}
-            onScroll={isHome || isStudio ? handleContentScroll : undefined}
+            onScroll={handleContentScroll}
             header={isHome ? <StoryListToolbar /> : undefined}
             className="h-full"
             contentClassName="flex flex-col">

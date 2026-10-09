@@ -94,6 +94,15 @@ export function leaveLayers(navigate: () => void): void {
   getStack().leave(navigate);
 }
 
+/**
+ * 지금 쌓여 있는 더미 칸 수를 돌려준다. 앱 안 이동 판정이 더미를 현재 화면으로 치는 데 쓴다.
+ *
+ * @returns 더미 칸 수. 아직 매니저를 쓰지 않았으면 0
+ */
+export function getLayerEntryCount(): number {
+  return stack?.entryCount() ?? 0;
+}
+
 /** 퍼널 이탈을 확정한다. 가드와 그 위 레이어를 모두 버리고 퍼널 진입 직전 화면까지 되감는다. */
 export function confirmLeaveLayers(): void {
   getStack().confirmLeave();

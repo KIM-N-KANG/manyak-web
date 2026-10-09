@@ -88,6 +88,11 @@ export class HistoryLayerStack {
     return this.entries.includes(id);
   }
 
+  /** 지금 쌓여 있는 더미 칸 수를 돌려준다. */
+  entryCount(): number {
+    return this.entries.length;
+  }
+
   handlePop(): { consumed: boolean } {
     if (this.pendingTraversal) {
       this.pendingTraversal = false;
