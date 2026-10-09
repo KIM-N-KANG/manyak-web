@@ -364,6 +364,21 @@ test.describe('이프 충전 (/my/credits)', () => {
     await expect(page).toHaveURL(/\/my$/);
   });
 
+  test('주소로 바로 연 충전 화면의 헤더 뒤로가기는 마이 탭으로 바꿔 연다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+
+    await page.goto('/my/credits');
+    await expect(
+      page.getByRole('banner').getByText(CREDIT_CHARGE_COPY.title),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(/\/my$/);
+  });
+
   test('되감을 기록 없이 복귀 화면에 오면 충전 화면으로 바꿔 끼운다', async ({
     page,
   }) => {

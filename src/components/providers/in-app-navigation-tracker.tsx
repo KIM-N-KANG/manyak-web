@@ -3,7 +3,10 @@
 import { useEffect } from 'react';
 
 import { getLayerEntryCount } from '@/lib/history-layers';
-import { hasPreviousInAppEntry } from '@/lib/in-app-navigation';
+import {
+  hasPreviousHistoryEntry,
+  hasPreviousInAppEntry,
+} from '@/lib/in-app-navigation';
 
 /** TypeScript DOM 타입에 아직 없는 Navigation API 중 아래 기록을 읽는 데 쓰는 부분이다. */
 type NavigationHistory = {
@@ -33,6 +36,23 @@ export function hasInAppNavigation(): boolean {
     layerEntryCount: getLayerEntryCount(),
     historyLength: window.history.length,
     landingHistoryLength,
+  });
+}
+
+/**
+ * 현재 화면 아래에 기록이 하나라도 있는지 돌려준다(다른 문서 포함).
+ * 결제 복귀 되감기 뒤 충전 화면처럼 뒤로가기가 다른 문서로 가야 하는 화면이 대체 경로를 쓸지 정할 때 쓴다.
+ *
+ * @returns 아래에 기록이 있으면 true
+ */
+export function hasHistoryBelow(): boolean {
+  const navigation = (window as Window & { navigation?: NavigationHistory })
+    .navigation;
+
+  return hasPreviousHistoryEntry({
+    currentIndex: navigation?.currentEntry?.index ?? null,
+    layerEntryCount: getLayerEntryCount(),
+    historyLength: window.history.length,
   });
 }
 

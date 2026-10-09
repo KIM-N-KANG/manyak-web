@@ -12,6 +12,26 @@ type InAppNavigationInput = {
 };
 
 /**
+ * 현재 화면 아래에 기록이 하나라도 있는지 판정한다. 같은 문서인지는 따지지 않는다.
+ * 결제 복귀 되감기처럼 다른 문서의 기록만 아래에 있는 화면과, 알림·주소로 바로 열어 아래가 비어 있는 화면을 가른다.
+ *
+ * @param input 기록 인덱스, 더미 수, 히스토리 길이
+ * @returns 아래에 기록이 있으면 true
+ */
+export function hasPreviousHistoryEntry({
+  currentIndex,
+  layerEntryCount,
+  historyLength,
+}: Pick<
+  InAppNavigationInput,
+  'currentIndex' | 'layerEntryCount' | 'historyLength'
+>): boolean {
+  if (currentIndex !== null) return currentIndex - layerEntryCount > 0;
+
+  return historyLength - layerEntryCount > 1;
+}
+
+/**
  * 헤더 뒤로가기로 돌아갈 앱 안 화면이 아래에 있는지 판정한다.
  *
  * Navigation API가 있으면 더미 칸을 뺀 현재 화면 바로 아래 기록이 같은 문서의 클라이언트 이동인지 본다.

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { hasPreviousInAppEntry } from '@/lib/in-app-navigation';
+import {
+  hasPreviousHistoryEntry,
+  hasPreviousInAppEntry,
+} from '@/lib/in-app-navigation';
 
 const sameDocument =
   (flags: boolean[]) =>
@@ -99,6 +102,49 @@ describe('hasPreviousInAppEntry', () => {
         layerEntryCount: 0,
         historyLength: 4,
         landingHistoryLength: null,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('hasPreviousHistoryEntry', () => {
+  it('다른 문서여도 아래 기록이 있으면 true, 더미만 있으면 false다', () => {
+    expect(
+      hasPreviousHistoryEntry({
+        currentIndex: 1,
+        layerEntryCount: 0,
+        historyLength: 2,
+      }),
+    ).toBe(true);
+    expect(
+      hasPreviousHistoryEntry({
+        currentIndex: 0,
+        layerEntryCount: 0,
+        historyLength: 1,
+      }),
+    ).toBe(false);
+    expect(
+      hasPreviousHistoryEntry({
+        currentIndex: 1,
+        layerEntryCount: 1,
+        historyLength: 2,
+      }),
+    ).toBe(false);
+  });
+
+  it('Navigation API가 없으면 히스토리 길이로 본다', () => {
+    expect(
+      hasPreviousHistoryEntry({
+        currentIndex: null,
+        layerEntryCount: 0,
+        historyLength: 2,
+      }),
+    ).toBe(true);
+    expect(
+      hasPreviousHistoryEntry({
+        currentIndex: null,
+        layerEntryCount: 0,
+        historyLength: 1,
       }),
     ).toBe(false);
   });
