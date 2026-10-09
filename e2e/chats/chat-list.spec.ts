@@ -342,6 +342,32 @@ test.describe('채팅 카드 옵션 (KNK-1186)', () => {
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
   });
 
+  test('카드 옵션 시트가 열린 채 뒤로가기를 하면 시트만 닫히고 목록에 남는다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await seedChatIds(page, ['c1']);
+    await page.route(CHATS_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([chat('c1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto('/chats');
+    await page
+      .getByRole('button', { name: '채팅 옵션 더보기' })
+      .first()
+      .click();
+
+    const sheet = page.getByRole('dialog');
+
+    await expect(sheet).toBeVisible();
+    await page.goBack();
+    await expect(sheet).toBeHidden();
+    await expect(page).toHaveURL(/\/chats$/);
+  });
+
   test('회원은 카드 옵션에서 참조 스토리를 신고할 수 있다', async ({
     page,
   }) => {
