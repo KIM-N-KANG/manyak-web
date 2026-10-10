@@ -313,6 +313,24 @@ test.describe('스토리 수정', () => {
     await expect(titleInput(page)).toHaveValue(EDIT_FORM.title);
   });
 
+  test('옵션 시트의 수정하기로 들어간 뒤 뒤로가기 한 번에 제작 탭으로 돌아간다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.route('**/api/v1/users/me/stories**', (route) =>
+      route.fulfill({ json: [DETAIL] }),
+    );
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+    await page.getByRole('menuitem', { name: '수정하기' }).click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STORY_EDIT(STORY_ID)}$`),
+    );
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/studio$/);
+  });
+
   test('내가 만들지 않은 스토리에는 수정하기가 없다 (STORY-DETAIL-45)', async ({
     page,
   }) => {

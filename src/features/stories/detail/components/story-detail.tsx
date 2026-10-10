@@ -26,6 +26,7 @@ import {
   clearCreatedPersona,
   useCreatedPersonaId,
 } from '@/features/stories/_shared/utils/created-persona-selection';
+import { consumePendingChatOpen } from '@/features/stories/_shared/utils/pending-chat-open';
 import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 import { useStoryFooterBackground } from '@/features/stories/detail/hooks/use-story-footer-background';
 import { buildChatStartSummary } from '@/features/stories/detail/utils/chat-start-summary';
@@ -71,6 +72,14 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
   const isNotFound = error instanceof FetchError && error.status === 404;
 
   const router = useRouter();
+
+  // 일반 제작 승인처럼 끝난 화면을 이 상세로 바꾼 뒤 채팅방을 쌓아야 하면, 상세가 떠 주소가 확정된 지금 연다.
+  useEffect(() => {
+    const chatId = consumePendingChatOpen(storyId);
+
+    if (chatId) router.push(APP_PATH.CHAT_ROOM(chatId));
+  }, [router, storyId]);
+
   const { status: sessionStatus } = useSession();
   const createdStoryIds = useCreatedStoryIds();
   const isMember = sessionStatus === 'authenticated';

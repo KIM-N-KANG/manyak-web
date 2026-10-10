@@ -1198,6 +1198,80 @@ test.describe('채팅 삭제', () => {
     await expect(page).toHaveURL(/\/chats$/);
   });
 
+  test('메뉴 드로어와 설정 시트는 뒤로가기로 닫히고 채팅방에 남는다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+
+    const menu = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
+
+    await expect(menu).toBeVisible();
+    await page.goBack();
+    await expect(menu).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+
+    await openChatSettings(page);
+    await page.goBack();
+    await expect(
+      page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+    ).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+  });
+
+  test('삭제 확인 다이얼로그는 뒤로가기로 닫히고 삭제 중에는 뒤로가기를 무시한다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await seedChatIds(page, ['c1']);
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'DELETE') {
+        // 삭제 응답을 늦춰 진행 중 상태를 만든다.
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await route.fulfill({ status: 204, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    // 드로어 닫기와 다이얼로그 열기가 같은 클릭에 와도 다이얼로그가 남아야 한다.
+    const dialog = await openDeleteDialog(page);
+
+    await expect(dialog).toBeVisible();
+    await page.goBack();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+
+    const pending = await openDeleteDialog(page);
+
+    await pending.getByRole('button', { name: '삭제하기' }).click();
+    await expect(
+      pending.getByLabel(CHAT_MENU_COPY.deleteConfirm.pending),
+    ).toBeVisible();
+    await page.goBack();
+    await expect(pending).toBeVisible();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    await expect(page.getByText('채팅이 삭제되었어요')).toBeVisible();
+    await expect(page).toHaveURL(/\/chats$/);
+  });
+
   test('로그인 상태에서 채팅을 삭제하면 목록에서 사라진다', async ({
     page,
   }) => {

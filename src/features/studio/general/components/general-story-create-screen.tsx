@@ -312,7 +312,7 @@ export function GeneralStoryCreateForm({
   const deleteThumbnail = useDeleteThumbnail();
   const { startChatFor } = useStartChat('', {
     // 제작 선택과 폼은 끝난 단계라 그 자리를 새 스토리 상세로 바꿔, 채팅방에서 뒤로 가면 상세로 돌아가게 한다.
-    backTo: APP_PATH.STORY_DETAIL,
+    viaStoryDetail: true,
     // 스토리는 이미 만들어졌으므로 채팅을 열지 못하면 상세로 보내 거기서 시작하게 한다.
     onError: (storyId) => router.replace(APP_PATH.STORY_DETAIL(storyId)),
   });

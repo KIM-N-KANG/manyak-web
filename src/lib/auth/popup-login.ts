@@ -2,7 +2,7 @@
 export const POPUP_LOGIN_MESSAGE_TYPE = 'manyak:google-popup-complete';
 
 export const POPUP_LOGIN_COPY = {
-  title: 'Google 로그인',
+  title: '로그인',
   complete: '인증 처리가 끝났어요. 원래 화면으로 돌아가 주세요.',
   failed: '로그인을 완료하지 못했어요. 원래 화면에서 다시 시도해 주세요.',
 } as const;

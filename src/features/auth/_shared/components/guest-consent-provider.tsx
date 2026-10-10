@@ -13,12 +13,13 @@ import { usePathname } from 'next/navigation';
 
 import { GuestConsentSheet } from '@/features/auth/_shared/components/guest-consent-sheet';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
+import { useBackLayer } from '@/hooks/use-back-layer';
+import { leaveLayers } from '@/lib/history-layers';
 
 const GuestConsentContext = createContext({
   requestConsent: async (): Promise<boolean> => false,
   open: false,
 });
-const HISTORY_KEY = 'manyakGuestConsent';
 
 /**
  * 회원 접근 또는 게스트 동의를 확인하고 대기 중인 한 동작만 재개한다.
@@ -42,75 +43,34 @@ export function GuestConsentProvider({ children }: { children: ReactNode }) {
   const [requestPath, setRequestPath] = useState<string | null>(null);
   const open = requestPath === pathname && isGuest;
   const pending = useRef<((accepted: boolean) => void) | null>(null);
-  const finish = useRef<(accepted: boolean) => void>(() => {});
 
+  const settle = (result: boolean) => {
+    const resolve = pending.current;
+
+    pending.current = null;
+    setRequestPath(null);
+    resolve?.(result);
+  };
+
+  // 뒤로가기는 대기 동작을 취소한다. 더미는 매니저가 소비했으므로 바로 정리한다.
+  useBackLayer({ open, onBack: () => settle(false) });
+
+  // 화면이나 인증 상태가 바뀌어 닫히면 대기 동작을 취소한다.
   useEffect(() => {
     if (!open) return;
 
-    const href = window.location.href;
-    let accepted = false;
-    let closing = false;
-    let consumed = false;
-    const settle = (result: boolean) => {
-      const resolve = pending.current;
-
-      pending.current = null;
-      setRequestPath(null);
-      resolve?.(result);
-    };
-    const onPop = (event: PopStateEvent) => {
-      if (window.location.href === href) event.stopImmediatePropagation();
-
-      consumed = true;
-
-      const valid = accepted && isGuest && window.location.href === href;
-
-      settle(valid);
-    };
-
-    window.history.pushState(
-      { ...window.history.state, [HISTORY_KEY]: true },
-      '',
-      href,
-    );
-    window.addEventListener('popstate', onPop, true);
-    finish.current = (result) => {
-      if (closing) return;
-
-      if (window.location.href !== href) {
-        settle(false);
-
-        return;
-      }
-
-      closing = true;
-      accepted = result;
-      window.history.back();
-    };
-
     return () => {
-      window.removeEventListener('popstate', onPop, true);
-      finish.current = () => {};
-
       const resolve = pending.current;
 
       pending.current = null;
-      resolve?.(false);
       setRequestPath(null);
-
-      if (
-        !consumed &&
-        window.location.href === href &&
-        window.history.state?.[HISTORY_KEY]
-      ) {
-        window.history.replaceState(
-          { ...window.history.state, [HISTORY_KEY]: undefined },
-          '',
-          href,
-        );
-      }
+      resolve?.(false);
     };
-  }, [open, pathname, isGuest, isMember]);
+  }, [open]);
+
+  // 시트 더미를 먼저 소비해 재개한 동작의 이동 아래에 빈 칸이 남지 않게 한다.
+  const finish = (result: boolean) =>
+    leaveLayers(() => settle(isGuest && result));
 
   const requestConsent = async () => {
     if (isMember) return true;
@@ -126,9 +86,7 @@ export function GuestConsentProvider({ children }: { children: ReactNode }) {
   return (
     <GuestConsentContext value={{ requestConsent, open }}>
       {children}
-      {open && isGuest && (
-        <GuestConsentSheet onFinish={(accepted) => finish.current(accepted)} />
-      )}
+      {open && isGuest && <GuestConsentSheet onFinish={finish} />}
     </GuestConsentContext>
   );
 }

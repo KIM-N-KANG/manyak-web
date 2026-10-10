@@ -288,7 +288,10 @@ for (const provider of ['kakao', 'google'] as const) {
     for (const button of await sheet.getByRole('button').all())
       await expect(button).toBeDisabled();
 
-    await expect.poll(() => callbackUrl).toBe(APP_PATH.STORY_DETAIL('s1'));
+    // 팝업 로그인은 완료 페이지로 돌아오고 상세 복귀 경로는 원래 탭이 기억한다.
+    await expect
+      .poll(() => callbackUrl)
+      .toContain(APP_PATH.LOGIN_POPUP_COMPLETE);
     await page.keyboard.press('Escape');
     await expect(sheet).toBeVisible();
     release();

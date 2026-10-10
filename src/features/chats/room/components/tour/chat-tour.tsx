@@ -7,6 +7,7 @@ import { m } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
 import { APP_FRAME_ID } from '@/constants/app-frame';
+import { useBackLayer } from '@/hooks/use-back-layer';
 import { cn } from '@/lib/utils';
 
 import { type ChatInputMode } from '../../utils/chat-input-config';
@@ -169,6 +170,9 @@ export function ChatTour({
   const [step, setStep] = useState<TourStepState | null>(null);
   const hasStartedRef = useRef(false);
   const steps = getChatTourSteps(inputMode);
+
+  // 뒤로가기는 건너뛰기와 같다(Android §71). 투어는 열려 있을 때만 마운트된다.
+  useBackLayer({ open: true, onBack: () => onSkip(step?.index ?? 0) });
 
   useEffect(() => {
     if (hasStartedRef.current) {

@@ -25,3 +25,25 @@ export async function waitForDarkTheme(page: Page): Promise<void> {
     .locator('html.dark')
     .waitFor({ state: 'attached', timeout: 5_000 });
 }
+
+/**
+ * 진행 중인 CSS 전이·애니메이션이 모두 끝날 때까지 기다린다.
+ * 무한 반복(스피너 등)과 스크롤 타임라인 애니메이션(scroll-fade 등, 늘 running)은 기다리지 않는다.
+ * 시트 열림처럼 전이 중에 찍히면 실행마다 위치가 달라지는 스냅샷 앞에 쓴다.
+ *
+ * @param page 대상 페이지
+ */
+export async function waitForAnimations(page: Page): Promise<void> {
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => {
+      const iterations = animation.effect?.getTiming().iterations ?? 1;
+
+      return (
+        iterations === Infinity ||
+        !(animation.timeline instanceof DocumentTimeline) ||
+        animation.playState === 'finished' ||
+        animation.playState === 'idle'
+      );
+    }),
+  );
+}

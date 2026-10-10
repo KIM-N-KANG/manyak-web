@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { useBackLayer } from '@/hooks/use-back-layer';
+
 import { REALTIME_IMAGE_NUDGE_DELAY_MS } from '../constants';
 
 /**
@@ -31,5 +33,10 @@ export function useRealtimeImageNudge(
     return () => clearTimeout(timer);
   }, [requested, hasOpened, isStreaming]);
 
-  return { isOpen, close: () => setIsOpen(false) };
+  const close = () => setIsOpen(false);
+
+  // 안내는 설정 시트 위에 열리므로 뒤로가기 한 번은 안내만 닫고 다음은 시트를 닫는다(Android §74).
+  useBackLayer({ open: isOpen, onBack: close });
+
+  return { isOpen, close };
 }

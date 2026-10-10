@@ -556,6 +556,57 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(filterGroup).toBeVisible();
   });
 
+  test('상세에서 돌아오거나 탭을 오가도 목록 스크롤 위치를 유지한다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockPublicStories(
+      page,
+      Array.from({ length: 12 }, (_, index) =>
+        originalStory(`o${index + 1}`, `긴 목록 ${index + 1}`),
+      ),
+    );
+
+    await page.goto('/');
+    await expect(page.getByText('긴 목록 1', { exact: true })).toBeVisible();
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    // 카드를 보이게 내린 위치가 떠날 때의 위치다.
+    const link = page.getByRole('link', { name: '긴 목록 9 상세 보기' });
+
+    await link.scrollIntoViewIfNeeded();
+
+    const leftAt = await scroller.evaluate((element) => element.scrollTop);
+
+    expect(leftAt).toBeGreaterThan(0);
+    await link.click();
+    await expect(page).toHaveURL(/\/stories\/o9$/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/$/);
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBe(leftAt);
+
+    // 탭을 오가도 각 탭이 떠날 때의 위치를 기억한다.
+    const navigation = page.getByRole('navigation', {
+      name: '하단 네비게이션',
+    });
+
+    await navigation.getByRole('link', { name: '채팅' }).click();
+    await expect(page).toHaveURL(/\/chats$/);
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBe(0);
+    await navigation.getByRole('link', { name: '홈' }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBe(leftAt);
+  });
+
   test('당겨도 필터 바는 제자리에 있고 표시자는 바 아래에 나타난다 (KNK-1570)', async ({
     page,
   }) => {

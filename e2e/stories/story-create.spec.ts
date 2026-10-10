@@ -250,6 +250,35 @@ test.describe('스토리 생성', () => {
     ).toBeVisible();
   });
 
+  test('선택한 키워드 드로어가 열린 채 뒤로가기를 하면 드로어만 닫히고 나가기 다이얼로그는 뜨지 않는다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await page.route(TAGS, async (route) => {
+      await route.fulfill({ json: tags });
+    });
+    await page.route(STORYLINES, async (route) => {
+      await route.fulfill({ status: 201, json: storylinesResponse });
+    });
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: '용감한' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
+    await page.getByRole('button', { name: STORYLINE_GENERATE_LABEL }).click();
+    await page
+      .getByRole('button', { name: SELECTED_TAGS_TRIGGER_LABEL })
+      .click();
+
+    const drawer = page.getByRole('dialog');
+
+    await expect(drawer).toBeVisible();
+    await page.goBack();
+    await expect(drawer).toBeHidden();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/studio\/story\/simple$/);
+  });
+
   test('장르를 3개 고르면 검색 목록의 다른 장르는 고를 수 없고 고른 장르는 해제할 수 있다 (KNK-1542)', async ({
     page,
   }) => {
