@@ -107,7 +107,7 @@ export function CreatedStoryList() {
 
   return (
     <>
-      <ul className="relative flex shrink-0 flex-col">
+      <ul className="relative flex shrink-0 flex-col not-empty:pb-2">
         <AnimatePresence mode="popLayout" initial={false}>
           {pendingCreationRecords.map((record) => (
             <m.li

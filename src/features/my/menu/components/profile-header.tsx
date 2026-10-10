@@ -34,7 +34,7 @@ export function ProfileHeader() {
   const profileImageSrc = thumbnailSrc ?? session?.user?.image;
 
   return (
-    <section className="mb-4 flex items-center gap-4 p-4">
+    <section className="flex items-center gap-4">
       {profileImageSrc && !imageError ? (
         <Image
           src={profileImageSrc}

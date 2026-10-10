@@ -43,11 +43,13 @@ export function MyScreen() {
   };
 
   return (
-    <main className="flex flex-1 flex-col">
-      <ProfileHeader />
-      <CreditBalanceCard />
+    <main className="flex flex-1 flex-col gap-8 pb-2">
+      <div className="flex flex-col gap-4 px-4 pt-4">
+        <ProfileHeader />
+        <CreditBalanceCard />
+      </div>
       {isAuthenticated && (
-        <section className="flex flex-col py-4">
+        <section className="flex flex-col">
           <div className="mb-2 px-4">
             <Label>{PERSONA_MENU_COPY.sectionLabel}</Label>
           </div>
@@ -59,21 +61,21 @@ export function MyScreen() {
         </section>
       )}
       {isAuthenticated && (
-        <section className="flex flex-col py-4">
+        <section className="flex flex-col">
           <div className="mb-2 px-4">
             <Label>이벤트</Label>
           </div>
           <InviteMenuItem />
         </section>
       )}
-      <section className="flex flex-col py-4">
+      <section className="flex flex-col">
         <div className="mb-2 px-4">
           <Label>화면</Label>
         </div>
         <ThemeMenuItem />
       </section>
       {isAuthenticated && (
-        <section className="flex flex-col py-4">
+        <section className="flex flex-col">
           <div className="mb-2 px-4">
             <Label>알림</Label>
           </div>
@@ -84,7 +86,7 @@ export function MyScreen() {
           />
         </section>
       )}
-      <section className="flex flex-col py-4">
+      <section className="flex flex-col">
         <div className="mb-2 px-4">
           <Label>기타</Label>
         </div>
@@ -101,7 +103,7 @@ export function MyScreen() {
         />
       </section>
       {isAuthenticated && (
-        <section className="flex flex-col py-4">
+        <section className="flex flex-col">
           <div className="mb-2 px-4">
             <Label>계정</Label>
           </div>
