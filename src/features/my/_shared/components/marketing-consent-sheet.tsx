@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/drawer';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
-import { useCloseOnBack } from '@/hooks/use-close-on-back';
 
 import { MARKETING_CONSENT_COPY } from '../constants/push-copy';
 import { useMarketingConsent } from '../hooks/use-marketing-consent';
@@ -84,8 +83,6 @@ export function MarketingConsentSheet() {
     clearMarketingConsentReask();
     void answer(userId, accepted);
   };
-
-  useCloseOnBack({ open: isOpen, onClose: () => respond(false) });
 
   const handleNoticeClose = () => {
     closeNotice();

@@ -5,6 +5,18 @@ import { expect, skipOnboarding, test } from '../fixtures/test';
 // (Playwright는 나중에 등록한 라우트를 먼저 매칭한다).
 const FEEDBACK_ENDPOINT = '**/api/v1/feedbacks';
 
+test('주소로 바로 연 피드백의 헤더 뒤로가기는 마이 탭으로 간다 (KNK-1610)', async ({
+  page,
+}) => {
+  await skipOnboarding(page);
+  await page.goto('/my/feedback');
+  await page
+    .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+    .click();
+
+  await expect(page).toHaveURL(/\/my$/);
+});
+
 test.describe('피드백 제출', () => {
   test('본문과 이메일을 입력해 제출하면 성공 안내가 뜨고 폼이 비워진다 (US-7-1·7-3)', async ({
     page,

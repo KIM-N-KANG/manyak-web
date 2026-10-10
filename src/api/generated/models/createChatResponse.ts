@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { ChatPersonaResponse } from './chatPersonaResponse';
 
 /**
  * 채팅 생성 응답
@@ -20,4 +21,5 @@ export interface CreateChatResponse {
   suggestedInputs?: string[];
   /** 생성 시각 */
   createdAt?: string;
+  persona?: ChatPersonaResponse | null;
 }

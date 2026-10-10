@@ -6,6 +6,9 @@
  * OpenAPI spec version: v1
  */
 
-export type ListParams = {
-  limit?: number;
-};
+export interface UpdateUserPersonaRequest {
+  /** @nullable */
+  name?: string | null;
+  /** @nullable */
+  description?: string | null;
+}

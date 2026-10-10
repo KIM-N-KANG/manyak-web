@@ -862,6 +862,32 @@ test.describe('일반 제작 임시 저장', () => {
     ).toBeVisible();
   });
 
+  test('제작 탭에서 연 일반 제작을 닫으면 제작 탭으로 돌아가고 제작 탭이 두 번 쌓이지 않는다 (KNK-1610)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page.getByRole('link', { name: '스토리 만들기' }).click();
+    await page
+      .getByRole('link', {
+        name: new RegExp(STORY_MODE_SELECT_COPY.general.title),
+      })
+      .click();
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+  });
+
   test('화면이 가려지면 저장하지 않은 입력을 임시 저장한다 (STORY-GENERAL-20)', async ({
     page,
   }) => {
@@ -1004,6 +1030,38 @@ test.describe('일반 제작 등록', () => {
     return requests;
   }
 
+  test('글에 {username}을 쓰고 주인공 이름을 비우면 등록하지 않고 주인공 이름 칸에 오류를 보인다 (KNK-1469)', async ({
+    page,
+  }) => {
+    const registerRequests = await mockRegisterAccepted(page);
+
+    await openWithGenreTags(page);
+    await fillRequiredForm(page);
+    await tab(page, 'protagonist').click();
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('');
+    await tab(page, 'start').click();
+    await page
+      .getByLabel(GENERAL_STORY_START_COPY.prologue.label)
+      .fill('{username}이(가) 불 꺼진 승강장에 내렸다');
+    await tab(page, 'publish').click();
+    await registerButton(page).click();
+
+    await expect(tab(page, 'protagonist')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(
+      page.getByText(GENERAL_STORY_REGISTER_ERROR_COPY.protagonistNameForToken),
+    ).toBeVisible();
+    expect(registerRequests).toHaveLength(0);
+
+    await page.getByRole('textbox', { name: '주인공 이름' }).fill('윤해솔');
+    await tab(page, 'publish').click();
+    await registerButton(page).click();
+    await expect.poll(() => registerRequests.length).toBe(1);
+    expect(registerRequests[0]).toMatchObject({ protagonistName: '윤해솔' });
+  });
+
   test('필수 항목을 채워 등록하면 검토 중을 안내하고, 승인되면 임시 저장본을 지운 뒤 채팅방으로 간다 (STORY-GENERAL-21)', async ({
     page,
   }) => {
@@ -1048,6 +1106,7 @@ test.describe('일반 제작 등록', () => {
     expect(registerRequests[0]).toMatchObject({
       title: '노선도에 없는 역',
       oneLineIntro: '막차에서 내린 곳',
+      protagonistName: '윤해솔',
       genres: ['판타지'],
       visibility: 'PRIVATE',
       characters: [
@@ -1074,7 +1133,7 @@ test.describe('일반 제작 등록', () => {
     );
   });
 
-  test('승인 뒤 채팅방에서 브라우저로 뒤로 가면 끝난 제작 선택·폼이 아니라 채팅 목록, 그다음 제작 탭으로 간다 (STORY-GENERAL-30)', async ({
+  test('승인 뒤 채팅방에서 브라우저로 뒤로 가면 끝난 제작 선택·폼이 아니라 새 스토리 상세, 그다음 제작 탭으로 간다 (STORY-GENERAL-30)', async ({
     page,
   }) => {
     await mockRegisterAccepted(page);
@@ -1114,7 +1173,9 @@ test.describe('일반 제작 등록', () => {
     );
 
     await page.goBack();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CHATS}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STORY_DETAIL('story-1')}$`),
+    );
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });

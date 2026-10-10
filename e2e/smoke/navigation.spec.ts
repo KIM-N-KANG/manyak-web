@@ -1,4 +1,5 @@
 import { APP_PATH } from '@/constants/app-path';
+import { NOT_FOUND_COPY } from '@/constants/not-found';
 
 import { expect, skipOnboarding, test } from '../fixtures/test';
 
@@ -115,4 +116,37 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
   await expect(logo).toBeVisible();
   await expect(loginButton).toBeVisible();
   await expect(loginButton).toHaveCSS('height', '40px');
+});
+
+test('없는 경로는 홈 링크만 두고, 앱 안에서 이동해 왔으면 이전 화면으로 버튼도 둔다 (KNK-1613)', async ({
+  page,
+}) => {
+  await skipOnboarding(page);
+
+  await page.goto('/no-such-page');
+  await expect(page.getByText(NOT_FOUND_COPY.title)).toBeVisible();
+  // 홈 링크는 Button이 Link를 감싸 role이 button이다.
+  await expect(
+    page.getByRole('button', { name: NOT_FOUND_COPY.home }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: NOT_FOUND_COPY.back }),
+  ).toHaveCount(0);
+
+  // 앱 안에서 이동해 온 404는 이전 화면으로 돌아갈 수 있다.
+  await page.goto(APP_PATH.MAIN.MY);
+  await page.evaluate(() =>
+    (
+      window as unknown as {
+        next: { router: { push: (href: string) => void } };
+      }
+    ).next.router.push('/no-such-page'),
+  );
+  await expect(page.getByText(NOT_FOUND_COPY.title)).toBeVisible();
+
+  const back = page.getByRole('button', { name: NOT_FOUND_COPY.back });
+
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page).toHaveURL(/\/my$/);
 });

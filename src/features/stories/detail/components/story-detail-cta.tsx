@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
+import { clearCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
 import { useStoryLike } from '@/features/stories/detail/hooks/use-story-like';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
@@ -19,10 +20,14 @@ type StoryDetailCtaProps = {
   storyId: string;
   canLike: boolean;
   isLiked: boolean;
-  /** 공개 초기 데이터를 브라우저 조회 응답으로 갱신할 때까지 시작을 막는다. */
+  /** 공개 초기 데이터를 브라우저 조회 응답으로 갱신할 때까지 시작과 좋아요를 막는다. */
   isLoading?: boolean;
   /** 선택한 시작 설정 ID. 없으면 백엔드가 첫 시작 설정을 사용한다. */
   startSettingId?: string;
+  /** 선택한 페르소나 ID. null이면 기본 주인공으로 시작한다. */
+  personaId?: string | null;
+  /** 버튼 아래 줄에 보이는 고른 페르소나와 시작 상황 요약이다. */
+  summary?: string;
 };
 
 export function StoryDetailCta({
@@ -31,16 +36,22 @@ export function StoryDetailCta({
   isLiked,
   isLoading = false,
   startSettingId,
+  personaId,
+  summary,
 }: StoryDetailCtaProps) {
   const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
   const { status } = useSession();
   const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
   const { startChat, isStarting } = useStartChat(storyId, {
     startSettingId,
-    onStart: () =>
+    personaId,
+    onStart: () => {
+      clearCreatedPersona();
       track('client_storyDetail_chatStartButton_clicked', {
         story_id: storyId,
-      }),
+        persona_type: personaId ? 'persona' : 'default',
+      });
+    },
   });
 
   return (
@@ -61,7 +72,7 @@ export function StoryDetailCta({
               }
               aria-pressed={isLiked}
               aria-busy={isLiking}
-              disabled={isLiking || status === 'loading'}
+              disabled={isLiking || isLoading || status === 'loading'}
               onClick={() => {
                 if (status !== 'authenticated') {
                   setIsLikeLoginOpen(true);
@@ -81,14 +92,21 @@ export function StoryDetailCta({
           <Button
             type="button"
             size="lg"
-            className="relative min-w-0 flex-1"
+            className={cn('relative min-w-0 flex-1', summary && 'py-1.5')}
             aria-busy={isStarting}
             disabled={isStarting || isLoading}
             onClick={startChat}>
             <LoadingButtonContent
               isLoading={isStarting}
               loadingLabel="새 채팅 시작 중">
-              새 채팅 시작하기
+              <span className="flex min-w-0 flex-col items-center">
+                <span className="text-sm leading-5">새 채팅 시작하기</span>
+                {summary && (
+                  <span className="max-w-full truncate text-[11px] leading-4 text-primary-foreground/80">
+                    {summary}
+                  </span>
+                )}
+              </span>
             </LoadingButtonContent>
           </Button>
         </div>

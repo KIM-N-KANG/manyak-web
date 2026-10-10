@@ -339,6 +339,7 @@ export const ResubmitBody = zod
       .max(resubmitBodyCharactersMax)
       .optional()
       .describe('인물 목록(최대 6명, 선택). 이름은 스토리 안에서 유일하다.'),
+    protagonistName: zod.string().nullish(),
   })
   .describe(
     '일반 제작 스토리 등록 요청(단발). 검수 제출본으로 접수하며 승인 후 저장한다.',
@@ -393,6 +394,15 @@ export const ReceiveBody = zod.string();
 
 export const ReceiveResponse = zod.unknown();
 
+export const ListResponse = zod.unknown();
+
+export const CreateBody = zod.object({
+  name: zod.string().nullish(),
+  description: zod.string().nullish(),
+});
+
+export const CreateResponse = zod.void();
+
 /**
  * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 초대 보상 이프를 적립합니다(스펙 §4-3-7, KNK-567). 적립액과 월 상한은 **운영 중 조정 가능한 정책값**이라 이 문서가 계약이 아닙니다 — 적립액은 응답 amount로, 월 상한은 GET /users/me/invite의 monthlyRewardLimit으로 확인하세요(KNK-1056). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
  * @summary 초대 코드 입력·보상 적립
@@ -438,17 +448,17 @@ export const PurchaseResponse = zod.unknown();
  * PENDING 주문과 그로블 결제창 URL을 반환합니다. 주문 생성만으로 이프를 적립하지 않습니다.
  * @summary 웹 이프 충전 주문 생성
  */
-export const createBodyProductIdMin = 0;
-export const createBodyProductIdMax = 32;
+export const create1BodyProductIdMin = 0;
+export const create1BodyProductIdMax = 32;
 
-export const CreateBody = zod.object({
+export const Create1Body = zod.object({
   productId: zod
     .string()
-    .min(createBodyProductIdMin)
-    .max(createBodyProductIdMax),
+    .min(create1BodyProductIdMin)
+    .max(create1BodyProductIdMax),
 });
 
-export const CreateResponse = zod.void();
+export const Create1Response = zod.void();
 
 /**
  * 출석 보상 이프를 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
@@ -1020,6 +1030,7 @@ export const CreateGeneralStoryBody = zod
       .max(createGeneralStoryBodyCharactersMax)
       .optional()
       .describe('인물 목록(최대 6명, 선택). 이름은 스토리 안에서 유일하다.'),
+    protagonistName: zod.string().nullish(),
   })
   .describe(
     '일반 제작 스토리 등록 요청(단발). 검수 제출본으로 접수하며 승인 후 저장한다.',
@@ -1141,6 +1152,7 @@ export const CreateChatBody = zod
       .describe(
         '채팅을 시작할 시작 설정 ID(공개 식별자). 생략하면 스토리의 첫 시작 설정을 사용한다.',
       ),
+    personaId: zod.string().nullish(),
   })
   .describe('채팅 생성 요청');
 
@@ -1618,44 +1630,44 @@ export const ConfirmResponse = zod.unknown();
  * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
  * @summary 로그인 핸드오프 생성
  */
-export const Create1Header = zod.object({
+export const Create2Header = zod.object({
   'X-Manyak-Device-Id': zod.string().optional(),
 });
 
-export const create1BodyStoryIdsMin = 0;
-export const create1BodyStoryIdsMax = 100;
+export const create2BodyStoryIdsMin = 0;
+export const create2BodyStoryIdsMax = 100;
 
-export const create1BodyChatIdsMin = 0;
-export const create1BodyChatIdsMax = 100;
+export const create2BodyChatIdsMin = 0;
+export const create2BodyChatIdsMax = 100;
 
-export const create1BodyCallbackPathMin = 0;
-export const create1BodyCallbackPathMax = 512;
+export const create2BodyCallbackPathMin = 0;
+export const create2BodyCallbackPathMax = 512;
 
-export const create1BodyCallbackPathRegExp = new RegExp(
+export const create2BodyCallbackPathRegExp = new RegExp(
   '^/(?![/\\\\])[^\\x00-\\x1F]*$',
 );
 
-export const Create1Body = zod
+export const Create2Body = zod
   .object({
     storyIds: zod
       .array(zod.string())
-      .min(create1BodyStoryIdsMin)
-      .max(create1BodyStoryIdsMax)
+      .min(create2BodyStoryIdsMin)
+      .max(create2BodyStoryIdsMax)
       .optional()
       .describe(
         '이관 대상 스토리 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용',
       ),
     chatIds: zod
       .array(zod.string())
-      .min(create1BodyChatIdsMin)
-      .max(create1BodyChatIdsMax)
+      .min(create2BodyChatIdsMin)
+      .max(create2BodyChatIdsMax)
       .optional()
       .describe('이관 대상 채팅 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용'),
     callbackPath: zod
       .string()
-      .min(create1BodyCallbackPathMin)
-      .max(create1BodyCallbackPathMax)
-      .regex(create1BodyCallbackPathRegExp)
+      .min(create2BodyCallbackPathMin)
+      .max(create2BodyCallbackPathMax)
+      .regex(create2BodyCallbackPathRegExp)
       .describe('로그인 후 복귀할 앱 내 상대 경로'),
     sourceApp: zod
       .enum(['kakaotalk', 'instagram', 'threads'])
@@ -1664,7 +1676,7 @@ export const Create1Body = zod
   })
   .describe('로그인 핸드오프 생성 요청');
 
-export const Create1Response = zod.void();
+export const Create2Response = zod.void();
 
 /**
  * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
@@ -1694,6 +1706,23 @@ export const UpdateProfileBody = zod
   .describe('프로필 수정 요청(KNK-1147). 둘 중 최소 하나는 있어야 한다');
 
 export const UpdateProfileResponse = zod.unknown();
+
+export const Delete1Params = zod.object({
+  personaId: zod.string(),
+});
+
+export const Delete1Response = zod.void();
+
+export const UpdateParams = zod.object({
+  personaId: zod.string(),
+});
+
+export const UpdateBody = zod.object({
+  name: zod.string().nullish(),
+  description: zod.string().nullish(),
+});
+
+export const UpdateResponse = zod.unknown();
 
 /**
  * 목록에서 선택한 스토리의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
@@ -1969,6 +1998,7 @@ export const UpdateStoryBody = zod
       .max(updateStoryBodyCharactersMax)
       .nullish()
       .describe('인물 목록(최대 6명). 생략하면 인물을 바꾸지 않는다.'),
+    protagonistName: zod.string().nullish(),
   })
   .describe('스토리 부분 갱신 요청. 보낸 필드만 교체하고 나머지는 유지한다.');
 
@@ -2098,13 +2128,13 @@ export const GetEditFormParams = zod.object({
 
 export const GetEditFormResponse = zod.unknown();
 
-export const listQueryLimitDefault = 100;
+export const list1QueryLimitDefault = 100;
 
-export const ListQueryParams = zod.object({
-  limit: zod.number().default(listQueryLimitDefault),
+export const List1QueryParams = zod.object({
+  limit: zod.number().default(list1QueryLimitDefault),
 });
 
-export const ListResponse = zod.unknown();
+export const List1Response = zod.unknown();
 
 /**
  * 간편 제작 키워드 선택 화면에서 사용할 사전 정의 태그 목록을 조회합니다.

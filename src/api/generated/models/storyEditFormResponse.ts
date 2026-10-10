@@ -48,4 +48,6 @@ export interface StoryEditFormResponse {
   /** 인물과 인물별 이미지 목록(KNK-1126). 인물이 없으면 빈 배열 */
   characters?: StoryEditCharacterResponse[];
   submission?: SubmissionMetadata | null;
+  /** @nullable */
+  protagonistName?: string | null;
 }

@@ -5,27 +5,40 @@ import { getSession, signIn } from 'next-auth/react';
 import { me } from '@/api/generated/endpoints/auth/auth';
 import { APP_PATH } from '@/constants/app-path';
 import { isPopupLoginMessage } from '@/lib/auth/popup-login';
+import type { SocialLoginProvider } from '@/lib/auth/social-provider';
+import { leaveLayers } from '@/lib/history-layers';
 
 import { resolveLoginCallbackUrl } from './login-callback-url';
 import { fetchPendingSignupConsent } from './signup-consent-client';
 
 const POPUP_TIMEOUT_MS = 5 * 60 * 1_000;
 
-// ponytail: Auth.js의 Google 트랜잭션 쿠키는 병렬 로그인을 지원하지 않아 문서당 한 번만 연다.
+/** 공급자별 인증 화면 호스트. Auth.js가 돌려준 URL이 이 호스트가 아니면 팝업을 보내지 않는다. */
+const AUTHORIZATION_HOSTS: Record<SocialLoginProvider, string> = {
+  google: 'accounts.google.com',
+  kakao: 'kauth.kakao.com',
+};
+
+export type PopupLoginOutcome = 'redirected' | 'failed' | 'blocked';
+
+// ponytail: Auth.js의 공급자 트랜잭션 쿠키는 병렬 로그인을 지원하지 않아 문서당 한 번만 연다.
 // 여러 로그인을 동시에 지원할 때는 공급자 트랜잭션부터 분리해야 한다.
 let popupLoginPending = false;
 let authorizationPending = false;
 let previousPopup: Window | null = null;
 
 /**
- * 사용자 클릭 중 빈 팝업을 먼저 열고 기존 Auth.js Google 인증을 그 창에서 진행한다.
+ * 사용자 클릭 중 빈 팝업을 먼저 열고 기존 Auth.js 소셜 인증을 그 창에서 진행한다.
  * 팝업 알림과 창 닫힘은 세션 재조회의 계기일 뿐이며 원래 창의 서버 세션을 확인해야 이동한다.
+ * 원래 창은 OAuth 화면을 거치지 않으므로 로그인 뒤 뒤로가기가 인증 화면으로 가지 않는다.
+ * @param provider 소셜 로그인 공급자
  * @param redirectTo 인증 완료 후 원래 창에서 이동할 앱 내 경로
- * @returns 원래 창 이동이 시작되면 redirected, 취소나 실패이면 failed
+ * @returns 원래 창 이동이 시작되면 redirected, 팝업이 차단됐으면 blocked, 취소나 실패이면 failed
  */
-export function startGooglePopupLogin(
+export function startPopupLogin(
+  provider: SocialLoginProvider,
   redirectTo: string,
-): Promise<'redirected' | 'failed'> {
+): Promise<PopupLoginOutcome> {
   if (popupLoginPending || authorizationPending) {
     return Promise.resolve('failed');
   }
@@ -39,11 +52,11 @@ export function startGooglePopupLogin(
     previousPopup = null;
     popup = window.open('about:blank', '_blank', 'popup,width=500,height=700');
   } catch {
-    return Promise.resolve('failed');
+    return Promise.resolve('blocked');
   }
 
   if (!popup) {
-    return Promise.resolve('failed');
+    return Promise.resolve('blocked');
   }
 
   popupLoginPending = true;
@@ -59,7 +72,7 @@ export function startGooglePopupLogin(
     let checkingSession = false;
     let authorizationStarted = false;
 
-    const finish = (outcome: 'redirected' | 'failed', closePopup = true) => {
+    const finish = (outcome: PopupLoginOutcome, closePopup = true) => {
       if (settled) {
         return;
       }
@@ -85,8 +98,11 @@ export function startGooglePopupLogin(
       resolve(outcome);
 
       if (outcome === 'redirected') {
-        // 원래 탭을 다시 로드해 Auth.js 세션과 회원 쿼리를 함께 갱신한다.
-        window.location.assign(resolveLoginCallbackUrl(redirectTo));
+        // 원래 탭을 다시 로드해 Auth.js 세션과 회원 쿼리를 함께 갱신한다. 로그인 필요 시트의 더미를 먼저 소비하고,
+        // 로그인 화면 칸을 복귀 화면으로 바꿔 뒤로가기가 로그인 화면으로 돌아가지 않게 한다.
+        leaveLayers(() => {
+          window.location.replace(resolveLoginCallbackUrl(redirectTo));
+        });
       }
     };
 
@@ -193,7 +209,7 @@ export function startGooglePopupLogin(
           finish('failed');
         }
       } catch {
-        // Google 인증 중에는 동일 출처 정책으로 팝업의 주소를 읽을 수 없다.
+        // 공급자 인증 중에는 동일 출처 정책으로 팝업의 주소를 읽을 수 없다.
       }
     }, 500);
     const timeout = window.setTimeout(
@@ -207,7 +223,7 @@ export function startGooglePopupLogin(
 
     // 만료 후에도 진행 중인 시작 응답이 새 PKCE 쿠키를 덮어쓰지 않도록 직렬화한다.
     authorizationPending = true;
-    void signIn('google', { redirect: false, redirectTo: callbackUrl.href })
+    void signIn(provider, { redirect: false, redirectTo: callbackUrl.href })
       .then((result) => {
         if (settled) {
           return;
@@ -223,7 +239,7 @@ export function startGooglePopupLogin(
 
         if (
           authorizationUrl.protocol !== 'https:' ||
-          authorizationUrl.hostname !== 'accounts.google.com'
+          authorizationUrl.hostname !== AUTHORIZATION_HOSTS[provider]
         ) {
           finish('failed');
 

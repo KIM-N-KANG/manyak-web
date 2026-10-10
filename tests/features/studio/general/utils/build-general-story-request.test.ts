@@ -137,4 +137,22 @@ describe('buildGeneralStoryRequest', () => {
     expect(request.characters?.[1]).not.toHaveProperty('description');
     expect(JSON.stringify(request)).not.toContain('client-');
   });
+
+  it('주인공 이름은 설정 글에 넣지 않고 protagonistName으로 보내며, 비우면 싣지 않는다', () => {
+    const request = buildGeneralStoryRequest(
+      { ...INPUT, protagonist: { ...INPUT.protagonist, name: ' 윤해솔 ' } },
+      [],
+    );
+
+    expect(request.protagonistName).toBe('윤해솔');
+    expect(request.storySettings.userRoleSetting).toBe(
+      '# 주인공\n## 성별\n여성\n회사원',
+    );
+    expect(
+      buildGeneralStoryRequest(
+        { ...INPUT, protagonist: { ...INPUT.protagonist, name: ' ' } },
+        [],
+      ),
+    ).not.toHaveProperty('protagonistName');
+  });
 });

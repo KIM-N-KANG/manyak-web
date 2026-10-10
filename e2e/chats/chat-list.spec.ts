@@ -10,6 +10,7 @@ import {
   expect,
   seedChatIds,
   seedStoryIds,
+  skipChatTour,
   skipOnboarding,
   test,
 } from '../fixtures/test';
@@ -218,6 +219,48 @@ test.describe('채팅 목록', () => {
   });
 });
 
+test.describe('채팅방 삭제 뒤로가기 (KNK-1610)', () => {
+  test('채팅 목록에서 연 방을 삭제하면 채팅 목록으로 돌아가고 채팅 목록이 두 번 쌓이지 않는다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await skipChatTour(page);
+    await seedChatIds(page, ['c1']);
+    await page.route(CHATS_BATCH, (route) =>
+      route.fulfill({ json: [chat('c1', '용의 계곡')] }),
+    );
+    await page.route('**/api/v1/chats/c1', (route) =>
+      route.request().method() === 'DELETE'
+        ? route.fulfill({ status: 204, body: '' })
+        : route.fulfill({
+            json: {
+              id: 'c1',
+              storyId: 'story-c1',
+              storyTitle: '용의 계곡',
+              prologue: '프롤로그',
+              turns: [],
+              suggestedInputs: [],
+            },
+          }),
+    );
+
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await page.goto(APP_PATH.MAIN.CHATS);
+    await page.getByRole('link', { name: '용의 계곡 채팅 보기' }).click();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    await page.getByRole('button', { name: '채팅 메뉴' }).click();
+    await page.getByRole('button', { name: '삭제하기' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: '삭제하기' })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CHATS}$`));
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+  });
+});
+
 test.describe('채팅 카드 옵션 (KNK-1186)', () => {
   const CHAT_DELETE = '**/api/v1/chats/c1';
 
@@ -297,6 +340,32 @@ test.describe('채팅 카드 옵션 (KNK-1186)', () => {
     await expect(page.getByText(TOAST_MESSAGE.CHAT_DELETED)).toBeVisible();
     await expect(page.getByText('용의 계곡', { exact: true })).toHaveCount(0);
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
+  });
+
+  test('카드 옵션 시트가 열린 채 뒤로가기를 하면 시트만 닫히고 목록에 남는다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await seedChatIds(page, ['c1']);
+    await page.route(CHATS_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([chat('c1', '용의 계곡')]),
+      });
+    });
+
+    await page.goto('/chats');
+    await page
+      .getByRole('button', { name: '채팅 옵션 더보기' })
+      .first()
+      .click();
+
+    const sheet = page.getByRole('dialog');
+
+    await expect(sheet).toBeVisible();
+    await page.goBack();
+    await expect(sheet).toBeHidden();
+    await expect(page).toHaveURL(/\/chats$/);
   });
 
   test('회원은 카드 옵션에서 참조 스토리를 신고할 수 있다', async ({

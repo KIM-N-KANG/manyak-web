@@ -115,6 +115,7 @@ export function GuestConsentSheet({
 
   return (
     <Drawer
+      closeOnBack={false}
       open={
         container !== null &&
         consent.isFetched &&

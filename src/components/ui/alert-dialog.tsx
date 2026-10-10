@@ -5,10 +5,44 @@ import * as React from 'react';
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog';
 
 import { Button } from '@/components/ui/button';
+import { useBackLayer } from '@/hooks/use-back-layer';
+import {
+  createBackCloseDetails,
+  useOverlayOpenState,
+} from '@/hooks/use-overlay-open-state';
 import { cn } from '@/lib/utils';
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
+function AlertDialog({
+  closeOnBack = true,
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: AlertDialogPrimitive.Root.Props & {
+  /** 거짓이면 브라우저·기기 뒤로가기로 닫지 않는다. */
+  closeOnBack?: boolean;
+}) {
+  const [isOpen, handleOpenChange] =
+    useOverlayOpenState<AlertDialogPrimitive.Root.ChangeEventDetails>({
+      open,
+      defaultOpen,
+      onOpenChange,
+    });
+
+  useBackLayer({
+    open: isOpen,
+    enabled: closeOnBack,
+    onBack: () => handleOpenChange(false, createBackCloseDetails()),
+  });
+
+  return (
+    <AlertDialogPrimitive.Root
+      data-slot="alert-dialog"
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  );
 }
 
 function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {

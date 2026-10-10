@@ -4,6 +4,11 @@ import * as React from 'react';
 
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 
+import { useBackLayer } from '@/hooks/use-back-layer';
+import {
+  createBackCloseDetails,
+  useOverlayOpenState,
+} from '@/hooks/use-overlay-open-state';
 import { cn } from '@/lib/utils';
 
 type DrawerContextProps = {
@@ -30,11 +35,29 @@ function Drawer({
   showSwipeHandle = true,
   snapPoints,
   swipeDirection = 'down',
+  closeOnBack = true,
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: DrawerPrimitive.Root.Props & {
   showSwipeHandle?: boolean;
+  /** 거짓이면 브라우저·기기 뒤로가기로 닫지 않는다. 뒤로가기에 다른 의미를 주는 시트만 끈다. */
+  closeOnBack?: boolean;
 }) {
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0;
+  const [isOpen, handleOpenChange] =
+    useOverlayOpenState<DrawerPrimitive.Root.ChangeEventDetails>({
+      open,
+      defaultOpen,
+      onOpenChange,
+    });
+
+  useBackLayer({
+    open: isOpen,
+    enabled: closeOnBack,
+    onBack: () => handleOpenChange(false, createBackCloseDetails()),
+  });
 
   return (
     <DrawerContext.Provider
@@ -44,6 +67,8 @@ function Drawer({
         modal={modal}
         snapPoints={snapPoints}
         swipeDirection={swipeDirection}
+        open={isOpen}
+        onOpenChange={handleOpenChange}
         {...props}
       />
     </DrawerContext.Provider>

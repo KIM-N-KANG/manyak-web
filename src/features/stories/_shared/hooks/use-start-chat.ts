@@ -13,19 +13,25 @@ import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { saveCreatedChatId } from '@/features/chats/_shared/utils/chat-id-storage';
+import { markPendingChatOpen } from '@/features/stories/_shared/utils/pending-chat-open';
+import { leaveLayers } from '@/lib/history-layers';
 
 type UseStartChatOptions = {
   /** 사용할 시작 설정 id(생략 시 백엔드가 첫 설정 사용) */
   startSettingId?: string;
+  /** 사용할 페르소나 id(생략하거나 null이면 기본 주인공) */
+  personaId?: string | null;
   /** 생성 요청 직전에 호출한다. 진입점별 분석 이벤트는 호출부가 소유한다. */
   onStart?: () => void;
   /** 채팅 생성에 실패해 토스트를 띄운 뒤 채팅을 만들려던 스토리 id로 호출한다. */
   onError?: (storyId: string) => void;
   /**
-   * 채팅방에서 브라우저 뒤로가기로 돌아갈 화면이다. 생략하면 지금 화면을 채팅방으로 바꿔 그 아래 화면으로
-   * 돌아간다. 제작을 마친 화면처럼 아래에 끝난 단계가 남는 곳에서 쓴다.
+   * 지금 화면을 채팅을 만든 스토리의 상세로 바꾸고, 상세가 마운트되면 그 위에 채팅방을 쌓는다. 제작을 마친
+   * 화면처럼 아래에 끝난 단계가 남는 곳에서 써서 채팅방의 뒤로가기가 상세로 돌아오게 한다.
    */
-  backTo?: string;
+  viaStoryDetail?: boolean;
+  /** 지금 화면을 채팅방으로 바꾼다. 채팅방에서 새 채팅을 열 때처럼 지금 화면으로 돌아오면 안 되는 곳에서 쓴다. */
+  replace?: boolean;
 };
 
 /**
@@ -34,19 +40,26 @@ type UseStartChatOptions = {
  * 채팅 생성 후 상세 데이터를 프리페치한 뒤 채팅방으로 이동한다.
  *
  * @param storyId 채팅을 시작할 스토리 id
- * @param options 시작 설정 id와 요청 직전·실패 콜백
+ * @param options 시작 설정 id와 페르소나 id, 요청 직전과 실패 콜백, 채팅방 아래에 둘 화면
  * @returns 채팅 시작 함수(호출 시점에야 id를 아는 경우 `startChatFor`)와 진행/에러 상태
  */
 export function useStartChat(
   storyId: string,
-  { startSettingId, onStart, onError, backTo }: UseStartChatOptions = {},
+  {
+    startSettingId,
+    personaId,
+    onStart,
+    onError,
+    viaStoryDetail,
+    replace,
+  }: UseStartChatOptions = {},
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status } = useSession();
   const createChat = useCreateChat({
     mutation: {
-      onSuccess: async (response) => {
+      onSuccess: async (response, variables) => {
         const chatId = response.status === 201 ? response.data.id : undefined;
 
         if (!chatId) {
@@ -64,17 +77,25 @@ export function useStartChat(
 
         await queryClient.prefetchQuery(getGetChatDetailQueryOptions(chatId));
 
-        if (backTo) {
-          // 지금 화면을 돌아갈 화면으로 바꾼 뒤 그 위에 채팅방을 쌓는다. 두 이동을 연달아 부르면 Next가
-          // 앞의 이동을 버려 히스토리에 남지 않으므로, 바꾼 주소가 반영된 뒤에 채팅방을 쌓는다.
-          router.replace(backTo);
-          await waitForPathname(backTo);
-          router.push(APP_PATH.CHAT_ROOM(chatId));
+        if (viaStoryDetail) {
+          const targetStoryId = variables.data.storyId ?? storyId;
+
+          // 두 이동을 연달아 부르면 Next가 앞의 이동을 버리므로, 열기 의도를 남기고 상세로만 바꾼다.
+          // 상세가 마운트되면(주소가 확정되면) 의도를 읽어 채팅방을 쌓는다.
+          markPendingChatOpen(targetStoryId, chatId);
+          leaveLayers(() =>
+            router.replace(APP_PATH.STORY_DETAIL(targetStoryId)),
+          );
 
           return;
         }
 
-        router.replace(APP_PATH.CHAT_ROOM(chatId));
+        // 채팅방 메뉴 드로어처럼 시트 안에서 시작하면 드로어 더미를 먼저 소비한다.
+        leaveLayers(() =>
+          replace
+            ? router.replace(APP_PATH.CHAT_ROOM(chatId))
+            : router.push(APP_PATH.CHAT_ROOM(chatId)),
+        );
       },
       onError: (_error, variables) => {
         // 채팅 생성은 이프를 소모하지 않으므로 사유 구분 없이 실패 토스트를 띄운다.
@@ -86,7 +107,9 @@ export function useStartChat(
 
   const startChatFor = (targetStoryId: string) => {
     onStart?.();
-    createChat.mutate({ data: { storyId: targetStoryId, startSettingId } });
+    createChat.mutate({
+      data: { storyId: targetStoryId, startSettingId, personaId },
+    });
   };
 
   const startChat = () => startChatFor(storyId);
@@ -97,15 +120,4 @@ export function useStartChat(
     isStarting: createChat.isPending || createChat.isSuccess,
     isError: createChat.isError,
   };
-}
-
-/** 주소가 pathname 이 될 때까지 기다린다. 이동이 늦어도 timeoutMillis 뒤에는 돌려준다. */
-async function waitForPathname(pathname: string, timeoutMillis = 5000) {
-  const startedAt = performance.now();
-
-  while (
-    window.location.pathname !== pathname &&
-    performance.now() - startedAt < timeoutMillis
-  )
-    await new Promise((resolve) => requestAnimationFrame(resolve));
 }

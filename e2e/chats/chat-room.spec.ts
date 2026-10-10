@@ -421,7 +421,7 @@ test.describe('채팅 스트리밍', () => {
 
     // 탭 제목을 클라이언트에서 덮어쓰므로, 화면을 벗어나면 원래대로 돌아오는지도 본다.
     await page
-      .getByRole('button', { name: '채팅 목록으로 돌아가기 버튼' })
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
       .click();
 
     await expect(page).toHaveTitle(DEFAULT_TITLE);
@@ -1194,6 +1194,80 @@ test.describe('채팅 삭제', () => {
     await expect(dialog.getByText('채팅을 삭제할까요?')).toBeVisible();
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
+    await expect(page.getByText('채팅이 삭제되었어요')).toBeVisible();
+    await expect(page).toHaveURL(/\/chats$/);
+  });
+
+  test('메뉴 드로어와 설정 시트는 뒤로가기로 닫히고 채팅방에 남는다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+
+    const menu = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
+
+    await expect(menu).toBeVisible();
+    await page.goBack();
+    await expect(menu).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+
+    await openChatSettings(page);
+    await page.goBack();
+    await expect(
+      page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
+    ).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+  });
+
+  test('삭제 확인 다이얼로그는 뒤로가기로 닫히고 삭제 중에는 뒤로가기를 무시한다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await seedChatIds(page, ['c1']);
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'DELETE') {
+        // 삭제 응답을 늦춰 진행 중 상태를 만든다.
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await route.fulfill({ status: 204, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    // 드로어 닫기와 다이얼로그 열기가 같은 클릭에 와도 다이얼로그가 남아야 한다.
+    const dialog = await openDeleteDialog(page);
+
+    await expect(dialog).toBeVisible();
+    await page.goBack();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+
+    const pending = await openDeleteDialog(page);
+
+    await pending.getByRole('button', { name: '삭제하기' }).click();
+    await expect(
+      pending.getByLabel(CHAT_MENU_COPY.deleteConfirm.pending),
+    ).toBeVisible();
+    await page.goBack();
+    await expect(pending).toBeVisible();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
     await expect(page.getByText('채팅이 삭제되었어요')).toBeVisible();
     await expect(page).toHaveURL(/\/chats$/);
   });
@@ -2290,5 +2364,24 @@ test.describe('추천 입력 긴 글', () => {
 
     await expect(page.getByText(`추천${UNBROKEN_TEXT}`)).toBeVisible();
     expect(await findOverflowingTexts(page)).toEqual([]);
+  });
+});
+
+test.describe('채팅 헤더 페르소나 표시', () => {
+  test('페르소나로 시작한 채팅도 헤더에 스토리 제목만 표시한다 (CHAT-ENTRY-12)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, (route) =>
+      route.fulfill({ json: { ...chatDetail(), persona: { name: '윤해솔' } } }),
+    );
+
+    await page.goto('/chats/c1');
+
+    const header = page.getByRole('banner');
+
+    await expect(
+      header.getByRole('heading', { name: '용의 계곡' }),
+    ).toBeVisible();
+    await expect(header.getByText(/윤해솔/)).toHaveCount(0);
   });
 });

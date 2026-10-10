@@ -4,6 +4,7 @@ import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 
+import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
@@ -34,7 +35,16 @@ export function ChatRoomHeader({
 }: ChatRoomHeaderProps) {
   const router = useRouter();
 
-  const goBack = () => router.push(APP_PATH.MAIN.CHATS);
+  // 채팅 목록이나 스토리 상세처럼 들어온 화면으로 돌아간다. 알림이나 주소로 바로 들어왔으면 채팅 목록으로 보낸다.
+  const goBack = () => {
+    if (!hasInAppNavigation()) {
+      router.replace(APP_PATH.MAIN.CHATS);
+
+      return;
+    }
+
+    router.back();
+  };
 
   return (
     <header
@@ -46,7 +56,7 @@ export function ChatRoomHeader({
         type="button"
         size="icon"
         variant="ghost"
-        aria-label="채팅 목록으로 돌아가기 버튼"
+        aria-label="이전 페이지로 돌아가기 버튼"
         onClick={goBack}>
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>

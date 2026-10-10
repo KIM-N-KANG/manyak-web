@@ -80,12 +80,14 @@ export function buildGeneralStoryRequest(
   genreNames: string[],
 ): CreateGeneralStoryRequest {
   const description = input.description.trim();
+  const protagonistName = input.protagonist.name.trim();
 
   return {
     title: input.texts.title.trim(),
     oneLineIntro: input.texts.oneLineIntro.trim(),
     ...(description && { description }),
     genres: genreNames,
+    ...(protagonistName && { protagonistName }),
     storySettings: {
       ...buildStorySettingTexts(input.texts, input.descriptionRatio),
       userRoleSetting: buildUserRoleSetting(input.protagonist),

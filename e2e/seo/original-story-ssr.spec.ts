@@ -129,9 +129,10 @@ test('공개 본문을 유지하며 개인화 응답을 받은 뒤 좋아요를 
     await expect(
       page.getByRole('heading', { level: 1, name: title }),
     ).toBeVisible();
+    // 하트는 처음부터 자리를 지키되 개인화 응답 전에는 잠근다.
     await expect(
       page.getByRole('button', { name: STORY_LIKE_COPY.like, exact: true }),
-    ).toHaveCount(0);
+    ).toBeDisabled();
     await expect(page.locator('main + nav button').last()).toBeDisabled();
     release();
     await expect(

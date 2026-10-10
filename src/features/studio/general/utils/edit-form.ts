@@ -61,6 +61,7 @@ const EDIT_FIELDS = [
   'title',
   'oneLineIntro',
   'description',
+  'protagonistName',
   'genres',
   'storySettings',
   'startSettings',

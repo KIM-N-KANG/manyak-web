@@ -15,6 +15,7 @@ const makeChat = (
   turnCount: 0,
   reachedEndings: [],
   updatedAt,
+  persona: null,
 });
 
 describe('toChatListItems', () => {

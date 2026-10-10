@@ -17,13 +17,13 @@ vi.mock('@/features/auth/_shared/utils/signup-consent-client', () => ({
   cancelPendingSignupConsent: mocks.cancelPendingSignupConsent,
 }));
 
-import { startGooglePopupLogin } from '@/features/auth/_shared/utils/start-google-popup-login';
+import { startPopupLogin } from '@/features/auth/_shared/utils/start-popup-login';
 import { startSocialLogin } from '@/features/auth/_shared/utils/start-social-login';
 import { POPUP_LOGIN_MESSAGE_TYPE } from '@/lib/auth/popup-login';
 
 const origin = 'https://manyak.example';
 let browser: EventTarget & {
-  location: { origin: string; assign: ReturnType<typeof vi.fn> };
+  location: { origin: string; replace: ReturnType<typeof vi.fn> };
 };
 let popup: {
   closed: boolean;
@@ -52,7 +52,7 @@ beforeEach(() => {
   };
   open = vi.fn(() => popup);
   browser = Object.assign(new EventTarget(), {
-    location: { origin, assign: vi.fn() },
+    location: { origin, replace: vi.fn() },
     open,
     setInterval,
     clearInterval,
@@ -92,11 +92,11 @@ function sendCompletion(overrides: Record<string, unknown> = {}) {
   browser.dispatchEvent(event);
 }
 
-describe('Auth.js Google 팝업 로그인', () => {
+describe('Auth.js 팝업 로그인', () => {
   it('클릭 중 팝업을 먼저 열고 원래 창의 두 인증 상태를 확인한 뒤 복귀한다', async () => {
     mocks.getSession.mockResolvedValue({ user: { id: 'user-1' } });
 
-    const result = startGooglePopupLogin('/stories/42?setting=1#detail');
+    const result = startPopupLogin('google', '/stories/42?setting=1#detail');
 
     expect(open.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.signIn.mock.invocationCallOrder[0],
@@ -108,7 +108,7 @@ describe('Auth.js Google 팝업 로그인', () => {
     sendCompletion();
     await expect(result).resolves.toBe('redirected');
     expect(mocks.me).toHaveBeenCalledOnce();
-    expect(browser.location.assign).toHaveBeenCalledWith(
+    expect(browser.location.replace).toHaveBeenCalledWith(
       '/stories/42?setting=1#detail',
     );
     expect(popup.close).toHaveBeenCalledOnce();
@@ -116,7 +116,7 @@ describe('Auth.js Google 팝업 로그인', () => {
   });
 
   it('출처, 창 참조, 시도 식별자가 다른 메시지는 인증 확인도 하지 않는다', async () => {
-    const result = startGooglePopupLogin('/');
+    const result = startPopupLogin('google', '/');
 
     await vi.advanceTimersByTimeAsync(0);
     sendCompletion({ origin: 'https://attacker.example' });
@@ -131,23 +131,23 @@ describe('Auth.js Google 팝업 로그인', () => {
     expect(mocks.getSession).not.toHaveBeenCalled();
     sendCompletion();
     await expect(result).resolves.toBe('failed');
-    expect(browser.location.assign).not.toHaveBeenCalled();
+    expect(browser.location.replace).not.toHaveBeenCalled();
   });
 
   it('팝업 성공 알림이 있어도 원래 창의 백엔드 계정이 다르면 성공으로 처리하지 않는다', async () => {
     mocks.getSession.mockResolvedValue({ user: { id: 'user-1' } });
     mocks.me.mockResolvedValue({ status: 200, data: { id: 'other-user' } });
 
-    const result = startGooglePopupLogin('/');
+    const result = startPopupLogin('google', '/');
 
     await vi.advanceTimersByTimeAsync(0);
     sendCompletion();
     await expect(result).resolves.toBe('failed');
-    expect(browser.location.assign).not.toHaveBeenCalled();
+    expect(browser.location.replace).not.toHaveBeenCalled();
   });
 
   it('가입 동의가 필요하다는 알림이면 원래 창의 callbackUrl로 돌아가 동의를 이어 간다', async () => {
-    const result = startGooglePopupLogin('/stories/42?setting=1#detail');
+    const result = startPopupLogin('google', '/stories/42?setting=1#detail');
 
     await vi.advanceTimersByTimeAsync(0);
     sendCompletion({
@@ -161,14 +161,14 @@ describe('Auth.js Google 팝업 로그인', () => {
       },
     });
     await expect(result).resolves.toBe('redirected');
-    expect(browser.location.assign).toHaveBeenCalledWith(
+    expect(browser.location.replace).toHaveBeenCalledWith(
       '/stories/42?setting=1#detail',
     );
     expect(mocks.me).not.toHaveBeenCalled();
   });
 
   it('COOP로 참조가 끊긴 뒤 세션이 없어도 가입 동의 대기가 있으면 돌아간다', async () => {
-    const result = startGooglePopupLogin('/my');
+    const result = startPopupLogin('google', '/my');
 
     await vi.advanceTimersByTimeAsync(0);
     popup.closed = true;
@@ -178,11 +178,11 @@ describe('Auth.js Google 팝업 로그인', () => {
     });
     browser.dispatchEvent(new Event('focus'));
     await expect(result).resolves.toBe('redirected');
-    expect(browser.location.assign).toHaveBeenCalledWith('/my');
+    expect(browser.location.replace).toHaveBeenCalledWith('/my');
   });
 
   it('가입 동의 대기 조회가 실패해도 미인증 포커스 복귀를 취소로 단정하지 않는다', async () => {
-    const result = startGooglePopupLogin('/my');
+    const result = startPopupLogin('google', '/my');
     const settled = vi.fn();
 
     void result.then(settled);
@@ -196,13 +196,13 @@ describe('Auth.js Google 팝업 로그인', () => {
 
   it('팝업이 차단되면 OAuth 요청이나 현재 창 이동을 하지 않는다', async () => {
     open.mockReturnValue(null);
-    await expect(startGooglePopupLogin('/')).resolves.toBe('failed');
+    await expect(startPopupLogin('google', '/')).resolves.toBe('blocked');
     expect(mocks.signIn).not.toHaveBeenCalled();
-    expect(browser.location.assign).not.toHaveBeenCalled();
+    expect(browser.location.replace).not.toHaveBeenCalled();
   });
 
   it('COOP로 참조가 닫혀도 미인증 포커스 복귀를 취소로 오판하지 않는다', async () => {
-    const result = startGooglePopupLogin('/my');
+    const result = startPopupLogin('google', '/my');
     const settled = vi.fn();
 
     void result.then(settled);
@@ -216,24 +216,24 @@ describe('Auth.js Google 팝업 로그인', () => {
     mocks.getSession.mockResolvedValue({ user: { id: 'user-1' } });
     await vi.advanceTimersByTimeAsync(500);
     await expect(result).resolves.toBe('redirected');
-    expect(browser.location.assign).toHaveBeenCalledWith('/my');
+    expect(browser.location.replace).toHaveBeenCalledWith('/my');
   });
 
   it('동시에 두 팝업을 열지 않고 만료 후 도착한 결과는 무시한다', async () => {
-    const result = startGooglePopupLogin('/');
+    const result = startPopupLogin('google', '/');
 
-    await expect(startGooglePopupLogin('/')).resolves.toBe('failed');
+    await expect(startPopupLogin('google', '/')).resolves.toBe('failed');
     expect(open).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(5 * 60 * 1_000);
     await expect(result).resolves.toBe('failed');
     expect(popup.close).not.toHaveBeenCalled();
     sendCompletion();
     expect(mocks.getSession).not.toHaveBeenCalled();
-    expect(browser.location.assign).not.toHaveBeenCalled();
+    expect(browser.location.replace).not.toHaveBeenCalled();
   });
 
   it('만료 후 명시적 재시도에서 이전 창을 정리하고 이전 시도의 메시지는 무시한다', async () => {
-    const first = startGooglePopupLogin('/first');
+    const first = startPopupLogin('google', '/first');
 
     await vi.advanceTimersByTimeAsync(0);
 
@@ -252,7 +252,7 @@ describe('Auth.js Google 팝업 로그인', () => {
       location: { href: 'about:blank', replace: vi.fn() },
     };
 
-    const retry = startGooglePopupLogin('/second');
+    const retry = startPopupLogin('google', '/second');
 
     await vi.advanceTimersByTimeAsync(0);
     expect(oldPopup.close).toHaveBeenCalledOnce();
@@ -275,7 +275,7 @@ describe('Auth.js Google 팝업 로그인', () => {
     mocks.getSession.mockResolvedValue({ user: { id: 'user-1' } });
     sendCompletion();
     await expect(retry).resolves.toBe('redirected');
-    expect(browser.location.assign).toHaveBeenCalledExactlyOnceWith('/second');
+    expect(browser.location.replace).toHaveBeenCalledExactlyOnceWith('/second');
   });
 
   it('만료된 시작 요청이 끝나기 전에는 새 OAuth 요청으로 쿠키를 덮어쓰지 않는다', async () => {
@@ -287,11 +287,11 @@ describe('Auth.js Google 팝업 로그인', () => {
       }),
     );
 
-    const result = startGooglePopupLogin('/');
+    const result = startPopupLogin('google', '/');
 
     await vi.advanceTimersByTimeAsync(5 * 60 * 1_000);
     await expect(result).resolves.toBe('failed');
-    await expect(startGooglePopupLogin('/')).resolves.toBe('failed');
+    await expect(startPopupLogin('google', '/')).resolves.toBe('failed');
     expect(mocks.signIn).toHaveBeenCalledOnce();
     complete({
       url: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -300,7 +300,7 @@ describe('Auth.js Google 팝업 로그인', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(popup.location.replace).not.toHaveBeenCalled();
 
-    const retry = startGooglePopupLogin('/');
+    const retry = startPopupLogin('google', '/');
 
     await vi.advanceTimersByTimeAsync(0);
     expect(mocks.signIn).toHaveBeenCalledTimes(2);
@@ -318,7 +318,7 @@ describe('Auth.js Google 팝업 로그인', () => {
       }),
     );
 
-    const result = startGooglePopupLogin('/first');
+    const result = startPopupLogin('google', '/first');
 
     await vi.advanceTimersByTimeAsync(0);
     sendCompletion();
@@ -326,21 +326,21 @@ describe('Auth.js Google 팝업 로그인', () => {
     await vi.advanceTimersByTimeAsync(5 * 60 * 1_000);
     await expect(result).resolves.toBe('failed');
 
-    const retry = startGooglePopupLogin('/second');
+    const retry = startPopupLogin('google', '/second');
 
     await vi.advanceTimersByTimeAsync(0);
     complete({ status: 200, data: { id: 'user-1' } });
     await vi.advanceTimersByTimeAsync(0);
-    expect(browser.location.assign).not.toHaveBeenCalled();
-    await expect(startGooglePopupLogin('/third')).resolves.toBe('failed');
+    expect(browser.location.replace).not.toHaveBeenCalled();
+    await expect(startPopupLogin('google', '/third')).resolves.toBe('failed');
     sendCompletion();
     await expect(retry).resolves.toBe('redirected');
-    expect(browser.location.assign).toHaveBeenCalledExactlyOnceWith('/second');
+    expect(browser.location.replace).toHaveBeenCalledExactlyOnceWith('/second');
   });
 
   it('OAuth 시작 요청이 실패하면 빈 팝업을 닫고 실패를 반환한다', async () => {
     mocks.signIn.mockRejectedValue(new Error('network'));
-    await expect(startGooglePopupLogin('/')).resolves.toBe('failed');
+    await expect(startPopupLogin('google', '/')).resolves.toBe('failed');
     expect(popup.close).toHaveBeenCalledOnce();
     expect(vi.getTimerCount()).toBe(0);
   });
@@ -350,18 +350,18 @@ describe('Auth.js Google 팝업 로그인', () => {
       url: 'https://attacker.example',
       error: null,
     });
-    await expect(startGooglePopupLogin('/')).resolves.toBe('failed');
+    await expect(startPopupLogin('google', '/')).resolves.toBe('failed');
     expect(popup.location.replace).not.toHaveBeenCalled();
   });
 
   it('OAuth 오류 페이지에 도착하면 원래 창을 유지하고 실패를 반환한다', async () => {
-    const result = startGooglePopupLogin('/');
+    const result = startPopupLogin('google', '/');
 
     await vi.advanceTimersByTimeAsync(0);
     popup.location.href = `${origin}/login?error=OAuthCallbackError`;
     await vi.advanceTimersByTimeAsync(500);
     await expect(result).resolves.toBe('failed');
-    expect(browser.location.assign).not.toHaveBeenCalled();
+    expect(browser.location.replace).not.toHaveBeenCalled();
   });
 });
 
@@ -415,13 +415,39 @@ describe('인앱 소셜 로그인 진입', () => {
     },
   );
 
-  it('일반 브라우저의 Google 로그인은 기존 redirect를 유지한다', async () => {
+  it('일반 브라우저는 Google과 Kakao 모두 팝업을 먼저 시도한다', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla Android Chrome' });
+    mocks.getSession.mockResolvedValue({ user: { id: 'user-1' } });
+    mocks.signIn.mockResolvedValue({
+      url: 'https://kauth.kakao.com/oauth/authorize',
+      error: null,
+    });
+
+    const result = startSocialLogin({ provider: 'kakao', redirectTo: '/my' });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(open).toHaveBeenCalledOnce();
+    expect(mocks.signIn).toHaveBeenCalledWith('kakao', {
+      redirect: false,
+      redirectTo: expect.stringContaining('/api/auth/popup-complete?attempt='),
+    });
+    expect(popup.location.replace).toHaveBeenCalledWith(
+      'https://kauth.kakao.com/oauth/authorize',
+    );
+    sendCompletion();
+    await expect(result).resolves.toBe('redirected');
+    expect(browser.location.replace).toHaveBeenCalledWith('/my');
+  });
+
+  it('일반 브라우저에서 팝업이 차단되면 같은 탭 redirect로 폴백한다', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla Android Chrome' });
+    open.mockReturnValue(null);
+
     await expect(
       startSocialLogin({ provider: 'google', redirectTo: '/' }),
     ).resolves.toBe('redirected');
     expect(mocks.signIn).toHaveBeenCalledWith('google', { redirectTo: '/' });
-    expect(open).not.toHaveBeenCalled();
+    expect(mocks.error).not.toHaveBeenCalled();
 
     mocks.signIn.mockRejectedValueOnce(new Error('offline'));
     await expect(

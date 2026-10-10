@@ -25,10 +25,7 @@ import type {
 } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
-import {
-  useGuestConsent,
-  useGuestConsentOpen,
-} from '@/features/auth/_shared/components/guest-consent-provider';
+import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import {
   getTrialRemaining,
@@ -69,6 +66,7 @@ import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
 import { FetchError } from '@/lib/custom-fetch';
+import { returnToMainTab } from '@/lib/return-to-main-tab';
 import { track } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
@@ -120,7 +118,6 @@ export function useStoryCreateFunnel() {
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
   const requestConsent = useGuestConsent();
-  const guestConsentOpen = useGuestConsentOpen();
   const trials = useTrials();
   const [guestLimitOpen, setGuestLimitOpen] = useState(false);
   const awaitingAccess = useRef(false);
@@ -680,13 +677,12 @@ export function useStoryCreateFunnel() {
   const { leaveAfterCleanup } = usePreventPageLeave({
     warnOnUnload: hasSavedDraft ? !isDraftSaved : hasDraftInput,
     interceptBack: true,
-    ignoreBack: guestConsentOpen,
     onBackAttempt: () => handleBackAttempt(),
   });
 
   // 진입 이력과 관계없이 퍼널 이탈은 제작 탭으로 정착시킨다.
   const exitToCreate = () =>
-    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
+    leaveAfterCleanup(() => returnToMainTab(router, APP_PATH.MAIN.STUDIO));
 
   // 스토리라인 생성 요청에 requestId를 부여하고 복구 레코드를 저장한 뒤 요청한다.
   // 일반 생성·재생성은 새 UUID를 쓰고, 실패한 같은 요청의 복구 재시도만 기존 ID를 재사용한다.
@@ -968,6 +964,13 @@ export function useStoryCreateFunnel() {
   // 없으면 묻지 않고 나간다. 생성 중 레코드는 생성 요청을 저장한 시점에 저장본으로 맞춰 두었으므로
   // 생성 중에 나가면 이어서 만들 수 있다는 안내다.
   const handleBackAttempt = () => {
+    // 나가기 다이얼로그가 열린 채 뒤로가기를 하면 다이얼로그만 닫는다(일반 제작과 같음).
+    if (backDialog !== null) {
+      setBackDialog(null);
+
+      return;
+    }
+
     const warning = getDraftExitWarning({
       hasInput: hasDraftInput,
       hasSavedDraft,

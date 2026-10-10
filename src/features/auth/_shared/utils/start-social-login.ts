@@ -5,11 +5,12 @@ import { toast } from 'sonner';
 
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
+import { leaveLayers } from '@/lib/history-layers';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 
 import { markPendingLogin } from './pending-login-storage';
 import { cancelPendingSignupConsent } from './signup-consent-client';
-import { startGooglePopupLogin } from './start-google-popup-login';
+import { startPopupLogin } from './start-popup-login';
 
 type StartSocialLoginOptions = {
   /** 로그인에 사용할 소셜 provider. */
@@ -27,7 +28,7 @@ export type SocialLoginOutcome = 'redirected' | 'failed';
 /**
  * 모든 소셜 로그인 CTA의 공통 진입점이다.
  * 감지된 인앱의 Google 로그인은 Auth.js 팝업에서 진행하고 원래 탭의 세션을 확인한다.
- * Kakao와 일반 브라우저의 Google 로그인은 같은 탭에서 signIn을 시작한다.
+ * 인앱의 Kakao와 팝업이 차단된 일반 브라우저만 같은 탭에서 signIn을 시작한다.
  *
  * @param options.provider 로그인에 사용할 소셜 provider
  * @param options.redirectTo 로그인 완료 후 복귀할 앱 내 상대 경로
@@ -45,23 +46,28 @@ export async function startSocialLogin({
   // 비운다. 팝업은 사용자 제스처 안에서 먼저 열려야 하므로 기다리지 않는다.
   void cancelPendingSignupConsent();
 
-  if (provider === 'google' && inAppBrowser) {
-    const outcome = await startGooglePopupLogin(redirectTo);
+  // 팝업은 원래 탭이 OAuth 화면을 거치지 않아 로그인 뒤 뒤로가기가 인증 화면으로 가지 않는다. 인앱의 Kakao만
+  // 카카오톡 인앱의 팝업 제약 때문에 같은 탭에서 시작한다. 일반 브라우저에서 팝업이 차단되면 같은 탭으로 폴백한다.
+  if (provider === 'google' || !inAppBrowser) {
+    const outcome = await startPopupLogin(provider, redirectTo);
 
-    if (outcome === 'failed') {
-      toast.error(TOAST_MESSAGE.LOGIN_FAILED);
+    if (outcome !== 'blocked' || inAppBrowser) {
+      if (outcome !== 'redirected') {
+        toast.error(TOAST_MESSAGE.LOGIN_FAILED);
+      }
+
+      return outcome === 'redirected' ? 'redirected' : 'failed';
     }
-
-    return outcome;
   }
 
-  try {
-    await signIn(provider, { redirectTo });
-  } catch {
-    toast.error(TOAST_MESSAGE.LOGIN_FAILED);
-
-    return 'failed';
-  }
-
-  return 'redirected';
+  return new Promise<SocialLoginOutcome>((resolve) => {
+    leaveLayers(() => {
+      signIn(provider, { redirectTo })
+        .then(() => resolve('redirected'))
+        .catch(() => {
+          toast.error(TOAST_MESSAGE.LOGIN_FAILED);
+          resolve('failed');
+        });
+    });
+  });
 }

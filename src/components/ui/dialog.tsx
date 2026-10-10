@@ -7,10 +7,44 @@ import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import { Button } from '@/components/ui/button';
+import { useBackLayer } from '@/hooks/use-back-layer';
+import {
+  createBackCloseDetails,
+  useOverlayOpenState,
+} from '@/hooks/use-overlay-open-state';
 import { cn } from '@/lib/utils';
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+function Dialog({
+  closeOnBack = true,
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: DialogPrimitive.Root.Props & {
+  /** 거짓이면 브라우저·기기 뒤로가기로 닫지 않는다. */
+  closeOnBack?: boolean;
+}) {
+  const [isOpen, handleOpenChange] =
+    useOverlayOpenState<DialogPrimitive.Root.ChangeEventDetails>({
+      open,
+      defaultOpen,
+      onOpenChange,
+    });
+
+  useBackLayer({
+    open: isOpen,
+    enabled: closeOnBack,
+    onBack: () => handleOpenChange(false, createBackCloseDetails()),
+  });
+
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      {...props}
+    />
+  );
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {

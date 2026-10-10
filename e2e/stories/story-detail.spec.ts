@@ -12,7 +12,13 @@ import {
   SPACED_LONG_TEXT,
   UNBROKEN_TEXT,
 } from '../fixtures/layout';
-import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
+import {
+  expect,
+  seedStoryIds,
+  skipChatTour,
+  skipOnboarding,
+  test,
+} from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
 const STORY_DETAIL = '**/api/v1/stories/s1';
@@ -648,6 +654,55 @@ test.describe('스토리 상세', () => {
     await expect(page).toHaveURL(/\/chats\/c1$/);
   });
 
+  test('상세에서 시작한 채팅방에서 뒤로 가면 상세로 돌아온다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await skipOnboarding(page);
+    await skipChatTour(page);
+    await page.route(STORY_DETAIL, fulfillStoryDetail);
+    await page.route('**/api/v1/chats', async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'c1', storyId: 's1', prologue: '프롤로그' }),
+      });
+    });
+    await page.route('**/api/v1/chats/c1', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'c1',
+          storyId: 's1',
+          storyTitle: '용의 계곡',
+          prologue: '프롤로그',
+          turns: [],
+          suggestedInputs: [],
+        }),
+      });
+    });
+
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+
+    // 헤더 뒤로가기는 채팅 목록이 아니라 들어온 상세로 돌아간다.
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+
+    // 브라우저 뒤로가기도 상세를 거쳐 원래 화면으로 돌아간다.
+    await page.goForward();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+  });
+
   test('로드에 실패하면 다시 시도로 복구한다 (US-4-4)', async ({ page }) => {
     let callCount = 0;
 
@@ -847,6 +902,87 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
     await dialog.getByRole('button', { name: '삭제하기' }).click();
 
     await expect(page.getByText(TOAST_MESSAGE.STORY_DELETED)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+  });
+});
+
+test.describe('스토리 상세 뒤로가기 (KNK-1610)', () => {
+  const mockStudioStory = async (page: Page) => {
+    await skipOnboarding(page);
+    await skipChatTour(page);
+    await seedStoryIds(page, ['s1']);
+    await page.route('**/api/v1/stories/batch', (route) =>
+      route.fulfill({ json: [storyDetail] }),
+    );
+    await page.route(STORY_DETAIL, (route) =>
+      route.request().method() === 'DELETE'
+        ? route.fulfill({ status: 204, body: '' })
+        : route.fulfill({ json: storyDetail }),
+    );
+  };
+
+  const openDetailFromStudio = async (page: Page) => {
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page.getByRole('link', { name: '용의 계곡 상세 보기' }).click();
+    await expect(page).toHaveURL(/\/stories\/s1$/);
+  };
+
+  test('제작 탭에서 연 상세에서 스토리를 삭제하면 제작 탭으로 돌아가고 제작 탭이 두 번 쌓이지 않는다', async ({
+    page,
+  }) => {
+    await mockStudioStory(page);
+    await openDetailFromStudio(page);
+
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+    await page.getByRole('menuitem', { name: '삭제하기' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: '삭제하기' })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+  });
+
+  test('상세에서 시작한 채팅방을 삭제하면 상세까지 걷어내고 채팅 목록으로 간다', async ({
+    page,
+  }) => {
+    await mockStudioStory(page);
+    await page.route('**/api/v1/chats', (route) =>
+      route.fulfill({
+        status: 201,
+        json: { id: 'c1', storyId: 's1', prologue: '프롤로그' },
+      }),
+    );
+    await page.route('**/api/v1/chats/c1', (route) =>
+      route.request().method() === 'DELETE'
+        ? route.fulfill({ status: 204, body: '' })
+        : route.fulfill({
+            json: {
+              id: 'c1',
+              storyId: 's1',
+              storyTitle: '용의 계곡',
+              prologue: '프롤로그',
+              turns: [],
+              suggestedInputs: [],
+            },
+          }),
+    );
+    await openDetailFromStudio(page);
+
+    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    await page.getByRole('button', { name: '채팅 메뉴' }).click();
+    await page.getByRole('button', { name: '삭제하기' }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: '삭제하기' })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.CHATS}$`));
+
+    await page.goBack();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
   });
 });

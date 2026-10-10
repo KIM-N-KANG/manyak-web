@@ -17,7 +17,7 @@ import {
 } from '@/api/generated/endpoints/stories/stories';
 import {
   get as getStorySubmission,
-  getListQueryKey as getStorySubmissionsQueryKey,
+  getList1QueryKey as getStorySubmissionsQueryKey,
   useResubmit,
 } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
@@ -108,6 +108,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { FetchError, getApiErrorCode } from '@/lib/api-error';
+import { returnToMainTab } from '@/lib/return-to-main-tab';
 import { track } from '@/observability/analytics';
 
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
@@ -310,8 +311,8 @@ export function GeneralStoryCreateForm({
   const updateStory = useUpdateStory();
   const deleteThumbnail = useDeleteThumbnail();
   const { startChatFor } = useStartChat('', {
-    // 제작 선택·폼은 끝난 단계라 채팅방에서 브라우저로 뒤로 가도 채팅 목록으로 돌아가게 한다.
-    backTo: APP_PATH.MAIN.CHATS,
+    // 제작 선택과 폼은 끝난 단계라 그 자리를 새 스토리 상세로 바꿔, 채팅방에서 뒤로 가면 상세로 돌아가게 한다.
+    viaStoryDetail: true,
     // 스토리는 이미 만들어졌으므로 채팅을 열지 못하면 상세로 보내 거기서 시작하게 한다.
     onError: (storyId) => router.replace(APP_PATH.STORY_DETAIL(storyId)),
   });
@@ -427,7 +428,7 @@ export function GeneralStoryCreateForm({
   useSaveWhenBackgrounded(saveDraft);
 
   const leaveToStudio = () =>
-    leaveAfterCleanup(() => router.replace(APP_PATH.MAIN.STUDIO));
+    leaveAfterCleanup(() => returnToMainTab(router, APP_PATH.MAIN.STUDIO));
 
   // 잃을 것이 없으면 묻지 않고 나간다. 수정은 임시 저장이 없어 마지막으로 저장한 뒤 고친 것만 본다.
   const handleClose = () => {
@@ -915,6 +916,7 @@ export function GeneralStoryCreateForm({
                     GENERAL_STORY_CHARACTER_COPY.protagonistFeatureDescription
                   }
                   featureRequired
+                  nameRequired={false}
                   registerErrorKeys={{
                     name: REGISTER_ERROR_KEY.protagonist('name'),
                     gender: REGISTER_ERROR_KEY.protagonist('gender'),

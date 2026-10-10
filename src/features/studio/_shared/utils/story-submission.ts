@@ -20,6 +20,8 @@ export type StorySubmissionPayload = {
   oneLineIntro: string;
   description: string;
   genres: string[];
+  /** 기본 주인공 이름이다. 없으면 빈 문자열이다. */
+  protagonistName: string;
   storySettings: {
     worldSetting: string;
     characterSetting: string;
@@ -146,6 +148,7 @@ export function readStorySubmissionPayload(
     genres: asArray(payload.genres).filter(
       (genre): genre is string => typeof genre === 'string',
     ),
+    protagonistName: asText(payload.protagonistName),
     storySettings: {
       worldSetting: asText(settings.worldSetting),
       characterSetting: asText(settings.characterSetting),

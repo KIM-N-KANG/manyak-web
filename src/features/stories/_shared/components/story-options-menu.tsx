@@ -19,6 +19,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
+import { leaveLayers } from '@/lib/history-layers';
 import type { ReportSource } from '@/observability/analytics';
 
 type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
@@ -66,7 +67,9 @@ export function StoryOptionsMenu({
     items.push({
       icon: Edit02Icon,
       label: '수정하기',
-      onSelect: () => router.push(APP_PATH.STORY_EDIT(storyId)),
+      // 옵션 시트의 더미를 먼저 소비해 수정 화면에서 뒤로가기 한 번에 돌아오게 한다.
+      onSelect: () =>
+        leaveLayers(() => router.push(APP_PATH.STORY_EDIT(storyId))),
     });
   }
 

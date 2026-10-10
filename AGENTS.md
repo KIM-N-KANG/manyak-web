@@ -15,7 +15,11 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 
 코드·설정 변경을 마친 작업 단위마다 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요. 읽기 전용 검토와 문서만 변경한 작업은 관련 내용·경로·링크를 검증합니다. 통과한 검사는 이후 변경이나 새로운 실패 근거가 없으면 반복하지 않습니다.
 
-전체 E2E의 정기 실행은 **커밋 직전**에 합니다. 화면·컴포넌트 코드(`src/app`·`src/features`·`src/components`)를 변경했다면 커밋 전에 `pnpm test:e2e`를 반드시 통과시키세요. E2E 수정·오류 재현 시에는 커밋 전이 아니어도 필요한 스펙을 실행합니다.
+커밋 전 로컬 E2E는 **바꾼 범위만** 돌립니다. 전체 E2E와 WebKit, 비주얼 회귀는 `dev`와 `main` 대상 PR마다 CI가 돌리므로 로컬에서 반복하지 않고, PR CI 결과로 확인합니다.
+
+- 특정 도메인의 화면 코드(`src/app`, `src/features`)를 변경했다면 커밋 전에 대응하는 `e2e/` 스펙과 스모크를 Mobile Chrome으로 통과시키세요. 예: `pnpm test:e2e e2e/stories e2e/smoke --project="Mobile Chrome"`
+- 여러 도메인이 함께 쓰는 코드(`src/components`, 루트 레이아웃, 프로바이더, `src/lib`, `src/api`, `src/observability`)를 변경했다면 커밋 전에 전체 `pnpm test:e2e`를 통과시키세요.
+- E2E 수정이나 오류 재현 시에는 커밋 전이 아니어도 필요한 스펙을 실행합니다.
 
 ## API 레이어 (Orval)
 

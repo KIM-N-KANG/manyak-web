@@ -60,13 +60,13 @@ const EDIT_FORM = {
   oneLineIntro: '막차에서 내린 곳',
   description: '',
   genres: ['판타지'],
+  protagonistName: '윤해솔',
   visibility: 'PRIVATE',
   storySettings: {
     worldSetting: '# 세계관\n막차 뒤에만 열리는 역',
     ruleSetting:
       '# 전개 규칙\n긴장감 있게 전개한다\n\n# 분량 배분\n묘사 5 : 대사 5',
-    userRoleSetting:
-      '# 주인공\n## 호칭\n윤해솔\n## 성별\n여성\n겁이 많은 회사원',
+    userRoleSetting: '# 주인공\n## 성별\n여성\n겁이 많은 회사원',
     characterSetting: '# 등장인물\n\n## 도하람\n### 성별\n여성',
   },
   startSettings: [
@@ -313,6 +313,24 @@ test.describe('스토리 수정', () => {
     await expect(titleInput(page)).toHaveValue(EDIT_FORM.title);
   });
 
+  test('옵션 시트의 수정하기로 들어간 뒤 뒤로가기 한 번에 제작 탭으로 돌아간다 (KNK-1613)', async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.route('**/api/v1/users/me/stories**', (route) =>
+      route.fulfill({ json: [DETAIL] }),
+    );
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page.getByRole('button', { name: '스토리 옵션 더보기' }).click();
+    await page.getByRole('menuitem', { name: '수정하기' }).click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STORY_EDIT(STORY_ID)}$`),
+    );
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/studio$/);
+  });
+
   test('내가 만들지 않은 스토리에는 수정하기가 없다 (STORY-DETAIL-45)', async ({
     page,
   }) => {
@@ -548,6 +566,26 @@ test.describe('스토리 수정', () => {
     await expect(
       page.getByRole('button', { name: GENERAL_STORY_EDIT_COPY.save }),
     ).toBeDisabled();
+  });
+
+  test('수정 폼을 열 수 없으면 들어온 상세로 돌아가고 상세가 두 번 쌓이지 않는다 (KNK-1610)', async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.route(EDIT_FORM_URL, (route) => route.fulfill({ status: 403 }));
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await openOptionsMenu(page);
+    await page.getByRole('menuitem', { name: '수정하기' }).click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_SUBMISSION_LOAD_FAILED),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STORY_DETAIL(STORY_ID)}$`),
+    );
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
   });
 
   test('게스트는 로그인 화면으로 보낸다 (STORY-EDIT-08)', async ({ page }) => {
