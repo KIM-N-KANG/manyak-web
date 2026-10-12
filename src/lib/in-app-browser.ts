@@ -24,3 +24,21 @@ export function detectInAppBrowser(userAgent: string): InAppBrowser | null {
 
   return null;
 }
+
+/**
+ * 앱 안내 배너가 인앱 브라우저로 보는 UA 토큰이다. `detectInAppBrowser`보다 넓게 잡고,
+ * Android의 `; wv)`는 앱 안 WebView의 공통 표식이다.
+ */
+const IN_APP_BROWSER_PATTERN =
+  /KAKAOTALK|Instagram|Barcelona|FBAN|FBAV|FB_IAB|Line\/|NAVER\(inapp|DaumApps|BAND\/|; wv\)/;
+
+/**
+ * 앱 안 브라우저(인앱 브라우저, WebView)인지 판정한다. 분석 이벤트 값이 걸린
+ * `detectInAppBrowser`와 달리 앱 종류를 구분하지 않는다.
+ *
+ * @param userAgent 검사할 User-Agent 문자열
+ * @returns 인앱 브라우저면 true
+ */
+export function isInAppBrowser(userAgent: string): boolean {
+  return IN_APP_BROWSER_PATTERN.test(userAgent);
+}
