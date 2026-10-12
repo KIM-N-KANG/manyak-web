@@ -32,6 +32,7 @@ import {
 import { isStandaloneDisplay } from '@/lib/device';
 import { openExternalBrowser } from '@/lib/external-browser-escape';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
+import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
 /** 외부 브라우저 전환을 시도한 뒤 실패로 판단하기까지 기다리는 시간(ms)이다. */
@@ -234,7 +235,7 @@ export function AppBanner() {
                   <a
                     href={buildAppIntentUrl(pathname)}
                     aria-label={APP_BANNER_VARIANT_COPY[variant].actionLabel}
-                    className={buttonVariants({ size: 'sm' })}
+                    className={cn(buttonVariants({ size: 'sm' }))}
                     onClick={() => handleAction(variant)}>
                     {APP_BANNER_VARIANT_COPY[variant].action}
                   </a>
