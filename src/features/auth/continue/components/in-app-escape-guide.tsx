@@ -8,7 +8,7 @@ import { ListStatus } from '@/components/common/list-status';
 import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { Button } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
-import { openExternalBrowser } from '@/features/auth/_shared/utils/external-browser-escape';
+import { openExternalBrowser } from '@/lib/external-browser-escape';
 import { type InAppBrowser } from '@/lib/in-app-browser';
 import { track } from '@/observability/analytics';
 
