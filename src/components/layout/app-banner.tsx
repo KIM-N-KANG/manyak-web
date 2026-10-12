@@ -225,7 +225,7 @@ export function AppBanner() {
                 : { duration: 0.25, ease: 'easeOut' }
             }
             className="shrink-0 overflow-hidden">
-            <div className="flex h-14 items-center gap-3 border-b border-border pr-2 pl-4">
+            <div className="flex items-center gap-3 bg-muted py-3 pr-2 pl-4">
               <p className="min-w-0 flex-1 text-sm leading-snug font-medium text-foreground">
                 {APP_BANNER_VARIANT_COPY[variant].message}
               </p>
