@@ -2,11 +2,10 @@
 
 import { useSyncExternalStore } from 'react';
 
+import { isIosDevice, isStandaloneDisplay } from '@/lib/device';
 import { IS_PUSH_ENABLED } from '@/lib/push/config';
 
 import {
-  isIosDevice,
-  isStandaloneDisplay,
   PUSH_PERMISSION_EVENT,
   readNotificationPermission,
   resolvePushPromptState,

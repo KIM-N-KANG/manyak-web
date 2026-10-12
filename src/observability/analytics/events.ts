@@ -6,6 +6,7 @@ import {
   type InviteCodeErrorType,
   type InviteCodeSource,
 } from '@/features/my/invite/utils/invite-code';
+import { type AppBannerVariant } from '@/lib/app-banner';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type InAppBrowser } from '@/lib/in-app-browser';
 
@@ -28,6 +29,13 @@ export type PersonaType = 'default' | 'persona';
 /** 신고 시트를 연 화면. 네 화면이 시트 하나를 공유하므로 이벤트 대신 프로퍼티로 구분한다(스펙 §6-4-2). */
 export type ReportSource = 'storyDetail' | 'studio' | 'chatList' | 'chat';
 
+/** 앱 안내 배너 이벤트 프로퍼티. `destination`은 Android 변형만, `story_id`는 스토리 상세에서만 싣는다. */
+export type AppBannerEventProps = {
+  variant: AppBannerVariant;
+  destination?: 'story' | 'home';
+  story_id?: string;
+};
+
 /** 이벤트 이름별 프로퍼티 정의. 프로퍼티가 없는 이벤트는 void로 표기한다. */
 export type AnalyticsEventProps = {
   // login
@@ -45,6 +53,11 @@ export type AnalyticsEventProps = {
   client_inappBrowser_detected: { app: InAppBrowser };
   client_inappBrowser_escapeAttempted: { app: 'kakaotalk' };
   client_inappBrowser_bannerShown: { app: InAppBrowser };
+  // app banner (앱 안내 배너, 스펙 §6-4-2-18)
+  client_appBanner_shown: AppBannerEventProps;
+  client_appBanner_actionButton_clicked: AppBannerEventProps;
+  client_appBanner_closeButton_clicked: { variant: AppBannerVariant };
+  client_appBanner_escapeGuide_shown: void;
   // 기존 발급 핸드오프 링크의 랜딩과 복구 이벤트다. 신규 생성은 종료됐다.
   client_loginContinue_viewed: void;
   client_loginContinue_loginButton_clicked: { provider: SocialLoginProvider };
