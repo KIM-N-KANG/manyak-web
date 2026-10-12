@@ -233,7 +233,7 @@ describe('parseStoryDetailId', () => {
 
 describe('buildAppIntentUrl', () => {
   const tail =
-    '#Intent;scheme=https;package=app.manyak;S.market_referrer=utm_source%3Dmanyak_web%26utm_medium%3Dapp_banner;end';
+    '#Intent;scheme=manyak;package=app.manyak;S.market_referrer=utm_source%3Dmanyak_web%26utm_medium%3Dapp_banner;end';
 
   it('스토리 상세에서는 앱의 그 스토리를 연다', () => {
     expect(buildAppIntentUrl('/stories/abc')).toBe(

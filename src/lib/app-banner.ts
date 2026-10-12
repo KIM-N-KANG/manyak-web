@@ -26,7 +26,13 @@ export const APP_BANNER_SESSION_KEY = 'manyak:app-banner:session';
 /** 이번 접속에서 배너를 닫았는지 담는 sessionStorage 키다. */
 export const APP_BANNER_DISMISSED_KEY = 'manyak:app-banner:dismissed';
 
-/** Android 앱이 받는 링크 호스트다. 웹 배포 환경과 관계없이 앱 intent-filter와 같아야 한다. */
+/**
+ * Android 앱이 받는 전용 스킴 링크의 스킴과 호스트다. 웹 배포 환경과 관계없이 앱 intent-filter와 같아야 한다.
+ * https 대신 전용 스킴을 쓰는 이유는 검증되지 않은 https 필터가 Android 11 이하에서 다른 앱의
+ * manyak.app 링크마다 앱 선택창을 띄우기 때문이다.
+ */
+const ANDROID_APP_SCHEME = 'manyak';
+
 const ANDROID_APP_HOST = 'manyak.app';
 
 const ANDROID_APP_PACKAGE = 'app.manyak';
@@ -160,7 +166,7 @@ export function buildAppIntentUrl(pathname: string): string {
   const path =
     storyId === null ? APP_PATH.MAIN.STORIES : APP_PATH.STORY_DETAIL(storyId);
 
-  return `intent://${ANDROID_APP_HOST}${path}#Intent;scheme=https;package=${ANDROID_APP_PACKAGE};S.market_referrer=${ANDROID_MARKET_REFERRER};end`;
+  return `intent://${ANDROID_APP_HOST}${path}#Intent;scheme=${ANDROID_APP_SCHEME};package=${ANDROID_APP_PACKAGE};S.market_referrer=${ANDROID_MARKET_REFERRER};end`;
 }
 
 /**
