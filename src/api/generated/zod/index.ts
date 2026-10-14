@@ -613,6 +613,12 @@ export const CreateSimpleStoryBody = zod
       .max(createSimpleStoryBodyAdditionalInfosMax)
       .optional()
       .describe('선택한 스토리라인을 보완하는 자유 추가 정보 목록'),
+    artStyle: zod
+      .string()
+      .nullish()
+      .describe(
+        '활성 화풍 코드. 누락·null이면 ANIME. 미등록·비활성·빈 문자열은 400. NONE도 기존 제작가 유지',
+      ),
     regenerated: zod.boolean().optional(),
   })
   .describe('간편 제작 스토리 생성 요청');
@@ -2199,6 +2205,12 @@ export const Get2QueryParams = zod.object({
 });
 
 export const Get2Response = zod.unknown();
+
+/**
+ * 게스트 허용. 활성 화풍만 노출 순서 오름차순으로 반환합니다.
+ * @summary 제공 화풍 목록 조회
+ */
+export const Get3Response = zod.unknown();
 
 /**
  * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목은 열람자가 그 스토리를 읽을 수 있을 때만 조회 시점의 값이고, 비공개로 전환됐거나 삭제됐으면 채팅 시작 시점의 스냅샷입니다(KNK-1059). 프롤로그도 같은 규칙입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.

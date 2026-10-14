@@ -30,5 +30,10 @@ export interface CreateSimpleStoryRequest {
    * @items.maxLength 100
    */
   additionalInfos?: string[];
+  /**
+   * 활성 화풍 코드. 누락·null이면 ANIME. 미등록·비활성·빈 문자열은 400. NONE도 기존 제작가 유지
+   * @nullable
+   */
+  artStyle?: string | null;
   regenerated?: boolean;
 }
