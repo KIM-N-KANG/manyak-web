@@ -9,6 +9,7 @@ import {
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  ART_STYLE_REQUIRED_ERROR,
   ART_STYLE_SECTION_LABEL,
   buildStoryCompletionCreditCostLabel,
   GENRE_CATEGORY,
@@ -34,6 +35,7 @@ import {
   seedPendingCreationRequests,
   seedStoryCompletionRequests,
 } from '../fixtures/storage';
+import { completeStory } from '../fixtures/story-generation';
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
@@ -561,7 +563,7 @@ test.describe('스토리 생성', () => {
     await expect(
       page.getByRole('button', { name: '스토리 완성하기' }),
     ).toBeVisible();
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await completeStory(page);
 
     // Step 4: 제출 직후 제작 탭으로 복귀. 완성 조회가 끝나면 완성 중 카드가 사라지고
     // 회원 목록에 실린 새 스토리 카드가 같은 자리에 나타난다. 채팅은 만들지 않는다.
@@ -645,7 +647,7 @@ test.describe('스토리 생성', () => {
       });
 
       await reachAdditionalInfo(page);
-      await page.getByRole('button', { name: '스토리 완성하기' }).click();
+      await completeStory(page);
       await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
       try {
@@ -736,7 +738,7 @@ test.describe('스토리 생성', () => {
     });
 
     await reachAdditionalInfo(page);
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await completeStory(page);
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
     const completingCards = page.getByRole('article', {
@@ -806,7 +808,7 @@ test.describe('스토리 생성', () => {
 
     await recommendation.click();
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await completeStory(page);
 
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
@@ -953,7 +955,7 @@ test.describe('스토리 생성', () => {
     await expect(secondInput).toBeFocused();
   });
 
-  test('추가 정보 단계는 인풋 하나와 화풍 선택(기본 없음), 공개 스위치(기본 꺼짐)를 보여 준다 (KNK-1468)', async ({
+  test('추가 정보 단계는 인풋 하나와 필수 이미지 스타일(처음엔 미선택), 공개 스위치(기본 꺼짐)를 보여 준다 (KNK-1468)', async ({
     page,
   }) => {
     await reachAdditionalInfo(page);
@@ -973,17 +975,9 @@ test.describe('스토리 생성', () => {
     await expect(artStyles.getByRole('radio')).toHaveCount(
       ART_STYLE_CATALOG_FIXTURE.length,
     );
-    await expect(
-      artStyles.getByRole('radio', { name: none.name }),
-    ).toBeChecked();
-
-    await artStyles.getByText(anime.name, { exact: true }).click();
-    await expect(
-      artStyles.getByRole('radio', { name: anime.name }),
-    ).toBeChecked();
-    await expect(
-      artStyles.getByRole('radio', { name: none.name }),
-    ).not.toBeChecked();
+    await expect(artStyles.getByRole('radio', { checked: true })).toHaveCount(
+      0,
+    );
 
     const visibility = page.getByRole('switch', {
       name: STORY_VISIBILITY_COPY.label,
@@ -993,20 +987,38 @@ test.describe('스토리 생성', () => {
     await visibility.click();
     await expect(visibility).toBeChecked();
 
+    const completionRequests: unknown[] = [];
+
     await page.route(CREATE_STORY, async (route) => {
+      completionRequests.push(route.request().postDataJSON());
       await route.fulfill({ status: 500 });
     });
 
-    const completion = page.waitForRequest(
-      (request) =>
-        request.method() === 'POST' &&
-        new URL(request.url()).pathname === '/api/v1/stories/simple',
-    );
-
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
-    expect((await completion).postDataJSON()).toMatchObject({
-      artStyle: anime.code,
+    // 고르지 않고 완성하면 이동하지 않고 키워드 단계처럼 푸터에 선택 안내를 띄운다.
+    const completeButton = page.getByRole('button', {
+      name: '스토리 완성하기',
     });
+    const footer = page.getByRole('navigation').filter({ has: completeButton });
+
+    await expect(completeButton).toBeEnabled();
+    await completeButton.click();
+    await expect(footer.getByText(ART_STYLE_REQUIRED_ERROR)).toBeVisible();
+    expect(completionRequests).toHaveLength(0);
+
+    await artStyles.getByText(none.name, { exact: true }).click();
+    await expect(page.getByText(ART_STYLE_REQUIRED_ERROR)).toHaveCount(0);
+    await artStyles.getByText(anime.name, { exact: true }).click();
+    await expect(
+      artStyles.getByRole('radio', { name: anime.name }),
+    ).toBeChecked();
+    await expect(
+      artStyles.getByRole('radio', { name: none.name }),
+    ).not.toBeChecked();
+
+    await completeButton.click();
+    await expect
+      .poll(() => completionRequests)
+      .toEqual([expect.objectContaining({ artStyle: anime.code })]);
   });
 
   test('스크롤해야 보이는 이미지 스타일을 골라도 앱 프레임이 밀리지 않는다 (KNK-1468)', async ({
@@ -1078,7 +1090,7 @@ test.describe('스토리 생성', () => {
     await reachAdditionalInfo(page);
 
     // 첫 제출: 제작 탭 복귀 뒤 500이 도착하면 초안 카드로 되돌린다.
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await completeStory(page);
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(
       page.getByText(TOAST_MESSAGE.STORY_COMPLETE_FAILED),
@@ -1088,7 +1100,7 @@ test.describe('스토리 생성', () => {
       .click();
 
     // 같은 입력의 재제출은 requestId를 재사용하고, 409는 완성 중 카드로 남아 조회로 결과를 되찾는다.
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await completeStory(page);
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
     await expect(

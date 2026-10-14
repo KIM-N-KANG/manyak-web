@@ -69,7 +69,6 @@ import { FetchError } from '@/lib/custom-fetch';
 import { returnToMainTab } from '@/lib/return-to-main-tab';
 import { track } from '@/observability/analytics';
 
-import { DEFAULT_ART_STYLE } from '../constants';
 import type { StoryCreateStep } from '../types';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedKeywordGroups } from '../utils/tag-categories';
@@ -191,8 +190,15 @@ export function useStoryCreateFunnel() {
     restoreAdditionalInfos,
   } = useAdditionalInfos();
   // 화풍과 공개 여부는 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 유지한다.
-  const [artStyle, setArtStyle] = useState<string>(DEFAULT_ART_STYLE);
+  // 화풍은 필수지만 처음에는 고르지 않은 상태로 두고, 완성을 누를 때 검증한다.
+  const [artStyle, setArtStyle] = useState<string | null>(null);
+  const [hasArtStyleError, setHasArtStyleError] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
+
+  const selectArtStyle = (code: string) => {
+    setArtStyle(code);
+    setHasArtStyleError(false);
+  };
 
   // 뮤테이션 콜백은 페이지 이탈(언마운트) 후에도 실행되므로, 응답 정착 판정에
   // 쓸 마운트 여부를 ref로 추적한다. StrictMode 재마운트를 위해 effect에서 되살린다.
@@ -276,6 +282,7 @@ export function useStoryCreateFunnel() {
   const resetAdditionalInfoStep = () => {
     resetAdditionalInfos();
     setSelectedRecommendations(new Set());
+    setHasArtStyleError(false);
   };
 
   const generateStorylines = useGenerateSimpleStorylines({
@@ -550,7 +557,8 @@ export function useStoryCreateFunnel() {
     setSelectedStoryline(record.selectedStoryline);
     setSelectedRecommendations(new Set(record.selectedRecommendations));
     restoreAdditionalInfos(record.additionalInfos);
-    setArtStyle(record.artStyle ?? DEFAULT_ART_STYLE);
+    setArtStyle(record.artStyle ?? null);
+    setHasArtStyleError(false);
     setCreatedStoryId(record.createdStoryId);
     setLastCompletionRequest(record.completionRequest);
     setHasCompleteStoryError(false);
@@ -590,7 +598,7 @@ export function useStoryCreateFunnel() {
           selectedStoryline,
           additionalInfos: additionalInfos.map(({ value }) => value),
           selectedRecommendations: [...selectedRecommendations],
-          artStyle,
+          artStyle: artStyle ?? undefined,
           createdStoryId,
           completionRequest: lastCompletionRequest,
         }
@@ -857,6 +865,13 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = async () => {
+    // 이미 만든 스토리로 채팅만 여는 재시도는 화풍을 다시 묻지 않는다.
+    if (createdStoryId === null && artStyle === null) {
+      setHasArtStyleError(true);
+
+      return;
+    }
+
     if (!(await canGenerate(createdStoryId === null ? 'storyCreation' : null)))
       return;
 
@@ -1025,7 +1040,8 @@ export function useStoryCreateFunnel() {
     additionalInfos,
     canAddAdditionalInfo,
     artStyle,
-    setArtStyle,
+    hasArtStyleError,
+    selectArtStyle,
     isPublic,
     setIsPublic,
     canCompleteStory,

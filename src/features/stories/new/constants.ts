@@ -169,10 +169,10 @@ export const SELECTED_TAGS_DRAWER_COPY = {
   description: '이 키워드들을 이용해서 스토리라인 세 개를 만들었어요',
 } as const;
 
-/** 화풍 선택의 기본값이다. 이미지를 만들지 않는 `NONE`으로 시작한다. */
-export const DEFAULT_ART_STYLE = 'NONE';
-
 export const ART_STYLE_SECTION_LABEL = '이미지 스타일';
+
+/** 이미지 스타일을 고르지 않고 완성하려 할 때 푸터에 보이는 안내다. 키워드 단계의 선택 안내와 같은 형태다. */
+export const ART_STYLE_REQUIRED_ERROR = '이미지 스타일을 선택해주세요';
 
 /** 추가 정보 단계의 공개 스위치 문구다. 일반 제작 등록 탭의 공개 스위치와 같다. */
 export const STORY_VISIBILITY_COPY = {

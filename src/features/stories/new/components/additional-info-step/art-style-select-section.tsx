@@ -19,7 +19,7 @@ const ART_STYLE_LABEL_ID = 'art-style-label';
 const SKELETON_COUNT = 6;
 
 type ArtStyleSelectSectionProps = {
-  value: string;
+  value: string | null;
   disabled: boolean;
   onValueChange: (code: string) => void;
 };
@@ -35,7 +35,12 @@ export function ArtStyleSelectSection({
     <section
       aria-labelledby={ART_STYLE_LABEL_ID}
       className="flex flex-col gap-2 px-4 pt-2 pb-4">
-      <Label id={ART_STYLE_LABEL_ID}>{ART_STYLE_SECTION_LABEL}</Label>
+      <Label id={ART_STYLE_LABEL_ID} className="gap-0.5">
+        {ART_STYLE_SECTION_LABEL}
+        <span className="text-destructive" aria-hidden="true">
+          *
+        </span>
+      </Label>
 
       {isError ? (
         <div className="flex items-center justify-between gap-2">
@@ -60,6 +65,7 @@ export function ArtStyleSelectSection({
         <div
           role="radiogroup"
           aria-labelledby={ART_STYLE_LABEL_ID}
+          aria-required="true"
           className="grid grid-cols-3 gap-2">
           {artStyles.map((artStyle) => (
             <ArtStyleOption

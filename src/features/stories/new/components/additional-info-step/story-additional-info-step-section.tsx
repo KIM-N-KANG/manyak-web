@@ -4,6 +4,7 @@ import type { SimpleStorylineResponse } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 
+import { ART_STYLE_REQUIRED_ERROR } from '../../constants';
 import type { AdditionalInfoInput } from '../../types';
 import { SelectedStorylineContent } from '../shared/selected-storyline-content';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
@@ -22,7 +23,8 @@ type StoryAdditionalInfoStepSectionProps = {
   selectedRecommendations: Set<string>;
   additionalInfos: AdditionalInfoInput[];
   canAddAdditionalInfo: boolean;
-  artStyle: string;
+  artStyle: string | null;
+  hasArtStyleError: boolean;
   isPublic: boolean;
   onToggleRecommendation: (recommendation: string, pressed: boolean) => void;
   onAddAdditionalInfo: () => void;
@@ -51,6 +53,7 @@ export function StoryAdditionalInfoStepSection({
   additionalInfos,
   canAddAdditionalInfo,
   artStyle,
+  hasArtStyleError,
   isPublic,
   onToggleRecommendation,
   onAddAdditionalInfo,
@@ -69,6 +72,13 @@ export function StoryAdditionalInfoStepSection({
       description="입력한 정보는 스토리를 완성하는 데 반영돼요"
       onScroll={onScroll}
       footerTop={<StoryCompletionCreditCost />}
+      footerMessage={
+        hasArtStyleError ? (
+          <StoryCreateErrorMessage>
+            {ART_STYLE_REQUIRED_ERROR}
+          </StoryCreateErrorMessage>
+        ) : null
+      }
       footer={
         <>
           <Button
