@@ -992,6 +992,21 @@ test.describe('스토리 생성', () => {
     await expect(visibility).not.toBeChecked();
     await visibility.click();
     await expect(visibility).toBeChecked();
+
+    await page.route(CREATE_STORY, async (route) => {
+      await route.fulfill({ status: 500 });
+    });
+
+    const completion = page.waitForRequest(
+      (request) =>
+        request.method() === 'POST' &&
+        new URL(request.url()).pathname === '/api/v1/stories/simple',
+    );
+
+    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    expect((await completion).postDataJSON()).toMatchObject({
+      artStyle: anime.code,
+    });
   });
 
   test('스크롤해야 보이는 이미지 스타일을 골라도 앱 프레임이 밀리지 않는다 (KNK-1468)', async ({

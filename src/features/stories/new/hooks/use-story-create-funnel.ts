@@ -550,6 +550,7 @@ export function useStoryCreateFunnel() {
     setSelectedStoryline(record.selectedStoryline);
     setSelectedRecommendations(new Set(record.selectedRecommendations));
     restoreAdditionalInfos(record.additionalInfos);
+    setArtStyle(record.artStyle ?? DEFAULT_ART_STYLE);
     setCreatedStoryId(record.createdStoryId);
     setLastCompletionRequest(record.completionRequest);
     setHasCompleteStoryError(false);
@@ -589,6 +590,7 @@ export function useStoryCreateFunnel() {
           selectedStoryline,
           additionalInfos: additionalInfos.map(({ value }) => value),
           selectedRecommendations: [...selectedRecommendations],
+          artStyle,
           createdStoryId,
           completionRequest: lastCompletionRequest,
         }
@@ -891,6 +893,7 @@ export function useStoryCreateFunnel() {
         ...selectedRecommendations,
         ...getSubmittedAdditionalInfos(),
       ],
+      artStyle,
     };
     // 같은 페이로드의 재시도는 requestId를 재사용한다. 서버가 이미 완성했다면(응답 유실)
     // AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
@@ -899,6 +902,7 @@ export function useStoryCreateFunnel() {
       lastRequest !== null &&
       lastRequest.simpleCreationId === payload.simpleCreationId &&
       lastRequest.storylineId === payload.storylineId &&
+      lastRequest.artStyle === payload.artStyle &&
       JSON.stringify(lastRequest.additionalInfos ?? []) ===
         JSON.stringify(payload.additionalInfos);
     const request: CreateSimpleStoryRequest = {
