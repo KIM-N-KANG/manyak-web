@@ -350,6 +350,11 @@ export function PullToRefresh({
       if (root.scrollTop > 0 || deltaY < 0) {
         gestureRef.current = { ...EMPTY_GESTURE };
 
+        if (statusRef.current === 'pulling' || statusRef.current === 'ready') {
+          setStatus('idle');
+          settle(0);
+        }
+
         return;
       }
 
