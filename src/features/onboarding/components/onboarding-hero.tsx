@@ -1,10 +1,11 @@
 'use client';
 
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useState } from 'react';
 
 import { m, useReducedMotion, useScroll, useTransform } from 'motion/react';
 import Image from 'next/image';
 
+import { ManyakLogo } from '@/components/layout/manyak-logo';
 import { cn } from '@/lib/utils';
 
 import {
@@ -31,10 +32,13 @@ interface HeroSlide {
 
 interface OnboardingHeroProps {
   scrollerRef: RefObject<HTMLElement | null>;
+  sectionRef: RefObject<HTMLElement | null>;
 }
 
-export function OnboardingHero({ scrollerRef }: OnboardingHeroProps) {
-  const sectionRef = useRef<HTMLElement>(null);
+export function OnboardingHero({
+  scrollerRef,
+  sectionRef,
+}: OnboardingHeroProps) {
   const prefersReducedMotion = useReducedMotion();
   const rise = createRiseVariants(prefersReducedMotion);
   const [slide, setSlide] = useState<HeroSlide>({ current: 0, previous: null });
@@ -96,6 +100,12 @@ export function OnboardingHero({ scrollerRef }: OnboardingHeroProps) {
           ))}
           <div className="absolute inset-x-0 bottom-0 z-20 h-3/5 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col gap-3 px-6 pb-10 text-white">
+            <m.div
+              variants={rise}
+              custom={ONBOARDING_ENTRANCE_DELAY.logo}
+              className="mb-1">
+              <ManyakLogo className="h-6 w-auto text-primary" />
+            </m.div>
             <h1 className="text-[clamp(1.25rem,calc((100cqi-7rem)/10.4),2.25rem)] leading-[1.3] font-bold tracking-[-0.03em]">
               {ONBOARDING_TITLE_LINES.map((titleLine, index) => (
                 <m.span

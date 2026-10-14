@@ -33,7 +33,8 @@ import {
 import { createRiseVariants } from '../utils/onboarding-motion';
 
 const SLIDE_SCROLL_LENGTH_CQH = 80;
-const SLIDE_WIDTH = 'min(80cqi, calc((100cqh - 18rem) * 0.75))';
+const SLIDE_WIDTH =
+  'min(80cqi, calc((100cqh - var(--onboarding-header-height) - 18rem) * 0.75))';
 const SLIDE_GAP = '3cqi';
 const SLIDE_CAPTION_HEIGHT = '7.5rem';
 const SLIDE_TOP_ROOM = '2.5rem';
@@ -261,9 +262,9 @@ export function OnboardingFeature({
         ref={galleryRef}
         aria-label={feature.label}
         style={{
-          height: `calc(100cqh + ${(slideCount - 1) * SLIDE_SCROLL_LENGTH_CQH}cqh)`,
+          height: `calc(100cqh - var(--onboarding-header-height) + ${(slideCount - 1) * SLIDE_SCROLL_LENGTH_CQH}cqh)`,
         }}>
-        <div className="sticky top-0 flex h-[100cqh] min-h-[30rem] flex-col justify-center gap-5 overflow-hidden">
+        <div className="sticky top-(--onboarding-header-height) flex h-[calc(100cqh-var(--onboarding-header-height))] min-h-[30rem] flex-col justify-center gap-5 overflow-hidden">
           <ol
             style={
               {

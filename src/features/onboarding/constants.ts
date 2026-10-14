@@ -76,16 +76,17 @@ export type OnboardingFeatureKey =
   | 'originals';
 
 /**
- * 온보딩 버튼을 누른 위치. 헤더 버튼과 기능 소개 섹션 아래 버튼을 구분하고, 섹션 버튼은
- * 어느 섹션인지 함께 남긴다.
+ * 온보딩 버튼을 누른 위치. 버튼은 기능 소개 섹션 아래에만 있어 어느 섹션인지 함께 남긴다.
+ * `source`는 헤더 버튼(`header`)과 본문 끝 버튼(`bottom`)이 있던 이전 기록과 같은 축으로
+ * 비교하려고 유지한다.
  */
-export type OnboardingButtonSource =
-  | { source: 'header' }
-  | { source: 'section'; section: OnboardingFeatureKey };
+export interface OnboardingButtonSource {
+  source: 'section';
+  section: OnboardingFeatureKey;
+}
 
 /**
- * 기능 소개 섹션 아래 버튼. `create`는 헤더 '바로 시작하기'처럼 간편 제작으로,
- * `browse`는 헤더 '둘러보기'처럼 홈으로 이동한다.
+ * 기능 소개 섹션 아래 버튼. `create`는 간편 제작으로, `browse`는 홈으로 이동한다.
  */
 export interface OnboardingFeatureAction {
   label: string;
@@ -262,9 +263,3 @@ export const ONBOARDING_FEATURES: readonly OnboardingFeature[] = [
     ],
   },
 ] as const;
-
-/** 헤더 왼쪽 보조 버튼. 온보딩을 건너뛰고 홈으로 이동한다. */
-export const ONBOARDING_BROWSE_LABEL = '둘러보기';
-
-/** 헤더 오른쪽 주 CTA. 스토리 생성 퍼널로 바로 이동한다. */
-export const ONBOARDING_START_LABEL = '바로 시작하기';

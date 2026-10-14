@@ -7,14 +7,14 @@ import type { Variants } from 'motion/react';
 export const ONBOARDING_EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * 첫 화면 등장 순서(초). 이미지 카드가 먼저 깔리고, 제목 두 줄이 소설 도입부처럼 반 박자
- * 간격으로 떠오른 뒤 설명, 헤더 액션 순으로 나타난다.
+ * 첫 화면 등장 순서(초). 이미지 카드가 먼저 깔리고 로고가 떠오른 뒤, 제목 두 줄이 소설
+ * 도입부처럼 반 박자 간격으로 떠오르고 설명이 나타난다.
  */
 export const ONBOARDING_ENTRANCE_DELAY = {
-  titleFirstLine: 0.25,
-  titleSecondLine: 0.5,
-  description: 0.75,
-  headerActions: 1,
+  logo: 0.15,
+  titleFirstLine: 0.3,
+  titleSecondLine: 0.55,
+  description: 0.8,
 } as const;
 
 /** 첫 화면 이미지 한 장이 머무는 시간과 다음 장으로 넘어가는 시간(ms). Android 로그인과 같다. */
