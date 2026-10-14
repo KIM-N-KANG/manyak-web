@@ -171,6 +171,12 @@ export const SELECTED_TAGS_DRAWER_COPY = {
 
 export const ART_STYLE_SECTION_LABEL = '이미지 스타일';
 
+/** 이미지 스타일 목록을 받지 못했을 때의 안내와 다시 받기 버튼 문구다. 앱 `create_art_style_load_failed`, `create_tags_reload` 문자열과 같다. */
+export const ART_STYLE_LOAD_FAILED_COPY = {
+  message: '이미지 스타일 목록을 불러오지 못했어요',
+  retry: '다시 불러오기',
+} as const;
+
 /** 이미지 스타일을 고르지 않고 완성하려 할 때 푸터에 보이는 안내다. 키워드 단계의 선택 안내와 같은 형태다. */
 export const ART_STYLE_REQUIRED_ERROR = '이미지 스타일을 선택해주세요';
 

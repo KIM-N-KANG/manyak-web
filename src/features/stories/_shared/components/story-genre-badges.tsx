@@ -2,9 +2,6 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import { PlusSignIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
-
 import { Badge } from '@/components/ui/badge';
 
 type StoryGenreBadgesProps = {
@@ -102,7 +99,7 @@ function GenreBadge({ genre }: { genre: string }) {
   return (
     <Badge
       variant="secondary"
-      className="min-w-0 shrink text-foreground-secondary">
+      className="h-7 min-w-0 shrink border-0 px-3 py-1 text-sm text-foreground-secondary">
       <span className="truncate">{genre}</span>
     </Badge>
   );
@@ -110,9 +107,10 @@ function GenreBadge({ genre }: { genre: string }) {
 
 function OverflowBadge({ count }: { count: number }) {
   return (
-    <Badge variant="secondary" className="text-foreground-secondary">
-      <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-      {count}
+    <Badge
+      variant="secondary"
+      className="h-7 border-0 px-3 py-1 text-sm text-foreground-secondary">
+      +{count}
     </Badge>
   );
 }

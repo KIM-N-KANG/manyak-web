@@ -10,7 +10,10 @@ import { FieldLabel } from '@/components/ui/field';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-import { ART_STYLE_SECTION_LABEL } from '../../constants';
+import {
+  ART_STYLE_LOAD_FAILED_COPY,
+  ART_STYLE_SECTION_LABEL,
+} from '../../constants';
 import { useArtStyleCatalog } from '../../hooks/use-art-style-catalog';
 
 const ART_STYLE_LABEL_ID = 'art-style-label';
@@ -43,16 +46,17 @@ export function ArtStyleSelectSection({
       </FieldLabel>
 
       {isError ? (
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-foreground-secondary">
-            이미지 스타일 목록을 불러오지 못했어요
+        <div className="flex flex-col items-center gap-4 py-2">
+          <p className="text-center text-sm text-foreground-secondary">
+            {ART_STYLE_LOAD_FAILED_COPY.message}
           </p>
           <Button
             type="button"
-            size="sm"
+            size="lg"
             variant="outline"
+            className="rounded-md px-6 text-sm"
             onClick={() => void refetch()}>
-            다시 시도하기
+            {ART_STYLE_LOAD_FAILED_COPY.retry}
           </Button>
         </div>
       ) : isPending || !artStyles ? (

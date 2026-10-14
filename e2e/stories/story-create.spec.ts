@@ -9,6 +9,7 @@ import {
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  ART_STYLE_LOAD_FAILED_COPY,
   ART_STYLE_REQUIRED_ERROR,
   ART_STYLE_SECTION_LABEL,
   buildStoryCompletionCreditCostLabel,
@@ -1034,6 +1035,39 @@ test.describe('스토리 생성', () => {
 
     await expect(page.getByRole('radio', { name: last.name })).toBeChecked();
     await expect(page.getByRole('banner')).toBeInViewport();
+  });
+
+  test('이미지 스타일 목록을 받지 못하면 안내와 다시 불러오기 버튼을 보이고, 누르면 목록을 다시 받는다 (KNK-1640)', async ({
+    page,
+  }) => {
+    let artStyleRequestCount = 0;
+
+    await page.route('**/api/v1/stories/art-styles', async (route) => {
+      artStyleRequestCount += 1;
+
+      if (artStyleRequestCount === 1) {
+        await route.fulfill({ status: 500, json: {} });
+
+        return;
+      }
+
+      await route.fulfill({ json: ART_STYLE_CATALOG_FIXTURE });
+    });
+    await reachAdditionalInfo(page);
+
+    const failureMessage = page.getByText(ART_STYLE_LOAD_FAILED_COPY.message);
+
+    await expect(failureMessage).toBeVisible();
+    await page
+      .getByRole('button', { name: ART_STYLE_LOAD_FAILED_COPY.retry })
+      .click();
+
+    await expect(
+      page
+        .getByRole('radiogroup', { name: ART_STYLE_SECTION_LABEL })
+        .getByRole('radio'),
+    ).toHaveCount(ART_STYLE_CATALOG_FIXTURE.length);
+    await expect(failureMessage).toHaveCount(0);
   });
 
   test('같은 완성 요청의 409는 실패로 끝내지 않고 저장한 requestId로 복구한다', async ({
