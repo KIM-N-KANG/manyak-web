@@ -19,7 +19,7 @@ export function StoryVisibilitySection({
   onPublicChange,
 }: StoryVisibilitySectionProps) {
   return (
-    <section className="flex items-center gap-4 px-4 pt-2 pb-4">
+    <section className="flex items-center gap-4 px-4">
       <Field className="flex-1 gap-2">
         <FieldLabel>{STORY_VISIBILITY_COPY.label}</FieldLabel>
         <FieldDescription

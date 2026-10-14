@@ -133,8 +133,12 @@ async function reachAdditionalInfo(page: Page): Promise<void> {
     '[data-testid="selected-storyline-content"] p',
   );
 
-  await expect(recommendedInfoSection).toHaveCSS('margin-bottom', '8px');
-  await expect(additionalInfoSection).toHaveCSS('padding-bottom', '16px');
+  // 추가 정보 단계의 섹션 사이는 키워드 단계의 섹션 사이와 같은 24px다.
+  await expect(recommendedInfoSection.locator('xpath=..')).toHaveCSS(
+    'row-gap',
+    '24px',
+  );
+  await expect(additionalInfoSection).toHaveCSS('padding-bottom', '0px');
   await expect(selectedStoryline).toHaveCSS('line-height', '28px');
 }
 

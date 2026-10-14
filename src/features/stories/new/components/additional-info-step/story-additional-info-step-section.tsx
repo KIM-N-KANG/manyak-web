@@ -105,7 +105,7 @@ export function StoryAdditionalInfoStepSection({
         </>
       }>
       <div>
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-6 pb-4">
           <SelectedStorylineContent story={storylineItem.storyline} />
 
           <RecommendedInfoSection
@@ -138,7 +138,7 @@ export function StoryAdditionalInfoStepSection({
           />
 
           {hasCompleteStoryError && (
-            <StoryCreateErrorMessage className="px-4 pb-6">
+            <StoryCreateErrorMessage className="px-4">
               스토리를 완성하지 못했어요
             </StoryCreateErrorMessage>
           )}

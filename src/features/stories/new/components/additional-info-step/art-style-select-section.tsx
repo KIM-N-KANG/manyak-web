@@ -6,7 +6,7 @@ import type { ArtStyleCatalogItem } from '@/api/generated/models';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { FieldLabel } from '@/components/ui/field';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -34,13 +34,13 @@ export function ArtStyleSelectSection({
   return (
     <section
       aria-labelledby={ART_STYLE_LABEL_ID}
-      className="flex flex-col gap-2 px-4 pt-2 pb-4">
-      <Label id={ART_STYLE_LABEL_ID} className="gap-0.5">
+      className="flex flex-col gap-2 px-4">
+      <FieldLabel id={ART_STYLE_LABEL_ID} className="gap-0.5">
         {ART_STYLE_SECTION_LABEL}
         <span className="text-destructive" aria-hidden="true">
           *
         </span>
-      </Label>
+      </FieldLabel>
 
       {isError ? (
         <div className="flex items-center justify-between gap-2">
