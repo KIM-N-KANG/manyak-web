@@ -9,8 +9,10 @@ import { SelectedStorylineContent } from '../shared/selected-storyline-content';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
 import { AdditionalInfoList } from './additional-info-list';
+import { ArtStyleSelectSection } from './art-style-select-section';
 import { RecommendedInfoSection } from './recommended-info-section';
 import { StoryCompletionCreditCost } from './story-completion-credit-cost';
+import { StoryVisibilitySection } from './story-visibility-section';
 
 type StoryAdditionalInfoStepSectionProps = {
   storylineItem: SimpleStorylineResponse;
@@ -20,6 +22,8 @@ type StoryAdditionalInfoStepSectionProps = {
   selectedRecommendations: Set<string>;
   additionalInfos: AdditionalInfoInput[];
   canAddAdditionalInfo: boolean;
+  artStyle: string;
+  isPublic: boolean;
   onToggleRecommendation: (recommendation: string, pressed: boolean) => void;
   onAddAdditionalInfo: () => void;
   onRemoveAdditionalInfo: (id: string) => void;
@@ -31,6 +35,8 @@ type StoryAdditionalInfoStepSectionProps = {
     id: string,
     element: HTMLTextAreaElement | null,
   ) => void;
+  onArtStyleChange: (code: string) => void;
+  onPublicChange: (isPublic: boolean) => void;
   onCompleteStory: () => void;
   onBackToStorylineSelect: () => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -44,11 +50,15 @@ export function StoryAdditionalInfoStepSection({
   selectedRecommendations,
   additionalInfos,
   canAddAdditionalInfo,
+  artStyle,
+  isPublic,
   onToggleRecommendation,
   onAddAdditionalInfo,
   onRemoveAdditionalInfo,
   onChangeAdditionalInfo,
   onRegisterAdditionalInfoInput,
+  onArtStyleChange,
+  onPublicChange,
   onCompleteStory,
   onBackToStorylineSelect,
   onScroll,
@@ -103,6 +113,18 @@ export function StoryAdditionalInfoStepSection({
             onRemoveAdditionalInfo={onRemoveAdditionalInfo}
             onChangeAdditionalInfo={onChangeAdditionalInfo}
             onRegisterAdditionalInfoInput={onRegisterAdditionalInfoInput}
+          />
+
+          <ArtStyleSelectSection
+            value={artStyle}
+            disabled={isCompletingStory}
+            onValueChange={onArtStyleChange}
+          />
+
+          <StoryVisibilitySection
+            isPublic={isPublic}
+            disabled={isCompletingStory}
+            onPublicChange={onPublicChange}
           />
 
           {hasCompleteStoryError && (

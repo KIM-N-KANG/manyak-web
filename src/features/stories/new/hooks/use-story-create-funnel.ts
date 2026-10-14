@@ -69,6 +69,7 @@ import { FetchError } from '@/lib/custom-fetch';
 import { returnToMainTab } from '@/lib/return-to-main-tab';
 import { track } from '@/observability/analytics';
 
+import { DEFAULT_ART_STYLE } from '../constants';
 import type { StoryCreateStep } from '../types';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedKeywordGroups } from '../utils/tag-categories';
@@ -189,6 +190,9 @@ export function useStoryCreateFunnel() {
     resetAdditionalInfos,
     restoreAdditionalInfos,
   } = useAdditionalInfos();
+  // 화풍과 공개 여부는 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 유지한다.
+  const [artStyle, setArtStyle] = useState<string>(DEFAULT_ART_STYLE);
+  const [isPublic, setIsPublic] = useState(false);
 
   // 뮤테이션 콜백은 페이지 이탈(언마운트) 후에도 실행되므로, 응답 정착 판정에
   // 쓸 마운트 여부를 ref로 추적한다. StrictMode 재마운트를 위해 effect에서 되살린다.
@@ -1016,6 +1020,10 @@ export function useStoryCreateFunnel() {
     selectedRecommendations,
     additionalInfos,
     canAddAdditionalInfo,
+    artStyle,
+    setArtStyle,
+    isPublic,
+    setIsPublic,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError:

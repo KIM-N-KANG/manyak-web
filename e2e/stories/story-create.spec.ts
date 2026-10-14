@@ -9,11 +9,13 @@ import {
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import {
+  ART_STYLE_SECTION_LABEL,
   buildStoryCompletionCreditCostLabel,
   GENRE_CATEGORY,
   PROTAGONIST_CATEGORY,
   SELECTED_TAGS_TRIGGER_LABEL,
   STORY_COMPLETION_CREDIT_COST_LABEL,
+  STORY_VISIBILITY_COPY,
   STORYLINE_GENERATE_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
@@ -22,7 +24,11 @@ import {
   CREATION_PROGRESS_CARD_COPY,
 } from '@/features/studio/menu/constants';
 
-import { GENRE_CATALOG_FIXTURE } from '../fixtures/api-mock';
+import {
+  ART_STYLE_CATALOG_FIXTURE,
+  GENRE_CATALOG_FIXTURE,
+  mockArtStyleCatalog,
+} from '../fixtures/api-mock';
 import { readCreationStorage } from '../fixtures/storage';
 import {
   seedPendingCreationRequests,
@@ -945,6 +951,67 @@ test.describe('스토리 생성', () => {
     await firstInput.focus();
     await firstInput.press('Tab');
     await expect(secondInput).toBeFocused();
+  });
+
+  test('추가 정보 단계는 인풋 하나와 화풍 선택(기본 없음), 공개 스위치(기본 꺼짐)를 보여 준다 (KNK-1468)', async ({
+    page,
+  }) => {
+    await reachAdditionalInfo(page);
+
+    await expect(
+      page.getByRole('textbox', { name: '추가 정보 1' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('textbox', { name: '추가 정보 2' }),
+    ).toHaveCount(0);
+
+    const artStyles = page.getByRole('radiogroup', {
+      name: ART_STYLE_SECTION_LABEL,
+    });
+    const [none, anime] = ART_STYLE_CATALOG_FIXTURE;
+
+    await expect(artStyles.getByRole('radio')).toHaveCount(
+      ART_STYLE_CATALOG_FIXTURE.length,
+    );
+    await expect(
+      artStyles.getByRole('radio', { name: none.name }),
+    ).toBeChecked();
+
+    await artStyles.getByText(anime.name, { exact: true }).click();
+    await expect(
+      artStyles.getByRole('radio', { name: anime.name }),
+    ).toBeChecked();
+    await expect(
+      artStyles.getByRole('radio', { name: none.name }),
+    ).not.toBeChecked();
+
+    const visibility = page.getByRole('switch', {
+      name: STORY_VISIBILITY_COPY.label,
+    });
+
+    await expect(visibility).not.toBeChecked();
+    await visibility.click();
+    await expect(visibility).toBeChecked();
+  });
+
+  test('스크롤해야 보이는 이미지 스타일을 골라도 앱 프레임이 밀리지 않는다 (KNK-1468)', async ({
+    page,
+  }) => {
+    // 실제 목록처럼 여러 줄이어야 숨긴 라디오의 위치 기준이 어긋날 때 포커스가 앱 프레임을 밀어 올린다.
+    const artStyles = Array.from({ length: 12 }, (_, index) => ({
+      code: `STYLE_${index}`,
+      name: `스타일 ${index + 1}`,
+      description: '',
+      previewImageUrl: null,
+    }));
+    const last = artStyles[artStyles.length - 1];
+
+    await mockArtStyleCatalog(page, artStyles);
+    await reachAdditionalInfo(page);
+    await page.getByText(last.name, { exact: true }).click();
+
+    await expect(page.getByRole('radio', { name: last.name })).toBeChecked();
+    await expect(page.getByRole('banner')).toBeInViewport();
   });
 
   test('같은 완성 요청의 409는 실패로 끝내지 않고 저장한 requestId로 복구한다', async ({

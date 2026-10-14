@@ -39,6 +39,10 @@ export function StoryCreateFunnel() {
     selectedRecommendations,
     additionalInfos,
     canAddAdditionalInfo,
+    artStyle,
+    setArtStyle,
+    isPublic,
+    setIsPublic,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError,
@@ -132,11 +136,15 @@ export function StoryCreateFunnel() {
               selectedRecommendations={selectedRecommendations}
               additionalInfos={additionalInfos}
               canAddAdditionalInfo={canAddAdditionalInfo}
+              artStyle={artStyle}
+              isPublic={isPublic}
               onToggleRecommendation={handleToggleRecommendation}
               onAddAdditionalInfo={addAdditionalInfo}
               onRemoveAdditionalInfo={removeAdditionalInfo}
               onChangeAdditionalInfo={changeAdditionalInfo}
               onRegisterAdditionalInfoInput={registerAdditionalInfoInput}
+              onArtStyleChange={setArtStyle}
+              onPublicChange={setIsPublic}
               onCompleteStory={handleCompleteStory}
               onBackToStorylineSelect={handleBackToStorylineSelect}
             />

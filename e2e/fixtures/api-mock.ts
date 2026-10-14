@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import type {
+  ArtStyleCatalogItem,
   CreditPolicyResponse,
   CreditProductResponse,
   GenreCatalogResponse,
@@ -58,6 +59,10 @@ export async function mockApi(page: Page): Promise<void> {
   // 제작 화면의 장르 칩과 검색은 제공 장르 조회를 따라간다. 스펙의 간편 제작 태그 목과 같은 id 1 판타지를
   // 대표로 두고, 나머지는 인물 특징 태그 id와 겹치지 않게 둔다. 다른 목록은 스펙에서 override한다.
   await mockGenreCatalog(page);
+
+  // 간편 제작 추가 정보 단계의 화풍 선택은 제공 화풍 조회를 따라간다. catch-all의 `[]`면 선택지가 비므로
+  // 기본 목록을 응답한다. 미리보기 이미지는 외부 CDN 요청을 막으려고 비워 둔다.
+  await mockArtStyleCatalog(page);
 
   // 회원 세션은 루트의 토큰 동기화·프롬프트가 알림 API를 부를 수 있다. 기본 설정과 204를
   // 응답해 어떤 시나리오도 catch-all의 `[]`로 깨지지 않게 한다. 설정 시나리오는 override한다.
@@ -506,6 +511,43 @@ export async function mockSignupConsent(
   });
 
   return requests;
+}
+
+/** 제공 화풍 조회 기본 응답이다. 서버처럼 `NONE`을 맨 앞에 둔다. */
+export const ART_STYLE_CATALOG_FIXTURE = [
+  {
+    code: 'NONE',
+    name: '없음',
+    description: '인물 이미지를 만들지 않아요',
+    previewImageUrl: null,
+  },
+  {
+    code: 'ANIME',
+    name: '애니메이션',
+    description: '깔끔한 선과 선명한 색의 일본 애니메이션 그림체',
+    previewImageUrl: null,
+  },
+  {
+    code: 'WEBTOON',
+    name: '웹툰',
+    description: '평면 채색의 한국 로맨스 웹툰 그림체',
+    previewImageUrl: null,
+  },
+] satisfies ArtStyleCatalogItem[];
+
+/**
+ * 제공 화풍 조회(`GET /stories/art-styles`)를 목킹한다.
+ *
+ * @param page 대상 페이지
+ * @param catalog 응답할 제공 화풍 목록
+ */
+export async function mockArtStyleCatalog(
+  page: Page,
+  catalog: ArtStyleCatalogItem[] = ART_STYLE_CATALOG_FIXTURE,
+): Promise<void> {
+  await page.route('**/api/v1/stories/art-styles', async (route) => {
+    await route.fulfill({ json: catalog });
+  });
 }
 
 /** 제공 장르 조회 기본 응답이다. 대표 장르는 판타지와 로맨스다. */
