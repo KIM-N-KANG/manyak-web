@@ -423,6 +423,39 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(card).toBeVisible();
   });
 
+  test('당기다 손가락이 시작점 위로 넘어가면 표시자와 목록이 제자리로 돌아온다 (KNK-1640)', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await page.goto(APP_PATH.MAIN.STORIES);
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    await expect(scroller).toBeVisible();
+
+    const box = await scroller.boundingBox();
+
+    if (!box) throw new Error('스크롤 영역을 찾지 못했다');
+
+    const x = box.x + box.width / 2;
+    const startY = box.y + 100;
+
+    await dispatchTouch(scroller, 'touchstart', x, startY);
+    await dispatchTouch(scroller, 'touchmove', x, startY + 40);
+    await expect(scroller).toHaveAttribute('data-state', 'pulling');
+    // 터치 이동은 띄엄띄엄 들어오므로 0 근처를 거치지 않고 시작점 위로 바로 넘어갈 수 있다.
+    await dispatchTouch(scroller, 'touchmove', x, startY - 5);
+    await dispatchTouch(scroller, 'touchend', x, startY - 5);
+
+    await expect(scroller).toHaveAttribute('data-state', 'idle');
+    await expect(scroller.locator('[aria-live="polite"]')).toHaveCSS(
+      'opacity',
+      '0',
+    );
+  });
+
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
     page,
   }) => {
