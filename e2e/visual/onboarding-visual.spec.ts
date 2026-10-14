@@ -30,6 +30,8 @@ test.describe('온보딩 비주얼', () => {
         await route.continue();
       }
     });
+    // 첫 화면 이미지가 일정 간격으로 바뀌므로, 모션 감소로 첫 장에 고정해 찍는다.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
