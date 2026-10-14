@@ -47,10 +47,10 @@ export function AdditionalInfoList({
   return (
     <section
       aria-labelledby="additional-info-label"
-      className="flex flex-col gap-2 px-4 pt-2 pb-4">
+      className="flex flex-col gap-2 px-4">
       <div className="flex items-baseline gap-1">
-        <Label>추가 정보</Label>
-        <p className="text-sm text-foreground">
+        <Label id="additional-info-label">추가 정보</Label>
+        <p className="text-sm leading-snug text-foreground">
           (최대 {ADDITIONAL_INFO_MAX_COUNT}개)
         </p>
       </div>

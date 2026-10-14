@@ -34,8 +34,6 @@ import {
   markPushPermissionAsked,
 } from '@/features/my/_shared/utils/marketing-consent-storage';
 import {
-  isIosDevice,
-  isStandaloneDisplay,
   readNotificationPermission,
   requestNotificationPermission,
 } from '@/features/my/_shared/utils/push-permission';
@@ -44,6 +42,7 @@ import { useBackLayer } from '@/hooks/use-back-layer';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
 import { SIGNUP_CONSENT_ERROR } from '@/lib/auth/signup-consent';
 import { FetchError, getApiErrorCode } from '@/lib/custom-fetch';
+import { isIosDevice, isStandaloneDisplay } from '@/lib/device';
 import { cn } from '@/lib/utils';
 
 type ConsentNotice = keyof typeof CONSENT_SHEET_COPY.error | null;

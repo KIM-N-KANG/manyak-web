@@ -4,6 +4,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
+import { completeStory } from '../fixtures/story-generation';
 import {
   expect,
   mockMemberSession,
@@ -88,7 +89,7 @@ test.describe('스토리 완성 이프 게이팅', () => {
     );
 
     await additionalInfoInput.fill('비밀은 사라진 왕국의 문장이다');
-    await page.getByRole('button', { name: '스토리 완성하기' }).click();
+    await completeStory(page);
 
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
     await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();

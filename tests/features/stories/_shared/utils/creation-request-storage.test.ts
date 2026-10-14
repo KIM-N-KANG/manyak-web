@@ -501,6 +501,15 @@ describe('parsePendingCreationRequest — STORY_DRAFT', () => {
 
     expect(parsePendingCreationRequest(JSON.stringify(record))).toBeNull();
   });
+
+  it('화풍은 없어도 되지만 문자열이 아니면 null을 반환한다', async () => {
+    const record = { ...draftRecord, artStyle: 'WEBTOON' };
+
+    expect(parsePendingCreationRequest(JSON.stringify(record))).toEqual(record);
+    expect(
+      parsePendingCreationRequest(JSON.stringify({ ...record, artStyle: 1 })),
+    ).toBeNull();
+  });
 });
 
 describe('demotePendingCompletionToDraft', () => {
@@ -538,6 +547,22 @@ describe('demotePendingCompletionToDraft', () => {
         completionRequest,
         createdStoryId: null,
       },
+    ]);
+  });
+
+  it('제출한 화풍을 초안에 되살린다', async () => {
+    stubStorage();
+    await savePendingCreationRequest(draftRecord);
+    await addStoryCompletionRequest({
+      ...completionRecord,
+      completionRequest: { ...completionRequest, artStyle: 'WEBTOON' },
+    });
+
+    expect(
+      await demotePendingCompletionToDraft(completionRecord.requestId),
+    ).toBe(true);
+    expect(await loadPendingCreationRequests()).toMatchObject([
+      { stage: 'STORY_DRAFT', artStyle: 'WEBTOON' },
     ]);
   });
 

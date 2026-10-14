@@ -14,7 +14,7 @@ function openExternalViaKakaoScheme(url: string): void {
 }
 
 /**
- * 일반 인앱 브라우저(인스타그램·쓰레드)에서 플랫폼별 스킴으로 주어진 URL을 외부 브라우저로 연다.
+ * 카카오톡 외 인앱 브라우저에서 플랫폼별 스킴으로 주어진 URL을 외부 브라우저로 연다.
  * Android는 intent:// 스킴, iOS는 x-safari- 접두 스킴을 쓴다.
  *
  * @param url 외부 브라우저로 열 절대 URL
@@ -35,12 +35,16 @@ function openExternalViaGenericScheme(url: string): void {
 
 /**
  * 인앱 브라우저 종류에 맞는 스킴으로 주어진 URL을 외부 브라우저에서 연다.
+ * 카카오톡만 전용 스킴을 쓰고, 그 밖의 앱과 종류를 알 수 없는 인앱은 일반 스킴을 시도한다.
  * 스킴 호출은 성공 콜백이 없어 실패해도 감지할 수 없으므로, 호출부는 수동 대안을 함께 제공한다.
  *
  * @param url 외부 브라우저로 열 절대 URL
- * @param app 현재 인앱 브라우저 종류
+ * @param app 현재 인앱 브라우저 종류. 알 수 없으면 null
  */
-export function openExternalBrowser(url: string, app: InAppBrowser): void {
+export function openExternalBrowser(
+  url: string,
+  app: InAppBrowser | null,
+): void {
   if (app === 'kakaotalk') {
     openExternalViaKakaoScheme(url);
 

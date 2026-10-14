@@ -1,14 +1,12 @@
 'use client';
 
-import { useRef, useState } from 'react';
-
 import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { m, useReducedMotion, type Variants } from 'motion/react';
 import Image from 'next/image';
 
+import { SnapStrip } from '@/components/common/snap-strip';
 import { Button } from '@/components/ui/button';
-import { useDragScroll } from '@/hooks/use-drag-scroll';
 import { cn } from '@/lib/utils';
 
 import {
@@ -61,87 +59,13 @@ interface OnboardingSceneStripProps {
 }
 
 function OnboardingSceneStrip({ scenes, variants }: OnboardingSceneStripProps) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const dragScrollProps = useDragScroll();
-
-  const resolveCards = () => {
-    const scroller = scrollerRef.current;
-
-    return scroller
-      ? { scroller, cards: [...scroller.children] as HTMLElement[] }
-      : null;
-  };
-
-  const handleScroll = () => {
-    const resolved = resolveCards();
-
-    if (!resolved || resolved.cards.length === 0) {
-      return;
-    }
-
-    const { scroller, cards } = resolved;
-    const alignedLeft = scroller.scrollLeft + cards[0].offsetLeft;
-    let closestIndex = 0;
-    let closestDistance = Number.POSITIVE_INFINITY;
-
-    cards.forEach((card, index) => {
-      const distance = Math.abs(card.offsetLeft - alignedLeft);
-
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
-      }
-    });
-
-    setActiveIndex(closestIndex);
-  };
-
-  const handleIndicatorClick = (index: number) => {
-    const resolved = resolveCards();
-    const card = resolved?.cards[index];
-
-    if (!resolved || !card) {
-      return;
-    }
-
-    resolved.scroller.scrollTo({
-      left: card.offsetLeft - resolved.cards[0].offsetLeft,
-      behavior: 'smooth',
-    });
-  };
-
   return (
-    <m.div variants={variants} className="flex flex-col gap-3">
-      <div
-        ref={scrollerRef}
-        onScroll={handleScroll}
-        {...dragScrollProps}
-        className="-mx-4 -my-2 scrollbar-none flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 py-2">
+    <m.div variants={variants}>
+      <SnapStrip>
         {scenes.map((scene) => (
-          <div key={scene.src} className="w-[82%] shrink-0 snap-start">
-            <SceneCard scene={scene} />
-          </div>
+          <SceneCard key={scene.src} scene={scene} />
         ))}
-      </div>
-      <div className="flex items-center justify-center">
-        {scenes.map((scene, index) => (
-          <button
-            key={scene.src}
-            type="button"
-            aria-label={`${index + 1}번째 화면 보기`}
-            aria-current={index === activeIndex ? 'true' : undefined}
-            onClick={() => handleIndicatorClick(index)}
-            className="flex size-6 items-center justify-center">
-            <span
-              className={cn(
-                'size-1.5 rounded-full bg-border transition-colors',
-                index === activeIndex && 'bg-foreground-secondary',
-              )}
-            />
-          </button>
-        ))}
-      </div>
+      </SnapStrip>
     </m.div>
   );
 }

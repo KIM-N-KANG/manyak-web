@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
+import { AppBanner } from '@/components/layout/app-banner';
 import { InAppBrowserObserver } from '@/components/layout/in-app-browser-observer';
 import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
@@ -16,7 +17,7 @@ import { QueryProvider } from '@/components/providers/query-provider';
 import { SessionExpiryWatcher } from '@/components/providers/session-expiry-watcher';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
-import { APP_FRAME_ID } from '@/constants/app-frame';
+import { APP_FRAME_ID, APP_SCREEN_ID } from '@/constants/app-frame';
 import {
   DEFAULT_TITLE,
   serializeStructuredData,
@@ -109,7 +110,12 @@ export default function RootLayout({
                         <div
                           id={APP_FRAME_ID}
                           className="relative mx-auto flex h-dvh min-h-0 w-full max-w-md flex-col overflow-hidden bg-background">
-                          {children}
+                          <AppBanner />
+                          <div
+                            id={APP_SCREEN_ID}
+                            className="relative flex min-h-0 flex-1 flex-col outline-none">
+                            {children}
+                          </div>
                           <InAppBrowserObserver />
                         </div>
                         <Toaster />

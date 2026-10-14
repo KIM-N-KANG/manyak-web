@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 import { useRegister } from '@/api/generated/endpoints/push/push';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
+import { isIosDevice, isStandaloneDisplay } from '@/lib/device';
 import { IS_PUSH_ENABLED } from '@/lib/push/config';
 import {
   requestPushToken,
@@ -24,8 +25,6 @@ import {
 import { requestMarketingConsentReask } from '../utils/marketing-consent-store';
 import { resolvePushLinkPath } from '../utils/push-link';
 import {
-  isIosDevice,
-  isStandaloneDisplay,
   PUSH_PERMISSION_EVENT,
   readNotificationPermission,
   requestNotificationPermission,

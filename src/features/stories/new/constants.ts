@@ -66,7 +66,7 @@ export const CHARACTER_GENDER_SELECT_OPTIONS = [
   ...CHARACTER_GENDER_OPTIONS,
 ] as const;
 
-export const ADDITIONAL_INFO_INITIAL_COUNT = 3;
+export const ADDITIONAL_INFO_INITIAL_COUNT = 1;
 
 export const ADDITIONAL_INFO_MAX_COUNT = 10;
 
@@ -168,6 +168,11 @@ export const SELECTED_TAGS_DRAWER_COPY = {
   title: '선택한 키워드들이에요',
   description: '이 키워드들을 이용해서 스토리라인 세 개를 만들었어요',
 } as const;
+
+export const ART_STYLE_SECTION_LABEL = '이미지 스타일';
+
+/** 이미지 스타일을 고르지 않고 완성하려 할 때 푸터에 보이는 안내다. 키워드 단계의 선택 안내와 같은 형태다. */
+export const ART_STYLE_REQUIRED_ERROR = '이미지 스타일을 선택해주세요';
 
 /** 추가 정보 단계 하단에 표시하는 스토리 완성 비용의 라벨. */
 export const STORY_COMPLETION_CREDIT_COST_LABEL = '스토리 완성 비용';

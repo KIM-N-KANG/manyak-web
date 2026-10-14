@@ -4,11 +4,13 @@ import type { SimpleStorylineResponse } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
 
+import { ART_STYLE_REQUIRED_ERROR } from '../../constants';
 import type { AdditionalInfoInput } from '../../types';
 import { SelectedStorylineContent } from '../shared/selected-storyline-content';
 import { StoryCreateErrorMessage } from '../shared/story-create-error-message';
 import { StoryCreateStepLayout } from '../step-layout/story-create-step-layout';
 import { AdditionalInfoList } from './additional-info-list';
+import { ArtStyleSelectSection } from './art-style-select-section';
 import { RecommendedInfoSection } from './recommended-info-section';
 import { StoryCompletionCreditCost } from './story-completion-credit-cost';
 
@@ -20,6 +22,8 @@ type StoryAdditionalInfoStepSectionProps = {
   selectedRecommendations: Set<string>;
   additionalInfos: AdditionalInfoInput[];
   canAddAdditionalInfo: boolean;
+  artStyle: string | null;
+  hasArtStyleError: boolean;
   onToggleRecommendation: (recommendation: string, pressed: boolean) => void;
   onAddAdditionalInfo: () => void;
   onRemoveAdditionalInfo: (id: string) => void;
@@ -31,6 +35,7 @@ type StoryAdditionalInfoStepSectionProps = {
     id: string,
     element: HTMLTextAreaElement | null,
   ) => void;
+  onArtStyleChange: (code: string) => void;
   onCompleteStory: () => void;
   onBackToStorylineSelect: () => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -44,11 +49,14 @@ export function StoryAdditionalInfoStepSection({
   selectedRecommendations,
   additionalInfos,
   canAddAdditionalInfo,
+  artStyle,
+  hasArtStyleError,
   onToggleRecommendation,
   onAddAdditionalInfo,
   onRemoveAdditionalInfo,
   onChangeAdditionalInfo,
   onRegisterAdditionalInfoInput,
+  onArtStyleChange,
   onCompleteStory,
   onBackToStorylineSelect,
   onScroll,
@@ -59,6 +67,13 @@ export function StoryAdditionalInfoStepSection({
       description="입력한 정보는 스토리를 완성하는 데 반영돼요"
       onScroll={onScroll}
       footerTop={<StoryCompletionCreditCost />}
+      footerMessage={
+        hasArtStyleError ? (
+          <StoryCreateErrorMessage>
+            {ART_STYLE_REQUIRED_ERROR}
+          </StoryCreateErrorMessage>
+        ) : null
+      }
       footer={
         <>
           <Button
@@ -85,7 +100,7 @@ export function StoryAdditionalInfoStepSection({
         </>
       }>
       <div>
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-6 pb-4">
           <SelectedStorylineContent story={storylineItem.storyline} />
 
           <RecommendedInfoSection
@@ -105,8 +120,14 @@ export function StoryAdditionalInfoStepSection({
             onRegisterAdditionalInfoInput={onRegisterAdditionalInfoInput}
           />
 
+          <ArtStyleSelectSection
+            value={artStyle}
+            disabled={isCompletingStory}
+            onValueChange={onArtStyleChange}
+          />
+
           {hasCompleteStoryError && (
-            <StoryCreateErrorMessage className="px-4 pb-6">
+            <StoryCreateErrorMessage className="px-4">
               스토리를 완성하지 못했어요
             </StoryCreateErrorMessage>
           )}

@@ -189,6 +189,15 @@ export function useStoryCreateFunnel() {
     resetAdditionalInfos,
     restoreAdditionalInfos,
   } = useAdditionalInfos();
+  // 화풍은 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 유지한다.
+  // 화풍은 필수지만 처음에는 고르지 않은 상태로 두고, 완성을 누를 때 검증한다.
+  const [artStyle, setArtStyle] = useState<string | null>(null);
+  const [hasArtStyleError, setHasArtStyleError] = useState(false);
+
+  const selectArtStyle = (code: string) => {
+    setArtStyle(code);
+    setHasArtStyleError(false);
+  };
 
   // 뮤테이션 콜백은 페이지 이탈(언마운트) 후에도 실행되므로, 응답 정착 판정에
   // 쓸 마운트 여부를 ref로 추적한다. StrictMode 재마운트를 위해 effect에서 되살린다.
@@ -272,6 +281,7 @@ export function useStoryCreateFunnel() {
   const resetAdditionalInfoStep = () => {
     resetAdditionalInfos();
     setSelectedRecommendations(new Set());
+    setHasArtStyleError(false);
   };
 
   const generateStorylines = useGenerateSimpleStorylines({
@@ -546,6 +556,8 @@ export function useStoryCreateFunnel() {
     setSelectedStoryline(record.selectedStoryline);
     setSelectedRecommendations(new Set(record.selectedRecommendations));
     restoreAdditionalInfos(record.additionalInfos);
+    setArtStyle(record.artStyle ?? null);
+    setHasArtStyleError(false);
     setCreatedStoryId(record.createdStoryId);
     setLastCompletionRequest(record.completionRequest);
     setHasCompleteStoryError(false);
@@ -585,6 +597,7 @@ export function useStoryCreateFunnel() {
           selectedStoryline,
           additionalInfos: additionalInfos.map(({ value }) => value),
           selectedRecommendations: [...selectedRecommendations],
+          artStyle: artStyle ?? undefined,
           createdStoryId,
           completionRequest: lastCompletionRequest,
         }
@@ -851,6 +864,13 @@ export function useStoryCreateFunnel() {
   };
 
   const handleCompleteStory = async () => {
+    // 이미 만든 스토리로 채팅만 여는 재시도는 화풍을 다시 묻지 않는다.
+    if (createdStoryId === null && artStyle === null) {
+      setHasArtStyleError(true);
+
+      return;
+    }
+
     if (!(await canGenerate(createdStoryId === null ? 'storyCreation' : null)))
       return;
 
@@ -887,6 +907,7 @@ export function useStoryCreateFunnel() {
         ...selectedRecommendations,
         ...getSubmittedAdditionalInfos(),
       ],
+      artStyle,
     };
     // 같은 페이로드의 재시도는 requestId를 재사용한다. 서버가 이미 완성했다면(응답 유실)
     // AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
@@ -895,6 +916,7 @@ export function useStoryCreateFunnel() {
       lastRequest !== null &&
       lastRequest.simpleCreationId === payload.simpleCreationId &&
       lastRequest.storylineId === payload.storylineId &&
+      lastRequest.artStyle === payload.artStyle &&
       JSON.stringify(lastRequest.additionalInfos ?? []) ===
         JSON.stringify(payload.additionalInfos);
     const request: CreateSimpleStoryRequest = {
@@ -1016,6 +1038,9 @@ export function useStoryCreateFunnel() {
     selectedRecommendations,
     additionalInfos,
     canAddAdditionalInfo,
+    artStyle,
+    hasArtStyleError,
+    selectArtStyle,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError:
