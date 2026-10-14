@@ -13,7 +13,6 @@ import { AdditionalInfoList } from './additional-info-list';
 import { ArtStyleSelectSection } from './art-style-select-section';
 import { RecommendedInfoSection } from './recommended-info-section';
 import { StoryCompletionCreditCost } from './story-completion-credit-cost';
-import { StoryVisibilitySection } from './story-visibility-section';
 
 type StoryAdditionalInfoStepSectionProps = {
   storylineItem: SimpleStorylineResponse;
@@ -25,7 +24,6 @@ type StoryAdditionalInfoStepSectionProps = {
   canAddAdditionalInfo: boolean;
   artStyle: string | null;
   hasArtStyleError: boolean;
-  isPublic: boolean;
   onToggleRecommendation: (recommendation: string, pressed: boolean) => void;
   onAddAdditionalInfo: () => void;
   onRemoveAdditionalInfo: (id: string) => void;
@@ -38,7 +36,6 @@ type StoryAdditionalInfoStepSectionProps = {
     element: HTMLTextAreaElement | null,
   ) => void;
   onArtStyleChange: (code: string) => void;
-  onPublicChange: (isPublic: boolean) => void;
   onCompleteStory: () => void;
   onBackToStorylineSelect: () => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -54,14 +51,12 @@ export function StoryAdditionalInfoStepSection({
   canAddAdditionalInfo,
   artStyle,
   hasArtStyleError,
-  isPublic,
   onToggleRecommendation,
   onAddAdditionalInfo,
   onRemoveAdditionalInfo,
   onChangeAdditionalInfo,
   onRegisterAdditionalInfoInput,
   onArtStyleChange,
-  onPublicChange,
   onCompleteStory,
   onBackToStorylineSelect,
   onScroll,
@@ -129,12 +124,6 @@ export function StoryAdditionalInfoStepSection({
             value={artStyle}
             disabled={isCompletingStory}
             onValueChange={onArtStyleChange}
-          />
-
-          <StoryVisibilitySection
-            isPublic={isPublic}
-            disabled={isCompletingStory}
-            onPublicChange={onPublicChange}
           />
 
           {hasCompleteStoryError && (

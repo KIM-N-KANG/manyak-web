@@ -16,7 +16,6 @@ import {
   PROTAGONIST_CATEGORY,
   SELECTED_TAGS_TRIGGER_LABEL,
   STORY_COMPLETION_CREDIT_COST_LABEL,
-  STORY_VISIBILITY_COPY,
   STORYLINE_GENERATE_LABEL,
   SUPPORTING_CHARACTER_CATEGORY,
 } from '@/features/stories/new/constants';
@@ -959,7 +958,7 @@ test.describe('스토리 생성', () => {
     await expect(secondInput).toBeFocused();
   });
 
-  test('추가 정보 단계는 인풋 하나와 필수 이미지 스타일(처음엔 미선택), 공개 스위치(기본 꺼짐)를 보여 준다 (KNK-1468)', async ({
+  test('추가 정보 단계는 인풋 하나와 필수 이미지 스타일(처음엔 미선택)을 보여 준다 (KNK-1468)', async ({
     page,
   }) => {
     await reachAdditionalInfo(page);
@@ -982,14 +981,6 @@ test.describe('스토리 생성', () => {
     await expect(artStyles.getByRole('radio', { checked: true })).toHaveCount(
       0,
     );
-
-    const visibility = page.getByRole('switch', {
-      name: STORY_VISIBILITY_COPY.label,
-    });
-
-    await expect(visibility).not.toBeChecked();
-    await visibility.click();
-    await expect(visibility).toBeChecked();
 
     const completionRequests: unknown[] = [];
 
