@@ -25,6 +25,7 @@ import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
   ApiErrorResponse,
+  ArtStyleCatalogItem,
   BatchStoryRequest,
   CreateGeneralStoryRequest,
   GenreCatalogResponse,
@@ -2435,6 +2436,148 @@ export function useGet2<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGet2QueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type get3Response200 = {
+  data: ArtStyleCatalogItem[];
+  status: 200;
+};
+
+export type get3ResponseSuccess = get3Response200 & {
+  headers: Headers;
+};
+export type get3Response = get3ResponseSuccess;
+
+export const getGet3Url = () => {
+  return `/api/v1/stories/art-styles`;
+};
+
+/**
+ * 게스트 허용. 활성 화풍만 노출 순서 오름차순으로 반환합니다.
+ * @summary 제공 화풍 목록 조회
+ */
+export const get3 = async (options?: RequestInit): Promise<get3Response> => {
+  return customInstance<get3Response>(getGet3Url(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGet3QueryKey = () => {
+  return [`/api/v1/stories/art-styles`] as const;
+};
+
+export const getGet3QueryOptions = <
+  TData = Awaited<ReturnType<typeof get3>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGet3QueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof get3>>> = ({
+    signal,
+  }) => get3({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof get3>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type Get3QueryResult = NonNullable<Awaited<ReturnType<typeof get3>>>;
+export type Get3QueryError = ErrorType<unknown>;
+
+export function useGet3<
+  TData = Awaited<ReturnType<typeof get3>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof get3>>,
+          TError,
+          Awaited<ReturnType<typeof get3>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGet3<
+  TData = Awaited<ReturnType<typeof get3>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof get3>>,
+          TError,
+          Awaited<ReturnType<typeof get3>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGet3<
+  TData = Awaited<ReturnType<typeof get3>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 제공 화풍 목록 조회
+ */
+
+export function useGet3<
+  TData = Awaited<ReturnType<typeof get3>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGet3QueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

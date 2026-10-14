@@ -9,6 +9,7 @@
 export * from './accountLinkRequest';
 export * from './apiErrorDetail';
 export * from './apiErrorResponse';
+export * from './artStyleCatalogItem';
 export * from './batchChatRequest';
 export * from './batchStoryRequest';
 export * from './characterImageResponse';

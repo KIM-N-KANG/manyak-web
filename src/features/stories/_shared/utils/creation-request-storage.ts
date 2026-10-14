@@ -98,6 +98,8 @@ export type PendingCreationRequest =
       selectedStoryline: SimpleStorylineResponse | null;
       additionalInfos: string[];
       selectedRecommendations: string[];
+      /** 고른 화풍 코드다. 화풍 선택 도입 전에 저장한 레코드에는 없다. */
+      artStyle?: string;
       createdStoryId: string | null;
       completionRequest: CreateSimpleStoryRequest | null;
     }
@@ -344,6 +346,7 @@ function isPendingCreationRequest(
       isValidSelectedStoryline &&
       isStringArray(parsed.additionalInfos) &&
       isStringArray(parsed.selectedRecommendations) &&
+      (parsed.artStyle === undefined || typeof parsed.artStyle === 'string') &&
       (parsed.createdStoryId === null ||
         typeof parsed.createdStoryId === 'string') &&
       (parsed.completionRequest === null ||
@@ -832,6 +835,8 @@ export function demotePendingCompletionToDraft(
       selectedStoryline: current.selectedStoryline,
       additionalInfos: current.additionalInfos ?? [],
       selectedRecommendations: current.selectedRecommendations ?? [],
+      // 제출한 화풍을 되살려야 같은 입력의 재시도가 같은 requestId를 쓴다.
+      artStyle: current.completionRequest.artStyle ?? undefined,
       createdStoryId: null,
       completionRequest: current.completionRequest,
     });

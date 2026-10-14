@@ -16,6 +16,7 @@ import {
 } from '@/features/studio/menu/constants';
 import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
+import { ART_STYLE_CATALOG_FIXTURE } from '../fixtures/api-mock';
 import { readCreationStorage } from '../fixtures/storage';
 import { seedPendingCreationRequests } from '../fixtures/storage';
 import {
@@ -363,8 +364,11 @@ test.describe('스토리 임시 저장·재개', () => {
       name: '주인공은 비밀을 품고 있다',
     });
 
+    const artStyle = ART_STYLE_CATALOG_FIXTURE[2];
+
     await additionalInfoInput.fill('사라진 왕국의 비밀');
     await recommendation.click();
+    await page.getByText(artStyle.name, { exact: true }).click();
     await saveButton(page).click();
     await expect(savedToast(page)).toBeVisible();
 
@@ -379,6 +383,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(
       page.getByRole('button', { name: '주인공은 비밀을 품고 있다' }),
     ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.getByRole('radio', { name: artStyle.name }),
+    ).toBeChecked();
     await expect
       .poll(() => readCreationStorage(page, STORAGE_KEY))
       .toContain('"stage":"STORY_DRAFT"');
