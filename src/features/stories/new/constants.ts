@@ -174,12 +174,6 @@ export const ART_STYLE_SECTION_LABEL = '이미지 스타일';
 /** 이미지 스타일을 고르지 않고 완성하려 할 때 푸터에 보이는 안내다. 키워드 단계의 선택 안내와 같은 형태다. */
 export const ART_STYLE_REQUIRED_ERROR = '이미지 스타일을 선택해주세요';
 
-/** 추가 정보 단계의 공개 스위치 문구다. 일반 제작 등록 탭의 공개 스위치와 같다. */
-export const STORY_VISIBILITY_COPY = {
-  label: '공개',
-  description: '누구나 스토리를 찾아보고 플레이할 수 있어요',
-} as const;
-
 /** 추가 정보 단계 하단에 표시하는 스토리 완성 비용의 라벨. */
 export const STORY_COMPLETION_CREDIT_COST_LABEL = '스토리 완성 비용';
 

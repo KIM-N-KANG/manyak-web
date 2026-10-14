@@ -189,11 +189,10 @@ export function useStoryCreateFunnel() {
     resetAdditionalInfos,
     restoreAdditionalInfos,
   } = useAdditionalInfos();
-  // 화풍과 공개 여부는 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 유지한다.
+  // 화풍은 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 유지한다.
   // 화풍은 필수지만 처음에는 고르지 않은 상태로 두고, 완성을 누를 때 검증한다.
   const [artStyle, setArtStyle] = useState<string | null>(null);
   const [hasArtStyleError, setHasArtStyleError] = useState(false);
-  const [isPublic, setIsPublic] = useState(false);
 
   const selectArtStyle = (code: string) => {
     setArtStyle(code);
@@ -1042,8 +1041,6 @@ export function useStoryCreateFunnel() {
     artStyle,
     hasArtStyleError,
     selectArtStyle,
-    isPublic,
-    setIsPublic,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError:
