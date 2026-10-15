@@ -81,6 +81,7 @@ export type AnalyticsEventProps = {
   client_onboarding_viewed: void;
   client_onboarding_createButton_clicked: OnboardingButtonSource;
   client_onboarding_browseButton_clicked: OnboardingButtonSource;
+  client_onboarding_playStoreBadge_clicked: void;
   // storyList
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;

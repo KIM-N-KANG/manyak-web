@@ -2,7 +2,11 @@ import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
 import { SITE_CONTACT_EMAIL } from '@/constants/site';
-import { ONBOARDING_FEATURES } from '@/features/onboarding/constants';
+import {
+  ONBOARDING_FEATURES,
+  ONBOARDING_PLAY_STORE_BADGE_ALT,
+  ONBOARDING_PLAY_STORE_URL,
+} from '@/features/onboarding/constants';
 
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
 
@@ -153,7 +157,7 @@ test.describe('온보딩', () => {
       }
     }
 
-    // 마지막 갤러리 뒤에는 따로 시작 섹션 없이 정책 링크와 문의처를 담은 푸터가 이어진다.
+    // 마지막 갤러리 뒤에는 따로 시작 섹션 없이 정책 링크, 문의처, Google Play 배지를 담은 푸터가 이어진다.
     // main 안의 footer는 contentinfo 랜드마크가 아니므로 요소로 찾는다.
     const footer = page.locator('footer');
 
@@ -167,6 +171,9 @@ test.describe('온보딩', () => {
     await expect(
       footer.getByRole('link', { name: SITE_CONTACT_EMAIL }),
     ).toHaveAttribute('href', `mailto:${SITE_CONTACT_EMAIL}`);
+    await expect(
+      footer.getByRole('link', { name: ONBOARDING_PLAY_STORE_BADGE_ALT }),
+    ).toHaveAttribute('href', ONBOARDING_PLAY_STORE_URL);
     // 헤더는 첫 화면을 지난 뒤로 계속 보이고, 로고는 홈 링크가 아니라 맨 위로
     // 되돌리는 버튼이다.
     await page

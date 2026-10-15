@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { ManyakLogo } from '@/components/layout/manyak-logo';
@@ -11,6 +12,13 @@ import {
   SITE_TEAM_NAME,
 } from '@/constants/site';
 import { SERVICE_INFO_TITLE } from '@/features/about/constants';
+import { track } from '@/observability/analytics';
+
+import {
+  ONBOARDING_PLAY_STORE_BADGE_ALT,
+  ONBOARDING_PLAY_STORE_BADGE_SRC,
+  ONBOARDING_PLAY_STORE_URL,
+} from '../constants';
 
 const FOOTER_LINKS = [
   { href: APP_PATH.ABOUT, label: SERVICE_INFO_TITLE },
@@ -18,10 +26,6 @@ const FOOTER_LINKS = [
   { href: APP_PATH.PRIVACY, label: '개인정보 처리방침' },
 ] as const;
 
-/**
- * 온보딩 랜딩 최하단 푸터. 서비스 소개·정책 링크·문의처·저작권을 담는다.
- * 랜딩 스크롤 콘텐츠의 끝이라 화면 셸의 고정 푸터가 아니라 본문 안에 놓인다.
- */
 export function OnboardingFooter() {
   return (
     <footer className="flex flex-col gap-6 border-t border-border bg-muted/50 px-4 py-8 text-sm text-foreground-secondary">
@@ -29,6 +33,21 @@ export function OnboardingFooter() {
         <ManyakLogo className="h-5 w-auto self-start text-foreground-secondary" />
         <p>{SITE_DESCRIPTION}</p>
       </div>
+      {/* Google 배지 가이드: 높이 28px 이상, 사방 여백은 배지 높이의 1/4 이상(푸터 gap이 채운다). */}
+      <a
+        href={ONBOARDING_PLAY_STORE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => track('client_onboarding_playStoreBadge_clicked')}
+        className="self-start">
+        <Image
+          src={ONBOARDING_PLAY_STORE_BADGE_SRC}
+          alt={ONBOARDING_PLAY_STORE_BADGE_ALT}
+          width={135}
+          height={40}
+          className="h-10 w-auto"
+        />
+      </a>
       <nav aria-label="서비스 정보">
         <ul className="flex flex-wrap gap-x-4 gap-y-1">
           {FOOTER_LINKS.map((link) => (
@@ -65,6 +84,7 @@ export function OnboardingFooter() {
         <p>
           © {new Date().getFullYear()} {SITE_TEAM_NAME}. All rights reserved.
         </p>
+        <p>Google Play 및 Google Play 로고는 Google LLC의 상표입니다.</p>
       </div>
     </footer>
   );
