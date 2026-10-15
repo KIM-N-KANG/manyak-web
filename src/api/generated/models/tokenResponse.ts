@@ -12,7 +12,7 @@
 export interface TokenResponse {
   /** access 토큰(HS256 JWT). Authorization: Bearer <accessToken> 로 보낸다. */
   accessToken?: string;
-  /** refresh 토큰(불투명 랜덤 문자열). access 만료 시 /token/refresh 로 회전한다. 1회용이며 회전 후 폐기된다. */
+  /** refresh 토큰(불투명 랜덤 문자열). access 만료 시 /token/refresh 로 회전한다. 1회용이며 회전 후 유예 조건을 만족하는 재요청에만 같은 회전 결과를 반환한다. */
   refreshToken?: string;
   /** access 토큰 만료까지 남은 시간(초) */
   expiresIn?: number;

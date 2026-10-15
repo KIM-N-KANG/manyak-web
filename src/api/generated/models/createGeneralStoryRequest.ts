@@ -69,4 +69,9 @@ export interface CreateGeneralStoryRequest {
   characters?: GeneralCharacterInput[];
   /** @nullable */
   protagonistName?: string | null;
+  /**
+   * 접수와 같은 트랜잭션에서 삭제할 내 초안 ID
+   * @nullable
+   */
+  draftId?: string | null;
 }

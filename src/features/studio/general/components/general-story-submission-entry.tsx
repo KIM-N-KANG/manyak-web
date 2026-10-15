@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { useGet as useGetStorySubmission } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
+import { useGetStoriesSubmissionsById as useGetStorySubmission } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';

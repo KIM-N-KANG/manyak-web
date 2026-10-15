@@ -6,6 +6,4 @@
  * OpenAPI spec version: v1
  */
 
-export type List1Params = {
-  limit?: number;
-};
+export type GetStoriesSubmissionsById200 = { [key: string]: unknown };

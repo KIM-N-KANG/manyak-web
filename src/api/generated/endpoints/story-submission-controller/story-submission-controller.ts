@@ -25,89 +25,108 @@ import type { BodyType, ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
   CreateGeneralStoryRequest,
-  Get200,
-  List1Params,
-  List1200Item,
+  GetStoriesSubmissions200Item,
+  GetStoriesSubmissionsById200,
+  GetStoriesSubmissionsParams,
   SubmissionAccepted,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type getResponse200 = {
-  data: Get200;
+export type getStoriesSubmissionsByIdResponse200 = {
+  data: GetStoriesSubmissionsById200;
   status: 200;
 };
 
-export type getResponseSuccess = getResponse200 & {
-  headers: Headers;
-};
-export type getResponse = getResponseSuccess;
+export type getStoriesSubmissionsByIdResponseSuccess =
+  getStoriesSubmissionsByIdResponse200 & {
+    headers: Headers;
+  };
+export type getStoriesSubmissionsByIdResponse =
+  getStoriesSubmissionsByIdResponseSuccess;
 
-export const getGetUrl = (id: string) => {
+export const getGetStoriesSubmissionsByIdUrl = (id: string) => {
   return `/api/v1/stories/submissions/${id}`;
 };
 
-export const get = async (
+export const getStoriesSubmissionsById = async (
   id: string,
   options?: RequestInit,
-): Promise<getResponse> => {
-  return customInstance<getResponse>(getGetUrl(id), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getStoriesSubmissionsByIdResponse> => {
+  return customInstance<getStoriesSubmissionsByIdResponse>(
+    getGetStoriesSubmissionsByIdUrl(id),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getGetQueryKey = (id: string) => {
+export const getGetStoriesSubmissionsByIdQueryKey = (id: string) => {
   return [`/api/v1/stories/submissions/${id}`] as const;
 };
 
-export const getGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof get>>,
+export const getGetStoriesSubmissionsByIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
   TError = ErrorType<unknown>,
 >(
   id: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetQueryKey(id);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetStoriesSubmissionsByIdQueryKey(id);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof get>>> = ({
-    signal,
-  }) => get(id, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getStoriesSubmissionsById>>
+  > = ({ signal }) =>
+    getStoriesSubmissionsById(id, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: id !== null && id !== undefined,
     ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>;
-export type GetQueryError = ErrorType<unknown>;
+export type GetStoriesSubmissionsByIdQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStoriesSubmissionsById>>
+>;
+export type GetStoriesSubmissionsByIdQueryError = ErrorType<unknown>;
 
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGetStoriesSubmissionsById<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
   TError = ErrorType<unknown>,
 >(
   id: string,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get>>,
+          Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
           TError,
-          Awaited<ReturnType<typeof get>>
+          Awaited<ReturnType<typeof getStoriesSubmissionsById>>
         >,
         'initialData'
       >;
@@ -117,20 +136,24 @@ export function useGet<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGetStoriesSubmissionsById<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
   TError = ErrorType<unknown>,
 >(
   id: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get>>,
+          Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
           TError,
-          Awaited<ReturnType<typeof get>>
+          Awaited<ReturnType<typeof getStoriesSubmissionsById>>
         >,
         'initialData'
       >;
@@ -140,14 +163,18 @@ export function useGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGetStoriesSubmissionsById<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
   TError = ErrorType<unknown>,
 >(
   id: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -156,14 +183,18 @@ export function useGet<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useGet<
-  TData = Awaited<ReturnType<typeof get>>,
+export function useGetStoriesSubmissionsById<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
   TError = ErrorType<unknown>,
 >(
   id: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissionsById>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -171,7 +202,7 @@ export function useGet<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGetQueryOptions(id, options);
+  const queryOptions = getGetStoriesSubmissionsByIdQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -271,48 +302,53 @@ export const useResubmit = <TError = ErrorType<unknown>, TContext = unknown>(
 > => {
   return useMutation(getResubmitMutationOptions(options), queryClient);
 };
-export type _deleteResponse204 = {
+export type deleteStoriesSubmissionsByIdResponse204 = {
   data: void;
   status: 204;
 };
 
-export type _deleteResponseSuccess = _deleteResponse204 & {
-  headers: Headers;
-};
-export type _deleteResponse = _deleteResponseSuccess;
+export type deleteStoriesSubmissionsByIdResponseSuccess =
+  deleteStoriesSubmissionsByIdResponse204 & {
+    headers: Headers;
+  };
+export type deleteStoriesSubmissionsByIdResponse =
+  deleteStoriesSubmissionsByIdResponseSuccess;
 
-export const getDeleteUrl = (id: string) => {
+export const getDeleteStoriesSubmissionsByIdUrl = (id: string) => {
   return `/api/v1/stories/submissions/${id}`;
 };
 
-export const _delete = async (
+export const deleteStoriesSubmissionsById = async (
   id: string,
   options?: RequestInit,
-): Promise<_deleteResponse> => {
-  return customInstance<_deleteResponse>(getDeleteUrl(id), {
-    ...options,
-    method: 'DELETE',
-  });
+): Promise<deleteStoriesSubmissionsByIdResponse> => {
+  return customInstance<deleteStoriesSubmissionsByIdResponse>(
+    getDeleteStoriesSubmissionsByIdUrl(id),
+    {
+      ...options,
+      method: 'DELETE',
+    },
+  );
 };
 
-export const getDeleteMutationOptions = <
+export const getDeleteStoriesSubmissionsByIdMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof _delete>>,
+    Awaited<ReturnType<typeof deleteStoriesSubmissionsById>>,
     TError,
     { id: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof _delete>>,
+  Awaited<ReturnType<typeof deleteStoriesSubmissionsById>>,
   TError,
   { id: string },
   TContext
 > => {
-  const mutationKey = ['_delete'];
+  const mutationKey = ['deleteStoriesSubmissionsById'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -322,27 +358,30 @@ export const getDeleteMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof _delete>>,
+    Awaited<ReturnType<typeof deleteStoriesSubmissionsById>>,
     { id: string }
   > = (props) => {
     const { id } = props ?? {};
 
-    return _delete(id, requestOptions);
+    return deleteStoriesSubmissionsById(id, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type _DeleteMutationResult = NonNullable<
-  Awaited<ReturnType<typeof _delete>>
+export type DeleteStoriesSubmissionsByIdMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteStoriesSubmissionsById>>
 >;
 
-export type _DeleteMutationError = ErrorType<unknown>;
+export type DeleteStoriesSubmissionsByIdMutationError = ErrorType<unknown>;
 
-export const useDelete = <TError = ErrorType<unknown>, TContext = unknown>(
+export const useDeleteStoriesSubmissionsById = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof _delete>>,
+      Awaited<ReturnType<typeof deleteStoriesSubmissionsById>>,
       TError,
       { id: string },
       TContext
@@ -351,24 +390,31 @@ export const useDelete = <TError = ErrorType<unknown>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof _delete>>,
+  Awaited<ReturnType<typeof deleteStoriesSubmissionsById>>,
   TError,
   { id: string },
   TContext
 > => {
-  return useMutation(getDeleteMutationOptions(options), queryClient);
+  return useMutation(
+    getDeleteStoriesSubmissionsByIdMutationOptions(options),
+    queryClient,
+  );
 };
-export type list1Response200 = {
-  data: List1200Item[];
+export type getStoriesSubmissionsResponse200 = {
+  data: GetStoriesSubmissions200Item[];
   status: 200;
 };
 
-export type list1ResponseSuccess = list1Response200 & {
-  headers: Headers;
-};
-export type list1Response = list1ResponseSuccess;
+export type getStoriesSubmissionsResponseSuccess =
+  getStoriesSubmissionsResponse200 & {
+    headers: Headers;
+  };
+export type getStoriesSubmissionsResponse =
+  getStoriesSubmissionsResponseSuccess;
 
-export const getList1Url = (params?: List1Params) => {
+export const getGetStoriesSubmissionsUrl = (
+  params?: GetStoriesSubmissionsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -384,64 +430,81 @@ export const getList1Url = (params?: List1Params) => {
     : `/api/v1/stories/submissions`;
 };
 
-export const list1 = async (
-  params?: List1Params,
+export const getStoriesSubmissions = async (
+  params?: GetStoriesSubmissionsParams,
   options?: RequestInit,
-): Promise<list1Response> => {
-  return customInstance<list1Response>(getList1Url(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getStoriesSubmissionsResponse> => {
+  return customInstance<getStoriesSubmissionsResponse>(
+    getGetStoriesSubmissionsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getList1QueryKey = (params?: List1Params) => {
+export const getGetStoriesSubmissionsQueryKey = (
+  params?: GetStoriesSubmissionsParams,
+) => {
   return [`/api/v1/stories/submissions`, ...(params ? [params] : [])] as const;
 };
 
-export const getList1QueryOptions = <
-  TData = Awaited<ReturnType<typeof list1>>,
+export const getGetStoriesSubmissionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStoriesSubmissions>>,
   TError = ErrorType<unknown>,
 >(
-  params?: List1Params,
+  params?: GetStoriesSubmissionsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissions>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getList1QueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetStoriesSubmissionsQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof list1>>> = ({
-    signal,
-  }) => list1(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getStoriesSubmissions>>
+  > = ({ signal }) =>
+    getStoriesSubmissions(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof list1>>,
+    Awaited<ReturnType<typeof getStoriesSubmissions>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type List1QueryResult = NonNullable<Awaited<ReturnType<typeof list1>>>;
-export type List1QueryError = ErrorType<unknown>;
+export type GetStoriesSubmissionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStoriesSubmissions>>
+>;
+export type GetStoriesSubmissionsQueryError = ErrorType<unknown>;
 
-export function useList1<
-  TData = Awaited<ReturnType<typeof list1>>,
+export function useGetStoriesSubmissions<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissions>>,
   TError = ErrorType<unknown>,
 >(
-  params: undefined | List1Params,
+  params: undefined | GetStoriesSubmissionsParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissions>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list1>>,
+          Awaited<ReturnType<typeof getStoriesSubmissions>>,
           TError,
-          Awaited<ReturnType<typeof list1>>
+          Awaited<ReturnType<typeof getStoriesSubmissions>>
         >,
         'initialData'
       >;
@@ -451,20 +514,24 @@ export function useList1<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useList1<
-  TData = Awaited<ReturnType<typeof list1>>,
+export function useGetStoriesSubmissions<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissions>>,
   TError = ErrorType<unknown>,
 >(
-  params?: List1Params,
+  params?: GetStoriesSubmissionsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissions>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list1>>,
+          Awaited<ReturnType<typeof getStoriesSubmissions>>,
           TError,
-          Awaited<ReturnType<typeof list1>>
+          Awaited<ReturnType<typeof getStoriesSubmissions>>
         >,
         'initialData'
       >;
@@ -474,14 +541,18 @@ export function useList1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useList1<
-  TData = Awaited<ReturnType<typeof list1>>,
+export function useGetStoriesSubmissions<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissions>>,
   TError = ErrorType<unknown>,
 >(
-  params?: List1Params,
+  params?: GetStoriesSubmissionsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissions>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -490,14 +561,18 @@ export function useList1<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useList1<
-  TData = Awaited<ReturnType<typeof list1>>,
+export function useGetStoriesSubmissions<
+  TData = Awaited<ReturnType<typeof getStoriesSubmissions>>,
   TError = ErrorType<unknown>,
 >(
-  params?: List1Params,
+  params?: GetStoriesSubmissionsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesSubmissions>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -505,7 +580,7 @@ export function useList1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getList1QueryOptions(params, options);
+  const queryOptions = getGetStoriesSubmissionsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

@@ -1,6 +1,8 @@
 import { loadEnvConfig } from '@next/env';
 import { defineConfig } from 'orval';
 
+import { stabilizeOperationIds } from './tools/orval/stabilize-operation-ids';
+
 loadEnvConfig(process.cwd());
 
 const apiBaseUrl = process.env.API_BASE_URL?.replace(/\/+$/, '');
@@ -15,6 +17,7 @@ export default defineConfig({
   api: {
     input: {
       target: OPENAPI_URL,
+      override: { transformer: stabilizeOperationIds },
     },
     output: {
       mode: 'tags-split',
@@ -36,6 +39,7 @@ export default defineConfig({
   zod: {
     input: {
       target: OPENAPI_URL,
+      override: { transformer: stabilizeOperationIds },
     },
     output: {
       mode: 'single',

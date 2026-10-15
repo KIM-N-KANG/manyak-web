@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { keepPreviousData } from '@tanstack/react-query';
 
-import { useGet2 } from '@/api/generated/endpoints/stories/stories';
+import { useGetStoriesGenres } from '@/api/generated/endpoints/stories/stories';
 import {
   GENRE_SEARCH_DEBOUNCE_MS,
   GENRE_SEARCH_LOADING_DELAY_MS,
@@ -24,7 +24,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 export function useGenreSearch() {
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
-  const results = useGet2(search ? { query: search } : undefined, {
+  const results = useGetStoriesGenres(search ? { query: search } : undefined, {
     query: { placeholderData: keepPreviousData },
   });
 

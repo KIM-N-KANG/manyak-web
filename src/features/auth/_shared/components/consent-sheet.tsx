@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { useRecordConsents } from '@/api/generated/endpoints/user/user';
+import { usePostUsersMeConsents } from '@/api/generated/endpoints/user/user';
 import type { UserConsentResponse } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Checkbox } from '@/components/motion/checkbox';
@@ -131,7 +131,7 @@ function useConsentForm({
     checkedState.versionKey === versionKey
       ? checkedState.keys
       : new Set<ConsentKey>();
-  const record = useRecordConsents({
+  const record = usePostUsersMeConsents({
     mutation: {
       onSuccess: (response) => {
         if (response.status === 200 && !hasPendingConsent(response.data)) {

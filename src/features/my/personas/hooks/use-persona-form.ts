@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import {
-  getListQueryKey as getPersonasQueryKey,
-  useCreate as useCreatePersona,
+  getGetUsersMePersonasQueryKey as getPersonasQueryKey,
+  usePostUsersMePersonas as useCreatePersona,
   useUpdate as useUpdatePersona,
 } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import type { UserPersonaResponse } from '@/api/generated/models';

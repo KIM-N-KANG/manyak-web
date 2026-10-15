@@ -74,7 +74,7 @@ export const getRefreshUrl = () => {
 };
 
 /**
- * 유효한 refresh 토큰으로 새 access+refresh를 발급합니다. 기존 refresh는 폐기(1회용)되며, 무효·만료·이미 회전된 토큰은 401로 응답합니다.
+ * 유효한 refresh 토큰으로 새 access+refresh를 발급합니다. 유예가 켜져 있고 회전 직후 유예 시간 안의 직전 토큰이면 현재 토큰이 더 회전되지 않은 경우 같은 refresh와 새 access를 200으로 반환합니다. 무효·만료·유예 조건 밖의 재사용은 401로 응답합니다.
  * @summary refresh 토큰 회전
  */
 export const refresh = async (
@@ -1241,26 +1241,28 @@ export function useConfirm<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type create2Response201 = {
+export type postAuthHandoffsResponse201 = {
   data: LoginHandoffCreateResponse;
   status: 201;
 };
 
-export type create2Response400 = {
+export type postAuthHandoffsResponse400 = {
   data: void;
   status: 400;
 };
 
-export type create2ResponseSuccess = create2Response201 & {
+export type postAuthHandoffsResponseSuccess = postAuthHandoffsResponse201 & {
   headers: Headers;
 };
-export type create2ResponseError = create2Response400 & {
+export type postAuthHandoffsResponseError = postAuthHandoffsResponse400 & {
   headers: Headers;
 };
 
-export type create2Response = create2ResponseSuccess | create2ResponseError;
+export type postAuthHandoffsResponse =
+  | postAuthHandoffsResponseSuccess
+  | postAuthHandoffsResponseError;
 
-export const getCreate2Url = () => {
+export const getPostAuthHandoffsUrl = () => {
   return `/api/v1/auth/handoffs`;
 };
 
@@ -1268,11 +1270,11 @@ export const getCreate2Url = () => {
  * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
  * @summary 로그인 핸드오프 생성
  */
-export const create2 = async (
+export const postAuthHandoffs = async (
   loginHandoffCreateRequest: LoginHandoffCreateRequest,
   options?: RequestInit,
-): Promise<create2Response> => {
-  return customInstance<create2Response>(getCreate2Url(), {
+): Promise<postAuthHandoffsResponse> => {
+  return customInstance<postAuthHandoffsResponse>(getPostAuthHandoffsUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1280,24 +1282,24 @@ export const create2 = async (
   });
 };
 
-export const getCreate2MutationOptions = <
+export const getPostAuthHandoffsMutationOptions = <
   TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof create2>>,
+    Awaited<ReturnType<typeof postAuthHandoffs>>,
     TError,
     { data: BodyType<LoginHandoffCreateRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof create2>>,
+  Awaited<ReturnType<typeof postAuthHandoffs>>,
   TError,
   { data: BodyType<LoginHandoffCreateRequest> },
   TContext
 > => {
-  const mutationKey = ['create2'];
+  const mutationKey = ['postAuthHandoffs'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -1307,30 +1309,33 @@ export const getCreate2MutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof create2>>,
+    Awaited<ReturnType<typeof postAuthHandoffs>>,
     { data: BodyType<LoginHandoffCreateRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return create2(data, requestOptions);
+    return postAuthHandoffs(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type Create2MutationResult = NonNullable<
-  Awaited<ReturnType<typeof create2>>
+export type PostAuthHandoffsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postAuthHandoffs>>
 >;
-export type Create2MutationBody = BodyType<LoginHandoffCreateRequest>;
-export type Create2MutationError = ErrorType<void>;
+export type PostAuthHandoffsMutationBody = BodyType<LoginHandoffCreateRequest>;
+export type PostAuthHandoffsMutationError = ErrorType<void>;
 
 /**
  * @summary 로그인 핸드오프 생성
  */
-export const useCreate2 = <TError = ErrorType<void>, TContext = unknown>(
+export const usePostAuthHandoffs = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof create2>>,
+      Awaited<ReturnType<typeof postAuthHandoffs>>,
       TError,
       { data: BodyType<LoginHandoffCreateRequest> },
       TContext
@@ -1339,12 +1344,12 @@ export const useCreate2 = <TError = ErrorType<void>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof create2>>,
+  Awaited<ReturnType<typeof postAuthHandoffs>>,
   TError,
   { data: BodyType<LoginHandoffCreateRequest> },
   TContext
 > => {
-  return useMutation(getCreate2MutationOptions(options), queryClient);
+  return useMutation(getPostAuthHandoffsMutationOptions(options), queryClient);
 };
 export type meResponse200 = {
   data: MeResponse;

@@ -6,8 +6,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 import {
-  useGetConsents1,
-  useRecordConsents1,
+  useGetGuestsConsents,
+  usePostGuestsConsents,
 } from '@/api/generated/endpoints/guest/guest';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ export function GuestConsentSheet({
   const [notice, setNotice] = useState<string | null>(null);
   const active = useRef(true);
   const submitting = useRef(false);
-  const consent = useGetConsents1({
+  const consent = useGetGuestsConsents({
     query: {
       staleTime: 0,
       gcTime: 0,
@@ -50,7 +50,7 @@ export function GuestConsentSheet({
       refetchOnReconnect: false,
     },
   });
-  const record = useRecordConsents1({ mutation: { retry: false } });
+  const record = usePostGuestsConsents({ mutation: { retry: false } });
   const status =
     consent.isSuccess && consent.data.status === 200
       ? parseGuestConsent(consent.data.data)

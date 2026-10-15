@@ -35,5 +35,10 @@ export interface CreateSimpleStoryRequest {
    * @nullable
    */
   artStyle?: string | null;
+  /**
+   * 생성 요청 기록과 같은 트랜잭션에서 삭제할 내 초안 ID
+   * @nullable
+   */
+  draftId?: string | null;
   regenerated?: boolean;
 }
