@@ -29,9 +29,29 @@ export function getGalleryPosition(progress: number, count: number): number {
 
 /**
  * 기능 소개 갤러리의 카드 전환 방식. `gallery`는 옆으로 흐르고, `deck`은 앞 카드가
- * 비스듬히 날아가며 뒤 카드가 올라오고, `stack`은 다음 카드가 아래에서 올라와 쌓인다.
+ * 왼쪽과 오른쪽으로 번갈아 비스듬히 날아가며 뒤 카드가 올라오고, `stack`은 다음 카드가 아래에서 올라와 쌓인다.
  */
 export type GalleryMotion = 'gallery' | 'deck' | 'stack';
+
+/** `deck` 전환에서 지나간 카드가 빠지는 쪽. */
+export type DeckExitSide = 'left' | 'right';
+
+/**
+ * `deck` 카드가 빠지는 쪽을 구한다. 첫 카드는 섹션이 정한 쪽으로, 다음 카드부터는
+ * 반대쪽과 번갈아 빠져 같은 방향으로만 날아가는 단조로움을 피한다.
+ *
+ * @param index 카드 순번
+ * @param firstExit 첫 카드가 빠지는 쪽
+ * @returns 카드가 빠지는 쪽
+ */
+export function getDeckExitSide(
+  index: number,
+  firstExit: DeckExitSide = 'left',
+): DeckExitSide {
+  if (index % 2 === 0) return firstExit;
+
+  return firstExit === 'left' ? 'right' : 'left';
+}
 
 /** 카드 한 장의 위치에 따른 표시 값. */
 export interface SlideMotionStyle {
@@ -51,11 +71,13 @@ const GALLERY_STEP = 'var(--slide-width) + var(--slide-gap)';
  *
  * @param motion 전환 방식
  * @param distance 카드 순번에서 지금 위치를 뺀 값. 음수면 지나간 카드다
+ * @param exitSide `deck`에서 지나간 카드가 빠지는 쪽
  * @returns 카드의 `transform`, 투명도, 캡션 투명도
  */
 export function getSlideMotionStyle(
   motion: GalleryMotion,
   distance: number,
+  exitSide: DeckExitSide = 'left',
 ): SlideMotionStyle {
   const nearness = Math.min(Math.abs(distance), 1);
   const captionOpacity =
@@ -64,9 +86,10 @@ export function getSlideMotionStyle(
   if (motion === 'deck') {
     if (distance < 0) {
       const away = Math.min(-distance, 1);
+      const sign = exitSide === 'left' ? -1 : 1;
 
       return {
-        transform: `translateX(-50%) translate(${-away * 115}%, ${-away * 6}%) rotate(${-away * 14}deg)`,
+        transform: `translateX(-50%) translate(${sign * away * 115}%, ${-away * 6}%) rotate(${sign * away * 14}deg)`,
         opacity: 1 - away,
         captionOpacity,
       };

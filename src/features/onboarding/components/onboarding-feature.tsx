@@ -26,7 +26,9 @@ import {
   type OnboardingSlide,
 } from '../constants';
 import {
+  type DeckExitSide,
   type GalleryMotion,
+  getDeckExitSide,
   getGalleryPosition,
   getSlideMotionStyle,
 } from '../utils/onboarding-gallery';
@@ -60,6 +62,7 @@ interface GallerySlideProps {
   index: number;
   slideCount: number;
   motion: GalleryMotion;
+  exitSide: DeckExitSide;
   position: MotionValue<number>;
   isCurrent: boolean;
   isNext: boolean;
@@ -70,12 +73,13 @@ function GallerySlide({
   index,
   slideCount,
   motion,
+  exitSide,
   position,
   isCurrent,
   isNext,
 }: GallerySlideProps) {
   const style = useTransform(position, (value) =>
-    getSlideMotionStyle(motion, index - value),
+    getSlideMotionStyle(motion, index - value, exitSide),
   );
   const transform = useTransform(style, ({ transform }) => transform);
   const opacity = useTransform(style, ({ opacity }) => opacity);
@@ -283,6 +287,7 @@ export function OnboardingFeature({
                 index={index}
                 slideCount={slideCount}
                 motion={feature.motion}
+                exitSide={getDeckExitSide(index, feature.deckFirstExit)}
                 position={position}
                 isCurrent={index === currentIndex}
                 isNext={index === currentIndex + 1}

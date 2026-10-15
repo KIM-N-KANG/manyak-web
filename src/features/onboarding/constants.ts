@@ -1,4 +1,7 @@
-import { type GalleryMotion } from './utils/onboarding-gallery';
+import {
+  type DeckExitSide,
+  type GalleryMotion,
+} from './utils/onboarding-gallery';
 
 export const ONBOARDING_SEEN_STORAGE_KEY = 'manyak:onboarding-seen';
 export const ONBOARDING_SEEN_VALUE = '1';
@@ -110,6 +113,8 @@ export interface OnboardingFeatureAction {
 export interface OnboardingFeature {
   key: OnboardingFeatureKey;
   motion: GalleryMotion;
+  /** `deck` 전환에서 첫 카드가 빠지는 쪽. 다음 카드부터 반대쪽과 번갈아 빠지며 기본은 왼쪽이다. */
+  deckFirstExit?: DeckExitSide;
   label: string;
   titleLines: readonly string[];
   description?: string;
@@ -249,6 +254,7 @@ export const ONBOARDING_FEATURES: readonly OnboardingFeature[] = [
   {
     key: 'originals',
     motion: 'deck',
+    deckFirstExit: 'right',
     action: { label: '오리지널 스토리 보기', type: 'browse' },
     label: '오리지널 스토리',
     titleLines: ['만들지 않아도', '바로 시작할 수 있어요'],

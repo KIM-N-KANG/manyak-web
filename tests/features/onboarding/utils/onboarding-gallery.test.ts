@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getDeckExitSide,
   getGalleryPosition,
   getSlideMotionStyle,
 } from '@/features/onboarding/utils/onboarding-gallery';
@@ -32,6 +33,21 @@ describe('getGalleryPosition', () => {
   });
 });
 
+describe('getDeckExitSide', () => {
+  it('첫 카드는 정한 쪽으로, 다음 카드부터는 반대쪽과 번갈아 빠진다', () => {
+    expect([0, 1, 2].map((index) => getDeckExitSide(index))).toEqual([
+      'left',
+      'right',
+      'left',
+    ]);
+    expect([0, 1, 2].map((index) => getDeckExitSide(index, 'right'))).toEqual([
+      'right',
+      'left',
+      'right',
+    ]);
+  });
+});
+
 describe('getSlideMotionStyle', () => {
   it('가로 갤러리는 옆 카드를 흐리게 하되 캡션은 카드와 함께 보인다', () => {
     const current = getSlideMotionStyle('gallery', 0);
@@ -51,6 +67,13 @@ describe('getSlideMotionStyle', () => {
     expect(passed.transform).toContain('translate(-115%');
     expect(behind.opacity).toBe(1);
     expect(behind.captionOpacity).toBe(0);
+  });
+
+  it('카드 덱이 오른쪽으로 빠지면 왼쪽과 대칭으로 날아간다', () => {
+    const passed = getSlideMotionStyle('deck', -1, 'right');
+
+    expect(passed.opacity).toBe(0);
+    expect(passed.transform).toContain('translate(115%, -6%) rotate(14deg)');
   });
 
   it('쌓이기는 다음 카드가 갤러리 칸 아래에서 불투명하게 올라오고 지나간 카드는 흐려진다', () => {
