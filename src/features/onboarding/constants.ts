@@ -20,6 +20,19 @@ export const ONBOARDING_DESCRIPTION =
   '키워드로 만든 스토리를 채팅으로 직접 이어가요';
 
 /**
+ * 푸터 Google Play 배지가 여는 스토어 페이지. `referrer`로 온보딩 푸터에서 온 설치를
+ * Play Console 획득 보고서에서 구분한다.
+ */
+export const ONBOARDING_PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=app.manyak&referrer=${encodeURIComponent(
+  'utm_source=manyak_web&utm_medium=onboarding_footer',
+)}`;
+
+/** Partner Marketing Hub에서 받은 한국어 "Google Play에서 다운로드" 배지다. 수정하지 않고 그대로 쓴다. */
+export const ONBOARDING_PLAY_STORE_BADGE_SRC = '/badges/google-play-ko.svg';
+
+export const ONBOARDING_PLAY_STORE_BADGE_ALT = 'Google Play에서 다운로드';
+
+/**
  * 첫 화면 이미지 카드에서 차례로 바뀌는 이미지. Android 로그인 화면 배경과 같은 이미지이며,
  * 테마와 무관해 라이트와 다크가 같이 쓴다.
  */
