@@ -274,7 +274,7 @@ export function CreationProgressCardBody({
           <div className="flex items-start gap-2">
             <p
               className={cn(
-                'line-clamp-2 min-w-0 flex-1 font-semibold wrap-break-word break-keep text-foreground-secondary',
+                'line-clamp-2 min-w-0 flex-1 font-medium wrap-break-word break-keep text-foreground-secondary',
                 'leading-6',
               )}>
               {isCompleting ? (
