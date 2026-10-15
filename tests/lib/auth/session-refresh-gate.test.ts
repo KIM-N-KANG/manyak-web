@@ -11,7 +11,7 @@ const FRESH = NOW + 30 * 60_000;
  * 테스트용 게이트를 만든다. 재발급은 resolve를 부를 때까지 진행 중으로 남는다.
  *
  * @param expiresAt 쿠키의 만료 시각
- * @returns 게이트, 재발급 mock, 진행 중 재발급 완료·거절 함수
+ * @returns 게이트, 재발급 mock, 진행 중 재발급의 완료 함수와 거절 함수
  */
 function setup(expiresAt: number | null) {
   let current = expiresAt;
