@@ -6,6 +6,7 @@ import { m, useReducedMotion } from 'motion/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { APP_PATH, type MainAppPath } from '@/constants/app-path';
+import { useSmoothScroll } from '@/hooks/use-smooth-scroll';
 import { track } from '@/observability/analytics';
 
 import { ONBOARDING_FEATURES, type OnboardingButtonSource } from '../constants';
@@ -44,6 +45,8 @@ export function OnboardingScreen() {
   const hasTrackedViewRef = useRef(false);
   const scrollerRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+
+  useSmoothScroll(scrollerRef, gate === 'eligible');
 
   useEffect(() => {
     if (hasChosenRef.current || gate === 'pending') {
