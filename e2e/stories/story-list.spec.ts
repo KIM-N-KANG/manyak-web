@@ -5,6 +5,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import {
   STORY_LIST_COPY,
   STORY_LIST_FILTER_OPTIONS,
@@ -223,8 +224,12 @@ test.describe('홈·제작 스토리 목록', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          { ...story('s1', '용의 계곡'), likeCount: 1234 },
-          story('s2', '별빛 항해'),
+          {
+            ...story('s1', '용의 계곡'),
+            likeCount: 1234,
+            visibility: 'PUBLIC',
+          },
+          { ...story('s2', '별빛 항해'), visibility: 'PRIVATE' },
         ]),
       });
     });
@@ -233,11 +238,23 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
+
+    // 좋아요 수와 턴 수는 표지 배지로, 하단 메타 줄은 공개 범위와 제작일로 보인다.
+    const covers = page.locator('[data-slot="aspect-ratio"]');
+
     await expect(
-      page.getByText(`${STORY_LIKE_COPY.count} 1.2K`, { exact: true }),
+      covers
+        .first()
+        .getByText(`${STORY_LIKE_COPY.count} 1.2K`, { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText(`${STORY_LIKE_COPY.count} 0`, { exact: true }),
+      covers.nth(1).getByText(`${STORY_LIKE_COPY.count} 0`, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(STORY_VISIBILITY_COPY.PUBLIC, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(STORY_VISIBILITY_COPY.PRIVATE, { exact: true }),
     ).toBeVisible();
     await page
       .getByRole('button', { name: '스토리 옵션 더보기' })

@@ -7,7 +7,7 @@ import type {
   StoryStartSettingResponse,
 } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
-import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import { formatDate } from '@/lib/format-date';
 
 import { StoryCharacters } from './story-characters';

@@ -4,8 +4,9 @@ import { useState } from 'react';
 
 import {
   Alert02Icon,
-  BubbleChatIcon,
   Calendar04Icon,
+  CircleLock01Icon,
+  CircleUnlock01Icon,
   Delete02Icon,
   Edit02Icon,
 } from '@hugeicons/core-free-icons';
@@ -19,17 +20,17 @@ import {
   CardOptionsSheet,
   type CardOptionsSheetItem,
 } from '@/components/common/card-options-sheet';
-import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
 import { StoryGenreBadges } from '@/features/stories/_shared/components/story-genre-badges';
+import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryReportSheet } from '@/features/stories/_shared/components/story-report-sheet';
-import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
+import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import { useDeleteCreatedStory } from '@/features/stories/_shared/hooks/use-delete-created-story';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
-import { formatCompactCount } from '@/lib/format-count';
 import { formatSameDayTimeOrDate } from '@/lib/format-date';
 import { leaveLayers } from '@/lib/history-layers';
 import { cn } from '@/lib/utils';
@@ -195,6 +196,11 @@ function CreatedStoryCardBody({
             <ManyakSymbolIcon className="size-8 text-foreground-tertiary" />
           </div>
         )}
+        {/* 표지가 홈 카드보다 좁아 큰 숫자 두 개가 한 줄에 안 들어가면 배지 단위로 줄바꿈한다. */}
+        <div className="absolute inset-x-2 bottom-2 flex flex-wrap items-center justify-end gap-1">
+          <StoryLikeCount likeCount={story.likeCount ?? 0} size="sm" />
+          <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
+        </div>
       </AspectRatio>
       <div
         className={cn(
@@ -234,24 +240,20 @@ function CreatedStoryCardBody({
             'mt-1 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-foreground-secondary',
             'text-sm',
           )}>
-          <div className="flex items-center gap-1 whitespace-nowrap">
-            <HeartOutlineIcon className={'size-3.5'} aria-hidden="true" />
-            <p>
-              <span className="sr-only">{STORY_LIKE_COPY.count} </span>
-              {formatCompactCount(story.likeCount ?? 0)}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 whitespace-nowrap">
-            <HugeiconsIcon
-              icon={BubbleChatIcon}
-              className={'size-3.5'}
-              aria-hidden="true"
-            />
-            <p>
-              <span className="sr-only">누적 턴 수 </span>
-              {formatCompactCount(story.turnCount ?? 0)}
-            </p>
-          </div>
+          {story.visibility ? (
+            <div className="flex items-center gap-1 whitespace-nowrap">
+              <HugeiconsIcon
+                icon={
+                  story.visibility === 'PUBLIC'
+                    ? CircleUnlock01Icon
+                    : CircleLock01Icon
+                }
+                className={'size-3.5'}
+                aria-hidden="true"
+              />
+              <p>{STORY_VISIBILITY_COPY[story.visibility]}</p>
+            </div>
+          ) : null}
           {story.createdAt ? (
             <div className="flex items-center gap-1 whitespace-nowrap">
               <HugeiconsIcon

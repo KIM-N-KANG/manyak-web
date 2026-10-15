@@ -20,7 +20,7 @@ export function CreatedStoryListSkeleton() {
               </div>
             </div>
             <div className="mt-1 flex justify-end gap-2">
-              <Skeleton className="h-5 w-8" />
+              <Skeleton className="h-5 w-12" />
               <Skeleton className="h-5 w-18" />
             </div>
           </div>
