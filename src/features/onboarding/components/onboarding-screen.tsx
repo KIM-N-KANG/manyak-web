@@ -95,7 +95,7 @@ export function OnboardingScreen() {
     <m.div
       initial="hidden"
       animate="show"
-      className="relative flex h-full min-h-0 flex-col break-keep [--onboarding-header-height:3.5rem]">
+      className="relative flex h-full min-h-0 flex-col [--onboarding-header-height:3.5rem]">
       <OnboardingHeader
         scrollerRef={scrollerRef}
         heroRef={heroRef}

@@ -107,7 +107,7 @@ export function MarketingConsentSheet() {
             <DrawerTitle className="text-xl leading-snug font-bold">
               {MARKETING_CONSENT_COPY.title}
             </DrawerTitle>
-            <DrawerDescription className="text-base leading-6 break-keep text-foreground-secondary">
+            <DrawerDescription className="text-base leading-6 text-foreground-secondary">
               {MARKETING_CONSENT_COPY.description}
             </DrawerDescription>
           </DrawerHeader>

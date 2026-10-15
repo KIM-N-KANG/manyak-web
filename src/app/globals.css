@@ -169,8 +169,24 @@
       var(--scrollbar-track, transparent);
   }
 
+  /* 한국어는 어절 단위로 줄을 바꾸고, 한 줄보다 긴 어절(URL, 반복 글자)만 넘칠 때 끊는다. */
   body {
     @apply relative bg-background text-foreground;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* 줄 배치만 다듬는다. text-wrap 단축 속성은 부모의 nowrap을 덮어쓰므로 longhand를 쓴다.
+     pretty는 글이 붙을 때마다 위쪽 줄까지 다시 배치하므로 스트리밍하는 채팅 본문(ChatMessageContent)은 auto로 되돌린다. */
+  p,
+  li {
+    text-wrap-style: pretty;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap-style: balance;
   }
 
   /* 문서 배경은 앱과 맞추고, 중앙 프레임 밖의 좌우 여백만 별도로 칠한다. */

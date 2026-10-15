@@ -15,7 +15,7 @@ export function TextContent({
   return (
     <p
       className={cn(
-        'wrap-break-word whitespace-pre-wrap',
+        'whitespace-pre-wrap',
         size === 'sm' ? 'text-sm' : 'text-base',
         font === 'maruburi' && 'font-maruburi leading-7',
       )}>

@@ -333,7 +333,7 @@ export function ConsentSheet({
             {errorHeader?.title ?? CONSENT_SHEET_COPY.title}
           </DrawerTitle>
           {errorHeader && (
-            <DrawerDescription className="text-base leading-relaxed break-keep">
+            <DrawerDescription className="text-base leading-relaxed">
               {errorHeader.description}
             </DrawerDescription>
           )}

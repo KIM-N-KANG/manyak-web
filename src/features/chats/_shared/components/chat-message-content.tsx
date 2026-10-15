@@ -14,7 +14,7 @@ export function ChatMessageContent({
   return (
     <p
       className={cn(
-        'font-maruburi text-base leading-7 wrap-break-word whitespace-pre-wrap',
+        'font-maruburi text-base leading-7 whitespace-pre-wrap [text-wrap-style:auto]',
         className,
       )}>
       <ChatTextSegments>{children}</ChatTextSegments>

@@ -179,7 +179,7 @@ export function NotificationSettingsScreen() {
         <div
           role="status"
           className="mx-4 mb-1 flex items-center gap-2 rounded-lg bg-muted py-2 pr-1 pl-4">
-          <p className="flex-1 text-sm break-keep">{banner}</p>
+          <p className="flex-1 text-sm">{banner}</p>
           {promptState === 'prompt' && (
             <Button
               type="button"
@@ -238,7 +238,7 @@ export function NotificationSettingsScreen() {
             <AlertDialogTitle>
               {PUSH_SETTINGS_COPY.deniedGuideTitle}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-left break-keep">
+            <AlertDialogDescription className="text-left">
               {PUSH_SETTINGS_COPY.deniedGuideDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
