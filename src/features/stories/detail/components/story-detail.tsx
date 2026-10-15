@@ -11,7 +11,7 @@ import {
   getStoryDetail,
   useGetStoryDetail,
 } from '@/api/generated/endpoints/stories/stories';
-import { useList as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
+import { useGetUsersMePersonas as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import type { StoryDetailResponse } from '@/api/generated/models';
 import { FullscreenImageViewer } from '@/components/common/fullscreen-image-viewer';
 import { RetryListStatus } from '@/components/common/retry-list-status';

@@ -9,12 +9,18 @@ vi.mock('@/observability/monitoring/sentry', () => ({
 import { customFetch } from '@/lib/custom-fetch';
 import { API_TIMEOUT_MS } from '@/lib/fetch-with-timeout';
 
-/** signal이 abort되면 그 reason으로 거부하는 fetch 목. */
+/** signal이 abort되면 그 reason으로 거부하는 fetch 목. 실제 fetch처럼 이미 중단된 signal은 바로 거부한다. */
 function abortAwareFetch() {
   return vi.fn(
     (_url: string, options: RequestInit) =>
       new Promise<Response>((_resolve, reject) => {
         const signal = options.signal;
+
+        if (signal?.aborted) {
+          reject(signal.reason);
+
+          return;
+        }
 
         signal?.addEventListener('abort', () => {
           reject(signal.reason);

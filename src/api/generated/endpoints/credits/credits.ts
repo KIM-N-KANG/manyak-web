@@ -174,46 +174,49 @@ export const usePurchase = <
 > => {
   return useMutation(getPurchaseMutationOptions(options), queryClient);
 };
-export type create1Response201 = {
+export type postUsersMeCreditsOrdersResponse201 = {
   data: CreateCreditOrderResponse;
   status: 201;
 };
 
-export type create1Response400 = {
+export type postUsersMeCreditsOrdersResponse400 = {
   data: ApiErrorResponse;
   status: 400;
 };
 
-export type create1Response401 = {
+export type postUsersMeCreditsOrdersResponse401 = {
   data: ApiErrorResponse;
   status: 401;
 };
 
-export type create1Response403 = {
+export type postUsersMeCreditsOrdersResponse403 = {
   data: ApiErrorResponse;
   status: 403;
 };
 
-export type create1Response503 = {
+export type postUsersMeCreditsOrdersResponse503 = {
   data: ApiErrorResponse;
   status: 503;
 };
 
-export type create1ResponseSuccess = create1Response201 & {
-  headers: Headers;
-};
-export type create1ResponseError = (
-  | create1Response400
-  | create1Response401
-  | create1Response403
-  | create1Response503
+export type postUsersMeCreditsOrdersResponseSuccess =
+  postUsersMeCreditsOrdersResponse201 & {
+    headers: Headers;
+  };
+export type postUsersMeCreditsOrdersResponseError = (
+  | postUsersMeCreditsOrdersResponse400
+  | postUsersMeCreditsOrdersResponse401
+  | postUsersMeCreditsOrdersResponse403
+  | postUsersMeCreditsOrdersResponse503
 ) & {
   headers: Headers;
 };
 
-export type create1Response = create1ResponseSuccess | create1ResponseError;
+export type postUsersMeCreditsOrdersResponse =
+  | postUsersMeCreditsOrdersResponseSuccess
+  | postUsersMeCreditsOrdersResponseError;
 
-export const getCreate1Url = () => {
+export const getPostUsersMeCreditsOrdersUrl = () => {
   return `/api/v1/users/me/credits/orders`;
 };
 
@@ -221,36 +224,39 @@ export const getCreate1Url = () => {
  * PENDING 주문과 그로블 결제창 URL을 반환합니다. 주문 생성만으로 이프를 적립하지 않습니다.
  * @summary 웹 이프 충전 주문 생성
  */
-export const create1 = async (
+export const postUsersMeCreditsOrders = async (
   createCreditOrderRequest: CreateCreditOrderRequest,
   options?: RequestInit,
-): Promise<create1Response> => {
-  return customInstance<create1Response>(getCreate1Url(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(createCreditOrderRequest),
-  });
+): Promise<postUsersMeCreditsOrdersResponse> => {
+  return customInstance<postUsersMeCreditsOrdersResponse>(
+    getPostUsersMeCreditsOrdersUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(createCreditOrderRequest),
+    },
+  );
 };
 
-export const getCreate1MutationOptions = <
+export const getPostUsersMeCreditsOrdersMutationOptions = <
   TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof create1>>,
+    Awaited<ReturnType<typeof postUsersMeCreditsOrders>>,
     TError,
     { data: BodyType<CreateCreditOrderRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof create1>>,
+  Awaited<ReturnType<typeof postUsersMeCreditsOrders>>,
   TError,
   { data: BodyType<CreateCreditOrderRequest> },
   TContext
 > => {
-  const mutationKey = ['create1'];
+  const mutationKey = ['postUsersMeCreditsOrders'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -260,33 +266,34 @@ export const getCreate1MutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof create1>>,
+    Awaited<ReturnType<typeof postUsersMeCreditsOrders>>,
     { data: BodyType<CreateCreditOrderRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return create1(data, requestOptions);
+    return postUsersMeCreditsOrders(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type Create1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof create1>>
+export type PostUsersMeCreditsOrdersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postUsersMeCreditsOrders>>
 >;
-export type Create1MutationBody = BodyType<CreateCreditOrderRequest>;
-export type Create1MutationError = ErrorType<ApiErrorResponse>;
+export type PostUsersMeCreditsOrdersMutationBody =
+  BodyType<CreateCreditOrderRequest>;
+export type PostUsersMeCreditsOrdersMutationError = ErrorType<ApiErrorResponse>;
 
 /**
  * @summary 웹 이프 충전 주문 생성
  */
-export const useCreate1 = <
+export const usePostUsersMeCreditsOrders = <
   TError = ErrorType<ApiErrorResponse>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof create1>>,
+      Awaited<ReturnType<typeof postUsersMeCreditsOrders>>,
       TError,
       { data: BodyType<CreateCreditOrderRequest> },
       TContext
@@ -295,12 +302,15 @@ export const useCreate1 = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof create1>>,
+  Awaited<ReturnType<typeof postUsersMeCreditsOrders>>,
   TError,
   { data: BodyType<CreateCreditOrderRequest> },
   TContext
 > => {
-  return useMutation(getCreate1MutationOptions(options), queryClient);
+  return useMutation(
+    getPostUsersMeCreditsOrdersMutationOptions(options),
+    queryClient,
+  );
 };
 export type claimAttendanceResponse200 = {
   data: CreditAttendanceResponse;
@@ -790,31 +800,37 @@ export function useGetMyCreditTransactions<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type get1Response200 = {
+export type getUsersMeCreditsOrdersByOrderIdResponse200 = {
   data: CreditOrderResponse;
   status: 200;
 };
 
-export type get1Response401 = {
+export type getUsersMeCreditsOrdersByOrderIdResponse401 = {
   data: ApiErrorResponse;
   status: 401;
 };
 
-export type get1Response404 = {
+export type getUsersMeCreditsOrdersByOrderIdResponse404 = {
   data: ApiErrorResponse;
   status: 404;
 };
 
-export type get1ResponseSuccess = get1Response200 & {
-  headers: Headers;
-};
-export type get1ResponseError = (get1Response401 | get1Response404) & {
+export type getUsersMeCreditsOrdersByOrderIdResponseSuccess =
+  getUsersMeCreditsOrdersByOrderIdResponse200 & {
+    headers: Headers;
+  };
+export type getUsersMeCreditsOrdersByOrderIdResponseError = (
+  | getUsersMeCreditsOrdersByOrderIdResponse401
+  | getUsersMeCreditsOrdersByOrderIdResponse404
+) & {
   headers: Headers;
 };
 
-export type get1Response = get1ResponseSuccess | get1ResponseError;
+export type getUsersMeCreditsOrdersByOrderIdResponse =
+  | getUsersMeCreditsOrdersByOrderIdResponseSuccess
+  | getUsersMeCreditsOrdersByOrderIdResponseError;
 
-export const getGet1Url = (orderId: string) => {
+export const getGetUsersMeCreditsOrdersByOrderIdUrl = (orderId: string) => {
   return `/api/v1/users/me/credits/orders/${orderId}`;
 };
 
@@ -822,67 +838,88 @@ export const getGet1Url = (orderId: string) => {
  * 결제 복귀 후 완료 여부 확인용입니다. 없는 주문과 타인 주문은 모두 404입니다.
  * @summary 본인 이프 충전 주문 조회
  */
-export const get1 = async (
+export const getUsersMeCreditsOrdersByOrderId = async (
   orderId: string,
   options?: RequestInit,
-): Promise<get1Response> => {
-  return customInstance<get1Response>(getGet1Url(orderId), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getUsersMeCreditsOrdersByOrderIdResponse> => {
+  return customInstance<getUsersMeCreditsOrdersByOrderIdResponse>(
+    getGetUsersMeCreditsOrdersByOrderIdUrl(orderId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getGet1QueryKey = (orderId: string) => {
+export const getGetUsersMeCreditsOrdersByOrderIdQueryKey = (
+  orderId: string,
+) => {
   return [`/api/v1/users/me/credits/orders/${orderId}`] as const;
 };
 
-export const getGet1QueryOptions = <
-  TData = Awaited<ReturnType<typeof get1>>,
+export const getGetUsersMeCreditsOrdersByOrderIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGet1QueryKey(orderId);
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetUsersMeCreditsOrdersByOrderIdQueryKey(orderId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof get1>>> = ({
-    signal,
-  }) => get1(orderId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>
+  > = ({ signal }) =>
+    getUsersMeCreditsOrdersByOrderId(orderId, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: orderId !== null && orderId !== undefined,
     ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type Get1QueryResult = NonNullable<Awaited<ReturnType<typeof get1>>>;
-export type Get1QueryError = ErrorType<ApiErrorResponse>;
+export type GetUsersMeCreditsOrdersByOrderIdQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>
+>;
+export type GetUsersMeCreditsOrdersByOrderIdQueryError =
+  ErrorType<ApiErrorResponse>;
 
-export function useGet1<
-  TData = Awaited<ReturnType<typeof get1>>,
+export function useGetUsersMeCreditsOrdersByOrderId<
+  TData = Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get1>>,
+          Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
           TError,
-          Awaited<ReturnType<typeof get1>>
+          Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>
         >,
         'initialData'
       >;
@@ -892,20 +929,24 @@ export function useGet1<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet1<
-  TData = Awaited<ReturnType<typeof get1>>,
+export function useGetUsersMeCreditsOrdersByOrderId<
+  TData = Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get1>>,
+          Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
           TError,
-          Awaited<ReturnType<typeof get1>>
+          Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>
         >,
         'initialData'
       >;
@@ -915,14 +956,18 @@ export function useGet1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet1<
-  TData = Awaited<ReturnType<typeof get1>>,
+export function useGetUsersMeCreditsOrdersByOrderId<
+  TData = Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -934,14 +979,18 @@ export function useGet1<
  * @summary 본인 이프 충전 주문 조회
  */
 
-export function useGet1<
-  TData = Awaited<ReturnType<typeof get1>>,
+export function useGetUsersMeCreditsOrdersByOrderId<
+  TData = Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
   orderId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeCreditsOrdersByOrderId>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -949,7 +998,10 @@ export function useGet1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGet1QueryOptions(orderId, options);
+  const queryOptions = getGetUsersMeCreditsOrdersByOrderIdQueryOptions(
+    orderId,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

@@ -76,8 +76,8 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
         </div>
       </AspectRatio>
       {/* 모든 줄이 1줄 고정이라 카드 높이가 저절로 같아진다 — 텍스트 영역에 고정 높이를 두지 않는다. */}
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <p className="line-clamp-1 leading-6 font-semibold wrap-break-word">
+      <div className="flex min-w-0 flex-col gap-0.5 px-1">
+        <p className="line-clamp-1 leading-6 font-medium">
           {storyId != null ? (
             <Link
               href={APP_PATH.STORY_DETAIL(storyId)}
@@ -97,7 +97,7 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
           )}
         </p>
         {story.author?.nickname != null && (
-          <p className="line-clamp-1 text-sm wrap-break-word text-foreground-secondary">
+          <p className="line-clamp-1 text-sm text-foreground-secondary">
             @{story.author.nickname}
           </p>
         )}

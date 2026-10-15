@@ -29,9 +29,9 @@ import type {
   BatchStoryRequest,
   CreateGeneralStoryRequest,
   GenreCatalogResponse,
-  Get2Params,
   GetLorebooksParams,
   GetPublicStoriesParams,
+  GetStoriesGenresParams,
   ImagePresignRequest,
   ImagePresignResponse,
   LorebookListItemResponse,
@@ -2272,26 +2272,28 @@ export function useGetLorebooks<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type get2Response200 = {
+export type getStoriesGenresResponse200 = {
   data: GenreCatalogResponse;
   status: 200;
 };
 
-export type get2Response400 = {
+export type getStoriesGenresResponse400 = {
   data: ApiErrorResponse;
   status: 400;
 };
 
-export type get2ResponseSuccess = get2Response200 & {
+export type getStoriesGenresResponseSuccess = getStoriesGenresResponse200 & {
   headers: Headers;
 };
-export type get2ResponseError = get2Response400 & {
+export type getStoriesGenresResponseError = getStoriesGenresResponse400 & {
   headers: Headers;
 };
 
-export type get2Response = get2ResponseSuccess | get2ResponseError;
+export type getStoriesGenresResponse =
+  | getStoriesGenresResponseSuccess
+  | getStoriesGenresResponseError;
 
-export const getGet2Url = (params?: Get2Params) => {
+export const getGetStoriesGenresUrl = (params?: GetStoriesGenresParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -2311,64 +2313,80 @@ export const getGet2Url = (params?: Get2Params) => {
  * 게스트 허용. query 원문 30자 이하, 공백과 대소문자를 무시하고 초성 및 별칭 검색. 빈 질의는 전체, 대표 목록은 항상 반환합니다.
  * @summary 제공 장르 조회와 검색
  */
-export const get2 = async (
-  params?: Get2Params,
+export const getStoriesGenres = async (
+  params?: GetStoriesGenresParams,
   options?: RequestInit,
-): Promise<get2Response> => {
-  return customInstance<get2Response>(getGet2Url(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getStoriesGenresResponse> => {
+  return customInstance<getStoriesGenresResponse>(
+    getGetStoriesGenresUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getGet2QueryKey = (params?: Get2Params) => {
+export const getGetStoriesGenresQueryKey = (
+  params?: GetStoriesGenresParams,
+) => {
   return [`/api/v1/stories/genres`, ...(params ? [params] : [])] as const;
 };
 
-export const getGet2QueryOptions = <
-  TData = Awaited<ReturnType<typeof get2>>,
+export const getGetStoriesGenresQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStoriesGenres>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
-  params?: Get2Params,
+  params?: GetStoriesGenresParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesGenres>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGet2QueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetStoriesGenresQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof get2>>> = ({
-    signal,
-  }) => get2(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getStoriesGenres>>
+  > = ({ signal }) => getStoriesGenres(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof get2>>,
+    Awaited<ReturnType<typeof getStoriesGenres>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type Get2QueryResult = NonNullable<Awaited<ReturnType<typeof get2>>>;
-export type Get2QueryError = ErrorType<ApiErrorResponse>;
+export type GetStoriesGenresQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStoriesGenres>>
+>;
+export type GetStoriesGenresQueryError = ErrorType<ApiErrorResponse>;
 
-export function useGet2<
-  TData = Awaited<ReturnType<typeof get2>>,
+export function useGetStoriesGenres<
+  TData = Awaited<ReturnType<typeof getStoriesGenres>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
-  params: undefined | Get2Params,
+  params: undefined | GetStoriesGenresParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesGenres>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get2>>,
+          Awaited<ReturnType<typeof getStoriesGenres>>,
           TError,
-          Awaited<ReturnType<typeof get2>>
+          Awaited<ReturnType<typeof getStoriesGenres>>
         >,
         'initialData'
       >;
@@ -2378,20 +2396,24 @@ export function useGet2<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet2<
-  TData = Awaited<ReturnType<typeof get2>>,
+export function useGetStoriesGenres<
+  TData = Awaited<ReturnType<typeof getStoriesGenres>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
-  params?: Get2Params,
+  params?: GetStoriesGenresParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesGenres>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get2>>,
+          Awaited<ReturnType<typeof getStoriesGenres>>,
           TError,
-          Awaited<ReturnType<typeof get2>>
+          Awaited<ReturnType<typeof getStoriesGenres>>
         >,
         'initialData'
       >;
@@ -2401,14 +2423,18 @@ export function useGet2<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet2<
-  TData = Awaited<ReturnType<typeof get2>>,
+export function useGetStoriesGenres<
+  TData = Awaited<ReturnType<typeof getStoriesGenres>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
-  params?: Get2Params,
+  params?: GetStoriesGenresParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesGenres>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -2420,14 +2446,18 @@ export function useGet2<
  * @summary 제공 장르 조회와 검색
  */
 
-export function useGet2<
-  TData = Awaited<ReturnType<typeof get2>>,
+export function useGetStoriesGenres<
+  TData = Awaited<ReturnType<typeof getStoriesGenres>>,
   TError = ErrorType<ApiErrorResponse>,
 >(
-  params?: Get2Params,
+  params?: GetStoriesGenresParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get2>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesGenres>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -2435,7 +2465,7 @@ export function useGet2<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGet2QueryOptions(params, options);
+  const queryOptions = getGetStoriesGenresQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -2445,17 +2475,18 @@ export function useGet2<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type get3Response200 = {
+export type getStoriesArtStylesResponse200 = {
   data: ArtStyleCatalogItem[];
   status: 200;
 };
 
-export type get3ResponseSuccess = get3Response200 & {
-  headers: Headers;
-};
-export type get3Response = get3ResponseSuccess;
+export type getStoriesArtStylesResponseSuccess =
+  getStoriesArtStylesResponse200 & {
+    headers: Headers;
+  };
+export type getStoriesArtStylesResponse = getStoriesArtStylesResponseSuccess;
 
-export const getGet3Url = () => {
+export const getGetStoriesArtStylesUrl = () => {
   return `/api/v1/stories/art-styles`;
 };
 
@@ -2463,57 +2494,72 @@ export const getGet3Url = () => {
  * 게스트 허용. 활성 화풍만 노출 순서 오름차순으로 반환합니다.
  * @summary 제공 화풍 목록 조회
  */
-export const get3 = async (options?: RequestInit): Promise<get3Response> => {
-  return customInstance<get3Response>(getGet3Url(), {
-    ...options,
-    method: 'GET',
-  });
+export const getStoriesArtStyles = async (
+  options?: RequestInit,
+): Promise<getStoriesArtStylesResponse> => {
+  return customInstance<getStoriesArtStylesResponse>(
+    getGetStoriesArtStylesUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getGet3QueryKey = () => {
+export const getGetStoriesArtStylesQueryKey = () => {
   return [`/api/v1/stories/art-styles`] as const;
 };
 
-export const getGet3QueryOptions = <
-  TData = Awaited<ReturnType<typeof get3>>,
+export const getGetStoriesArtStylesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStoriesArtStyles>>,
   TError = ErrorType<unknown>,
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getStoriesArtStyles>>,
+      TError,
+      TData
+    >
   >;
   request?: SecondParameter<typeof customInstance>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGet3QueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetStoriesArtStylesQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof get3>>> = ({
-    signal,
-  }) => get3({ signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getStoriesArtStyles>>
+  > = ({ signal }) => getStoriesArtStyles({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof get3>>,
+    Awaited<ReturnType<typeof getStoriesArtStyles>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type Get3QueryResult = NonNullable<Awaited<ReturnType<typeof get3>>>;
-export type Get3QueryError = ErrorType<unknown>;
+export type GetStoriesArtStylesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStoriesArtStyles>>
+>;
+export type GetStoriesArtStylesQueryError = ErrorType<unknown>;
 
-export function useGet3<
-  TData = Awaited<ReturnType<typeof get3>>,
+export function useGetStoriesArtStyles<
+  TData = Awaited<ReturnType<typeof getStoriesArtStyles>>,
   TError = ErrorType<unknown>,
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesArtStyles>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get3>>,
+          Awaited<ReturnType<typeof getStoriesArtStyles>>,
           TError,
-          Awaited<ReturnType<typeof get3>>
+          Awaited<ReturnType<typeof getStoriesArtStyles>>
         >,
         'initialData'
       >;
@@ -2523,19 +2569,23 @@ export function useGet3<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet3<
-  TData = Awaited<ReturnType<typeof get3>>,
+export function useGetStoriesArtStyles<
+  TData = Awaited<ReturnType<typeof getStoriesArtStyles>>,
   TError = ErrorType<unknown>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesArtStyles>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get3>>,
+          Awaited<ReturnType<typeof getStoriesArtStyles>>,
           TError,
-          Awaited<ReturnType<typeof get3>>
+          Awaited<ReturnType<typeof getStoriesArtStyles>>
         >,
         'initialData'
       >;
@@ -2545,13 +2595,17 @@ export function useGet3<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGet3<
-  TData = Awaited<ReturnType<typeof get3>>,
+export function useGetStoriesArtStyles<
+  TData = Awaited<ReturnType<typeof getStoriesArtStyles>>,
   TError = ErrorType<unknown>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesArtStyles>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -2563,13 +2617,17 @@ export function useGet3<
  * @summary 제공 화풍 목록 조회
  */
 
-export function useGet3<
-  TData = Awaited<ReturnType<typeof get3>>,
+export function useGetStoriesArtStyles<
+  TData = Awaited<ReturnType<typeof getStoriesArtStyles>>,
   TError = ErrorType<unknown>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof get3>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getStoriesArtStyles>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -2577,7 +2635,7 @@ export function useGet3<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGet3QueryOptions(options);
+  const queryOptions = getGetStoriesArtStylesQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

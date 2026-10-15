@@ -3,8 +3,8 @@ import type { Page, Route } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import { START_SETTING_INFO_COPY } from '@/features/stories/detail/constants/start-setting-copy';
-import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
 
 import { mockMemberSession } from '../fixtures/auth';
 import {

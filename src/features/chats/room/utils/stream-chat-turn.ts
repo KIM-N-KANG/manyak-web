@@ -7,6 +7,7 @@ import type {
   RegenerateChatRequest,
 } from '@/api/generated/models';
 import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
+import { waitForFreshSession } from '@/lib/auth/session-refresh-gate';
 import {
   FetchError,
   parseErrorResponseBody,
@@ -28,6 +29,8 @@ async function postSseStream(
   body: unknown,
   signal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
+  await waitForFreshSession();
+
   const response = await fetch(resolveApiProxyUrl(url), {
     method: 'POST',
     headers: {

@@ -34,7 +34,7 @@ export function GeneralStoryLengthRatioField({
         value={descriptionRatio}
         onValueChange={onChange}
       />
-      <FieldDescription className="break-keep text-foreground-secondary">
+      <FieldDescription className="text-foreground-secondary">
         {GENERAL_STORY_LENGTH_RATIO_COPY.description}
       </FieldDescription>
     </Field>

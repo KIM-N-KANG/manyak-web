@@ -7,6 +7,75 @@
  */
 import * as zod from 'zod';
 
+export const GetUsersMeStoryDraftsByDraftIdParams = zod.object({
+  draftId: zod.string(),
+});
+
+export const GetUsersMeStoryDraftsByDraftIdResponse = zod.unknown();
+
+export const PutParams = zod.object({
+  draftId: zod.string(),
+});
+
+export const PutBody = zod.object({
+  mode: zod.enum(['SIMPLE', 'GENERAL']).optional(),
+  stage: zod.enum(['GENERAL_DRAFT', 'KEYWORD_DRAFT', 'STORY_DRAFT']).optional(),
+  schemaVersion: zod.number().optional(),
+  payload: zod
+    .object({
+      container: zod.boolean().optional(),
+      number: zod.boolean().optional(),
+      string: zod.boolean().optional(),
+      floatingPointNumber: zod.boolean().optional(),
+      missingNode: zod.boolean().optional(),
+      integralNumber: zod.boolean().optional(),
+      nodeType: zod
+        .enum([
+          'ARRAY',
+          'BINARY',
+          'BOOLEAN',
+          'MISSING',
+          'NULL',
+          'NUMBER',
+          'OBJECT',
+          'POJO',
+          'STRING',
+        ])
+        .optional(),
+      int: zod.boolean().optional(),
+      long: zod.boolean().optional(),
+      short: zod.boolean().optional(),
+      double: zod.boolean().optional(),
+      bigDecimal: zod.boolean().optional(),
+      bigInteger: zod.boolean().optional(),
+      valueNode: zod.boolean().optional(),
+      object: zod.boolean().optional(),
+      pojo: zod.boolean().optional(),
+      textual: zod.boolean().optional(),
+      boolean: zod.boolean().optional(),
+      binary: zod.boolean().optional(),
+      array: zod.boolean().optional(),
+      empty: zod.boolean().optional(),
+      null: zod.boolean().optional(),
+      float: zod.boolean().optional(),
+      embeddedValue: zod.boolean().optional(),
+    })
+    .optional(),
+  baseVersion: zod.number().nullish(),
+  title: zod.string().nullish(),
+  oneLineIntro: zod.string().nullish(),
+  thumbnailObjectKey: zod.string().nullish(),
+  generationRequestId: zod.uuid().nullish(),
+});
+
+export const PutResponse = zod.unknown();
+
+export const DeleteUsersMeStoryDraftsByDraftIdParams = zod.object({
+  draftId: zod.string(),
+});
+
+export const DeleteUsersMeStoryDraftsByDraftIdResponse = zod.void();
+
 /**
  * 앱이 FCM에서 발급받은 토큰을 요청자의 기기로 등록합니다(KNK-1131). 같은 토큰 재등록은 갱신(멱등)이고, 다른 회원이 같은 토큰을 등록하면 소유자가 옮겨갑니다(한 기기에서 계정 전환). 한 회원이 기기 여러 대를 등록할 수 있습니다. 인증 필수이며 게스트는 대상이 아닙니다.
  * @summary 디바이스 푸시 토큰 등록
@@ -81,11 +150,11 @@ export const UpdatePushSettingsBody = zod
 
 export const UpdatePushSettingsResponse = zod.unknown();
 
-export const GetParams = zod.object({
+export const GetStoriesSubmissionsByIdParams = zod.object({
   id: zod.string(),
 });
 
-export const GetResponse = zod.unknown();
+export const GetStoriesSubmissionsByIdResponse = zod.unknown();
 
 export const ResubmitParams = zod.object({
   id: zod.string(),
@@ -340,6 +409,10 @@ export const ResubmitBody = zod
       .optional()
       .describe('인물 목록(최대 6명, 선택). 이름은 스토리 안에서 유일하다.'),
     protagonistName: zod.string().nullish(),
+    draftId: zod
+      .uuid()
+      .nullish()
+      .describe('접수와 같은 트랜잭션에서 삭제할 내 초안 ID'),
   })
   .describe(
     '일반 제작 스토리 등록 요청(단발). 검수 제출본으로 접수하며 승인 후 저장한다.',
@@ -347,11 +420,11 @@ export const ResubmitBody = zod
 
 export const ResubmitResponse = zod.void();
 
-export const _DeleteParams = zod.object({
+export const DeleteStoriesSubmissionsByIdParams = zod.object({
   id: zod.string(),
 });
 
-export const _DeleteResponse = zod.void();
+export const DeleteStoriesSubmissionsByIdResponse = zod.void();
 
 /**
  * 간편 제작으로 생성된 스토리라인에 좋아요/나빠요 평가를 남깁니다. 같은 스토리라인을 다시 평가하면 값이 갱신됩니다(대상당 1개). 취소는 DELETE를 사용합니다.
@@ -394,14 +467,14 @@ export const ReceiveBody = zod.string();
 
 export const ReceiveResponse = zod.unknown();
 
-export const ListResponse = zod.unknown();
+export const GetUsersMePersonasResponse = zod.unknown();
 
-export const CreateBody = zod.object({
+export const PostUsersMePersonasBody = zod.object({
   name: zod.string().nullish(),
   description: zod.string().nullish(),
 });
 
-export const CreateResponse = zod.void();
+export const PostUsersMePersonasResponse = zod.void();
 
 /**
  * 다른 회원의 초대 코드를 제출해 초대자·제출자 양쪽에 초대 보상 이프를 적립합니다(스펙 §4-3-7, KNK-567). 적립액과 월 상한은 **운영 중 조정 가능한 정책값**이라 이 문서가 계약이 아닙니다 — 적립액은 응답 amount로, 월 상한은 GET /users/me/invite의 monthlyRewardLimit으로 확인하세요(KNK-1056). 제출 자격은 계정당 평생 1회이며, 코드는 trim·대문자 정규화 후 비교합니다. 초대자가 월 상한에 도달했으면 초대자 적립만 건너뛰고 제출자는 적립하며 응답은 200입니다.
@@ -448,17 +521,17 @@ export const PurchaseResponse = zod.unknown();
  * PENDING 주문과 그로블 결제창 URL을 반환합니다. 주문 생성만으로 이프를 적립하지 않습니다.
  * @summary 웹 이프 충전 주문 생성
  */
-export const create1BodyProductIdMin = 0;
-export const create1BodyProductIdMax = 32;
+export const postUsersMeCreditsOrdersBodyProductIdMin = 0;
+export const postUsersMeCreditsOrdersBodyProductIdMax = 32;
 
-export const Create1Body = zod.object({
+export const PostUsersMeCreditsOrdersBody = zod.object({
   productId: zod
     .string()
-    .min(create1BodyProductIdMin)
-    .max(create1BodyProductIdMax),
+    .min(postUsersMeCreditsOrdersBodyProductIdMin)
+    .max(postUsersMeCreditsOrdersBodyProductIdMax),
 });
 
-export const Create1Response = zod.void();
+export const PostUsersMeCreditsOrdersResponse = zod.void();
 
 /**
  * 출석 보상 이프를 지급합니다. KST 자정 기준 1일 1회이며, 오늘 이미 받았으면 rewarded=false로 200을 반환합니다(멱등). 인증 필수입니다.
@@ -470,13 +543,13 @@ export const ClaimAttendanceResponse = zod.unknown();
  * 현행 문서 버전별 동의 필요 여부를 반환합니다. 만 14세 이상 확인 버전은 1입니다. 미동의 회원의 다른 API를 차단하지 않으며 정지 계정은 조회도 403입니다.
  * @summary 약관·개인정보 처리방침 동의 조회
  */
-export const GetConsentsResponse = zod.unknown();
+export const GetUsersMeConsentsResponse = zod.unknown();
 
 /**
  * 명시적으로 수락한 현행 버전만 기록합니다. 최소 한 항목이 필요하며 누락·null은 미제출입니다. 전부 검증한 뒤 저장하고 같은 버전의 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
  * @summary 약관·개인정보 처리방침 동의 기록
  */
-export const RecordConsentsBody = zod
+export const PostUsersMeConsentsBody = zod
   .object({
     terms: zod.string().nullish().describe('수락한 이용약관 버전'),
     privacy: zod.string().nullish().describe('수락한 개인정보 처리방침 버전'),
@@ -486,7 +559,7 @@ export const RecordConsentsBody = zod
     '명시적으로 수락한 버전만 제출. 누락·null은 미제출. 회원 동의 API는 최소 한 항목, 인증 완료는 현재 필요한 모든 항목 필수',
   );
 
-export const RecordConsentsResponse = zod.unknown();
+export const PostUsersMeConsentsResponse = zod.unknown();
 
 /**
  * 스토리를 신고합니다. 인증 필수이며(게스트 불가) 같은 스토리를 다시 신고해도 같은 201로 응답합니다(멱등 — 행이 늘거나 알림이 중복 발송되지 않습니다). 읽을 수 없는 스토리(타인의 비공개·초안)는 존재 여부를 노출하지 않기 위해 404로 응답합니다. 계정 상태로는 정지 계정이 403, 탈퇴 계정이 401입니다(§4-5 B20).
@@ -619,6 +692,10 @@ export const CreateSimpleStoryBody = zod
       .describe(
         '활성 화풍 코드. 누락·null이면 ANIME. 미등록·비활성·빈 문자열은 400. NONE도 기존 제작가 유지',
       ),
+    draftId: zod
+      .uuid()
+      .nullish()
+      .describe('생성 요청 기록과 같은 트랜잭션에서 삭제할 내 초안 ID'),
     regenerated: zod.boolean().optional(),
   })
   .describe('간편 제작 스토리 생성 요청');
@@ -1037,6 +1114,10 @@ export const CreateGeneralStoryBody = zod
       .optional()
       .describe('인물 목록(최대 6명, 선택). 이름은 스토리 안에서 유일하다.'),
     protagonistName: zod.string().nullish(),
+    draftId: zod
+      .uuid()
+      .nullish()
+      .describe('접수와 같은 트랜잭션에서 삭제할 내 초안 ID'),
   })
   .describe(
     '일반 제작 스토리 등록 요청(단발). 검수 제출본으로 접수하며 승인 후 저장한다.',
@@ -1069,27 +1150,27 @@ export const GetStoriesByIdsResponse = zod.unknown();
  * 인증 없이 디바이스별 현행 문서의 동의 필요 여부를 반환합니다. 미동의 게스트의 다른 API를 차단하지 않으며 회원 동의로 이관하지 않습니다.
  * @summary 게스트 개인정보 수집 동의 조회
  */
-export const GetConsents1Header = zod.object({
+export const GetGuestsConsentsHeader = zod.object({
   'X-Manyak-Device-Id': zod.string().describe('체험 한도와 같은 디바이스 ID'),
 });
 
-export const GetConsents1Response = zod.unknown();
+export const GetGuestsConsentsResponse = zod.unknown();
 
 /**
  * guestPrivacy의 현행 버전만 기록하며 같은 버전 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
  * @summary 게스트 개인정보 수집 동의 기록
  */
-export const RecordConsents1Header = zod.object({
+export const PostGuestsConsentsHeader = zod.object({
   'X-Manyak-Device-Id': zod.string().describe('체험 한도와 같은 디바이스 ID'),
 });
 
-export const RecordConsents1Body = zod
+export const PostGuestsConsentsBody = zod
   .object({
     guestPrivacy: zod.string().nullish().describe('수락한 현행 문서 버전'),
   })
   .describe('명시적으로 수락한 게스트 개인정보 수집 및 이용 동의 버전');
 
-export const RecordConsents1Response = zod.unknown();
+export const PostGuestsConsentsResponse = zod.unknown();
 
 /**
  * 사용자 피드백을 등록합니다. 본문만 필수이며, 답변용 이메일은 선택입니다. platform/appVersion 은 앱이 자동으로 채워 보내는 메타이며, 로그인 상태면 서버가 user_id 를 채웁니다(인증 도입 후).
@@ -1287,7 +1368,7 @@ export const GetChatsByIdsBody = zod
 export const GetChatsByIdsResponse = zod.unknown();
 
 /**
- * 유효한 refresh 토큰으로 새 access+refresh를 발급합니다. 기존 refresh는 폐기(1회용)되며, 무효·만료·이미 회전된 토큰은 401로 응답합니다.
+ * 유효한 refresh 토큰으로 새 access+refresh를 발급합니다. 유예가 켜져 있고 회전 직후 유예 시간 안의 직전 토큰이면 현재 토큰이 더 회전되지 않은 경우 같은 refresh와 새 access를 200으로 반환합니다. 무효·만료·유예 조건 밖의 재사용은 401로 응답합니다.
  * @summary refresh 토큰 회전
  */
 
@@ -1345,7 +1426,7 @@ export const StartResponse = zod
               .string()
               .optional()
               .describe(
-                'refresh 토큰(불투명 랜덤 문자열). access 만료 시 \/token\/refresh 로 회전한다. 1회용이며 회전 후 폐기된다.',
+                'refresh 토큰(불투명 랜덤 문자열). access 만료 시 \/token\/refresh 로 회전한다. 1회용이며 회전 후 유예 조건을 만족하는 재요청에만 같은 회전 결과를 반환한다.',
               ),
             expiresIn: zod
               .number()
@@ -1453,7 +1534,7 @@ export const CompleteResponse = zod
       .string()
       .optional()
       .describe(
-        'refresh 토큰(불투명 랜덤 문자열). access 만료 시 \/token\/refresh 로 회전한다. 1회용이며 회전 후 폐기된다.',
+        'refresh 토큰(불투명 랜덤 문자열). access 만료 시 \/token\/refresh 로 회전한다. 1회용이며 회전 후 유예 조건을 만족하는 재요청에만 같은 회전 결과를 반환한다.',
       ),
     expiresIn: zod
       .number()
@@ -1636,44 +1717,44 @@ export const ConfirmResponse = zod.unknown();
  * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
  * @summary 로그인 핸드오프 생성
  */
-export const Create2Header = zod.object({
+export const PostAuthHandoffsHeader = zod.object({
   'X-Manyak-Device-Id': zod.string().optional(),
 });
 
-export const create2BodyStoryIdsMin = 0;
-export const create2BodyStoryIdsMax = 100;
+export const postAuthHandoffsBodyStoryIdsMin = 0;
+export const postAuthHandoffsBodyStoryIdsMax = 100;
 
-export const create2BodyChatIdsMin = 0;
-export const create2BodyChatIdsMax = 100;
+export const postAuthHandoffsBodyChatIdsMin = 0;
+export const postAuthHandoffsBodyChatIdsMax = 100;
 
-export const create2BodyCallbackPathMin = 0;
-export const create2BodyCallbackPathMax = 512;
+export const postAuthHandoffsBodyCallbackPathMin = 0;
+export const postAuthHandoffsBodyCallbackPathMax = 512;
 
-export const create2BodyCallbackPathRegExp = new RegExp(
+export const postAuthHandoffsBodyCallbackPathRegExp = new RegExp(
   '^/(?![/\\\\])[^\\x00-\\x1F]*$',
 );
 
-export const Create2Body = zod
+export const PostAuthHandoffsBody = zod
   .object({
     storyIds: zod
       .array(zod.string())
-      .min(create2BodyStoryIdsMin)
-      .max(create2BodyStoryIdsMax)
+      .min(postAuthHandoffsBodyStoryIdsMin)
+      .max(postAuthHandoffsBodyStoryIdsMax)
       .optional()
       .describe(
         '이관 대상 스토리 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용',
       ),
     chatIds: zod
       .array(zod.string())
-      .min(create2BodyChatIdsMin)
-      .max(create2BodyChatIdsMax)
+      .min(postAuthHandoffsBodyChatIdsMin)
+      .max(postAuthHandoffsBodyChatIdsMax)
       .optional()
       .describe('이관 대상 채팅 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용'),
     callbackPath: zod
       .string()
-      .min(create2BodyCallbackPathMin)
-      .max(create2BodyCallbackPathMax)
-      .regex(create2BodyCallbackPathRegExp)
+      .min(postAuthHandoffsBodyCallbackPathMin)
+      .max(postAuthHandoffsBodyCallbackPathMax)
+      .regex(postAuthHandoffsBodyCallbackPathRegExp)
       .describe('로그인 후 복귀할 앱 내 상대 경로'),
     sourceApp: zod
       .enum(['kakaotalk', 'instagram', 'threads'])
@@ -1682,7 +1763,7 @@ export const Create2Body = zod
   })
   .describe('로그인 핸드오프 생성 요청');
 
-export const Create2Response = zod.void();
+export const PostAuthHandoffsResponse = zod.void();
 
 /**
  * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
@@ -1713,11 +1794,11 @@ export const UpdateProfileBody = zod
 
 export const UpdateProfileResponse = zod.unknown();
 
-export const Delete1Params = zod.object({
+export const DeleteUsersMePersonasByPersonaIdParams = zod.object({
   personaId: zod.string(),
 });
 
-export const Delete1Response = zod.void();
+export const DeleteUsersMePersonasByPersonaIdResponse = zod.void();
 
 export const UpdateParams = zod.object({
   personaId: zod.string(),
@@ -2020,6 +2101,8 @@ export const GetTrialsHeader = zod.object({
 
 export const GetTrialsResponse = zod.unknown();
 
+export const GetUsersMeStoryDraftsResponse = zod.unknown();
+
 /**
  * 요청자가 소유한 스토리 카드를 생성 최신순으로 반환합니다. 소프트 삭제는 제외하며, limit(기본 100, 최대 100)으로 상한을 둡니다.
  * @summary 내 스토리 목록 조회
@@ -2074,11 +2157,11 @@ export const GetMyCreditTransactionsResponse = zod.unknown();
  * 결제 복귀 후 완료 여부 확인용입니다. 없는 주문과 타인 주문은 모두 404입니다.
  * @summary 본인 이프 충전 주문 조회
  */
-export const Get1Params = zod.object({
+export const GetUsersMeCreditsOrdersByOrderIdParams = zod.object({
   orderId: zod.uuid(),
 });
 
-export const Get1Response = zod.unknown();
+export const GetUsersMeCreditsOrdersByOrderIdResponse = zod.unknown();
 
 /**
  * 요청자가 소유한 채팅 카드를 최근 활동순으로 반환합니다. 소프트 삭제는 제외하며, limit(기본 100, 최대 100)으로 상한을 둡니다.
@@ -2134,13 +2217,13 @@ export const GetEditFormParams = zod.object({
 
 export const GetEditFormResponse = zod.unknown();
 
-export const list1QueryLimitDefault = 100;
+export const getStoriesSubmissionsQueryLimitDefault = 100;
 
-export const List1QueryParams = zod.object({
-  limit: zod.number().default(list1QueryLimitDefault),
+export const GetStoriesSubmissionsQueryParams = zod.object({
+  limit: zod.number().default(getStoriesSubmissionsQueryLimitDefault),
 });
 
-export const List1Response = zod.unknown();
+export const GetStoriesSubmissionsResponse = zod.unknown();
 
 /**
  * 간편 제작 키워드 선택 화면에서 사용할 사전 정의 태그 목록을 조회합니다.
@@ -2200,17 +2283,17 @@ export const GetLorebooksResponse = zod.unknown();
  * 게스트 허용. query 원문 30자 이하, 공백과 대소문자를 무시하고 초성 및 별칭 검색. 빈 질의는 전체, 대표 목록은 항상 반환합니다.
  * @summary 제공 장르 조회와 검색
  */
-export const Get2QueryParams = zod.object({
+export const GetStoriesGenresQueryParams = zod.object({
   query: zod.string().optional(),
 });
 
-export const Get2Response = zod.unknown();
+export const GetStoriesGenresResponse = zod.unknown();
 
 /**
  * 게스트 허용. 활성 화풍만 노출 순서 오름차순으로 반환합니다.
  * @summary 제공 화풍 목록 조회
  */
-export const Get3Response = zod.unknown();
+export const GetStoriesArtStylesResponse = zod.unknown();
 
 /**
  * 공유 토큰으로 공유된 채팅을 조회합니다(스펙 §4-3-11). **인증이 필요하지 않습니다** — 추측 불가 UUID 링크 보유가 접근 수단입니다. 발급 시점 커트라인 이하의 턴만 반환하므로 이후 원본이 진행돼도 내용은 변하지 않으며, 커트라인 이내 턴이 재생성되면 활성본이 반영됩니다. 스토리 제목은 열람자가 그 스토리를 읽을 수 있을 때만 조회 시점의 값이고, 비공개로 전환됐거나 삭제됐으면 채팅 시작 시점의 스냅샷입니다(KNK-1059). 프롤로그도 같은 규칙입니다. 열람에 불필요한 choices·suggestedInputs와 원본 chatId는 싣지 않습니다.

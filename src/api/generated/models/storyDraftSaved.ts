@@ -6,4 +6,9 @@
  * OpenAPI spec version: v1
  */
 
-export type Get200 = { [key: string]: unknown };
+export interface StoryDraftSaved {
+  draftId?: string;
+  version?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

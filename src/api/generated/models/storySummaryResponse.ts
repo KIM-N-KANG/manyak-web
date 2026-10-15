@@ -7,6 +7,7 @@
  */
 import type { StoryAuthorResponse } from './storyAuthorResponse';
 import type { StorySummaryResponseStatus } from './storySummaryResponseStatus';
+import type { StorySummaryResponseVisibility } from './storySummaryResponseVisibility';
 
 /**
  * 스토리 목록 항목
@@ -32,6 +33,8 @@ export interface StorySummaryResponse {
   likeCount?: number;
   /** 등록 상태 */
   status?: StorySummaryResponseStatus;
+  /** 스토리 공개 여부. 상세 응답과 같은 공개 범위입니다. */
+  visibility?: StorySummaryResponseVisibility;
   /** 생성 시각 */
   createdAt?: string;
   isOriginal?: boolean;

@@ -27,36 +27,37 @@ import type { UserConsentRequest, UserConsentResponse } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type getConsentsResponse200 = {
+export type getUsersMeConsentsResponse200 = {
   data: UserConsentResponse;
   status: 200;
 };
 
-export type getConsentsResponse401 = {
+export type getUsersMeConsentsResponse401 = {
   data: void;
   status: 401;
 };
 
-export type getConsentsResponse403 = {
+export type getUsersMeConsentsResponse403 = {
   data: void;
   status: 403;
 };
 
-export type getConsentsResponseSuccess = getConsentsResponse200 & {
-  headers: Headers;
-};
-export type getConsentsResponseError = (
-  | getConsentsResponse401
-  | getConsentsResponse403
+export type getUsersMeConsentsResponseSuccess =
+  getUsersMeConsentsResponse200 & {
+    headers: Headers;
+  };
+export type getUsersMeConsentsResponseError = (
+  | getUsersMeConsentsResponse401
+  | getUsersMeConsentsResponse403
 ) & {
   headers: Headers;
 };
 
-export type getConsentsResponse =
-  | getConsentsResponseSuccess
-  | getConsentsResponseError;
+export type getUsersMeConsentsResponse =
+  | getUsersMeConsentsResponseSuccess
+  | getUsersMeConsentsResponseError;
 
-export const getGetConsentsUrl = () => {
+export const getGetUsersMeConsentsUrl = () => {
   return `/api/v1/users/me/consents`;
 };
 
@@ -64,61 +65,72 @@ export const getGetConsentsUrl = () => {
  * 현행 문서 버전별 동의 필요 여부를 반환합니다. 만 14세 이상 확인 버전은 1입니다. 미동의 회원의 다른 API를 차단하지 않으며 정지 계정은 조회도 403입니다.
  * @summary 약관·개인정보 처리방침 동의 조회
  */
-export const getConsents = async (
+export const getUsersMeConsents = async (
   options?: RequestInit,
-): Promise<getConsentsResponse> => {
-  return customInstance<getConsentsResponse>(getGetConsentsUrl(), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getUsersMeConsentsResponse> => {
+  return customInstance<getUsersMeConsentsResponse>(
+    getGetUsersMeConsentsUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getGetConsentsQueryKey = () => {
+export const getGetUsersMeConsentsQueryKey = () => {
   return [`/api/v1/users/me/consents`] as const;
 };
 
-export const getGetConsentsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getConsents>>,
+export const getGetUsersMeConsentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUsersMeConsents>>,
   TError = ErrorType<void>,
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof getConsents>>, TError, TData>
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getUsersMeConsents>>,
+      TError,
+      TData
+    >
   >;
   request?: SecondParameter<typeof customInstance>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetConsentsQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetUsersMeConsentsQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getConsents>>> = ({
-    signal,
-  }) => getConsents({ signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUsersMeConsents>>
+  > = ({ signal }) => getUsersMeConsents({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getConsents>>,
+    Awaited<ReturnType<typeof getUsersMeConsents>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetConsentsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getConsents>>
+export type GetUsersMeConsentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUsersMeConsents>>
 >;
-export type GetConsentsQueryError = ErrorType<void>;
+export type GetUsersMeConsentsQueryError = ErrorType<void>;
 
-export function useGetConsents<
-  TData = Awaited<ReturnType<typeof getConsents>>,
+export function useGetUsersMeConsents<
+  TData = Awaited<ReturnType<typeof getUsersMeConsents>>,
   TError = ErrorType<void>,
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeConsents>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getConsents>>,
+          Awaited<ReturnType<typeof getUsersMeConsents>>,
           TError,
-          Awaited<ReturnType<typeof getConsents>>
+          Awaited<ReturnType<typeof getUsersMeConsents>>
         >,
         'initialData'
       >;
@@ -128,19 +140,23 @@ export function useGetConsents<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetConsents<
-  TData = Awaited<ReturnType<typeof getConsents>>,
+export function useGetUsersMeConsents<
+  TData = Awaited<ReturnType<typeof getUsersMeConsents>>,
   TError = ErrorType<void>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeConsents>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getConsents>>,
+          Awaited<ReturnType<typeof getUsersMeConsents>>,
           TError,
-          Awaited<ReturnType<typeof getConsents>>
+          Awaited<ReturnType<typeof getUsersMeConsents>>
         >,
         'initialData'
       >;
@@ -150,13 +166,17 @@ export function useGetConsents<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetConsents<
-  TData = Awaited<ReturnType<typeof getConsents>>,
+export function useGetUsersMeConsents<
+  TData = Awaited<ReturnType<typeof getUsersMeConsents>>,
   TError = ErrorType<void>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeConsents>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -168,13 +188,17 @@ export function useGetConsents<
  * @summary 약관·개인정보 처리방침 동의 조회
  */
 
-export function useGetConsents<
-  TData = Awaited<ReturnType<typeof getConsents>>,
+export function useGetUsersMeConsents<
+  TData = Awaited<ReturnType<typeof getUsersMeConsents>>,
   TError = ErrorType<void>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMeConsents>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -182,7 +206,7 @@ export function useGetConsents<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGetConsentsQueryOptions(options);
+  const queryOptions = getGetUsersMeConsentsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -192,42 +216,43 @@ export function useGetConsents<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type recordConsentsResponse200 = {
+export type postUsersMeConsentsResponse200 = {
   data: UserConsentResponse;
   status: 200;
 };
 
-export type recordConsentsResponse400 = {
+export type postUsersMeConsentsResponse400 = {
   data: void;
   status: 400;
 };
 
-export type recordConsentsResponse401 = {
+export type postUsersMeConsentsResponse401 = {
   data: void;
   status: 401;
 };
 
-export type recordConsentsResponse403 = {
+export type postUsersMeConsentsResponse403 = {
   data: void;
   status: 403;
 };
 
-export type recordConsentsResponseSuccess = recordConsentsResponse200 & {
-  headers: Headers;
-};
-export type recordConsentsResponseError = (
-  | recordConsentsResponse400
-  | recordConsentsResponse401
-  | recordConsentsResponse403
+export type postUsersMeConsentsResponseSuccess =
+  postUsersMeConsentsResponse200 & {
+    headers: Headers;
+  };
+export type postUsersMeConsentsResponseError = (
+  | postUsersMeConsentsResponse400
+  | postUsersMeConsentsResponse401
+  | postUsersMeConsentsResponse403
 ) & {
   headers: Headers;
 };
 
-export type recordConsentsResponse =
-  | recordConsentsResponseSuccess
-  | recordConsentsResponseError;
+export type postUsersMeConsentsResponse =
+  | postUsersMeConsentsResponseSuccess
+  | postUsersMeConsentsResponseError;
 
-export const getRecordConsentsUrl = () => {
+export const getPostUsersMeConsentsUrl = () => {
   return `/api/v1/users/me/consents`;
 };
 
@@ -235,36 +260,39 @@ export const getRecordConsentsUrl = () => {
  * 명시적으로 수락한 현행 버전만 기록합니다. 최소 한 항목이 필요하며 누락·null은 미제출입니다. 전부 검증한 뒤 저장하고 같은 버전의 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
  * @summary 약관·개인정보 처리방침 동의 기록
  */
-export const recordConsents = async (
+export const postUsersMeConsents = async (
   userConsentRequest: UserConsentRequest,
   options?: RequestInit,
-): Promise<recordConsentsResponse> => {
-  return customInstance<recordConsentsResponse>(getRecordConsentsUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(userConsentRequest),
-  });
+): Promise<postUsersMeConsentsResponse> => {
+  return customInstance<postUsersMeConsentsResponse>(
+    getPostUsersMeConsentsUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(userConsentRequest),
+    },
+  );
 };
 
-export const getRecordConsentsMutationOptions = <
+export const getPostUsersMeConsentsMutationOptions = <
   TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof recordConsents>>,
+    Awaited<ReturnType<typeof postUsersMeConsents>>,
     TError,
     { data: BodyType<UserConsentRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof recordConsents>>,
+  Awaited<ReturnType<typeof postUsersMeConsents>>,
   TError,
   { data: BodyType<UserConsentRequest> },
   TContext
 > => {
-  const mutationKey = ['recordConsents'];
+  const mutationKey = ['postUsersMeConsents'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -274,30 +302,33 @@ export const getRecordConsentsMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof recordConsents>>,
+    Awaited<ReturnType<typeof postUsersMeConsents>>,
     { data: BodyType<UserConsentRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return recordConsents(data, requestOptions);
+    return postUsersMeConsents(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type RecordConsentsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof recordConsents>>
+export type PostUsersMeConsentsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postUsersMeConsents>>
 >;
-export type RecordConsentsMutationBody = BodyType<UserConsentRequest>;
-export type RecordConsentsMutationError = ErrorType<void>;
+export type PostUsersMeConsentsMutationBody = BodyType<UserConsentRequest>;
+export type PostUsersMeConsentsMutationError = ErrorType<void>;
 
 /**
  * @summary 약관·개인정보 처리방침 동의 기록
  */
-export const useRecordConsents = <TError = ErrorType<void>, TContext = unknown>(
+export const usePostUsersMeConsents = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof recordConsents>>,
+      Awaited<ReturnType<typeof postUsersMeConsents>>,
       TError,
       { data: BodyType<UserConsentRequest> },
       TContext
@@ -306,10 +337,13 @@ export const useRecordConsents = <TError = ErrorType<void>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof recordConsents>>,
+  Awaited<ReturnType<typeof postUsersMeConsents>>,
   TError,
   { data: BodyType<UserConsentRequest> },
   TContext
 > => {
-  return useMutation(getRecordConsentsMutationOptions(options), queryClient);
+  return useMutation(
+    getPostUsersMeConsentsMutationOptions(options),
+    queryClient,
+  );
 };

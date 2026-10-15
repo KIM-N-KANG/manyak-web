@@ -7,7 +7,7 @@ import type {
   StoryStartSettingResponse,
 } from '@/api/generated/models';
 import { TextContent } from '@/components/common/text-content';
-import { STORY_VISIBILITY_COPY } from '@/features/stories/detail/constants/story-visibility';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import { formatDate } from '@/lib/format-date';
 
 import { StoryCharacters } from './story-characters';
@@ -66,13 +66,11 @@ export function StoryInfoSection({
       <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-2">
-            <h1 ref={titleRef} className="text-2xl font-bold wrap-break-word">
+            <h1 ref={titleRef} className="text-2xl font-bold">
               {story.title}
             </h1>
             {story.oneLineIntro ? (
-              <p className="wrap-break-word text-foreground-secondary">
-                {story.oneLineIntro}
-              </p>
+              <p className="text-foreground-secondary">{story.oneLineIntro}</p>
             ) : null}
           </div>
           {genres.length > 0 ? <StoryDetailTags genres={genres} /> : null}

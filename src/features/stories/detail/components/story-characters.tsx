@@ -158,7 +158,7 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
               </button>
             ) : null}
           </div>
-          <div className="border-t border-border px-4 py-3.5 break-keep">
+          <div className="border-t border-border px-4 py-3.5">
             <h3 className="leading-6 font-semibold">{selected.name}</h3>
             {/* 소개 없이 만든 기존·일반 제작 인물은 description이 null이라 생략한다 */}
             {selected.description ? (

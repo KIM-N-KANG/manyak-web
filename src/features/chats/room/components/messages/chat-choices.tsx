@@ -47,7 +47,7 @@ export function ChatChoices({
       {showsHint && (
         <m.div
           variants={itemVariants}
-          className="flex flex-col gap-0.5 text-right text-xs break-keep text-foreground-secondary">
+          className="flex flex-col gap-0.5 text-right text-xs text-foreground-secondary">
           <p>AI가 추천하는 입력이에요</p>
           <p>
             탭하면 바로 전송되고,{' '}
@@ -79,7 +79,7 @@ export function ChatChoices({
             variant="secondary"
             onClick={() => onSend(choice, index, sourceTurnId)}
             className="h-auto min-h-10 w-4/5 justify-start text-left font-maruburi leading-[1.75] font-normal whitespace-normal">
-            <span className="min-w-0 wrap-break-word">
+            <span className="min-w-0">
               <ChatTextSegments>{choice}</ChatTextSegments>
             </span>
           </Button>

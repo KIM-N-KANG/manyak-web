@@ -16,8 +16,8 @@ import {
   useUpdateStory,
 } from '@/api/generated/endpoints/stories/stories';
 import {
-  get as getStorySubmission,
-  getList1QueryKey as getStorySubmissionsQueryKey,
+  getGetStoriesSubmissionsQueryKey as getStorySubmissionsQueryKey,
+  getStoriesSubmissionsById as getStorySubmission,
   useResubmit,
 } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';

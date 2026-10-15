@@ -6,4 +6,4 @@
  * OpenAPI spec version: v1
  */
 
-export type List1200Item = { [key: string]: unknown };
+export type GetStoriesSubmissions200Item = { [key: string]: unknown };

@@ -266,7 +266,7 @@ export function CreationProgressCardBody({
       </AspectRatio>
       <div
         className={cn(
-          'flex min-w-0 flex-1 flex-col justify-between py-0.5',
+          'flex min-w-0 flex-1 flex-col justify-between py-1',
           'min-h-[10.6667rem]',
         )}>
         <div>
@@ -274,7 +274,7 @@ export function CreationProgressCardBody({
           <div className="flex items-start gap-2">
             <p
               className={cn(
-                'line-clamp-2 min-w-0 flex-1 font-semibold wrap-break-word break-keep text-foreground-secondary',
+                'line-clamp-2 min-w-0 flex-1 font-medium text-foreground-secondary',
                 'leading-6',
               )}>
               {isCompleting ? (
@@ -285,7 +285,7 @@ export function CreationProgressCardBody({
             </p>
             {action ? <div className="shrink-0">{action}</div> : null}
           </div>
-          <p className="mt-1 line-clamp-2 text-sm leading-5 wrap-break-word break-keep text-foreground-secondary">
+          <p className="mt-1 line-clamp-2 text-sm leading-5 text-foreground-secondary">
             {description}
           </p>
         </div>

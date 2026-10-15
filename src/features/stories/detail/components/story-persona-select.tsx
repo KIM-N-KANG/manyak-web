@@ -5,7 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { useList as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
+import { useGetUsersMePersonas as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import {
   Select,
   SelectContent,

@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import type { get1Response } from '@/api/generated/endpoints/credits/credits';
+import type { getUsersMeCreditsOrdersByOrderIdResponse } from '@/api/generated/endpoints/credits/credits';
 import {
   CREDIT_ORDER_MAX_ATTEMPTS,
   resolveCreditOrderConfirmation,
 } from '@/features/my/credits/utils/credit-order-confirmation';
 import { FetchError } from '@/lib/custom-fetch';
 
-function order(status: 'PENDING' | 'COMPLETED' | 'REFUNDED'): get1Response {
+function order(
+  status: 'PENDING' | 'COMPLETED' | 'REFUNDED',
+): getUsersMeCreditsOrdersByOrderIdResponse {
   return {
     status: 200,
     headers: new Headers(),

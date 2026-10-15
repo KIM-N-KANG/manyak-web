@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import {
-  getList1QueryKey as getStorySubmissionsQueryKey,
-  useDelete as useDeleteStorySubmission,
+  getGetStoriesSubmissionsQueryKey as getStorySubmissionsQueryKey,
+  useDeleteStoriesSubmissionsById as useDeleteStorySubmission,
 } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';
 import { Badge } from '@/components/ui/badge';
