@@ -94,10 +94,22 @@ test.describe('온보딩', () => {
       header.getByRole('button', { includeHidden: true }),
     ).toHaveCount(1);
 
-    // 첫 화면을 지나 내려가면 헤더가 나타나 맨 위 로고 버튼을 누를 수 있다.
-    await page.getByRole('main').evaluate((main) => {
-      main.scrollTo({ top: main.querySelector('section')!.offsetHeight });
-    });
+    // 첫 화면 아래쪽 스크롤 신호를 누르면 첫 화면을 지나 첫 기능 소개까지 내려간다.
+    // 내려가면 스크롤 신호는 사라지고 헤더가 나타나 맨 위 로고 버튼을 누를 수 있다.
+    const scrollCue = page.getByRole('button', { name: '아래로 이동' });
+
+    await scrollCue.click();
+    await expect
+      .poll(() =>
+        page
+          .getByRole('main')
+          .evaluate(
+            (main) =>
+              main.scrollTop === main.querySelector('section')!.offsetHeight,
+          ),
+      )
+      .toBe(true);
+    await expect(scrollCue).toBeHidden();
     await expect(page.getByRole('banner')).toBeVisible();
     await expect
       .poll(() =>
