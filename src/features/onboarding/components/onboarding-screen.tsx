@@ -100,7 +100,7 @@ export function OnboardingScreen() {
       />
       <main
         ref={scrollerRef}
-        className="[container-type:size] min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        className="[container-type:size] relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <OnboardingHero scrollerRef={scrollerRef} sectionRef={heroRef} />
         {ONBOARDING_FEATURES.map((feature, index) => (
           <OnboardingFeature
