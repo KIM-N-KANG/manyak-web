@@ -152,14 +152,14 @@ function ChatCardBody({ chat, action }: ChatCardBodyProps) {
         ratio={3 / 4}
         className={cn(
           'shrink-0 overflow-hidden rounded-sm border border-border bg-muted',
-          'w-12',
+          'w-14',
         )}>
         {thumbnailUrl ? (
           <Image
             src={thumbnailUrl}
             alt=""
             fill
-            sizes={'48px'}
+            sizes={'56px'}
             className="object-cover"
           />
         ) : (
@@ -170,7 +170,8 @@ function ChatCardBody({ chat, action }: ChatCardBodyProps) {
           </div>
         )}
       </AspectRatio>
-      <div className="flex min-w-0 flex-1 flex-col gap-1 py-0.5">
+      {/* 글 영역이 표지 높이까지 늘어나 메타 줄이 표지 아랫변에 맞는다. */}
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 self-stretch py-0.5">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-start gap-2">
             <p
