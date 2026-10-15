@@ -1,3 +1,8 @@
+import {
+  type DeckExitSide,
+  type GalleryMotion,
+} from './utils/onboarding-gallery';
+
 export const ONBOARDING_SEEN_STORAGE_KEY = 'manyak:onboarding-seen';
 export const ONBOARDING_SEEN_VALUE = '1';
 
@@ -15,147 +20,265 @@ export const ONBOARDING_TITLE_LINES = [
 ] as const;
 
 export const ONBOARDING_DESCRIPTION =
-  'AI와 함께 나만의 다음 장면을 만들어보세요';
+  '키워드로 만든 스토리를 채팅으로 직접 이어가요';
 
 /**
- * 온보딩 랜딩 섹션에서 보여주는 화면 스크린샷 한 장.
- * 크기를 생략하면 전체 화면 스크린샷 공통 크기(1082×2402)를 쓴다.
+ * 푸터 Google Play 배지가 여는 스토어 페이지. `referrer`로 온보딩 푸터에서 온 설치를
+ * Play Console 획득 보고서에서 구분한다.
  */
-export interface OnboardingScene {
+export const ONBOARDING_PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=app.manyak&referrer=${encodeURIComponent(
+  'utm_source=manyak_web&utm_medium=onboarding_footer',
+)}`;
+
+/** Partner Marketing Hub에서 받은 한국어 "Google Play에서 다운로드" 배지다. 수정하지 않고 그대로 쓴다. */
+export const ONBOARDING_PLAY_STORE_BADGE_SRC = '/badges/google-play-ko.svg';
+
+export const ONBOARDING_PLAY_STORE_BADGE_ALT = 'Google Play에서 다운로드';
+
+/**
+ * 첫 화면 이미지 카드에서 차례로 바뀌는 이미지. Android 로그인 화면 배경과 같은 이미지이며,
+ * 테마와 무관해 라이트와 다크가 같이 쓴다.
+ */
+export const ONBOARDING_HERO_IMAGES = [
+  '/onboarding/hero-1.webp',
+  '/onboarding/hero-2.webp',
+  '/onboarding/hero-3.webp',
+  '/onboarding/hero-4.webp',
+  '/onboarding/hero-5.webp',
+] as const;
+
+export const ONBOARDING_HERO_IMAGE_WIDTH = 941;
+export const ONBOARDING_HERO_IMAGE_HEIGHT = 1672;
+
+/** 스토리 만들기 소개 제목 위에 흩어 놓는 장르 키워드. 간편 제작이 제공하는 장르 일부다. */
+export const ONBOARDING_GENRE_KEYWORDS = [
+  '회귀',
+  '빙의',
+  '로맨스판타지',
+  '아포칼립스',
+  '헌터물',
+  '계약결혼',
+  '복수',
+  '집착',
+  '괴담',
+  '먼치킨',
+  '현대판타지',
+  '탈출',
+] as const;
+
+/** 소개 화면 스크린샷 원본 크기. 24장 모두 같은 기기에서 캡처했다. */
+export const ONBOARDING_SCREEN_WIDTH = 786;
+export const ONBOARDING_SCREEN_HEIGHT = 1704;
+
+/**
+ * 가로 갤러리 카드 한 장. 테마별 스크린샷 중 `cropTop`(원본 px)부터 아래로 보이는
+ * 부분만 박스에 잘라 넣고, 카드 아래에 짧은 제목과 설명을 붙인다.
+ */
+export interface OnboardingSlide {
+  key: string;
+  title: string;
+  description: string;
   src: string;
   darkSrc: string;
   alt: string;
-  width?: number;
-  height?: number;
+  cropTop: number;
 }
 
-/** 온보딩 랜딩 섹션 하나. 스크린샷 묶음과 소개 문구로 구성된다. */
-export interface OnboardingSection {
-  key: string;
-  eyebrow: string;
-  title: string;
-  description: string;
-  scenes: readonly OnboardingScene[];
+export type OnboardingFeatureKey =
+  | 'create'
+  | 'storyline'
+  | 'complete'
+  | 'chat'
+  | 'originals';
+
+/**
+ * 온보딩 버튼을 누른 위치. 버튼은 기능 소개 섹션 아래에만 있어 어느 섹션인지 함께 남긴다.
+ * `source`는 헤더 버튼(`header`)과 본문 끝 버튼(`bottom`)이 있던 이전 기록과 같은 축으로
+ * 비교하려고 유지한다.
+ */
+export interface OnboardingButtonSource {
+  source: 'section';
+  section: OnboardingFeatureKey;
 }
 
 /**
- * 온보딩 랜딩 섹션 목록. 실제 사용 흐름(스토리 만들기 → 채팅 → 공유)
- * 순서를 그대로 따르므로 섹션 순번이 곧 사용 순서다.
+ * 기능 소개 섹션 아래 버튼. `create`는 간편 제작으로, `browse`는 홈으로 이동한다.
  */
-export const ONBOARDING_SECTIONS: readonly OnboardingSection[] = [
+export interface OnboardingFeatureAction {
+  label: string;
+  type: 'create' | 'browse';
+}
+
+/** 기능 소개 섹션 하나. 제목, 스크롤에 따라 카드가 바뀌는 갤러리, 아래 버튼으로 구성된다. */
+export interface OnboardingFeature {
+  key: OnboardingFeatureKey;
+  motion: GalleryMotion;
+  /** `deck` 전환에서 첫 카드가 빠지는 쪽. 다음 카드부터 반대쪽과 번갈아 빠지며 기본은 왼쪽이다. */
+  deckFirstExit?: DeckExitSide;
+  label: string;
+  titleLines: readonly string[];
+  description?: string;
+  slides: readonly OnboardingSlide[];
+  action: OnboardingFeatureAction;
+}
+
+/**
+ * 화면 키로 테마별 스크린샷 경로를 채워 갤러리 카드 하나를 만든다.
+ *
+ * @param key `public/onboarding/{key}-light.webp`와 `-dark.webp`의 화면 키
+ * @param cropTop 카드에 보이기 시작할 원본 세로 위치(px)
+ * @param copy 카드 제목, 설명, 대체 텍스트
+ * @returns 갤러리 카드
+ */
+function slide(
+  key: string,
+  cropTop: number,
+  copy: Pick<OnboardingSlide, 'title' | 'description' | 'alt'>,
+): OnboardingSlide {
+  return {
+    key,
+    cropTop,
+    src: `/onboarding/${key}-light.webp`,
+    darkSrc: `/onboarding/${key}-dark.webp`,
+    ...copy,
+  };
+}
+
+/**
+ * 기능 소개 섹션 목록. 한 스토리가 만들어지고 채팅으로 이어지는 실제 사용 순서를
+ * 따르고, 마지막에 직접 만들지 않고 바로 즐기는 오리지널 스토리를 소개한다.
+ * 문구 속 `\u00a0`은 한 덩어리로 읽혀야 하는 말이 줄바꿈으로 갈라지지 않게 붙인다.
+ */
+export const ONBOARDING_FEATURES: readonly OnboardingFeature[] = [
   {
-    key: 'keywords',
-    eyebrow: '스토리 만들기',
-    title: '키워드만 고르면 준비 끝',
-    description:
-      '장르, 주인공, 주변 인물까지. 원하는 키워드를 고르면 나머지는 AI가 채워요.',
-    scenes: [
-      {
-        src: '/onboarding/keyword-genre-light.webp',
-        darkSrc: '/onboarding/keyword-genre-dark.webp',
-        alt: '장르 키워드를 선택하는 화면',
-      },
-      {
-        src: '/onboarding/keyword-protagonist-light.webp',
-        darkSrc: '/onboarding/keyword-protagonist-dark.webp',
-        alt: '주인공 키워드를 선택하는 화면',
-      },
-      {
-        src: '/onboarding/keyword-characters-light.webp',
-        darkSrc: '/onboarding/keyword-characters-dark.webp',
-        alt: '주변 인물 키워드를 선택하는 화면',
-      },
+    key: 'create',
+    motion: 'gallery',
+    action: { label: '키워드 고르러 가기', type: 'create' },
+    label: '스토리 만들기',
+    titleLines: ['어떤 스토리든', '키워드 몇 개면 시작돼요'],
+    description: '글솜씨는 없어도 괜찮아요. 고르기만 하면 AI가 써 드려요.',
+    slides: [
+      slide('keyword-genre', 0, {
+        title: '장르를 골라요',
+        description:
+          '공포, 스릴러, 로맨스판타지까지. 끌리는 장르를 3개까지 골라요.',
+        alt: '장르 키워드를 고르는 화면',
+      }),
+      slide('keyword-protagonist', 140, {
+        title: '주인공을 정해요',
+        description: '이름과 특징 키워드를 골라요. 이름은 비워 둬도 돼요.',
+        alt: '주인공 이름과 특징을 고르는 화면',
+      }),
+      slide('keyword-characters', 380, {
+        title: '주변 인물을 더해요',
+        description: '함께할 인물을 더하고 특징을 골라요.',
+        alt: '주변 인물의 이름과 특징을 고르는 화면',
+      }),
     ],
   },
   {
     key: 'storyline',
-    eyebrow: '스토리 만들기',
-    title: '마음에 드는 흐름을 골라요',
-    description:
-      'AI가 제안한 스토리라인 중 하나를 고르고, 더하고 싶은 정보를 자유롭게 적어 완성해요.',
-    scenes: [
-      {
-        src: '/onboarding/storyline-select-light.webp',
-        darkSrc: '/onboarding/storyline-select-dark.webp',
-        alt: '스토리라인을 선택하는 화면',
-      },
-      {
-        src: '/onboarding/storyline-detail-light.webp',
-        darkSrc: '/onboarding/storyline-detail-dark.webp',
+    motion: 'deck',
+    action: { label: '내 스토리 만들어 보기', type: 'create' },
+    label: '스토리라인과 이미지 스타일',
+    titleLines: ['줄거리도 이미지 스타일도', '고르기만 하면 돼요'],
+    slides: [
+      slide('storyline-select', 140, {
+        title: '스토리라인을 골라요',
+        description: 'AI가 쓴 스토리라인 3개\u00a0중 마음에 드는 걸 골라요.',
+        alt: 'AI가 쓴 스토리라인을 고르는 화면',
+      }),
+      slide('storyline-detail', 400, {
+        title: '설정을 덧붙여요',
+        description:
+          '넣고 싶은 설정을 적거나, AI가\u00a0추천한 정보를 눌러 더해요.',
         alt: '스토리라인에 추가 정보를 입력하는 화면',
-      },
+      }),
+      slide('art-style', 140, {
+        title: '이미지 스타일을 골라요',
+        description:
+          '애니메이션부터 수묵까지, 고른 이미지\u00a0스타일로 썸네일과 인물을 그려요.',
+        alt: '이미지 스타일을 고르는 화면',
+      }),
+    ],
+  },
+  {
+    key: 'complete',
+    motion: 'gallery',
+    action: { label: '첫 스토리 만들기', type: 'create' },
+    label: '스토리 완성',
+    titleLines: ['썸네일부터 첫 장면까지', '한 번에 완성돼요'],
+    slides: [
+      slide('story-cover', 0, {
+        title: '썸네일이 완성돼요',
+        description: '제목과 소개, 썸네일\u00a0이미지까지 한 번에 만들어져요.',
+        alt: '완성된 스토리의 썸네일과 소개 화면',
+      }),
+      slide('story-start-situation', 100, {
+        title: '첫 장면이 준비돼요',
+        description: '채팅을 시작할 상황을 AI가 미리 써 둬요.',
+        alt: '채팅 시작 상황을 보여주는 화면',
+      }),
+      slide('story-characters', 280, {
+        title: '인물 소개도 함께',
+        description: '주변 인물마다 이미지와 소개가 생겨요.',
+        alt: '주변 인물 이미지와 소개를 보는 화면',
+      }),
     ],
   },
   {
     key: 'chat',
-    eyebrow: '채팅',
-    title: '이야기 속 주인공은 이제 나',
-    description:
-      '완성한 스토리에서 바로 대화가 시작돼요. 내가 보내는 말에 따라 다음 장면이 흘러가요.',
-    scenes: [
-      {
-        src: '/onboarding/chat-first-input-light.webp',
-        darkSrc: '/onboarding/chat-first-input-dark.webp',
-        alt: '채팅에서 상황과 대사를 입력하는 화면',
-      },
-      {
-        src: '/onboarding/chat-response-light.webp',
-        darkSrc: '/onboarding/chat-response-dark.webp',
-        alt: '인물 이미지와 함께 응답이 도착한 채팅 화면',
-      },
+    motion: 'stack',
+    action: { label: '채팅할 스토리 고르기', type: 'browse' },
+    label: '채팅',
+    titleLines: ['다음 장면은', '내가 정해요'],
+    slides: [
+      slide('chat-prologue', 490, {
+        title: '상황과 대사로 이어가요',
+        description:
+          '행동은 상황에, 말은 대사에 적어 보내요. 막막하면 AI 추천 입력을 눌러요.',
+        alt: 'AI 추천 입력과 상황, 대사 입력이 보이는 채팅 화면',
+      }),
+      slide('chat-first-turn', 330, {
+        title: '인물이 바로 반응해요',
+        description: '보낸 내용에 맞춰 다음 장면이 이어져요.',
+        alt: '첫 응답과 함께 인물 이미지가 생성된 채팅 화면',
+      }),
+      slide('chat-realtime-image', 480, {
+        title: '장면이 바뀌면 이미지도 함께',
+        description: '대화 흐름에 맞춰 AI가 이미지를 새로 그려요.',
+        alt: '다음 장면에 맞춰 새 이미지가 생성된 채팅 화면',
+      }),
     ],
   },
   {
-    key: 'image-generation',
-    eyebrow: '채팅',
-    title: '장면이 바뀌면, 이미지도 함께',
+    key: 'originals',
+    motion: 'deck',
+    deckFirstExit: 'right',
+    action: { label: '오리지널 스토리 보기', type: 'browse' },
+    label: '오리지널 스토리',
+    titleLines: ['만들지 않아도', '바로 시작할 수 있어요'],
     description:
-      '대화의 흐름에 맞춰 AI가 이미지를 새로 만들어요. 달라지는 표정과 배경으로 이야기에 더 몰입해보세요.',
-    scenes: [
-      {
-        src: '/onboarding/chat-image-generation-1-light.webp',
-        darkSrc: '/onboarding/chat-image-generation-1-dark.webp',
-        alt: '대화 중 장면에 맞는 인물 이미지가 생성된 화면',
-      },
-      {
-        src: '/onboarding/chat-image-generation-2-light.webp',
-        darkSrc: '/onboarding/chat-image-generation-2-dark.webp',
-        alt: '다음 장면에 맞춰 인물의 표정과 구도가 달라진 화면',
-      },
-    ],
-  },
-  {
-    key: 'suggestion',
-    eyebrow: '채팅',
-    title: '다음 장면이 막막할 땐',
-    description:
-      'AI가 지금 상황에 어울리는 입력을 추천해요. 탭 한 번이면 바로 전송돼요.',
-    scenes: [
-      {
-        src: '/onboarding/chat-suggestion-light.webp',
-        darkSrc: '/onboarding/chat-suggestion-dark.webp',
-        alt: 'AI가 추천한 입력을 보여주는 채팅 화면',
-      },
-    ],
-  },
-  {
-    key: 'share',
-    eyebrow: '공유',
-    title: '완성된 이야기는 함께 봐요',
-    description:
-      '링크 하나면 내가 이어온 채팅을 친구에게 그대로 보여줄 수 있어요.',
-    scenes: [
-      {
-        src: '/onboarding/share-view-light.webp',
-        darkSrc: '/onboarding/share-view-dark.webp',
-        alt: '친구가 공유한 채팅을 보는 화면',
-      },
+      '마냑 오리지널부터 다른 사람이 공개한\u00a0스토리까지, 끌리는 걸 골라 채팅해요.',
+    slides: [
+      slide('original-home', 100, {
+        title: '취향대로 골라요',
+        description:
+          '장르별로 준비된 오리지널\u00a0스토리\u00a0중 끌리는 걸 골라요.',
+        alt: '오리지널 스토리 목록이 보이는 홈 화면',
+      }),
+      slide('original-detail', 140, {
+        title: '바로 채팅을 시작해요',
+        description:
+          '스토리를 만들 필요 없이 새\u00a0채팅\u00a0시작하기만 누르면 돼요.',
+        alt: '오리지널 스토리 0호선의 상세 화면',
+      }),
+      slide('shared-detail', 290, {
+        title: '다른 사람의 스토리도',
+        description:
+          '다른 사람이 공개한 스토리도 똑같이 골라 이어갈 수 있어요.',
+        alt: '스토리 (알 수 없음)의 상세 화면',
+      }),
     ],
   },
 ] as const;
-
-/** 헤더 왼쪽 보조 버튼. 온보딩을 건너뛰고 홈으로 이동한다. */
-export const ONBOARDING_BROWSE_LABEL = '둘러보기';
-
-/** 헤더 오른쪽·본문 끝 주 CTA. 스토리 생성 퍼널로 바로 이동한다. */
-export const ONBOARDING_START_LABEL = '바로 시작하기';

@@ -3,9 +3,9 @@ import type { Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { SITE_CONTACT_EMAIL } from '@/constants/site';
 import {
-  ONBOARDING_BROWSE_LABEL,
-  ONBOARDING_SECTIONS,
-  ONBOARDING_START_LABEL,
+  ONBOARDING_FEATURES,
+  ONBOARDING_PLAY_STORE_BADGE_ALT,
+  ONBOARDING_PLAY_STORE_URL,
 } from '@/features/onboarding/constants';
 
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -38,6 +38,38 @@ async function stubOptimizedImages(page: Page): Promise<void> {
   );
 }
 
+/**
+ * 기능 소개 갤러리에서 지정한 카드가 가운데에 멈춰 있는 위치로 본문을 스크롤한다.
+ * 갤러리 구간을 카드 사이 간격만큼 똑같이 나눈 계약에 맞춰 해당 카드 위치로 옮긴다.
+ *
+ * @param page 대상 페이지
+ * @param label 갤러리 구간의 접근성 이름
+ * @param slideIndex 가운데에 둘 카드 순번
+ * @param slideCount 갤러리의 전체 카드 수
+ */
+async function scrollToGallerySlide(
+  page: Page,
+  label: string,
+  slideIndex: number,
+  slideCount: number,
+): Promise<void> {
+  await page.getByRole('main').evaluate(
+    (main, [name, index, count]) => {
+      const section = main.querySelector<HTMLElement>(
+        `section[aria-label="${name}"]`,
+      )!;
+      const top =
+        section.getBoundingClientRect().top -
+        main.getBoundingClientRect().top +
+        main.scrollTop;
+      const travel = section.offsetHeight - main.clientHeight;
+
+      main.scrollTo({ top: top + (travel * index) / (count - 1) });
+    },
+    [label, slideIndex, slideCount] as const,
+  );
+}
+
 test.describe('온보딩', () => {
   test('새 방문자는 첫 진입 시 온보딩 페이지로 이동한다', async ({ page }) => {
     const response = await page.goto('/');
@@ -53,22 +85,39 @@ test.describe('온보딩', () => {
       }),
     ).toBeVisible();
 
-    // 헤더 오른쪽에 보조(둘러보기)·주(바로 시작하기) 버튼이 나란히 있고,
-    // 로고는 더 이상 홈 링크가 아니며 하단 고정 CTA도 없다.
-    const header = page.getByRole('banner');
+    // 맨 위에서는 첫 화면 이미지가 화면을 차지하고 헤더는 숨어 있다.
+    // 헤더에는 로고만 있고 이동 버튼은 없다.
+    const header = page.getByRole('banner', { includeHidden: true });
 
+    await expect(header).toBeHidden();
     await expect(
-      header.getByRole('button', { name: ONBOARDING_BROWSE_LABEL }),
-    ).toBeVisible();
-    await expect(
-      header.getByRole('button', { name: ONBOARDING_START_LABEL }),
-    ).toBeVisible();
-    await expect(
-      header.getByRole('button', { name: '홈으로 이동' }),
-    ).toHaveCount(0);
-    await expect(
-      page.locator('nav').filter({ hasText: ONBOARDING_START_LABEL }),
-    ).toHaveCount(0);
+      header.getByRole('button', { includeHidden: true }),
+    ).toHaveCount(1);
+
+    // 첫 화면 아래쪽 스크롤 신호를 누르면 첫 화면을 지나 첫 기능 소개까지 내려간다.
+    // 내려가면 스크롤 신호는 사라지고 헤더가 나타나 맨 위 로고 버튼을 누를 수 있다.
+    const scrollCue = page.getByRole('button', { name: '아래로 이동' });
+
+    await scrollCue.click();
+    await expect
+      .poll(() =>
+        page
+          .getByRole('main')
+          .evaluate(
+            (main) =>
+              main.scrollTop === main.querySelector('section')!.offsetHeight,
+          ),
+      )
+      .toBe(true);
+    await expect(scrollCue).toBeHidden();
+    await expect(page.getByRole('banner')).toBeVisible();
+    await expect
+      .poll(() =>
+        page
+          .getByRole('banner')
+          .evaluate((element) => getComputedStyle(element).opacity),
+      )
+      .toBe('1');
   });
 
   test('온보딩 리다이렉트는 원본 쿼리를 유지한다', async ({ page }) => {
@@ -88,31 +137,43 @@ test.describe('온보딩', () => {
     expect(url.searchParams.get('from')).toBe('/');
   });
 
-  test('랜딩 섹션이 사용 흐름 순서대로 표시되고 끝까지 스크롤할 수 있다', async ({
+  test('스크롤하면 기능 카드가 사용 순서대로 옆으로 흐르고 끝까지 내려갈 수 있다', async ({
     page,
   }) => {
+    await stubOptimizedImages(page);
     await page.goto('/');
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
-    // 섹션 제목이 스토리 만들기 → 채팅 → 공유 흐름 순서 그대로 나열된다.
-    await expect(page.getByRole('heading', { level: 2 })).toHaveText(
-      ONBOARDING_SECTIONS.map((section) => section.title),
-    );
-    await expect(
-      page.getByRole('img', { name: ONBOARDING_SECTIONS[0].scenes[0].alt }),
-    ).toBeVisible();
+    // 기능 소개마다 카드 갤러리가 붙어 있고, 스크롤 위치에 따라 카드가 옆으로 흘러
+    // 사용 순서대로 가운데에 온다. 갤러리 아래에는 섹션에 맞는 버튼이 함께 붙어 있다.
+    for (const feature of ONBOARDING_FEATURES) {
+      const gallery = page.getByRole('region', { name: feature.label });
 
-    // 본문 끝에는 "바로 시작하기" CTA, 그 아래에 정책 링크·문의처를 담은 푸터가 이어진다.
+      for (const [index, slide] of feature.slides.entries()) {
+        await scrollToGallerySlide(
+          page,
+          feature.label,
+          index,
+          feature.slides.length,
+        );
+        await expect(gallery.locator('li[aria-current="step"] h3')).toHaveText(
+          slide.title,
+        );
+        await expect(
+          gallery.getByRole('img', { name: slide.alt, exact: true }),
+        ).toBeVisible();
+        await expect(
+          gallery.getByRole('button', { name: feature.action.label }),
+        ).toBeVisible();
+      }
+    }
+
+    // 마지막 갤러리 뒤에는 따로 시작 섹션 없이 정책 링크, 문의처, Google Play 배지를 담은 푸터가 이어진다.
     // main 안의 footer는 contentinfo 랜드마크가 아니므로 요소로 찾는다.
     const footer = page.locator('footer');
 
     await footer.scrollIntoViewIfNeeded();
-    await expect(
-      page
-        .getByRole('main')
-        .getByRole('button', { name: ONBOARDING_START_LABEL }),
-    ).toBeVisible();
     await expect(
       footer.getByRole('link', { name: '이용약관' }),
     ).toHaveAttribute('href', APP_PATH.TERMS);
@@ -122,14 +183,11 @@ test.describe('온보딩', () => {
     await expect(
       footer.getByRole('link', { name: SITE_CONTACT_EMAIL }),
     ).toHaveAttribute('href', `mailto:${SITE_CONTACT_EMAIL}`);
-    // 헤더는 스크롤 영역의 형제라 끝까지 내려도 헤더 CTA는 계속 보인다.
     await expect(
-      page
-        .getByRole('banner')
-        .getByRole('button', { name: ONBOARDING_START_LABEL }),
-    ).toBeVisible();
-
-    // 로고는 홈 링크가 아니라 맨 위로 되돌리는 버튼이다.
+      footer.getByRole('link', { name: ONBOARDING_PLAY_STORE_BADGE_ALT }),
+    ).toHaveAttribute('href', ONBOARDING_PLAY_STORE_URL);
+    // 헤더는 첫 화면을 지난 뒤로 계속 보이고, 로고는 홈 링크가 아니라 맨 위로
+    // 되돌리는 버튼이다.
     await page
       .getByRole('banner')
       .getByRole('button', { name: '맨 위로 이동' })
@@ -139,61 +197,6 @@ test.describe('온보딩', () => {
     await expect
       .poll(() => page.getByRole('main').evaluate((main) => main.scrollTop))
       .toBe(0);
-  });
-
-  test('여러 장면 카드 줄은 마우스로 끌어 넘기고, 놓으면 가장 가까운 카드에 맞춘다', async ({
-    page,
-  }) => {
-    await stubOptimizedImages(page);
-    await page.goto(APP_PATH.ONBOARDING);
-
-    const secondIndicator = page
-      .getByRole('button', { name: '2번째 화면 보기' })
-      .first();
-    const section = page
-      .getByRole('main')
-      .locator('section')
-      .filter({ has: secondIndicator })
-      .first();
-    const strip = section.locator('.snap-x');
-
-    await strip.scrollIntoViewIfNeeded();
-
-    const box = (await strip.boundingBox())!;
-    const y = box.y + box.height / 2;
-    const cursorAt = (x: number) =>
-      page.evaluate(
-        ([pointX, pointY]) =>
-          getComputedStyle(document.elementFromPoint(pointX, pointY)!).cursor,
-        [x, y],
-      );
-
-    // 카드 폭의 절반을 넘겨 끌면 놓았을 때 두 번째 카드로 넘어간다.
-    await page.mouse.move(box.x + box.width * 0.8, y);
-    // 넘치는 줄 위에서는 끌 수 있다는 뜻으로 grab 커서를 보인다.
-    await expect(strip).toHaveCSS('cursor', 'grab');
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width * 0.2, y, { steps: 10 });
-    // 끄는 동안에는 포인터 아래 요소와 무관하게 grabbing 커서를 보인다.
-    expect(await cursorAt(box.x + box.width * 0.2)).toBe('grabbing');
-    await page.mouse.up();
-    expect(await cursorAt(box.x + box.width * 0.2)).not.toBe('grabbing');
-
-    await expect(secondIndicator).toHaveAttribute('aria-current', 'true');
-    // 드래그 중 끈 스냅은 카드에 맞춘 뒤 되돌린다.
-    await expect
-      .poll(() =>
-        strip.evaluate((element) => {
-          const [first, second] = [...element.children] as HTMLElement[];
-
-          return (
-            Math.abs(
-              element.scrollLeft - (second.offsetLeft - first.offsetLeft),
-            ) < 1 && element.style.scrollSnapType === ''
-          );
-        }),
-      )
-      .toBe(true);
   });
 
   for (const theme of ['light', 'dark'] as const) {
@@ -221,36 +224,22 @@ test.describe('온보딩', () => {
       );
       await page.goto(APP_PATH.ONBOARDING);
 
-      const sections = page.getByRole('main').locator('section');
+      for (const feature of ONBOARDING_FEATURES) {
+        const gallery = page.getByRole('region', { name: feature.label });
 
-      await expect(sections).toHaveCount(6);
-      expect(ONBOARDING_SECTIONS.map((section) => section.key)).toEqual([
-        'keywords',
-        'storyline',
-        'chat',
-        'image-generation',
-        'suggestion',
-        'share',
-      ]);
+        for (const [index, slide] of feature.slides.entries()) {
+          await scrollToGallerySlide(
+            page,
+            feature.label,
+            index,
+            feature.slides.length,
+          );
 
-      for (const [index, section] of ONBOARDING_SECTIONS.entries()) {
-        const container = sections.nth(index);
-
-        await expect(container.getByRole('heading')).toHaveText(section.title);
-        await expect(
-          container.getByText(section.description, { exact: true }),
-        ).toBeAttached();
-        await expect(container.getByRole('img')).toHaveCount(
-          section.scenes.length,
-        );
-
-        for (const scene of section.scenes) {
-          const image = container.getByRole('img', {
-            name: scene.alt,
+          const image = gallery.getByRole('img', {
+            name: slide.alt,
             exact: true,
           });
 
-          await image.scrollIntoViewIfNeeded();
           await expect(image).toBeVisible();
           await expect
             .poll(
@@ -260,14 +249,14 @@ test.describe('온보딩', () => {
 
                   return img.complete && img.naturalWidth > 0;
                 }),
-              { timeout: 15_000, message: `${theme}: ${scene.src}` },
+              { timeout: 15_000, message: `${theme}: ${slide.src}` },
             )
             .toBe(true);
 
           const src = await image.getAttribute('src');
 
           expect(new URL(src!, page.url()).searchParams.get('url')).toBe(
-            theme === 'dark' ? scene.darkSrc : scene.src,
+            theme === 'dark' ? slide.darkSrc : slide.src,
           );
         }
       }
@@ -278,7 +267,7 @@ test.describe('온보딩', () => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto(APP_PATH.ONBOARDING);
 
-    const scene = ONBOARDING_SECTIONS[0].scenes[0];
+    const scene = ONBOARDING_FEATURES[0].slides[0];
     const image = page.getByRole('img', { name: scene.alt, exact: true });
 
     await expect(image).toHaveAttribute(
@@ -343,16 +332,18 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('헤더 "바로 시작하기"를 누르면 게스트도 동의 없이 제작 입력 화면으로 이동한다', async ({
+  test('스토리 만들기 섹션 아래 버튼을 누르면 게스트도 동의 없이 제작 입력 화면으로 이동한다', async ({
     page,
   }) => {
     await stubOptimizedImages(page);
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
+    const feature = ONBOARDING_FEATURES.find(({ key }) => key === 'create')!;
+
     await page
-      .getByRole('banner')
-      .getByRole('button', { name: ONBOARDING_START_LABEL })
+      .getByRole('region', { name: feature.label })
+      .getByRole('button', { name: feature.action.label })
       .click();
 
     await expect(page).toHaveURL(
@@ -362,35 +353,18 @@ test.describe('온보딩', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
-  test('본문 끝 "바로 시작하기"를 눌러도 스토리 생성으로 이동한다', async ({
+  test('채팅 섹션 아래 버튼을 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
     page,
   }) => {
     await stubOptimizedImages(page);
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
 
-    const bottomCta = page
-      .getByRole('main')
-      .getByRole('button', { name: ONBOARDING_START_LABEL });
-
-    await bottomCta.scrollIntoViewIfNeeded();
-    await bottomCta.click();
-
-    await expect(page).toHaveURL(
-      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
-    );
-  });
-
-  test('"둘러보기"를 누르면 홈으로 가고 새로고침 후에도 온보딩이 다시 뜨지 않는다', async ({
-    page,
-  }) => {
-    await stubOptimizedImages(page);
-    await page.goto('/');
-    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+    const feature = ONBOARDING_FEATURES.find(({ key }) => key === 'chat')!;
 
     await page
-      .getByRole('banner')
-      .getByRole('button', { name: ONBOARDING_BROWSE_LABEL })
+      .getByRole('region', { name: feature.label })
+      .getByRole('button', { name: feature.action.label })
       .click();
 
     await expect(page).toHaveURL(/\/$/);

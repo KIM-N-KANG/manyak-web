@@ -1,6 +1,6 @@
 import { formatCreditAmount } from '@/constants/credit';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
-import { ONBOARDING_START_LABEL } from '@/features/onboarding/constants';
+import { ONBOARDING_DESCRIPTION } from '@/features/onboarding/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
@@ -30,6 +30,8 @@ test.describe('온보딩 비주얼', () => {
         await route.continue();
       }
     });
+    // 첫 화면 이미지가 일정 간격으로 바뀌므로, 모션 감소로 첫 장에 고정해 찍는다.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
@@ -38,16 +40,12 @@ test.describe('온보딩 비주얼', () => {
         name: '눈을 떠보니 스토리 속 주인공이 되었다',
       }),
     ).toBeVisible();
-    // 등장 애니메이션(마지막 요소는 헤더 버튼 영역)이 끝난 정적 상태에서 찍는다.
+    // 등장 애니메이션(마지막 요소는 제목 아래 설명)이 끝난 정적 상태에서 찍는다.
     await expect
       .poll(() =>
         page
-          .getByRole('banner')
-          .getByRole('button', { name: ONBOARDING_START_LABEL })
-          .evaluate(
-            (button) =>
-              getComputedStyle(button.parentElement as HTMLElement).opacity,
-          ),
+          .getByText(ONBOARDING_DESCRIPTION)
+          .evaluate((element) => getComputedStyle(element).opacity),
       )
       .toBe('1');
     await waitForFonts(page);

@@ -6,6 +6,7 @@ import {
   type InviteCodeErrorType,
   type InviteCodeSource,
 } from '@/features/my/invite/utils/invite-code';
+import { type OnboardingButtonSource } from '@/features/onboarding/constants';
 import { type AppBannerVariant } from '@/lib/app-banner';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type InAppBrowser } from '@/lib/in-app-browser';
@@ -78,8 +79,9 @@ export type AnalyticsEventProps = {
   client_report_failed: { target_type: 'story'; error_type: string };
   // onboarding
   client_onboarding_viewed: void;
-  client_onboarding_createButton_clicked: { source: 'header' | 'bottom' };
-  client_onboarding_browseButton_clicked: void;
+  client_onboarding_createButton_clicked: OnboardingButtonSource;
+  client_onboarding_browseButton_clicked: OnboardingButtonSource;
+  client_onboarding_playStoreBadge_clicked: void;
   // storyList
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;

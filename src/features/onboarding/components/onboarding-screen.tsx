@@ -2,39 +2,22 @@
 
 import { useEffect, useRef } from 'react';
 
-import { m, useReducedMotion, type Variants } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { ManyakLogo } from '@/components/layout/manyak-logo';
-import { Button } from '@/components/ui/button';
 import { APP_PATH, type MainAppPath } from '@/constants/app-path';
 import { track } from '@/observability/analytics';
 
-import {
-  ONBOARDING_BROWSE_LABEL,
-  ONBOARDING_DESCRIPTION,
-  ONBOARDING_START_LABEL,
-  ONBOARDING_TITLE_LINES,
-} from '../constants';
+import { ONBOARDING_FEATURES, type OnboardingButtonSource } from '../constants';
 import { useOnboardingGate } from '../hooks/use-onboarding-gate';
 import {
   markOnboardingSeen,
   setOnboardingSeenCookie,
 } from '../utils/onboarding-storage';
+import { OnboardingFeature } from './onboarding-feature';
 import { OnboardingFooter } from './onboarding-footer';
-import { OnboardingLanding } from './onboarding-landing';
-
-// 위에서 아래로 읽는 순서를 따라가는 등장 시점(초). 타이틀 두 줄은
-// 소설 도입부처럼 반 박자 간격을 두고, 헤더 액션이 마지막에 나타난다.
-const ENTRANCE_DELAY = {
-  titleSecondLine: 0.25,
-  description: 0.45,
-  headerActions: 0.65,
-} as const;
-
-// 초반에 빠르게 감속한 뒤 긴 꼬리로 잦아드는 커브. 기본 easeOut보다
-// 멈추는 순간이 드러나지 않아 등장이 우아하게 느껴진다.
-const ENTRANCE_EASE = [0.22, 1, 0.36, 1] as const;
+import { OnboardingHeader } from './onboarding-header';
+import { OnboardingHero } from './onboarding-hero';
 
 const MAIN_PATHS = new Set<string>(Object.values(APP_PATH.MAIN));
 
@@ -60,6 +43,7 @@ export function OnboardingScreen() {
   const hasChosenRef = useRef(false);
   const hasTrackedViewRef = useRef(false);
   const scrollerRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (hasChosenRef.current || gate === 'pending') {
@@ -79,10 +63,10 @@ export function OnboardingScreen() {
     }
   }, [gate, returnPath, router]);
 
-  const handleStartCreate = (source: 'header' | 'bottom') => {
+  const handleStartCreate = (source: OnboardingButtonSource) => {
     hasChosenRef.current = true;
     markOnboardingSeen();
-    track('client_onboarding_createButton_clicked', { source });
+    track('client_onboarding_createButton_clicked', source);
     router.replace(APP_PATH.STUDIO.STORY.SIMPLE);
   };
 
@@ -93,23 +77,11 @@ export function OnboardingScreen() {
     });
   };
 
-  const handleBrowse = () => {
+  const handleBrowse = (source: OnboardingButtonSource) => {
     hasChosenRef.current = true;
     markOnboardingSeen();
-    track('client_onboarding_browseButton_clicked');
+    track('client_onboarding_browseButton_clicked', source);
     router.replace(APP_PATH.MAIN.STORIES);
-  };
-
-  const rise: Variants = {
-    hidden: {
-      opacity: 0,
-      ...(prefersReducedMotion ? {} : { y: 18, filter: 'blur(5px)' }),
-    },
-    show: (delay: number) => ({
-      opacity: 1,
-      ...(prefersReducedMotion ? {} : { y: 0, filter: 'blur(0px)' }),
-      transition: { delay, duration: 0.6, ease: ENTRANCE_EASE },
-    }),
   };
 
   if (gate !== 'eligible') {
@@ -120,50 +92,36 @@ export function OnboardingScreen() {
     <m.div
       initial="hidden"
       animate="show"
-      className="flex h-full min-h-0 flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between bg-background px-4">
-        <button
-          type="button"
-          aria-label="맨 위로 이동"
-          onClick={handleScrollToTop}>
-          <ManyakLogo className="h-6 w-auto text-primary" />
-        </button>
-        <m.div
-          variants={rise}
-          custom={ENTRANCE_DELAY.headerActions}
-          className="flex items-center gap-1">
-          <Button type="button" variant="secondary" onClick={handleBrowse}>
-            {ONBOARDING_BROWSE_LABEL}
-          </Button>
-          <Button type="button" onClick={() => handleStartCreate('header')}>
-            {ONBOARDING_START_LABEL}
-          </Button>
-        </m.div>
-      </header>
+      className="relative flex h-full min-h-0 flex-col break-keep [--onboarding-header-height:3.5rem]">
+      <OnboardingHeader
+        scrollerRef={scrollerRef}
+        heroRef={heroRef}
+        onLogoClick={handleScrollToTop}
+      />
       <main
         ref={scrollerRef}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="flex flex-col items-start gap-1 p-4">
-          <h1 className="text-xl font-semibold">
-            {ONBOARDING_TITLE_LINES.map((titleLine, index) => (
-              <m.span
-                key={titleLine}
-                variants={rise}
-                custom={index === 0 ? 0 : ENTRANCE_DELAY.titleSecondLine}
-                className="block">
-                {titleLine}
-              </m.span>
-            ))}
-          </h1>
-          <m.p
-            variants={rise}
-            custom={ENTRANCE_DELAY.description}
-            className="text-foreground-secondary">
-            {ONBOARDING_DESCRIPTION}
-          </m.p>
-        </div>
+        className="[container-type:size] relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <OnboardingHero scrollerRef={scrollerRef} sectionRef={heroRef} />
+        {ONBOARDING_FEATURES.map((feature, index) => (
+          <OnboardingFeature
+            key={feature.key}
+            feature={feature}
+            scrollerRef={scrollerRef}
+            showGenreCloud={index === 0}
+            onAction={() => {
+              const source = {
+                source: 'section',
+                section: feature.key,
+              } as const;
 
-        <OnboardingLanding onStart={() => handleStartCreate('bottom')} />
+              if (feature.action.type === 'create') {
+                handleStartCreate(source);
+              } else {
+                handleBrowse(source);
+              }
+            }}
+          />
+        ))}
         <OnboardingFooter />
       </main>
     </m.div>
