@@ -163,7 +163,7 @@ export function StoryTagStepSection({
                 onToggle={toggleGenreTag}
               />
               {needsGenreReselection && (
-                <p className="text-sm break-keep text-foreground-secondary">
+                <p className="text-sm text-foreground-secondary">
                   {GENRE_SEARCH_COPY.reselect}
                 </p>
               )}

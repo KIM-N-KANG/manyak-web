@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { getMeUrl, getMigrateUrl } from '@/api/generated/endpoints/auth/auth';
-import { getGetConsentsUrl } from '@/api/generated/endpoints/user/user';
+import { getGetUsersMeConsentsUrl } from '@/api/generated/endpoints/user/user';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
@@ -225,7 +225,7 @@ test.describe('인앱 소셜 로그인', () => {
     let migrationCount = 0;
     let consentRecords = 0;
 
-    await page.route(`**${getGetConsentsUrl()}`, (route) => {
+    await page.route(`**${getGetUsersMeConsentsUrl()}`, (route) => {
       if (route.request().method() === 'POST') {
         consentRecords++;
       }

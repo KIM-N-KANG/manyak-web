@@ -31,71 +31,87 @@ import type {
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type listResponse200 = {
+export type getUsersMePersonasResponse200 = {
   data: UserPersonaResponse[];
   status: 200;
 };
 
-export type listResponseSuccess = listResponse200 & {
-  headers: Headers;
-};
-export type listResponse = listResponseSuccess;
+export type getUsersMePersonasResponseSuccess =
+  getUsersMePersonasResponse200 & {
+    headers: Headers;
+  };
+export type getUsersMePersonasResponse = getUsersMePersonasResponseSuccess;
 
-export const getListUrl = () => {
+export const getGetUsersMePersonasUrl = () => {
   return `/api/v1/users/me/personas`;
 };
 
-export const list = async (options?: RequestInit): Promise<listResponse> => {
-  return customInstance<listResponse>(getListUrl(), {
-    ...options,
-    method: 'GET',
-  });
+export const getUsersMePersonas = async (
+  options?: RequestInit,
+): Promise<getUsersMePersonasResponse> => {
+  return customInstance<getUsersMePersonasResponse>(
+    getGetUsersMePersonasUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getListQueryKey = () => {
+export const getGetUsersMePersonasQueryKey = () => {
   return [`/api/v1/users/me/personas`] as const;
 };
 
-export const getListQueryOptions = <
-  TData = Awaited<ReturnType<typeof list>>,
+export const getGetUsersMePersonasQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUsersMePersonas>>,
   TError = ErrorType<unknown>,
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getUsersMePersonas>>,
+      TError,
+      TData
+    >
   >;
   request?: SecondParameter<typeof customInstance>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetUsersMePersonasQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof list>>> = ({
-    signal,
-  }) => list({ signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUsersMePersonas>>
+  > = ({ signal }) => getUsersMePersonas({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof list>>,
+    Awaited<ReturnType<typeof getUsersMePersonas>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type ListQueryResult = NonNullable<Awaited<ReturnType<typeof list>>>;
-export type ListQueryError = ErrorType<unknown>;
+export type GetUsersMePersonasQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUsersMePersonas>>
+>;
+export type GetUsersMePersonasQueryError = ErrorType<unknown>;
 
-export function useList<
-  TData = Awaited<ReturnType<typeof list>>,
+export function useGetUsersMePersonas<
+  TData = Awaited<ReturnType<typeof getUsersMePersonas>>,
   TError = ErrorType<unknown>,
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMePersonas>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof getUsersMePersonas>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof getUsersMePersonas>>
         >,
         'initialData'
       >;
@@ -105,19 +121,23 @@ export function useList<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useList<
-  TData = Awaited<ReturnType<typeof list>>,
+export function useGetUsersMePersonas<
+  TData = Awaited<ReturnType<typeof getUsersMePersonas>>,
   TError = ErrorType<unknown>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMePersonas>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof getUsersMePersonas>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof getUsersMePersonas>>
         >,
         'initialData'
       >;
@@ -127,13 +147,17 @@ export function useList<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useList<
-  TData = Awaited<ReturnType<typeof list>>,
+export function useGetUsersMePersonas<
+  TData = Awaited<ReturnType<typeof getUsersMePersonas>>,
   TError = ErrorType<unknown>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMePersonas>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -142,13 +166,17 @@ export function useList<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useList<
-  TData = Awaited<ReturnType<typeof list>>,
+export function useGetUsersMePersonas<
+  TData = Awaited<ReturnType<typeof getUsersMePersonas>>,
   TError = ErrorType<unknown>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getUsersMePersonas>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -156,7 +184,7 @@ export function useList<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getListQueryOptions(options);
+  const queryOptions = getGetUsersMePersonasQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -166,50 +194,54 @@ export function useList<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type createResponse201 = {
+export type postUsersMePersonasResponse201 = {
   data: UserPersonaResponse;
   status: 201;
 };
 
-export type createResponseSuccess = createResponse201 & {
-  headers: Headers;
-};
-export type createResponse = createResponseSuccess;
+export type postUsersMePersonasResponseSuccess =
+  postUsersMePersonasResponse201 & {
+    headers: Headers;
+  };
+export type postUsersMePersonasResponse = postUsersMePersonasResponseSuccess;
 
-export const getCreateUrl = () => {
+export const getPostUsersMePersonasUrl = () => {
   return `/api/v1/users/me/personas`;
 };
 
-export const create = async (
+export const postUsersMePersonas = async (
   createUserPersonaRequest: CreateUserPersonaRequest,
   options?: RequestInit,
-): Promise<createResponse> => {
-  return customInstance<createResponse>(getCreateUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(createUserPersonaRequest),
-  });
+): Promise<postUsersMePersonasResponse> => {
+  return customInstance<postUsersMePersonasResponse>(
+    getPostUsersMePersonasUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(createUserPersonaRequest),
+    },
+  );
 };
 
-export const getCreateMutationOptions = <
+export const getPostUsersMePersonasMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof postUsersMePersonas>>,
     TError,
     { data: BodyType<CreateUserPersonaRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof postUsersMePersonas>>,
   TError,
   { data: BodyType<CreateUserPersonaRequest> },
   TContext
 > => {
-  const mutationKey = ['create'];
+  const mutationKey = ['postUsersMePersonas'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -219,27 +251,31 @@ export const getCreateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof postUsersMePersonas>>,
     { data: BodyType<CreateUserPersonaRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return create(data, requestOptions);
+    return postUsersMePersonas(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof create>>
+export type PostUsersMePersonasMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postUsersMePersonas>>
 >;
-export type CreateMutationBody = BodyType<CreateUserPersonaRequest>;
-export type CreateMutationError = ErrorType<unknown>;
+export type PostUsersMePersonasMutationBody =
+  BodyType<CreateUserPersonaRequest>;
+export type PostUsersMePersonasMutationError = ErrorType<unknown>;
 
-export const useCreate = <TError = ErrorType<unknown>, TContext = unknown>(
+export const usePostUsersMePersonas = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof create>>,
+      Awaited<ReturnType<typeof postUsersMePersonas>>,
       TError,
       { data: BodyType<CreateUserPersonaRequest> },
       TContext
@@ -248,55 +284,63 @@ export const useCreate = <TError = ErrorType<unknown>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof postUsersMePersonas>>,
   TError,
   { data: BodyType<CreateUserPersonaRequest> },
   TContext
 > => {
-  return useMutation(getCreateMutationOptions(options), queryClient);
+  return useMutation(
+    getPostUsersMePersonasMutationOptions(options),
+    queryClient,
+  );
 };
-export type delete1Response204 = {
+export type deleteUsersMePersonasByPersonaIdResponse204 = {
   data: void;
   status: 204;
 };
 
-export type delete1ResponseSuccess = delete1Response204 & {
-  headers: Headers;
-};
-export type delete1Response = delete1ResponseSuccess;
+export type deleteUsersMePersonasByPersonaIdResponseSuccess =
+  deleteUsersMePersonasByPersonaIdResponse204 & {
+    headers: Headers;
+  };
+export type deleteUsersMePersonasByPersonaIdResponse =
+  deleteUsersMePersonasByPersonaIdResponseSuccess;
 
-export const getDelete1Url = (personaId: string) => {
+export const getDeleteUsersMePersonasByPersonaIdUrl = (personaId: string) => {
   return `/api/v1/users/me/personas/${personaId}`;
 };
 
-export const delete1 = async (
+export const deleteUsersMePersonasByPersonaId = async (
   personaId: string,
   options?: RequestInit,
-): Promise<delete1Response> => {
-  return customInstance<delete1Response>(getDelete1Url(personaId), {
-    ...options,
-    method: 'DELETE',
-  });
+): Promise<deleteUsersMePersonasByPersonaIdResponse> => {
+  return customInstance<deleteUsersMePersonasByPersonaIdResponse>(
+    getDeleteUsersMePersonasByPersonaIdUrl(personaId),
+    {
+      ...options,
+      method: 'DELETE',
+    },
+  );
 };
 
-export const getDelete1MutationOptions = <
+export const getDeleteUsersMePersonasByPersonaIdMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof delete1>>,
+    Awaited<ReturnType<typeof deleteUsersMePersonasByPersonaId>>,
     TError,
     { personaId: string },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof delete1>>,
+  Awaited<ReturnType<typeof deleteUsersMePersonasByPersonaId>>,
   TError,
   { personaId: string },
   TContext
 > => {
-  const mutationKey = ['delete1'];
+  const mutationKey = ['deleteUsersMePersonasByPersonaId'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -306,27 +350,30 @@ export const getDelete1MutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof delete1>>,
+    Awaited<ReturnType<typeof deleteUsersMePersonasByPersonaId>>,
     { personaId: string }
   > = (props) => {
     const { personaId } = props ?? {};
 
-    return delete1(personaId, requestOptions);
+    return deleteUsersMePersonasByPersonaId(personaId, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type Delete1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof delete1>>
+export type DeleteUsersMePersonasByPersonaIdMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteUsersMePersonasByPersonaId>>
 >;
 
-export type Delete1MutationError = ErrorType<unknown>;
+export type DeleteUsersMePersonasByPersonaIdMutationError = ErrorType<unknown>;
 
-export const useDelete1 = <TError = ErrorType<unknown>, TContext = unknown>(
+export const useDeleteUsersMePersonasByPersonaId = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof delete1>>,
+      Awaited<ReturnType<typeof deleteUsersMePersonasByPersonaId>>,
       TError,
       { personaId: string },
       TContext
@@ -335,12 +382,15 @@ export const useDelete1 = <TError = ErrorType<unknown>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof delete1>>,
+  Awaited<ReturnType<typeof deleteUsersMePersonasByPersonaId>>,
   TError,
   { personaId: string },
   TContext
 > => {
-  return useMutation(getDelete1MutationOptions(options), queryClient);
+  return useMutation(
+    getDeleteUsersMePersonasByPersonaIdMutationOptions(options),
+    queryClient,
+  );
 };
 export type updateResponse200 = {
   data: UserPersonaResponse;

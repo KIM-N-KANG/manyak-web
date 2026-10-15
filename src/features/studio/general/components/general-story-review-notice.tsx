@@ -50,7 +50,7 @@ export function GeneralStoryReviewNotice({
       role="status"
       aria-label={title}
       className={cn(
-        'mx-4 mb-2 flex shrink-0 gap-2 rounded-2xl px-4 py-3 text-sm break-keep',
+        'mx-4 mb-2 flex shrink-0 gap-2 rounded-2xl px-4 py-3 text-sm',
         isPending ? 'bg-muted' : 'bg-destructive/10',
       )}>
       <HugeiconsIcon

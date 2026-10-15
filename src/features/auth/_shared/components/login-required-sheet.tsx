@@ -92,7 +92,7 @@ export function LoginRequiredSheet({
               </LoadingButtonContent>
             </Button>
           </div>
-          <DrawerDescription className="text-center text-sm leading-relaxed break-keep whitespace-pre-line text-foreground-secondary">
+          <DrawerDescription className="text-center text-sm leading-relaxed whitespace-pre-line text-foreground-secondary">
             {LOGIN_COPY.linkNotice}
           </DrawerDescription>
         </div>

@@ -12,6 +12,12 @@ export const SESSION_COOKIE_MAX_AGE_SECONDS = 14 * 24 * 60 * 60;
 const ACCESS_TOKEN_REFRESH_SKEW_MS = 60 * 1000;
 
 /**
+ * 브라우저 재발급 게이트가 쓰는 여유(ms). 프록시보다 먼저 한 번 재발급해 두려고 더 넓게 잡는다.
+ * 기기 시계가 앞서 이 창이 일찍 열려도 서버가 같은 창으로 다시 판정하므로 불필요한 회전은 없다.
+ */
+export const SESSION_REFRESH_GATE_SKEW_MS = 2 * 60 * 1000;
+
+/**
  * 로그인·재발급 응답의 expiresIn(초)을 만료 시각(epoch ms)으로 변환한다.
  *
  * @param nowMs 현재 시각(ms epoch)
@@ -46,11 +52,13 @@ export function parseExpiresAt(value: string | undefined): number | null {
  *
  * @param expiresAtMs access 토큰 만료 시각(ms epoch)
  * @param nowMs 현재 시각(ms epoch)
+ * @param skewMs 만료 전 여유(ms). 기본은 프록시의 선제 재발급 여유다
  * @returns 선제 재발급이 필요하면 true
  */
 export function shouldRefreshAccessToken(
   expiresAtMs: number,
   nowMs: number,
+  skewMs: number = ACCESS_TOKEN_REFRESH_SKEW_MS,
 ): boolean {
-  return nowMs >= expiresAtMs - ACCESS_TOKEN_REFRESH_SKEW_MS;
+  return nowMs >= expiresAtMs - skewMs;
 }

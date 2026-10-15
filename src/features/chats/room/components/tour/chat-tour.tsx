@@ -298,7 +298,7 @@ export function ChatTour({
               }
         }>
         <p className="font-semibold">{current.title}</p>
-        <p className="text-sm break-keep text-foreground-secondary">
+        <p className="text-sm text-foreground-secondary">
           {current.description}
         </p>
         <div className="mt-3 flex items-center gap-1">

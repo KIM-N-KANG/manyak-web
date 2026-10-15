@@ -8,8 +8,8 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import {
-  getGetConsentsQueryKey,
-  useGetConsents,
+  getGetUsersMeConsentsQueryKey,
+  useGetUsersMeConsents,
 } from '@/api/generated/endpoints/user/user';
 import type { UserConsentResponse } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
@@ -187,8 +187,8 @@ function useConsentGate() {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const userId = session?.user.id;
-  const queryKey = [...getGetConsentsQueryKey(), userId] as const;
-  const consentsQuery = useGetConsents({
+  const queryKey = [...getGetUsersMeConsentsQueryKey(), userId] as const;
+  const consentsQuery = useGetUsersMeConsents({
     query: {
       queryKey,
       enabled: status === 'authenticated',

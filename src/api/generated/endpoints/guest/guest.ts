@@ -27,28 +27,28 @@ import type { GuestConsentRequest, GuestConsentResponse } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type getConsents1Response200 = {
+export type getGuestsConsentsResponse200 = {
   data: GuestConsentResponse;
   status: 200;
 };
 
-export type getConsents1Response400 = {
+export type getGuestsConsentsResponse400 = {
   data: void;
   status: 400;
 };
 
-export type getConsents1ResponseSuccess = getConsents1Response200 & {
+export type getGuestsConsentsResponseSuccess = getGuestsConsentsResponse200 & {
   headers: Headers;
 };
-export type getConsents1ResponseError = getConsents1Response400 & {
+export type getGuestsConsentsResponseError = getGuestsConsentsResponse400 & {
   headers: Headers;
 };
 
-export type getConsents1Response =
-  | getConsents1ResponseSuccess
-  | getConsents1ResponseError;
+export type getGuestsConsentsResponse =
+  | getGuestsConsentsResponseSuccess
+  | getGuestsConsentsResponseError;
 
-export const getGetConsents1Url = () => {
+export const getGetGuestsConsentsUrl = () => {
   return `/api/v1/guests/consents`;
 };
 
@@ -56,61 +56,69 @@ export const getGetConsents1Url = () => {
  * 인증 없이 디바이스별 현행 문서의 동의 필요 여부를 반환합니다. 미동의 게스트의 다른 API를 차단하지 않으며 회원 동의로 이관하지 않습니다.
  * @summary 게스트 개인정보 수집 동의 조회
  */
-export const getConsents1 = async (
+export const getGuestsConsents = async (
   options?: RequestInit,
-): Promise<getConsents1Response> => {
-  return customInstance<getConsents1Response>(getGetConsents1Url(), {
+): Promise<getGuestsConsentsResponse> => {
+  return customInstance<getGuestsConsentsResponse>(getGetGuestsConsentsUrl(), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getGetConsents1QueryKey = () => {
+export const getGetGuestsConsentsQueryKey = () => {
   return [`/api/v1/guests/consents`] as const;
 };
 
-export const getGetConsents1QueryOptions = <
-  TData = Awaited<ReturnType<typeof getConsents1>>,
+export const getGetGuestsConsentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getGuestsConsents>>,
   TError = ErrorType<void>,
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof getConsents1>>, TError, TData>
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getGuestsConsents>>,
+      TError,
+      TData
+    >
   >;
   request?: SecondParameter<typeof customInstance>;
 }) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetConsents1QueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetGuestsConsentsQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getConsents1>>> = ({
-    signal,
-  }) => getConsents1({ signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getGuestsConsents>>
+  > = ({ signal }) => getGuestsConsents({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getConsents1>>,
+    Awaited<ReturnType<typeof getGuestsConsents>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetConsents1QueryResult = NonNullable<
-  Awaited<ReturnType<typeof getConsents1>>
+export type GetGuestsConsentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getGuestsConsents>>
 >;
-export type GetConsents1QueryError = ErrorType<void>;
+export type GetGuestsConsentsQueryError = ErrorType<void>;
 
-export function useGetConsents1<
-  TData = Awaited<ReturnType<typeof getConsents1>>,
+export function useGetGuestsConsents<
+  TData = Awaited<ReturnType<typeof getGuestsConsents>>,
   TError = ErrorType<void>,
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getGuestsConsents>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getConsents1>>,
+          Awaited<ReturnType<typeof getGuestsConsents>>,
           TError,
-          Awaited<ReturnType<typeof getConsents1>>
+          Awaited<ReturnType<typeof getGuestsConsents>>
         >,
         'initialData'
       >;
@@ -120,19 +128,23 @@ export function useGetConsents1<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetConsents1<
-  TData = Awaited<ReturnType<typeof getConsents1>>,
+export function useGetGuestsConsents<
+  TData = Awaited<ReturnType<typeof getGuestsConsents>>,
   TError = ErrorType<void>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getGuestsConsents>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getConsents1>>,
+          Awaited<ReturnType<typeof getGuestsConsents>>,
           TError,
-          Awaited<ReturnType<typeof getConsents1>>
+          Awaited<ReturnType<typeof getGuestsConsents>>
         >,
         'initialData'
       >;
@@ -142,13 +154,17 @@ export function useGetConsents1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useGetConsents1<
-  TData = Awaited<ReturnType<typeof getConsents1>>,
+export function useGetGuestsConsents<
+  TData = Awaited<ReturnType<typeof getGuestsConsents>>,
   TError = ErrorType<void>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getGuestsConsents>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -160,13 +176,17 @@ export function useGetConsents1<
  * @summary 게스트 개인정보 수집 동의 조회
  */
 
-export function useGetConsents1<
-  TData = Awaited<ReturnType<typeof getConsents1>>,
+export function useGetGuestsConsents<
+  TData = Awaited<ReturnType<typeof getGuestsConsents>>,
   TError = ErrorType<void>,
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getConsents1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getGuestsConsents>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -174,7 +194,7 @@ export function useGetConsents1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getGetConsents1QueryOptions(options);
+  const queryOptions = getGetGuestsConsentsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -184,28 +204,29 @@ export function useGetConsents1<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type recordConsents1Response200 = {
+export type postGuestsConsentsResponse200 = {
   data: GuestConsentResponse;
   status: 200;
 };
 
-export type recordConsents1Response400 = {
+export type postGuestsConsentsResponse400 = {
   data: void;
   status: 400;
 };
 
-export type recordConsents1ResponseSuccess = recordConsents1Response200 & {
-  headers: Headers;
-};
-export type recordConsents1ResponseError = recordConsents1Response400 & {
+export type postGuestsConsentsResponseSuccess =
+  postGuestsConsentsResponse200 & {
+    headers: Headers;
+  };
+export type postGuestsConsentsResponseError = postGuestsConsentsResponse400 & {
   headers: Headers;
 };
 
-export type recordConsents1Response =
-  | recordConsents1ResponseSuccess
-  | recordConsents1ResponseError;
+export type postGuestsConsentsResponse =
+  | postGuestsConsentsResponseSuccess
+  | postGuestsConsentsResponseError;
 
-export const getRecordConsents1Url = () => {
+export const getPostGuestsConsentsUrl = () => {
   return `/api/v1/guests/consents`;
 };
 
@@ -213,36 +234,39 @@ export const getRecordConsents1Url = () => {
  * guestPrivacy의 현행 버전만 기록하며 같은 버전 재제출은 최초 동의 시각을 유지합니다. CONSENT_VERSION_MISMATCH이면 문서를 다시 표시해 동의받아야 하며 버전만 바꿔 자동 재전송하지 않습니다.
  * @summary 게스트 개인정보 수집 동의 기록
  */
-export const recordConsents1 = async (
+export const postGuestsConsents = async (
   guestConsentRequest: GuestConsentRequest,
   options?: RequestInit,
-): Promise<recordConsents1Response> => {
-  return customInstance<recordConsents1Response>(getRecordConsents1Url(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(guestConsentRequest),
-  });
+): Promise<postGuestsConsentsResponse> => {
+  return customInstance<postGuestsConsentsResponse>(
+    getPostGuestsConsentsUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(guestConsentRequest),
+    },
+  );
 };
 
-export const getRecordConsents1MutationOptions = <
+export const getPostGuestsConsentsMutationOptions = <
   TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof recordConsents1>>,
+    Awaited<ReturnType<typeof postGuestsConsents>>,
     TError,
     { data: BodyType<GuestConsentRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof recordConsents1>>,
+  Awaited<ReturnType<typeof postGuestsConsents>>,
   TError,
   { data: BodyType<GuestConsentRequest> },
   TContext
 > => {
-  const mutationKey = ['recordConsents1'];
+  const mutationKey = ['postGuestsConsents'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -252,33 +276,33 @@ export const getRecordConsents1MutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof recordConsents1>>,
+    Awaited<ReturnType<typeof postGuestsConsents>>,
     { data: BodyType<GuestConsentRequest> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return recordConsents1(data, requestOptions);
+    return postGuestsConsents(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type RecordConsents1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof recordConsents1>>
+export type PostGuestsConsentsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postGuestsConsents>>
 >;
-export type RecordConsents1MutationBody = BodyType<GuestConsentRequest>;
-export type RecordConsents1MutationError = ErrorType<void>;
+export type PostGuestsConsentsMutationBody = BodyType<GuestConsentRequest>;
+export type PostGuestsConsentsMutationError = ErrorType<void>;
 
 /**
  * @summary 게스트 개인정보 수집 동의 기록
  */
-export const useRecordConsents1 = <
+export const usePostGuestsConsents = <
   TError = ErrorType<void>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof recordConsents1>>,
+      Awaited<ReturnType<typeof postGuestsConsents>>,
       TError,
       { data: BodyType<GuestConsentRequest> },
       TContext
@@ -287,10 +311,13 @@ export const useRecordConsents1 = <
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof recordConsents1>>,
+  Awaited<ReturnType<typeof postGuestsConsents>>,
   TError,
   { data: BodyType<GuestConsentRequest> },
   TContext
 > => {
-  return useMutation(getRecordConsents1MutationOptions(options), queryClient);
+  return useMutation(
+    getPostGuestsConsentsMutationOptions(options),
+    queryClient,
+  );
 };

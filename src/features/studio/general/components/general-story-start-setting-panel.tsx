@@ -383,7 +383,7 @@ function GeneralStoryStartSettingEditor({
               {suggestedInputError}
             </FieldError>
           ) : (
-            <FieldDescription className="break-keep text-foreground-secondary">
+            <FieldDescription className="text-foreground-secondary">
               {suggestedInput.description}
             </FieldDescription>
           )}
@@ -391,7 +391,7 @@ function GeneralStoryStartSettingEditor({
 
         <Field className="gap-2">
           <FieldLabel>{ending.label}</FieldLabel>
-          <FieldDescription className="break-keep text-foreground-secondary">
+          <FieldDescription className="text-foreground-secondary">
             {ending.description}
           </FieldDescription>
         </Field>

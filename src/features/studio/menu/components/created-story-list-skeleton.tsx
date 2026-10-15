@@ -9,7 +9,7 @@ export function CreatedStoryListSkeleton() {
           <AspectRatio ratio={3 / 4} className="w-32 shrink-0">
             <Skeleton className="size-full rounded-lg" />
           </AspectRatio>
-          <div className="flex min-h-[10.6667rem] min-w-0 flex-1 flex-col justify-between py-0.5">
+          <div className="flex min-h-[10.6667rem] min-w-0 flex-1 flex-col justify-between py-1">
             <div className="flex flex-col gap-1">
               <Skeleton className="h-6 w-3/4" />
               <Skeleton className="h-5 w-full" />
@@ -20,7 +20,7 @@ export function CreatedStoryListSkeleton() {
               </div>
             </div>
             <div className="mt-1 flex justify-end gap-2">
-              <Skeleton className="h-5 w-8" />
+              <Skeleton className="h-5 w-12" />
               <Skeleton className="h-5 w-18" />
             </div>
           </div>

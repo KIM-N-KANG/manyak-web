@@ -135,7 +135,7 @@ export function GeneralStoryImageField({
               </Button>
             )}
           </div>
-          <FieldDescription className="break-keep text-foreground-secondary">
+          <FieldDescription className="text-foreground-secondary">
             {ratioHint}
             <span className="block text-xs">{fileRule}</span>
           </FieldDescription>
@@ -145,7 +145,7 @@ export function GeneralStoryImageField({
         <FieldError data-register-error>{error}</FieldError>
       ) : (
         description && (
-          <FieldDescription className="break-keep text-foreground-secondary">
+          <FieldDescription className="text-foreground-secondary">
             {description}
           </FieldDescription>
         )

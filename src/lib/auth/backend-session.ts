@@ -81,20 +81,23 @@ function isConfirmedAuthRejection(error: unknown): boolean {
  * 재발급 중복 방지 캐시가 그대로 적용되므로 직전에 발급된 토큰이 다시 거절돼도
  * 같은 결과를 돌려줄 뿐 refresh 토큰을 두 번 회전시키지 않는다.
  *
+ * `refreshSkewMs`는 만료 임박 판정 여유를 바꾼다. 브라우저 재발급 게이트 라우트가 프록시보다
+ * 넓은 창으로 미리 재발급할 때 쓴다.
+ *
  * @param nowMs 현재 시각(ms epoch)
  * @param options 재발급 옵션. `forceRefresh`가 true면 유효해 보이는 access 토큰이 있어도 재발급한다
  * @returns access 토큰 확보 결과(판별 유니온)
  */
 export async function ensureFreshAccessToken(
   nowMs = Date.now(),
-  options: { forceRefresh?: boolean } = {},
+  options: { forceRefresh?: boolean; refreshSkewMs?: number } = {},
 ): Promise<FreshAccessTokenResult> {
   const tokens = await readBackendSessionTokens();
 
   if (
     tokens &&
     !options.forceRefresh &&
-    !shouldRefreshAccessToken(tokens.expiresAt, nowMs)
+    !shouldRefreshAccessToken(tokens.expiresAt, nowMs, options.refreshSkewMs)
   ) {
     return { status: 'authenticated', accessToken: tokens.accessToken };
   }

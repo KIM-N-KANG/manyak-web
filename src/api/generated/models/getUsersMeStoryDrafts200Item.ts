@@ -6,6 +6,4 @@
  * OpenAPI spec version: v1
  */
 
-export type Get2Params = {
-  query?: string;
-};
+export type GetUsersMeStoryDrafts200Item = { [key: string]: unknown };

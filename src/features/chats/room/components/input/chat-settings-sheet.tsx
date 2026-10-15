@@ -239,7 +239,7 @@ export function ChatSettingsSheet({
                     <p className="font-semibold">
                       {CHAT_SETTINGS_COPY.realtimeImage.nudge.title}
                     </p>
-                    <p className="text-sm break-keep text-foreground-secondary">
+                    <p className="text-sm text-foreground-secondary">
                       {CHAT_SETTINGS_COPY.realtimeImage.nudge.description}
                     </p>
                     <Button

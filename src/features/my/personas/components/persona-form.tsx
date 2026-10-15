@@ -157,7 +157,7 @@ export function PersonaForm({ persona }: PersonaFormProps) {
                 {basicInfoError}
               </FieldError>
             ) : (
-              <FieldDescription className="break-keep text-foreground-secondary">
+              <FieldDescription className="text-foreground-secondary">
                 {PERSONA_CREATE_COPY.basicInfoDescription}
               </FieldDescription>
             )}
@@ -194,7 +194,7 @@ export function PersonaForm({ persona }: PersonaFormProps) {
                 {errors.feature}
               </FieldError>
             ) : (
-              <FieldDescription className="break-keep text-foreground-secondary">
+              <FieldDescription className="text-foreground-secondary">
                 {PERSONA_CREATE_COPY.featureDescription}
               </FieldDescription>
             )}

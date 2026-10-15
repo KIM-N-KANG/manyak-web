@@ -1,4 +1,5 @@
 import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
+import { waitForFreshSession } from '@/lib/auth/session-refresh-gate';
 import { FetchError, resolveApiProxyUrl } from '@/lib/custom-fetch';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
@@ -107,6 +108,8 @@ export const customInstance = async <T>(
   options: RequestInit = {},
 ): Promise<T> => {
   try {
+    await waitForFreshSession();
+
     const response = await fetchWithTimeout(resolveApiProxyUrl(url), {
       ...options,
       headers: resolveHeaders(options.headers),

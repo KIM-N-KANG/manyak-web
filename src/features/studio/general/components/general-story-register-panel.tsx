@@ -86,7 +86,7 @@ export function GeneralStoryRegisterPanel({
           onToggle={(id, pressed) => changeGenre({ kind: 'tag', id }, pressed)}
         />
         {needsGenreReselection && (
-          <p className="text-sm break-keep text-foreground-secondary">
+          <p className="text-sm text-foreground-secondary">
             {GENRE_SEARCH_COPY.reselect}
           </p>
         )}
@@ -116,7 +116,7 @@ export function GeneralStoryRegisterPanel({
         {genreError ? (
           <FieldError>{genreError}</FieldError>
         ) : (
-          <FieldDescription className="break-keep text-foreground-secondary">
+          <FieldDescription className="text-foreground-secondary">
             {genre.description}
           </FieldDescription>
         )}
@@ -140,7 +140,7 @@ export function GeneralStoryRegisterPanel({
           <FieldLabel>{visibility.label}</FieldLabel>
           <FieldDescription
             id={VISIBILITY_DESCRIPTION_ID}
-            className="break-keep text-foreground-secondary">
+            className="text-foreground-secondary">
             {visibility.description}
           </FieldDescription>
         </Field>
@@ -154,7 +154,7 @@ export function GeneralStoryRegisterPanel({
         />
       </div>
 
-      <p className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-sm break-keep text-foreground-secondary">
+      <p className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-sm text-foreground-secondary">
         <HugeiconsIcon
           icon={AlertCircleIcon}
           aria-hidden="true"

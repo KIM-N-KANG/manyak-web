@@ -108,7 +108,7 @@ test.describe('채팅 목록', () => {
     await expect(skeletonRow).toHaveCSS('padding-right', '16px');
     await expect(skeletonRow).toHaveCSS('padding-bottom', '8px');
     await expect(skeletonRow).toHaveCSS('padding-left', '16px');
-    await expect(skeletonCover).toHaveCSS('width', '48px');
+    await expect(skeletonCover).toHaveCSS('width', '56px');
     await expect(skeletonSurface).toHaveCSS('border-radius', '12px');
 
     releaseResponse();
@@ -123,7 +123,7 @@ test.describe('채팅 목록', () => {
     await expect(chatCard).toHaveCSS('padding-right', '16px');
     await expect(chatCard).toHaveCSS('padding-bottom', '8px');
     await expect(chatCard).toHaveCSS('padding-left', '16px');
-    await expect(chatCover).toHaveCSS('width', '48px');
+    await expect(chatCover).toHaveCSS('width', '56px');
     await expect(chatCover).toHaveCSS('border-radius', '12px');
   });
 

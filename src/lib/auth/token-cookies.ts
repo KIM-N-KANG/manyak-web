@@ -100,11 +100,11 @@ export async function writeBackendSessionTokens(
 
   store.set(ACCESS_TOKEN_COOKIE, accessToken, COOKIE_OPTIONS);
   store.set(REFRESH_TOKEN_COOKIE, refreshToken, COOKIE_OPTIONS);
-  store.set(
-    EXPIRES_AT_COOKIE,
-    String(computeExpiresAt(nowMs, expiresIn)),
-    COOKIE_OPTIONS,
-  );
+  // 만료 시각은 자격증명이 아니다. 브라우저 재발급 게이트가 만료 임박을 미리 알도록 JS에 연다.
+  store.set(EXPIRES_AT_COOKIE, String(computeExpiresAt(nowMs, expiresIn)), {
+    ...COOKIE_OPTIONS,
+    httpOnly: false,
+  });
 }
 
 /**

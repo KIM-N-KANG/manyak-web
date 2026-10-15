@@ -50,7 +50,7 @@ export function StoryModeSelectScreen() {
         title={STORY_MODE_SELECT_COPY.title}
         fallbackHref={APP_PATH.MAIN.STUDIO}
       />
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 break-keep">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4">
         <div className="flex flex-1 flex-col justify-center gap-4">
           {MODE_OPTIONS.map(({ method, href, copy, Illustration }) => (
             <Link

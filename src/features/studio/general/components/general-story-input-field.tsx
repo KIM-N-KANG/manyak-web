@@ -121,7 +121,7 @@ export function GeneralStoryInputField({
         description && (
           <FieldDescription
             id={descriptionId}
-            className="break-keep text-foreground-secondary">
+            className="text-foreground-secondary">
             {description}
           </FieldDescription>
         )

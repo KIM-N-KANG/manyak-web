@@ -69,7 +69,7 @@ export function GeneralStoryMainEventPanel({
     <div className="flex flex-col gap-4">
       <Field className="gap-2 px-4 pt-4">
         <FieldLabel>{label}</FieldLabel>
-        <FieldDescription className="break-keep text-foreground-secondary">
+        <FieldDescription className="text-foreground-secondary">
           {intro}
         </FieldDescription>
       </Field>

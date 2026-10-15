@@ -172,7 +172,7 @@ export function GeneralStoryCharacterFields({
         {basicInfoError ? (
           <FieldError id={nameErrorId}>{basicInfoError}</FieldError>
         ) : (
-          <FieldDescription className="break-keep text-foreground-secondary">
+          <FieldDescription className="text-foreground-secondary">
             {basicInfoDescription}
           </FieldDescription>
         )}
@@ -211,7 +211,7 @@ export function GeneralStoryCharacterFields({
         {featureError ? (
           <FieldError id={featureErrorId}>{featureError}</FieldError>
         ) : (
-          <FieldDescription className="break-keep text-foreground-secondary">
+          <FieldDescription className="text-foreground-secondary">
             {featureDescription}
           </FieldDescription>
         )}

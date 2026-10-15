@@ -1,6 +1,6 @@
 'use client';
 
-import { useList as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
+import { useGetUsersMePersonas as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
