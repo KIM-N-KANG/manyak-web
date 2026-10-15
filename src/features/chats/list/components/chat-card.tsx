@@ -170,7 +170,7 @@ function ChatCardBody({ chat, action }: ChatCardBodyProps) {
           </div>
         )}
       </AspectRatio>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1 py-0.5">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-start gap-2">
             <p

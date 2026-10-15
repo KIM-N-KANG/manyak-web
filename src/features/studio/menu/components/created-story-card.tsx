@@ -198,7 +198,7 @@ function CreatedStoryCardBody({
       </AspectRatio>
       <div
         className={cn(
-          'flex min-w-0 flex-1 flex-col justify-between py-0.5',
+          'flex min-w-0 flex-1 flex-col justify-between py-1',
           'min-h-[10.6667rem]',
         )}>
         <div>

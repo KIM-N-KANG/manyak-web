@@ -9,7 +9,7 @@ export function ChatListSkeleton() {
           <AspectRatio ratio={3 / 4} className="w-12 shrink-0">
             <Skeleton className="size-full rounded-sm" />
           </AspectRatio>
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 py-0.5">
             <div className="flex flex-col gap-0.5">
               <Skeleton className="h-6 w-1/2" />
               <Skeleton className="h-3.5 w-full" />
