@@ -146,8 +146,16 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       setRealtimeImageNudgeRequested(true);
     }
 
-    await queryClient.invalidateQueries({ queryKey: [CHATS_BATCH_QUERY_KEY] });
-    await queryClient.invalidateQueries({ queryKey: getGetMyChatsQueryKey() });
+    // 목록 화면은 지금 구독자가 없어 낡음 표시만으로는 돌아온 순간 옛 순서가 먼저 그려진다.
+    // 여기서 미리 받아 두면 돌아왔을 때 방금 대화한 채팅이 이미 맨 위에 있다.
+    void queryClient.invalidateQueries({
+      queryKey: [CHATS_BATCH_QUERY_KEY],
+      refetchType: 'all',
+    });
+    void queryClient.invalidateQueries({
+      queryKey: getGetMyChatsQueryKey(),
+      refetchType: 'all',
+    });
 
     const detail = result.data?.status === 200 ? result.data.data : undefined;
     const lastTurn = (detail?.turns as ChatTurnResponse[] | undefined)?.at(-1);
