@@ -64,6 +64,23 @@ describe('writeBackendSessionTokens / readBackendSessionTokens', () => {
     });
   });
 
+  it('토큰은 httpOnly로 두고 만료 시각만 브라우저 JS에 연다', async () => {
+    await writeBackendSessionTokens(
+      { accessToken: 'access', refreshToken: 'refresh', expiresIn: 1800 },
+      1_000,
+    );
+
+    const httpOnlyByName = Object.fromEntries(
+      setCalls.map((call) => [call.name, call.options?.httpOnly]),
+    );
+
+    expect(httpOnlyByName).toEqual({
+      manyak_session_access: true,
+      manyak_session_refresh: true,
+      manyak_session_expires_at: false,
+    });
+  });
+
   it('필수 값이 빠진 토큰 응답은 저장하지 않고 던진다', async () => {
     await expect(
       writeBackendSessionTokens({ accessToken: 'access' }, 1_000),

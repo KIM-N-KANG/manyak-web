@@ -35,4 +35,13 @@ describe('shouldRefreshAccessToken', () => {
   it('만료까지 60초 넘게 남았으면 재발급하지 않는다', () => {
     expect(shouldRefreshAccessToken(expiresAt, expiresAt - 60_001)).toBe(false);
   });
+
+  it('여유를 넘기면 그 창으로 판정한다', () => {
+    expect(
+      shouldRefreshAccessToken(expiresAt, expiresAt - 90_000, 120_000),
+    ).toBe(true);
+    expect(
+      shouldRefreshAccessToken(expiresAt, expiresAt - 120_001, 120_000),
+    ).toBe(false);
+  });
 });
