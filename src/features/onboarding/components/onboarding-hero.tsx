@@ -2,7 +2,15 @@
 
 import { type RefObject, useEffect, useState } from 'react';
 
-import { m, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  m,
+  type Transition,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from 'motion/react';
 import Image from 'next/image';
 
 import { ManyakLogo } from '@/components/layout/manyak-logo';
@@ -24,6 +32,21 @@ const TITLE_LINE_DELAYS = [
   ONBOARDING_ENTRANCE_DELAY.titleFirstLine,
   ONBOARDING_ENTRANCE_DELAY.titleSecondLine,
 ] as const;
+
+/** 스크롤 신호가 완전히 사라지는 첫 화면 스크롤 진행률. 카드가 넓어지기 시작하면 바로 물러난다. */
+const SCROLL_CUE_FADE_END = 0.15;
+
+/**
+ * 스크롤 신호가 아래로 내려가며 옅어졌다 돌아오는 호흡. 등장이 끝난 뒤 시작하고, 튀는
+ * 바운스 대신 숨 쉬듯 쉬어 가며 반복해 이미지 감상을 방해하지 않는다.
+ */
+const SCROLL_CUE_BREATH: Transition = {
+  delay: ONBOARDING_ENTRANCE_DELAY.scrollCue + 0.7,
+  duration: 1.6,
+  ease: 'easeInOut',
+  repeat: Infinity,
+  repeatDelay: 0.6,
+};
 
 interface HeroSlide {
   current: number;
@@ -49,6 +72,12 @@ export function OnboardingHero({
   });
   const cardInset = useTransform(scrollYProgress, [0, 1], [32, 0]);
   const cardRadius = useTransform(scrollYProgress, [0, 1], [28, 0]);
+  const cueOpacity = useTransform(scrollYProgress, (progress) =>
+    Math.max(1 - progress / SCROLL_CUE_FADE_END, 0),
+  );
+  const cueVisibility = useTransform(cueOpacity, (value) =>
+    value > 0 ? 'visible' : 'hidden',
+  );
 
   useEffect(() => {
     if (prefersReducedMotion) return;
@@ -62,6 +91,13 @@ export function OnboardingHero({
 
     return () => window.clearInterval(timer);
   }, [prefersReducedMotion]);
+
+  const handleScrollDown = () => {
+    scrollerRef.current?.scrollTo({
+      top: sectionRef.current?.offsetHeight ?? 0,
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
+  };
 
   return (
     <section ref={sectionRef} className="relative h-[130cqh]">
@@ -99,7 +135,7 @@ export function OnboardingHero({
             />
           ))}
           <div className="absolute inset-x-0 bottom-0 z-20 h-3/5 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col gap-3 px-6 pb-10 text-white">
+          <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col gap-3 px-6 pb-14 text-white">
             <m.div
               variants={rise}
               custom={ONBOARDING_ENTRANCE_DELAY.logo}
@@ -124,6 +160,32 @@ export function OnboardingHero({
               {ONBOARDING_DESCRIPTION}
             </m.p>
           </div>
+          <m.div
+            style={{ opacity: cueOpacity, visibility: cueVisibility }}
+            className="absolute inset-x-0 bottom-1 z-40 flex justify-center">
+            <m.button
+              type="button"
+              aria-label="아래로 이동"
+              onClick={handleScrollDown}
+              variants={rise}
+              custom={ONBOARDING_ENTRANCE_DELAY.scrollCue}
+              className="flex size-11 items-center justify-center text-white/80">
+              <m.span
+                animate={
+                  prefersReducedMotion
+                    ? undefined
+                    : { y: [0, 6, 0], opacity: [1, 0.4, 1] }
+                }
+                transition={SCROLL_CUE_BREATH}
+                className="flex">
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  strokeWidth={1.75}
+                  className="size-6"
+                />
+              </m.span>
+            </m.button>
+          </m.div>
         </m.div>
       </div>
     </section>
