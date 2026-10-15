@@ -211,7 +211,7 @@ function CreatedStoryCardBody({
               {title}
             </p>
             {action ? (
-              <div className="relative z-20 shrink-0">{action}</div>
+              <div className="relative z-20 flex shrink-0">{action}</div>
             ) : null}
           </div>
           {introduction ? (
