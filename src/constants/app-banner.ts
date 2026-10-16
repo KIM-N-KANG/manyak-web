@@ -7,7 +7,7 @@ type AppBannerVariantCopy = {
 };
 
 const ANDROID_COPY: AppBannerVariantCopy = {
-  message: '앱으로 즐겨보세요',
+  message: '앱에서 이어서 볼 수 있어요',
   action: '앱 열기',
   actionLabel: '앱 열기',
 };
@@ -20,12 +20,12 @@ export const APP_BANNER_VARIANT_COPY: Record<
   android_inapp: ANDROID_COPY,
   android_browser: ANDROID_COPY,
   ios_inapp: {
-    message: '외부 브라우저로 즐겨보세요',
+    message: '외부 브라우저에서 이어서 볼 수 있어요',
     action: '열기',
     actionLabel: '외부 브라우저로 열기',
   },
   ios_browser: {
-    message: '홈 화면에 추가해 보세요',
+    message: '홈 화면에 추가하면 앱처럼 열 수 있어요',
     action: '추가하기',
     actionLabel: '홈 화면에 추가하기',
   },

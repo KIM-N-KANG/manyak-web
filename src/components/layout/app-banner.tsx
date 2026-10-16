@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 import {
@@ -17,6 +18,7 @@ import {
   APP_BANNER_VARIANT_COPY,
 } from '@/constants/app-banner';
 import { APP_SCREEN_ID } from '@/constants/app-frame';
+import { SITE_NAME } from '@/constants/site';
 import {
   type AppBannerVariant,
   buildAppIntentUrl,
@@ -37,6 +39,13 @@ import { track } from '@/observability/analytics';
 
 /** 외부 브라우저 전환을 시도한 뒤 실패로 판단하기까지 기다리는 시간(ms)이다. */
 const ESCAPE_FALLBACK_DELAY_MS = 1500;
+
+/**
+ * 배너 버튼에 primaryOutline 위로 덧씌우는 클래스다. 진한 초록 아이콘과 겹치지 않게 테두리를
+ * 빼고, 연한 초록 바탕에서도 작은 글자 대비 4.5:1을 넘도록 초록에 글자색을 30% 섞는다.
+ */
+const ACTION_BUTTON_CLASS =
+  'border-transparent text-[color-mix(in_oklch,var(--primary),var(--foreground)_30%)]';
 
 /**
  * 아무 것도 구독하지 않는 useSyncExternalStore용 빈 구독 함수를 만든다.
@@ -227,22 +236,40 @@ export function AppBanner() {
             }
             className="shrink-0 overflow-hidden">
             <div className="flex items-center gap-3 bg-muted py-3 pr-2 pl-4">
-              <p className="min-w-0 flex-1 text-sm leading-snug font-medium text-foreground">
-                {APP_BANNER_VARIANT_COPY[variant].message}
-              </p>
+              <Image
+                src="/icons/icon-192.png"
+                alt=""
+                width={40}
+                height={40}
+                unoptimized
+                className="size-10 shrink-0 rounded-[10px]"
+              />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <p className="text-sm leading-snug font-semibold text-foreground">
+                  {SITE_NAME}
+                </p>
+                <p className="text-xs leading-snug text-foreground-secondary">
+                  {APP_BANNER_VARIANT_COPY[variant].message}
+                </p>
+              </div>
               <div className="flex shrink-0 items-center gap-1">
                 {isAndroidVariant(variant) ? (
                   <a
                     href={buildAppIntentUrl(pathname)}
                     aria-label={APP_BANNER_VARIANT_COPY[variant].actionLabel}
-                    className={cn(buttonVariants({ size: 'sm' }))}
+                    className={cn(
+                      buttonVariants({ variant: 'primaryOutline', size: 'sm' }),
+                      ACTION_BUTTON_CLASS,
+                    )}
                     onClick={() => handleAction(variant)}>
                     {APP_BANNER_VARIANT_COPY[variant].action}
                   </a>
                 ) : (
                   <Button
                     type="button"
+                    variant="primaryOutline"
                     size="sm"
+                    className={ACTION_BUTTON_CLASS}
                     aria-label={APP_BANNER_VARIANT_COPY[variant].actionLabel}
                     onClick={() => handleAction(variant)}>
                     {APP_BANNER_VARIANT_COPY[variant].action}
