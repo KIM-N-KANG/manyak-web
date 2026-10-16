@@ -81,6 +81,11 @@ export const GENERAL_STORY_TEXT_FIELDS = {
 
 export type GeneralStoryTextField = keyof typeof GENERAL_STORY_TEXT_FIELDS;
 
+/** 모든 글 칸이 빈 입력이다. 새 폼과 임시 저장본에 빠진 칸의 기본값이다. */
+export const EMPTY_GENERAL_TEXT_VALUES = Object.fromEntries(
+  Object.keys(GENERAL_STORY_TEXT_FIELDS).map((field) => [field, '']),
+) as Record<GeneralStoryTextField, string>;
+
 /**
  * 모든 글 입력의 클라이언트 전용 최소 글자 수다. 앞뒤 공백을 빼고 세며, 한 글자만 쓰고 칸을 벗어나면
  * 설명 자리에 오류를 보인다(`utils/general-story-text-error`). 숫자 칸(최소 턴 수)은 대상이 아니다.

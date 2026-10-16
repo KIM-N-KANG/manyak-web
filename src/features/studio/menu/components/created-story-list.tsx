@@ -17,11 +17,16 @@ import { track } from '@/observability/analytics';
 import { CREATED_STORY_LIST_COPY } from '../constants';
 import { useCreatedStories } from '../hooks/use-created-stories';
 import { useCreationRecords } from '../hooks/use-pending-creation-request';
+import { useStoryDrafts } from '../hooks/use-story-drafts';
 import { useStorySubmissions } from '../hooks/use-story-submissions';
+import { mergeDraftCards } from '../utils/merge-draft-cards';
 import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryCard } from './created-story-card';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
-import { CreationProgressCard } from './creation-progress-card';
+import {
+  CreationProgressCard,
+  ServerDraftCard,
+} from './creation-progress-card';
 import { SubmissionCard } from './submission-card';
 
 export function CreatedStoryList() {
@@ -29,9 +34,12 @@ export function CreatedStoryList() {
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const local = useCreationRecords();
   const { submissions } = useStorySubmissions();
-  const pendingCreationRecords = local.pending ?? [];
+  const serverDrafts = useStoryDrafts(local.pending);
+  // 기기 안 초안과 서버 초안(회원 일반 제작)을 한 묶음으로 최신순에 놓는다.
+  const draftItems = mergeDraftCards(local.pending ?? [], serverDrafts.cards);
   const completionRecords = local.completions ?? [];
-  const showSkeleton = useDelayedLoading(isLoading || local.isLoading);
+  const isDraftsLoading = local.isLoading || serverDrafts.isLoading;
+  const showSkeleton = useDelayedLoading(isLoading || isDraftsLoading);
   const shouldReduceMotion = useReducedMotion();
   const isStoryListed = (storyId: string | null | undefined) =>
     typeof storyId === 'string' &&
@@ -70,7 +78,7 @@ export function CreatedStoryList() {
   // 진행 카드(초안·완성 중·검수 제출본)가 하나라도 있으면 목록이 비어 있어도 빈 안내를 두지 않는다.
   const showsEmptyNotice =
     isEmpty &&
-    pendingCreationRecords.length === 0 &&
+    draftItems.length === 0 &&
     visibleCompletionRecords.length === 0 &&
     submissions.length === 0;
 
@@ -81,7 +89,7 @@ export function CreatedStoryList() {
     stateKey = 'skeleton';
     content = <CreatedStoryListSkeleton />;
   } else if (
-    (isLoading || local.isLoading) &&
+    (isLoading || isDraftsLoading) &&
     visibleCompletionRecords.length === 0
   ) {
     stateKey = 'pending';
@@ -109,12 +117,16 @@ export function CreatedStoryList() {
     <>
       <ul className="relative flex shrink-0 flex-col not-empty:pb-2">
         <AnimatePresence mode="popLayout" initial={false}>
-          {pendingCreationRecords.map((record) => (
+          {draftItems.map((item) => (
             <m.li
-              key={`creation-${record.requestId}`}
+              key={`creation-${item.source === 'server' ? item.card.draftId : item.record.requestId}`}
               layout={shouldReduceMotion ? false : 'position'}
               {...rowMotion}>
-              <CreationProgressCard record={record} />
+              {item.source === 'server' ? (
+                <ServerDraftCard card={item.card} />
+              ) : (
+                <CreationProgressCard record={item.record} />
+              )}
             </m.li>
           ))}
           {submissions.map((submission) =>

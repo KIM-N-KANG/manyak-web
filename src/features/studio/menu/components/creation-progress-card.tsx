@@ -4,10 +4,15 @@ import { useEffect, useRef } from 'react';
 
 import { Calendar04Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import {
+  deleteUsersMeStoryDraftsByDraftId,
+  getGetUsersMeStoryDraftsQueryKey,
+} from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';
 import { MascotStage } from '@/components/common/mascot-stage';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
@@ -24,6 +29,7 @@ import type {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { takePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { markDraftResumeIntent } from '@/features/stories/_shared/utils/draft-resume-intent';
+import type { StoryDraftCard } from '@/features/stories/_shared/utils/story-draft-response';
 import { formatDateTime } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
@@ -146,24 +152,118 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
   const router = useRouter();
   const epoch = useCreationEpoch();
   const isGeneral = record.stage === 'GENERAL_DRAFT';
-  const title =
-    (isGeneral && record.snapshot.texts.title.trim()) ||
-    CREATION_PROGRESS_CARD_COPY.draftTitle;
 
-  const handleResume = () => {
-    track('client_storyCreate_continueBanner_clicked', { stage: record.stage });
-    markDraftResumeIntent(record.requestId);
-    router.push(
-      isGeneral ? APP_PATH.STUDIO.STORY.GENERAL : APP_PATH.STUDIO.STORY.SIMPLE,
-    );
-  };
+  return (
+    <DraftCardContent
+      title={
+        (isGeneral && record.snapshot.texts.title.trim()) ||
+        CREATION_PROGRESS_CARD_COPY.draftTitle
+      }
+      cover={(isGeneral && record.snapshot.cover?.blob) || undefined}
+      description={getDraftDescription(record)}
+      createdAt={record.createdAt}
+      onResume={() => {
+        track('client_storyCreate_continueBanner_clicked', {
+          stage: record.stage,
+        });
+        markDraftResumeIntent(record.requestId);
+        router.push(
+          isGeneral
+            ? APP_PATH.STUDIO.STORY.GENERAL
+            : APP_PATH.STUDIO.STORY.SIMPLE,
+        );
+      }}
+      onDelete={async () => {
+        if (!(await takePendingCreationRequest(record.requestId, epoch)))
+          toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
+      }}
+    />
+  );
+}
 
+type ServerDraftCardProps = {
+  card: StoryDraftCard;
+};
+
+/** 서버에 임시 저장한 일반 제작 초안의 진행 카드다. 기기 안 초안 카드와 같은 모양과 동작을 쓴다. */
+export function ServerDraftCard({ card }: ServerDraftCardProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const impressionRef = useImpression({
+    object: 'continueBanner',
+    itemId: card.draftId,
+    screen: SCREEN.STORY_LIST,
+    onImpress: () => {
+      track('client_storyCreate_continueBanner_shown', {
+        stage: 'GENERAL_DRAFT',
+      });
+    },
+  });
+
+  return (
+    <article
+      ref={impressionRef}
+      aria-label={CREATION_PROGRESS_CARD_COPY.draftTitle}
+      className="flex px-4 py-2">
+      <DraftCardContent
+        title={card.title?.trim() || CREATION_PROGRESS_CARD_COPY.draftTitle}
+        cover={card.thumbnailUrl ?? undefined}
+        description={
+          card.oneLineIntro?.trim() ||
+          CREATION_PROGRESS_CARD_COPY.draftDescription.general
+        }
+        createdAt={card.createdAt}
+        onResume={() => {
+          track('client_storyCreate_continueBanner_clicked', {
+            stage: 'GENERAL_DRAFT',
+          });
+          markDraftResumeIntent(card.draftId);
+          router.push(APP_PATH.STUDIO.STORY.GENERAL);
+        }}
+        onDelete={async () => {
+          try {
+            await deleteUsersMeStoryDraftsByDraftId(card.draftId);
+          } catch {
+            toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
+
+            return;
+          }
+
+          await queryClient.invalidateQueries({
+            queryKey: getGetUsersMeStoryDraftsQueryKey(),
+          });
+        }}
+      />
+    </article>
+  );
+}
+
+type DraftCardContentProps = {
+  title: string;
+  /** 표지 파일(기기 안 초안) 또는 미리보기 URL(서버 초안). 없으면 기본 심벌이다. */
+  cover?: Blob | string;
+  description: string;
+  /** 처음 임시 저장한 시각(ISO). 구 레코드에는 없다. */
+  createdAt?: string;
+  onResume: () => void;
+  onDelete: () => Promise<void>;
+};
+
+/** 초안 진행 카드의 본문이다. 이어서 만들기와 더보기 삭제를 둔다. */
+function DraftCardContent({
+  title,
+  cover,
+  description,
+  createdAt,
+  onResume,
+  onDelete,
+}: DraftCardContentProps) {
   return (
     <CreationProgressCardBody
       isCompleting={false}
       title={title}
-      cover={(isGeneral && record.snapshot.cover?.blob) || undefined}
-      description={getDraftDescription(record)}
+      cover={cover}
+      description={description}
       action={
         <CardOptionsSheet
           kind={CREATION_PROGRESS_CARD_COPY.optionsKind}
@@ -174,12 +274,7 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
               icon: Delete02Icon,
               label: CREATION_PROGRESS_CARD_COPY.delete,
               variant: 'destructive',
-              onSelect: async () => {
-                if (
-                  !(await takePendingCreationRequest(record.requestId, epoch))
-                )
-                  toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
-              },
+              onSelect: onDelete,
               confirm: {
                 title: CREATION_PROGRESS_CARD_COPY.deleteConfirmTitle,
                 description:
@@ -190,8 +285,8 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
         />
       }>
       <div className="flex flex-col gap-2">
-        {record.createdAt ? <SavedAtRow createdAt={record.createdAt} /> : null}
-        <Button variant="secondary" className="w-full" onClick={handleResume}>
+        {createdAt ? <SavedAtRow createdAt={createdAt} /> : null}
+        <Button variant="secondary" className="w-full" onClick={onResume}>
           {CREATION_PROGRESS_CARD_COPY.resume}
         </Button>
       </div>
