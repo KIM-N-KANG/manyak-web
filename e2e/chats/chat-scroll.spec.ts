@@ -145,17 +145,20 @@ const mockChatDetail = async (
   page: Page,
   tokenCount: number = STREAM_TOKEN_COUNT,
 ) => {
-  let detailCallCount = 0;
+  // 진입 때 마지막 턴의 선택지 생성 뒤 재조회도 있으므로, 조회 횟수가 아니라 전송 여부로 응답을 바꾼다.
+  let sent = false;
 
+  page.on('request', (request) => {
+    if (request.url().includes('/turns/stream')) sent = true;
+  });
   await page.route(CHAT_DETAIL, async (route) => {
-    detailCallCount += 1;
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(
-        detailCallCount === 1
-          ? chatDetail(historyTurns)
-          : chatDetail([...historyTurns, completedTurnOf(tokenCount)]),
+        sent
+          ? chatDetail([...historyTurns, completedTurnOf(tokenCount)])
+          : chatDetail(historyTurns),
       ),
     });
   });

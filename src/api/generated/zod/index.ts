@@ -24,7 +24,6 @@ export const PutBody = zod.object({
   payload: zod
     .object({
       container: zod.boolean().optional(),
-      number: zod.boolean().optional(),
       string: zod.boolean().optional(),
       floatingPointNumber: zod.boolean().optional(),
       missingNode: zod.boolean().optional(),
@@ -54,6 +53,7 @@ export const PutBody = zod.object({
       textual: zod.boolean().optional(),
       boolean: zod.boolean().optional(),
       binary: zod.boolean().optional(),
+      number: zod.boolean().optional(),
       array: zod.boolean().optional(),
       empty: zod.boolean().optional(),
       null: zod.boolean().optional(),
@@ -493,29 +493,6 @@ export const RedeemInviteCodeBody = zod
   .describe('초대 코드 입력 요청(스펙 §4-3-7, KNK-567)');
 
 export const RedeemInviteCodeResponse = zod.unknown();
-
-/**
- * 구매 토큰을 검증해 이프를 적립합니다. 같은 토큰은 본인에게만 멱등 응답하며 consume은 앱에서 수행합니다.
- * @summary Google Play 이프 구매 검증
- */
-export const purchaseBodyProductIdMin = 0;
-export const purchaseBodyProductIdMax = 32;
-
-export const purchaseBodyPurchaseTokenMin = 0;
-export const purchaseBodyPurchaseTokenMax = 4096;
-
-export const PurchaseBody = zod.object({
-  productId: zod
-    .string()
-    .min(purchaseBodyProductIdMin)
-    .max(purchaseBodyProductIdMax),
-  purchaseToken: zod
-    .string()
-    .min(purchaseBodyPurchaseTokenMin)
-    .max(purchaseBodyPurchaseTokenMax),
-});
-
-export const PurchaseResponse = zod.unknown();
 
 /**
  * PENDING 주문과 그로블 결제창 URL을 반환합니다. 주문 생성만으로 이프를 적립하지 않습니다.
@@ -1257,7 +1234,7 @@ export const GenerateChoicesParams = zod.object({
 export const GenerateChoicesResponse = zod.unknown();
 
 /**
- * 사용자 입력을 바탕으로 앞선 채팅 맥락에 이어지는 이야기를 생성하고 SSE로 스트리밍합니다. 사용자 입력은 캐릭터 프로필 설정, 다음 행동, 대사, 분위기, 감정, 연출 방향 등을 모두 포함할 수 있습니다. 스트리밍은 started, token, completed 순서로 전달되며 completed 이벤트에는 최종 저장된 aiOutput 전체가 포함됩니다. 실패 시 error 이벤트를 전달할 수 있습니다.
+ * 사용자 입력을 바탕으로 앞선 채팅 맥락에 이어지는 이야기를 생성하고 SSE로 스트리밍합니다. 사용자 입력은 캐릭터 프로필 설정, 다음 행동, 대사, 분위기, 감정, 연출 방향 등을 모두 포함할 수 있습니다. 연결이 끊겨도 생성과 저장은 계속됩니다. 생성 마감은 요청 접수부터 큐 대기 포함 120초입니다. started에는 UUID generationId가 포함됩니다. lastTurnId 생략은 비교 생략, 명시적 null은 첫 턴에만 일치합니다. 스트리밍은 started, token, completed 순서로 전달되며 completed 이벤트에는 최종 저장된 aiOutput 전체가 포함됩니다. 실패 시 error 이벤트를 전달할 수 있습니다.
  * @summary 채팅 이어쓰기 스트리밍
  */
 export const StreamChatTurnParams = zod.object({
@@ -1302,13 +1279,19 @@ export const StreamChatTurnBody = zod
       .boolean()
       .optional()
       .describe('실시간 이미지 생성 여부. 기본 true'),
+    lastTurnId: zod
+      .string()
+      .nullish()
+      .describe(
+        '마지막 완료 턴 ID. 생략은 비교 생략, 명시적 null은 첫 턴만 허용',
+      ),
   })
   .describe('채팅 이어쓰기 요청');
 
 export const StreamChatTurnResponse = zod.unknown();
 
 /**
- * 마지막 턴의 AI 출력을 같은 사용자 입력으로 다시 생성해 교체하고 SSE로 스트리밍합니다(스펙 §4-3-9, 리롤이 아니라 재생성). 이어쓰기와 동일하게 started, token, completed 순서로 전달되며, completed에는 교체된 aiOutput 전체와 선택지가 포함됩니다. 새 턴을 추가하지 않고 마지막 턴의 본문·선택지만 교체하므로 사용자 입력과 턴 수(turnCount)는 변하지 않습니다. 이전 출력·선택지는 덮어쓰기 직전 버전 이력(story_message_versions, V37)에 보존되며, 상세 조회·completed에는 활성본만 실립니다. 요청 turnId가 서버의 마지막 턴과 다르면 409로 거절합니다.
+ * 마지막 턴의 AI 출력을 같은 사용자 입력으로 다시 생성해 교체하고 SSE로 스트리밍합니다(스펙 §4-3-9, 리롤이 아니라 재생성). 연결이 끊겨도 생성은 계속되며 started에는 UUID generationId가 포함됩니다. 이어쓰기와 동일하게 started, token, completed 순서로 전달되며, completed에는 교체된 aiOutput 전체와 선택지가 포함됩니다. 새 턴을 추가하지 않고 마지막 턴의 본문·선택지만 교체하므로 사용자 입력과 턴 수(turnCount)는 변하지 않습니다. 이전 출력·선택지는 덮어쓰기 직전 버전 이력(story_message_versions, V37)에 보존되며, 상세 조회·completed에는 활성본만 실립니다. 요청 turnId가 서버의 마지막 턴과 다르면 409로 거절합니다.
  * @summary AI 응답 재생성 스트리밍
  */
 export const RegenerateChatTurnParams = zod.object({
@@ -2312,7 +2295,7 @@ export const GetChatShareResponse = zod.unknown();
 export const ListPresetsResponse = zod.unknown();
 
 /**
- * 인증 없이 설정 순서대로 상품 6종의 총량과 웹·앱 가격을 조회합니다.
+ * 인증 없이 설정 순서대로 상품 6종의 총량과 웹 가격을 조회합니다.
  * @summary 이프 충전 상품 목록
  */
 export const ProductsResponse = zod.unknown();
@@ -2349,6 +2332,19 @@ export const DeleteChatParams = zod.object({
 });
 
 export const DeleteChatResponse = zod.void();
+
+/**
+ * 보관 중인 생성 이벤트를 처음부터 재생하고 새 이벤트를 이어서 받습니다. 생성과 과금을 반복하지 않습니다. 큐 대기 중 스트림이 없어도 생성 중 키가 해당 ID이면 기다립니다. completed 또는 error 수신 시 종료합니다.
+ * @summary 채팅 생성 스트림 재연결
+ */
+export const ResumeGenerationParams = zod.object({
+  chatId: zod.string().describe('채팅 공개 UUID'),
+  generationId: zod
+    .string()
+    .describe('started 또는 generatingTurn에서 받은 생성 UUID'),
+});
+
+export const ResumeGenerationResponse = zod.unknown();
 
 /**
  * Authorization: Bearer <accessToken> 의 sub(공개 식별자)로 사용자를 조회합니다. 토큰이 없거나 만료·위조됐으면 401, 토큰의 사용자가 더 이상 존재하지 않으면 401로 응답합니다.

@@ -38,6 +38,7 @@ import {
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
 const CHAT_REGENERATE = '**/api/v1/chats/c1/turns/regenerate/stream';
+const CHAT_RESUME = '**/api/v1/chats/c1/generations/*/stream';
 const CHAT_CHOICES = '**/api/v1/chats/c1/turns/1/choices';
 const PLAY_FILLED_PATH =
   'M21.4086 9.35258C23.5305 10.5065 23.5305 13.4935 21.4086 14.6474';
@@ -1028,13 +1029,13 @@ test.describe('채팅 스트리밍', () => {
     );
   });
 
-  test('completed·error 없이 스트림이 끝나면 실패로 처리하고 저장된 턴을 반영한다', async ({
+  test('종료 이벤트 없이 끊겼지만 서버가 저장했으면 실패 안내 없이 저장된 턴을 보인다 (CHAT-SEND-11)', async ({
     page,
   }) => {
     await mockMemberSession(page);
 
-    // 백엔드 SSE 전체 상한(120초) 초과는 error 이벤트 없이 스트림을 닫는다. 그때 서버는 턴을
-    // 저장했을 수 있으므로, 프론트는 상태를 풀고 상세를 다시 조회해 확정본을 보여줘야 한다.
+    // 서버는 연결이 끊겨도 생성과 저장을 계속한다. 생성 ID를 모르는 채 끊기면 상세로 확인하고,
+    // 생성 중인 턴 없이 저장된 턴이 있으면 정상 완료로 본다.
     const persistedTurn = {
       id: 1,
       userInput: '계속한다',
@@ -1072,13 +1073,408 @@ test.describe('채팅 스트리밍', () => {
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
-    // 스트리밍 상태가 풀려야 한다 — 이 처리가 없으면 스피너가 영구히 남는다(G5).
+    await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    // 스트리밍 상태가 풀려야 한다. 이 처리가 없으면 스피너가 영구히 남는다(G5).
     await expect(
       page.locator('[data-tour="send"]').getByRole('status'),
     ).toBeHidden();
-    // 재조회로 서버가 저장한 턴이 화면에 나타나야 한다.
-    await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
+    await expect(
+      page.getByText(TOAST_MESSAGE.RESPONSE_STREAM_FAILED),
+    ).toBeHidden();
+  });
+
+  test('끊긴 뒤 생성 중인 턴도 저장된 턴도 없으면 실패로 안내한다 (CHAT-SEND-11)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([], [])),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse(['event: started\ndata: {}\n\n']),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.RESPONSE_STREAM_FAILED),
+    ).toBeVisible();
+    await expect(
+      page.locator('[data-tour="send"]').getByRole('status'),
+    ).toBeHidden();
+  });
+});
+
+test.describe('생성 이어받기 (KNK-1691)', () => {
+  // 전송은 회원 전용이라 회원 세션으로 진행한다.
+  test.beforeEach(async ({ page }) => {
+    await mockMemberSession(page);
+  });
+
+  const PLAIN_INPUT = '이야기를 어떻게 이어갈까요?';
+  const completedTurn = {
+    id: 1,
+    userInput: '문을 연다',
+    aiOutput: '문이 서서히 열린다.',
+    choices: [],
+    createdAt: '2026-06-01T00:00:00Z',
+  };
+  const generatingTurn = (overrides: Record<string, unknown> = {}) => ({
+    type: 'CONTINUE',
+    userInput: completedTurn.userInput,
+    startedAt: '2026-06-01T00:00:00Z',
+    targetTurnId: null,
+    generationId: 'g-1',
+    ...overrides,
+  });
+  const resumedStream = (generationId: string, aiOutput: string) =>
+    sse([
+      `event: started\ndata: {"chatId":"c1","generationId":"${generationId}"}\n\n`,
+      `event: token\ndata: {"text":"${aiOutput}"}\n\n`,
+      `event: completed\ndata: {"aiOutput":"${aiOutput}"}\n\n`,
+    ]);
+
+  test('생성 중에 다시 들어오면 보낸 입력과 생성 중 화면을 보이고 이어서 받는다 (CHAT-SEND-20)', async ({
+    page,
+  }) => {
+    let detailCallCount = 0;
+    const resumedUrls: string[] = [];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1
+            ? { ...chatDetail([]), generatingTurn: generatingTurn() }
+            : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route(CHAT_RESUME, async (route) => {
+      resumedUrls.push(route.request().url());
+      // 생성 중 화면을 관찰할 시간을 만든다.
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: resumedStream('g-1', completedTurn.aiOutput),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const sendButton = page.locator('[data-tour="send"]');
+
+    await expect(page.getByText(completedTurn.userInput)).toBeVisible();
+    await expect(
+      sendButton.getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeVisible();
+
+    await expect(page.getByText(completedTurn.aiOutput)).toBeVisible();
+    await expect(
+      sendButton.getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeHidden();
+    expect(resumedUrls).toEqual([
+      expect.stringContaining('/api/v1/chats/c1/generations/g-1/stream'),
+    ]);
+  });
+
+  test('목록으로 나갔다가 곧바로 다시 들어와도 캐시가 아닌 새 상세로 생성 중인 턴을 이어서 받는다 (CHAT-SEND-24)', async ({
+    page,
+  }) => {
+    let detailCallCount = 0;
+
+    await skipOnboarding(page);
+    await page.route('**/api/v1/users/me/chats**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 'c1',
+            storyId: 's1',
+            storyTitle: '용의 계곡',
+            lastStoryPreview: '안개 낀 계곡 앞에 한 용사가 섰다.',
+            turnCount: 0,
+            updatedAt: '2026-06-01T00:00:00Z',
+          },
+        ]),
+      });
+    });
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+
+      const body =
+        detailCallCount === 1
+          ? chatDetail([], [])
+          : detailCallCount === 2
+            ? { ...chatDetail([], []), generatingTurn: generatingTurn() }
+            : chatDetail([completedTurn]);
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(body),
+      });
+    });
+    // 응답이 오기 전에 방을 나간다. 나가면 브라우저가 요청을 끊어 응답은 보내지 못한다.
+    await page.route(CHAT_STREAM, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await route
+        .fulfill({
+          status: 200,
+          contentType: 'text/event-stream',
+          body: sse([
+            'event: started\ndata: {"chatId":"c1","generationId":"g-1"}\n\n',
+          ]),
+        })
+        .catch(() => {});
+    });
+    await page.route(CHAT_RESUME, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: resumedStream('g-1', completedTurn.aiOutput),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats');
+    await page.getByRole('link', { name: '용의 계곡 채팅 보기' }).click();
+    await page.getByPlaceholder(PLAIN_INPUT).fill(completedTurn.userInput);
+    await page.getByRole('button', { name: '전송' }).click();
+    await expect(page.getByText(completedTurn.userInput)).toBeVisible();
+
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(/\/chats$/);
+    await page.getByRole('link', { name: '용의 계곡 채팅 보기' }).click();
+
+    await expect(page.getByText(completedTurn.userInput)).toBeVisible();
+    await expect(
+      page
+        .locator('[data-tour="send"]')
+        .getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeVisible();
+    await expect(page.getByText(completedTurn.aiOutput)).toBeVisible();
+  });
+
+  test('같은 화면에서 끊기면 started의 생성 ID로 다시 붙어 실패 안내 없이 완료한다 (CHAT-SEND-21)', async ({
+    page,
+  }) => {
+    let detailCallCount = 0;
+    const resumedUrls: string[] = [];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1
+            ? chatDetail([], [])
+            : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {"chatId":"c1","generationId":"g-1"}\n\n',
+          'event: token\ndata: {"text":"문이 "}\n\n',
+        ]),
+      });
+    });
+    await page.route(CHAT_RESUME, async (route) => {
+      resumedUrls.push(route.request().url());
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: resumedStream('g-1', completedTurn.aiOutput),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder(PLAIN_INPUT).fill(completedTurn.userInput);
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText(completedTurn.aiOutput)).toBeVisible();
+    await expect(
+      page.locator('[data-tour="send"]').getByRole('status'),
+    ).toBeHidden();
+    await expect(
+      page.getByText(TOAST_MESSAGE.RESPONSE_STREAM_FAILED),
+    ).toBeHidden();
+    expect(resumedUrls).toEqual([
+      expect.stringContaining('/api/v1/chats/c1/generations/g-1/stream'),
+    ]);
+  });
+
+  test('다른 곳에서 생성 중이라 거절되면(409 CHAT_TURN_IN_PROGRESS) 입력을 되돌리고 그 생성을 이어서 받는다 (CHAT-SEND-22)', async ({
+    page,
+  }) => {
+    const otherTurn = {
+      ...completedTurn,
+      userInput: '다른 기기에서 보낸 입력',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+
+      const body =
+        detailCallCount === 1
+          ? chatDetail([], [])
+          : detailCallCount === 2
+            ? {
+                ...chatDetail([], []),
+                generatingTurn: generatingTurn({
+                  userInput: otherTurn.userInput,
+                  generationId: 'g-2',
+                }),
+              }
+            : chatDetail([otherTurn]);
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(body),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 409, code: 'CHAT_TURN_IN_PROGRESS' }),
+      });
+    });
+    await page.route(CHAT_RESUME, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: resumedStream('g-2', otherTurn.aiOutput),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder(PLAIN_INPUT).fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText(otherTurn.userInput)).toBeVisible();
+    await expect(page.getByPlaceholder(PLAIN_INPUT)).toHaveValue('계속한다');
+    await expect(page.getByText(otherTurn.aiOutput)).toBeVisible();
+    await expect(
+      page.getByText(TOAST_MESSAGE.RESPONSE_STREAM_FAILED),
+    ).toBeHidden();
+  });
+
+  test('마지막 턴이 바뀌어 거절되면(409 CHAT_TURN_STALE) 새 턴을 보이고 입력을 되돌린다 (CHAT-SEND-23)', async ({
+    page,
+  }) => {
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1
+            ? chatDetail([], [])
+            : chatDetail([completedTurn]),
+        ),
+      });
+    });
+    await page.route(CHAT_STREAM, async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 409, code: 'CHAT_TURN_STALE' }),
+      });
+    });
+
+    await setPlainInputMode(page);
+    await page.goto('/chats/c1');
+    await page.getByPlaceholder(PLAIN_INPUT).fill('계속한다');
+    await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(page.getByText(completedTurn.aiOutput)).toBeVisible();
+    await expect(page.getByPlaceholder(PLAIN_INPUT)).toHaveValue('계속한다');
+    await expect(
+      page.getByText(TOAST_MESSAGE.RESPONSE_STREAM_FAILED),
+    ).toBeHidden();
+  });
+
+  test('재생성 중에 다시 들어오면 마지막 턴 자리에서 다시 쓰는 중을 보이고 이어서 받는다 (CHAT-REGEN-09)', async ({
+    page,
+  }) => {
+    const regenerated = {
+      ...completedTurn,
+      aiOutput: '문이 굉음과 함께 부서졌다.',
+    };
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          detailCallCount === 1
+            ? {
+                ...chatDetail([completedTurn]),
+                generatingTurn: generatingTurn({
+                  type: 'REGENERATE',
+                  targetTurnId: completedTurn.id,
+                  generationId: 'g-3',
+                }),
+              }
+            : chatDetail([regenerated]),
+        ),
+      });
+    });
+    await page.route(CHAT_RESUME, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: resumedStream('g-3', regenerated.aiOutput),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    // 다시 쓰는 동안 기존 본문은 스트리밍 블록으로 대체되고 사용자 입력은 한 번만 보인다.
+    await expect(
+      page
+        .locator('[data-tour="send"]')
+        .getByRole('status', { name: '응답을 받는 중' }),
+    ).toBeVisible();
+    await expect(page.getByText(completedTurn.aiOutput)).toBeHidden();
+    await expect(page.getByText(completedTurn.userInput)).toHaveCount(1);
+
+    await expect(page.getByText(regenerated.aiOutput)).toBeVisible();
+    await expect(page.getByText(completedTurn.userInput)).toHaveCount(1);
   });
 });
 
@@ -1427,6 +1823,7 @@ test.describe('블럭 입력 모드 (기본)', () => {
       userInput: '*비가 온다*\n\n우산 챙겼어?',
       userSource: 'typed',
       realtimeImage: true,
+      lastTurnId: null,
     });
   });
 
@@ -1566,6 +1963,7 @@ test.describe('입력 출처(userSource) 전달', () => {
       userInput: SUGGESTION,
       userSource: 'choice',
       realtimeImage: true,
+      lastTurnId: null,
     });
   });
 
@@ -1585,6 +1983,7 @@ test.describe('입력 출처(userSource) 전달', () => {
       realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
+      lastTurnId: SOURCE_TURN_ID,
     });
   });
 
@@ -1601,6 +2000,7 @@ test.describe('입력 출처(userSource) 전달', () => {
     expect(body).toMatchObject({
       userSource: 'choice',
       sourceTurnId: SOURCE_TURN_ID,
+      lastTurnId: SOURCE_TURN_ID,
     });
     expect([
       { userInput: OTHER_CHOICE, choiceOrder: 1 },
@@ -1634,6 +2034,7 @@ test.describe('입력 출처(userSource) 전달', () => {
       realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
+      lastTurnId: SOURCE_TURN_ID,
     });
   });
 
@@ -1676,6 +2077,7 @@ test.describe('입력 출처(userSource) 전달', () => {
       realtimeImage: true,
       sourceTurnId: SOURCE_TURN_ID,
       choiceOrder: 2,
+      lastTurnId: SOURCE_TURN_ID,
     });
   });
 
@@ -1694,6 +2096,7 @@ test.describe('입력 출처(userSource) 전달', () => {
       userInput: '횃불을 켜고 안쪽을 살핀다',
       userSource: 'typed',
       realtimeImage: true,
+      lastTurnId: null,
     });
   });
 });
@@ -1865,12 +2268,15 @@ test.describe('추천 입력 토글', () => {
     page,
   }) => {
     let choicesCalled = 0;
+    let streamCalled = 0;
 
     await page.route(CHAT_DETAIL, async (route) => {
       const body =
         choicesCalled > 0
           ? chatDetail([{ ...baseTurn, choices: CHOICES }])
-          : chatDetail([baseTurn]);
+          : streamCalled > 0
+            ? chatDetail([baseTurn])
+            : chatDetail([], []);
 
       await route.fulfill({
         status: 200,
@@ -1878,7 +2284,18 @@ test.describe('추천 입력 토글', () => {
         body: JSON.stringify(body),
       });
     });
-    await routeStream(page);
+    await page.route(CHAT_STREAM, async (route) => {
+      streamCalled += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sse([
+          'event: started\ndata: {}\n\n',
+          'event: token\ndata: {"text":"문이 서서히 열린다."}\n\n',
+          'event: completed\ndata: {"aiOutput":"문이 서서히 열린다."}\n\n',
+        ]),
+      });
+    });
     await page.route(CHAT_CHOICES, async (route) => {
       choicesCalled += 1;
       await route.fulfill({
@@ -1893,6 +2310,39 @@ test.describe('추천 입력 토글', () => {
 
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('진입한다');
     await page.getByRole('button', { name: '전송' }).click();
+
+    await expect(
+      page.getByRole('button', { name: '안으로 들어간다' }),
+    ).toBeVisible();
+    expect(choicesCalled).toBe(1);
+  });
+
+  test('나가 있는 동안 저장된 턴처럼 마지막 턴에 선택지가 없으면 들어오자마자 만든다 (CHAT-INPUT-22)', async ({
+    page,
+  }) => {
+    let choicesCalled = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatDetail([
+            choicesCalled > 0 ? { ...baseTurn, choices: CHOICES } : baseTurn,
+          ]),
+        ),
+      });
+    });
+    await page.route(CHAT_CHOICES, async (route) => {
+      choicesCalled += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ choices: CHOICES }),
+      });
+    });
+
+    await page.goto('/chats/c1');
 
     await expect(
       page.getByRole('button', { name: '안으로 들어간다' }),
@@ -2050,12 +2500,18 @@ test.describe('추천 입력 토글', () => {
     page,
   }) => {
     let choicesCalled = 0;
+    let sent = false;
 
+    page.on('request', (request) => {
+      if (request.url().includes('/turns/stream')) sent = true;
+    });
     await page.route(CHAT_DETAIL, async (route) => {
       const body =
         choicesCalled > 1
           ? chatDetail([{ ...baseTurn, choices: CHOICES }])
-          : chatDetail([baseTurn]);
+          : sent
+            ? chatDetail([baseTurn])
+            : chatDetail([], []);
 
       await route.fulfill({
         status: 200,

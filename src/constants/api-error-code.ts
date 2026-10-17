@@ -13,6 +13,10 @@ export const API_ERROR_CODE = {
   CONSENT_VERSION_MISMATCH: 'CONSENT_VERSION_MISMATCH',
   /** 가입 완료 요청에 현재 필요한 필수 항목이 빠짐(400). 약관 개정과 같이 다시 로그인해 받는다. */
   CONSENT_REQUIRED_MISSING: 'CONSENT_REQUIRED_MISSING',
+  /** 같은 채팅의 이어쓰기나 재생성이 생성 중(409). 생성 중 화면으로 바꿔 이어서 받는다. */
+  CHAT_TURN_IN_PROGRESS: 'CHAT_TURN_IN_PROGRESS',
+  /** 보낸 마지막 턴이 서버의 마지막 턴과 다름(409). 상세를 다시 조회한다. */
+  CHAT_TURN_STALE: 'CHAT_TURN_STALE',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODE)[keyof typeof API_ERROR_CODE];

@@ -204,10 +204,6 @@ test.describe('이프 충전 (/my/credits)', () => {
     await expect(
       rows.nth(1).getByText(buildCreditBonusLabel(withBonus.bonusCredits)),
     ).toBeVisible();
-    // 앱 가격은 웹에 노출하지 않는다.
-    await expect(page.getByText(formatKrwPrice(plain.appPriceKrw))).toHaveCount(
-      0,
-    );
     await expect(page.getByText(CREDIT_PURCHASE_COPY.note)).toBeVisible();
   });
 
