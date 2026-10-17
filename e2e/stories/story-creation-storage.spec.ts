@@ -13,6 +13,8 @@ import { mockApi } from '../fixtures/api-mock';
 import { readCreationStorage } from '../fixtures/storage';
 import {
   expect,
+  mockGuestConsents,
+  mockGuestSession,
   mockMemberSession,
   skipOnboarding,
   test,
@@ -128,6 +130,9 @@ test('DB를 열 수 없으면 입력을 표시하지 않고 실패와 재시도�
 test('용량 초과 시 임시 저장 완료로 표시하지 않고 생성 제출을 막는다 (STORY-DRAFT-15)', async ({
   page,
 }) => {
+  // 기기 안 저장소의 용량 초과는 기기 안에 저장하는 게스트 세션에서 본다. 회원의 새 세션은 서버에 저장한다.
+  await mockGuestSession(page);
+  await mockGuestConsents(page, false);
   await page.route('**/api/v1/stories/simple/tags', (route) =>
     route.fulfill({
       json: [

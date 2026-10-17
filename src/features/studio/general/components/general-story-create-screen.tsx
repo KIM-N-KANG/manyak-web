@@ -41,6 +41,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DraftConflictDialog } from '@/features/stories/_shared/components/draft-conflict-dialog';
 import {
   DRAFT_SAVED_TOAST_DURATION_MS,
   DraftSaveButton,
@@ -52,8 +53,10 @@ import {
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
+import { useStoryDraftSave } from '@/features/stories/_shared/hooks/use-story-draft-save';
 import { takePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { getDraftExitWarning } from '@/features/stories/_shared/utils/draft-exit-warning';
+import { toGeneralDraftRequest } from '@/features/studio/_shared/utils/general-draft-payload';
 import {
   type GeneralStoryDraftImage,
   type GeneralStoryDraftSnapshot,
@@ -71,7 +74,6 @@ import {
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
-import { useGeneralDraftSave } from '@/features/studio/general/hooks/use-general-draft-save';
 import { useGeneralStoryDraftEntry } from '@/features/studio/general/hooks/use-general-story-draft-entry';
 import {
   buildGeneralStoryRequest,
@@ -109,7 +111,6 @@ import { FetchError, getApiErrorCode } from '@/lib/api-error';
 import { returnToMainTab } from '@/lib/return-to-main-tab';
 import { track } from '@/observability/analytics';
 
-import { GeneralDraftConflictDialog } from './general-draft-conflict-dialog';
 import { GeneralStoryCharacterFields } from './general-story-character-fields';
 import {
   GeneralStoryFormTabs,
@@ -414,27 +415,37 @@ export function GeneralStoryCreateForm({
   const hasSavedDraft = savedKey !== null;
   const isSaved = snapshotKey === savedKey;
 
-  const draftSave = useGeneralDraftSave({
+  // 이어서 연 기기 안 레거시 저장본은 서버에 처음 저장하면 지운다. 지우지 못해도 목록이 서버 쪽을 남긴다.
+  const hasLocalDraftRef = useRef(hasLocalDraft);
+  const draftSave = useStoryDraftSave({
     draftId: requestId,
     initialVersion: draftVersion,
-    hasLocalDraft,
-    onSaved: setSavedKey,
+    onSaved: (key) => {
+      setSavedKey(key);
+
+      if (hasLocalDraftRef.current) {
+        hasLocalDraftRef.current = false;
+        void takePendingCreationRequest(requestId, epoch).catch(() => false);
+      }
+    },
   });
   const isSaving = draftSave.isSaving;
+  const toDraftBody = (baseVersion: number | null) =>
+    toGeneralDraftRequest(snapshot, baseVersion);
 
-  const writeDraft = () => draftSave.save(snapshot, snapshotKey);
+  const writeDraft = () => draftSave.save(toDraftBody, snapshotKey);
 
   // 검토 중이거나 접수된 뒤에는 저장하지 않는다. 지운 임시 저장본을 화면 숨김 저장이 되살리지 않게 한다.
+  // 저장 훅이 차례로 보내므로 앞 저장이 끝나지 않았어도 뒤에 넣는다(건너뛰면 탭 이동 전에 고친 내용이 저장되지 않는다).
   const saveDraft = async ({ background = false } = {}) => {
     if (
       !edit &&
       hasInput &&
       !isSaved &&
-      !isSaving &&
       !isReviewingRef.current &&
       !isSubmittedRef.current
     )
-      await draftSave.save(snapshot, snapshotKey, { background });
+      await draftSave.save(toDraftBody, snapshotKey, { background });
   };
 
   useSaveWhenBackgrounded(() => saveDraft({ background: true }));
@@ -1004,7 +1015,7 @@ export function GeneralStoryCreateForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <GeneralDraftConflictDialog
+      <DraftConflictDialog
         open={draftSave.isConflictOpen}
         onKeep={draftSave.keepServerDraft}
         onSave={() => void draftSave.overwrite()}

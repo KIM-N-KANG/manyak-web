@@ -4,11 +4,20 @@ import { FetchError, getApiErrorCode } from '@/lib/api-error';
 
 export type StoryDraftMode = 'SIMPLE' | 'GENERAL';
 
+/** 서버 초안의 단계다. 일반 제작은 `GENERAL_DRAFT`, 간편 제작은 `KEYWORD_DRAFT`와 `STORY_DRAFT`다. */
+export type StoryDraftStage = 'GENERAL_DRAFT' | 'KEYWORD_DRAFT' | 'STORY_DRAFT';
+
+const STORY_DRAFT_STAGES: readonly string[] = [
+  'GENERAL_DRAFT',
+  'KEYWORD_DRAFT',
+  'STORY_DRAFT',
+] satisfies StoryDraftStage[];
+
 /** 제작 탭 카드에 쓰는 서버 초안 요약이다. */
 export type StoryDraftCard = {
   draftId: string;
   mode: StoryDraftMode;
-  stage: string;
+  stage: StoryDraftStage;
   title: string | null;
   oneLineIntro: string | null;
   thumbnailUrl: string | null;
@@ -16,11 +25,16 @@ export type StoryDraftCard = {
   createdAt: string;
 };
 
-/** 이어서 만들기에 쓰는 서버 초안 상세다. `imageUrls`는 payload의 객체 키별 미리보기 URL이다. */
+/**
+ * 이어서 만들기에 쓰는 서버 초안 상세다. `imageUrls`는 payload의 객체 키별 미리보기 URL이고,
+ * `generation`은 연결한 스토리라인 생성 요청의 복구 조회 결과(연결이 없으면 null)다.
+ */
 export type StoryDraftDetail = StoryDraftCard & {
   schemaVersion: number;
   payload: Record<string, unknown>;
   imageUrls: Record<string, string>;
+  generationRequestId: string | null;
+  generation: { status: string; result: unknown } | null;
 };
 
 /** 임시 저장 PUT 실패의 종류다. 충돌이면 서버의 현재 버전을 함께 담는다. */
@@ -65,6 +79,7 @@ function readCard(value: unknown): StoryDraftCard | null {
     typeof draftId !== 'string' ||
     (mode !== 'SIMPLE' && mode !== 'GENERAL') ||
     typeof stage !== 'string' ||
+    !STORY_DRAFT_STAGES.includes(stage) ||
     typeof version !== 'number' ||
     typeof createdAt !== 'string'
   )
@@ -73,7 +88,7 @@ function readCard(value: unknown): StoryDraftCard | null {
   return {
     draftId,
     mode,
-    stage,
+    stage: stage as StoryDraftStage,
     title: asNullableText(value.title),
     oneLineIntro: asNullableText(value.oneLineIntro),
     thumbnailUrl: asNullableText(value.thumbnailUrl),
@@ -124,11 +139,18 @@ export function readStoryDraftDetail(data: unknown): StoryDraftDetail | null {
       )
     : {};
 
+  const { generation } = data;
+
   return {
     ...card,
     schemaVersion: data.schemaVersion,
     payload: data.payload,
     imageUrls,
+    generationRequestId: asNullableText(data.generationRequestId),
+    generation:
+      isObject(generation) && typeof generation.status === 'string'
+        ? { status: generation.status, result: generation.result ?? null }
+        : null,
   };
 }
 

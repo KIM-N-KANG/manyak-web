@@ -809,6 +809,37 @@ test.describe('일반 제작 임시 저장', () => {
     ).toBeVisible();
   });
 
+  test('저장 중에 탭을 옮겨도 고친 내용을 뒤이어 저장한다 (STORY-GENERAL-41)', async ({
+    page,
+  }) => {
+    let releaseFirstPut = () => {};
+    const firstPutHeld = new Promise<void>((resolve) => {
+      releaseFirstPut = resolve;
+    });
+    let heldPuts = 0;
+
+    // 버튼 저장의 응답을 붙잡아 둔 채 제목을 고치고 탭을 옮긴다.
+    await page.route('**/api/v1/users/me/story-drafts/*', async (route) => {
+      if (route.request().method() === 'PUT' && heldPuts++ === 0)
+        await firstPutHeld;
+
+      await route.fallback();
+    });
+    await openGeneralCreate(page);
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
+      .fill('노선도에 없는 역');
+    await saveButton(page).click();
+    await expect.poll(() => heldPuts).toBe(1);
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
+      .fill('막차가 서는 역');
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
+    releaseFirstPut();
+
+    await waitForSavedDraft('막차가 서는 역');
+  });
+
   test('제목·한 줄 소개·표지 없이 임시 저장하면 카드는 기본 제목·설명·이미지를 보이고, 저장 뒤 뒤로가기는 저장본 안내를 띄운다 (STORY-GENERAL-17)', async ({
     page,
   }) => {

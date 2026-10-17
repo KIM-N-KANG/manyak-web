@@ -21,7 +21,7 @@ import { readStoryDraftCards } from '@/features/stories/_shared/utils/story-draf
 import { migrateLocalGeneralDrafts } from '../utils/migrate-local-general-drafts';
 
 /**
- * 제작 탭에 보일 회원의 서버 일반 제작 초안을 조회하는 훅. 회원만 조회한다.
+ * 제작 탭에 보일 회원의 서버 초안(간편 제작과 일반 제작)을 조회하는 훅. 회원만 조회한다.
  * 조회에 실패하면 서버 초안 카드만 숨기고 제작 탭의 다른 목록은 그대로 둔다.
  * 기기 안에 남은 일반 제작 임시 저장본은 화면마다 한 번 서버로 옮긴다.
  *
@@ -38,9 +38,7 @@ export function useStoryDrafts(
   const hasMigratedRef = useRef(false);
   const listed = query.data?.status === 200 ? query.data.data : undefined;
   const isListed = listed !== undefined;
-  const cards = readStoryDraftCards(listed).filter(
-    (card) => card.mode === 'GENERAL',
-  );
+  const cards = readStoryDraftCards(listed);
 
   useEffect(() => {
     const legacy = (localRecords ?? []).filter(

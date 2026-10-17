@@ -33,6 +33,7 @@ describe('readStoryDraftCards', () => {
       { ...CARD, draftId: 'missing-version', version: '1' },
       { ...CARD, draftId: 'bad-mode', mode: 'OTHER' },
       { ...CARD, draftId: 'no-created-at', createdAt: undefined },
+      { ...CARD, draftId: 'bad-stage', stage: 'STORYLINE_GENERATION' },
     ]);
 
     expect(cards).toEqual([
@@ -89,7 +90,36 @@ describe('readStoryDraftDetail', () => {
       imageUrls: {
         'thumbnails/uploaded/drafts/u/a.jpg': 'https://cdn.test/a.jpg',
       },
+      generationRequestId: null,
+      generation: null,
     });
+  });
+
+  it('연결한 생성 요청과 그 복구 조회 결과를 읽는다', () => {
+    const detail = readStoryDraftDetail({
+      ...DETAIL,
+      mode: 'SIMPLE',
+      stage: 'STORY_DRAFT',
+      generationRequestId: 'g-1',
+      generation: {
+        stage: 'STORYLINE_GENERATION',
+        status: 'COMPLETED',
+        result: { storylines: [] },
+      },
+    });
+
+    expect(detail?.generationRequestId).toBe('g-1');
+    expect(detail?.generation).toEqual({
+      status: 'COMPLETED',
+      result: { storylines: [] },
+    });
+  });
+
+  it('생성 결과의 상태를 읽을 수 없으면 연결 결과를 null로 읽는다', () => {
+    expect(
+      readStoryDraftDetail({ ...DETAIL, generation: { result: {} } })
+        ?.generation,
+    ).toBeNull();
   });
 
   it('이미지 URL 맵이 없으면 빈 객체다', () => {

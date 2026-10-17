@@ -4,6 +4,7 @@ import type {
   ArtStyleCatalogItem,
   CreditPolicyResponse,
   CreditProductResponse,
+  GenerateSimpleStorylinesResponse,
   GenreCatalogResponse,
   PushSettingsResponse,
   PutStoryDraftRequest,
@@ -83,10 +84,14 @@ export type StoredStoryDraft = PutStoryDraftRequest & {
   updatedAt: string;
 };
 
-/** 서버 임시 저장 목의 상태다. 스펙에서 저장 결과를 단언하거나 다른 기기의 저장을 흉내 낼 때 직접 바꾼다. */
+/**
+ * 서버 임시 저장 목의 상태다. 스펙에서 저장 결과를 단언하거나 다른 기기의 저장을 흉내 낼 때 직접 바꾼다.
+ * `generations`는 간편 제작 스토리라인 초안이 연결한 생성 요청 ID별 생성 결과이며, 상세 응답의 `generation`이 된다.
+ */
 export type StoryDraftMock = {
   drafts: Map<string, StoredStoryDraft>;
   puts: { draftId: string; body: PutStoryDraftRequest }[];
+  generations: Map<string, GenerateSimpleStorylinesResponse>;
 };
 
 /** 목이 돌려주는 초안 이미지 미리보기 URL의 앞부분이다. */
@@ -164,15 +169,27 @@ const jsonError = (code: string, details?: object[]) =>
  *
  * @param page 대상 페이지
  * @param options.initial 미리 넣어 둘 초안
+ * @param options.generations 생성 요청 ID별 스토리라인 생성 결과
+ * @param options.now 저장 시각
  * @returns 저장소 핸들
  */
 export async function mockStoryDrafts(
   page: Page,
-  { initial = [] }: { initial?: StoredStoryDraft[] } = {},
+  {
+    initial = [],
+    generations = {},
+    now = () => new Date().toISOString(),
+  }: {
+    initial?: StoredStoryDraft[];
+    generations?: Record<string, GenerateSimpleStorylinesResponse>;
+    /** 저장 시각을 정한다. 페이지 시계를 고정한 스펙은 같은 시각을 넘긴다(목은 Node 시계를 쓴다). */
+    now?: () => string;
+  } = {},
 ): Promise<StoryDraftMock> {
   const mock: StoryDraftMock = {
     drafts: new Map(initial.map((draft) => [draft.draftId, { ...draft }])),
     puts: [],
+    generations: new Map(Object.entries(generations)),
   };
 
   await page.route(STORY_DRAFTS_ROUTE, async (route) => {
@@ -199,20 +216,32 @@ export async function mockStoryDrafts(
         return;
       }
 
+      const generationRequestId = current.generationRequestId ?? null;
+      const generation =
+        generationRequestId === null
+          ? undefined
+          : mock.generations.get(generationRequestId);
+
       await route.fulfill({
         status: 200,
         json: {
           ...draftSummary(current),
           schemaVersion: current.schemaVersion,
           payload: current.payload,
-          generationRequestId: null,
+          generationRequestId,
           imageUrls: Object.fromEntries(
             collectDraftImageKeys(current.payload).map((key) => [
               key,
               draftImageUrl(key),
             ]),
           ),
-          generation: null,
+          generation: generation
+            ? {
+                stage: 'STORYLINE_GENERATION',
+                status: 'COMPLETED',
+                result: generation,
+              }
+            : null,
         },
       });
 
@@ -273,13 +302,13 @@ export async function mockStoryDrafts(
       return;
     }
 
-    const now = new Date().toISOString();
+    const savedAt = now();
     const saved: StoredStoryDraft = {
       ...body,
       draftId,
       version: (current?.version ?? 0) + 1,
-      createdAt: current?.createdAt ?? now,
-      updatedAt: now,
+      createdAt: current?.createdAt ?? savedAt,
+      updatedAt: savedAt,
     };
 
     mock.drafts.set(draftId, saved);

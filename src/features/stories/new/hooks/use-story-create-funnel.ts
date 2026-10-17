@@ -16,6 +16,7 @@ import {
   useGenerateSimpleStorylines,
   useGetSimpleStoryTags,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
+import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type {
   CreateSimpleStoryRequest,
@@ -37,6 +38,7 @@ import { DRAFT_SAVE_TOAST_ID } from '@/features/stories/_shared/components/draft
 import type { DraftExitDialog } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
+import { useStoryDraftSave } from '@/features/stories/_shared/hooks/use-story-draft-save';
 import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import {
   resolveErrorSettlement,
@@ -61,6 +63,7 @@ import {
 } from '@/features/stories/_shared/utils/creation-request-storage';
 import { applyStorylinesGeneratedEffects } from '@/features/stories/_shared/utils/creation-side-effects';
 import { getDraftExitWarning } from '@/features/stories/_shared/utils/draft-exit-warning';
+import { toSimpleDraftRequest } from '@/features/stories/_shared/utils/simple-draft-payload';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { useTrials } from '@/hooks/use-trials';
@@ -74,7 +77,10 @@ import { mapStepToSpec } from '../utils/step-analytics';
 import { getSelectedKeywordGroups } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { useCreationRequestRecovery } from './use-creation-request-recovery';
-import { useStoryCreateDraft } from './use-story-create-draft';
+import {
+  type DraftRestoreSource,
+  useStoryCreateDraft,
+} from './use-story-create-draft';
 import { useStoryTagStep } from './use-story-tag-step';
 
 /**
@@ -124,8 +130,13 @@ export function useStoryCreateFunnel() {
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
     useState<GenerateSimpleStorylinesRequest | null>(null);
-  const [generationResult, setGenerationResult] =
-    useState<GenerateSimpleStorylinesResponse | null>(null);
+  // 생성 결과와 그 결과를 만든 생성 요청이다. 재생성이 실패하면 generationRequest만 실패한 요청으로 바뀌고 결과는
+  // 이전 것이 남으므로, 저장과 완성 기록은 결과와 짝인 요청을 쓴다.
+  const [generated, setGenerated] = useState<{
+    request: GenerateSimpleStorylinesRequest;
+    result: GenerateSimpleStorylinesResponse;
+  } | null>(null);
+  const generationResult = generated?.result ?? null;
   const [settledGenerationRequestId, setSettledGenerationRequestId] = useState<
     string | null
   >(null);
@@ -326,7 +337,7 @@ export function useStoryCreateFunnel() {
         applyStorylinesGeneratedEffects(queryClient);
 
         setGenerationRequest(variables.data);
-        setGenerationResult(response.data);
+        setGenerated({ request: variables.data, result: response.data });
         setActiveStorylineIndex(0);
         setSelectedStoryline(null);
         setStep('storyline-select');
@@ -501,7 +512,7 @@ export function useStoryCreateFunnel() {
       applyStorylinesGeneratedEffects(queryClient);
 
       setGenerationRequest(record.generationRequest);
-      setGenerationResult(result);
+      setGenerated({ request: record.generationRequest, result });
       setActiveStorylineIndex(0);
       setSelectedStoryline(null);
       setHasRecoveredGenerateError(false);
@@ -538,8 +549,13 @@ export function useStoryCreateFunnel() {
 
   // 임시 저장 복원: 키워드는 입력만 복원하고 첫 탭에서 시작한다. 스토리 draft는
   // 퍼널 컨텍스트를 통째로 되살려 완성·채팅 재시도 멱등 흐름에 합류시킨다.
-  const restoreDraft = (record: DraftCreationRecord) => {
-    ownedRequestIdRef.current = record.requestId;
+  // 서버에서 읽은 기록은 기기 안에 없으므로 소유 기록으로 잡지 않는다(잡으면 다음 생성 기록 저장이 거절된다).
+  const restoreDraft = (
+    record: DraftCreationRecord,
+    source: DraftRestoreSource,
+  ) => {
+    if (source === 'local') ownedRequestIdRef.current = record.requestId;
+
     setKeywordDraftRequestId(record.requestId);
 
     if (record.stage === 'KEYWORD_DRAFT') {
@@ -551,7 +567,10 @@ export function useStoryCreateFunnel() {
     }
 
     setGenerationRequest(record.generationRequest);
-    setGenerationResult(record.generationResult);
+    setGenerated({
+      request: record.generationRequest,
+      result: record.generationResult,
+    });
     setActiveStorylineIndex(record.activeStorylineIndex);
     setSelectedStoryline(record.selectedStoryline);
     setSelectedRecommendations(new Set(record.selectedRecommendations));
@@ -579,20 +598,53 @@ export function useStoryCreateFunnel() {
     onRestore: restoreDraft,
     onRestorePending: restorePendingGeneration,
   });
+  // 서버 세션은 사용자 저장을 세션마다 고정한 서버 초안에 쓰고, 기기 안 세션(게스트, 연결 없는 기존 초안)은
+  // 지금처럼 IndexedDB에 쓴다. 생성 중, 생성 결과, 완성 기록은 두 세션 모두 기기 안에 둔다.
+  const isServerSession = draft.session?.storage === 'server';
+  const draftId = draft.session?.draftId ?? keywordDraftRequestId;
+  // 이 세션의 서버 초안을 처음 저장한 시각. 진행 기록의 처음 저장 시각으로 이어 준다.
+  const draftCreatedAtRef = useRef<string | null>(null);
+  const draftSave = useStoryDraftSave({
+    draftId,
+    initialVersion: null,
+    onSaved: (key, saved) => {
+      setSavedDraftKey(key);
+      draftCreatedAtRef.current ??= saved.createdAt;
+    },
+  });
+  const syncedSessionRef = useRef(false);
+
+  // 진입 판정이 끝나면 이어서 연 서버 초안의 버전과 처음 저장 시각을 한 번 잡는다.
+  useEffect(() => {
+    if (!draft.session || syncedSessionRef.current) return;
+
+    syncedSessionRef.current = true;
+    draftSave.setBaseVersion(draft.session.version);
+    draftCreatedAtRef.current = draft.session.createdAt;
+  }, [draft.session, draftSave]);
+
+  /** 서버 세션이 진행 기록에 남기는 서버 초안 연결과 처음 저장 시각이다. 기기 안 세션은 비운다. */
+  const getServerDraftLink = () =>
+    isServerSession
+      ? {
+          draftId,
+          draftVersion: draftSave.getBaseVersion(),
+          createdAt: draftCreatedAtRef.current ?? undefined,
+        }
+      : {};
 
   const storyDraftStep =
     step === 'storyline-select' ? 'storyline-select' : 'additional-info';
   const storyDraftCandidate: StoryDraftRecord | null =
     step !== 'keyword' &&
-    generationRequest !== null &&
-    generationResult !== null &&
+    generated !== null &&
     (storyDraftStep !== 'additional-info' || selectedStoryline !== null)
       ? {
           stage: 'STORY_DRAFT',
-          requestId: generationRequest.requestId,
+          requestId: generated.request.requestId,
           step: storyDraftStep,
-          generationRequest,
-          generationResult,
+          generationRequest: generated.request,
+          generationResult: generated.result,
           activeStorylineIndex,
           selectedStoryline,
           additionalInfos: additionalInfos.map(({ value }) => value),
@@ -621,6 +673,7 @@ export function useStoryCreateFunnel() {
   const hasDraftInput = draftCandidate !== null;
   const hasSavedDraft = savedDraftKey !== null;
   const isDraftSaved = draftKey === savedDraftKey;
+  const isSaving = isSavingDraft || draftSave.isSaving;
   const canSaveDraft =
     draft.isEntryResolved &&
     currentEpoch === epoch &&
@@ -633,11 +686,41 @@ export function useStoryCreateFunnel() {
     !recovery.isRecovering &&
     step !== 'complete';
 
-  const writeDraft = async () => {
-    if (draftCandidate === null) return false;
+  // 서버 세션은 서버 초안에 저장하고 실패 안내를 저장 훅에 맡긴다. 저장(충돌 뒤 덮어쓰기 포함)에 성공하면 그때까지
+  // 소유한 기기 안 기록(생성 결과 승격본, 완성 실패 강등본)을 지워 같은 제작이 서버 초안 하나로 보이게 한다.
+  const settleServerWrite = async (write: Promise<boolean>) => {
+    const ownedAtSave = ownedRequestIdRef.current;
 
-    const record = draftCandidate;
-    const key = draftKey;
+    draftWriteRef.current = write;
+
+    const saved = await write;
+
+    if (
+      saved &&
+      ownedAtSave !== null &&
+      ownedRequestIdRef.current === ownedAtSave
+    ) {
+      ownedRequestIdRef.current = null;
+      await takePendingCreationRequest(ownedAtSave, epoch).catch(() => false);
+    }
+
+    return saved;
+  };
+
+  const writeServerDraft = (
+    record: DraftCreationRecord,
+    key: string,
+    background: boolean,
+  ) =>
+    settleServerWrite(
+      draftSave.save(
+        (baseVersion) => toSimpleDraftRequest(record, baseVersion),
+        key,
+        { background },
+      ),
+    );
+
+  const writeLocalDraft = async (record: DraftCreationRecord, key: string) => {
     const write = persistOwnRecord(record, saveDraftCreationRecord);
 
     draftWriteRef.current = write;
@@ -649,9 +732,6 @@ export function useStoryCreateFunnel() {
 
     if (saved) {
       setSavedDraftKey(key);
-      track('client_storyCreate_draftSaved', {
-        step: record.stage === 'KEYWORD_DRAFT' ? 'keyword' : record.step,
-      });
     } else {
       toast.error(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED, {
         id: DRAFT_SAVE_TOAST_ID,
@@ -661,13 +741,40 @@ export function useStoryCreateFunnel() {
     return saved;
   };
 
-  // 버튼 없이 저장하는 단계 이동·화면 숨김은 입력이 없거나 마지막 저장본과 같으면 건너뛴다.
-  const saveDraft = async () => {
-    if (canSaveDraft && hasDraftInput && !isDraftSaved && !isSavingDraft)
-      await writeDraft();
+  const writeDraft = async ({
+    background = false,
+  }: { background?: boolean } = {}) => {
+    if (draftCandidate === null) return false;
+
+    const record = draftCandidate;
+    const saved = isServerSession
+      ? await writeServerDraft(record, draftKey, background)
+      : await writeLocalDraft(record, draftKey);
+
+    if (saved) {
+      track('client_storyCreate_draftSaved', {
+        step: record.stage === 'KEYWORD_DRAFT' ? 'keyword' : record.step,
+      });
+    }
+
+    return saved;
   };
 
-  useSaveWhenBackgrounded(saveDraft);
+  // 버튼 없이 저장하는 단계 이동과 화면 숨김은 입력이 없거나 마지막 저장본과 같으면 건너뛴다. 서버 저장은 저장 훅이
+  // 차례로 보내므로 앞 저장이 끝나지 않았어도 뒤에 넣는다(건너뛰면 옮긴 단계의 내용이 저장되지 않는다).
+  const saveDraft = async ({
+    background = false,
+  }: { background?: boolean } = {}) => {
+    if (
+      canSaveDraft &&
+      hasDraftInput &&
+      !isDraftSaved &&
+      (isServerSession || !isSaving)
+    )
+      await writeDraft({ background });
+  };
+
+  useSaveWhenBackgrounded(() => saveDraft({ background: true }));
 
   // 단계를 옮기면 옮겨 간 단계의 편집 상태를 알리지 않고 저장한다(일반 제작의 탭 이동 저장에 대응).
   // 키워드 카테고리 탭 이동은 단계 이동이 아니라 저장하지 않는다.
@@ -731,6 +838,7 @@ export function useStoryCreateFunnel() {
         stage: 'STORYLINE_GENERATION',
         requestId: request.requestId,
         generationRequest: request,
+        ...getServerDraftLink(),
       },
       savePendingCreationRequest,
     );
@@ -747,7 +855,7 @@ export function useStoryCreateFunnel() {
     }
 
     if (parentCreationId === null) {
-      setGenerationResult(null);
+      setGenerated(null);
       setActiveStorylineIndex(0);
       setSelectedStoryline(null);
       setCreatedStoryId(null);
@@ -922,6 +1030,8 @@ export function useStoryCreateFunnel() {
     const request: CreateSimpleStoryRequest = {
       ...payload,
       requestId: isSamePayload ? lastRequest.requestId : createClientId(),
+      // 서버가 완성 요청을 기록할 때 이 초안을 지운다. 서버에 없는 ID(기기 안 세션)는 조용히 넘긴다.
+      draftId,
     };
 
     setLastCompletionRequest(request);
@@ -931,7 +1041,7 @@ export function useStoryCreateFunnel() {
     // 편집 슬롯이 함께 비워져 다음 제작을 바로 시작할 수 있다.
     let saved = false;
 
-    if (generationRequest !== null && generationResult !== null) {
+    if (generated !== null) {
       storageBusy.current = true;
       setIsPersisting(true);
       await draftWriteRef.current;
@@ -940,14 +1050,15 @@ export function useStoryCreateFunnel() {
         {
           stage: 'STORY_COMPLETION',
           requestId: request.requestId,
-          generationRequest,
-          generationResult,
+          generationRequest: generated.request,
+          generationResult: generated.result,
           activeStorylineIndex,
           selectedStoryline,
           additionalInfos: additionalInfos.map(({ value }) => value),
           selectedRecommendations: [...selectedRecommendations],
           createdStoryId: null,
           completionRequest: request,
+          ...getServerDraftLink(),
         },
         epoch,
       );
@@ -967,6 +1078,12 @@ export function useStoryCreateFunnel() {
 
     hasLeftForCreateRef.current = true;
     createStory.mutate({ data: request });
+
+    // 서버가 완성 요청을 기록하며 초안을 지우므로 제작 탭이 지운 초안 카드를 다시 그리지 않게 한다.
+    if (isServerSession)
+      void queryClient.invalidateQueries({
+        queryKey: getGetUsersMeStoryDraftsQueryKey(),
+      });
 
     // 저장한 완성 요청의 결과는 제작 탭 진행 카드가 되찾는다.
     setHasLeftForCreate(true);
@@ -1023,7 +1140,7 @@ export function useStoryCreateFunnel() {
     retryEntry: draft.retry,
     step,
     tagStep,
-    isSavingDraft,
+    isSavingDraft: isSaving,
     canSaveDraft: canSaveDraft && hasDraftInput,
     isDraftSaved,
     saveDraft: writeDraft,
@@ -1069,5 +1186,10 @@ export function useStoryCreateFunnel() {
     handleConfirmReselect: confirmBackToStorylineSelect,
     handleHeaderBack,
     handleConfirmBack,
+    draftConflict: {
+      open: draftSave.isConflictOpen,
+      onKeep: draftSave.keepServerDraft,
+      onSave: () => void settleServerWrite(draftSave.overwrite()),
+    },
   };
 }

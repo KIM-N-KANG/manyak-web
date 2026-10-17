@@ -40,9 +40,14 @@ import { drawStoryCompletingStage } from '../utils/draw-story-completing-stage';
 
 type CreationProgressCardProps = {
   record: CreationProgressRecord;
+  /** 이 기록에 가려 숨긴 같은 제작의 서버 초안 ID다. 카드를 지우면 함께 지운다. */
+  hiddenServerDraftId?: string;
 };
 
-export function CreationProgressCard({ record }: CreationProgressCardProps) {
+export function CreationProgressCard({
+  record,
+  hiddenServerDraftId,
+}: CreationProgressCardProps) {
   const impressionRef = useImpression({
     object: 'continueBanner',
     itemId: record.requestId,
@@ -66,9 +71,15 @@ export function CreationProgressCard({ record }: CreationProgressCardProps) {
       {record.stage === 'STORY_COMPLETION' ? (
         <CompletingCardBody record={record} />
       ) : record.stage === 'STORYLINE_GENERATION' ? (
-        <GeneratingCardBody record={record} />
+        <GeneratingCardBody
+          record={record}
+          hiddenServerDraftId={hiddenServerDraftId}
+        />
       ) : (
-        <DraftCardBody record={record} />
+        <DraftCardBody
+          record={record}
+          hiddenServerDraftId={hiddenServerDraftId}
+        />
       )}
     </article>
   );
@@ -114,16 +125,23 @@ function CompletingCardBody({ record }: CompletingCardBodyProps) {
 
 type GeneratingCardBodyProps = {
   record: Extract<PendingCreationRequest, { stage: 'STORYLINE_GENERATION' }>;
+  hiddenServerDraftId?: string;
 };
 
-function GeneratingCardBody({ record }: GeneratingCardBodyProps) {
+function GeneratingCardBody({
+  record,
+  hiddenServerDraftId,
+}: GeneratingCardBodyProps) {
   useCreationProgressPolling(record);
 
-  return <DraftCardBody record={record} />;
+  return (
+    <DraftCardBody record={record} hiddenServerDraftId={hiddenServerDraftId} />
+  );
 }
 
 type DraftCardBodyProps = {
   record: PendingCreationRequest;
+  hiddenServerDraftId?: string;
 };
 
 /**
@@ -148,8 +166,9 @@ function getDraftDescription(record: PendingCreationRequest): string {
   return draftDescription[record.step];
 }
 
-function DraftCardBody({ record }: DraftCardBodyProps) {
+function DraftCardBody({ record, hiddenServerDraftId }: DraftCardBodyProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const epoch = useCreationEpoch();
   const isGeneral = record.stage === 'GENERAL_DRAFT';
 
@@ -174,8 +193,24 @@ function DraftCardBody({ record }: DraftCardBodyProps) {
         );
       }}
       onDelete={async () => {
-        if (!(await takePendingCreationRequest(record.requestId, epoch)))
+        if (!(await takePendingCreationRequest(record.requestId, epoch))) {
           toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
+
+          return;
+        }
+
+        // 이 카드가 가린 같은 제작의 서버 초안만 함께 지운다. 기록 뒤에 다른 곳에서 저장한 서버 초안은 따로 보이므로 남긴다.
+        if (hiddenServerDraftId === undefined) return;
+
+        try {
+          await deleteUsersMeStoryDraftsByDraftId(hiddenServerDraftId);
+        } catch {
+          toast.error(TOAST_MESSAGE.STORY_DELETE_FAILED);
+        }
+
+        await queryClient.invalidateQueries({
+          queryKey: getGetUsersMeStoryDraftsQueryKey(),
+        });
       }}
     />
   );
@@ -185,18 +220,35 @@ type ServerDraftCardProps = {
   card: StoryDraftCard;
 };
 
-/** 서버에 임시 저장한 일반 제작 초안의 진행 카드다. 기기 안 초안 카드와 같은 모양과 동작을 쓴다. */
+/**
+ * 서버 초안 카드의 설명 문구를 고른다. 일반 제작은 한 줄 소개, 간편 제작 스토리라인 초안은 고른 스토리라인 본문을 쓰고,
+ * 없으면 단계별 고정 문구를 쓴다.
+ *
+ * @param card 서버 초안 요약
+ * @returns 카드 설명
+ */
+function getServerDraftDescription(card: StoryDraftCard): string {
+  const { draftDescription } = CREATION_PROGRESS_CARD_COPY;
+
+  if (card.stage === 'GENERAL_DRAFT')
+    return card.oneLineIntro?.trim() || draftDescription.general;
+
+  if (card.stage === 'KEYWORD_DRAFT') return draftDescription.keyword;
+
+  return card.oneLineIntro?.trim() || draftDescription['storyline-select'];
+}
+
+/** 서버에 임시 저장한 초안(간편 제작, 일반 제작)의 진행 카드다. 기기 안 초안 카드와 같은 모양과 동작을 쓴다. */
 export function ServerDraftCard({ card }: ServerDraftCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const isGeneral = card.mode === 'GENERAL';
   const impressionRef = useImpression({
     object: 'continueBanner',
     itemId: card.draftId,
     screen: SCREEN.STORY_LIST,
     onImpress: () => {
-      track('client_storyCreate_continueBanner_shown', {
-        stage: 'GENERAL_DRAFT',
-      });
+      track('client_storyCreate_continueBanner_shown', { stage: card.stage });
     },
   });
 
@@ -206,19 +258,23 @@ export function ServerDraftCard({ card }: ServerDraftCardProps) {
       aria-label={CREATION_PROGRESS_CARD_COPY.draftTitle}
       className="flex px-4 py-2">
       <DraftCardContent
-        title={card.title?.trim() || CREATION_PROGRESS_CARD_COPY.draftTitle}
-        cover={card.thumbnailUrl ?? undefined}
-        description={
-          card.oneLineIntro?.trim() ||
-          CREATION_PROGRESS_CARD_COPY.draftDescription.general
+        title={
+          (isGeneral && card.title?.trim()) ||
+          CREATION_PROGRESS_CARD_COPY.draftTitle
         }
+        cover={card.thumbnailUrl ?? undefined}
+        description={getServerDraftDescription(card)}
         createdAt={card.createdAt}
         onResume={() => {
           track('client_storyCreate_continueBanner_clicked', {
-            stage: 'GENERAL_DRAFT',
+            stage: card.stage,
           });
           markDraftResumeIntent(card.draftId);
-          router.push(APP_PATH.STUDIO.STORY.GENERAL);
+          router.push(
+            isGeneral
+              ? APP_PATH.STUDIO.STORY.GENERAL
+              : APP_PATH.STUDIO.STORY.SIMPLE,
+          );
         }}
         onDelete={async () => {
           try {

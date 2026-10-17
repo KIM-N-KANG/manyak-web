@@ -1,17 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import type {
+  PendingCreationRequest,
+  StoryCompletionRecord,
+} from '@/features/stories/_shared/utils/creation-request-storage';
 import type { StoryDraftCard } from '@/features/stories/_shared/utils/story-draft-response';
 import { mergeDraftCards } from '@/features/studio/menu/utils/merge-draft-cards';
 
-const card = (draftId: string, createdAt: string): StoryDraftCard => ({
+const card = (
+  draftId: string,
+  createdAt: string,
+  version = 1,
+): StoryDraftCard => ({
   draftId,
   mode: 'GENERAL',
   stage: 'GENERAL_DRAFT',
   title: null,
   oneLineIntro: null,
   thumbnailUrl: null,
-  version: 1,
+  version,
   createdAt,
 });
 
@@ -62,6 +69,76 @@ describe('mergeDraftCards', () => {
     );
 
     expect(ids(merged)).toEqual(['server:same']);
+  });
+
+  const generating: PendingCreationRequest = {
+    stage: 'STORYLINE_GENERATION',
+    requestId: 'g1',
+    createdAt: '2026-10-16T02:00:00.000Z',
+    generationRequest: {
+      requestId: 'g1',
+      genreTagIds: [1],
+      protagonist: {
+        name: null,
+        gender: null,
+        featureTagIds: [],
+        customTags: [],
+      },
+      supportingCharacters: [],
+    },
+    draftId: 'linked',
+    draftVersion: 1,
+  };
+
+  it('기기 안 진행 기록이 가리키는 서버 초안은 숨기고 기기 안 기록에 숨긴 초안 ID를 싣는다', () => {
+    const merged = mergeDraftCards(
+      [generating],
+      [
+        card('linked', '2026-10-16T02:00:00.000000Z'),
+        card('s1', '2026-10-16T01:00:00.000000Z'),
+      ],
+    );
+
+    expect(ids(merged)).toEqual(['local:g1', 'server:s1']);
+    expect(merged[0]).toMatchObject({ hiddenServerDraftId: 'linked' });
+  });
+
+  it('기기 안 기록보다 새로 저장된 서버 초안은 숨기지 않는다', () => {
+    const merged = mergeDraftCards(
+      [generating],
+      [card('linked', '2026-10-16T03:00:00.000000Z', 2)],
+    );
+
+    expect(ids(merged)).toEqual(['server:linked', 'local:g1']);
+    expect(merged[1]).not.toHaveProperty('hiddenServerDraftId');
+  });
+
+  it('완성 기록이 가리키는 서버 초안은 그 기록 뒤에 저장되지 않았을 때만 숨긴다', () => {
+    const completion = {
+      stage: 'STORY_COMPLETION',
+      requestId: 'c1',
+      draftId: 'linked',
+      draftVersion: 1,
+    } as StoryCompletionRecord;
+
+    expect(
+      ids(
+        mergeDraftCards(
+          [],
+          [card('linked', '2026-10-16T02:00:00.000000Z')],
+          [completion],
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      ids(
+        mergeDraftCards(
+          [],
+          [card('linked', '2026-10-16T02:00:00.000000Z', 2)],
+          [completion],
+        ),
+      ),
+    ).toEqual(['server:linked']);
   });
 
   it('시각이 없는 로컬 레코드는 맨 뒤에 원래 순서대로 둔다', () => {

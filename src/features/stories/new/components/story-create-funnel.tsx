@@ -7,6 +7,7 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { DraftConflictDialog } from '@/features/stories/_shared/components/draft-conflict-dialog';
 import { track } from '@/observability/analytics';
 
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
@@ -31,6 +32,7 @@ export function StoryCreateFunnel() {
     canSaveDraft,
     isDraftSaved,
     saveDraft,
+    draftConflict,
     creationId,
     storylines,
     selectedTagGroups,
@@ -154,6 +156,11 @@ export function StoryCreateFunnel() {
           open={reselectDialogOpen}
           onOpenChange={onReselectDialogOpenChange}
           onConfirm={handleConfirmReselect}
+        />
+        <DraftConflictDialog
+          open={draftConflict.open}
+          onKeep={draftConflict.onKeep}
+          onSave={draftConflict.onSave}
         />
       </div>
     </CollapsedListItemsProvider>

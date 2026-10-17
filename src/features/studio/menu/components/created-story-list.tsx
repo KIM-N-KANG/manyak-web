@@ -35,8 +35,12 @@ export function CreatedStoryList() {
   const local = useCreationRecords();
   const { submissions } = useStorySubmissions();
   const serverDrafts = useStoryDrafts(local.pending);
-  // 기기 안 초안과 서버 초안(회원 일반 제작)을 한 묶음으로 최신순에 놓는다.
-  const draftItems = mergeDraftCards(local.pending ?? [], serverDrafts.cards);
+  // 기기 안 초안과 서버 초안(회원 간편 제작과 일반 제작)을 한 묶음으로 최신순에 놓는다.
+  const draftItems = mergeDraftCards(
+    local.pending ?? [],
+    serverDrafts.cards,
+    local.completions,
+  );
   const completionRecords = local.completions ?? [];
   const isDraftsLoading = local.isLoading || serverDrafts.isLoading;
   const showSkeleton = useDelayedLoading(isLoading || isDraftsLoading);
@@ -125,7 +129,10 @@ export function CreatedStoryList() {
               {item.source === 'server' ? (
                 <ServerDraftCard card={item.card} />
               ) : (
-                <CreationProgressCard record={item.record} />
+                <CreationProgressCard
+                  record={item.record}
+                  hiddenServerDraftId={item.hiddenServerDraftId}
+                />
               )}
             </m.li>
           ))}
