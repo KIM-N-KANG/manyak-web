@@ -3,13 +3,14 @@
 import { useEffect } from 'react';
 
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
+import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
-import { Skeleton } from '@/components/ui/skeleton';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { DraftConflictDialog } from '@/features/stories/_shared/components/draft-conflict-dialog';
 import { track } from '@/observability/analytics';
 
+import { STORY_CREATE_GATE_COPY } from '../constants';
 import { useStoryCreateFunnel } from '../hooks/use-story-create-funnel';
 import { mapStepToSpec } from '../utils/step-analytics';
 import { StoryAdditionalInfoStepSection } from './additional-info-step/story-additional-info-step-section';
@@ -76,6 +77,15 @@ export function StoryCreateFunnel() {
     track('client_storyCreate_step_viewed', mapStepToSpec(step));
   }, [step]);
 
+  // 진입 판정 중에는 채팅방에 들어갈 때처럼 헤더 없이 가운데 스피너만 둔다. 앞선 로그인 확인 스피너와 이어진다.
+  if (!isEntryResolved && !entryError) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <PageLoadingSpinner aria-label={STORY_CREATE_GATE_COPY.loading} />
+      </div>
+    );
+  }
+
   return (
     <CollapsedListItemsProvider>
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -95,14 +105,12 @@ export function StoryCreateFunnel() {
           onConfirmBack={handleConfirmBack}
         />
 
-        {entryError ? (
+        {entryError && (
           <RetryListStatus
             title={TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED}
             onRetry={retryEntry}
           />
-        ) : !isEntryResolved ? (
-          <Skeleton className="m-4 h-48" />
-        ) : null}
+        )}
 
         {isEntryResolved && !entryError && step === 'keyword' && (
           <StoryTagStepSection

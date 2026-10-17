@@ -24,6 +24,7 @@ import {
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
+import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import {
@@ -37,7 +38,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
@@ -104,7 +104,6 @@ import {
 } from '@/features/studio/general/utils/start-setting-draft';
 import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
 import type { GeneralStoryFormInitial } from '@/features/studio/general/utils/submission-form';
-import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { FetchError, getApiErrorCode } from '@/lib/api-error';
@@ -195,7 +194,6 @@ const toStoredImage = (
 
 export function GeneralStoryCreateScreen() {
   const { entry, isError, retry } = useGeneralStoryDraftEntry();
-  const showSkeleton = useDelayedLoading(!entry && !isError);
 
   if (entry?.source === 'server') {
     return (
@@ -228,7 +226,12 @@ export function GeneralStoryCreateScreen() {
     );
   }
 
-  return showSkeleton ? <Skeleton className="m-4 h-48" /> : null;
+  // 진입 판정 중에는 채팅방에 들어갈 때처럼 가운데 스피너만 둔다. 앞선 로그인 확인 스피너와 이어진다.
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <PageLoadingSpinner aria-label={GENERAL_STORY_CREATE_COPY.loading} />
+    </div>
+  );
 }
 
 /** 스토리 수정으로 열 때의 값이다. 있으면 등록 대신 PATCH로 저장하고 임시 저장하지 않는다. */

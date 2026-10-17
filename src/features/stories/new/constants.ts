@@ -228,4 +228,5 @@ export const STORY_COMPLETION_LOADING_HINTS = [
 export const STORY_CREATE_GATE_COPY = {
   title: '스토리 간편 제작',
   checking: '로그인 상태를 확인하는 중',
+  loading: '스토리를 불러오는 중',
 } as const;
