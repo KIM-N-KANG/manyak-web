@@ -4,8 +4,10 @@ import type {
   ArtStyleCatalogItem,
   CreditPolicyResponse,
   CreditProductResponse,
+  GenerateSimpleStorylinesResponse,
   GenreCatalogResponse,
   PushSettingsResponse,
+  PutStoryDraftRequest,
   TrialsResponse,
   UserConsentResponse,
 } from '@/api/generated/models';
@@ -68,6 +70,252 @@ export async function mockApi(page: Page): Promise<void> {
   // 응답해 어떤 시나리오도 catch-all의 `[]`로 깨지지 않게 한다. 설정 시나리오는 override한다.
   await mockPushTokens(page);
   await mockPushSettings(page);
+
+  // 회원 일반 제작의 임시 저장은 서버에 보관한다. 빈 서버 저장소로 시작해 저장과 재개가 실제 계약대로 오가게 한다.
+  // 저장소를 들여다보거나 미리 채우는 스펙은 mockStoryDrafts를 다시 불러 새 핸들을 얻는다.
+  await mockStoryDrafts(page);
+}
+
+/** 서버 임시 저장 목에 보관하는 초안이다. 응답의 미리보기 URL은 이 값으로 만든다. */
+export type StoredStoryDraft = PutStoryDraftRequest & {
+  draftId: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * 서버 임시 저장 목의 상태다. 스펙에서 저장 결과를 단언하거나 다른 기기의 저장을 흉내 낼 때 직접 바꾼다.
+ * `generations`는 간편 제작 스토리라인 초안이 연결한 생성 요청 ID별 생성 결과이며, 상세 응답의 `generation`이 된다.
+ */
+export type StoryDraftMock = {
+  drafts: Map<string, StoredStoryDraft>;
+  puts: { draftId: string; body: PutStoryDraftRequest }[];
+  generations: Map<string, GenerateSimpleStorylinesResponse>;
+};
+
+/** 목이 돌려주는 초안 이미지 미리보기 URL의 앞부분이다. */
+export const STORY_DRAFT_IMAGE_BASE = 'https://images.test';
+
+const STORY_DRAFTS_ROUTE = '**/api/v1/users/me/story-drafts';
+
+const STORY_DRAFT_ROUTE = '**/api/v1/users/me/story-drafts/*';
+
+/** 백엔드 스펙 §4-3-12의 회원당 초안 상한이다. */
+const STORY_DRAFT_LIMIT = 5;
+
+/** 백엔드 스펙 §4-3-12의 payload 크기 상한(UTF-8 바이트)이다. */
+const STORY_DRAFT_PAYLOAD_LIMIT = 65_536;
+
+const draftImageUrl = (objectKey: string) =>
+  `${STORY_DRAFT_IMAGE_BASE}/${objectKey}`;
+
+/** 서버가 미리보기 URL로 풀어 주는 payload 안 업로드 객체 키를 모은다. */
+const collectDraftImageKeys = (value: unknown, keys: string[] = []) => {
+  if (
+    typeof value === 'string' &&
+    /^(thumbnails|characters)\/uploaded\//.test(value)
+  ) {
+    keys.push(value);
+  } else if (value && typeof value === 'object') {
+    Object.values(value).forEach((item) => collectDraftImageKeys(item, keys));
+  }
+
+  return keys;
+};
+
+const draftSummary = (draft: StoredStoryDraft) => ({
+  draftId: draft.draftId,
+  mode: draft.mode,
+  stage: draft.stage,
+  title: draft.title ?? null,
+  oneLineIntro: draft.oneLineIntro ?? null,
+  thumbnailUrl: draft.thumbnailObjectKey
+    ? draftImageUrl(draft.thumbnailObjectKey)
+    : null,
+  version: draft.version,
+  createdAt: draft.createdAt,
+  updatedAt: draft.updatedAt,
+});
+
+/** 버전 판정에서 비교하는 저장 내용이다. baseVersion은 비교하지 않는다. */
+const draftContent = ({
+  mode,
+  stage,
+  schemaVersion,
+  payload,
+  title,
+  oneLineIntro,
+  thumbnailObjectKey,
+  generationRequestId,
+}: PutStoryDraftRequest) =>
+  JSON.stringify({
+    mode,
+    stage,
+    schemaVersion,
+    payload,
+    title: title ?? null,
+    oneLineIntro: oneLineIntro ?? null,
+    thumbnailObjectKey: thumbnailObjectKey ?? null,
+    generationRequestId: generationRequestId ?? null,
+  });
+
+const jsonError = (code: string, details?: object[]) =>
+  JSON.stringify({ code, message: code, ...(details && { details }) });
+
+/**
+ * 서버 임시 저장 API(`/users/me/story-drafts`)를 메모리 저장소로 흉내 낸다. 목록, 상세, 멱등 PUT(같은 내용 재전송,
+ * 버전 충돌 409, 개수 상한과 크기 상한 400), DELETE를 백엔드 스펙 §4-3-12대로 응답한다.
+ *
+ * @param page 대상 페이지
+ * @param options.initial 미리 넣어 둘 초안
+ * @param options.generations 생성 요청 ID별 스토리라인 생성 결과
+ * @param options.now 저장 시각
+ * @returns 저장소 핸들
+ */
+export async function mockStoryDrafts(
+  page: Page,
+  {
+    initial = [],
+    generations = {},
+    now = () => new Date().toISOString(),
+  }: {
+    initial?: StoredStoryDraft[];
+    generations?: Record<string, GenerateSimpleStorylinesResponse>;
+    /** 저장 시각을 정한다. 페이지 시계를 고정한 스펙은 같은 시각을 넘긴다(목은 Node 시계를 쓴다). */
+    now?: () => string;
+  } = {},
+): Promise<StoryDraftMock> {
+  const mock: StoryDraftMock = {
+    drafts: new Map(initial.map((draft) => [draft.draftId, { ...draft }])),
+    puts: [],
+    generations: new Map(Object.entries(generations)),
+  };
+
+  await page.route(STORY_DRAFTS_ROUTE, async (route) => {
+    const cards = [...mock.drafts.values()]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((draft) => ({ kind: 'DRAFT', ...draftSummary(draft) }));
+
+    await route.fulfill({ status: 200, json: cards });
+  });
+
+  await page.route(STORY_DRAFT_ROUTE, async (route) => {
+    const request = route.request();
+    const draftId = new URL(request.url()).pathname.split('/').pop() ?? '';
+    const current = mock.drafts.get(draftId);
+
+    if (request.method() === 'GET') {
+      if (!current) {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: jsonError('NOT_FOUND'),
+        });
+
+        return;
+      }
+
+      const generationRequestId = current.generationRequestId ?? null;
+      const generation =
+        generationRequestId === null
+          ? undefined
+          : mock.generations.get(generationRequestId);
+
+      await route.fulfill({
+        status: 200,
+        json: {
+          ...draftSummary(current),
+          schemaVersion: current.schemaVersion,
+          payload: current.payload,
+          generationRequestId,
+          imageUrls: Object.fromEntries(
+            collectDraftImageKeys(current.payload).map((key) => [
+              key,
+              draftImageUrl(key),
+            ]),
+          ),
+          generation: generation
+            ? {
+                stage: 'STORYLINE_GENERATION',
+                status: 'COMPLETED',
+                result: generation,
+              }
+            : null,
+        },
+      });
+
+      return;
+    }
+
+    if (request.method() === 'DELETE') {
+      mock.drafts.delete(draftId);
+      await route.fulfill({ status: 204, body: '' });
+
+      return;
+    }
+
+    const body = request.postDataJSON() as PutStoryDraftRequest;
+    const fail = (code: string, status: number, details?: object[]) =>
+      route.fulfill({
+        status,
+        contentType: 'application/json',
+        body: jsonError(code, details),
+      });
+
+    mock.puts.push({ draftId, body });
+
+    if (current && draftContent(current) === draftContent(body)) {
+      await route.fulfill({ status: 200, json: draftSummary(current) });
+
+      return;
+    }
+
+    if (
+      new TextEncoder().encode(JSON.stringify(body.payload)).length >
+      STORY_DRAFT_PAYLOAD_LIMIT
+    ) {
+      await fail('DRAFT_PAYLOAD_TOO_LARGE', 400);
+
+      return;
+    }
+
+    if (current && body.baseVersion !== current.version) {
+      await fail('DRAFT_VERSION_CONFLICT', 409, [
+        { field: 'version', message: String(current.version) },
+        { field: 'updatedAt', message: current.updatedAt },
+      ]);
+
+      return;
+    }
+
+    // 새 초안의 기준 버전은 null이어야 한다.
+    if (!current && body.baseVersion != null) {
+      await fail('BAD_REQUEST', 400);
+
+      return;
+    }
+
+    if (!current && mock.drafts.size >= STORY_DRAFT_LIMIT) {
+      await fail('DRAFT_LIMIT_EXCEEDED', 400);
+
+      return;
+    }
+
+    const savedAt = now();
+    const saved: StoredStoryDraft = {
+      ...body,
+      draftId,
+      version: (current?.version ?? 0) + 1,
+      createdAt: current?.createdAt ?? savedAt,
+      updatedAt: savedAt,
+    };
+
+    mock.drafts.set(draftId, saved);
+    await route.fulfill({ status: 200, json: draftSummary(saved) });
+  });
+
+  return mock;
 }
 
 export const GUEST_CONSENT_VERSION_FIXTURE = 'guest-v1';

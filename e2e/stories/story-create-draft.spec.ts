@@ -16,7 +16,11 @@ import {
 } from '@/features/studio/menu/constants';
 import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
-import { ART_STYLE_CATALOG_FIXTURE } from '../fixtures/api-mock';
+import {
+  ART_STYLE_CATALOG_FIXTURE,
+  mockStoryDrafts,
+  type StoryDraftMock,
+} from '../fixtures/api-mock';
 import { readCreationStorage } from '../fixtures/storage';
 import { seedPendingCreationRequests } from '../fixtures/storage';
 import {
@@ -29,11 +33,16 @@ import { waitForToastToClose } from '../fixtures/toast';
 
 // 편집 임시 저장(draft): 임시 저장 버튼·단계 이동·화면 숨김 때 제작 상태를 저장하고
 // 제작 탭 진행 카드의 "이어서 만들기"로 이어 만드는 흐름. 초안은 여러 건 공존하고
-// 새 제작·딥링크 진입은 묻지 않고 새 세션으로 시작한다.
+// 새 제작·딥링크 진입은 묻지 않고 새 세션으로 시작한다. 회원의 새 세션은 서버 초안에 저장하고(KNK-1667),
+// 시드한 기기 안 초안(서버 연결 없음)은 기기 안에 저장한다.
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 
 const STORAGE_KEY = 'manyak:pending-creation-request';
+
+/** 서버 초안 목의 stage 배열을 읽는다. */
+const serverStages = (mock: StoryDraftMock) =>
+  [...mock.drafts.values()].map(({ stage }) => stage);
 
 /** 저장된 편집 초안 목록의 stage 배열을 읽는다. */
 const readDraftStages = async (page: Page) => {
@@ -99,10 +108,13 @@ const draftRecord: PendingCreationRequest = {
 };
 
 test.describe('스토리 임시 저장·재개', () => {
+  let drafts: StoryDraftMock;
+
   // 제작은 회원 전용이라 회원 세션으로 진행한다.
   test.beforeEach(async ({ page }) => {
     await skipOnboarding(page);
     await mockMemberSession(page);
+    drafts = await mockStoryDrafts(page);
     await page.route(TAGS, async (route) => {
       await route.fulfill({
         status: 200,
@@ -149,13 +161,13 @@ test.describe('스토리 임시 저장·재개', () => {
       'aria-pressed',
       'true',
     );
-    expect(await readDraftStages(page)).toEqual([]);
+    expect(serverStages(drafts)).toEqual([]);
 
     // 연타 처리는 공용 버튼이라 일반 제작(STORY-GENERAL-17)에서 확인한다. iPhone 폭에서는 토스트가
     // 버튼을 덮어 포인터가 토스트 위에 머물면 sonner가 닫힘을 멈추기 때문이다.
     await saveButton(page).click();
     await expect(savedToast(page)).toBeVisible();
-    await expect.poll(() => readDraftStages(page)).toEqual(['KEYWORD_DRAFT']);
+    await expect.poll(() => serverStages(drafts)).toEqual(['KEYWORD_DRAFT']);
 
     // 저장 뒤 고친 내용이 있으면 저장 뒤 편집 경고다.
     await page.getByRole('button', { name: '다음' }).click();
@@ -243,7 +255,7 @@ test.describe('스토리 임시 저장·재개', () => {
       });
       document.dispatchEvent(new Event('visibilitychange'));
     });
-    await expect.poll(() => readDraftStages(page)).toEqual(['KEYWORD_DRAFT']);
+    await expect.poll(() => serverStages(drafts)).toEqual(['KEYWORD_DRAFT']);
     await expect(savedToast(page)).toHaveCount(0);
   });
 
@@ -271,8 +283,11 @@ test.describe('스토리 임시 저장·재개', () => {
       });
     });
     // 처음 임시 저장 시각(키워드 임시 저장)이 단계 전환 뒤에도 카드 날짜로 남는지 보기 위해
-    // 키워드 저장과 스토리라인 생성 사이에 시계를 옮긴다.
+    // 키워드 저장과 스토리라인 생성 사이에 시계를 옮긴다. 서버 초안의 처음 저장 시각도 같은 시각으로 둔다.
     await page.clock.setFixedTime(new Date('2026-09-22T04:30:00.000Z'));
+    drafts = await mockStoryDrafts(page, {
+      now: () => '2026-09-22T04:30:00.000Z',
+    });
 
     await page.goto(APP_PATH.MAIN.STUDIO);
     await page
@@ -334,10 +349,16 @@ test.describe('스토리 임시 저장·재개', () => {
       .toContain('"stage":"STORY_DRAFT"');
   });
 
-  test('스토리라인을 고르면 알림 없이 저장하고, 임시 저장한 추가 정보 입력과 추천을 이어서 만들기로 복원한다', async ({
+  test('스토리라인을 골라도 저장하지 않고, 임시 저장한 추가 정보 입력과 추천을 이어서 만들기로 복원한다', async ({
     page,
   }) => {
     await page.route(STORYLINES, async (route) => {
+      const { requestId } = route.request().postDataJSON() as {
+        requestId: string;
+      };
+
+      // 서버 초안을 이어서 열 때 연결한 생성 요청의 결과를 상세로 돌려준다.
+      drafts.generations.set(requestId, storylinesResponse);
       await route.fulfill({
         status: 201,
         contentType: 'application/json',
@@ -351,15 +372,18 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
     await page.getByRole('button', { name: '선택하기' }).click();
-    // 단계를 옮기면 옮겨 간 단계를 알림 없이 저장한다.
-    await expect
-      .poll(() => readCreationStorage(page, STORAGE_KEY))
-      .toContain('"step":"additional-info"');
-    await expect(savedToast(page)).toHaveCount(0);
 
     const additionalInfoInput = page.locator(
       'textarea[aria-label="추가 정보 1"]',
     );
+
+    // 단계를 옮기는 것은 저장 계기가 아니다.
+    await expect(additionalInfoInput).toBeVisible();
+    await page.waitForTimeout(300);
+    expect(JSON.stringify([...drafts.drafts.values()])).not.toContain(
+      '"step":"additional-info"',
+    );
+
     const recommendation = page.getByRole('button', {
       name: '주인공은 비밀을 품고 있다',
     });
@@ -386,9 +410,7 @@ test.describe('스토리 임시 저장·재개', () => {
     await expect(
       page.getByRole('radio', { name: artStyle.name }),
     ).toBeChecked();
-    await expect
-      .poll(() => readCreationStorage(page, STORAGE_KEY))
-      .toContain('"stage":"STORY_DRAFT"');
+    expect(serverStages(drafts)).toEqual(['STORY_DRAFT']);
   });
 
   test('draft가 있어도 FAB는 묻지 않고 새 세션으로 진입하며 기존 초안을 유지한다', async ({
@@ -435,9 +457,9 @@ test.describe('스토리 임시 저장·재개', () => {
     await saveButton(page).click();
     await expect(savedToast(page)).toBeVisible();
 
-    await expect
-      .poll(() => readDraftStages(page))
-      .toEqual(['STORY_DRAFT', 'KEYWORD_DRAFT']);
+    // 시드한 기기 안 초안은 그대로 두고 새 세션의 키워드 초안은 서버에 저장한다.
+    await expect.poll(() => readDraftStages(page)).toEqual(['STORY_DRAFT']);
+    expect(serverStages(drafts)).toEqual(['KEYWORD_DRAFT']);
     await waitForToastToClose(page, savedToast(page));
 
     // 시드 initScript가 새 문서 로드마다 다시 심으므로 클라이언트 전환으로 제작 탭에 간다.

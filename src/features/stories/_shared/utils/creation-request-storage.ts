@@ -49,6 +49,15 @@ export type KeywordDraftSnapshot = {
 };
 
 /**
+ * 서버 세션이 진행 기록에 남기는 서버 초안 연결 정보다. 같은 제작의 서버 초안 ID와 그 기록을 만들 때의
+ * 기준 버전을 들고 있어, 이어서 만들어 저장하면 같은 서버 초안을 덮어쓴다. 게스트와 기기 안 세션의 기록에는 없다.
+ */
+export type ServerDraftLink = {
+  draftId?: string;
+  draftVersion?: number | null;
+};
+
+/**
  * 완성 요청 레코드. 편집 초안 목록과 별도 목록에 requestId별로 여러 건 보관해 완성 중에도
  * 새 제작을 시작할 수 있다. 실패 시 추가 정보 초안으로 되돌릴 수 있도록 퍼널 컨텍스트를 함께 담는다.
  */
@@ -66,7 +75,7 @@ export type StoryCompletionRecord = {
   /** 스토리 성공 부수효과까지 적용한 ID. 폴링·새로고침이 같은 결과를 다시 적용하지 않게 한다. */
   createdStoryId?: string | null;
   completionRequest: CreateSimpleStoryRequest;
-};
+} & ServerDraftLink;
 
 /**
  * 편집 초안 레코드. 퍼널 한 세션이 한 건을 소유하며 여러 세션의 레코드가 목록에 공존한다.
@@ -81,13 +90,13 @@ export type PendingCreationRequest =
       createdAt?: string;
       snapshot: KeywordDraftSnapshot;
     }
-  | {
+  | ({
       stage: 'STORYLINE_GENERATION';
       requestId: string;
       createdAt?: string;
       generationRequest: GenerateSimpleStorylinesRequest;
-    }
-  | {
+    } & ServerDraftLink)
+  | ({
       stage: 'STORY_DRAFT';
       requestId: string;
       createdAt?: string;
@@ -102,7 +111,7 @@ export type PendingCreationRequest =
       artStyle?: string;
       createdStoryId: string | null;
       completionRequest: CreateSimpleStoryRequest | null;
-    }
+    } & ServerDraftLink)
   | {
       /** 일반 제작 폼의 임시 저장본. 임시 저장 버튼과 탭 이동 때만 갱신한다. */
       stage: 'GENERAL_DRAFT';
@@ -231,7 +240,9 @@ function isKeywordCharacterSnapshot(
  * @param value 검사할 값
  * @returns 키워드 단계 스냅숏 여부
  */
-function isKeywordDraftSnapshot(value: unknown): value is KeywordDraftSnapshot {
+export function isKeywordDraftSnapshot(
+  value: unknown,
+): value is KeywordDraftSnapshot {
   return (
     isPlainObject(value) &&
     isNumberArray(value.selectedGenreTagIds) &&
@@ -242,6 +253,21 @@ function isKeywordDraftSnapshot(value: unknown): value is KeywordDraftSnapshot {
     isKeywordCharacterSnapshot(value.protagonist) &&
     Array.isArray(value.supportingCharacters) &&
     value.supportingCharacters.every(isKeywordCharacterSnapshot)
+  );
+}
+
+/**
+ * 서버 초안 연결 필드가 없거나 올바른 형태인지 판별한다.
+ *
+ * @param value 검사할 레코드
+ * @returns 연결 필드가 없거나 `draftId` 문자열, `draftVersion` 숫자 또는 null이면 참
+ */
+function hasValidServerDraftLink(value: Record<string, unknown>): boolean {
+  return (
+    (value.draftId === undefined || typeof value.draftId === 'string') &&
+    (value.draftVersion === undefined ||
+      value.draftVersion === null ||
+      typeof value.draftVersion === 'number')
   );
 }
 
@@ -258,6 +284,7 @@ function isStoryCompletionRecord(
     isPlainObject(value) &&
     value.stage === 'STORY_COMPLETION' &&
     typeof value.requestId === 'string' &&
+    hasValidServerDraftLink(value) &&
     isPlainObject(value.generationRequest) &&
     isPlainObject(value.generationResult) &&
     isPlainObject(value.selectedStoryline) &&
@@ -321,7 +348,10 @@ function isPendingCreationRequest(
     return true;
   }
 
-  if (!isPlainObject(parsed.generationRequest)) {
+  if (
+    !isPlainObject(parsed.generationRequest) ||
+    !hasValidServerDraftLink(parsed)
+  ) {
     return false;
   }
 
@@ -645,6 +675,26 @@ async function writeCreation(
   }
 }
 
+/**
+ * 출처 기록의 서버 초안 연결을 대상 기록에 붙인다. 출처에 연결이 없으면 대상을 그대로 둔다.
+ *
+ * @param record 연결을 붙일 기록
+ * @param source 연결을 가진 출처 기록
+ * @returns 연결을 붙인 기록
+ */
+function withServerDraftLink<Record extends ServerDraftLink>(
+  record: Record,
+  source: ServerDraftLink | undefined,
+): Record {
+  if (source?.draftId === undefined) return record;
+
+  return {
+    ...record,
+    draftId: source.draftId,
+    draftVersion: source.draftVersion ?? null,
+  };
+}
+
 /** 최초 시각과 목록 내 순서를 유지한다. */
 async function putPending(
   record: PendingCreationRequest,
@@ -733,7 +783,13 @@ export function replacePendingCreationRequest(
 
     if (!current || current.stage !== 'STORYLINE_GENERATION') return false;
 
-    await putPending(replacement, state, current);
+    // 승격 경로(퍼널 응답, 복구 조회, 제작 탭 폴링)는 생성 기록만 알므로 서버 초안 연결을 여기서 옮긴다.
+    const linked =
+      replacement.stage === 'STORY_DRAFT' && replacement.draftId === undefined
+        ? withServerDraftLink(replacement, current)
+        : replacement;
+
+    await putPending(linked, state, current);
 
     if (requestId !== replacement.requestId)
       await creationDb.pendingCreations.delete(requestId);
@@ -752,12 +808,24 @@ export function addStoryCompletionRequest(
     );
     const existing = await creationDb.storyCompletions.get(record.requestId);
 
-    if (!pending && !existing) return false;
+    // 서버 세션은 편집 초안을 서버에만 두므로, 서버 초안을 가리키는 완성 기록은 기기 안 초안 없이도 받는다.
+    if (!pending && !existing && record.draftId === undefined) return false;
 
     const source = existing ?? pending;
+    const linked =
+      record.draftId === undefined
+        ? withServerDraftLink(
+            record,
+            source?.stage === 'STORY_COMPLETION' ||
+              source?.stage === 'STORY_DRAFT' ||
+              source?.stage === 'STORYLINE_GENERATION'
+              ? source
+              : undefined,
+          )
+        : record;
 
     await creationDb.storyCompletions.put({
-      ...record,
+      ...linked,
       createdAt: source?.createdAt ?? record.createdAt,
       storageOrder: source?.storageOrder ?? ++state.sequence,
     });
@@ -839,6 +907,10 @@ export function demotePendingCompletionToDraft(
       artStyle: current.completionRequest.artStyle ?? undefined,
       createdStoryId: null,
       completionRequest: current.completionRequest,
+      ...(current.draftId !== undefined && {
+        draftId: current.draftId,
+        draftVersion: current.draftVersion ?? null,
+      }),
     });
     await creationDb.storyCompletions.delete(requestId);
     await creationDb.metadata.put(state);

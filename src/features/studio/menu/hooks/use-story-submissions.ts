@@ -20,7 +20,7 @@ const SUBMISSION_LIMIT = 100;
  * 검토 중인 제출본이 있는 동안 주기적으로 다시 조회하고, 목록에서 빠진 제출본(승인·삭제)이 있으면
  * 내 스토리 목록을 새로 받아 승인된 스토리가 바로 보이게 한다.
  *
- * @returns 제출본 목록(최신순)
+ * @returns 제출본 목록(최신순)과 첫 조회 중 여부
  */
 export function useStorySubmissions() {
   const { isMember } = useMemberAccess();
@@ -62,5 +62,5 @@ export function useStorySubmissions() {
     }
   }, [idsKey, queryClient]);
 
-  return { submissions };
+  return { submissions, isLoading: isMember && query.isPending };
 }

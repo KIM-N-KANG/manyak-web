@@ -15,6 +15,7 @@ import {
   useDeleteThumbnail,
   useUpdateStory,
 } from '@/api/generated/endpoints/stories/stories';
+import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
 import {
   getGetStoriesSubmissionsQueryKey as getStorySubmissionsQueryKey,
   getStoriesSubmissionsById as getStorySubmission,
@@ -23,6 +24,7 @@ import {
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';
+import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import {
@@ -36,12 +38,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { DraftConflictDialog } from '@/features/stories/_shared/components/draft-conflict-dialog';
 import {
-  DRAFT_SAVE_TOAST_ID,
   DRAFT_SAVED_TOAST_DURATION_MS,
   DraftSaveButton,
 } from '@/features/stories/_shared/components/draft-save-button';
@@ -52,11 +53,10 @@ import {
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
 import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
-import {
-  savePendingCreationRequest,
-  takePendingCreationRequest,
-} from '@/features/stories/_shared/utils/creation-request-storage';
+import { useStoryDraftSave } from '@/features/stories/_shared/hooks/use-story-draft-save';
+import { takePendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { getDraftExitWarning } from '@/features/stories/_shared/utils/draft-exit-warning';
+import { toGeneralDraftRequest } from '@/features/studio/_shared/utils/general-draft-payload';
 import {
   type GeneralStoryDraftImage,
   type GeneralStoryDraftSnapshot,
@@ -67,10 +67,10 @@ import {
   type StorySubmission,
 } from '@/features/studio/_shared/utils/story-submission';
 import {
+  EMPTY_GENERAL_TEXT_VALUES,
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_EDIT_COPY,
-  GENERAL_STORY_TEXT_FIELDS,
   type GeneralStoryTextField,
 } from '@/features/studio/general/constants';
 import type { DraftImage } from '@/features/studio/general/hooks/use-draft-image-picker';
@@ -104,7 +104,6 @@ import {
 } from '@/features/studio/general/utils/start-setting-draft';
 import { LENGTH_RATIO_DEFAULT } from '@/features/studio/general/utils/story-setting-sections';
 import type { GeneralStoryFormInitial } from '@/features/studio/general/utils/submission-form';
-import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { FetchError, getApiErrorCode } from '@/lib/api-error';
@@ -115,7 +114,6 @@ import { GeneralStoryCharacterFields } from './general-story-character-fields';
 import {
   GeneralStoryFormTabs,
   type GeneralStoryFormTabsHandle,
-  type GeneralStoryTextValues,
 } from './general-story-form-tabs';
 import { GeneralStoryMainEventPanel } from './general-story-main-event-panel';
 import { GeneralStoryRegisterErrorsContext } from './general-story-register-errors';
@@ -126,10 +124,6 @@ import {
   type GeneralStorySupportingCharacter,
   GeneralStorySupportingCharacterList,
 } from './general-story-supporting-character-list';
-
-const EMPTY_TEXT_VALUES = Object.fromEntries(
-  Object.keys(GENERAL_STORY_TEXT_FIELDS).map((field) => [field, '']),
-) as GeneralStoryTextValues;
 
 /** 검토 중 토스트의 id다. 결과를 알리거나 화면을 떠날 때 아직 떠 있으면 이 id로 닫는다. */
 const REVIEW_TOAST_ID = 'general-story-review';
@@ -149,18 +143,43 @@ const wait = (ms: number) =>
   });
 
 /**
- * 임시 저장본의 이미지로 폼 이미지를 만든다. 미리보기 blob URL은 저장한 파일로 다시 만든다.
+ * 임시 저장본의 이미지로 폼 이미지를 만든다. 기기 안 저장본은 저장한 파일로 blob URL을 다시 만들고,
+ * 서버 저장본은 상세 응답의 미리보기 URL을 쓴다.
  *
  * @param image 임시 저장한 이미지
+ * @param imageUrls 서버 저장본의 객체 키별 미리보기 URL
  * @returns 폼에서 쓰는 이미지. 없으면 null
  */
 const toDraftImage = (
   image: GeneralStoryDraftImage | null,
+  imageUrls: Record<string, string> = {},
 ): DraftImage | null =>
   image && {
     ...image,
-    previewUrl: image.blob ? URL.createObjectURL(image.blob) : '',
+    previewUrl: image.blob
+      ? URL.createObjectURL(image.blob)
+      : (imageUrls[image.objectKey] ?? ''),
   };
+
+/**
+ * 임시 저장 스냅숏을 폼 초기 입력으로 바꾼다.
+ *
+ * @param snapshot 임시 저장 스냅숏
+ * @param imageUrls 서버 저장본의 객체 키별 미리보기 URL
+ * @returns 폼 초기 입력
+ */
+const toFormInitial = (
+  snapshot: GeneralStoryDraftSnapshot,
+  imageUrls?: Record<string, string>,
+): GeneralStoryFormInitial => ({
+  ...snapshot,
+  cover: toDraftImage(snapshot.cover, imageUrls),
+  supporting: snapshot.supporting.map((character) => ({
+    ...character,
+    description: character.description ?? '',
+    image: toDraftImage(character.image, imageUrls),
+  })),
+});
 
 /**
  * 폼 이미지를 임시 저장할 형태로 바꾼다. 페이지마다 달라지는 blob URL은 빼고 저장한다.
@@ -175,28 +194,28 @@ const toStoredImage = (
 
 export function GeneralStoryCreateScreen() {
   const { entry, isError, retry } = useGeneralStoryDraftEntry();
-  const showSkeleton = useDelayedLoading(!entry && !isError);
 
-  if (entry) {
-    const { record } = entry;
-
+  if (entry?.source === 'server') {
     return (
       <GeneralStoryCreateForm
-        initial={
-          record && {
-            ...record.snapshot,
-            cover: toDraftImage(record.snapshot.cover),
-            supporting: record.snapshot.supporting.map((character) => ({
-              ...character,
-              description: character.description ?? '',
-              image: toDraftImage(character.image),
-            })),
-          }
-        }
-        draftRequestId={record?.requestId}
+        initial={toFormInitial(entry.snapshot, entry.imageUrls)}
+        draftRequestId={entry.draftId}
+        draftVersion={entry.version}
       />
     );
   }
+
+  if (entry?.source === 'local') {
+    return (
+      <GeneralStoryCreateForm
+        initial={toFormInitial(entry.record.snapshot)}
+        draftRequestId={entry.record.requestId}
+        hasLocalDraft
+      />
+    );
+  }
+
+  if (entry) return <GeneralStoryCreateForm initial={null} />;
 
   if (isError) {
     return (
@@ -207,7 +226,12 @@ export function GeneralStoryCreateScreen() {
     );
   }
 
-  return showSkeleton ? <Skeleton className="m-4 h-48" /> : null;
+  // 진입 판정 중에는 채팅방에 들어갈 때처럼 가운데 스피너만 둔다. 앞선 로그인 확인 스피너와 이어진다.
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <PageLoadingSpinner aria-label={GENERAL_STORY_CREATE_COPY.loading} />
+    </div>
+  );
 }
 
 /** 스토리 수정으로 열 때의 값이다. 있으면 등록 대신 PATCH로 저장하고 임시 저장하지 않는다. */
@@ -223,6 +247,10 @@ type GeneralStoryCreateFormProps = {
   initial: GeneralStoryFormInitial | null;
   /** 이어서 만드는 임시 저장본의 id다. 있으면 같은 레코드에 덮어쓴다. */
   draftRequestId?: string;
+  /** 이어서 만드는 서버 저장본의 버전이다. 새 초안과 기기 안 레거시 저장본은 null이다. */
+  draftVersion?: number | null;
+  /** 같은 id의 기기 안 레거시 저장본이 있으면 참이다. 서버에 처음 저장하면 기기 안 저장본을 지운다. */
+  hasLocalDraft?: boolean;
   /** 고쳐 다시 제출할 반려·실패 제출본이다. 있으면 처음부터 접수된 상태로 연다. */
   submission?: StorySubmission;
   /** 스토리 수정으로 열 때의 값이다. */
@@ -232,6 +260,8 @@ type GeneralStoryCreateFormProps = {
 export function GeneralStoryCreateForm({
   initial,
   draftRequestId,
+  draftVersion = null,
+  hasLocalDraft = false,
   submission,
   edit,
 }: GeneralStoryCreateFormProps) {
@@ -242,7 +272,7 @@ export function GeneralStoryCreateForm({
   const [exitWarning, setExitWarning] = useState<DraftExitDialog>('saved');
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [textValues, setTextValues] = useState(
-    initial?.texts ?? EMPTY_TEXT_VALUES,
+    initial?.texts ?? EMPTY_GENERAL_TEXT_VALUES,
   );
   const [cover, setCover] = useState(initial?.cover ?? null);
   const [descriptionRatio, setDescriptionRatio] = useState(
@@ -284,7 +314,6 @@ export function GeneralStoryCreateForm({
       initial?.visibility ?? 'PRIVATE',
     );
   const [hasTriedRegister, setHasTriedRegister] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [isReviewing, setIsReviewing] = useState(false);
   /** 검토 중이거나 승인돼 떠나는 중이면 참이다. 비동기 흐름과 저장 판단이 같은 값을 보도록 ref로 둔다. */
   const isReviewingRef = useRef(false);
@@ -389,43 +418,40 @@ export function GeneralStoryCreateForm({
   const hasSavedDraft = savedKey !== null;
   const isSaved = snapshotKey === savedKey;
 
-  const writeDraft = async () => {
-    const key = snapshotKey;
-
-    setIsSaving(true);
-
-    const saved = await savePendingCreationRequest(
-      { stage: 'GENERAL_DRAFT', requestId, snapshot },
-      epoch,
-    );
-
-    setIsSaving(false);
-
-    if (saved) {
+  // 이어서 연 기기 안 레거시 저장본은 서버에 처음 저장하면 지운다. 지우지 못해도 목록이 서버 쪽을 남긴다.
+  const hasLocalDraftRef = useRef(hasLocalDraft);
+  const draftSave = useStoryDraftSave({
+    draftId: requestId,
+    initialVersion: draftVersion,
+    onSaved: (key) => {
       setSavedKey(key);
-    } else {
-      toast.error(TOAST_MESSAGE.STORY_DRAFT_SAVE_FAILED, {
-        id: DRAFT_SAVE_TOAST_ID,
-      });
-    }
 
-    return saved;
-  };
+      if (hasLocalDraftRef.current) {
+        hasLocalDraftRef.current = false;
+        void takePendingCreationRequest(requestId, epoch).catch(() => false);
+      }
+    },
+  });
+  const isSaving = draftSave.isSaving;
+  const toDraftBody = (baseVersion: number | null) =>
+    toGeneralDraftRequest(snapshot, baseVersion);
+
+  const writeDraft = () => draftSave.save(toDraftBody, snapshotKey);
 
   // 검토 중이거나 접수된 뒤에는 저장하지 않는다. 지운 임시 저장본을 화면 숨김 저장이 되살리지 않게 한다.
-  const saveDraft = async () => {
+  // 저장 훅이 차례로 보내므로 앞 저장이 끝나지 않았어도 뒤에 넣는다(건너뛰면 탭 이동 전에 고친 내용이 저장되지 않는다).
+  const saveDraft = async ({ background = false } = {}) => {
     if (
       !edit &&
       hasInput &&
       !isSaved &&
-      !isSaving &&
       !isReviewingRef.current &&
       !isSubmittedRef.current
     )
-      await writeDraft();
+      await draftSave.save(toDraftBody, snapshotKey, { background });
   };
 
-  useSaveWhenBackgrounded(saveDraft);
+  useSaveWhenBackgrounded(() => saveDraft({ background: true }));
 
   const leaveToStudio = () =>
     leaveAfterCleanup(() => returnToMainTab(router, APP_PATH.MAIN.STUDIO));
@@ -606,24 +632,28 @@ export function GeneralStoryCreateForm({
       return;
     }
 
-    const request = buildGeneralStoryRequest(
-      {
-        texts: textValues,
-        coverObjectKey: cover?.objectKey ?? null,
-        descriptionRatio,
-        protagonist,
-        supporting: supporting.map((character) => ({
-          ...character,
-          imageObjectKey: character.image?.objectKey ?? null,
-        })),
-        startSettings,
-        mainEvents,
-        genres,
-        description: storyDescription,
-        visibility: storyVisibility,
-      },
-      genreNames,
-    );
+    // 접수(202)와 함께 서버가 이 임시 저장본을 지우도록 초안 ID를 함께 보낸다. 없는 초안이면 서버가 넘어간다.
+    const request = {
+      ...buildGeneralStoryRequest(
+        {
+          texts: textValues,
+          coverObjectKey: cover?.objectKey ?? null,
+          descriptionRatio,
+          protagonist,
+          supporting: supporting.map((character) => ({
+            ...character,
+            imageObjectKey: character.image?.objectKey ?? null,
+          })),
+          startSettings,
+          mainEvents,
+          genres,
+          description: storyDescription,
+          visibility: storyVisibility,
+        },
+        genreNames,
+      ),
+      draftId: requestId,
+    };
     const requestKey = snapshotKey;
     const requestForm = reviewForm;
     const controller = new AbortController();
@@ -732,6 +762,9 @@ export function GeneralStoryCreateForm({
       setSavedKey(null);
       void queryClient.invalidateQueries({
         queryKey: getStorySubmissionsQueryKey(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: getGetUsersMeStoryDraftsQueryKey(),
       });
       await takePendingCreationRequest(requestId, epoch).catch(() => false);
 
@@ -964,7 +997,7 @@ export function GeneralStoryCreateForm({
             readOnly={isLocked}
             registerLabel={edit ? GENERAL_STORY_EDIT_COPY.save : undefined}
             registeringLabel={edit ? GENERAL_STORY_EDIT_COPY.saving : undefined}
-            onTabChange={saveDraft}
+            onTabChange={() => saveDraft()}
           />
         </GeneralStoryRegisterErrorsContext>
       </CollapsedListItemsProvider>
@@ -985,6 +1018,11 @@ export function GeneralStoryCreateForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <DraftConflictDialog
+        open={draftSave.isConflictOpen}
+        onKeep={draftSave.keepServerDraft}
+        onSave={() => void draftSave.overwrite()}
+      />
     </div>
   );
 }
