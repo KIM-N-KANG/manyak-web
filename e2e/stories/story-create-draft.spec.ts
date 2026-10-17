@@ -349,7 +349,7 @@ test.describe('스토리 임시 저장·재개', () => {
       .toContain('"stage":"STORY_DRAFT"');
   });
 
-  test('스토리라인을 고르면 알림 없이 저장하고, 임시 저장한 추가 정보 입력과 추천을 이어서 만들기로 복원한다', async ({
+  test('스토리라인을 골라도 저장하지 않고, 임시 저장한 추가 정보 입력과 추천을 이어서 만들기로 복원한다', async ({
     page,
   }) => {
     await page.route(STORYLINES, async (route) => {
@@ -372,15 +372,18 @@ test.describe('스토리 임시 저장·재개', () => {
     await page.getByRole('button', { name: '다음' }).click();
     await page.getByRole('button', { name: '스토리라인 만들기' }).click();
     await page.getByRole('button', { name: '선택하기' }).click();
-    // 단계를 옮기면 옮겨 간 단계를 알림 없이 저장한다.
-    await expect
-      .poll(() => JSON.stringify([...drafts.drafts.values()]))
-      .toContain('"step":"additional-info"');
-    await expect(savedToast(page)).toHaveCount(0);
 
     const additionalInfoInput = page.locator(
       'textarea[aria-label="추가 정보 1"]',
     );
+
+    // 단계를 옮기는 것은 저장 계기가 아니다.
+    await expect(additionalInfoInput).toBeVisible();
+    await page.waitForTimeout(300);
+    expect(JSON.stringify([...drafts.drafts.values()])).not.toContain(
+      '"step":"additional-info"',
+    );
+
     const recommendation = page.getByRole('button', {
       name: '주인공은 비밀을 품고 있다',
     });

@@ -338,7 +338,7 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
     expect(await readLocalStages(page)).toEqual([]);
   });
 
-  test('스토리라인을 골라 추가 정보로 넘어가면 같은 초안을 STORY_DRAFT로 덮어쓰고 생성 결과는 싣지 않는다 (STORY-DRAFT-24)', async ({
+  test('추가 정보 단계에서 임시 저장하면 같은 초안을 STORY_DRAFT로 덮어쓰고 생성 결과는 싣지 않는다 (STORY-DRAFT-24)', async ({
     page,
   }) => {
     const mock = await mockStoryDrafts(page);
@@ -346,7 +346,7 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
 
     await generateAfterKeywordSave(page);
 
-    // 임시 저장 직후 단계 이동 저장이 겹쳐도 같은 기준 버전으로 두 번 나가 충돌하지 않아야 한다.
+    // 연달아 저장해도 앞 저장의 버전을 기준으로 이어 보내 충돌하지 않아야 한다.
     await page.getByRole('tab', { name: '두 번째' }).click();
     await saveButton(page).click();
     await page.getByRole('tab', { name: '첫 번째' }).click();
@@ -354,6 +354,9 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
     await expect(
       page.locator('textarea[aria-label="추가 정보 1"]'),
     ).toBeVisible();
+    // 임시 저장 버튼의 연타 간격(1초)이 지난 뒤 다시 누른다.
+    await page.waitForTimeout(1_000);
+    await saveButton(page).click();
     await expect
       .poll(() => mock.puts.at(-1)?.body.oneLineIntro)
       .toBe('첫 번째 이야기 흐름입니다.');
@@ -452,7 +455,7 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
     await expect.poll(() => readLocalStages(page)).toEqual([]);
   });
 
-  test('저장 중에 단계를 옮겨도 옮긴 단계의 저장을 뒤이어 보낸다 (STORY-DRAFT-33)', async ({
+  test('저장 중에 화면이 가려지면 그 뒤의 내용을 앞 저장 뒤에 이어 보낸다 (STORY-DRAFT-33)', async ({
     page,
   }) => {
     const mock = await mockStoryDrafts(page);
@@ -465,7 +468,7 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
     await answerStorylines(page, mock);
     await generateAfterKeywordSave(page);
 
-    // 스토리라인 선택 단계의 저장 응답을 붙잡아 둔 채 추가 정보 단계로 옮긴다.
+    // 스토리라인 선택 단계의 저장 응답을 붙잡아 둔 채 추가 정보 단계로 옮기고 화면을 가린다.
     await page.route('**/api/v1/users/me/story-drafts/*', async (route) => {
       if (route.request().method() === 'PUT' && heldPuts++ === 0)
         await firstPutHeld;
@@ -479,6 +482,13 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
     await expect(
       page.locator('textarea[aria-label="추가 정보 1"]'),
     ).toBeVisible();
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     releaseFirstPut();
 
     await expect
@@ -778,6 +788,7 @@ test.describe('간편 제작 임시 저장 기기 안 유지', () => {
     await seedPendingCreationRequests(page, [legacyDraft]);
     await resumeFromStudio(page);
     await page.getByRole('button', { name: '선택하기' }).click();
+    await saveButton(page).click();
     await expect
       .poll(() => readCreationStorage(page, STORAGE_KEY))
       .toContain('"step":"additional-info"');

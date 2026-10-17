@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -764,8 +764,8 @@ export function useStoryCreateFunnel() {
     return saved;
   };
 
-  // 버튼 없이 저장하는 단계 이동과 화면 숨김은 입력이 없거나 마지막 저장본과 같으면 건너뛴다. 서버 저장은 저장 훅이
-  // 차례로 보내므로 앞 저장이 끝나지 않았어도 뒤에 넣는다(건너뛰면 옮긴 단계의 내용이 저장되지 않는다).
+  // 버튼 없이 저장하는 화면 숨김은 입력이 없거나 마지막 저장본과 같으면 건너뛴다. 서버 저장은 저장 훅이
+  // 차례로 보내므로 앞 저장이 끝나지 않았어도 뒤에 넣는다(건너뛰면 그 뒤에 바꾼 내용이 저장되지 않는다).
   const saveDraft = async ({
     background = false,
   }: { background?: boolean } = {}) => {
@@ -779,24 +779,6 @@ export function useStoryCreateFunnel() {
   };
 
   useSaveWhenBackgrounded(() => saveDraft({ background: true }));
-
-  // 단계를 옮기면 옮겨 간 단계의 편집 상태를 알리지 않고 저장한다(일반 제작의 탭 이동 저장에 대응).
-  // 키워드 카테고리 탭 이동은 단계 이동이 아니라 저장하지 않는다.
-  const saveDraftOnStepChange = useEffectEvent(() => {
-    void saveDraft();
-  });
-
-  useEffect(() => {
-    let active = true;
-
-    queueMicrotask(() => {
-      if (active) saveDraftOnStepChange();
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [step]);
 
   const { leaveAfterCleanup } = usePreventPageLeave({
     warnOnUnload: hasSavedDraft ? !isDraftSaved : hasDraftInput,
