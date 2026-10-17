@@ -12,5 +12,4 @@ export interface CreditProductResponse {
   bonusCredits?: number;
   totalCredits?: number;
   webPriceKrw?: number;
-  appPriceKrw?: number;
 }

@@ -314,6 +314,16 @@ export type streamChatTurnResponse404 = {
   status: 404;
 };
 
+export type streamChatTurnResponse409 = {
+  data: ApiErrorResponse;
+  status: 409;
+};
+
+export type streamChatTurnResponse503 = {
+  data: ApiErrorResponse;
+  status: 503;
+};
+
 export type streamChatTurnResponseSuccess = streamChatTurnResponse200 & {
   headers: Headers;
 };
@@ -322,6 +332,8 @@ export type streamChatTurnResponseError = (
   | streamChatTurnResponse402
   | streamChatTurnResponse403
   | streamChatTurnResponse404
+  | streamChatTurnResponse409
+  | streamChatTurnResponse503
 ) & {
   headers: Headers;
 };
@@ -335,7 +347,7 @@ export const getStreamChatTurnUrl = (chatId: string) => {
 };
 
 /**
- * 사용자 입력을 바탕으로 앞선 채팅 맥락에 이어지는 이야기를 생성하고 SSE로 스트리밍합니다. 사용자 입력은 캐릭터 프로필 설정, 다음 행동, 대사, 분위기, 감정, 연출 방향 등을 모두 포함할 수 있습니다. 스트리밍은 started, token, completed 순서로 전달되며 completed 이벤트에는 최종 저장된 aiOutput 전체가 포함됩니다. 실패 시 error 이벤트를 전달할 수 있습니다.
+ * 사용자 입력을 바탕으로 앞선 채팅 맥락에 이어지는 이야기를 생성하고 SSE로 스트리밍합니다. 사용자 입력은 캐릭터 프로필 설정, 다음 행동, 대사, 분위기, 감정, 연출 방향 등을 모두 포함할 수 있습니다. 연결이 끊겨도 생성과 저장은 계속됩니다. 생성 마감은 요청 접수부터 큐 대기 포함 120초입니다. started에는 UUID generationId가 포함됩니다. lastTurnId 생략은 비교 생략, 명시적 null은 첫 턴에만 일치합니다. 스트리밍은 started, token, completed 순서로 전달되며 completed 이벤트에는 최종 저장된 aiOutput 전체가 포함됩니다. 실패 시 error 이벤트를 전달할 수 있습니다.
  * @summary 채팅 이어쓰기 스트리밍
  */
 export const streamChatTurn = async (
@@ -450,6 +462,11 @@ export type regenerateChatTurnResponse409 = {
   status: 409;
 };
 
+export type regenerateChatTurnResponse503 = {
+  data: ApiErrorResponse;
+  status: 503;
+};
+
 export type regenerateChatTurnResponseSuccess =
   regenerateChatTurnResponse200 & {
     headers: Headers;
@@ -460,6 +477,7 @@ export type regenerateChatTurnResponseError = (
   | regenerateChatTurnResponse403
   | regenerateChatTurnResponse404
   | regenerateChatTurnResponse409
+  | regenerateChatTurnResponse503
 ) & {
   headers: Headers;
 };
@@ -473,7 +491,7 @@ export const getRegenerateChatTurnUrl = (chatId: string) => {
 };
 
 /**
- * 마지막 턴의 AI 출력을 같은 사용자 입력으로 다시 생성해 교체하고 SSE로 스트리밍합니다(스펙 §4-3-9, 리롤이 아니라 재생성). 이어쓰기와 동일하게 started, token, completed 순서로 전달되며, completed에는 교체된 aiOutput 전체와 선택지가 포함됩니다. 새 턴을 추가하지 않고 마지막 턴의 본문·선택지만 교체하므로 사용자 입력과 턴 수(turnCount)는 변하지 않습니다. 이전 출력·선택지는 덮어쓰기 직전 버전 이력(story_message_versions, V37)에 보존되며, 상세 조회·completed에는 활성본만 실립니다. 요청 turnId가 서버의 마지막 턴과 다르면 409로 거절합니다.
+ * 마지막 턴의 AI 출력을 같은 사용자 입력으로 다시 생성해 교체하고 SSE로 스트리밍합니다(스펙 §4-3-9, 리롤이 아니라 재생성). 연결이 끊겨도 생성은 계속되며 started에는 UUID generationId가 포함됩니다. 이어쓰기와 동일하게 started, token, completed 순서로 전달되며, completed에는 교체된 aiOutput 전체와 선택지가 포함됩니다. 새 턴을 추가하지 않고 마지막 턴의 본문·선택지만 교체하므로 사용자 입력과 턴 수(turnCount)는 변하지 않습니다. 이전 출력·선택지는 덮어쓰기 직전 버전 이력(story_message_versions, V37)에 보존되며, 상세 조회·completed에는 활성본만 실립니다. 요청 turnId가 서버의 마지막 턴과 다르면 409로 거절합니다.
  * @summary AI 응답 재생성 스트리밍
  */
 export const regenerateChatTurn = async (
@@ -1257,3 +1275,222 @@ export const useDeleteChat = <
 > => {
   return useMutation(getDeleteChatMutationOptions(options), queryClient);
 };
+export type resumeGenerationResponse403 = {
+  data: ApiErrorResponse;
+  status: 403;
+};
+
+export type resumeGenerationResponse404 = {
+  data: ApiErrorResponse;
+  status: 404;
+};
+
+export type resumeGenerationResponse503 = {
+  data: ApiErrorResponse;
+  status: 503;
+};
+export type resumeGenerationResponseError = (
+  | resumeGenerationResponse403
+  | resumeGenerationResponse404
+  | resumeGenerationResponse503
+) & {
+  headers: Headers;
+};
+
+export type resumeGenerationResponse = resumeGenerationResponseError;
+
+export const getResumeGenerationUrl = (
+  chatId: string,
+  generationId: string,
+) => {
+  return `/api/v1/chats/${chatId}/generations/${generationId}/stream`;
+};
+
+/**
+ * 보관 중인 생성 이벤트를 처음부터 재생하고 새 이벤트를 이어서 받습니다. 생성과 과금을 반복하지 않습니다. 큐 대기 중 스트림이 없어도 생성 중 키가 해당 ID이면 기다립니다. completed 또는 error 수신 시 종료합니다.
+ * @summary 채팅 생성 스트림 재연결
+ */
+export const resumeGeneration = async (
+  chatId: string,
+  generationId: string,
+  options?: RequestInit,
+): Promise<resumeGenerationResponse> => {
+  return customInstance<resumeGenerationResponse>(
+    getResumeGenerationUrl(chatId, generationId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getResumeGenerationQueryKey = (
+  chatId: string,
+  generationId: string,
+) => {
+  return [
+    `/api/v1/chats/${chatId}/generations/${generationId}/stream`,
+  ] as const;
+};
+
+export const getResumeGenerationQueryOptions = <
+  TData = Awaited<ReturnType<typeof resumeGeneration>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  chatId: string,
+  generationId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumeGeneration>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getResumeGenerationQueryKey(chatId, generationId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof resumeGeneration>>
+  > = ({ signal }) =>
+    resumeGeneration(chatId, generationId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled:
+      chatId !== null &&
+      chatId !== undefined &&
+      generationId !== null &&
+      generationId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof resumeGeneration>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ResumeGenerationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof resumeGeneration>>
+>;
+export type ResumeGenerationQueryError = ErrorType<ApiErrorResponse>;
+
+export function useResumeGeneration<
+  TData = Awaited<ReturnType<typeof resumeGeneration>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  chatId: string,
+  generationId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumeGeneration>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumeGeneration>>,
+          TError,
+          Awaited<ReturnType<typeof resumeGeneration>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumeGeneration<
+  TData = Awaited<ReturnType<typeof resumeGeneration>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  chatId: string,
+  generationId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumeGeneration>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resumeGeneration>>,
+          TError,
+          Awaited<ReturnType<typeof resumeGeneration>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useResumeGeneration<
+  TData = Awaited<ReturnType<typeof resumeGeneration>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  chatId: string,
+  generationId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumeGeneration>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 채팅 생성 스트림 재연결
+ */
+
+export function useResumeGeneration<
+  TData = Awaited<ReturnType<typeof resumeGeneration>>,
+  TError = ErrorType<ApiErrorResponse>,
+>(
+  chatId: string,
+  generationId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof resumeGeneration>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getResumeGenerationQueryOptions(
+    chatId,
+    generationId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
