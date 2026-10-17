@@ -164,6 +164,17 @@ export function useChatComposer({
     }
   };
 
+  /** 서버가 받지 않은 전송 본문을 현재 입력 모드의 입력창에 되돌린다. */
+  const restoreDraft = (text: string) => {
+    if (inputMode === 'block') {
+      blockComposer.replace(parseInputBlocks(text));
+
+      return;
+    }
+
+    plainComposer.setValue(text);
+  };
+
   /** 현재 입력을 전송 본문과 같은 형식의 문자열로 만든다(로그인 복귀 초안 저장용). */
   const serializeDraft = () =>
     inputMode === 'block'
@@ -174,6 +185,7 @@ export function useChatComposer({
     value: plainComposer.value,
     setValue: plainComposer.setValue,
     serializeDraft,
+    restoreDraft,
     textareaRef: plainComposer.textareaRef,
     blocks: blockComposer.blocks,
     hasDraft,

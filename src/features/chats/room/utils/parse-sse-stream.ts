@@ -1,10 +1,10 @@
 /** 채팅 턴 스트리밍에서 발생하는 SSE 이벤트 */
 export type SseEvent =
-  | { type: 'started' }
+  | { type: 'started'; generationId?: string }
   | { type: 'token'; content: string }
   | { type: 'character-image'; name: string; imageUrl: string }
   | { type: 'completed'; aiOutput: string }
-  | { type: 'error'; message?: string };
+  | { type: 'error'; code?: string; message?: string };
 
 const SSE_EVENT_PREFIX = 'event:';
 const SSE_DATA_PREFIX = 'data:';
@@ -15,6 +15,8 @@ const SSE_FIELD = {
   IMAGE_URL: 'imageUrl',
   AI_OUTPUT: 'aiOutput',
   MESSAGE: 'message',
+  CODE: 'code',
+  GENERATION_ID: 'generationId',
 } as const;
 
 /**
@@ -60,7 +62,11 @@ function extractField(dataStr: string, field: string): string | null {
 function toSseEvent(eventName: string, dataStr: string): SseEvent | null {
   switch (eventName) {
     case 'started':
-      return { type: 'started' };
+      return {
+        type: 'started',
+        generationId:
+          extractField(dataStr, SSE_FIELD.GENERATION_ID) ?? undefined,
+      };
     case 'token': {
       const content = extractField(dataStr, SSE_FIELD.TEXT);
 
@@ -82,6 +88,7 @@ function toSseEvent(eventName: string, dataStr: string): SseEvent | null {
     case 'error':
       return {
         type: 'error',
+        code: extractField(dataStr, SSE_FIELD.CODE) ?? undefined,
         message: extractField(dataStr, SSE_FIELD.MESSAGE) ?? undefined,
       };
 

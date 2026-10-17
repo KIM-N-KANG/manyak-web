@@ -1,6 +1,12 @@
 'use client';
 
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -110,10 +116,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     prologue,
     turns,
     suggestedInputs,
+    generatingTurn,
     isLoading,
     isError,
     isForbidden,
     refetch,
+    reload,
   } = useChatDetail(chatId);
 
   useDocumentTitle(storyTitle);
@@ -173,14 +181,16 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   };
 
   const { streamingTurn, isStreaming, send, regenerate, regeneratingTurnId } =
-    useChatStream(
+    useChatStream({
       chatId,
-      turns.length,
-      handleStreamCompleted,
-      handlePaymentRequired,
-      refetch,
-      realtimeImageEnabled,
-    );
+      turns,
+      generatingTurn,
+      onCompleted: handleStreamCompleted,
+      onPaymentRequired: handlePaymentRequired,
+      reload,
+      onUnsent: (text) => composer.restoreDraft(text),
+      realtimeImage: realtimeImageEnabled,
+    });
 
   const realtimeImageNudge = useRealtimeImageNudge(
     realtimeImageNudgeRequested,
@@ -342,6 +352,23 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       void generateChoicesForTurn(lastTurn.id);
     }
   };
+
+  const generateMissingChoicesOnEntry = useEffectEvent(() => {
+    const lastTurn = turns.at(-1);
+
+    if (
+      isMember &&
+      generatingTurn === null &&
+      lastTurn?.id != null &&
+      shouldGenerateChoices({ enabled: choicesEnabled, isStreaming, lastTurn })
+    ) {
+      void generateChoicesForTurn(lastTurn.id);
+    }
+  });
+
+  useEffect(() => {
+    if (!isLoading && isMember) generateMissingChoicesOnEntry();
+  }, [isLoading, isMember]);
 
   const handleRetryChoices = () => {
     const lastTurn = turns.at(-1);

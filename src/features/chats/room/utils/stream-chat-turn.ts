@@ -1,5 +1,6 @@
 import {
   getRegenerateChatTurnUrl,
+  getResumeGenerationUrl,
   getStreamChatTurnUrl,
 } from '@/api/generated/endpoints/chats/chats';
 import type {
@@ -16,15 +17,23 @@ import {
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
 /**
- * 채팅 SSE 엔드포인트에 POST 요청을 보내고 응답 본문 스트림을 반환한다.
+ * 이어쓰기 요청 본문. 계약의 `lastTurnId`는 `turns[].id`와 같은 정수인데 생성 타입이 문자열이라 숫자로 덮어쓴다.
+ * 생략하면 서버가 마지막 턴 비교를 건너뛰므로 웹은 늘 싣는다(첫 턴은 `null`).
+ */
+export type ContinueChatStreamBody = Omit<ContinueChatRequest, 'lastTurnId'> & {
+  lastTurnId: number | null;
+};
+
+/**
+ * 채팅 SSE 엔드포인트를 호출하고 응답 본문 스트림을 반환한다.
  *
  * @param url 요청할 API 경로
- * @param body 요청 본문(JSON 직렬화됨)
+ * @param body 요청 본문(JSON 직렬화됨). 없으면 GET으로 보낸다
  * @param signal 요청 중단 시그널
  * @returns SSE 응답 본문 스트림
  * @throws 응답이 실패하거나 본문이 없으면 FetchError를 던진다
  */
-async function postSseStream(
+async function requestSseStream(
   url: string,
   body: unknown,
   signal?: AbortSignal,
@@ -32,15 +41,15 @@ async function postSseStream(
   await waitForFreshSession();
 
   const response = await fetch(resolveApiProxyUrl(url), {
-    method: 'POST',
+    method: body === undefined ? 'GET' : 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       // 성공 응답은 SSE지만, 402(이프 부족·게스트 한도) 같은 에러는 동기 JSON으로 온다.
       // application/json을 함께 요청해야 서버가 에러 바디(code)를 실어 보낸다(백엔드 KNK-524).
       Accept: 'text/event-stream, application/json',
       ...getAnalyticsIdentityHeaders(),
     },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
     signal,
   });
 
@@ -69,10 +78,10 @@ async function postSseStream(
  */
 export function streamChatTurnRaw(
   chatId: string,
-  body: ContinueChatRequest,
+  body: ContinueChatStreamBody,
   signal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
-  return postSseStream(getStreamChatTurnUrl(chatId), body, signal);
+  return requestSseStream(getStreamChatTurnUrl(chatId), body, signal);
 }
 
 /**
@@ -89,5 +98,26 @@ export function streamRegenerateChatTurnRaw(
   body: RegenerateChatRequest,
   signal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
-  return postSseStream(getRegenerateChatTurnUrl(chatId), body, signal);
+  return requestSseStream(getRegenerateChatTurnUrl(chatId), body, signal);
+}
+
+/**
+ * 진행 중이거나 막 끝난 생성의 스트림에 다시 붙는다. 이벤트를 처음부터 다시 받으며 생성과 과금은 반복하지 않는다.
+ * 스트림이 없으면 404, 수신할 수 없으면 503으로 거절한다.
+ *
+ * @param chatId 대상 채팅 ID
+ * @param generationId `started` 이벤트나 상세의 `generatingTurn`에서 받은 생성 ID
+ * @param signal 요청 중단 시그널
+ * @returns SSE 응답 본문 스트림
+ */
+export function resumeChatGenerationRaw(
+  chatId: string,
+  generationId: string,
+  signal?: AbortSignal,
+): Promise<ReadableStream<Uint8Array>> {
+  return requestSseStream(
+    getResumeGenerationUrl(chatId, generationId),
+    undefined,
+    signal,
+  );
 }

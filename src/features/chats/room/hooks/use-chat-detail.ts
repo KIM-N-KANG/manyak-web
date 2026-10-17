@@ -16,8 +16,8 @@ import { queryFnWithoutAbortSignal } from '@/lib/query-client';
  * 닫힌 계정에서는 영구적이라 재시도로 풀리지 않으므로 일반 오류와 구분해 다룬다.
  *
  * @param chatId 조회할 채팅 ID
- * @returns 스토리 ID와 제목, 프롤로그, 턴 목록, 추천 입력, 페르소나 이름(기본 주인공이면 null)과 로딩, 에러,
- *   차단 상태, refetch 함수. 참조 스토리가 삭제되면 서버가 제목을 비워 보내므로 `storyId`도 null로 정리한다
+ * @returns 스토리 ID와 제목, 프롤로그, 턴 목록, 추천 입력, 생성 중인 턴(없으면 null)과 로딩, 에러,
+ *   차단 상태, refetch와 새 응답을 돌려주는 reload 함수. 참조 스토리가 삭제되면 서버가 제목을 비워 보내므로 `storyId`도 null로 정리한다
  */
 export function useChatDetail(chatId: string) {
   const query = useGetChatDetail(chatId, {
@@ -25,6 +25,8 @@ export function useChatDetail(chatId: string) {
       // StrictMode 이중 마운트로 상세가 두 번 조회되지 않도록 abort signal을
       // 전달하지 않는다. 배경은 queryFnWithoutAbortSignal 문서 참고.
       queryFn: queryFnWithoutAbortSignal(() => getChatDetail(chatId)),
+      // 나가 있는 동안 서버가 생성을 이어 가므로, 들어올 때마다 캐시 대신 새 상세로 생성 중인 턴과 저장된 턴을 확인한다.
+      refetchOnMount: 'always',
     },
   });
   const detail = query.data?.status === 200 ? query.data.data : undefined;
@@ -33,15 +35,30 @@ export function useChatDetail(chatId: string) {
 
   const storyTitle = detail?.storyTitle?.trim() ?? '';
 
+  /**
+   * 상세를 다시 조회해 새 응답을 돌려준다. 실패하면 undefined다.
+   * 실패한 재조회도 직전 데이터를 남기므로 결과 상태로 가려 낡은 응답을 새 응답으로 쓰지 않는다.
+   */
+  const reload = async () => {
+    const result = await query.refetch();
+
+    return result.status === 'success' && result.data.status === 200
+      ? result.data.data
+      : undefined;
+  };
+
   return {
     storyId: storyTitle && detail?.storyId ? detail.storyId : null,
     storyTitle,
     prologue: detail?.prologue ?? '',
     turns: (detail?.turns ?? []) as ChatTurnResponse[],
     suggestedInputs: detail?.suggestedInputs ?? [],
-    isLoading: query.isPending,
+    generatingTurn: detail?.generatingTurn ?? null,
+    // 캐시가 있어도 들어온 뒤 새로 받기 전까지는 로딩으로 두어, 낡은 화면에서 보내거나 고르지 않게 한다.
+    isLoading: query.isPending || !query.isFetchedAfterMount,
     isError: query.isError,
     isForbidden,
     refetch: query.refetch,
+    reload,
   };
 }
