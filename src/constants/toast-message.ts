@@ -4,6 +4,7 @@ export const TOAST_MESSAGE = {
   STORY_DRAFT_LOAD_FAILED: '작성 내용을 불러오지 못했어요',
   STORY_DRAFT_NOT_FOUND: '만들던 스토리를 찾지 못했어요',
   STORY_DRAFT_LIMIT_EXCEEDED: '임시 저장은 5개까지 할 수 있어요',
+  STORY_DRAFT_CARD_LIMIT_REACHED: '만들고 있는 스토리는 5개까지 둘 수 있어요',
   STORY_DRAFT_TOO_LARGE: '내용이 길어서 임시 저장하지 못했어요',
   STORY_COMPLETED: '스토리가 완성되었어요',
   STORY_COMPLETE_FAILED: '스토리를 완성하지 못했어요',

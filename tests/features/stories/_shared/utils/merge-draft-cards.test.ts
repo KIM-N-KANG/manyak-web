@@ -4,8 +4,8 @@ import type {
   PendingCreationRequest,
   StoryCompletionRecord,
 } from '@/features/stories/_shared/utils/creation-request-storage';
+import { mergeDraftCards } from '@/features/stories/_shared/utils/merge-draft-cards';
 import type { StoryDraftCard } from '@/features/stories/_shared/utils/story-draft-response';
-import { mergeDraftCards } from '@/features/studio/menu/utils/merge-draft-cards';
 
 const card = (
   draftId: string,

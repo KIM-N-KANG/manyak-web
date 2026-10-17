@@ -597,6 +597,10 @@ export function useStoryCreateFunnel() {
   const draft = useStoryCreateDraft({
     onRestore: restoreDraft,
     onRestorePending: restorePendingGeneration,
+    onLimitReached: () => {
+      toast.error(TOAST_MESSAGE.STORY_DRAFT_CARD_LIMIT_REACHED);
+      exitToCreate();
+    },
   });
   // 서버 세션은 사용자 저장을 세션마다 고정한 서버 초안에 쓰고, 기기 안 세션(게스트, 연결 없는 기존 초안)은
   // 지금처럼 IndexedDB에 쓴다. 생성 중, 생성 결과, 완성 기록은 두 세션 모두 기기 안에 둔다.

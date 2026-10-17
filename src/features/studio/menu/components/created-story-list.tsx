@@ -4,13 +4,18 @@ import { type MouseEvent, type ReactNode, useEffect } from 'react';
 
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import { FadeStateSwitch } from '@/components/common/fade-state-switch';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { APP_PATH } from '@/constants/app-path';
+import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { takeStoryCompletionRequest } from '@/features/stories/_shared/utils/creation-request-storage';
+import { DRAFT_CARD_LIMIT } from '@/features/stories/_shared/utils/draft-card-limit';
+import { mergeDraftCards } from '@/features/stories/_shared/utils/merge-draft-cards';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { track } from '@/observability/analytics';
 
@@ -19,7 +24,6 @@ import { useCreatedStories } from '../hooks/use-created-stories';
 import { useCreationRecords } from '../hooks/use-pending-creation-request';
 import { useStoryDrafts } from '../hooks/use-story-drafts';
 import { useStorySubmissions } from '../hooks/use-story-submissions';
-import { mergeDraftCards } from '../utils/merge-draft-cards';
 import { CreateStoryFab } from './create-story-fab';
 import { CreatedStoryCard } from './created-story-card';
 import { CreatedStoryListSkeleton } from './created-story-list-skeleton';
@@ -31,6 +35,7 @@ import { SubmissionCard } from './submission-card';
 
 export function CreatedStoryList() {
   const router = useRouter();
+  const { isMember } = useMemberAccess();
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const local = useCreationRecords();
   const { submissions } = useStorySubmissions();
@@ -76,6 +81,14 @@ export function CreatedStoryList() {
     event.preventDefault();
     // 앱과 같이 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab이다.
     track('client_storyList_createButton_clicked', { source: 'fab' });
+
+    // 회원은 만들고 있는 스토리 카드가 가득 차면 새로 만들지 않는다. 조회 중이면 퍼널 진입이 다시 센다.
+    if (isMember && !isDraftsLoading && draftItems.length >= DRAFT_CARD_LIMIT) {
+      toast.error(TOAST_MESSAGE.STORY_DRAFT_CARD_LIMIT_REACHED);
+
+      return;
+    }
+
     router.push(APP_PATH.STUDIO.STORY.SELECT);
   };
 

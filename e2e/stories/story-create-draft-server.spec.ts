@@ -9,7 +9,10 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
 import { DRAFT_CONFLICT_COPY } from '@/features/stories/_shared/constants/draft-conflict';
 import type { PendingCreationRequest } from '@/features/stories/_shared/utils/creation-request-storage';
-import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
+import {
+  CREATE_STORY_FAB_COPY,
+  CREATION_PROGRESS_CARD_COPY,
+} from '@/features/studio/menu/constants';
 
 import {
   ART_STYLE_CATALOG_FIXTURE,
@@ -140,6 +143,26 @@ const legacyDraft: Extract<PendingCreationRequest, { stage: 'STORY_DRAFT' }> = {
   createdStoryId: null,
   completionRequest: null,
 };
+
+/**
+ * 서로 다른 ID의 서버 키워드 초안을 만든다. 만들고 있는 스토리 카드 상한을 채울 때 쓴다.
+ *
+ * @param count 만들 초안 수
+ * @returns 최신순 서버 초안 목록
+ */
+const keywordDrafts = (count: number) =>
+  Array.from(
+    { length: count },
+    (_, index): StoredStoryDraft => ({
+      ...keywordDraft,
+      draftId: `16670000-0000-4000-8000-0000000003${index}0`,
+      createdAt: `2026-10-1${index}T03:00:00.000Z`,
+      updatedAt: `2026-10-1${index}T03:00:00.000Z`,
+    }),
+  );
+
+const limitToast = (page: Page) =>
+  page.getByText(TOAST_MESSAGE.STORY_DRAFT_CARD_LIMIT_REACHED);
 
 /** 기기 안 편집 초안 목록의 stage 배열을 읽는다. */
 const readLocalStages = async (page: Page) => {
@@ -565,6 +588,69 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
     await expect.poll(() => readLocalStages(page)).toEqual([]);
   });
 
+  test('만들고 있는 스토리 카드가 5장이면 새로 만들기를 막는다 (STORY-DRAFT-34)', async ({
+    page,
+  }) => {
+    // 서버 초안 4개와 서버에 올리지 않은 기기 안 생성 결과 1개로, 서버 상한이 아니라 보이는 카드 수로 센다.
+    await mockStoryDrafts(page, { initial: keywordDrafts(4) });
+    await seedPendingCreationRequests(page, [legacyDraft]);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await expect(
+      page.getByRole('article', {
+        name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+      }),
+    ).toHaveCount(5);
+
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+
+    await expect(limitToast(page)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+  });
+
+  test('카드가 5장이면 간편 제작 주소로 바로 들어와도 안내한 뒤 제작 탭으로 보낸다 (STORY-DRAFT-35)', async ({
+    page,
+  }) => {
+    const mock = await mockStoryDrafts(page, { initial: keywordDrafts(5) });
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+
+    await expect(limitToast(page)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    expect(mock.puts).toEqual([]);
+  });
+
+  test('카드가 4장이면 새로 만들 수 있다 (STORY-DRAFT-36)', async ({
+    page,
+  }) => {
+    await mockStoryDrafts(page, { initial: keywordDrafts(4) });
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+
+    await expect(page.getByRole('button', { name: '판타지' })).toBeVisible();
+    await expect(limitToast(page)).toHaveCount(0);
+  });
+
+  test('카드가 5장이어도 이어서 만들기는 연다 (STORY-DRAFT-37)', async ({
+    page,
+  }) => {
+    await mockStoryDrafts(page, { initial: keywordDrafts(5) });
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .first()
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+    await expect(page.getByRole('button', { name: '판타지' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(limitToast(page)).toHaveCount(0);
+  });
+
   test('기기 안 기록 뒤에 다른 곳에서 저장한 서버 초안은 따로 보이고 기기 안 카드를 지워도 남는다 (STORY-DRAFT-31)', async ({
     page,
   }) => {
@@ -624,6 +710,32 @@ test.describe('간편 제작 임시 저장 기기 안 유지', () => {
     await expect(savedToast(page)).toBeVisible();
     await expect.poll(() => readLocalStages(page)).toEqual(['KEYWORD_DRAFT']);
     expect(mock.puts).toEqual([]);
+  });
+
+  test('게스트는 기기 안 카드가 5장이어도 새로 만들 수 있다 (STORY-DRAFT-38)', async ({
+    page,
+  }) => {
+    await mockGuestSession(page);
+    await seedPendingCreationRequests(
+      page,
+      Array.from({ length: 5 }, (_, index) => ({
+        ...legacyDraft,
+        requestId: `16670000-0000-4000-8000-0000000004${index}0`,
+      })),
+    );
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await expect(
+      page.getByRole('article', {
+        name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+      }),
+    ).toHaveCount(5);
+    await page
+      .getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SELECT}$`),
+    );
   });
 
   test('회원이 연결 없는 기기 안 초안을 이어서 만들면 기기 안에 저장한다 (STORY-DRAFT-26)', async ({

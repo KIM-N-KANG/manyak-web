@@ -1008,7 +1008,7 @@ test.describe('일반 제작 임시 저장', () => {
     page,
   }) => {
     mock = await mockStoryDrafts(page, {
-      initial: Array.from({ length: 5 }, (_, index) =>
+      initial: Array.from({ length: 4 }, (_, index) =>
         serverDraft(
           `16410000-0000-4000-8000-00000000001${index}`,
           `2026-10-1${index}T01:00:00.000000Z`,
@@ -1016,6 +1016,14 @@ test.describe('일반 제작 임시 저장', () => {
       ),
     });
     await openGeneralCreate(page);
+    // 폼을 연 뒤 다른 기기가 다섯 번째 초안을 저장했다.
+    mock.drafts.set(
+      '16410000-0000-4000-8000-000000000014',
+      serverDraft(
+        '16410000-0000-4000-8000-000000000014',
+        '2026-10-14T01:00:00.000000Z',
+      ),
+    );
     await page
       .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
       .fill('여섯 번째 이야기');
@@ -1035,6 +1043,28 @@ test.describe('일반 제작 임시 저장', () => {
         .getByRole('alertdialog')
         .getByText(DRAFT_EXIT_WARNING_COPY.unsavedNew.title),
     ).toBeVisible();
+  });
+
+  test('만들고 있는 스토리 카드가 5장이면 일반 제작 주소로 바로 들어와도 안내한 뒤 제작 탭으로 보낸다 (STORY-GENERAL-42)', async ({
+    page,
+  }) => {
+    mock = await mockStoryDrafts(page, {
+      initial: Array.from({ length: 5 }, (_, index) =>
+        serverDraft(
+          `16410000-0000-4000-8000-00000000002${index}`,
+          `2026-10-1${index}T01:00:00.000000Z`,
+        ),
+      ),
+    });
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_DRAFT_CARD_LIMIT_REACHED),
+    ).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    expect(mock.puts).toEqual([]);
   });
 
   test('다른 곳에서 먼저 저장했으면 확인한 뒤 남겨두거나 지금 내용으로 덮어쓴다 (STORY-GENERAL-37)', async ({

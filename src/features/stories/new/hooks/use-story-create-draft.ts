@@ -16,6 +16,7 @@ import {
   findPendingCreationRequest,
   initializeCreationStorage,
 } from '@/features/stories/_shared/utils/creation-request-storage';
+import { isDraftCardLimitReached } from '@/features/stories/_shared/utils/draft-card-limit';
 import {
   clearDraftResumeIntent,
   peekDraftResumeIntent,
@@ -43,6 +44,8 @@ type UseStoryCreateDraftArgs = {
   onRestore: (record: DraftCreationRecord, source: DraftRestoreSource) => void;
   /** 진행 중이던 스토리라인 생성 레코드로 로딩 화면을 복원한다. 복구 조회는 복구 훅이 잇는다. */
   onRestorePending: (record: StorylineGenerationRecord) => void;
+  /** 회원의 새 세션인데 만들고 있는 스토리 카드가 가득 찼다. 진입을 끝내지 않으므로 퍼널이 안내하고 떠난다. */
+  onLimitReached: () => void;
 };
 
 const NEW_SERVER_SESSION: SimpleDraftSession = {
@@ -149,27 +152,29 @@ async function resolveServerDraft(draftId: string): Promise<{
  *
  * - 진행 카드 "이어서 만들기" 경유 진입이면 기기 안 기록을 먼저 찾고, 없고 회원이면 서버 초안을 읽는다.
  * - 그 외 진입은 항상 새 세션이다. 회원은 서버 세션, 게스트는 기기 안 세션이며 다른 초안은 건드리지 않는다.
+ * - 회원의 새 세션은 만들고 있는 스토리 카드가 가득 찼으면 열지 않는다. 이어서 만들기는 막지 않는다.
  * - 회원 판정이 끝나기 전에는 진입을 끝내지 않고, 끝난 뒤에는 판정이 바뀌어도 다시 정하지 않는다.
  *
- * @param args 레코드 복원 콜백
+ * @param args 레코드 복원 콜백과 카드 상한 콜백
  * @returns 진입 판정 완료 여부, 세션, 조회 실패 여부와 재시도 함수
  */
 export function useStoryCreateDraft({
   onRestore,
   onRestorePending,
+  onLimitReached,
 }: UseStoryCreateDraftArgs) {
   const { isMember, isGuest } = useMemberAccess();
   const access = isMember ? 'member' : isGuest ? 'guest' : null;
   const [session, setSession] = useState<SimpleDraftSession | null>(null);
   const [isError, setIsError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const callbacksRef = useRef({ onRestore, onRestorePending });
+  const callbacksRef = useRef({ onRestore, onRestorePending, onLimitReached });
   // 판정이 끝나면 세션 동안 고정한다. 창으로 돌아올 때의 세션 재조회가 실패해 회원 판정이 흔들려도
   // 저장 위치와 draftId가 바뀌지 않게 한다. 다시 시도는 판정이 실패해 세션이 없을 때만 돈다.
   const isResolvedRef = useRef(false);
 
   useEffect(() => {
-    callbacksRef.current = { onRestore, onRestorePending };
+    callbacksRef.current = { onRestore, onRestorePending, onLimitReached };
   });
   useEffect(() => {
     if (access === null || isResolvedRef.current) return;
@@ -190,8 +195,22 @@ export function useStoryCreateDraft({
           current === null && requestId !== null && isMemberAccess
             ? await resolveServerDraft(requestId)
             : null;
+        const isNewSession =
+          server === null &&
+          !isDraftCreationRecord(current) &&
+          current?.stage !== 'STORYLINE_GENERATION';
+        const isLimitReached =
+          isNewSession && isMemberAccess && (await isDraftCardLimitReached());
 
         if (!active) return;
+
+        if (isLimitReached) {
+          clearDraftResumeIntent();
+          isResolvedRef.current = true;
+          callbacksRef.current.onLimitReached();
+
+          return;
+        }
 
         let next = isMemberAccess ? NEW_SERVER_SESSION : LOCAL_SESSION;
 
