@@ -631,6 +631,36 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
     await expect(limitToast(page)).toHaveCount(0);
   });
 
+  test('제작 탭은 초안, 검수 제출본, 내 스토리가 모두 준비될 때까지 한 스켈레톤으로 덮고 함께 보인다 (STORY-DRAFT-39)', async ({
+    page,
+  }) => {
+    let releaseList = () => {};
+    const listHeld = new Promise<void>((resolve) => {
+      releaseList = resolve;
+    });
+
+    await mockStoryDrafts(page, { initial: keywordDrafts(1) });
+    // 서버 초안 목록 응답을 붙잡아 둔다. 기기 안 초안과 내 스토리는 먼저 준비된다.
+    await page.route('**/api/v1/users/me/story-drafts', async (route) => {
+      await listHeld;
+      await route.fallback();
+    });
+    await seedPendingCreationRequests(page, [legacyDraft]);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const cards = page.getByRole('article', {
+      name: CREATION_PROGRESS_CARD_COPY.draftTitle,
+    });
+
+    await expect(page.locator('[data-slot=skeleton]').first()).toBeVisible();
+    await expect(cards).toHaveCount(0);
+
+    releaseList();
+
+    await expect(cards).toHaveCount(2);
+    await expect(page.locator('[data-slot=skeleton]')).toHaveCount(0);
+  });
+
   test('카드가 5장이어도 이어서 만들기는 연다 (STORY-DRAFT-37)', async ({
     page,
   }) => {

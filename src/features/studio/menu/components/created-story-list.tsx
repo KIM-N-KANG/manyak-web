@@ -38,7 +38,8 @@ export function CreatedStoryList() {
   const { isMember } = useMemberAccess();
   const { stories, isLoading, isError, isEmpty, refetch } = useCreatedStories();
   const local = useCreationRecords();
-  const { submissions } = useStorySubmissions();
+  const submissionList = useStorySubmissions();
+  const { submissions } = submissionList;
   const serverDrafts = useStoryDrafts(local.pending);
   // 기기 안 초안과 서버 초안(회원 간편 제작과 일반 제작)을 한 묶음으로 최신순에 놓는다.
   const draftItems = mergeDraftCards(
@@ -48,7 +49,10 @@ export function CreatedStoryList() {
   );
   const completionRecords = local.completions ?? [];
   const isDraftsLoading = local.isLoading || serverDrafts.isLoading;
-  const showSkeleton = useDelayedLoading(isLoading || isDraftsLoading);
+  // 초안, 검수 제출본, 내 스토리가 모두 준비될 때까지 한 스켈레톤으로 덮어 한 목록처럼 함께 보인다.
+  const isListLoading =
+    isLoading || isDraftsLoading || submissionList.isLoading;
+  const showSkeleton = useDelayedLoading(isListLoading);
   const shouldReduceMotion = useReducedMotion();
   const isStoryListed = (storyId: string | null | undefined) =>
     typeof storyId === 'string' &&
@@ -105,10 +109,7 @@ export function CreatedStoryList() {
   if (showSkeleton && visibleCompletionRecords.length === 0) {
     stateKey = 'skeleton';
     content = <CreatedStoryListSkeleton />;
-  } else if (
-    (isLoading || isDraftsLoading) &&
-    visibleCompletionRecords.length === 0
-  ) {
+  } else if (isListLoading && visibleCompletionRecords.length === 0) {
     stateKey = 'pending';
     content = null;
   } else if (isError || local.isError) {
@@ -134,7 +135,7 @@ export function CreatedStoryList() {
     <>
       <ul className="relative flex shrink-0 flex-col not-empty:pb-2">
         <AnimatePresence mode="popLayout" initial={false}>
-          {draftItems.map((item) => (
+          {(isListLoading ? [] : draftItems).map((item) => (
             <m.li
               key={`creation-${item.source === 'server' ? item.card.draftId : item.record.requestId}`}
               layout={shouldReduceMotion ? false : 'position'}
@@ -149,7 +150,7 @@ export function CreatedStoryList() {
               )}
             </m.li>
           ))}
-          {submissions.map((submission) =>
+          {(isListLoading ? [] : submissions).map((submission) =>
             submission.status === 'APPROVED' ? null : (
               <m.li
                 key={`submission-${submission.submissionId}`}
@@ -169,7 +170,7 @@ export function CreatedStoryList() {
               <CreationProgressCard record={record} />
             </m.li>
           ))}
-          {!isLoading && !isError && !local.isLoading
+          {!isListLoading && !isError
             ? stories.map((story, index) => (
                 <m.li
                   key={story.id}
