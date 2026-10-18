@@ -34,146 +34,10 @@ import type {
   CreditProductsResponse,
   CreditTransactionPageResponse,
   GetMyCreditTransactionsParams,
-  GooglePlayPurchaseRequest,
-  GooglePlayPurchaseResponse,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type purchaseResponse200 = {
-  data: GooglePlayPurchaseResponse;
-  status: 200;
-};
-
-export type purchaseResponse400 = {
-  data: GooglePlayPurchaseResponse;
-  status: 400;
-};
-
-export type purchaseResponse401 = {
-  data: GooglePlayPurchaseResponse;
-  status: 401;
-};
-
-export type purchaseResponse403 = {
-  data: GooglePlayPurchaseResponse;
-  status: 403;
-};
-
-export type purchaseResponse502 = {
-  data: GooglePlayPurchaseResponse;
-  status: 502;
-};
-
-export type purchaseResponse503 = {
-  data: GooglePlayPurchaseResponse;
-  status: 503;
-};
-
-export type purchaseResponseSuccess = purchaseResponse200 & {
-  headers: Headers;
-};
-export type purchaseResponseError = (
-  | purchaseResponse400
-  | purchaseResponse401
-  | purchaseResponse403
-  | purchaseResponse502
-  | purchaseResponse503
-) & {
-  headers: Headers;
-};
-
-export type purchaseResponse = purchaseResponseSuccess | purchaseResponseError;
-
-export const getPurchaseUrl = () => {
-  return `/api/v1/users/me/credits/purchases/google`;
-};
-
-/**
- * 구매 토큰을 검증해 이프를 적립합니다. 같은 토큰은 본인에게만 멱등 응답하며 consume은 앱에서 수행합니다.
- * @summary Google Play 이프 구매 검증
- */
-export const purchase = async (
-  googlePlayPurchaseRequest: GooglePlayPurchaseRequest,
-  options?: RequestInit,
-): Promise<purchaseResponse> => {
-  return customInstance<purchaseResponse>(getPurchaseUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(googlePlayPurchaseRequest),
-  });
-};
-
-export const getPurchaseMutationOptions = <
-  TError = ErrorType<GooglePlayPurchaseResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof purchase>>,
-    TError,
-    { data: BodyType<GooglePlayPurchaseRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customInstance>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof purchase>>,
-  TError,
-  { data: BodyType<GooglePlayPurchaseRequest> },
-  TContext
-> => {
-  const mutationKey = ['purchase'];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      'mutationKey' in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof purchase>>,
-    { data: BodyType<GooglePlayPurchaseRequest> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return purchase(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type PurchaseMutationResult = NonNullable<
-  Awaited<ReturnType<typeof purchase>>
->;
-export type PurchaseMutationBody = BodyType<GooglePlayPurchaseRequest>;
-export type PurchaseMutationError = ErrorType<GooglePlayPurchaseResponse>;
-
-/**
- * @summary Google Play 이프 구매 검증
- */
-export const usePurchase = <
-  TError = ErrorType<GooglePlayPurchaseResponse>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof purchase>>,
-      TError,
-      { data: BodyType<GooglePlayPurchaseRequest> },
-      TContext
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof purchase>>,
-  TError,
-  { data: BodyType<GooglePlayPurchaseRequest> },
-  TContext
-> => {
-  return useMutation(getPurchaseMutationOptions(options), queryClient);
-};
 export type postUsersMeCreditsOrdersResponse201 = {
   data: CreateCreditOrderResponse;
   status: 201;
@@ -322,10 +186,18 @@ export type claimAttendanceResponse401 = {
   status: 401;
 };
 
+export type claimAttendanceResponse403 = {
+  data: void;
+  status: 403;
+};
+
 export type claimAttendanceResponseSuccess = claimAttendanceResponse200 & {
   headers: Headers;
 };
-export type claimAttendanceResponseError = claimAttendanceResponse401 & {
+export type claimAttendanceResponseError = (
+  | claimAttendanceResponse401
+  | claimAttendanceResponse403
+) & {
   headers: Headers;
 };
 
@@ -1026,7 +898,7 @@ export const getProductsUrl = () => {
 };
 
 /**
- * 인증 없이 설정 순서대로 상품 6종의 총량과 웹·앱 가격을 조회합니다.
+ * 인증 없이 설정 순서대로 상품 6종의 총량과 웹 가격을 조회합니다.
  * @summary 이프 충전 상품 목록
  */
 export const products = async (

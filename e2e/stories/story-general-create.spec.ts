@@ -5,9 +5,15 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
+import { DRAFT_CONFLICT_COPY } from '@/features/stories/_shared/constants/draft-conflict';
 import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
 import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
+import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
 import { PENDING_CREATION_REQUEST_STORAGE_KEY } from '@/features/stories/_shared/utils/creation-request-storage';
+import {
+  readGeneralDraftPayload,
+  toGeneralDraftRequest,
+} from '@/features/studio/_shared/utils/general-draft-payload';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
@@ -30,10 +36,21 @@ import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 import { DISCARD_INPUT_CONFIRM_COPY } from '@/hooks/use-discard-confirm';
 
+import {
+  mockStoryDrafts,
+  type StoredStoryDraft,
+  STORY_DRAFT_IMAGE_BASE,
+  type StoryDraftMock,
+} from '../fixtures/api-mock';
 import { mockGuestSession, mockMemberSession } from '../fixtures/auth';
 import { oneLine } from '../fixtures/copy';
-import { readCreationStorage } from '../fixtures/storage';
+import {
+  readCreationStorage,
+  seedDraftResumeIntent,
+  seedPendingCreationRequests,
+} from '../fixtures/storage';
 import { expect, skipOnboarding, test } from '../fixtures/test';
+import { waitForToastToClose } from '../fixtures/toast';
 
 const UPLOAD_URL = 'https://upload.e2e.test/cover';
 const OBJECT_KEY = 'thumbnails/uploaded/drafts/user-1/cover.png';
@@ -703,15 +720,22 @@ test.describe('일반 제작 임시 저장', () => {
     });
   const savedToast = (page: Page) =>
     page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVED);
-  /** 버튼 없이 저장되는 경우(탭 이동·화면 숨김)는 IndexedDB에 들어갈 때까지 기다린다. */
-  const waitForSavedDraft = (page: Page, text: string) =>
+  let mock: StoryDraftMock;
+  /** 버튼 없이 저장되는 경우(탭 이동, 화면 숨김)는 서버 저장소에 들어갈 때까지 기다린다. */
+  const waitForSavedDraft = (text: string) =>
     expect
       .poll(() =>
-        readCreationStorage(page, PENDING_CREATION_REQUEST_STORAGE_KEY),
+        [...mock.drafts.values()]
+          .map((draft) => JSON.stringify(draft.payload))
+          .join(),
       )
       .toContain(text);
   const draftCard = (page: Page) =>
     page.getByRole('article', { name: CREATION_PROGRESS_CARD_COPY.draftTitle });
+
+  test.beforeEach(async ({ page }) => {
+    mock = await mockStoryDrafts(page);
+  });
 
   test('표지·제목·한 줄 소개를 넣고 탭을 옮기면 임시 저장되고, 제작 탭 카드에 보이며 이어서 만든다 (STORY-GENERAL-16)', async ({
     page,
@@ -732,7 +756,7 @@ test.describe('일반 제작 임시 저장', () => {
       .getByLabel(GENERAL_STORY_TEXT_FIELDS.oneLineIntro.label)
       .fill('막차에서 내린 곳은 존재하지 않는 역이었다');
     await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
-    await waitForSavedDraft(page, '노선도에 없는 역');
+    await waitForSavedDraft('노선도에 없는 역');
 
     await page
       .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
@@ -756,7 +780,10 @@ test.describe('일반 제작 임시 저장', () => {
     await expect(
       card.getByText('막차에서 내린 곳은 존재하지 않는 역이었다'),
     ).toBeVisible();
-    await expect(card.locator('img')).toHaveAttribute('src', /^blob:/);
+    await expect(card.locator('img')).toHaveAttribute(
+      'src',
+      `${STORY_DRAFT_IMAGE_BASE}/${OBJECT_KEY}`,
+    );
     await expect(card.locator('time')).toBeVisible();
 
     await card
@@ -782,6 +809,37 @@ test.describe('일반 제작 임시 저장', () => {
     ).toBeVisible();
   });
 
+  test('저장 중에 탭을 옮겨도 고친 내용을 뒤이어 저장한다 (STORY-GENERAL-41)', async ({
+    page,
+  }) => {
+    let releaseFirstPut = () => {};
+    const firstPutHeld = new Promise<void>((resolve) => {
+      releaseFirstPut = resolve;
+    });
+    let heldPuts = 0;
+
+    // 버튼 저장의 응답을 붙잡아 둔 채 제목을 고치고 탭을 옮긴다.
+    await page.route('**/api/v1/users/me/story-drafts/*', async (route) => {
+      if (route.request().method() === 'PUT' && heldPuts++ === 0)
+        await firstPutHeld;
+
+      await route.fallback();
+    });
+    await openGeneralCreate(page);
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
+      .fill('노선도에 없는 역');
+    await saveButton(page).click();
+    await expect.poll(() => heldPuts).toBe(1);
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
+      .fill('막차가 서는 역');
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
+    releaseFirstPut();
+
+    await waitForSavedDraft('막차가 서는 역');
+  });
+
   test('제목·한 줄 소개·표지 없이 임시 저장하면 카드는 기본 제목·설명·이미지를 보이고, 저장 뒤 뒤로가기는 저장본 안내를 띄운다 (STORY-GENERAL-17)', async ({
     page,
   }) => {
@@ -796,6 +854,11 @@ test.describe('일반 제작 임시 저장', () => {
     await saveButton(page).click();
     await saveButton(page).click();
     await expect(savedToast(page)).toHaveCount(1);
+    // 연타가 저장과 겹쳐도 자기 자신과 버전이 충돌하지 않는다.
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    expect([...mock.drafts.values()].map(({ version }) => version)).toEqual([
+      1,
+    ]);
 
     await page.goBack();
 
@@ -831,6 +894,7 @@ test.describe('일반 제작 임시 저장', () => {
     await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
     await expect(saveButton(page)).toBeDisabled();
     await page.getByRole('tab', { name: GENERAL_STORY_TABS[0].label }).click();
+    expect(mock.puts).toHaveLength(0);
 
     const title = page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label);
 
@@ -903,7 +967,7 @@ test.describe('일반 제작 임시 저장', () => {
       });
       document.dispatchEvent(new Event('visibilitychange'));
     });
-    await waitForSavedDraft(page, '노선도에 없는 역');
+    await waitForSavedDraft('노선도에 없는 역');
 
     await page
       .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
@@ -920,6 +984,7 @@ test.describe('일반 제작 임시 저장', () => {
       })
       .click();
     await expect(draftCard(page).getByText('노선도에 없는 역')).toBeVisible();
+    expect(mock.drafts.size).toBe(1);
   });
 
   test('저장하지 않은 입력이 있으면 새로고침·탭 닫기 때 브라우저 확인창을 띄운다 (STORY-GENERAL-19)', async ({
@@ -937,6 +1002,133 @@ test.describe('일반 제작 임시 저장', () => {
     void page.close({ runBeforeUnload: true });
     expect((await dialog).type()).toBe('beforeunload');
     await (await dialog).dismiss();
+  });
+
+  test('임시 저장은 5개까지이며, 넘으면 안내하고 저장하지 않은 상태로 둔다 (STORY-GENERAL-36)', async ({
+    page,
+  }) => {
+    mock = await mockStoryDrafts(page, {
+      initial: Array.from({ length: 4 }, (_, index) =>
+        serverDraft(
+          `16410000-0000-4000-8000-00000000001${index}`,
+          `2026-10-1${index}T01:00:00.000000Z`,
+        ),
+      ),
+    });
+    await openGeneralCreate(page);
+    // 폼을 연 뒤 다른 기기가 다섯 번째 초안을 저장했다.
+    mock.drafts.set(
+      '16410000-0000-4000-8000-000000000014',
+      serverDraft(
+        '16410000-0000-4000-8000-000000000014',
+        '2026-10-14T01:00:00.000000Z',
+      ),
+    );
+    await page
+      .getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label)
+      .fill('여섯 번째 이야기');
+    await saveButton(page).click();
+
+    const limitToast = page.getByText(TOAST_MESSAGE.STORY_DRAFT_LIMIT_EXCEEDED);
+
+    await expect(limitToast).toBeVisible();
+    expect(mock.drafts.size).toBe(5);
+
+    await waitForToastToClose(page, limitToast);
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+    await expect(
+      page
+        .getByRole('alertdialog')
+        .getByText(DRAFT_EXIT_WARNING_COPY.unsavedNew.title),
+    ).toBeVisible();
+  });
+
+  test('만들고 있는 스토리 카드가 5장이면 일반 제작 주소로 바로 들어와도 안내한 뒤 제작 탭으로 보낸다 (STORY-GENERAL-42)', async ({
+    page,
+  }) => {
+    mock = await mockStoryDrafts(page, {
+      initial: Array.from({ length: 5 }, (_, index) =>
+        serverDraft(
+          `16410000-0000-4000-8000-00000000002${index}`,
+          `2026-10-1${index}T01:00:00.000000Z`,
+        ),
+      ),
+    });
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_DRAFT_CARD_LIMIT_REACHED),
+    ).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
+    expect(mock.puts).toEqual([]);
+  });
+
+  test('다른 곳에서 먼저 저장했으면 확인한 뒤 남겨두거나 지금 내용으로 덮어쓴다 (STORY-GENERAL-37)', async ({
+    page,
+  }) => {
+    mock = await mockStoryDrafts(page, {
+      initial: [
+        serverDraft(DRAFT_ID_NEW, '2026-10-16T01:00:00.000000Z', {
+          title: '노선도에 없는 역',
+        }),
+      ],
+    });
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+    await draftCard(page)
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
+
+    const title = page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label);
+
+    await expect(title).toHaveValue('노선도에 없는 역');
+
+    // 다른 기기가 같은 초안을 먼저 고쳐 저장한 상태를 만든다.
+    const other = mock.drafts.get(DRAFT_ID_NEW);
+
+    if (!other) throw new Error('seeded draft missing');
+
+    mock.drafts.set(DRAFT_ID_NEW, {
+      ...other,
+      title: '다른 기기의 제목',
+      version: 2,
+    });
+
+    await title.fill('이 기기의 제목');
+    await saveButton(page).click();
+
+    const conflict = page.getByRole('alertdialog');
+
+    await expect(conflict.getByText(DRAFT_CONFLICT_COPY.title)).toBeVisible();
+    await expect(
+      conflict.getByText(DRAFT_CONFLICT_COPY.description),
+    ).toBeVisible();
+    await conflict
+      .getByRole('button', { name: DRAFT_CONFLICT_COPY.keep })
+      .click();
+    await expect(conflict).toBeHidden();
+    expect(mock.drafts.get(DRAFT_ID_NEW)?.title).toBe('다른 기기의 제목');
+
+    // 저장 버튼은 1초 안의 연타를 무시하므로 다이얼로그가 다시 뜰 때까지 누른다.
+    await expect(async () => {
+      await saveButton(page).click();
+      await expect(conflict.getByText(DRAFT_CONFLICT_COPY.title)).toBeVisible({
+        timeout: 500,
+      });
+    }).toPass();
+    await conflict
+      .getByRole('button', { name: DRAFT_CONFLICT_COPY.save })
+      .click();
+    await expect(savedToast(page)).toBeVisible();
+    expect(mock.drafts.get(DRAFT_ID_NEW)).toMatchObject({
+      title: '이 기기의 제목',
+      version: 3,
+    });
   });
 });
 
@@ -1011,16 +1203,28 @@ test.describe('일반 제작 등록', () => {
   }
 
   const SUBMISSION_API = '**/api/v1/stories/submissions/submission-1';
-  const readDraftStorage = async (page: Page) =>
-    (await readCreationStorage(page, PENDING_CREATION_REQUEST_STORAGE_KEY)) ??
-    '';
+  let drafts: StoryDraftMock;
+  /** 서버 저장소에 남은 임시 저장본 payload를 이어 붙여 읽는다. */
+  const readDraftStorage = () =>
+    [...drafts.drafts.values()]
+      .map((draft) => JSON.stringify(draft.payload))
+      .join();
 
-  /** 등록 요청을 202로 접수하고, 받은 요청 본문을 기록한다. */
+  test.beforeEach(async ({ page }) => {
+    drafts = await mockStoryDrafts(page);
+  });
+
+  /** 등록 요청을 202로 접수하고, 받은 요청 본문을 기록한다. 서버처럼 접수와 함께 요청의 초안을 지운다. */
   async function mockRegisterAccepted(page: Page) {
     const requests: Record<string, unknown>[] = [];
 
     await page.route(GENERAL_STORY_API, async (route) => {
-      requests.push(route.request().postDataJSON() as Record<string, unknown>);
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+
+      requests.push(body);
+
+      if (typeof body.draftId === 'string') drafts.drafts.delete(body.draftId);
+
       await route.fulfill({
         status: 202,
         json: { submissionId: 'submission-1', status: 'PENDING' },
@@ -1090,9 +1294,9 @@ test.describe('일반 제작 등록', () => {
     });
     await openWithGenreTags(page);
     await fillRequiredForm(page);
-    await expect
-      .poll(() => readDraftStorage(page))
-      .toContain('노선도에 없는 역');
+    await expect.poll(() => readDraftStorage()).toContain('노선도에 없는 역');
+
+    const [draftId] = drafts.drafts.keys();
 
     await registerButton(page).click();
     await expect(
@@ -1104,6 +1308,7 @@ test.describe('일반 제작 등록', () => {
     );
     expect(registerRequests).toHaveLength(1);
     expect(registerRequests[0]).toMatchObject({
+      draftId,
       title: '노선도에 없는 역',
       oneLineIntro: '막차에서 내린 곳',
       protagonistName: '윤해솔',
@@ -1124,7 +1329,7 @@ test.describe('일반 제작 등록', () => {
     expect(registerRequests[0]).not.toHaveProperty('description');
     expect(chatRequests).toEqual([{ storyId: 'story-1' }]);
     await expect(page.getByText(TOAST_MESSAGE.STORY_REVIEWING)).toHaveCount(0);
-    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+    expect(await readDraftStorage()).not.toContain('노선도에 없는 역');
 
     // 채팅방에서 뒤로가기는 등록을 마친 일반 제작 화면으로 돌아가지 않는다.
     await page.goBack();
@@ -1238,7 +1443,7 @@ test.describe('일반 제작 등록', () => {
       page.getByLabel(GENERAL_STORY_START_COPY.prologue.label),
     ).toHaveAttribute('aria-invalid', 'true');
     // 접수된 입력은 서버 제출본이 정본이라 임시 저장본을 지우고 다시 임시 저장하지 않는다.
-    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+    expect(await readDraftStorage()).not.toContain('노선도에 없는 역');
     await expect(
       page.getByRole('button', {
         name: DRAFT_SAVE_BUTTON_LABEL,
@@ -1250,7 +1455,10 @@ test.describe('일반 제작 등록', () => {
     await expect(registerButton(page)).toBeEnabled();
     await registerButton(page).click();
     await expect.poll(() => resubmitRequests.length).toBe(1);
-    expect(resubmitRequests[0]).toMatchObject({ title: '노선도에 없는 역' });
+    expect(resubmitRequests[0]).toMatchObject({
+      title: '노선도에 없는 역',
+      draftId: registerRequests[0].draftId,
+    });
     expect(registerRequests).toHaveLength(1);
   });
 
@@ -1277,7 +1485,7 @@ test.describe('일반 제작 등록', () => {
     await expect(
       page.getByText(TOAST_MESSAGE.STORY_REVIEW_DELAYED),
     ).toBeVisible();
-    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+    expect(await readDraftStorage()).not.toContain('노선도에 없는 역');
   });
 
   test('검토 중에 나가면 제출본이 있다고 안내하고, 이어서 만들 임시 저장본을 남기지 않는다 (STORY-GENERAL-28)', async ({
@@ -1291,9 +1499,7 @@ test.describe('일반 제작 등록', () => {
     );
     await openWithGenreTags(page);
     await fillRequiredForm(page);
-    await expect
-      .poll(() => readDraftStorage(page))
-      .toContain('노선도에 없는 역');
+    await expect.poll(() => readDraftStorage()).toContain('노선도에 없는 역');
 
     const firstRead = page.waitForRequest(SUBMISSION_API);
 
@@ -1320,7 +1526,7 @@ test.describe('일반 제작 등록', () => {
         name: CREATION_PROGRESS_CARD_COPY.draftTitle,
       }),
     ).toHaveCount(0);
-    expect(await readDraftStorage(page)).not.toContain('노선도에 없는 역');
+    expect(await readDraftStorage()).not.toContain('노선도에 없는 역');
   });
 
   test('등록 요청이 실패하면 안내하고 입력을 그대로 둔다 (STORY-GENERAL-22)', async ({
@@ -1376,5 +1582,321 @@ test.describe('일반 제작 등록', () => {
 
     await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.LOGIN}\\?`));
+  });
+});
+
+/**
+ * 서버 임시 저장 목에 넣을 일반 제작 초안을 만든다. payload는 실제 저장 경로와 같은 변환으로 만든다.
+ *
+ * @param draftId 초안 ID
+ * @param createdAt 처음 저장 시각
+ * @param input 제목, 한 줄 소개, 세계관, 표지 객체 키
+ * @returns 목 저장소 초안
+ */
+function serverDraft(
+  draftId: string,
+  createdAt: string,
+  input: {
+    title?: string;
+    oneLineIntro?: string;
+    world?: string;
+    coverObjectKey?: string;
+  } = {},
+): StoredStoryDraft {
+  const snapshot = readGeneralDraftPayload({
+    texts: {
+      title: input.title ?? '',
+      oneLineIntro: input.oneLineIntro ?? '',
+      world: input.world ?? '',
+    },
+  });
+
+  return {
+    ...toGeneralDraftRequest(
+      {
+        ...snapshot,
+        cover: input.coverObjectKey
+          ? { objectKey: input.coverObjectKey, blob: null }
+          : null,
+      },
+      null,
+    ),
+    draftId,
+    version: 1,
+    createdAt,
+    updatedAt: createdAt,
+  };
+}
+
+const DRAFT_ID_OLD = '16410000-0000-4000-8000-000000000001';
+const DRAFT_ID_NEW = '16410000-0000-4000-8000-000000000002';
+
+test.describe('일반 제작 서버 임시 저장', () => {
+  const draftCards = (page: Page) =>
+    page.getByRole('article', { name: CREATION_PROGRESS_CARD_COPY.draftTitle });
+
+  async function openStudio(page: Page) {
+    await skipOnboarding(page);
+    await mockMemberSession(page);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+  }
+
+  test('서버 임시 저장본은 제작 탭 카드에 제목, 한 줄 소개, 표지와 함께 최신순으로 보이고, 삭제하면 사라진다 (STORY-GENERAL-32)', async ({
+    page,
+  }) => {
+    const mock = await mockStoryDrafts(page, {
+      initial: [
+        serverDraft(DRAFT_ID_OLD, '2026-10-15T01:00:00.000000Z', {
+          world: '유실역은 막차가 끊긴 뒤에만 불이 켜진다',
+        }),
+        serverDraft(DRAFT_ID_NEW, '2026-10-16T01:00:00.000000Z', {
+          title: '노선도에 없는 역',
+          oneLineIntro: '막차에서 내린 곳은 존재하지 않는 역이었다',
+          coverObjectKey: OBJECT_KEY,
+        }),
+      ],
+    });
+
+    await openStudio(page);
+
+    const cards = draftCards(page);
+
+    await expect(cards).toHaveCount(2);
+    await expect(cards.first().getByText('노선도에 없는 역')).toBeVisible();
+    await expect(
+      cards.first().getByText('막차에서 내린 곳은 존재하지 않는 역이었다'),
+    ).toBeVisible();
+    await expect(cards.first().locator('img')).toHaveAttribute(
+      'src',
+      `${STORY_DRAFT_IMAGE_BASE}/${OBJECT_KEY}`,
+    );
+    await expect(cards.first().locator('time')).toBeVisible();
+    await expect(
+      cards
+        .nth(1)
+        .getByText(CREATION_PROGRESS_CARD_COPY.draftDescription.general),
+    ).toBeVisible();
+    await expect(cards.nth(1).locator('img')).toHaveCount(0);
+
+    await cards
+      .nth(1)
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.optionsTrigger })
+      .click();
+    await page
+      .getByRole('menuitem', { name: CREATION_PROGRESS_CARD_COPY.delete })
+      .click();
+    await page
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.delete })
+      .click();
+    await expect(cards).toHaveCount(1);
+    expect(mock.drafts.has(DRAFT_ID_OLD)).toBe(false);
+  });
+
+  test('서버 임시 저장본을 이어서 만들면 입력과 표지 미리보기가 복원되고, 닫기는 저장본 안내를 띄운다 (STORY-GENERAL-34)', async ({
+    page,
+  }) => {
+    await mockStoryDrafts(page, {
+      initial: [
+        serverDraft(DRAFT_ID_NEW, '2026-10-16T01:00:00.000000Z', {
+          title: '노선도에 없는 역',
+          world: '유실역은 막차가 끊긴 뒤에만 불이 켜진다',
+          coverObjectKey: OBJECT_KEY,
+        }),
+      ],
+    });
+    await openStudio(page);
+    await draftCards(page)
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.GENERAL}$`),
+    );
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toHaveValue('노선도에 없는 역');
+    await expect(
+      page.getByRole('button', { name: GENERAL_STORY_COVER_COPY.remove }),
+    ).toBeVisible();
+    await expect(
+      page.locator(`img[src="${STORY_DRAFT_IMAGE_BASE}/${OBJECT_KEY}"]`),
+    ).toHaveCount(1);
+    await page.getByRole('tab', { name: GENERAL_STORY_TABS[1].label }).click();
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.world.label),
+    ).toHaveValue('유실역은 막차가 끊긴 뒤에만 불이 켜진다');
+
+    await page
+      .getByRole('button', { name: GENERAL_STORY_CREATE_COPY.close })
+      .click();
+    await expect(
+      page
+        .getByRole('alertdialog')
+        .getByText(DRAFT_EXIT_WARNING_COPY.saved.title),
+    ).toBeVisible();
+  });
+
+  test('다른 곳에서 지운 임시 저장본을 이어서 만들면 안내한 뒤 빈 폼으로 시작한다 (STORY-GENERAL-35)', async ({
+    page,
+  }) => {
+    await seedDraftResumeIntent(page, DRAFT_ID_OLD);
+    await openGeneralCreate(page);
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_DRAFT_NOT_FOUND),
+    ).toBeVisible();
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toHaveValue('');
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED),
+    ).toHaveCount(0);
+  });
+
+  test('열어 둔 임시 저장본이 다른 곳에서 지워져도 저장하면 새 임시 저장본으로 남긴다 (STORY-GENERAL-39)', async ({
+    page,
+  }) => {
+    const mock = await mockStoryDrafts(page, {
+      initial: [
+        serverDraft(DRAFT_ID_NEW, '2026-10-16T01:00:00.000000Z', {
+          title: '노선도에 없는 역',
+        }),
+      ],
+    });
+
+    await openStudio(page);
+    await draftCards(page)
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
+
+    const title = page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label);
+
+    await expect(title).toHaveValue('노선도에 없는 역');
+    // 다른 기기가 같은 초안을 등록하거나 지운 상태를 만든다.
+    mock.drafts.delete(DRAFT_ID_NEW);
+
+    await title.fill('이 기기에서 이어 쓴 제목');
+    await page
+      .getByRole('button', { name: DRAFT_SAVE_BUTTON_LABEL, exact: true })
+      .click();
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_DRAFT_SAVED)).toBeVisible();
+    expect(mock.drafts.get(DRAFT_ID_NEW)).toMatchObject({
+      title: '이 기기에서 이어 쓴 제목',
+      version: 1,
+    });
+  });
+
+  test('모르는 스키마 버전의 임시 저장본은 열지 않고 불러오기 실패를 보인다 (STORY-GENERAL-40)', async ({
+    page,
+  }) => {
+    await mockStoryDrafts(page, {
+      initial: [
+        {
+          ...serverDraft(DRAFT_ID_NEW, '2026-10-16T01:00:00.000000Z', {
+            title: '다음 버전 초안',
+          }),
+          schemaVersion: 2,
+        },
+      ],
+    });
+
+    await openStudio(page);
+    await draftCards(page)
+      .getByRole('button', { name: CREATION_PROGRESS_CARD_COPY.resume })
+      .click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.STORY_DRAFT_LOAD_FAILED),
+    ).toBeVisible();
+    await expect(
+      page.getByLabel(GENERAL_STORY_TEXT_FIELDS.title.label),
+    ).toHaveCount(0);
+  });
+
+  test('기기에 남은 일반 제작 임시 저장본은 제작 탭에 들어오면 서버로 옮기고, 상한을 넘는 것은 기기에 남긴다 (STORY-GENERAL-38)', async ({
+    page,
+  }) => {
+    const mock = await mockStoryDrafts(page, {
+      initial: Array.from({ length: 4 }, (_, index) =>
+        serverDraft(
+          `16410000-0000-4000-8000-00000000002${index}`,
+          `2026-10-0${index + 1}T01:00:00.000000Z`,
+        ),
+      ),
+    });
+
+    await seedPendingCreationRequests(page, [
+      {
+        stage: 'GENERAL_DRAFT',
+        requestId: '16410000-0000-4000-8000-000000000031',
+        createdAt: '2026-10-16T01:00:00.000Z',
+        snapshot: readGeneralDraftPayload({
+          texts: { title: '기기 안 초안 하나' },
+        }),
+      },
+      {
+        stage: 'GENERAL_DRAFT',
+        requestId: '16410000-0000-4000-8000-000000000032',
+        createdAt: '2026-10-16T02:00:00.000Z',
+        snapshot: readGeneralDraftPayload({
+          texts: { title: '기기 안 초안 둘' },
+        }),
+      },
+    ]);
+    await openStudio(page);
+
+    await expect.poll(() => mock.drafts.size).toBe(5);
+    await expect
+      .poll(async () => {
+        const stored = await readCreationStorage(
+          page,
+          PENDING_CREATION_REQUEST_STORAGE_KEY,
+        );
+
+        return (JSON.parse(stored ?? '[]') as { stage: string }[]).filter(
+          ({ stage }) => stage === 'GENERAL_DRAFT',
+        ).length;
+      })
+      .toBe(1);
+    await expect(draftCards(page)).toHaveCount(6);
+    await expect(draftCards(page).getByText('기기 안 초안 하나')).toHaveCount(
+      1,
+    );
+    await expect(draftCards(page).getByText('기기 안 초안 둘')).toHaveCount(1);
+  });
+
+  test('서버 목록 조회가 실패하면 서버 초안 카드만 숨기고 기기 안 초안 카드는 보인다 (STORY-GENERAL-33)', async ({
+    page,
+  }) => {
+    await page.route('**/api/v1/users/me/story-drafts', (route) =>
+      route.fulfill({ status: 500, json: { code: 'INTERNAL' } }),
+    );
+    await seedPendingCreationRequests(page, [
+      {
+        stage: 'KEYWORD_DRAFT',
+        requestId: 'keyword-draft-1',
+        createdAt: '2026-10-16T01:00:00.000Z',
+        snapshot: {
+          selectedGenreTagIds: [1],
+          customGenreTags: [],
+          protagonist: {
+            name: '',
+            gender: 'MALE',
+            selectedTagIds: [],
+            customTags: [],
+          },
+          supportingCharacters: [],
+        },
+      },
+    ]);
+    await openStudio(page);
+
+    await expect(draftCards(page)).toHaveCount(1);
+    await expect(
+      draftCards(page).getByText(
+        CREATION_PROGRESS_CARD_COPY.draftDescription.keyword,
+      ),
+    ).toBeVisible();
+    await expect(page.getByText(STORY_LIST_ERROR_TITLE)).toHaveCount(0);
   });
 });

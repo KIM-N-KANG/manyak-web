@@ -235,6 +235,14 @@ describe('parsePendingCreationRequests', () => {
     ]);
   });
 
+  it('서버 초안 연결이 있는 구 레코드도 읽는다', async () => {
+    const linked = { ...draftRecord, draftId: 'draft-1', draftVersion: null };
+
+    expect(parsePendingCreationRequests(JSON.stringify([linked]))).toEqual([
+      linked,
+    ]);
+  });
+
   it('구 형식(단일 객체)은 1건 배열로 읽는다', async () => {
     expect(parsePendingCreationRequests(JSON.stringify(draftRecord))).toEqual([
       draftRecord,
@@ -329,6 +337,67 @@ describe('편집 초안 목록', () => {
     ).toBe(true);
     expect(await loadPendingCreationRequests()).toMatchObject([
       { stage: 'STORY_DRAFT', createdAt: SAVED_AT },
+    ]);
+  });
+
+  it('생성 결과를 초안으로 승격해도 서버 초안 연결을 유지한다', async () => {
+    stubStorage();
+    await savePendingCreationRequest({
+      ...storylineRecord,
+      draftId: 'draft-1',
+      draftVersion: 2,
+    });
+
+    expect(
+      await replacePendingCreationRequest(
+        storylineRecord.requestId,
+        draftRecord,
+      ),
+    ).toBe(true);
+    expect(await loadPendingCreationRequests()).toMatchObject([
+      { stage: 'STORY_DRAFT', draftId: 'draft-1', draftVersion: 2 },
+    ]);
+  });
+
+  it('서버 초안 연결을 완성 기록과 완성 실패 강등까지 옮긴다', async () => {
+    stubStorage();
+    await savePendingCreationRequest({
+      ...draftRecord,
+      draftId: 'draft-1',
+      draftVersion: null,
+    });
+
+    expect(await addStoryCompletionRequest(completionRecord)).toBe(true);
+    expect(await loadStoryCompletionRequests()).toMatchObject([
+      { draftId: 'draft-1', draftVersion: null },
+    ]);
+
+    expect(
+      await demotePendingCompletionToDraft(completionRecord.requestId),
+    ).toBe(true);
+    expect(await loadPendingCreationRequests()).toMatchObject([
+      { stage: 'STORY_DRAFT', draftId: 'draft-1', draftVersion: null },
+    ]);
+  });
+
+  it('서버 초안을 가리키는 완성 기록은 기기 안 초안이 없어도 저장하고, 연결이 없으면 거절한다', async () => {
+    stubStorage();
+
+    expect(await addStoryCompletionRequest(completionRecord)).toBe(false);
+    expect(
+      await addStoryCompletionRequest({
+        ...completionRecord,
+        draftId: 'draft-1',
+        draftVersion: 4,
+        createdAt: '2026-09-21T00:00:00.000Z',
+      }),
+    ).toBe(true);
+    expect(await loadStoryCompletionRequests()).toMatchObject([
+      {
+        draftId: 'draft-1',
+        draftVersion: 4,
+        createdAt: '2026-09-21T00:00:00.000Z',
+      },
     ]);
   });
 

@@ -96,10 +96,13 @@ const createProxyRequestInit = async (request: Request) => {
   // 인증은 Authorization 헤더 주입으로만 전달한다.
   headers.delete('cookie');
 
+  // 브라우저가 연결을 끊으면 백엔드 요청도 닫는다. 채팅 생성은 서버가 끊김과 무관하게 끝까지 하고,
+  // 다시 들어온 화면이 재연결 GET으로 이어받는다.
   const init: RequestInit = {
     method,
     headers,
     cache: 'no-store',
+    signal: request.signal,
   };
 
   if (!BODYLESS_METHODS.has(method) && request.body) {
