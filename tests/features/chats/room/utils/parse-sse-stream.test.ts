@@ -72,6 +72,20 @@ describe('parseSseStream', () => {
     expect(events).toEqual([{ type: 'error', message: '실패' }]);
   });
 
+  it('started의 생성 ID와 error의 code를 꺼낸다', async () => {
+    const events = await collect(
+      streamFrom([
+        'event: started\ndata: {"chatId":"c1","generationId":"g-1"}\n\n',
+        'event: error\ndata: {"code":"CHAT_TURN_STALE","message":"실패"}\n\n',
+      ]),
+    );
+
+    expect(events).toStrictEqual([
+      { type: 'started', generationId: 'g-1' },
+      { type: 'error', code: 'CHAT_TURN_STALE', message: '실패' },
+    ]);
+  });
+
   it('treats raw (non-JSON) token data as the token content', async () => {
     const events = await collect(streamFrom(['event: token\ndata: 음\n\n']));
 

@@ -503,7 +503,6 @@ export const CREDIT_PRODUCTS_FIXTURE = [
     bonusCredits: 0,
     totalCredits: 200,
     webPriceKrw: 2_000,
-    appPriceKrw: 2_500,
   },
   {
     productId: 'credit_1000',
@@ -511,7 +510,6 @@ export const CREDIT_PRODUCTS_FIXTURE = [
     bonusCredits: 100,
     totalCredits: 1_100,
     webPriceKrw: 10_000,
-    appPriceKrw: 12_000,
   },
 ] as const satisfies readonly Required<CreditProductResponse>[];
 
