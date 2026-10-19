@@ -21,6 +21,7 @@ export const APP_PATH = {
   MY_LINK_CONTINUE: '/my/link/continue',
   MY_NOTIFICATIONS: '/my/notifications',
   MY_PERSONAS: '/my/personas',
+  MY_PROFILE_EDIT: '/my/profile/edit',
   MY_PERSONA_NEW: '/my/personas/new',
   MY_PERSONA_EDIT: (id: string) => `/my/personas/${id}/edit`,
   STORY_DETAIL: (id: number | string) => `/stories/${id}`,

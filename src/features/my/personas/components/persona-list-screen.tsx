@@ -26,13 +26,13 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { PERSONA_MAX_COUNT } from '@/features/my/_shared/constants/persona';
+import { useGuestLoginRedirect } from '@/features/my/_shared/hooks/use-guest-login-redirect';
 import { clearCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
 import { leaveLayers } from '@/lib/history-layers';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
 import { PERSONA_LIST_COPY } from '../constants';
-import { useGuestLoginRedirect } from '../hooks/use-guest-login-redirect';
 import { parsePersonaDescription } from '../utils/persona-description';
 
 function PersonaRow({ persona }: { persona: UserPersonaResponse }) {

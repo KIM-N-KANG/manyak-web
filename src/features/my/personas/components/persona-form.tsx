@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useGuestLoginRedirect } from '@/features/my/_shared/hooks/use-guest-login-redirect';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
@@ -35,7 +36,6 @@ import {
   PERSONA_FEATURE_MAX_LENGTH,
   PERSONA_NAME_MAX_LENGTH,
 } from '../constants';
-import { useGuestLoginRedirect } from '../hooks/use-guest-login-redirect';
 import { usePersonaForm } from '../hooks/use-persona-form';
 import {
   PERSONA_GENDER_TEXT,

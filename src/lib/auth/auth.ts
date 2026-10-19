@@ -11,6 +11,7 @@ import {
   authenticateSocialLogin,
   type BackendProfile,
   completeSignupConsent,
+  fetchCurrentMe,
 } from './backend-session';
 import { parseLinkProviderId } from './link-account';
 import { processLinkCallback } from './link-callback';
@@ -166,6 +167,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.expectedUserId === token.userId
       ) {
         token.inviteOnboardingPending = false;
+      }
+
+      // 프로필 수정 뒤 세션의 닉네임과 이미지를 맞춘다. 브라우저가 보낸 값은 믿지 않고 서버에서 다시 읽는다.
+      if (
+        trigger === 'update' &&
+        session?.profileRefresh === true &&
+        token.userId
+      ) {
+        const me = await fetchCurrentMe();
+
+        if (me?.id === token.userId) {
+          token.nickname = me.nickname ?? '';
+          token.profileImageUrl = me.profileImageUrl ?? null;
+        }
       }
 
       // account는 최초 로그인(OAuth 콜백)에서만 존재한다. 이후 세션 조회는 그대로 통과.

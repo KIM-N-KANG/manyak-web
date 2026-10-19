@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -34,7 +36,7 @@ export function ProfileHeader() {
   const profileImageSrc = thumbnailSrc ?? session?.user?.image;
 
   return (
-    <section className="flex items-center gap-4">
+    <section className="relative flex items-center gap-4">
       {profileImageSrc && !imageError ? (
         <Image
           src={profileImageSrc}
@@ -56,10 +58,28 @@ export function ProfileHeader() {
         </div>
       ) : (
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate text-lg font-semibold">
-            {isAuthenticated ? nickname : '게스트'}
-          </span>
-          {isMember && <LinkedAccountSection />}
+          {isMember ? (
+            <Link
+              href={APP_PATH.MY_PROFILE_EDIT}
+              className="flex min-w-0 items-center gap-1 outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring">
+              <span className="truncate text-lg font-semibold">{nickname}</span>
+              <span className="sr-only">프로필 수정</span>
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className="size-5 shrink-0 text-foreground-tertiary"
+                aria-hidden
+              />
+            </Link>
+          ) : (
+            <span className="truncate text-lg font-semibold">
+              {isAuthenticated ? nickname : '게스트'}
+            </span>
+          )}
+          {isMember && (
+            <div className="relative">
+              <LinkedAccountSection />
+            </div>
+          )}
         </div>
       )}
       {status === 'unauthenticated' && (

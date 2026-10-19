@@ -5,9 +5,9 @@ import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
+import { useGuestLoginRedirect } from '@/features/my/_shared/hooks/use-guest-login-redirect';
 
 import { PERSONA_EDIT_COPY, PERSONA_LIST_COPY } from '../constants';
-import { useGuestLoginRedirect } from '../hooks/use-guest-login-redirect';
 import { PersonaForm } from './persona-form';
 
 type PersonaEditEntryProps = {
