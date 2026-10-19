@@ -1280,7 +1280,7 @@ export const StreamChatTurnBody = zod
       .optional()
       .describe('실시간 이미지 생성 여부. 기본 true'),
     lastTurnId: zod
-      .string()
+      .number()
       .nullish()
       .describe(
         '마지막 완료 턴 ID. 생략은 비교 생략, 명시적 null은 첫 턴만 허용',
