@@ -79,6 +79,16 @@ function readExpiresAtCookie(): number | null {
 }
 
 /**
+ * 브라우저 쿠키에 회원 세션의 access 만료 시각이 있는지 본다. 세션 판정이 끝나기 전에
+ * 회원일 가능성을 미리 알아 회원 조회를 앞당기는 힌트로만 쓰고, 회원 판정의 근거로는 쓰지 않는다.
+ *
+ * @returns 회원 세션 쿠키가 있으면 true. 서버 렌더링에서는 false
+ */
+export function hasMemberSessionCookie(): boolean {
+  return typeof document !== 'undefined' && readExpiresAtCookie() !== null;
+}
+
+/**
  * BFF 재발급 라우트를 부른다. 네트워크 오류는 삼켜 기다리던 요청이 그대로 나가게 하고,
  * 세션 만료면 능동 로그아웃을 알린 뒤 거절해 기다리던 요청이 게스트로 나가지 않게 한다.
  *
