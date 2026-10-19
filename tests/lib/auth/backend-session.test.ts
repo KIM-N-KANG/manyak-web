@@ -15,10 +15,6 @@ const identityServerMock = vi.hoisted(() => ({
   readAmplitudeDeviceIdOnServer: vi.fn(),
 }));
 
-const handoffCookieMock = vi.hoisted(() => ({
-  readHandoffCodeOnServer: vi.fn(),
-}));
-
 const signupConsentCookieMock = vi.hoisted(() => ({
   readPendingSignupConsent: vi.fn(),
   writePendingSignupConsent: vi.fn(),
@@ -27,7 +23,6 @@ const signupConsentCookieMock = vi.hoisted(() => ({
 
 vi.mock('@/lib/auth/token-cookies', () => tokenCookiesMock);
 vi.mock('@/observability/analytics/identity-server', () => identityServerMock);
-vi.mock('@/lib/auth/handoff-cookie', () => handoffCookieMock);
 // toPendingSignupConsent는 순수 함수라 실제 구현을 쓰고 쿠키 입출력만 목킹한다.
 vi.mock('@/lib/auth/signup-consent-cookie', async (importActual) => ({
   ...(await importActual<object>()),
@@ -65,7 +60,6 @@ beforeEach(() => {
   tokenCookiesMock.hasNextAuthSessionCookie.mockResolvedValue(false);
   tokenCookiesMock.readRefreshTokenCookie.mockResolvedValue(null);
   identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(undefined);
-  handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue(undefined);
   signupConsentCookieMock.readPendingSignupConsent.mockResolvedValue(null);
 });
 
@@ -307,17 +301,15 @@ describe('authenticateSocialLogin', () => {
       'google',
       'id-token',
       undefined,
-      undefined,
     );
     expect(fetchMeOnServer).toHaveBeenCalledWith('access-1');
   });
 
-  it('요청 쿠키의 Amplitude device_id와 핸드오프 코드를 소셜 인증 호출에 원문 그대로 전달한다', async () => {
-    // 가입 시 게스트 체험 사용량 시드(스펙 §4-3-7)와 핸드오프 이관(§4-3-5)에 쓰인다.
+  it('요청 쿠키의 Amplitude device_id를 소셜 인증 호출에 원문 그대로 전달한다', async () => {
+    // 가입 시 게스트 체험 사용량 시드(스펙 §4-3-7)에 쓰인다.
     identityServerMock.readAmplitudeDeviceIdOnServer.mockResolvedValue(
       'amp-device-raw',
     );
-    handoffCookieMock.readHandoffCodeOnServer.mockResolvedValue('handoff-code');
     vi.mocked(startSocialAuthOnServer).mockResolvedValue({
       status: 'COMPLETED',
       token: TOKENS,
@@ -330,7 +322,6 @@ describe('authenticateSocialLogin', () => {
       'kakao',
       'id-token',
       'amp-device-raw',
-      'handoff-code',
     );
   });
 

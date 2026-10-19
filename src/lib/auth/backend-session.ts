@@ -14,7 +14,6 @@ import {
   parseBackendErrorCode,
   startSocialAuthOnServer,
 } from './backend-client';
-import { readHandoffCodeOnServer } from './handoff-cookie';
 import { refreshWithDedup } from './refresh-dedup';
 import {
   SIGNUP_CONSENT_ERROR,
@@ -234,16 +233,7 @@ export async function authenticateSocialLogin(
   // 쓰이며(스펙 §4-3-7), 빠뜨리면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의
   // 무료 체험이 0이 된다(1회성 시드라 비가역).
   const deviceId = await readAmplitudeDeviceIdOnServer();
-  // 외부 랜딩이 심은 핸드오프 쿠키를 읽는다. 서버가 대기 코드에 함께 보관해 로그인이
-  // 완료되는 시점에 시드와 이관을 수행한다(스펙 §4-3-5). 코드는 비밀값이라 로그·분석에
-  // 남기지 않는다.
-  const handoffCode = await readHandoffCodeOnServer();
-  const response = await startSocialAuthOnServer(
-    provider,
-    idToken,
-    deviceId,
-    handoffCode,
-  );
+  const response = await startSocialAuthOnServer(provider, idToken, deviceId);
 
   if (response.status === SocialAuthResponseStatus.COMPLETED) {
     if (!response.token) {

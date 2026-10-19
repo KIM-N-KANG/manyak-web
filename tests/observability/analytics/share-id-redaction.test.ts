@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { handoffRedactionPlugin } from '@/observability/analytics/handoff-redaction';
+import { shareIdRedactionPlugin } from '@/observability/analytics/share-id-redaction';
 
 type PluginEvent = Parameters<
-  NonNullable<typeof handoffRedactionPlugin.execute>
+  NonNullable<typeof shareIdRedactionPlugin.execute>
 >[0];
 
 /**
@@ -16,24 +16,22 @@ function createEvent(overrides: Partial<PluginEvent>): PluginEvent {
   return { event_type: '[Amplitude] Page Viewed', ...overrides } as PluginEvent;
 }
 
-describe('handoffRedactionPlugin', () => {
-  it('페이지뷰 URL 프로퍼티의 핸드오프 코드를 가린다', async () => {
+describe('shareIdRedactionPlugin', () => {
+  it('페이지뷰 URL 프로퍼티의 공유 열람 토큰을 가린다', async () => {
     const event = createEvent({
       event_properties: {
-        '[Amplitude] Page Location':
-          'https://manyak.app/login/continue?handoff=secret-1',
-        '[Amplitude] Page Path': '/login/continue',
+        '[Amplitude] Page Location': 'https://manyak.app/share/secret-1',
+        '[Amplitude] Page Path': '/share/secret-1',
       },
     });
 
-    const result = (await handoffRedactionPlugin.execute?.(
+    const result = (await shareIdRedactionPlugin.execute?.(
       event,
     )) as PluginEvent;
 
     expect(result.event_properties).toEqual({
-      '[Amplitude] Page Location':
-        'https://manyak.app/login/continue?handoff=[redacted]',
-      '[Amplitude] Page Path': '/login/continue',
+      '[Amplitude] Page Location': 'https://manyak.app/share/[redacted]',
+      '[Amplitude] Page Path': '/share/[redacted]',
     });
   });
 
@@ -42,28 +40,28 @@ describe('handoffRedactionPlugin', () => {
       event_type: '$identify',
       user_properties: {
         $set: {
-          referrer: 'https://manyak.app/login/continue?handoff=secret-1',
+          referrer: 'https://manyak.app/share/secret-1',
         },
       },
     });
 
-    const result = (await handoffRedactionPlugin.execute?.(
+    const result = (await shareIdRedactionPlugin.execute?.(
       event,
     )) as PluginEvent;
 
     expect(result.user_properties).toEqual({
       $set: {
-        referrer: 'https://manyak.app/login/continue?handoff=[redacted]',
+        referrer: 'https://manyak.app/share/[redacted]',
       },
     });
   });
 
-  it('코드가 없는 이벤트는 그대로 통과시킨다', async () => {
+  it('토큰이 없는 이벤트는 그대로 통과시킨다', async () => {
     const event = createEvent({
       event_properties: { trigger: 'story_create', count: 3 },
     });
 
-    const result = (await handoffRedactionPlugin.execute?.(
+    const result = (await shareIdRedactionPlugin.execute?.(
       event,
     )) as PluginEvent;
 

@@ -52,16 +52,11 @@ export type AnalyticsEventProps = {
   };
   // in-app browser (감지·탈출 — 스펙 §6-4-2-12)
   client_inappBrowser_detected: { app: InAppBrowser };
-  client_inappBrowser_escapeAttempted: { app: 'kakaotalk' };
-  client_inappBrowser_bannerShown: { app: InAppBrowser };
   // app banner (앱 안내 배너, 스펙 §6-4-2-18)
   client_appBanner_shown: AppBannerEventProps;
   client_appBanner_actionButton_clicked: AppBannerEventProps;
   client_appBanner_closeButton_clicked: { variant: AppBannerVariant };
   client_appBanner_escapeGuide_shown: void;
-  // 기존 발급 핸드오프 링크의 랜딩과 복구 이벤트다. 신규 생성은 종료됐다.
-  client_loginContinue_viewed: void;
-  client_loginContinue_loginButton_clicked: { provider: SocialLoginProvider };
   // credit shortage (회원 이프 부족 → 토스트 안내, 이벤트 이름은 하위 호환 유지)
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
   // report (스토리 신고 시트 — 채팅에서 열어도 대상은 참조 스토리라 target_type은 story 고정)

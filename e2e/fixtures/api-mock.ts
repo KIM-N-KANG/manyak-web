@@ -532,65 +532,6 @@ export async function mockCreditProducts(
   });
 }
 
-/** 핸드오프 상태 조회(GET /api/v1/auth/handoffs/status) 라우트 글롭. */
-const HANDOFF_STATUS_ROUTE = '**/api/v1/auth/handoffs/status';
-/** 외부 랜딩의 쿠키 이전 BFF(POST /api/auth/handoff-session) 라우트 글롭. */
-const HANDOFF_SESSION_ROUTE = '**/api/auth/handoff-session';
-
-/**
- * 외부 랜딩의 쿠키 이전 BFF를 목킹한다. 200이면 안내 요약을, 404면 만료를 재현한다.
- * 실제 라우트는 백엔드로 나가므로 E2E에서는 브라우저 레벨에서 가로챈다.
- *
- * @param page 대상 페이지
- * @param options 응답 status와 안내 요약 body(만료 재현 시 status만 404)
- */
-export async function mockHandoffSession(
-  page: Page,
-  options: {
-    status?: number;
-    body?: { storyCount: number; chatCount: number; callbackPath: string };
-  } = {},
-): Promise<void> {
-  const {
-    status = 200,
-    body = { storyCount: 1, chatCount: 1, callbackPath: '/' },
-  } = options;
-
-  await page.route(HANDOFF_SESSION_ROUTE, async (route) => {
-    await route.fulfill({
-      status,
-      contentType: 'application/json',
-      body:
-        status === 200
-          ? JSON.stringify(body)
-          : JSON.stringify({ error: 'gone' }),
-    });
-  });
-}
-
-/**
- * 핸드오프 상태 조회를 목킹한다(인앱 복귀 정리가 소비).
- *
- * @param page 대상 페이지
- * @param body 상태와 이관된 공개 ID 목록
- */
-export async function mockHandoffStatus(
-  page: Page,
-  body: {
-    status: 'PENDING' | 'LANDED' | 'MIGRATED' | 'MIGRATION_CLOSED';
-    migratedStoryIds?: string[];
-    migratedChatIds?: string[];
-  },
-): Promise<void> {
-  await page.route(HANDOFF_STATUS_ROUTE, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(body),
-    });
-  });
-}
-
 /** 공유 열람(GET /api/v1/shares/{shareId}) 라우트 글롭. */
 const CHAT_SHARE_VIEW_ROUTE = '**/api/v1/shares/*';
 /** 공유 발급(POST /api/v1/chats/{chatId}/shares) 라우트 글롭. */
