@@ -510,8 +510,12 @@ test.describe('스토리 오버레이 비주얼', () => {
       .click();
 
     const sheet = page.getByRole('dialog', { name: STORY_REPORT_COPY.title });
+    const reason = sheet.getByRole('radio', { name: '부적절한 내용' });
 
-    await sheet.getByRole('radio', { name: '부적절한 내용' }).check();
+    // 시트가 올라오기 전에 고르면 Playwright가 화면 밖 라디오를 보이려고 앱 프레임을 스크롤해,
+    // 다 올라온 뒤에도 프레임이 시트 아래 bleed 높이(48px)만큼 밀린 채 찍힌다.
+    await expect(reason).toBeInViewport({ ratio: 1 });
+    await reason.check();
     await expect(
       sheet.getByRole('button', { name: STORY_REPORT_COPY.submit }),
     ).toBeEnabled();
