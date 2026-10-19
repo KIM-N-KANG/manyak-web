@@ -1,4 +1,5 @@
 import {
+  type MeResponse,
   SocialAuthResponseStatus,
   type TokenResponse,
   type UserConsentRequest,
@@ -142,6 +143,25 @@ export async function ensureFreshAccessToken(
     }
 
     return { status: 'degraded' };
+  }
+}
+
+/**
+ * 현재 백엔드 세션의 회원 정보를 다시 읽는다. 프로필 수정 뒤 Auth.js 세션 클레임을 서버 기준으로 맞출 때 쓴다.
+ *
+ * @returns 회원 정보. access 토큰을 확보하지 못했거나 조회가 실패하면 null
+ */
+export async function fetchCurrentMe(): Promise<MeResponse | null> {
+  const auth = await ensureFreshAccessToken();
+
+  if (auth.status !== 'authenticated') {
+    return null;
+  }
+
+  try {
+    return await fetchMeOnServer(auth.accessToken);
+  } catch {
+    return null;
   }
 }
 

@@ -270,6 +270,12 @@ export type AnalyticsEventProps = {
   client_personaEdit_viewed: void;
   client_personaEdit_form_submitted: void;
   client_personaEdit_completed: void;
+  // profile edit (KNK-1148)
+  client_profileEdit_viewed: void;
+  client_profileEdit_completed: {
+    nickname_changed: boolean;
+    image_changed: boolean;
+  };
   // invite (친구 초대 페이지)
   client_invite_viewed: void;
   client_invite_copyButton_clicked: void;
