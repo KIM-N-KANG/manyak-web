@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test';
 
-import { PENDING_HANDOFF_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-handoff-storage';
 import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
 import { GUEST_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/guest-chat-storage';
@@ -115,27 +114,6 @@ export async function skipChatChoicesHint(page: Page): Promise<void> {
 }
 
 /**
- * 로컬스토리지에 진행 중인 로그인 핸드오프를 심는다.
- * 외부 로그인을 마치고 인앱으로 돌아온 뒤 이관 정리(useHandoffCleanup)가 트리거되는 상태를 재현한다.
- */
-export async function seedPendingHandoff(
-  page: Page,
-  pending: {
-    code: string;
-    handoffId: string;
-    storyIds: string[];
-    chatIds: string[];
-  },
-): Promise<void> {
-  await page.addInitScript(
-    ([key, value]) => {
-      window.localStorage.setItem(key, value);
-    },
-    [PENDING_HANDOFF_STORAGE_KEY, JSON.stringify(pending)] as const,
-  );
-}
-
-/**
  * 결제창으로 나가기 직전 남긴 이프 충전 대기 주문을 심는다.
  * 그로블에서 `/my/credits`로 돌아와 주문 확인 카드가 폴링을 시작하는 상태를 재현한다.
  */
@@ -214,7 +192,7 @@ export async function seedPendingLogin(page: Page): Promise<void> {
 
 /**
  * 이 탭에서 게스트로 시작한 채팅 ID(sessionStorage)를 심는다.
- * 채팅 목록에는 없지만 로그인 후 이관·핸드오프에 실려야 하는 상태를 재현한다.
+ * 채팅 목록에는 없지만 로그인 후 이관에 실려야 하는 상태를 재현한다.
  */
 export async function seedGuestChatIds(
   page: Page,

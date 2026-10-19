@@ -126,13 +126,6 @@ for (const userAgent of [
           window.open = () => null;
         });
 
-        const handoffRequests: string[] = [];
-
-        page.on('request', (request) => {
-          if (request.url().endsWith('/api/v1/auth/handoffs')) {
-            handoffRequests.push(request.url());
-          }
-        });
         await page.goto(path);
         await page.getByRole('link', { name: '로그인', exact: true }).click();
 
@@ -152,8 +145,6 @@ for (const userAgent of [
           await expect(kakao).toBeEnabled();
           await expect(page).toHaveURL(APP_PATH.LOGIN);
         }
-
-        expect(handoffRequests).toEqual([]);
       });
     }
   });
@@ -424,5 +415,41 @@ test.describe('인앱 소셜 로그인', () => {
     await expect(page).toHaveURL(
       `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`,
     );
+  });
+});
+
+test.describe('인앱 게스트 이용', () => {
+  test.use({
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 300.0.0.0',
+  });
+
+  test('인앱에서도 전면 차단 없이 제작 스토리 목록을 이용한다', async ({
+    page,
+  }) => {
+    await skipOnboarding(page);
+    await seedStoryIds(page, ['s1']);
+    await page.route('**/api/v1/stories/batch', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: 's1',
+            title: '용의 계곡',
+            oneLineIntro: '한 줄 소개입니다',
+            genres: ['판타지'],
+            createdAt: '2026-06-01T00:00:00Z',
+          },
+        ]),
+      });
+    });
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('외부 브라우저에서 로그인해주세요'),
+    ).toBeHidden();
   });
 });

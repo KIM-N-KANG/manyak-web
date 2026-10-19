@@ -15,6 +15,7 @@ const authMocks = vi.hoisted(() => ({
   processLinkCallback: vi.fn(),
   restoreSessionClaims: vi.fn(),
   readAuthCallbackUrl: vi.fn(),
+  fetchCurrentMe: vi.fn(),
 }));
 
 vi.mock('next-auth', () => ({
@@ -42,6 +43,7 @@ vi.mock('@/lib/auth/backend-client', () => ({
 vi.mock('@/lib/auth/backend-session', () => ({
   authenticateSocialLogin: authMocks.authenticateSocialLogin,
   completeSignupConsent: authMocks.completeSignupConsent,
+  fetchCurrentMe: authMocks.fetchCurrentMe,
 }));
 vi.mock('@/lib/auth/token-cookie-policy', () => ({
   SESSION_COOKIE_MAX_AGE_SECONDS: 1_209_600,
@@ -88,6 +90,8 @@ type JwtCallback = (args: {
   session?: {
     inviteOnboardingPending?: unknown;
     expectedUserId?: unknown;
+    profileRefresh?: unknown;
+    nickname?: unknown;
   };
 }) => Promise<TestToken>;
 
@@ -149,6 +153,7 @@ beforeEach(() => {
   authMocks.readAuthCallbackUrl.mockReset();
   authMocks.processLinkCallback.mockReset();
   authMocks.restoreSessionClaims.mockReset();
+  authMocks.fetchCurrentMe.mockReset();
 });
 
 it.each(['google', 'link-google'])(
@@ -471,5 +476,68 @@ describe('NextAuth 초대 온보딩 세션', () => {
         token: { inviteOnboardingPending: undefined },
       }).inviteOnboardingPending,
     ).toBe(false);
+  });
+});
+
+describe('NextAuth 프로필 수정 세션 맞춤', () => {
+  const TOKEN = {
+    userId: 'user-1',
+    nickname: '옛닉네임',
+    profileImageUrl: 'https://api.manyak.app/profile-presets/old.png',
+  };
+
+  it('profileRefresh면 서버에서 다시 읽은 닉네임과 이미지로 클레임을 바꾼다', async () => {
+    authMocks.fetchCurrentMe.mockResolvedValue({
+      id: 'user-1',
+      nickname: '새닉네임',
+      profileImageUrl: 'https://api.manyak.app/profile-presets/new.png',
+    });
+
+    await expect(
+      getAuthConfig().callbacks.jwt({
+        token: { ...TOKEN },
+        trigger: 'update',
+        session: { profileRefresh: true, nickname: '보낸값' },
+      }),
+    ).resolves.toEqual({
+      userId: 'user-1',
+      nickname: '새닉네임',
+      profileImageUrl: 'https://api.manyak.app/profile-presets/new.png',
+    });
+  });
+
+  it('조회가 실패하거나 다른 회원이면 기존 클레임을 유지한다', async () => {
+    const { jwt } = getAuthConfig().callbacks;
+
+    authMocks.fetchCurrentMe.mockResolvedValueOnce(null);
+    await expect(
+      jwt({
+        token: { ...TOKEN },
+        trigger: 'update',
+        session: { profileRefresh: true },
+      }),
+    ).resolves.toEqual(TOKEN);
+
+    authMocks.fetchCurrentMe.mockResolvedValueOnce({
+      id: 'user-2',
+      nickname: '남의닉네임',
+    });
+    await expect(
+      jwt({
+        token: { ...TOKEN },
+        trigger: 'update',
+        session: { profileRefresh: true },
+      }),
+    ).resolves.toEqual(TOKEN);
+  });
+
+  it('profileRefresh가 없는 update는 서버를 조회하지 않는다', async () => {
+    await getAuthConfig().callbacks.jwt({
+      token: { ...TOKEN },
+      trigger: 'update',
+      session: { nickname: '보낸값' },
+    });
+
+    expect(authMocks.fetchCurrentMe).not.toHaveBeenCalled();
   });
 });

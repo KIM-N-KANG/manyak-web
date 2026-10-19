@@ -1,6 +1,5 @@
 import {
   getCompleteUrl,
-  getConfirmUrl,
   getLinkUrl,
   getLogoutUrl,
   getMeUrl,
@@ -10,7 +9,6 @@ import {
 } from '@/api/generated/endpoints/auth/auth';
 import type {
   LinkCodeResponse,
-  LoginHandoffSummaryResponse,
   MeResponse,
   SocialAuthResponse,
   TokenResponse,
@@ -20,7 +18,6 @@ import { SocialReauthRequestProvider } from '@/api/generated/models';
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout';
 import { DEVICE_ID_HEADER } from '@/observability/analytics/amplitude-identity';
 
-import { HANDOFF_CODE_HEADER } from './handoff-header';
 import { LINK_CODE_HEADER } from './link-header';
 import type { SocialLoginProvider } from './social-provider';
 
@@ -124,25 +121,19 @@ export const CONSENT_TOKEN_HEADER = 'X-Manyak-Consent-Token';
  * 해시하면 이중 해시가 되어 게스트 사용량 키와 일치하지 않는다. 헤더가 없으면 백엔드가
  * 한도 소진 상태로 시드하는 우회 차단 폴백을 타므로, 값이 있으면 반드시 실어야 한다.
  *
- * handoffCode가 유효하면 로그인이 완료되는 시점(바로 완료 또는 가입 완료)에 회원 체험
- * 시드(핸드오프의 원본 디바이스 ID 우선)와 게스트 데이터 이관이 함께 수행된다. 대기
- * 단계는 핸드오프를 소비하지 않는다.
- *
  * @param provider 로그인에 사용한 소셜 provider
  * @param idToken provider에서 발급한 OIDC ID 토큰
  * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
- * @param handoffCode 인앱 핸드오프 코드 원문(없으면 body에서 생략)
  * @returns 소셜 인증 응답(완료 토큰 또는 동의 대기 정보)
  */
 export const startSocialAuthOnServer = (
   provider: SocialLoginProvider,
   idToken: string,
   deviceId?: string,
-  handoffCode?: string,
 ): Promise<SocialAuthResponse> =>
   postJson<SocialAuthResponse>(
     getStartUrl(provider),
-    { idToken, ...(handoffCode ? { handoffCode } : {}) },
+    { idToken },
     deviceId ? { [DEVICE_ID_HEADER]: deviceId } : undefined,
   );
 
@@ -192,22 +183,6 @@ export const logoutOnServer = (refreshToken: string): Promise<void> =>
 export const fetchMeOnServer = (accessToken: string): Promise<MeResponse> =>
   requestBackend<MeResponse>(getMeUrl(), {
     headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-/**
- * 핸드오프 코드로 확인 API를 호출해 외부 랜딩 안내용 요약을 조회한다.
- * 외부 랜딩의 BFF 라우트가 코드를 HttpOnly 쿠키로 옮기기 전에 코드를 검증하는 데 쓴다.
- * 코드는 URI가 아니라 X-Manyak-Handoff-Code 헤더로 전달한다(스펙 §4-3-5).
- *
- * @param handoffCode 확인할 핸드오프 코드 원문
- * @returns 옮길 스토리·채팅 건수와 복귀 경로 요약
- * @throws 만료·무효(404) 등 실패 시 BackendAuthError
- */
-export const confirmHandoffOnServer = (
-  handoffCode: string,
-): Promise<LoginHandoffSummaryResponse> =>
-  requestBackend<LoginHandoffSummaryResponse>(getConfirmUrl(), {
-    headers: { [HANDOFF_CODE_HEADER]: handoffCode },
   });
 
 /** provider별 재인증 요청 body의 백엔드 enum 값. 경로 세그먼트와 달리 대문자다. */

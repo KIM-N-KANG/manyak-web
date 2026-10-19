@@ -1,7 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FetchError } from '@/lib/api-error';
-import { createSessionRefreshGate } from '@/lib/auth/session-refresh-gate';
+import {
+  createSessionRefreshGate,
+  hasMemberSessionCookie,
+} from '@/lib/auth/session-refresh-gate';
+import { EXPIRES_AT_COOKIE } from '@/lib/auth/token-cookie-policy';
 
 const NOW = 1_000_000;
 const EXPIRING = NOW + 60_000;
@@ -90,5 +94,26 @@ describe('createSessionRefreshGate', () => {
     for (const wait of waits) {
       await expect(wait).rejects.toBe(expired);
     }
+  });
+});
+
+describe('hasMemberSessionCookie', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('document가 없는 서버 렌더링에서는 false다', () => {
+    expect(hasMemberSessionCookie()).toBe(false);
+  });
+
+  it('만료 시각 쿠키가 있으면 true, 없거나 손상이면 false다', () => {
+    vi.stubGlobal('document', { cookie: `a=1; ${EXPIRES_AT_COOKIE}=${FRESH}` });
+    expect(hasMemberSessionCookie()).toBe(true);
+
+    vi.stubGlobal('document', { cookie: `${EXPIRES_AT_COOKIE}=broken` });
+    expect(hasMemberSessionCookie()).toBe(false);
+
+    vi.stubGlobal('document', { cookie: 'a=1' });
+    expect(hasMemberSessionCookie()).toBe(false);
   });
 });

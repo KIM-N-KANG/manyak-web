@@ -17,12 +17,10 @@ import {
 import { getAnalyticsIdentityHeaders } from '@/observability/analytics/identity';
 
 /**
- * 이어쓰기 요청 본문. 계약의 `lastTurnId`는 `turns[].id`와 같은 정수인데 생성 타입이 문자열이라 숫자로 덮어쓴다.
- * 생략하면 서버가 마지막 턴 비교를 건너뛰므로 웹은 늘 싣는다(첫 턴은 `null`).
+ * 이어쓰기 요청 본문. `lastTurnId`를 생략하면 서버가 마지막 턴 비교를 건너뛰므로 웹은 늘 싣는다(첫 턴은 `null`).
  */
-export type ContinueChatStreamBody = Omit<ContinueChatRequest, 'lastTurnId'> & {
-  lastTurnId: number | null;
-};
+export type ContinueChatStreamBody = ContinueChatRequest &
+  Required<Pick<ContinueChatRequest, 'lastTurnId'>>;
 
 /**
  * 채팅 SSE 엔드포인트를 호출하고 응답 본문 스트림을 반환한다.

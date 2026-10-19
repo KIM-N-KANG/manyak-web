@@ -1,4 +1,5 @@
 import {
+  type MeResponse,
   SocialAuthResponseStatus,
   type TokenResponse,
   type UserConsentRequest,
@@ -13,7 +14,6 @@ import {
   parseBackendErrorCode,
   startSocialAuthOnServer,
 } from './backend-client';
-import { readHandoffCodeOnServer } from './handoff-cookie';
 import { refreshWithDedup } from './refresh-dedup';
 import {
   SIGNUP_CONSENT_ERROR,
@@ -145,6 +145,25 @@ export async function ensureFreshAccessToken(
   }
 }
 
+/**
+ * 현재 백엔드 세션의 회원 정보를 다시 읽는다. 프로필 수정 뒤 Auth.js 세션 클레임을 서버 기준으로 맞출 때 쓴다.
+ *
+ * @returns 회원 정보. access 토큰을 확보하지 못했거나 조회가 실패하면 null
+ */
+export async function fetchCurrentMe(): Promise<MeResponse | null> {
+  const auth = await ensureFreshAccessToken();
+
+  if (auth.status !== 'authenticated') {
+    return null;
+  }
+
+  try {
+    return await fetchMeOnServer(auth.accessToken);
+  } catch {
+    return null;
+  }
+}
+
 /** 세션에 담을 백엔드 회원 프로필. */
 export type BackendProfile = {
   userId: string;
@@ -214,16 +233,7 @@ export async function authenticateSocialLogin(
   // 쓰이며(스펙 §4-3-7), 빠뜨리면 백엔드가 한도 소진 폴백으로 시드해 신규 가입자의
   // 무료 체험이 0이 된다(1회성 시드라 비가역).
   const deviceId = await readAmplitudeDeviceIdOnServer();
-  // 외부 랜딩이 심은 핸드오프 쿠키를 읽는다. 서버가 대기 코드에 함께 보관해 로그인이
-  // 완료되는 시점에 시드와 이관을 수행한다(스펙 §4-3-5). 코드는 비밀값이라 로그·분석에
-  // 남기지 않는다.
-  const handoffCode = await readHandoffCodeOnServer();
-  const response = await startSocialAuthOnServer(
-    provider,
-    idToken,
-    deviceId,
-    handoffCode,
-  );
+  const response = await startSocialAuthOnServer(provider, idToken, deviceId);
 
   if (response.status === SocialAuthResponseStatus.COMPLETED) {
     if (!response.token) {
