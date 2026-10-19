@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 import {
   getGetUsersMeConsentsQueryKey,
+  getUsersMeConsents,
   useGetUsersMeConsents,
 } from '@/api/generated/endpoints/user/user';
 import type { UserConsentResponse } from '@/api/generated/models';
@@ -35,6 +36,7 @@ import {
 } from '@/features/auth/_shared/utils/signup-consent-client';
 import { submitMarketingConsentAnswer } from '@/features/my/_shared/utils/marketing-consent-store';
 import { notifySessionExpired } from '@/lib/auth/session-expiry';
+import { hasMemberSessionCookie } from '@/lib/auth/session-refresh-gate';
 import type { SignupConsentSummary } from '@/lib/auth/signup-consent';
 import { FetchError } from '@/lib/custom-fetch';
 
@@ -188,9 +190,40 @@ function useConsentGate() {
   const queryClient = useQueryClient();
   const userId = session?.user.id;
   const queryKey = [...getGetUsersMeConsentsQueryKey(), userId] as const;
+  // 회원 세션 쿠키가 있으면 세션 판정(/api/auth/session)을 기다리지 않고 동의 조회를 먼저 보낸다.
+  // 두 요청이 직렬이면 회원 목록이 그만큼 늦게 시작하기 때문이다. 판정 순서는 그대로다 —
+  // 인증이 확정돼 쿼리가 켜질 때 이 응답을 그대로 쓰고, 게스트로 확정되면 버린다.
+  const earlyConsentsRef = useRef<ReturnType<typeof getUsersMeConsents> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (
+      status !== 'loading' ||
+      earlyConsentsRef.current ||
+      !hasMemberSessionCookie()
+    ) {
+      return;
+    }
+
+    const early = getUsersMeConsents();
+
+    // 게스트로 확정돼 아무도 기다리지 않는 실패가 unhandled rejection이 되지 않게 한다.
+    early.catch(() => {});
+    earlyConsentsRef.current = early;
+  }, [status]);
+
   const consentsQuery = useGetUsersMeConsents({
     query: {
       queryKey,
+      // 미리 보낸 조회가 있으면 한 번만 넘겨받고, 재시도는 새로 요청한다.
+      queryFn: () => {
+        const early = earlyConsentsRef.current;
+
+        earlyConsentsRef.current = null;
+
+        return early ?? getUsersMeConsents();
+      },
       enabled: status === 'authenticated',
       staleTime: Infinity,
     },

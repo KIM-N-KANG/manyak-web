@@ -7,6 +7,7 @@ import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
 import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
 import { PUSH_CONSENT_NOTICE_COPY } from '@/features/my/_shared/constants/push-copy';
 import type { SignupConsentSummary } from '@/lib/auth/signup-consent';
+import { EXPIRES_AT_COOKIE } from '@/lib/auth/token-cookie-policy';
 
 import {
   CONSENTS_FIXTURE,
@@ -100,6 +101,48 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     await expect(
       page.getByRole('banner').getByRole('link', { name: '로그인' }),
     ).toHaveCount(0);
+  });
+
+  test('회원 세션 쿠키가 있으면 세션 확인이 끝나기 전에 동의 조회를 시작하고, 확정 뒤 그 응답을 한 번만 쓴다', async ({
+    page,
+  }) => {
+    let consentsCount = 0;
+    let releaseSession!: () => void;
+    const consentsRequested = new Promise<void>((resolve) => {
+      releaseSession = resolve;
+    });
+
+    await mockMemberSession(page);
+    // BFF가 로그인 때 심는 회원 세션 쿠키(access 만료 시각, JS에 열림). 이 값이 선시작 힌트다.
+    await page.context().addCookies([
+      {
+        name: EXPIRES_AT_COOKIE,
+        value: String(Date.now() + 60 * 60 * 1000),
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
+    await page.route(CONSENTS, async (route) => {
+      consentsCount += 1;
+      releaseSession();
+      await route.fulfill({ json: CONSENTS_FIXTURE });
+    });
+    // 세션 확인은 동의 조회가 먼저 나간 뒤에만 응답한다. 직렬이면 여기서 멈춰 실패한다.
+    await page.route('**/api/auth/session', async (route) => {
+      if (route.request().method() === 'GET') {
+        await consentsRequested;
+      }
+
+      await route.fallback();
+    });
+
+    const myStories = page.waitForRequest(MY_STORIES);
+
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    await myStories;
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(consentsCount).toBe(1);
   });
 
   test('동의 조회가 끝나기 전에는 회원 조회·게스트 이관·초대 온보딩을 시작하지 않고, 끝난 뒤에 순서대로 시작한다', async ({
