@@ -23,8 +23,8 @@ export const PutBody = zod.object({
   schemaVersion: zod.number().optional(),
   payload: zod
     .object({
-      container: zod.boolean().optional(),
       string: zod.boolean().optional(),
+      container: zod.boolean().optional(),
       floatingPointNumber: zod.boolean().optional(),
       missingNode: zod.boolean().optional(),
       integralNumber: zod.boolean().optional(),
@@ -46,13 +46,13 @@ export const PutBody = zod.object({
       short: zod.boolean().optional(),
       double: zod.boolean().optional(),
       bigDecimal: zod.boolean().optional(),
+      textual: zod.boolean().optional(),
+      boolean: zod.boolean().optional(),
+      binary: zod.boolean().optional(),
       bigInteger: zod.boolean().optional(),
       valueNode: zod.boolean().optional(),
       object: zod.boolean().optional(),
       pojo: zod.boolean().optional(),
-      textual: zod.boolean().optional(),
-      boolean: zod.boolean().optional(),
-      binary: zod.boolean().optional(),
       number: zod.boolean().optional(),
       array: zod.boolean().optional(),
       empty: zod.boolean().optional(),
@@ -1383,12 +1383,6 @@ export const StartBody = zod
       .describe(
         '소셜 provider에서 발급받은 OIDC ID 토큰(JWT). 서버가 provider 공개키로 검증한다.',
       ),
-    handoffCode: zod
-      .string()
-      .nullish()
-      .describe(
-        '인앱 브라우저에서 만든 로그인 핸드오프 코드(스펙 §4-3-5). 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가 X-Manyak-Device-Id 헤더보다 우선)와 게스트 데이터 이관을 함께 수행한다. 무효·만료면 헤더 디바이스 ID로 폴백하고 로그인은 정상 진행한다.',
-      ),
   })
   .describe('소셜 로그인 요청(Google·Kakao 공통)');
 
@@ -1591,12 +1585,6 @@ export const LoginWithKakaoBody = zod
       .describe(
         '소셜 provider에서 발급받은 OIDC ID 토큰(JWT). 서버가 provider 공개키로 검증한다.',
       ),
-    handoffCode: zod
-      .string()
-      .nullish()
-      .describe(
-        '인앱 브라우저에서 만든 로그인 핸드오프 코드(스펙 §4-3-5). 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가 X-Manyak-Device-Id 헤더보다 우선)와 게스트 데이터 이관을 함께 수행한다. 무효·만료면 헤더 디바이스 ID로 폴백하고 로그인은 정상 진행한다.',
-      ),
   })
   .describe('소셜 로그인 요청(Google·Kakao 공통)');
 
@@ -1617,12 +1605,6 @@ export const LoginWithGoogleBody = zod
       .min(1)
       .describe(
         '소셜 provider에서 발급받은 OIDC ID 토큰(JWT). 서버가 provider 공개키로 검증한다.',
-      ),
-    handoffCode: zod
-      .string()
-      .nullish()
-      .describe(
-        '인앱 브라우저에서 만든 로그인 핸드오프 코드(스펙 §4-3-5). 유효하면 이 호출이 회원 체험 시드(핸드오프의 원본 디바이스 ID가 X-Manyak-Device-Id 헤더보다 우선)와 게스트 데이터 이관을 함께 수행한다. 무효·만료면 헤더 디바이스 ID로 폴백하고 로그인은 정상 진행한다.',
       ),
   })
   .describe('소셜 로그인 요청(Google·Kakao 공통)');
@@ -1685,68 +1667,6 @@ export const ReauthenticateBody = zod
   .describe('계정 연동 재인증 요청(이미 연동된 provider로 소유를 재확인한다)');
 
 export const ReauthenticateResponse = zod.void();
-
-/**
- * 외부 브라우저 랜딩이 코드를 검증하고 옮길 건수와 복귀 경로를 받습니다. PENDING 상태면 LANDED로 전이합니다. 스토리 제목·채팅 본문 같은 콘텐츠는 노출하지 않습니다.
- * @summary 로그인 핸드오프 확인
- */
-export const ConfirmHeader = zod.object({
-  'X-Manyak-Handoff-Code': zod.string(),
-});
-
-export const ConfirmResponse = zod.unknown();
-
-/**
- * 인앱 브라우저에서 외부 브라우저로 넘어가기 전에 게스트 스토리·채팅 ID와 원본 디바이스 ID를 임시 보관하고 일회용 코드를 발급합니다. 코드는 이 응답에서만 노출되며 이후 헤더로만 제시합니다. 디바이스 ID는 회원 체험 시드에 쓰이므로 원문 헤더가 필수입니다.
- * @summary 로그인 핸드오프 생성
- */
-export const PostAuthHandoffsHeader = zod.object({
-  'X-Manyak-Device-Id': zod.string().optional(),
-});
-
-export const postAuthHandoffsBodyStoryIdsMin = 0;
-export const postAuthHandoffsBodyStoryIdsMax = 100;
-
-export const postAuthHandoffsBodyChatIdsMin = 0;
-export const postAuthHandoffsBodyChatIdsMax = 100;
-
-export const postAuthHandoffsBodyCallbackPathMin = 0;
-export const postAuthHandoffsBodyCallbackPathMax = 512;
-
-export const postAuthHandoffsBodyCallbackPathRegExp = new RegExp(
-  '^/(?![/\\\\])[^\\x00-\\x1F]*$',
-);
-
-export const PostAuthHandoffsBody = zod
-  .object({
-    storyIds: zod
-      .array(zod.string())
-      .min(postAuthHandoffsBodyStoryIdsMin)
-      .max(postAuthHandoffsBodyStoryIdsMax)
-      .optional()
-      .describe(
-        '이관 대상 스토리 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용',
-      ),
-    chatIds: zod
-      .array(zod.string())
-      .min(postAuthHandoffsBodyChatIdsMin)
-      .max(postAuthHandoffsBodyChatIdsMax)
-      .optional()
-      .describe('이관 대상 채팅 공개 ID(UUID) 목록. 최대 100개, 빈 배열 허용'),
-    callbackPath: zod
-      .string()
-      .min(postAuthHandoffsBodyCallbackPathMin)
-      .max(postAuthHandoffsBodyCallbackPathMax)
-      .regex(postAuthHandoffsBodyCallbackPathRegExp)
-      .describe('로그인 후 복귀할 앱 내 상대 경로'),
-    sourceApp: zod
-      .enum(['kakaotalk', 'instagram', 'threads'])
-      .optional()
-      .describe('핸드오프를 만든 인앱 브라우저'),
-  })
-  .describe('로그인 핸드오프 생성 요청');
-
-export const PostAuthHandoffsResponse = zod.void();
 
 /**
  * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
@@ -2243,13 +2163,6 @@ export const SearchStoriesQueryParams = zod.object({
 export const SearchStoriesResponse = zod.unknown();
 
 /**
- * 마냑 공식 계정 소유의 공개 스토리 카드를 등록순으로 반환합니다. 인증은 필요 없고 공식 계정 미설정 환경은 빈 목록입니다. **폐기 예정**: GET /stories?filter=original이 대체하며, 클라이언트 전환 후 KNK-1400에서 제거합니다.
- * @deprecated
- * @summary 오리지널 스토리 목록 조회(폐기 예정)
- */
-export const GetOriginalStoriesResponse = zod.unknown();
-
-/**
  * 일반 제작에서 참조할 로어북(장르 공용 용어 사전) 목록을 조회합니다. genre로 필터할 수 있습니다.
  * @summary 로어북 카탈로그 조회
  */
@@ -2351,16 +2264,6 @@ export const ResumeGenerationResponse = zod.unknown();
  * @summary 현재 로그인 사용자 조회
  */
 export const MeResponse = zod.unknown();
-
-/**
- * 외부 로그인을 마치고 인앱 브라우저로 돌아왔을 때, 실제로 이관된 ID만 로컬에서 정리하기 위해 상태와 이관된 공개 ID 목록을 조회합니다. 이관되지 않은 ID는 여전히 게스트 소유이므로 지우면 안 됩니다.
- * @summary 로그인 핸드오프 상태 조회
- */
-export const StatusHeader = zod.object({
-  'X-Manyak-Handoff-Code': zod.string(),
-});
-
-export const StatusResponse = zod.unknown();
 
 /**
  * 표지 URL과 프리셋 키를 모두 지워 표지를 null로 만듭니다. 표지가 없어도 204입니다(멱등). 검수 중에는 409입니다. S3 객체는 지난 채팅 카드에서 참조할 수 있어 지우지 않습니다.

@@ -9,7 +9,7 @@ import {
   APP_VERSION,
   IS_ANALYTICS_ENABLED,
 } from '@/observability/analytics/config';
-import { handoffRedactionPlugin } from '@/observability/analytics/handoff-redaction';
+import { shareIdRedactionPlugin } from '@/observability/analytics/share-id-redaction';
 import { identifyUser } from '@/observability/monitoring/sentry';
 
 let initialized = false;
@@ -21,7 +21,7 @@ export function AmplitudeProvider({ children }: PropsWithChildren) {
     initialized = true;
 
     void (async () => {
-      amplitude.add(handoffRedactionPlugin);
+      amplitude.add(shareIdRedactionPlugin);
 
       await amplitude.initAll(ANALYTICS_API_KEY, {
         analytics: {

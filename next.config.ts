@@ -2,7 +2,6 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 import packageJson from './package.json';
-import { APP_PATH } from './src/constants/app-path';
 
 const nextConfig: NextConfig = {
   // E2E에서는 개발 도구 버튼이 제품 버튼을 덮어 클릭을 막지 않도록 숨긴다.
@@ -16,18 +15,8 @@ const nextConfig: NextConfig = {
     // 릴리스마다 손으로 갱신해야 해서 낡은 값이 남으므로, package.json을 정본으로 주입한다.
     NEXT_PUBLIC_APP_VERSION: packageJson.version,
   },
-  // 핸드오프 랜딩은 URL에 일회용 코드를 달고 열린다. 코드가 주소에 남아 있는 동안
-  // 이 문서에서 나가는 모든 요청이 Referer로 코드를 흘리지 않도록 no-referrer를 걸고,
-  // 응답이 중간 캐시에 남지 않도록 no-store를 함께 지정한다(정적 프리렌더는 유지된다).
   async headers() {
     return [
-      {
-        source: APP_PATH.LOGIN_CONTINUE,
-        headers: [
-          { key: 'Cache-Control', value: 'no-store' },
-          { key: 'Referrer-Policy', value: 'no-referrer' },
-        ],
-      },
       {
         // FCM 서비스 워커는 항상 최신 본을 받아야 한다. 캐시된 구버전이 남으면
         // Firebase 설정·SDK 버전이 앱과 어긋난 채 푸시를 처리한다.
