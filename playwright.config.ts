@@ -36,7 +36,7 @@ export default defineConfig({
     {
       name: 'Mobile Safari',
       testMatch:
-        /(?:smoke\/.*|auth\/in-app-login|stories\/story-create-draft|stories\/story-creation-storage)\.spec\.ts/,
+        /(?:smoke\/.*|auth\/in-app-login|my\/profile|stories\/story-edit|stories\/story-create-draft|stories\/story-creation-storage)\.spec\.ts/,
       use: { ...devices['iPhone 13'] },
     },
     {
