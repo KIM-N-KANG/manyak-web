@@ -152,10 +152,8 @@ export class HistoryLayerStack {
   }
 
   confirmLeave(): void {
-    const count = this.entries.length;
-
-    this.resetLayers();
-    this.enqueueGo(-(count + 1));
+    // 더미 정리만 흡수하고 실제 화면 이동의 popstate는 라우터에 넘긴다.
+    this.leave(() => this.adapter.go(-1));
   }
 
   private pushEntry(id: string): void {

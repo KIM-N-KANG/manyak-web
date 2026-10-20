@@ -191,17 +191,39 @@ describe('HistoryLayerStack', () => {
     expect(calls).toEqual(['push', 'push', 'push']);
   });
 
-  it('confirmLeave는 더미 수 + 1만큼 되감고 모든 레이어를 버린다', () => {
+  it('confirmLeave는 더미를 정리한 뒤 이전 화면으로 이동하고 마지막 pop을 넘긴다', () => {
     const { stack, calls } = createFakeHistory();
 
     stack.open(layer('guard', vi.fn(), 'guard'));
     stack.open(layer('dialog'));
     stack.confirmLeave();
-    expect(calls).toEqual(['push', 'push', 'go(-3)']);
+    expect(calls).toEqual(['push', 'push', 'go(-2)']);
+    expect(stack.handlePop()).toEqual({ consumed: true });
+    expect(calls).toEqual(['push', 'push', 'go(-2)', 'go(-1)']);
+    expect(stack.handlePop()).toEqual({ consumed: false });
     // 버린 레이어의 뒤늦은 close는 무시된다.
-    stack.handlePop();
     stack.close('dialog');
-    expect(calls).toEqual(['push', 'push', 'go(-3)']);
+    expect(calls).toEqual(['push', 'push', 'go(-2)', 'go(-1)']);
+  });
+
+  it('confirmLeave는 더미가 없으면 바로 뒤로가고 pop을 넘긴다', () => {
+    const { stack, calls } = createFakeHistory();
+
+    stack.confirmLeave();
+    expect(calls).toEqual(['go(-1)']);
+    expect(stack.handlePop()).toEqual({ consumed: false });
+  });
+
+  it('confirmLeave는 진행 중인 더미 정리가 끝난 뒤 이전 화면으로 이동한다', () => {
+    const { stack, calls } = createFakeHistory();
+
+    stack.open(layer('dialog'));
+    stack.close('dialog');
+    stack.confirmLeave();
+    expect(calls).toEqual(['push', 'go(-1)']);
+    expect(stack.handlePop()).toEqual({ consumed: true });
+    expect(calls).toEqual(['push', 'go(-1)', 'go(-1)']);
+    expect(stack.handlePop()).toEqual({ consumed: false });
   });
 
   it('leave는 더미를 모두 소비한 뒤 이동한다', () => {

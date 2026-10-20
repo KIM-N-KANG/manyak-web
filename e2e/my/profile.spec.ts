@@ -141,6 +141,50 @@ test.describe('프로필 수정', () => {
     await expect(page.getByText(TOAST_MESSAGE.PROFILE_SAVED)).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.MY}$`));
     await expect(page.getByRole('link', { name: /달빛작가/ })).toBeVisible();
+    await expect(nicknameInput(page)).toHaveCount(0);
+  });
+
+  test('바꾼 내용 없이 헤더 뒤로가기를 누르면 마이 화면으로 돌아간다 (MY-PROFILE-09)', async ({
+    page,
+  }) => {
+    const updates = await mockProfileApi(page);
+
+    await openProfileEdit(page);
+    await expect(nicknameInput(page)).toHaveValue(ME.nickname ?? '');
+    await expect(saveButton(page)).toBeDisabled();
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .tap();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.MY}$`));
+    await expect(
+      page.getByRole('link', {
+        name: new RegExp(PROFILE_EDIT_COPY.headerTitle),
+      }),
+    ).toBeVisible();
+    await expect(nicknameInput(page)).toHaveCount(0);
+    expect(updates).toEqual([]);
+  });
+
+  test('회원이 주소로 바로 열어도 헤더 뒤로가기로 마이 화면에 간다 (MY-PROFILE-10)', async ({
+    page,
+  }) => {
+    await mockProfileApi(page);
+    await skipOnboarding(page);
+    await mockMemberSession(page, { nickname: ME.nickname });
+    await page.goto(APP_PATH.MY_PROFILE_EDIT);
+    await expect(nicknameInput(page)).toHaveValue(ME.nickname ?? '');
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .tap();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.MY}$`));
+    await expect(
+      page.getByRole('link', {
+        name: new RegExp(PROFILE_EDIT_COPY.headerTitle),
+      }),
+    ).toBeVisible();
+    await expect(nicknameInput(page)).toHaveCount(0);
   });
 
   test('규칙을 어긴 닉네임은 보내지 않고, 이미 쓰는 닉네임은 서버 사유를 보여 주며 입력을 유지한다 (KNK-1148)', async ({
@@ -193,6 +237,12 @@ test.describe('프로필 수정', () => {
     await page.goBack();
     await dialog.getByRole('button', { name: exitCopy.confirm }).click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.MY}$`));
+    await expect(
+      page.getByRole('link', {
+        name: new RegExp(PROFILE_EDIT_COPY.headerTitle),
+      }),
+    ).toBeVisible();
+    await expect(nicknameInput(page)).toHaveCount(0);
     expect(updates).toEqual([]);
   });
 
