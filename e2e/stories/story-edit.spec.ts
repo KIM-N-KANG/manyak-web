@@ -329,6 +329,10 @@ test.describe('스토리 수정', () => {
 
     await page.goBack();
     await expect(page).toHaveURL(/\/studio$/);
+    await expect(
+      page.getByRole('link', { name: `${DETAIL.title} 상세 보기` }),
+    ).toBeVisible();
+    await expect(titleInput(page)).toHaveCount(0);
   });
 
   test('내가 만들지 않은 스토리에는 수정하기가 없다 (STORY-DETAIL-45)', async ({
@@ -458,6 +462,10 @@ test.describe('스토리 수정', () => {
     await expect(page).toHaveURL(
       new RegExp(`${APP_PATH.STORY_DETAIL(STORY_ID)}$`),
     );
+    await expect(
+      page.getByRole('heading', { name: DETAIL.title, exact: true }),
+    ).toBeVisible();
+    await expect(titleInput(page)).toHaveCount(0);
     expect(patches).toEqual([]);
   });
 
