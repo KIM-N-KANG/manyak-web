@@ -68,8 +68,8 @@ describe('법적 문서 콘텐츠', () => {
 
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
-    expect(privacyContent.effectiveDate).toBe('2026-09-25');
-    expect(privacyContent.version).toBe('v1.7');
+    expect(privacyContent.effectiveDate).toBe('2026-10-22');
+    expect(privacyContent.version).toBe('v1.8');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 
@@ -111,7 +111,7 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('마스킹된 화면 구조·클릭·스크롤');
     expect(text).toContain('Android Keystore로 암호화한 로그인 토큰');
     expect(text).toContain(
-      '광고 ID, 연락처, 위치, 카메라·마이크 권한을 요청하지 않습니다',
+      '광고 식별자(AAID) 외에 연락처, 위치, 카메라와 마이크 권한을 요청하지 않습니다',
     );
   });
 
@@ -201,6 +201,20 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('광고 성과 측정');
     expect(text).toContain('채팅 메시지나 스토리 자유입력 원문은');
     expect(text).toContain('서드 파티 쿠키·추적을 차단');
+  });
+
+  it('개인정보 처리방침은 Android 앱 Meta SDK의 광고 식별자 수집과 거부 방법을 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain('Android 앱에서는 Meta SDK');
+    expect(text).toContain('광고 식별자(AAID), 앱 설치와 앱 실행 이벤트');
+    expect(text).toContain(
+      '앱에 포함된 Meta SDK가 암호화된 통신으로 Meta에 직접 전송',
+    );
+    expect(text).toContain(
+      '설정 > Google > 광고에서 광고 ID를 삭제하거나 재설정',
+    );
+    expect(text).not.toContain('광고 ID 수집 SDK가 구현되어 있지 않습니다');
   });
 
   it('개인정보 처리방침은 연령 제한과 자동화된 결정 비적용을 고지한다', () => {
