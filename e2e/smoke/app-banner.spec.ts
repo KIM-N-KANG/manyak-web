@@ -8,6 +8,7 @@ import {
 import { APP_SCREEN_ID } from '@/constants/app-frame';
 import { APP_PATH } from '@/constants/app-path';
 import {
+  ANDROID_PLAY_STORE_URL,
   APP_BANNER_SESSION_KEY,
   APP_BANNER_VISITS_KEY,
   buildAppIntentUrl,
@@ -176,6 +177,57 @@ test.describe('Android 인앱 브라우저', () => {
     await startNewVisit(page);
     await waitForVisit(page, 2);
     await expect(banner(page)).toBeVisible();
+  });
+});
+
+test.describe('Android 인앱 브라우저 앱 열기 실패', () => {
+  test.use({ userAgent: USER_AGENT.androidKakao });
+
+  test.beforeEach(({ browserName }) => {
+    test.skip(
+      browserName === 'webkit',
+      'WebKit은 알 수 없는 스킴으로 이동하면 오류 화면으로 바뀐다',
+    );
+  });
+
+  test('앱이 열리지 않으면 0.7초 뒤 플레이스토어로 이동한다 (ONBD-BANNER-20)', async ({
+    page,
+  }) => {
+    await page.route(ANDROID_PLAY_STORE_URL, (route) =>
+      route.fulfill({ body: 'play store' }),
+    );
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await waitForVisit(page, 1);
+    await banner(page)
+      .getByRole('link', {
+        name: APP_BANNER_VARIANT_COPY.android_inapp.actionLabel,
+      })
+      .click();
+
+    await page.waitForURL(ANDROID_PLAY_STORE_URL);
+  });
+
+  test('앱으로 전환되면 플레이스토어로 이동하지 않는다 (ONBD-BANNER-20)', async ({
+    page,
+  }) => {
+    await page.goto(APP_PATH.MAIN.STORIES);
+    await waitForVisit(page, 1);
+    await banner(page)
+      .getByRole('link', {
+        name: APP_BANNER_VARIANT_COPY.android_inapp.actionLabel,
+      })
+      .click();
+
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(2000);
+
+    expect(page.url()).not.toContain('play.google.com');
   });
 });
 
