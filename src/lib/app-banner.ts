@@ -42,6 +42,12 @@ const ANDROID_MARKET_REFERRER = encodeURIComponent(
   'utm_source=manyak_web&utm_medium=app_banner',
 );
 
+/**
+ * 앱 열기가 일어나지 않을 때 직접 여는 플레이스토어 주소다. 인스타그램 인앱 브라우저는
+ * 앱이 없으면 intent 링크를 `S.browser_fallback_url`까지 무시하고 버리지만 이 주소는 연다.
+ */
+export const ANDROID_PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${ANDROID_APP_PACKAGE}&referrer=${ANDROID_MARKET_REFERRER}`;
+
 /** Android 앱 WebView가 여는 문서 화면이다. 앱 안에서 앱 열기를 권하지 않도록 뺀다. */
 const EXCLUDED_PATHS: readonly string[] = [
   APP_PATH.ABOUT,
