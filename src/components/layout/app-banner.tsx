@@ -20,6 +20,7 @@ import {
 import { APP_SCREEN_ID } from '@/constants/app-frame';
 import { SITE_NAME } from '@/constants/site';
 import {
+  ANDROID_PLAY_STORE_URL,
   type AppBannerVariant,
   buildAppIntentUrl,
   dismissAppBanner,
@@ -39,6 +40,12 @@ import { track } from '@/observability/analytics';
 
 /** 외부 브라우저 전환을 시도한 뒤 실패로 판단하기까지 기다리는 시간(ms)이다. */
 const ESCAPE_FALLBACK_DELAY_MS = 1500;
+
+/**
+ * Android 앱 열기를 시도한 뒤 실패로 판단하기까지 기다리는 시간(ms)이다. 실패하면 사용자가
+ * 플레이스토어를 기다리는 시간이라 짧게 둔다. 앱이 이보다 늦게 뜨면 플레이스토어가 함께 열린다.
+ */
+const APP_OPEN_FALLBACK_DELAY_MS = 700;
 
 /**
  * 배너 버튼에 primaryOutline 위로 덧씌우는 클래스다. 진한 초록 아이콘과 겹치지 않게 테두리를
@@ -107,14 +114,18 @@ function buildEventProps(variant: AppBannerVariant, pathname: string) {
 }
 
 /**
- * 외부 브라우저 전환을 시도한 뒤 대기 시간 안에 문서가 한 번도 숨겨지지 않으면 실패로 보고
- * 콜백을 부른다. 전환에 성공하면 앱이 백그라운드로 가며 문서가 숨겨지므로, 그 뒤 대기 시간
+ * 외부 브라우저나 앱 전환을 시도한 뒤 대기 시간 안에 문서가 한 번도 숨겨지지 않으면 실패로
+ * 보고 콜백을 부른다. 전환에 성공하면 앱이 백그라운드로 가며 문서가 숨겨지므로, 그 뒤 대기 시간
  * 안에 돌아와도 실패로 보지 않는다.
  *
  * @param onFail 전환에 실패했을 때 부를 함수
+ * @param delayMs 실패로 판단하기까지 기다리는 시간(ms)
  * @returns 대기를 취소하는 함수
  */
-function scheduleEscapeFallback(onFail: () => void): () => void {
+function scheduleEscapeFallback(
+  onFail: () => void,
+  delayMs: number,
+): () => void {
   let timer = 0;
 
   function handleVisibilityChange() {
@@ -131,7 +142,7 @@ function scheduleEscapeFallback(onFail: () => void): () => void {
   timer = window.setTimeout(() => {
     cancel();
     onFail();
-  }, ESCAPE_FALLBACK_DELAY_MS);
+  }, delayMs);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
   return cancel;
@@ -198,7 +209,16 @@ export function AppBanner() {
       cancelEscapeFallbackRef.current = scheduleEscapeFallback(() => {
         track('client_appBanner_escapeGuide_shown');
         openGuide('escape');
-      });
+      }, ESCAPE_FALLBACK_DELAY_MS);
+
+      return;
+    }
+
+    if (isAndroidVariant(shownVariant)) {
+      cancelEscapeFallbackRef.current?.();
+      cancelEscapeFallbackRef.current = scheduleEscapeFallback(() => {
+        window.location.assign(ANDROID_PLAY_STORE_URL);
+      }, APP_OPEN_FALLBACK_DELAY_MS);
 
       return;
     }
