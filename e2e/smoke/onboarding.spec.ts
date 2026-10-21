@@ -87,8 +87,8 @@ test.describe('온보딩', () => {
       page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
     ).toBeVisible();
 
-    // 첫 방문 소개를 가리지 않도록 앱 안내 배너를 띄우지 않는다.
-    await page.waitForLoadState('networkidle');
+    // 첫 방문 소개를 가리지 않도록 앱 안내 배너를 띄우지 않는다. 제목은 클라이언트 게이트를
+    // 통과한 뒤에 그려지므로, 이때는 배너 판정도 이미 끝났다.
     await expect(
       page.getByRole('region', { name: APP_BANNER_COPY.regionLabel }),
     ).toHaveCount(0);
