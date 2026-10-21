@@ -100,6 +100,8 @@ export function OnboardingScreen() {
         scrollerRef={scrollerRef}
         heroRef={heroRef}
         onLogoClick={handleScrollToTop}
+        onStartCreate={() => handleStartCreate({ source: 'header' })}
+        onBrowse={() => handleBrowse({ source: 'header' })}
       />
       <main
         ref={scrollerRef}

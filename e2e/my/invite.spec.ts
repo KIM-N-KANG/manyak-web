@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { formatCreditAmount } from '@/constants/credit';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
+import { ONBOARDING_TITLE_LINES } from '@/features/onboarding/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
@@ -704,9 +705,7 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
     await page.goto('/');
 
     await expect(
-      page.getByRole('heading', {
-        name: '눈을 떠보니 스토리 속 주인공이 되었다',
-      }),
+      page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
     ).toBeVisible();
 
     isAuthenticated = true;
@@ -726,9 +725,7 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', {
-        name: '눈을 떠보니 스토리 속 주인공이 되었다',
-      }),
+      page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
     ).toHaveCount(0);
     await expect(page.getByRole('dialog')).toHaveCount(1);
   });
