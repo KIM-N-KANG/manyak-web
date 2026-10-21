@@ -142,7 +142,7 @@ export function OnboardingHero({
               className="mb-1">
               <ManyakLogo className="h-6 w-auto text-primary" />
             </m.div>
-            <h1 className="text-[clamp(1.25rem,calc((100cqi-7rem)/10.4),2.25rem)] leading-[1.3] font-bold tracking-[-0.03em]">
+            <h1 className="text-[clamp(1rem,calc((100cqi-7rem)/11.9),2.25rem)] leading-[1.3] font-bold tracking-[-0.03em]">
               {ONBOARDING_TITLE_LINES.map((titleLine, index) => (
                 <m.span
                   key={titleLine}
@@ -156,7 +156,7 @@ export function OnboardingHero({
             <m.p
               variants={rise}
               custom={ONBOARDING_ENTRANCE_DELAY.description}
-              className="text-[clamp(0.8125rem,calc((100cqi-7rem)/20),1rem)] text-white/80">
+              className="text-[clamp(0.8125rem,calc((100cqi-7rem)/20),1rem)] whitespace-pre-line text-white/80">
               {ONBOARDING_DESCRIPTION}
             </m.p>
           </div>

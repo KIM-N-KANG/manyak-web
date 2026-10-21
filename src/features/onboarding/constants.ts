@@ -15,12 +15,16 @@ export const ONBOARDING_SEEN_COOKIE = 'manyak_onboarding_seen';
 export const ONBOARDING_SEEN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 export const ONBOARDING_TITLE_LINES = [
-  '눈을 떠보니',
-  '스토리 속 주인공이 되었다',
+  '키워드 몇 개로',
+  '상상 속 인물이 내 스토리 안에',
 ] as const;
 
+/** 첫 화면 설명. `\n`에서 줄을 바꾼다. */
 export const ONBOARDING_DESCRIPTION =
-  '키워드로 만든 스토리를 채팅으로 직접 이어가요';
+  '간단하게 스토리 만들고\nAI와 함께 나만의 스토리로 이어가보세요';
+
+export const ONBOARDING_HEADER_CREATE_LABEL = '시작하기';
+export const ONBOARDING_HEADER_BROWSE_LABEL = '둘러보기';
 
 /**
  * 푸터 Google Play 배지가 여는 스토어 페이지. `referrer`로 온보딩 푸터에서 온 설치를
@@ -92,14 +96,12 @@ export type OnboardingFeatureKey =
   | 'originals';
 
 /**
- * 온보딩 버튼을 누른 위치. 버튼은 기능 소개 섹션 아래에만 있어 어느 섹션인지 함께 남긴다.
- * `source`는 헤더 버튼(`header`)과 본문 끝 버튼(`bottom`)이 있던 이전 기록과 같은 축으로
- * 비교하려고 유지한다.
+ * 온보딩 버튼을 누른 위치. 헤더 버튼은 `header`, 기능 소개 섹션 아래 버튼은 `section`과
+ * 어느 섹션인지를 함께 남긴다.
  */
-export interface OnboardingButtonSource {
-  source: 'section';
-  section: OnboardingFeatureKey;
-}
+export type OnboardingButtonSource =
+  | { source: 'header' }
+  | { source: 'section'; section: OnboardingFeatureKey };
 
 /**
  * 기능 소개 섹션 아래 버튼. `create`는 간편 제작으로, `browse`는 홈으로 이동한다.
@@ -196,8 +198,7 @@ export const ONBOARDING_FEATURES: readonly OnboardingFeature[] = [
       }),
       slide('art-style', 140, {
         title: '이미지 스타일을 골라요',
-        description:
-          '애니메이션부터 수묵까지, 고른 이미지\u00a0스타일로 썸네일과 인물을 그려요.',
+        description: '고른 이미지\u00a0스타일로 썸네일과 인물을 그려요.',
         alt: '이미지 스타일을 고르는 화면',
       }),
     ],
