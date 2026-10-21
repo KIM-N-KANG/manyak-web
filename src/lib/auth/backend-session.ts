@@ -216,7 +216,7 @@ export type SocialLoginResult =
 
 /**
  * 소셜 provider의 id_token으로 소셜 인증을 하고, 현행 필수 동의가 모두 있으면 백엔드
- * 세션을 수립한다. 동의가 남았으면 세션을 만들지 않고 대기 코드를 HttpOnly 쿠키에 담는다.
+ * 세션을 수립한다. 동의가 남았으면 남은 이전 세션 쿠키를 지우고 대기 코드를 HttpOnly 쿠키에 담는다.
  * NextAuth signIn 콜백(최초 로그인)에서 호출한다. 실패 시 던져서 로그인 자체를 실패시킨다.
  *
  * @param provider 로그인에 사용한 소셜 provider
@@ -257,6 +257,9 @@ export async function authenticateSocialLogin(
     throw new Error('소셜 인증 응답을 해석하지 못했습니다.');
   }
 
+  // 동의 전에는 세션이 없어야 한다. 이 브라우저에 남은 이전 세션의 토큰 쿠키를 지워, 원래
+  // 화면이 그 토큰으로 회원 조회를 보내 401과 세션 만료 로그아웃으로 가입 동의를 끊지 않게 한다.
+  await clearBackendSession();
   await writePendingSignupConsent(pending);
 
   return { status: 'consent-required' };

@@ -321,32 +321,51 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     expect(createChatCount).toBe(1);
   });
 
-  test('동의를 마치지 않은 탭을 닫고 다시 접속하면 로그인이 유지되지 않는다', async ({
+  test('문서 개정으로 동의가 남은 기존 세션은 탭 로그인 표시가 없어도 로그아웃하지 않고 재동의 시트를 띄운다', async ({
     page,
   }) => {
+    const recordBodies: unknown[] = [];
+
     await mockMemberSession(page);
-    await page.route(CONSENTS, (route) =>
-      route.fulfill({ json: PENDING_CONSENTS }),
-    );
+    await page.route(CONSENTS, async (route) => {
+      if (route.request().method() === 'POST') {
+        recordBodies.push(route.request().postDataJSON());
+        await route.fulfill({ json: CONSENTS_FIXTURE });
+
+        return;
+      }
+
+      await route.fulfill({
+        json: {
+          ...CONSENTS_FIXTURE,
+          privacy: { requiredVersion: 'v1.8', needsConsent: true },
+        },
+      });
+    });
 
     const signOut = await mockSignOut(page);
 
-    // 이 탭에는 로그인 진행 표시가 없다(이전 탭에서 동의 없이 끝난 로그인).
+    // 이 탭에는 로그인 진행 표시가 없다(며칠 전에 로그인한 세션).
     await page.goto(APP_PATH.MAIN.STUDIO);
-    await page.evaluate(() => {
-      (window as { keepAlive?: boolean }).keepAlive = true;
-    });
 
-    await expect.poll(() => signOut.count).toBe(1);
+    const dialog = consentDialog(page);
+
+    await expect(dialog).toBeVisible();
     await expect(
-      page.getByRole('banner').getByRole('link', { name: '로그인' }),
+      dialog.getByRole('checkbox', { name: CONSENT_SHEET_COPY.items.privacy }),
     ).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    // 페이지를 다시 불러오지 않고 그 자리에서 게스트로 바뀐다(깜빡임 없음).
-    expect(
-      await page.evaluate(() => (window as { keepAlive?: boolean }).keepAlive),
-    ).toBe(true);
+
+    const myStories = page.waitForRequest(MY_STORIES);
+
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .check();
+    await submitButton(page).click();
+
+    await myStories;
+    await expect(dialog).toBeHidden();
+    expect(recordBodies).toEqual([{ privacy: 'v1.8' }]);
+    expect(signOut.count).toBe(0);
   });
 
   for (const [action, leave] of LEAVE_SHEET) {
@@ -747,6 +766,55 @@ test.describe('동의 전 가입 대기(세션 없음)', () => {
     // 가입 완료가 동의를 함께 저장하므로 회원 동의 기록 API는 부르지 않는다.
     expect(consentRecords).toBe(0);
     await expect.poll(() => readPendingLogin(page)).toBeNull();
+  });
+
+  test('이전 세션 쿠키로 미리 보낸 동의 조회가 401이어도, 같은 화면에서 가입을 마친 뒤 그 응답으로 로그아웃하지 않는다', async ({
+    page,
+  }) => {
+    let consentsCount = 0;
+
+    await seedPendingLogin(page);
+    await mockSignupConsent(page, SIGNUP_PENDING);
+    // 로그아웃 뒤에도 남은 이전 세션의 회원 쿠키. 세션 판정 전에 동의 조회를 미리 보내게 한다.
+    await page.context().addCookies([
+      {
+        name: EXPIRES_AT_COOKIE,
+        value: String(Date.now() + 60 * 60 * 1000),
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
+    await page.route(CONSENTS, async (route) => {
+      consentsCount += 1;
+      // 첫 조회는 폐기된 옛 토큰으로 나간 것이라 401이다.
+      await route.fulfill(
+        consentsCount === 1
+          ? { status: 401, json: '세션이 만료되었습니다.' }
+          : { json: CONSENTS_FIXTURE },
+      );
+    });
+
+    const signOut = await mockSignOut(page);
+
+    await mockSignupConsentSignIn(page);
+    await page.goto(APP_PATH.MAIN.STUDIO);
+
+    const dialog = consentDialog(page);
+
+    await expect(dialog).toBeVisible();
+    expect(consentsCount).toBe(1);
+
+    const myStories = page.waitForRequest(MY_STORIES);
+
+    await dialog
+      .getByRole('checkbox', { name: CONSENT_SHEET_COPY.agreeAll })
+      .check();
+    await submitButton(page).click();
+
+    await myStories;
+    await expect(dialog).toBeHidden();
+    expect(consentsCount).toBe(2);
+    expect(signOut.count).toBe(0);
   });
 
   for (const [code, toast] of [

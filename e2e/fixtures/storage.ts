@@ -181,8 +181,8 @@ export async function seedStoryCompletionRequests(
 
 /**
  * 이 탭에서 OAuth를 시작했다는 표시(sessionStorage)를 심는다.
- * OAuth 복귀·같은 탭 새로고침처럼 동의 시트가 이어져야 하는 상태를 재현한다. 심지 않으면
- * 동의가 남은 회원 세션은 이전 탭의 미완 로그인으로 판정돼 로그아웃된다.
+ * OAuth 복귀·같은 탭 새로고침처럼 가입 동의 시트가 이어져야 하는 상태를 재현한다. 심지 않으면
+ * 세션 없는 화면은 가입 대기를 조회하지 않는다.
  */
 export async function seedPendingLogin(page: Page): Promise<void> {
   await page.addInitScript((key) => {

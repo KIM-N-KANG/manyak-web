@@ -28,7 +28,6 @@ import {
   clearPendingLogin,
   hasPendingLogin,
 } from '@/features/auth/_shared/utils/pending-login-storage';
-import { signOutBeforeConsent } from '@/features/auth/_shared/utils/sign-out-before-consent';
 import {
   abandonPendingLogin,
   cancelPendingSignupConsent,
@@ -44,9 +43,8 @@ import { FetchError } from '@/lib/custom-fetch';
  * 동의 게이트가 판정한 단계.
  * - `guest`: 비로그인 확정. 보호 기능은 로그인 시트로 안내한다.
  * - `checking`: 세션 판정·동의 조회 중. 회원 기능을 열지 않는다(fail-closed).
- * - `required`: 이 탭에서 시작한 로그인에 필수 동의가 남아 시트를 띄운다.
- * - `stale-login`: 필수 동의가 남았는데 이 탭의 로그인 표시가 없다. 이전 탭에서 끝내지
- *   않은 로그인으로 보고 로그아웃한다.
+ * - `required`: 로그인한 세션에 필수 동의가 남아 시트를 띄운다. 동의 전에는 세션이 생기지
+ *   않으므로 문서 개정으로 요구 버전이 오른 기존 세션이다. 시트에서 회원 동의 API로 다시 받는다.
  * - `blocked`: 공개 법적 문서 경로에서 동의가 남았다. 시트·로그아웃 없이 회원 기능만 잠근다.
  * - `satisfied`: 필수 동의까지 마친 회원.
  * - `load-error`: 조회가 네트워크·5xx로 실패했다. 시트에서 재시도한다.
@@ -59,7 +57,6 @@ export type ConsentGatePhase =
   | 'guest'
   | 'checking'
   | 'required'
-  | 'stale-login'
   | 'blocked'
   | 'satisfied'
   | 'load-error'
@@ -71,10 +68,8 @@ export type ConsentGatePhase =
 const SIGNUP_CONSENT_QUERY_KEY = ['signup-consent'] as const;
 
 /**
- * 동의 시트에서 연 문서를 새 탭으로 읽는 동안 원래 탭이 로그아웃되지 않도록, 공개 법적
- * 문서 경로에서는 fail-closed 로그아웃과 시트를 모두 끈다. 새 탭은 이 탭의 로그인 표시를
- * 물려받지 않을 수 있는데(브라우저·noopener에 따라 다르다), 그때 로그아웃하면 공유 쿠키가
- * 지워져 동의 중이던 원래 탭까지 풀린다.
+ * 동의 시트에서 연 문서를 새 탭으로 읽는 동안 그 탭이 문서를 가리지 않도록, 공개 법적
+ * 문서 경로에서는 시트를 띄우지 않고 회원 기능만 잠근다.
  */
 const PUBLIC_LEGAL_PATHS: readonly string[] = [
   APP_PATH.TERMS,
@@ -109,7 +104,8 @@ type ResolvePhaseInput = {
 };
 
 /**
- * 세션 상태·동의 조회 결과·경로·탭 로그인 표시를 한 단계로 접는다.
+ * 세션 상태·동의 조회 결과·경로·탭 로그인 표시를 한 단계로 접는다. 탭 로그인 표시는 세션이
+ * 없는 가입 대기 판정에만 쓴다.
  * 401은 세션 만료 흐름이 로그아웃시키므로 그동안 `checking`으로 두고, 조회 응답이 오기
  * 전에도 회원 기능을 열지 않는다.
  *
@@ -165,11 +161,7 @@ function resolvePhase({
     return 'satisfied';
   }
 
-  if (isPublicLegalPath) {
-    return 'blocked';
-  }
-
-  return hasPendingLogin() ? 'required' : 'stale-login';
+  return isPublicLegalPath ? 'blocked' : 'required';
 }
 
 /**
@@ -178,9 +170,7 @@ function resolvePhase({
  * 동의 조회는 인증 확정 후 사용자별 키로 한 번만 하고(`staleTime: Infinity`), 이후 갱신은
  * 시트의 기록 성공(`applyRecordedConsent`)과 명시 재조회(`reload`)로만 일어난다.
  * 회원 기능과 로그인 후 부수 효과는 전부 `useMemberAccess().isMember`로 이 판정을 재사용한다.
- * fail-closed 로그아웃은 페이지를 다시 불러오지 않고 세션만 비우므로, 같은 탭에서 다시 로그인해
- * 다시 판정할 수 있도록 `stale-login`을 벗어나면 진행 표시를 되돌린다. 뒤로가기·앞으로가기로
- * 다시 불러온 문서에 남은 탭 표시는 마치지 않고 떠난 로그인으로 보고 정리한다.
+ * 뒤로가기·앞으로가기로 다시 불러온 문서에 남은 탭 표시는 마치지 않고 떠난 로그인으로 보고 정리한다.
  *
  * @returns 판정 단계, 필요 항목, 기록 결과 반영·재조회 함수, 시트 상태를 초기화할 사용자 키
  */
@@ -198,6 +188,14 @@ function useConsentGate() {
   );
 
   useEffect(() => {
+    // 게스트로 확정되면 미리 보낸 조회를 버린다. 같은 화면에서 가입 동의를 마쳐 세션이 생겼을 때
+    // 세션이 없던 때 보낸 응답(만료된 옛 토큰의 401 등)을 새 회원의 판정에 쓰지 않게 한다.
+    if (status === 'unauthenticated') {
+      earlyConsentsRef.current = null;
+
+      return;
+    }
+
     if (
       status !== 'loading' ||
       earlyConsentsRef.current ||
@@ -254,11 +252,10 @@ function useConsentGate() {
   });
   const isSignupPhase =
     phase === 'signup-required' || phase === 'signup-load-error';
-  const signingOutRef = useRef(false);
 
   // 히스토리 이동으로 돌아온 문서에 남은 탭 표시는 시트를 마치지 않고 떠난 로그인이다. Chrome은
   // 사용자 조작 없이 시트를 연 화면을 뒤로가기 버튼에서 건너뛰어 시트의 취소가 실행되지 않는다.
-  // 마운트 시점은 세션 조회 전이라 표시를 지우면 이후 판정이 게스트·stale-login 경로를 따른다.
+  // 마운트 시점은 세션 조회 전이라 표시를 지우면 이후 판정이 가입 대기를 조회하지 않는 게스트 경로를 따른다.
   // bfcache 복원은 이전 판정을 그대로 들고 있으므로 정리한 뒤 다시 불러온다.
   useEffect(() => {
     if (hasPendingLogin() && isHistoryTraversalLoad()) {
@@ -292,21 +289,6 @@ function useConsentGate() {
       notifySessionExpired();
     }
   }, [consentsQuery]);
-
-  useEffect(() => {
-    if (phase !== 'stale-login') {
-      signingOutRef.current = false;
-
-      return;
-    }
-
-    if (signingOutRef.current) {
-      return;
-    }
-
-    signingOutRef.current = true;
-    void signOutBeforeConsent();
-  }, [phase]);
 
   const applyRecordedConsent = (
     recorded: UserConsentResponse,

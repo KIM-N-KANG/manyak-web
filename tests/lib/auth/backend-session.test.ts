@@ -402,7 +402,7 @@ describe('authenticateSocialLogin', () => {
     expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
   });
 
-  it('CONSENT_REQUIRED면 토큰 쿠키 없이 대기 쿠키만 쓴다', async () => {
+  it('CONSENT_REQUIRED면 남은 이전 세션 쿠키를 지우고 토큰 쿠키 없이 대기 쿠키만 쓴다', async () => {
     vi.mocked(startSocialAuthOnServer).mockResolvedValue({
       status: 'CONSENT_REQUIRED',
       isNewUser: true,
@@ -419,6 +419,7 @@ describe('authenticateSocialLogin', () => {
     ).toHaveBeenCalledWith(PENDING);
     expect(fetchMeOnServer).not.toHaveBeenCalled();
     expect(tokenCookiesMock.writeBackendSessionTokens).not.toHaveBeenCalled();
+    expect(tokenCookiesMock.clearBackendSession).toHaveBeenCalledTimes(1);
   });
 
   it('CONSENT_REQUIRED에 대기 코드가 없으면 실패시키고 아무 쿠키도 쓰지 않는다', async () => {
