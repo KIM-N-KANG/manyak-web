@@ -4,8 +4,11 @@ import { APP_PATH } from '@/constants/app-path';
 import { SITE_CONTACT_EMAIL } from '@/constants/site';
 import {
   ONBOARDING_FEATURES,
+  ONBOARDING_HEADER_BROWSE_LABEL,
+  ONBOARDING_HEADER_CREATE_LABEL,
   ONBOARDING_PLAY_STORE_BADGE_ALT,
   ONBOARDING_PLAY_STORE_URL,
+  ONBOARDING_TITLE_LINES,
 } from '@/features/onboarding/constants';
 
 import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
@@ -80,19 +83,17 @@ test.describe('온보딩', () => {
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
     await expect(
-      page.getByRole('heading', {
-        name: '눈을 떠보니 스토리 속 주인공이 되었다',
-      }),
+      page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
     ).toBeVisible();
 
     // 맨 위에서는 첫 화면 이미지가 화면을 차지하고 헤더는 숨어 있다.
-    // 헤더에는 로고만 있고 이동 버튼은 없다.
+    // 헤더에는 로고와 둘러보기, 시작하기 버튼이 있다.
     const header = page.getByRole('banner', { includeHidden: true });
 
     await expect(header).toBeHidden();
     await expect(
       header.getByRole('button', { includeHidden: true }),
-    ).toHaveCount(1);
+    ).toHaveCount(3);
 
     // 첫 화면 아래쪽 스크롤 신호를 누르면 첫 화면을 지나 첫 기능 소개까지 내려간다.
     // 내려가면 스크롤 신호는 사라지고 헤더가 나타나 맨 위 로고 버튼을 누를 수 있다.
@@ -370,6 +371,35 @@ test.describe('온보딩', () => {
     await expect(page).toHaveURL(/\/$/);
 
     await page.reload();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test('헤더 시작하기 버튼은 제작 입력 화면으로, 둘러보기 버튼은 홈으로 이동한다', async ({
+    page,
+  }) => {
+    await stubOptimizedImages(page);
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/onboarding(\?|$)/);
+
+    await page.getByRole('button', { name: '아래로 이동' }).click();
+
+    const header = page.getByRole('banner');
+
+    await header
+      .getByRole('button', { name: ONBOARDING_HEADER_CREATE_LABEL })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+
+    // 시작하기로 온보딩을 본 것으로 기록됐으므로 새 방문자로 다시 연다.
+    await page.context().clearCookies();
+    await page.evaluate(() => localStorage.clear());
+    await page.goto('/onboarding');
+    await page.getByRole('button', { name: '아래로 이동' }).click();
+    await header
+      .getByRole('button', { name: ONBOARDING_HEADER_BROWSE_LABEL })
+      .click();
     await expect(page).toHaveURL(/\/$/);
   });
 });

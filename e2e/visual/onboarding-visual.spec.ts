@@ -1,6 +1,9 @@
 import { formatCreditAmount } from '@/constants/credit';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
-import { ONBOARDING_DESCRIPTION } from '@/features/onboarding/constants';
+import {
+  ONBOARDING_DESCRIPTION,
+  ONBOARDING_TITLE_LINES,
+} from '@/features/onboarding/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
@@ -36,9 +39,7 @@ test.describe('온보딩 비주얼', () => {
 
     await expect(page).toHaveURL(/\/onboarding(\?|$)/);
     await expect(
-      page.getByRole('heading', {
-        name: '눈을 떠보니 스토리 속 주인공이 되었다',
-      }),
+      page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
     ).toBeVisible();
     // 등장 애니메이션(마지막 요소는 제목 아래 설명)이 끝난 정적 상태에서 찍는다.
     await expect
