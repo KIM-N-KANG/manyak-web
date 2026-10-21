@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 
+import { APP_BANNER_COPY } from '@/constants/app-banner';
 import { APP_PATH } from '@/constants/app-path';
 import { SITE_CONTACT_EMAIL } from '@/constants/site';
 import {
@@ -85,6 +86,12 @@ test.describe('온보딩', () => {
     await expect(
       page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
     ).toBeVisible();
+
+    // 첫 방문 소개를 가리지 않도록 앱 안내 배너를 띄우지 않는다.
+    await page.waitForLoadState('networkidle');
+    await expect(
+      page.getByRole('region', { name: APP_BANNER_COPY.regionLabel }),
+    ).toHaveCount(0);
 
     // 맨 위에서는 첫 화면 이미지가 화면을 차지하고 헤더는 숨어 있다.
     // 헤더에는 로고와 둘러보기, 시작하기 버튼이 있다.
