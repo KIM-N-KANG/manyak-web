@@ -27,6 +27,8 @@ export function useSmoothScroll(
       // ponytail: 끝 위치를 매 프레임 scroller에서 다시 읽는다(레이아웃 읽기). 콘텐츠를 감싼
       // 단일 요소가 없어 크기 감시 대신 쓴다. 긴 목록에 붙이면 콘텐츠 래퍼를 두고 끈다.
       naiveDimensions: true,
+      // 기본값(0.1)보다 빨리 따라붙어 휠 입력에 굼뜨지 않게 한다.
+      lerp: 0.16,
       autoRaf: true,
     });
 

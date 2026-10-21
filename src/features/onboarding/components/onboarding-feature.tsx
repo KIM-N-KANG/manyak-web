@@ -34,11 +34,10 @@ import {
 } from '../utils/onboarding-gallery';
 import { createRiseVariants } from '../utils/onboarding-motion';
 
-const SLIDE_SCROLL_LENGTH_CQH = 80;
+const SLIDE_SCROLL_LENGTH_CQH = 60;
 const SLIDE_WIDTH =
   'min(80cqi, calc((100cqh - var(--onboarding-header-height) - 18rem) * 0.75))';
 const SLIDE_GAP = '3cqi';
-const SLIDE_CAPTION_HEIGHT = '7.5rem';
 const SLIDE_TOP_ROOM = '2.5rem';
 const SLIDE_IMAGE_SIZES = '(max-width: 448px) 66vw, 300px';
 
@@ -98,7 +97,7 @@ function GallerySlide({
     <m.li
       aria-current={isCurrent ? 'step' : undefined}
       style={{ transform, opacity, zIndex }}
-      className="absolute top-(--slide-top-room) left-1/2 h-(--slide-height) w-(--slide-width) origin-top">
+      className="absolute top-(--slide-top-room) left-1/2 h-[calc(100%-var(--slide-top-room))] w-(--slide-width) origin-top">
       <div
         className={cn(
           'relative aspect-3/4 overflow-hidden rounded-[1.75rem] bg-muted',
@@ -127,15 +126,45 @@ function GallerySlide({
           ))}
         </div>
       </div>
-      <m.div style={{ opacity: captionOpacity }} className="px-1">
-        <h3 className="mt-5 text-lg font-bold tracking-[-0.02em]">
-          {slide.title}
-        </h3>
-        <p className="mt-1 text-[0.9375rem] leading-normal text-balance text-foreground-secondary">
-          {slide.description}
-        </p>
+      <m.div style={{ opacity: captionOpacity }}>
+        <SlideCaption slide={slide} />
       </m.div>
     </m.li>
+  );
+}
+
+function SlideCaption({ slide }: { slide: OnboardingSlide }) {
+  return (
+    <div className="px-1">
+      <h3 className="mt-5 text-lg font-bold tracking-[-0.02em]">
+        {slide.title}
+      </h3>
+      <p className="mt-1 text-[0.9375rem] leading-normal text-balance text-foreground-secondary">
+        {slide.description}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * 카드 칸 높이를 잡는 보이지 않는 자리. 카드는 겹쳐 움직이도록 `absolute`라 칸 높이에
+ * 들어가지 않으므로, 같은 폭에 카드와 섹션의 캡션을 모두 겹쳐 두어 가장 긴 캡션만큼만
+ * 칸을 늘린다. 그래서 점과 버튼이 캡션 바로 아래에 온다.
+ */
+function GallerySizer({ slides }: { slides: readonly OnboardingSlide[] }) {
+  return (
+    <li
+      aria-hidden="true"
+      className="invisible mx-auto w-(--slide-width) pt-(--slide-top-room)">
+      <div className="aspect-3/4" />
+      <div className="grid">
+        {slides.map((slide) => (
+          <div key={slide.key} className="[grid-area:1/1]">
+            <SlideCaption slide={slide} />
+          </div>
+        ))}
+      </div>
+    </li>
   );
 }
 
@@ -268,18 +297,17 @@ export function OnboardingFeature({
         style={{
           height: `calc(100cqh - var(--onboarding-header-height) + ${(slideCount - 1) * SLIDE_SCROLL_LENGTH_CQH}cqh)`,
         }}>
-        <div className="sticky top-(--onboarding-header-height) flex h-[calc(100cqh-var(--onboarding-header-height))] min-h-[30rem] flex-col justify-center gap-5 overflow-hidden">
+        <div className="sticky top-(--onboarding-header-height) flex h-[calc(100cqh-var(--onboarding-header-height))] min-h-[30rem] flex-col justify-center gap-4 overflow-hidden">
           <ol
             style={
               {
                 '--slide-width': SLIDE_WIDTH,
                 '--slide-gap': SLIDE_GAP,
                 '--slide-top-room': SLIDE_TOP_ROOM,
-                '--slide-height': `calc(var(--slide-width) * 4 / 3 + ${SLIDE_CAPTION_HEIGHT})`,
-                height: `calc(var(--slide-height) + ${SLIDE_TOP_ROOM})`,
               } as CSSProperties
             }
             className="relative shrink-0 overflow-hidden">
+            <GallerySizer slides={feature.slides} />
             {feature.slides.map((slide, index) => (
               <GallerySlide
                 key={slide.key}
@@ -309,7 +337,7 @@ export function OnboardingFeature({
               ))}
             </div>
           )}
-          <div className="flex justify-center pt-1">
+          <div className="flex justify-center">
             <FeatureActionButton action={feature.action} onClick={onAction} />
           </div>
         </div>
