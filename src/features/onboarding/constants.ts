@@ -198,8 +198,7 @@ export const ONBOARDING_FEATURES: readonly OnboardingFeature[] = [
       }),
       slide('art-style', 140, {
         title: '이미지 스타일을 골라요',
-        description:
-          '애니메이션부터 수묵까지, 고른 이미지\u00a0스타일로 썸네일과 인물을 그려요.',
+        description: '고른 이미지\u00a0스타일로 썸네일과 인물을 그려요.',
         alt: '이미지 스타일을 고르는 화면',
       }),
     ],
