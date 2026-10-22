@@ -392,51 +392,56 @@ export const useDeleteUsersMePersonasByPersonaId = <
     queryClient,
   );
 };
-export type updateResponse200 = {
+export type patchUsersMePersonasByPersonaIdResponse200 = {
   data: UserPersonaResponse;
   status: 200;
 };
 
-export type updateResponseSuccess = updateResponse200 & {
-  headers: Headers;
-};
-export type updateResponse = updateResponseSuccess;
+export type patchUsersMePersonasByPersonaIdResponseSuccess =
+  patchUsersMePersonasByPersonaIdResponse200 & {
+    headers: Headers;
+  };
+export type patchUsersMePersonasByPersonaIdResponse =
+  patchUsersMePersonasByPersonaIdResponseSuccess;
 
-export const getUpdateUrl = (personaId: string) => {
+export const getPatchUsersMePersonasByPersonaIdUrl = (personaId: string) => {
   return `/api/v1/users/me/personas/${personaId}`;
 };
 
-export const update = async (
+export const patchUsersMePersonasByPersonaId = async (
   personaId: string,
   updateUserPersonaRequest: UpdateUserPersonaRequest,
   options?: RequestInit,
-): Promise<updateResponse> => {
-  return customInstance<updateResponse>(getUpdateUrl(personaId), {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(updateUserPersonaRequest),
-  });
+): Promise<patchUsersMePersonasByPersonaIdResponse> => {
+  return customInstance<patchUsersMePersonasByPersonaIdResponse>(
+    getPatchUsersMePersonasByPersonaIdUrl(personaId),
+    {
+      ...options,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(updateUserPersonaRequest),
+    },
+  );
 };
 
-export const getUpdateMutationOptions = <
+export const getPatchUsersMePersonasByPersonaIdMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof update>>,
+    Awaited<ReturnType<typeof patchUsersMePersonasByPersonaId>>,
     TError,
     { personaId: string; data: BodyType<UpdateUserPersonaRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof update>>,
+  Awaited<ReturnType<typeof patchUsersMePersonasByPersonaId>>,
   TError,
   { personaId: string; data: BodyType<UpdateUserPersonaRequest> },
   TContext
 > => {
-  const mutationKey = ['update'];
+  const mutationKey = ['patchUsersMePersonasByPersonaId'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -446,27 +451,31 @@ export const getUpdateMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof update>>,
+    Awaited<ReturnType<typeof patchUsersMePersonasByPersonaId>>,
     { personaId: string; data: BodyType<UpdateUserPersonaRequest> }
   > = (props) => {
     const { personaId, data } = props ?? {};
 
-    return update(personaId, data, requestOptions);
+    return patchUsersMePersonasByPersonaId(personaId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type UpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof update>>
+export type PatchUsersMePersonasByPersonaIdMutationResult = NonNullable<
+  Awaited<ReturnType<typeof patchUsersMePersonasByPersonaId>>
 >;
-export type UpdateMutationBody = BodyType<UpdateUserPersonaRequest>;
-export type UpdateMutationError = ErrorType<unknown>;
+export type PatchUsersMePersonasByPersonaIdMutationBody =
+  BodyType<UpdateUserPersonaRequest>;
+export type PatchUsersMePersonasByPersonaIdMutationError = ErrorType<unknown>;
 
-export const useUpdate = <TError = ErrorType<unknown>, TContext = unknown>(
+export const usePatchUsersMePersonasByPersonaId = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof update>>,
+      Awaited<ReturnType<typeof patchUsersMePersonasByPersonaId>>,
       TError,
       { personaId: string; data: BodyType<UpdateUserPersonaRequest> },
       TContext
@@ -475,10 +484,13 @@ export const useUpdate = <TError = ErrorType<unknown>, TContext = unknown>(
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof update>>,
+  Awaited<ReturnType<typeof patchUsersMePersonasByPersonaId>>,
   TError,
   { personaId: string; data: BodyType<UpdateUserPersonaRequest> },
   TContext
 > => {
-  return useMutation(getUpdateMutationOptions(options), queryClient);
+  return useMutation(
+    getPatchUsersMePersonasByPersonaIdMutationOptions(options),
+    queryClient,
+  );
 };

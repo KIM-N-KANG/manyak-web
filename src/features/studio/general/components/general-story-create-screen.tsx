@@ -12,7 +12,7 @@ import {
   getGetEditFormQueryKey,
   getGetStoryDetailQueryKey,
   useCreateGeneralStory,
-  useDeleteThumbnail,
+  useDeleteStoriesByStoryIdThumbnail,
   useUpdateStory,
 } from '@/api/generated/endpoints/stories/stories';
 import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
@@ -338,7 +338,7 @@ export function GeneralStoryCreateForm({
   const createGeneralStory = useCreateGeneralStory();
   const resubmitGeneralStory = useResubmit();
   const updateStory = useUpdateStory();
-  const deleteThumbnail = useDeleteThumbnail();
+  const deleteThumbnail = useDeleteStoriesByStoryIdThumbnail();
   const { startChatFor } = useStartChat('', {
     // 제작 선택과 폼은 끝난 단계라 그 자리를 새 스토리 상세로 바꿔, 채팅방에서 뒤로 가면 상세로 돌아가게 한다.
     viaStoryDetail: true,
