@@ -54,6 +54,7 @@ const chatDetail = (turns: unknown[] = []) => ({
   prologue: '안개 낀 계곡 앞에 한 용사가 섰다.',
   turns,
   suggestedInputs: ['던전에 진입한다', '주변을 둘러본다'],
+  model: 'LITE',
 });
 
 test.describe('채팅 비주얼', () => {

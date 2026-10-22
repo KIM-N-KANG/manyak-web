@@ -69,28 +69,22 @@ export const CHAT_SETTINGS_COPY = {
   },
 } as const;
 
-export const CHAT_ADVANCED_MODEL_ENABLED_STORAGE_KEY =
-  'manyak:chat-advanced-model-enabled';
-
 /**
- * 고급 모델의 채팅 턴 이프 비용. 서버 정책 응답에 고급 비용이 생기기 전까지 쓰는 임시 값이다.
- * AI 명세의 고급 등급 실험 조건(50이프)을 따른다.
+ * 게스트와 턴 체험이 남은 회원의 턴에 서버가 쓰는 모델 코드. 고른 모델과 무관하게 이 모델로 무료 응답한다.
+ * 게스트는 다른 모델을 고를 수 없어 이 모델을 고른 것으로 보인다.
  */
-export const ADVANCED_CHAT_TURN_COST = 50;
+export const CHAT_TRIAL_MODEL_CODE = 'LITE';
 
-/** 채팅방 헤더 AI 모델 선택 버튼과 시트의 문구. 모델 순서는 화면 순서 그대로다. */
+/** 채팅방 헤더 AI 모델 선택 버튼과 시트의 문구. 모델 이름과 순서는 서버 모델 목록을 따른다. */
 export const CHAT_MODEL_COPY = {
   trigger: 'AI 모델 선택',
   title: 'AI 모델 선택',
   description: '턴마다 이프가 사용되고, 다시 만들 때도 같은 이프가 사용돼요',
-  basic: {
-    label: '일반챗',
-    description: '빠르고 가볍게 이야기를 이어가요',
-  },
-  advanced: {
-    label: '고급챗',
-    description: '더 풍부하고 섬세하게 이야기를 이어가요',
-  },
+  /** 모델 코드별 칸 설명. 모르는 코드는 설명 없이 이름과 비용만 보인다 */
+  optionDescriptions: {
+    LITE: '빠르고 가볍게 이야기를 이어가요',
+    AURORA: '더 풍부하고 섬세하게 이야기를 이어가요',
+  } as Record<string, string | undefined>,
 } as const;
 
 /** 채팅방 헤더 메뉴 시트의 문구. 항목 순서는 화면 순서 그대로다. */

@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 
 import {
   getGetUsersMePersonasQueryKey as getPersonasQueryKey,
+  usePatchUsersMePersonasByPersonaId as useUpdatePersona,
   usePostUsersMePersonas as useCreatePersona,
-  useUpdate as useUpdatePersona,
 } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import type { UserPersonaResponse } from '@/api/generated/models';
 import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';

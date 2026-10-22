@@ -1051,7 +1051,8 @@ export const getGetCreditPoliciesUrl = () => {
  *             - `inviteMonthlyCap`만 이프가 아니라 월 적립 **횟수**이며, **초대자 몫에만** 걸립니다(제출자 몫은 상한 없음).
  *             - `storyCreationCost`는 **간편 제작**에만 듭니다(일반 제작은 무료).
  *             - `storyCreationCost`·`chatTurnCost`는 회원의 무료 체험 잔여를 소진한 뒤 적용되는 단가입니다(게스트는 디바이스 한도를 씁니다).
- *             - 변경 반영은 서버의 정책 스냅샷 갱신 주기를 따릅니다(기본 설정 기준 약 1분).
+ *             - `chatTurnCost`는 deprecated이며 LITE 가격을 즉시 반영합니다. 모델별 가격은 GET /api/v1/chats/models를 사용하세요.
+ *             - 다른 정책 변경은 서버의 스냅샷 갱신 주기를 따릅니다(기본 약 1분).
  * @summary 이프 적립·소모 수치 조회
  */
 export const getCreditPolicies = async (
