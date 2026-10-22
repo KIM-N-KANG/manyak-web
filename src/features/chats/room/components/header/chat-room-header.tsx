@@ -76,12 +76,18 @@ export function ChatRoomHeader({
         )}>
         {storyId === null ? DELETED_STORY_LABEL : storyTitle}
       </h1>
-      <ChatModelDrawer
-        advancedModel={advancedModel}
-        onSelect={onAdvancedModelSelect}
-        withRealtimeImage={realtimeImageEnabled}
-      />
-      <ChatMenuDrawer chatId={chatId} storyId={storyId} turnCount={turnCount} />
+      <div className="flex shrink-0 items-center gap-1">
+        <ChatModelDrawer
+          advancedModel={advancedModel}
+          onSelect={onAdvancedModelSelect}
+          withRealtimeImage={realtimeImageEnabled}
+        />
+        <ChatMenuDrawer
+          chatId={chatId}
+          storyId={storyId}
+          turnCount={turnCount}
+        />
+      </div>
     </header>
   );
 }
