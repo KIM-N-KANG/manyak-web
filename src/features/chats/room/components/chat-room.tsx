@@ -456,6 +456,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           storyTitle={storyTitle}
           turnCount={turns.length}
           hidden={isHeaderHidden && !tour.isOpen}
+          advancedModel={advancedModel}
+          onAdvancedModelSelect={handleAdvancedModelSelect}
+          realtimeImageEnabled={realtimeImageEnabled}
         />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages
@@ -484,7 +487,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           isStreaming={isStreaming}
           realtimeImageEnabled={realtimeImageEnabled}
           advancedModel={advancedModel}
-          onAdvancedModelSelect={handleAdvancedModelSelect}
           onRealtimeImageEnabledChange={setRealtimeImageEnabled}
           realtimeImageNudgeOpen={realtimeImageNudge.isOpen}
           onRealtimeImageNudgeClose={realtimeImageNudge.close}

@@ -78,7 +78,7 @@ export const CHAT_ADVANCED_MODEL_ENABLED_STORAGE_KEY =
  */
 export const ADVANCED_CHAT_TURN_COST = 50;
 
-/** 입력 툴바 AI 모델 선택 버튼과 시트의 문구. 모델 순서는 화면 순서 그대로다. */
+/** 채팅방 헤더 AI 모델 선택 버튼과 시트의 문구. 모델 순서는 화면 순서 그대로다. */
 export const CHAT_MODEL_COPY = {
   trigger: 'AI 모델 선택',
   title: 'AI 모델 선택',

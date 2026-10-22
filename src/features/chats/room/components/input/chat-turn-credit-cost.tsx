@@ -1,7 +1,6 @@
 'use client';
 
 import { CreditMark } from '@/components/common/credit-mark';
-import { Badge } from '@/components/ui/badge';
 import { formatCreditAmount } from '@/constants/credit';
 import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
@@ -28,6 +27,8 @@ export function ChatTurnCreditCost({
   const policy = useCreditPolicy();
   const turnRemaining = getTrialRemaining(trials, 'chatTurn');
   const imageRemaining = getTrialRemaining(trials, 'chatImage');
+  const baseClassName =
+    'flex shrink-0 items-center gap-1 text-xs text-foreground-secondary';
 
   const { full, discounted } = calcChatTurnCost({
     chatTurnCost: policy?.chatTurnCost,
@@ -42,10 +43,9 @@ export function ChatTurnCreditCost({
     full !== undefined && discounted !== undefined && discounted < full;
 
   return (
-    <Badge
-      variant="secondary"
+    <span
       className={cn(
-        'gap-1 text-foreground-secondary',
+        baseClassName,
         discounted === undefined && 'animate-pulse',
         className,
       )}>
@@ -54,6 +54,6 @@ export function ChatTurnCreditCost({
       <span>
         {buildChatTurnCreditCostLabel(formatCreditAmount(discounted))}
       </span>
-    </Badge>
+    </span>
   );
 }

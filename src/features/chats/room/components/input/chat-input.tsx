@@ -8,7 +8,6 @@ import { showReplacingToast } from '@/lib/replacing-toast';
 import { type useChatComposer } from '../../hooks/use-chat-composer';
 import { type ChatInputMode } from '../../hooks/use-chat-input-mode';
 import { ChatBlockInput } from './chat-block-input';
-import { ChatModelDrawer } from './chat-model-drawer';
 import { ChatPlainInput } from './chat-plain-input';
 import { ChatSettingsSheet } from './chat-settings-sheet';
 
@@ -20,7 +19,6 @@ type ChatInputProps = {
   realtimeImageEnabled: boolean;
   /** 지금 적용 중인 모델이 고급인지 여부 */
   advancedModel: boolean;
-  onAdvancedModelSelect: (advancedModel: boolean) => void;
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
   /** 실시간 이미지 안내로 설정 시트를 열고 해당 항목을 강조하는지 여부 */
   realtimeImageNudgeOpen: boolean;
@@ -37,7 +35,6 @@ export function ChatInput({
   isStreaming,
   realtimeImageEnabled,
   advancedModel,
-  onAdvancedModelSelect,
   onRealtimeImageEnabledChange,
   realtimeImageNudgeOpen,
   onRealtimeImageNudgeClose,
@@ -50,13 +47,6 @@ export function ChatInput({
   // 응답 생성 중 잠긴 입력창을 누르면 왜 입력할 수 없는지 알린다. 연타는 직전 토스트를 교체한다.
   const handleLockedTap = () =>
     showReplacingToast(TOAST_MESSAGE.CHAT_COMPOSER_LOCKED);
-  const modelSelect = (
-    <ChatModelDrawer
-      advancedModel={advancedModel}
-      onSelect={onAdvancedModelSelect}
-      withRealtimeImage={realtimeImageEnabled}
-    />
-  );
   // 시트는 입력 모드가 바뀌어도 열린 채 남아야 하므로 블럭·일반 입력 바깥에 둔다.
   const settingsSheet = (
     <ChatSettingsSheet
@@ -98,7 +88,8 @@ export function ChatInput({
           isStreaming={isStreaming}
           choicesEnabled={choicesEnabled}
           onOpenSettings={openSettings}
-          modelSelect={modelSelect}
+          realtimeImageEnabled={realtimeImageEnabled}
+          advancedModel={advancedModel}
           onLockedTap={handleLockedTap}
         />
         {settingsSheet}
@@ -119,7 +110,8 @@ export function ChatInput({
         textareaRef={composer.textareaRef}
         choicesEnabled={choicesEnabled}
         onOpenSettings={openSettings}
-        modelSelect={modelSelect}
+        realtimeImageEnabled={realtimeImageEnabled}
+        advancedModel={advancedModel}
         onLockedTap={handleLockedTap}
       />
       {settingsSheet}

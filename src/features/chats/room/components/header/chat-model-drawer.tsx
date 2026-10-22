@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -18,7 +19,7 @@ import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { cn } from '@/lib/utils';
 
 import { CHAT_MODEL_COPY } from '../../constants';
-import { ChatTurnCreditCost } from './chat-turn-credit-cost';
+import { ChatTurnCreditCost } from '../input/chat-turn-credit-cost';
 
 type ChatModelDrawerProps = {
   /** 지금 적용 중인 모델이 고급인지 여부 */
@@ -123,13 +124,18 @@ function ChatModelOption({
       <span className="flex items-center gap-2 font-bold">
         {copy.label}
         {/* 고른 칸의 연한 프라이머리 배경 위에서는 회색 캡슐이 탁해 보여, 배경색 캡슐에 프라이머리 글씨로 바꾼다. */}
-        <ChatTurnCreditCost
-          withRealtimeImage={withRealtimeImage}
-          advancedModel={advancedModel}
+        <Badge
+          variant="secondary"
           className={cn(
+            'text-foreground-secondary',
             checked && 'bg-background text-primary [&_s]:text-primary/60',
-          )}
-        />
+          )}>
+          <ChatTurnCreditCost
+            withRealtimeImage={withRealtimeImage}
+            advancedModel={advancedModel}
+            className="text-inherit"
+          />
+        </Badge>
       </span>
       <span className="text-sm text-foreground-secondary">
         {copy.description}
