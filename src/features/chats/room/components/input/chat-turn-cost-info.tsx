@@ -97,7 +97,7 @@ export function ChatTurnCostInfo({
         side="top"
         align="end"
         sideOffset={8}
-        className="w-64 gap-3 rounded-xl">
+        className="w-64 gap-3">
         <PopoverTitle className="font-semibold">{COPY.title}</PopoverTitle>
         {/* 영수증처럼 항목을 먼저 적고 구분선 아래에 합계를 둔다. */}
         <dl className="flex flex-col gap-3">
