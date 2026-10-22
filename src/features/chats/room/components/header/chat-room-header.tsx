@@ -11,6 +11,7 @@ import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-
 import { cn } from '@/lib/utils';
 
 import { ChatMenuDrawer } from './chat-menu-drawer';
+import { ChatModelDrawer } from './chat-model-drawer';
 
 type ChatRoomHeaderProps = {
   chatId: string;
@@ -20,6 +21,11 @@ type ChatRoomHeaderProps = {
   turnCount: number;
   /** 메시지 영역 탭으로 헤더를 숨겼는지 여부 */
   hidden: boolean;
+  /** 지금 적용 중인 모델이 고급인지 여부 */
+  advancedModel: boolean;
+  onAdvancedModelSelect: (advancedModel: boolean) => void;
+  /** 실시간 이미지가 켜져 있으면 모델 시트의 비용에 이미지 비용을 합산한다 */
+  realtimeImageEnabled: boolean;
 };
 
 /**
@@ -32,6 +38,9 @@ export function ChatRoomHeader({
   storyTitle,
   turnCount,
   hidden,
+  advancedModel,
+  onAdvancedModelSelect,
+  realtimeImageEnabled,
 }: ChatRoomHeaderProps) {
   const router = useRouter();
 
@@ -67,7 +76,18 @@ export function ChatRoomHeader({
         )}>
         {storyId === null ? DELETED_STORY_LABEL : storyTitle}
       </h1>
-      <ChatMenuDrawer chatId={chatId} storyId={storyId} turnCount={turnCount} />
+      <div className="flex shrink-0 items-center gap-1">
+        <ChatModelDrawer
+          advancedModel={advancedModel}
+          onSelect={onAdvancedModelSelect}
+          withRealtimeImage={realtimeImageEnabled}
+        />
+        <ChatMenuDrawer
+          chatId={chatId}
+          storyId={storyId}
+          turnCount={turnCount}
+        />
+      </div>
     </header>
   );
 }

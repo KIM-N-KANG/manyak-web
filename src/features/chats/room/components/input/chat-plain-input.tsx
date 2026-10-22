@@ -28,6 +28,8 @@ type ChatPlainInputProps = {
   onOpenSettings: () => void;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
   realtimeImageEnabled: boolean;
+  /** 고급 모델을 골랐으면 비용 배지를 고급 비용으로 보인다 */
+  advancedModel: boolean;
   /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
   onLockedTap: () => void;
 };
@@ -44,6 +46,7 @@ export function ChatPlainInput({
   choicesEnabled,
   onOpenSettings,
   realtimeImageEnabled,
+  advancedModel,
   onLockedTap,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
@@ -100,7 +103,10 @@ export function ChatPlainInput({
             </Button>
             <ChatSettingsButton onClick={onOpenSettings} />
             <div className="ml-auto flex items-center gap-2">
-              <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
+              <ChatTurnCreditCost
+                withRealtimeImage={realtimeImageEnabled}
+                advancedModel={advancedModel}
+              />
               <Button
                 type="submit"
                 variant="default"

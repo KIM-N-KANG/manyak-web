@@ -17,6 +17,8 @@ type ChatInputProps = {
   composer: ReturnType<typeof useChatComposer>;
   isStreaming: boolean;
   realtimeImageEnabled: boolean;
+  /** 지금 적용 중인 모델이 고급인지 여부 */
+  advancedModel: boolean;
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
   /** 실시간 이미지 안내로 설정 시트를 열고 해당 항목을 강조하는지 여부 */
   realtimeImageNudgeOpen: boolean;
@@ -32,6 +34,7 @@ export function ChatInput({
   composer,
   isStreaming,
   realtimeImageEnabled,
+  advancedModel,
   onRealtimeImageEnabledChange,
   realtimeImageNudgeOpen,
   onRealtimeImageNudgeClose,
@@ -86,6 +89,7 @@ export function ChatInput({
           choicesEnabled={choicesEnabled}
           onOpenSettings={openSettings}
           realtimeImageEnabled={realtimeImageEnabled}
+          advancedModel={advancedModel}
           onLockedTap={handleLockedTap}
         />
         {settingsSheet}
@@ -107,6 +111,7 @@ export function ChatInput({
         choicesEnabled={choicesEnabled}
         onOpenSettings={openSettings}
         realtimeImageEnabled={realtimeImageEnabled}
+        advancedModel={advancedModel}
         onLockedTap={handleLockedTap}
       />
       {settingsSheet}

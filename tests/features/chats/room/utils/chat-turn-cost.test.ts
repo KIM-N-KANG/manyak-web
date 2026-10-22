@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ADVANCED_CHAT_TURN_COST } from '@/features/chats/room/constants';
 import { calcChatTurnCost } from '@/features/chats/room/utils/chat-turn-cost';
 
 const policy = { chatTurnCost: 20, chatImageCost: 60 };
@@ -110,5 +111,36 @@ describe('calcChatTurnCost', () => {
         imageRemaining: undefined,
       }),
     ).toEqual({ full: 80, discounted: undefined });
+  });
+
+  it('고급 모델은 고급 비용을 쓰고 턴 체험을 적용하지 않는다', () => {
+    expect(
+      calcChatTurnCost({
+        ...policy,
+        withRealtimeImage: true,
+        advancedModel: true,
+        turnRemaining: 3,
+        imageRemaining: 2,
+      }),
+    ).toEqual({
+      full: ADVANCED_CHAT_TURN_COST + 60,
+      discounted: ADVANCED_CHAT_TURN_COST,
+    });
+  });
+
+  it('고급 모델은 턴 정책값을 못 받아도 계산한다', () => {
+    expect(
+      calcChatTurnCost({
+        chatTurnCost: undefined,
+        chatImageCost: undefined,
+        withRealtimeImage: false,
+        advancedModel: true,
+        turnRemaining: 0,
+        imageRemaining: undefined,
+      }),
+    ).toEqual({
+      full: ADVANCED_CHAT_TURN_COST,
+      discounted: ADVANCED_CHAT_TURN_COST,
+    });
   });
 });

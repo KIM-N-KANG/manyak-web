@@ -3,12 +3,15 @@ import { type Page } from '@playwright/test';
 import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
+  ADVANCED_CHAT_TURN_COST,
   buildChatTurnCreditCostLabel,
   CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
   CHAT_MENU_COPY,
+  CHAT_MODEL_COPY,
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_SETTINGS_COPY,
   CHAT_STREAM_LOADING_COPY,
@@ -18,6 +21,7 @@ import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { oneLine } from '../fixtures/copy';
 import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   CREDIT_POLICY_FIXTURE,
@@ -74,6 +78,21 @@ const closeChatSettings = async (page: Page) => {
     page.getByRole('dialog', { name: CHAT_SETTINGS_COPY.title }),
   ).toBeHidden();
 };
+
+// 헤더의 AI 모델 선택 버튼. 이름은 숨김 접두어 + 모델 라벨이다.
+const modelButton = (page: Page) =>
+  page
+    .getByRole('banner')
+    .getByRole('button', { name: CHAT_MODEL_COPY.trigger });
+
+const modelSheet = (page: Page) =>
+  page.getByRole('dialog', { name: CHAT_MODEL_COPY.title });
+
+// 모델 시트 칸의 한 턴 비용 배지(이프 마크 + 취소선 정가 + 적용가).
+const modelCostBadge = (page: Page, model: 'basic' | 'advanced') =>
+  modelSheet(page)
+    .locator('label', { hasText: CHAT_MODEL_COPY[model].label })
+    .locator('[data-slot="badge"]');
 
 const choicesSwitch = (page: Page) =>
   page.getByRole('switch', { name: CHAT_SETTINGS_COPY.choices.label });
@@ -342,6 +361,102 @@ test.describe('채팅 스트리밍', () => {
         { exact: true },
       ),
     ).toBeVisible();
+  });
+
+  test('회원은 헤더 모델 시트에서 고급챗을 고르면 버튼 라벨과 전송 버튼 옆 비용이 고급으로 바뀌고 다시 들어와도 유지된다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, EXHAUSTED_TRIALS);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const { chatTurnCost, chatImageCost } = CREDIT_POLICY_FIXTURE;
+    const sheet = modelSheet(page);
+    const basicOption = sheet.getByRole('radio').first();
+    const advancedOption = sheet.getByRole('radio').last();
+    const advancedCost = buildChatTurnCreditCostLabel(
+      formatCreditAmount(ADVANCED_CHAT_TURN_COST + chatImageCost),
+    );
+
+    // 버튼은 라벨만 보이고 비용은 전송 버튼 왼쪽에 둔다.
+    await expect(modelButton(page)).toHaveText(
+      `${CHAT_MODEL_COPY.trigger}${CHAT_MODEL_COPY.basic.label}`,
+    );
+
+    await modelButton(page).click();
+    await expect(sheet.getByText(CHAT_MODEL_COPY.description)).toBeVisible();
+    await expect(basicOption).toBeChecked();
+    await expect(advancedOption).not.toBeChecked();
+    // 모델별 비용은 실시간 이미지 비용을 합산한 한 턴 비용이고, 고른 칸 배지만 프라이머리 글씨다.
+    await expect(modelCostBadge(page, 'basic')).toHaveText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(chatTurnCost + chatImageCost),
+      ),
+    );
+    await expect(modelCostBadge(page, 'basic')).toHaveClass(/text-primary/);
+    await expect(modelCostBadge(page, 'advanced')).toHaveText(advancedCost);
+    await expect(modelCostBadge(page, 'advanced')).toHaveClass(
+      /text-foreground-secondary/,
+    );
+
+    await sheet.getByText(CHAT_MODEL_COPY.advanced.label).click();
+    await expect(sheet).toBeHidden();
+    await expect(modelButton(page)).toContainText(
+      CHAT_MODEL_COPY.advanced.label,
+    );
+    await expect(
+      page
+        .getByText(advancedCost, { exact: true })
+        .locator('xpath=../following-sibling::*[1]'),
+    ).toHaveAttribute('data-tour', 'send');
+
+    await page.reload();
+    await expect(modelButton(page)).toContainText(
+      CHAT_MODEL_COPY.advanced.label,
+    );
+    await expect(page.getByText(advancedCost, { exact: true })).toBeVisible();
+
+    // 이미 고른 모델을 다시 눌러도 시트가 닫힌다.
+    await modelButton(page).click();
+    await expect(advancedOption).toBeChecked();
+    await sheet.getByText(CHAT_MODEL_COPY.advanced.label).click();
+    await expect(sheet).toBeHidden();
+  });
+
+  test('게스트가 모델 시트에서 고급 모델을 누르면 로그인 시트를 열고 일반 모델을 유지한다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await mockTrials(page, EXHAUSTED_TRIALS);
+
+    await page.goto('/chats/c1');
+    await modelButton(page).click();
+
+    const sheet = modelSheet(page);
+
+    await sheet.getByText(CHAT_MODEL_COPY.advanced.label).click();
+    await expect(sheet).toBeHidden();
+    await expect(
+      page.getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
+    ).toBeVisible();
+
+    // 로그인 시트가 열린 동안 뒤 화면은 접근성 트리에서 빠지므로 닫고 확인한다.
+    await page.keyboard.press('Escape');
+    await expect(modelButton(page)).toContainText(CHAT_MODEL_COPY.basic.label);
   });
 
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {

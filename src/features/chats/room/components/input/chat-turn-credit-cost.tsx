@@ -13,11 +13,14 @@ import { calcChatTurnCost } from '../../utils/chat-turn-cost';
 type ChatTurnCreditCostProps = {
   /** 실시간 이미지 비용을 턴 비용에 합산해 보일지 여부 */
   withRealtimeImage?: boolean;
+  /** 고급 모델 비용으로 보일지 여부 */
+  advancedModel?: boolean;
   className?: string;
 };
 
 export function ChatTurnCreditCost({
   withRealtimeImage = false,
+  advancedModel = false,
   className,
 }: ChatTurnCreditCostProps) {
   const trials = useTrials();
@@ -31,6 +34,7 @@ export function ChatTurnCreditCost({
     chatTurnCost: policy?.chatTurnCost,
     chatImageCost: policy?.chatImageCost,
     withRealtimeImage,
+    advancedModel,
     turnRemaining,
     imageRemaining,
   });

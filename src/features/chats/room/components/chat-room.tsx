@@ -38,6 +38,7 @@ import { useTrials } from '@/hooks/use-trials';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import {
+  CHAT_ADVANCED_MODEL_ENABLED_STORAGE_KEY,
   CHAT_CHOICES_ENABLED_STORAGE_KEY,
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   DEFAULT_REALTIME_IMAGE_ENABLED,
@@ -133,6 +134,20 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
       DEFAULT_REALTIME_IMAGE_ENABLED,
     );
+  const { enabled: advancedModelEnabled, setEnabled: setAdvancedModelEnabled } =
+    useStoredToggle(CHAT_ADVANCED_MODEL_ENABLED_STORAGE_KEY, false);
+  // 게스트는 AI가 등급과 무관하게 일반 모델로 응답하므로, 회원일 때만 저장된 고급 선택을 적용한다.
+  const advancedModel =
+    sessionStatus === 'authenticated' && advancedModelEnabled;
+  const handleAdvancedModelSelect = (next: boolean) => {
+    if (next && sessionStatus !== 'authenticated') {
+      setLoginOpen(true);
+
+      return;
+    }
+
+    setAdvancedModelEnabled(next);
+  };
   const [realtimeImageNudgeRequested, setRealtimeImageNudgeRequested] =
     useState(false);
   const { choicesStatus, generate: generateChoicesForTurn } = useChatChoices(
@@ -220,6 +235,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       chatTurnCost: policy?.chatTurnCost,
       chatImageCost: policy?.chatImageCost,
       withRealtimeImage: realtimeImageEnabled,
+      advancedModel,
       turnRemaining: getTrialRemaining(trials, 'chatTurn'),
       imageRemaining: getTrialRemaining(trials, 'chatImage'),
     });
@@ -440,6 +456,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           storyTitle={storyTitle}
           turnCount={turns.length}
           hidden={isHeaderHidden && !tour.isOpen}
+          advancedModel={advancedModel}
+          onAdvancedModelSelect={handleAdvancedModelSelect}
+          realtimeImageEnabled={realtimeImageEnabled}
         />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages
@@ -467,6 +486,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           composer={composer}
           isStreaming={isStreaming}
           realtimeImageEnabled={realtimeImageEnabled}
+          advancedModel={advancedModel}
           onRealtimeImageEnabledChange={setRealtimeImageEnabled}
           realtimeImageNudgeOpen={realtimeImageNudge.isOpen}
           onRealtimeImageNudgeClose={realtimeImageNudge.close}
