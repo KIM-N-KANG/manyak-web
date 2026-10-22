@@ -48,8 +48,7 @@ export function ChatModelDrawer({
 
   return (
     <Drawer open={isOpen && container !== null} onOpenChange={setIsOpen}>
-      <DrawerTrigger
-        render={<Button type="button" variant="secondary" size="sm" />}>
+      <DrawerTrigger render={<Button type="button" variant="secondary" />}>
         <span className="sr-only">{CHAT_MODEL_COPY.trigger}</span>
         {current.label}
         <HugeiconsIcon
