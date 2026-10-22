@@ -16,11 +16,13 @@ type ChatTurnCreditCostProps = {
   withRealtimeImage?: boolean;
   /** 고급 모델 비용으로 보일지 여부 */
   advancedModel?: boolean;
+  className?: string;
 };
 
 export function ChatTurnCreditCost({
   withRealtimeImage = false,
   advancedModel = false,
+  className,
 }: ChatTurnCreditCostProps) {
   const trials = useTrials();
   const policy = useCreditPolicy();
@@ -45,6 +47,7 @@ export function ChatTurnCreditCost({
       className={cn(
         'gap-1 text-foreground-secondary',
         discounted === undefined && 'animate-pulse',
+        className,
       )}>
       <CreditMark className="size-3" />
       {showsStrike && <s>{formatCreditAmount(full)}</s>}

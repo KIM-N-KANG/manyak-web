@@ -147,7 +147,13 @@ test.describe('채팅 스트리밍', () => {
     // 턴 체험만 남고 실시간 이미지가 켜져 있으면 정가(턴+이미지)에 취소선, 적용가는 이미지 비용만.
     const badge = await openModelCostBadge(page, 'basic');
 
-    await expect(badge).toHaveClass(/text-foreground-secondary/);
+    // 고른 칸의 배지는 연한 프라이머리 배경에 맞춰 배경색 캡슐과 프라이머리 글씨를 쓴다.
+    await expect(badge).toHaveClass(/text-primary/);
+    await expect(
+      modelSheet(page)
+        .locator('label', { hasText: CHAT_MODEL_COPY.advanced.label })
+        .locator('[data-slot="badge"]'),
+    ).toHaveClass(/text-foreground-secondary/);
     await expect(badge.locator('s')).toHaveText(
       formatCreditAmount(chatTurnCost + chatImageCost),
     );
