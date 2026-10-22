@@ -69,7 +69,7 @@ describe('법적 문서 콘텐츠', () => {
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
     expect(privacyContent.effectiveDate).toBe('2026-10-22');
-    expect(privacyContent.version).toBe('v1.8');
+    expect(privacyContent.version).toBe('v1.9');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 
@@ -108,6 +108,10 @@ describe('법적 문서 콘텐츠', () => {
       '소셜 프로필 이름과 사진은 회원 프로필로 저장하지 않습니다',
     );
     expect(text).toContain('Sentry가 표본 수집하는 오류 맥락');
+    expect(text).toContain(
+      'privacy@amplitude.com): 기기 식별자, 로그인한 경우 회원 공개 식별자',
+    );
+    expect(text).not.toContain('회원 공개 식별자 또는 기기 식별자 해시');
     expect(text).toContain('마스킹된 화면 구조·클릭·스크롤');
     expect(text).toContain('Android Keystore로 암호화한 로그인 토큰');
     expect(text).toContain(
