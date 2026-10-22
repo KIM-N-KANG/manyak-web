@@ -41,8 +41,6 @@ export type getAdminOriginalsResponse200 = {
 export type getAdminOriginalsResponseSuccess = getAdminOriginalsResponse200 & {
   headers: Headers;
 };
-export type getAdminOriginalsResponse = getAdminOriginalsResponseSuccess;
-
 export const getGetAdminOriginalsUrl = (params: GetAdminOriginalsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -62,8 +60,8 @@ export const getGetAdminOriginalsUrl = (params: GetAdminOriginalsParams) => {
 export const getAdminOriginals = async (
   params: GetAdminOriginalsParams,
   options?: RequestInit,
-): Promise<getAdminOriginalsResponse> => {
-  return customInstance<getAdminOriginalsResponse>(
+): Promise<getAdminOriginalsResponseSuccess> => {
+  return customInstance<getAdminOriginalsResponseSuccess>(
     getGetAdminOriginalsUrl(params),
     {
       ...options,
@@ -321,9 +319,6 @@ export type postAdminOriginalsByStoryIdImagesPresignResponseSuccess =
   postAdminOriginalsByStoryIdImagesPresignResponse201 & {
     headers: Headers;
   };
-export type postAdminOriginalsByStoryIdImagesPresignResponse =
-  postAdminOriginalsByStoryIdImagesPresignResponseSuccess;
-
 export const getPostAdminOriginalsByStoryIdImagesPresignUrl = (
   storyId: string,
 ) => {
@@ -334,8 +329,8 @@ export const postAdminOriginalsByStoryIdImagesPresign = async (
   storyId: string,
   imagePresignRequest: ImagePresignRequest,
   options?: RequestInit,
-): Promise<postAdminOriginalsByStoryIdImagesPresignResponse> => {
-  return customInstance<postAdminOriginalsByStoryIdImagesPresignResponse>(
+): Promise<postAdminOriginalsByStoryIdImagesPresignResponseSuccess> => {
+  return customInstance<postAdminOriginalsByStoryIdImagesPresignResponseSuccess>(
     getPostAdminOriginalsByStoryIdImagesPresignUrl(storyId),
     {
       ...options,
@@ -430,8 +425,6 @@ export type presignDraftResponse201 = {
 export type presignDraftResponseSuccess = presignDraftResponse201 & {
   headers: Headers;
 };
-export type presignDraftResponse = presignDraftResponseSuccess;
-
 export const getPresignDraftUrl = () => {
   return `/api/v1/admin/originals/images/presign`;
 };
@@ -439,8 +432,8 @@ export const getPresignDraftUrl = () => {
 export const presignDraft = async (
   imagePresignRequest: ImagePresignRequest,
   options?: RequestInit,
-): Promise<presignDraftResponse> => {
-  return customInstance<presignDraftResponse>(getPresignDraftUrl(), {
+): Promise<presignDraftResponseSuccess> => {
+  return customInstance<presignDraftResponseSuccess>(getPresignDraftUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },

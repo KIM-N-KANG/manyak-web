@@ -36,8 +36,6 @@ export type getNoticesResponse200 = {
 export type getNoticesResponseSuccess = getNoticesResponse200 & {
   headers: Headers;
 };
-export type getNoticesResponse = getNoticesResponseSuccess;
-
 export const getGetNoticesUrl = (params?: GetNoticesParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -57,8 +55,8 @@ export const getGetNoticesUrl = (params?: GetNoticesParams) => {
 export const getNotices = async (
   params?: GetNoticesParams,
   options?: RequestInit,
-): Promise<getNoticesResponse> => {
-  return customInstance<getNoticesResponse>(getGetNoticesUrl(params), {
+): Promise<getNoticesResponseSuccess> => {
+  return customInstance<getNoticesResponseSuccess>(getGetNoticesUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -196,8 +194,6 @@ export type getNoticesByNoticeIdResponseSuccess =
   getNoticesByNoticeIdResponse200 & {
     headers: Headers;
   };
-export type getNoticesByNoticeIdResponse = getNoticesByNoticeIdResponseSuccess;
-
 export const getGetNoticesByNoticeIdUrl = (noticeId: string) => {
   return `/api/v1/notices/${noticeId}`;
 };
@@ -205,8 +201,8 @@ export const getGetNoticesByNoticeIdUrl = (noticeId: string) => {
 export const getNoticesByNoticeId = async (
   noticeId: string,
   options?: RequestInit,
-): Promise<getNoticesByNoticeIdResponse> => {
-  return customInstance<getNoticesByNoticeIdResponse>(
+): Promise<getNoticesByNoticeIdResponseSuccess> => {
+  return customInstance<getNoticesByNoticeIdResponseSuccess>(
     getGetNoticesByNoticeIdUrl(noticeId),
     {
       ...options,

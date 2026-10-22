@@ -67,10 +67,6 @@ export type createChatResponseError = (
   headers: Headers;
 };
 
-export type createChatResponse =
-  | createChatResponseSuccess
-  | createChatResponseError;
-
 export const getCreateChatUrl = () => {
   return `/api/v1/chats`;
 };
@@ -82,8 +78,8 @@ export const getCreateChatUrl = () => {
 export const createChat = async (
   createChatRequest: CreateChatRequest,
   options?: RequestInit,
-): Promise<createChatResponse> => {
-  return customInstance<createChatResponse>(getCreateChatUrl(), {
+): Promise<createChatResponseSuccess> => {
+  return customInstance<createChatResponseSuccess>(getCreateChatUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -197,10 +193,6 @@ export type generateChoicesResponseError = (
   headers: Headers;
 };
 
-export type generateChoicesResponse =
-  | generateChoicesResponseSuccess
-  | generateChoicesResponseError;
-
 export const getGenerateChoicesUrl = (chatId: string, turnId: number) => {
   return `/api/v1/chats/${chatId}/turns/${turnId}/choices`;
 };
@@ -213,8 +205,8 @@ export const generateChoices = async (
   chatId: string,
   turnId: number,
   options?: RequestInit,
-): Promise<generateChoicesResponse> => {
-  return customInstance<generateChoicesResponse>(
+): Promise<generateChoicesResponseSuccess> => {
+  return customInstance<generateChoicesResponseSuccess>(
     getGenerateChoicesUrl(chatId, turnId),
     {
       ...options,
@@ -341,10 +333,6 @@ export type streamChatTurnResponseError = (
   headers: Headers;
 };
 
-export type streamChatTurnResponse =
-  | streamChatTurnResponseSuccess
-  | streamChatTurnResponseError;
-
 export const getStreamChatTurnUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}/turns/stream`;
 };
@@ -357,13 +345,16 @@ export const streamChatTurn = async (
   chatId: string,
   continueChatRequest: ContinueChatRequest,
   options?: RequestInit,
-): Promise<streamChatTurnResponse> => {
-  return customInstance<streamChatTurnResponse>(getStreamChatTurnUrl(chatId), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(continueChatRequest),
-  });
+): Promise<streamChatTurnResponseSuccess> => {
+  return customInstance<streamChatTurnResponseSuccess>(
+    getStreamChatTurnUrl(chatId),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(continueChatRequest),
+    },
+  );
 };
 
 export const getStreamChatTurnMutationOptions = <
@@ -485,10 +476,6 @@ export type regenerateChatTurnResponseError = (
   headers: Headers;
 };
 
-export type regenerateChatTurnResponse =
-  | regenerateChatTurnResponseSuccess
-  | regenerateChatTurnResponseError;
-
 export const getRegenerateChatTurnUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}/turns/regenerate/stream`;
 };
@@ -501,8 +488,8 @@ export const regenerateChatTurn = async (
   chatId: string,
   regenerateChatRequest: RegenerateChatRequest,
   options?: RequestInit,
-): Promise<regenerateChatTurnResponse> => {
-  return customInstance<regenerateChatTurnResponse>(
+): Promise<regenerateChatTurnResponseSuccess> => {
+  return customInstance<regenerateChatTurnResponseSuccess>(
     getRegenerateChatTurnUrl(chatId),
     {
       ...options,
@@ -610,10 +597,6 @@ export type createChatShareResponseError = (
   headers: Headers;
 };
 
-export type createChatShareResponse =
-  | createChatShareResponseSuccess
-  | createChatShareResponseError;
-
 export const getCreateChatShareUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}/shares`;
 };
@@ -625,8 +608,8 @@ export const getCreateChatShareUrl = (chatId: string) => {
 export const createChatShare = async (
   chatId: string,
   options?: RequestInit,
-): Promise<createChatShareResponse> => {
-  return customInstance<createChatShareResponse>(
+): Promise<createChatShareResponseSuccess> => {
+  return customInstance<createChatShareResponseSuccess>(
     getCreateChatShareUrl(chatId),
     {
       ...options,
@@ -721,10 +704,6 @@ export type getChatsByIdsResponseError = getChatsByIdsResponse400 & {
   headers: Headers;
 };
 
-export type getChatsByIdsResponse =
-  | getChatsByIdsResponseSuccess
-  | getChatsByIdsResponseError;
-
 export const getGetChatsByIdsUrl = () => {
   return `/api/v1/chats/batch`;
 };
@@ -736,8 +715,8 @@ export const getGetChatsByIdsUrl = () => {
 export const getChatsByIds = async (
   batchChatRequest: BatchChatRequest,
   options?: RequestInit,
-): Promise<getChatsByIdsResponse> => {
-  return customInstance<getChatsByIdsResponse>(getGetChatsByIdsUrl(), {
+): Promise<getChatsByIdsResponseSuccess> => {
+  return customInstance<getChatsByIdsResponseSuccess>(getGetChatsByIdsUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -839,10 +818,6 @@ export type getChatDetailResponseError = (
   headers: Headers;
 };
 
-export type getChatDetailResponse =
-  | getChatDetailResponseSuccess
-  | getChatDetailResponseError;
-
 export const getGetChatDetailUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}`;
 };
@@ -854,11 +829,14 @@ export const getGetChatDetailUrl = (chatId: string) => {
 export const getChatDetail = async (
   chatId: string,
   options?: RequestInit,
-): Promise<getChatDetailResponse> => {
-  return customInstance<getChatDetailResponse>(getGetChatDetailUrl(chatId), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getChatDetailResponseSuccess> => {
+  return customInstance<getChatDetailResponseSuccess>(
+    getGetChatDetailUrl(chatId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetChatDetailQueryKey = (chatId: string) => {
@@ -1017,10 +995,6 @@ export type deleteChatResponseError = (
   headers: Headers;
 };
 
-export type deleteChatResponse =
-  | deleteChatResponseSuccess
-  | deleteChatResponseError;
-
 export const getDeleteChatUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}`;
 };
@@ -1032,8 +1006,8 @@ export const getDeleteChatUrl = (chatId: string) => {
 export const deleteChat = async (
   chatId: string,
   options?: RequestInit,
-): Promise<deleteChatResponse> => {
-  return customInstance<deleteChatResponse>(getDeleteChatUrl(chatId), {
+): Promise<deleteChatResponseSuccess> => {
+  return customInstance<deleteChatResponseSuccess>(getDeleteChatUrl(chatId), {
     ...options,
     method: 'DELETE',
   });
@@ -1116,8 +1090,6 @@ export type changeModelResponse200 = {
 export type changeModelResponseSuccess = changeModelResponse200 & {
   headers: Headers;
 };
-export type changeModelResponse = changeModelResponseSuccess;
-
 export const getChangeModelUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}`;
 };
@@ -1130,8 +1102,8 @@ export const changeModel = async (
   chatId: string,
   changeChatModelRequest: ChangeChatModelRequest,
   options?: RequestInit,
-): Promise<changeModelResponse> => {
-  return customInstance<changeModelResponse>(getChangeModelUrl(chatId), {
+): Promise<changeModelResponseSuccess> => {
+  return customInstance<changeModelResponseSuccess>(getChangeModelUrl(chatId), {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1222,10 +1194,6 @@ export type getChatShareResponseError = getChatShareResponse404 & {
   headers: Headers;
 };
 
-export type getChatShareResponse =
-  | getChatShareResponseSuccess
-  | getChatShareResponseError;
-
 export const getGetChatShareUrl = (shareId: string) => {
   return `/api/v1/shares/${shareId}`;
 };
@@ -1237,11 +1205,14 @@ export const getGetChatShareUrl = (shareId: string) => {
 export const getChatShare = async (
   shareId: string,
   options?: RequestInit,
-): Promise<getChatShareResponse> => {
-  return customInstance<getChatShareResponse>(getGetChatShareUrl(shareId), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getChatShareResponseSuccess> => {
+  return customInstance<getChatShareResponseSuccess>(
+    getGetChatShareUrl(shareId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetChatShareQueryKey = (shareId: string) => {
@@ -1603,8 +1574,6 @@ export type getModelsResponse200 = {
 export type getModelsResponseSuccess = getModelsResponse200 & {
   headers: Headers;
 };
-export type getModelsResponse = getModelsResponseSuccess;
-
 export const getGetModelsUrl = () => {
   return `/api/v1/chats/models`;
 };
@@ -1615,8 +1584,8 @@ export const getGetModelsUrl = () => {
  */
 export const getModels = async (
   options?: RequestInit,
-): Promise<getModelsResponse> => {
-  return customInstance<getModelsResponse>(getGetModelsUrl(), {
+): Promise<getModelsResponseSuccess> => {
+  return customInstance<getModelsResponseSuccess>(getGetModelsUrl(), {
     ...options,
     method: 'GET',
   });

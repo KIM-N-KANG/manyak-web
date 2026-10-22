@@ -89,10 +89,6 @@ export type reportStoryResponseError = (
   headers: Headers;
 };
 
-export type reportStoryResponse =
-  | reportStoryResponseSuccess
-  | reportStoryResponseError;
-
 export const getReportStoryUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}/reports`;
 };
@@ -105,13 +101,16 @@ export const reportStory = async (
   storyId: string,
   storyReportRequest: StoryReportRequest,
   options?: RequestInit,
-): Promise<reportStoryResponse> => {
-  return customInstance<reportStoryResponse>(getReportStoryUrl(storyId), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(storyReportRequest),
-  });
+): Promise<reportStoryResponseSuccess> => {
+  return customInstance<reportStoryResponseSuccess>(
+    getReportStoryUrl(storyId),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(storyReportRequest),
+    },
+  );
 };
 
 export const getReportStoryMutationOptions = <
@@ -211,10 +210,6 @@ export type likeStoryResponseError = (
   headers: Headers;
 };
 
-export type likeStoryResponse =
-  | likeStoryResponseSuccess
-  | likeStoryResponseError;
-
 export const getLikeStoryUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}/like`;
 };
@@ -226,8 +221,8 @@ export const getLikeStoryUrl = (storyId: string) => {
 export const likeStory = async (
   storyId: string,
   options?: RequestInit,
-): Promise<likeStoryResponse> => {
-  return customInstance<likeStoryResponse>(getLikeStoryUrl(storyId), {
+): Promise<likeStoryResponseSuccess> => {
+  return customInstance<likeStoryResponseSuccess>(getLikeStoryUrl(storyId), {
     ...options,
     method: 'POST',
   });
@@ -330,10 +325,6 @@ export type unlikeStoryResponseError = (
   headers: Headers;
 };
 
-export type unlikeStoryResponse =
-  | unlikeStoryResponseSuccess
-  | unlikeStoryResponseError;
-
 export const getUnlikeStoryUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}/like`;
 };
@@ -345,11 +336,14 @@ export const getUnlikeStoryUrl = (storyId: string) => {
 export const unlikeStory = async (
   storyId: string,
   options?: RequestInit,
-): Promise<unlikeStoryResponse> => {
-  return customInstance<unlikeStoryResponse>(getUnlikeStoryUrl(storyId), {
-    ...options,
-    method: 'DELETE',
-  });
+): Promise<unlikeStoryResponseSuccess> => {
+  return customInstance<unlikeStoryResponseSuccess>(
+    getUnlikeStoryUrl(storyId),
+    {
+      ...options,
+      method: 'DELETE',
+    },
+  );
 };
 
 export const getUnlikeStoryMutationOptions = <
@@ -462,10 +456,6 @@ export type postStoriesByStoryIdImagesPresignResponseError = (
   headers: Headers;
 };
 
-export type postStoriesByStoryIdImagesPresignResponse =
-  | postStoriesByStoryIdImagesPresignResponseSuccess
-  | postStoriesByStoryIdImagesPresignResponseError;
-
 export const getPostStoriesByStoryIdImagesPresignUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}/images/presign`;
 };
@@ -478,8 +468,8 @@ export const postStoriesByStoryIdImagesPresign = async (
   storyId: string,
   imagePresignRequest: ImagePresignRequest,
   options?: RequestInit,
-): Promise<postStoriesByStoryIdImagesPresignResponse> => {
-  return customInstance<postStoriesByStoryIdImagesPresignResponse>(
+): Promise<postStoriesByStoryIdImagesPresignResponseSuccess> => {
+  return customInstance<postStoriesByStoryIdImagesPresignResponseSuccess>(
     getPostStoriesByStoryIdImagesPresignUrl(storyId),
     {
       ...options,
@@ -600,10 +590,6 @@ export type presignDraftImageResponseError = (
   headers: Headers;
 };
 
-export type presignDraftImageResponse =
-  | presignDraftImageResponseSuccess
-  | presignDraftImageResponseError;
-
 export const getPresignDraftImageUrl = () => {
   return `/api/v1/stories/images/presign`;
 };
@@ -615,13 +601,16 @@ export const getPresignDraftImageUrl = () => {
 export const presignDraftImage = async (
   imagePresignRequest: ImagePresignRequest,
   options?: RequestInit,
-): Promise<presignDraftImageResponse> => {
-  return customInstance<presignDraftImageResponse>(getPresignDraftImageUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(imagePresignRequest),
-  });
+): Promise<presignDraftImageResponseSuccess> => {
+  return customInstance<presignDraftImageResponseSuccess>(
+    getPresignDraftImageUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(imagePresignRequest),
+    },
+  );
 };
 
 export const getPresignDraftImageMutationOptions = <
@@ -725,10 +714,6 @@ export type createGeneralStoryResponseError = (
   headers: Headers;
 };
 
-export type createGeneralStoryResponse =
-  | createGeneralStoryResponseSuccess
-  | createGeneralStoryResponseError;
-
 export const getCreateGeneralStoryUrl = () => {
   return `/api/v1/stories/general`;
 };
@@ -740,8 +725,8 @@ export const getCreateGeneralStoryUrl = () => {
 export const createGeneralStory = async (
   createGeneralStoryRequest: CreateGeneralStoryRequest,
   options?: RequestInit,
-): Promise<createGeneralStoryResponse> => {
-  return customInstance<createGeneralStoryResponse>(
+): Promise<createGeneralStoryResponseSuccess> => {
+  return customInstance<createGeneralStoryResponseSuccess>(
     getCreateGeneralStoryUrl(),
     {
       ...options,
@@ -842,10 +827,6 @@ export type getStoriesByIdsResponseError = getStoriesByIdsResponse400 & {
   headers: Headers;
 };
 
-export type getStoriesByIdsResponse =
-  | getStoriesByIdsResponseSuccess
-  | getStoriesByIdsResponseError;
-
 export const getGetStoriesByIdsUrl = () => {
   return `/api/v1/stories/batch`;
 };
@@ -857,13 +838,16 @@ export const getGetStoriesByIdsUrl = () => {
 export const getStoriesByIds = async (
   batchStoryRequest: BatchStoryRequest,
   options?: RequestInit,
-): Promise<getStoriesByIdsResponse> => {
-  return customInstance<getStoriesByIdsResponse>(getGetStoriesByIdsUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(batchStoryRequest),
-  });
+): Promise<getStoriesByIdsResponseSuccess> => {
+  return customInstance<getStoriesByIdsResponseSuccess>(
+    getGetStoriesByIdsUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(batchStoryRequest),
+    },
+  );
 };
 
 export const getGetStoriesByIdsMutationOptions = <
@@ -952,10 +936,6 @@ export type getStoryDetailResponseError = getStoryDetailResponse404 & {
   headers: Headers;
 };
 
-export type getStoryDetailResponse =
-  | getStoryDetailResponseSuccess
-  | getStoryDetailResponseError;
-
 export const getGetStoryDetailUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}`;
 };
@@ -967,11 +947,14 @@ export const getGetStoryDetailUrl = (storyId: string) => {
 export const getStoryDetail = async (
   storyId: string,
   options?: RequestInit,
-): Promise<getStoryDetailResponse> => {
-  return customInstance<getStoryDetailResponse>(getGetStoryDetailUrl(storyId), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getStoryDetailResponseSuccess> => {
+  return customInstance<getStoryDetailResponseSuccess>(
+    getGetStoryDetailUrl(storyId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetStoryDetailQueryKey = (storyId: string) => {
@@ -1130,10 +1113,6 @@ export type deleteStoryResponseError = (
   headers: Headers;
 };
 
-export type deleteStoryResponse =
-  | deleteStoryResponseSuccess
-  | deleteStoryResponseError;
-
 export const getDeleteStoryUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}`;
 };
@@ -1145,11 +1124,14 @@ export const getDeleteStoryUrl = (storyId: string) => {
 export const deleteStory = async (
   storyId: string,
   options?: RequestInit,
-): Promise<deleteStoryResponse> => {
-  return customInstance<deleteStoryResponse>(getDeleteStoryUrl(storyId), {
-    ...options,
-    method: 'DELETE',
-  });
+): Promise<deleteStoryResponseSuccess> => {
+  return customInstance<deleteStoryResponseSuccess>(
+    getDeleteStoryUrl(storyId),
+    {
+      ...options,
+      method: 'DELETE',
+    },
+  );
 };
 
 export const getDeleteStoryMutationOptions = <
@@ -1269,10 +1251,6 @@ export type updateStoryResponseError = (
   headers: Headers;
 };
 
-export type updateStoryResponse =
-  | updateStoryResponseSuccess
-  | updateStoryResponseError;
-
 export const getUpdateStoryUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}`;
 };
@@ -1285,13 +1263,16 @@ export const updateStory = async (
   storyId: string,
   updateStoryRequest: UpdateStoryRequest,
   options?: RequestInit,
-): Promise<updateStoryResponse> => {
-  return customInstance<updateStoryResponse>(getUpdateStoryUrl(storyId), {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(updateStoryRequest),
-  });
+): Promise<updateStoryResponseSuccess> => {
+  return customInstance<updateStoryResponseSuccess>(
+    getUpdateStoryUrl(storyId),
+    {
+      ...options,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(updateStoryRequest),
+    },
+  );
 };
 
 export const getUpdateStoryMutationOptions = <
@@ -1398,10 +1379,6 @@ export type getPublicStoriesResponseError = getPublicStoriesResponse400 & {
   headers: Headers;
 };
 
-export type getPublicStoriesResponse =
-  | getPublicStoriesResponseSuccess
-  | getPublicStoriesResponseError;
-
 export const getGetPublicStoriesUrl = (params?: GetPublicStoriesParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1425,8 +1402,8 @@ export const getGetPublicStoriesUrl = (params?: GetPublicStoriesParams) => {
 export const getPublicStories = async (
   params?: GetPublicStoriesParams,
   options?: RequestInit,
-): Promise<getPublicStoriesResponse> => {
-  return customInstance<getPublicStoriesResponse>(
+): Promise<getPublicStoriesResponseSuccess> => {
+  return customInstance<getPublicStoriesResponseSuccess>(
     getGetPublicStoriesUrl(params),
     {
       ...options,
@@ -1609,10 +1586,6 @@ export type getEditFormResponseError = (
   headers: Headers;
 };
 
-export type getEditFormResponse =
-  | getEditFormResponseSuccess
-  | getEditFormResponseError;
-
 export const getGetEditFormUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}/edit`;
 };
@@ -1624,11 +1597,14 @@ export const getGetEditFormUrl = (storyId: string) => {
 export const getEditForm = async (
   storyId: string,
   options?: RequestInit,
-): Promise<getEditFormResponse> => {
-  return customInstance<getEditFormResponse>(getGetEditFormUrl(storyId), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getEditFormResponseSuccess> => {
+  return customInstance<getEditFormResponseSuccess>(
+    getGetEditFormUrl(storyId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetEditFormQueryKey = (storyId: string) => {
@@ -1787,10 +1763,6 @@ export type searchStoriesResponseError = (
   headers: Headers;
 };
 
-export type searchStoriesResponse =
-  | searchStoriesResponseSuccess
-  | searchStoriesResponseError;
-
 export const getSearchStoriesUrl = (params: SearchStoriesParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1814,11 +1786,14 @@ export const getSearchStoriesUrl = (params: SearchStoriesParams) => {
 export const searchStories = async (
   params: SearchStoriesParams,
   options?: RequestInit,
-): Promise<searchStoriesResponse> => {
-  return customInstance<searchStoriesResponse>(getSearchStoriesUrl(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<searchStoriesResponseSuccess> => {
+  return customInstance<searchStoriesResponseSuccess>(
+    getSearchStoriesUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getSearchStoriesQueryKey = (params?: SearchStoriesParams) => {
@@ -1955,8 +1930,6 @@ export type getLorebooksResponse200 = {
 export type getLorebooksResponseSuccess = getLorebooksResponse200 & {
   headers: Headers;
 };
-export type getLorebooksResponse = getLorebooksResponseSuccess;
-
 export const getGetLorebooksUrl = (params?: GetLorebooksParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1980,11 +1953,14 @@ export const getGetLorebooksUrl = (params?: GetLorebooksParams) => {
 export const getLorebooks = async (
   params?: GetLorebooksParams,
   options?: RequestInit,
-): Promise<getLorebooksResponse> => {
-  return customInstance<getLorebooksResponse>(getGetLorebooksUrl(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getLorebooksResponseSuccess> => {
+  return customInstance<getLorebooksResponseSuccess>(
+    getGetLorebooksUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetLorebooksQueryKey = (params?: GetLorebooksParams) => {
@@ -2130,10 +2106,6 @@ export type getStoriesGenresResponseError = getStoriesGenresResponse400 & {
   headers: Headers;
 };
 
-export type getStoriesGenresResponse =
-  | getStoriesGenresResponseSuccess
-  | getStoriesGenresResponseError;
-
 export const getGetStoriesGenresUrl = (params?: GetStoriesGenresParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -2157,8 +2129,8 @@ export const getGetStoriesGenresUrl = (params?: GetStoriesGenresParams) => {
 export const getStoriesGenres = async (
   params?: GetStoriesGenresParams,
   options?: RequestInit,
-): Promise<getStoriesGenresResponse> => {
-  return customInstance<getStoriesGenresResponse>(
+): Promise<getStoriesGenresResponseSuccess> => {
+  return customInstance<getStoriesGenresResponseSuccess>(
     getGetStoriesGenresUrl(params),
     {
       ...options,
@@ -2325,8 +2297,6 @@ export type getStoriesArtStylesResponseSuccess =
   getStoriesArtStylesResponse200 & {
     headers: Headers;
   };
-export type getStoriesArtStylesResponse = getStoriesArtStylesResponseSuccess;
-
 export const getGetStoriesArtStylesUrl = () => {
   return `/api/v1/stories/art-styles`;
 };
@@ -2337,8 +2307,8 @@ export const getGetStoriesArtStylesUrl = () => {
  */
 export const getStoriesArtStyles = async (
   options?: RequestInit,
-): Promise<getStoriesArtStylesResponse> => {
-  return customInstance<getStoriesArtStylesResponse>(
+): Promise<getStoriesArtStylesResponseSuccess> => {
+  return customInstance<getStoriesArtStylesResponseSuccess>(
     getGetStoriesArtStylesUrl(),
     {
       ...options,
@@ -2524,10 +2494,6 @@ export type deleteStoriesByStoryIdThumbnailResponseError = (
   headers: Headers;
 };
 
-export type deleteStoriesByStoryIdThumbnailResponse =
-  | deleteStoriesByStoryIdThumbnailResponseSuccess
-  | deleteStoriesByStoryIdThumbnailResponseError;
-
 export const getDeleteStoriesByStoryIdThumbnailUrl = (storyId: string) => {
   return `/api/v1/stories/${storyId}/thumbnail`;
 };
@@ -2539,8 +2505,8 @@ export const getDeleteStoriesByStoryIdThumbnailUrl = (storyId: string) => {
 export const deleteStoriesByStoryIdThumbnail = async (
   storyId: string,
   options?: RequestInit,
-): Promise<deleteStoriesByStoryIdThumbnailResponse> => {
-  return customInstance<deleteStoriesByStoryIdThumbnailResponse>(
+): Promise<deleteStoriesByStoryIdThumbnailResponseSuccess> => {
+  return customInstance<deleteStoriesByStoryIdThumbnailResponseSuccess>(
     getDeleteStoriesByStoryIdThumbnailUrl(storyId),
     {
       ...options,
@@ -2659,10 +2625,6 @@ export type deleteCharacterImageResponseError = (
   headers: Headers;
 };
 
-export type deleteCharacterImageResponse =
-  | deleteCharacterImageResponseSuccess
-  | deleteCharacterImageResponseError;
-
 export const getDeleteCharacterImageUrl = (
   storyId: string,
   characterId: string,
@@ -2680,8 +2642,8 @@ export const deleteCharacterImage = async (
   characterId: string,
   imageId: string,
   options?: RequestInit,
-): Promise<deleteCharacterImageResponse> => {
-  return customInstance<deleteCharacterImageResponse>(
+): Promise<deleteCharacterImageResponseSuccess> => {
+  return customInstance<deleteCharacterImageResponseSuccess>(
     getDeleteCharacterImageUrl(storyId, characterId, imageId),
     {
       ...options,

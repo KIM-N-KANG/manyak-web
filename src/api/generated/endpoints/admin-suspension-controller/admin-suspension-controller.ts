@@ -30,8 +30,6 @@ export type suspendResponse200 = {
 export type suspendResponseSuccess = suspendResponse200 & {
   headers: Headers;
 };
-export type suspendResponse = suspendResponseSuccess;
-
 export const getSuspendUrl = (memberId: string) => {
   return `/api/v1/admin/members/${memberId}/suspension`;
 };
@@ -40,8 +38,8 @@ export const suspend = async (
   memberId: string,
   adminOperationReason: AdminOperationReason,
   options?: RequestInit,
-): Promise<suspendResponse> => {
-  return customInstance<suspendResponse>(getSuspendUrl(memberId), {
+): Promise<suspendResponseSuccess> => {
+  return customInstance<suspendResponseSuccess>(getSuspendUrl(memberId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -120,8 +118,6 @@ export type unsuspendResponse200 = {
 export type unsuspendResponseSuccess = unsuspendResponse200 & {
   headers: Headers;
 };
-export type unsuspendResponse = unsuspendResponseSuccess;
-
 export const getUnsuspendUrl = (memberId: string) => {
   return `/api/v1/admin/members/${memberId}/suspension`;
 };
@@ -130,8 +126,8 @@ export const unsuspend = async (
   memberId: string,
   adminOperationReason: AdminOperationReason,
   options?: RequestInit,
-): Promise<unsuspendResponse> => {
-  return customInstance<unsuspendResponse>(getUnsuspendUrl(memberId), {
+): Promise<unsuspendResponseSuccess> => {
+  return customInstance<unsuspendResponseSuccess>(getUnsuspendUrl(memberId), {
     ...options,
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },

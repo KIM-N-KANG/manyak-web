@@ -50,8 +50,6 @@ export type receiveResponseError = (
   headers: Headers;
 };
 
-export type receiveResponse = receiveResponseSuccess | receiveResponseError;
-
 export const getReceiveUrl = () => {
   return `/api/v1/webhooks/groble`;
 };
@@ -63,8 +61,8 @@ export const getReceiveUrl = () => {
 export const receive = async (
   receiveBody: string,
   options?: RequestInit,
-): Promise<receiveResponse> => {
-  return customInstance<receiveResponse>(getReceiveUrl(), {
+): Promise<receiveResponseSuccess> => {
+  return customInstance<receiveResponseSuccess>(getReceiveUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },

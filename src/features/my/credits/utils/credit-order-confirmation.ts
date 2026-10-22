@@ -1,4 +1,4 @@
-import type { getUsersMeCreditsOrdersByOrderIdResponse } from '@/api/generated/endpoints/credits/credits';
+import type { getUsersMeCreditsOrdersByOrderIdResponseSuccess } from '@/api/generated/endpoints/credits/credits';
 import { CreditOrderResponseStatus } from '@/api/generated/models';
 import { FetchError } from '@/lib/custom-fetch';
 
@@ -17,7 +17,7 @@ export type CreditOrderConfirmation =
   | { kind: 'failed' };
 
 type ResolveInput = {
-  data: getUsersMeCreditsOrdersByOrderIdResponse | undefined;
+  data: getUsersMeCreditsOrdersByOrderIdResponseSuccess | undefined;
   error: unknown;
   /** 지금까지 성공한 조회 횟수 */
   attempts: number;

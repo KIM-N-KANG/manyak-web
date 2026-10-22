@@ -32,8 +32,6 @@ export type getTrialsResponse200 = {
 export type getTrialsResponseSuccess = getTrialsResponse200 & {
   headers: Headers;
 };
-export type getTrialsResponse = getTrialsResponseSuccess;
-
 export const getGetTrialsUrl = () => {
   return `/api/v1/users/me/trials`;
 };
@@ -44,8 +42,8 @@ export const getGetTrialsUrl = () => {
  */
 export const getTrials = async (
   options?: RequestInit,
-): Promise<getTrialsResponse> => {
-  return customInstance<getTrialsResponse>(getGetTrialsUrl(), {
+): Promise<getTrialsResponseSuccess> => {
+  return customInstance<getTrialsResponseSuccess>(getGetTrialsUrl(), {
     ...options,
     method: 'GET',
   });

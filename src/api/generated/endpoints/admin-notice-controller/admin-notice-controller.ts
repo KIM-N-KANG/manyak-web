@@ -43,8 +43,6 @@ export type getAdminNoticesResponse200 = {
 export type getAdminNoticesResponseSuccess = getAdminNoticesResponse200 & {
   headers: Headers;
 };
-export type getAdminNoticesResponse = getAdminNoticesResponseSuccess;
-
 export const getGetAdminNoticesUrl = (params: GetAdminNoticesParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -64,8 +62,8 @@ export const getGetAdminNoticesUrl = (params: GetAdminNoticesParams) => {
 export const getAdminNotices = async (
   params: GetAdminNoticesParams,
   options?: RequestInit,
-): Promise<getAdminNoticesResponse> => {
-  return customInstance<getAdminNoticesResponse>(
+): Promise<getAdminNoticesResponseSuccess> => {
+  return customInstance<getAdminNoticesResponseSuccess>(
     getGetAdminNoticesUrl(params),
     {
       ...options,
@@ -225,8 +223,6 @@ export type postAdminNoticesResponse201 = {
 export type postAdminNoticesResponseSuccess = postAdminNoticesResponse201 & {
   headers: Headers;
 };
-export type postAdminNoticesResponse = postAdminNoticesResponseSuccess;
-
 export const getPostAdminNoticesUrl = () => {
   return `/api/v1/admin/notices`;
 };
@@ -234,13 +230,16 @@ export const getPostAdminNoticesUrl = () => {
 export const postAdminNotices = async (
   createNoticeRequest: CreateNoticeRequest,
   options?: RequestInit,
-): Promise<postAdminNoticesResponse> => {
-  return customInstance<postAdminNoticesResponse>(getPostAdminNoticesUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(createNoticeRequest),
-  });
+): Promise<postAdminNoticesResponseSuccess> => {
+  return customInstance<postAdminNoticesResponseSuccess>(
+    getPostAdminNoticesUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(createNoticeRequest),
+    },
+  );
 };
 
 export const getPostAdminNoticesMutationOptions = <
@@ -317,8 +316,6 @@ export type unpublishResponse200 = {
 export type unpublishResponseSuccess = unpublishResponse200 & {
   headers: Headers;
 };
-export type unpublishResponse = unpublishResponseSuccess;
-
 export const getUnpublishUrl = (noticeId: string) => {
   return `/api/v1/admin/notices/${noticeId}/unpublish`;
 };
@@ -327,8 +324,8 @@ export const unpublish = async (
   noticeId: string,
   noticeReasonRequest: NoticeReasonRequest,
   options?: RequestInit,
-): Promise<unpublishResponse> => {
-  return customInstance<unpublishResponse>(getUnpublishUrl(noticeId), {
+): Promise<unpublishResponseSuccess> => {
+  return customInstance<unpublishResponseSuccess>(getUnpublishUrl(noticeId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -407,8 +404,6 @@ export type publishResponse200 = {
 export type publishResponseSuccess = publishResponse200 & {
   headers: Headers;
 };
-export type publishResponse = publishResponseSuccess;
-
 export const getPublishUrl = (noticeId: string) => {
   return `/api/v1/admin/notices/${noticeId}/publish`;
 };
@@ -417,8 +412,8 @@ export const publish = async (
   noticeId: string,
   publishNoticeRequest: PublishNoticeRequest,
   options?: RequestInit,
-): Promise<publishResponse> => {
-  return customInstance<publishResponse>(getPublishUrl(noticeId), {
+): Promise<publishResponseSuccess> => {
+  return customInstance<publishResponseSuccess>(getPublishUrl(noticeId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -498,9 +493,6 @@ export type getAdminNoticesByNoticeIdResponseSuccess =
   getAdminNoticesByNoticeIdResponse200 & {
     headers: Headers;
   };
-export type getAdminNoticesByNoticeIdResponse =
-  getAdminNoticesByNoticeIdResponseSuccess;
-
 export const getGetAdminNoticesByNoticeIdUrl = (noticeId: string) => {
   return `/api/v1/admin/notices/${noticeId}`;
 };
@@ -508,8 +500,8 @@ export const getGetAdminNoticesByNoticeIdUrl = (noticeId: string) => {
 export const getAdminNoticesByNoticeId = async (
   noticeId: string,
   options?: RequestInit,
-): Promise<getAdminNoticesByNoticeIdResponse> => {
-  return customInstance<getAdminNoticesByNoticeIdResponse>(
+): Promise<getAdminNoticesByNoticeIdResponseSuccess> => {
+  return customInstance<getAdminNoticesByNoticeIdResponseSuccess>(
     getGetAdminNoticesByNoticeIdUrl(noticeId),
     {
       ...options,
@@ -680,9 +672,6 @@ export type deleteAdminNoticesByNoticeIdResponseSuccess =
   deleteAdminNoticesByNoticeIdResponse204 & {
     headers: Headers;
   };
-export type deleteAdminNoticesByNoticeIdResponse =
-  deleteAdminNoticesByNoticeIdResponseSuccess;
-
 export const getDeleteAdminNoticesByNoticeIdUrl = (noticeId: string) => {
   return `/api/v1/admin/notices/${noticeId}`;
 };
@@ -691,8 +680,8 @@ export const deleteAdminNoticesByNoticeId = async (
   noticeId: string,
   noticeReasonRequest: NoticeReasonRequest,
   options?: RequestInit,
-): Promise<deleteAdminNoticesByNoticeIdResponse> => {
-  return customInstance<deleteAdminNoticesByNoticeIdResponse>(
+): Promise<deleteAdminNoticesByNoticeIdResponseSuccess> => {
+  return customInstance<deleteAdminNoticesByNoticeIdResponseSuccess>(
     getDeleteAdminNoticesByNoticeIdUrl(noticeId),
     {
       ...options,
@@ -782,9 +771,6 @@ export type patchAdminNoticesByNoticeIdResponseSuccess =
   patchAdminNoticesByNoticeIdResponse200 & {
     headers: Headers;
   };
-export type patchAdminNoticesByNoticeIdResponse =
-  patchAdminNoticesByNoticeIdResponseSuccess;
-
 export const getPatchAdminNoticesByNoticeIdUrl = (noticeId: string) => {
   return `/api/v1/admin/notices/${noticeId}`;
 };
@@ -793,8 +779,8 @@ export const patchAdminNoticesByNoticeId = async (
   noticeId: string,
   updateNoticeRequest: UpdateNoticeRequest,
   options?: RequestInit,
-): Promise<patchAdminNoticesByNoticeIdResponse> => {
-  return customInstance<patchAdminNoticesByNoticeIdResponse>(
+): Promise<patchAdminNoticesByNoticeIdResponseSuccess> => {
+  return customInstance<patchAdminNoticesByNoticeIdResponseSuccess>(
     getPatchAdminNoticesByNoticeIdUrl(noticeId),
     {
       ...options,

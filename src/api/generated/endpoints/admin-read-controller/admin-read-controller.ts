@@ -54,8 +54,6 @@ export type storiesResponse200 = {
 export type storiesResponseSuccess = storiesResponse200 & {
   headers: Headers;
 };
-export type storiesResponse = storiesResponseSuccess;
-
 export const getStoriesUrl = (params: StoriesParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -75,8 +73,8 @@ export const getStoriesUrl = (params: StoriesParams) => {
 export const stories = async (
   params: StoriesParams,
   options?: RequestInit,
-): Promise<storiesResponse> => {
-  return customInstance<storiesResponse>(getStoriesUrl(params), {
+): Promise<storiesResponseSuccess> => {
+  return customInstance<storiesResponseSuccess>(getStoriesUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -213,8 +211,6 @@ export type storyResponse200 = {
 export type storyResponseSuccess = storyResponse200 & {
   headers: Headers;
 };
-export type storyResponse = storyResponseSuccess;
-
 export const getStoryUrl = (storyId: string) => {
   return `/api/v1/admin/stories/${storyId}`;
 };
@@ -222,8 +218,8 @@ export const getStoryUrl = (storyId: string) => {
 export const story = async (
   storyId: string,
   options?: RequestInit,
-): Promise<storyResponse> => {
-  return customInstance<storyResponse>(getStoryUrl(storyId), {
+): Promise<storyResponseSuccess> => {
+  return customInstance<storyResponseSuccess>(getStoryUrl(storyId), {
     ...options,
     method: 'GET',
   });
@@ -361,8 +357,6 @@ export type paymentsResponse200 = {
 export type paymentsResponseSuccess = paymentsResponse200 & {
   headers: Headers;
 };
-export type paymentsResponse = paymentsResponseSuccess;
-
 export const getPaymentsUrl = (params: PaymentsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -382,8 +376,8 @@ export const getPaymentsUrl = (params: PaymentsParams) => {
 export const payments = async (
   params: PaymentsParams,
   options?: RequestInit,
-): Promise<paymentsResponse> => {
-  return customInstance<paymentsResponse>(getPaymentsUrl(params), {
+): Promise<paymentsResponseSuccess> => {
+  return customInstance<paymentsResponseSuccess>(getPaymentsUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -523,8 +517,6 @@ export type paymentResponse200 = {
 export type paymentResponseSuccess = paymentResponse200 & {
   headers: Headers;
 };
-export type paymentResponse = paymentResponseSuccess;
-
 export const getPaymentUrl = (orderId: string) => {
   return `/api/v1/admin/payments/orders/${orderId}`;
 };
@@ -532,8 +524,8 @@ export const getPaymentUrl = (orderId: string) => {
 export const payment = async (
   orderId: string,
   options?: RequestInit,
-): Promise<paymentResponse> => {
-  return customInstance<paymentResponse>(getPaymentUrl(orderId), {
+): Promise<paymentResponseSuccess> => {
+  return customInstance<paymentResponseSuccess>(getPaymentUrl(orderId), {
     ...options,
     method: 'GET',
   });
@@ -673,8 +665,6 @@ export type membersResponse200 = {
 export type membersResponseSuccess = membersResponse200 & {
   headers: Headers;
 };
-export type membersResponse = membersResponseSuccess;
-
 export const getMembersUrl = (params: MembersParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -694,8 +684,8 @@ export const getMembersUrl = (params: MembersParams) => {
 export const members = async (
   params: MembersParams,
   options?: RequestInit,
-): Promise<membersResponse> => {
-  return customInstance<membersResponse>(getMembersUrl(params), {
+): Promise<membersResponseSuccess> => {
+  return customInstance<membersResponseSuccess>(getMembersUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -832,8 +822,6 @@ export type memberResponse200 = {
 export type memberResponseSuccess = memberResponse200 & {
   headers: Headers;
 };
-export type memberResponse = memberResponseSuccess;
-
 export const getMemberUrl = (memberId: string) => {
   return `/api/v1/admin/members/${memberId}`;
 };
@@ -841,8 +829,8 @@ export const getMemberUrl = (memberId: string) => {
 export const member = async (
   memberId: string,
   options?: RequestInit,
-): Promise<memberResponse> => {
-  return customInstance<memberResponse>(getMemberUrl(memberId), {
+): Promise<memberResponseSuccess> => {
+  return customInstance<memberResponseSuccess>(getMemberUrl(memberId), {
     ...options,
     method: 'GET',
   });
@@ -980,8 +968,6 @@ export type transactionsResponse200 = {
 export type transactionsResponseSuccess = transactionsResponse200 & {
   headers: Headers;
 };
-export type transactionsResponse = transactionsResponseSuccess;
-
 export const getTransactionsUrl = (
   memberId: string,
   params: TransactionsParams,
@@ -1005,8 +991,8 @@ export const transactions = async (
   memberId: string,
   params: TransactionsParams,
   options?: RequestInit,
-): Promise<transactionsResponse> => {
-  return customInstance<transactionsResponse>(
+): Promise<transactionsResponseSuccess> => {
+  return customInstance<transactionsResponseSuccess>(
     getTransactionsUrl(memberId, params),
     {
       ...options,
@@ -1163,8 +1149,6 @@ export type attendanceResponse200 = {
 export type attendanceResponseSuccess = attendanceResponse200 & {
   headers: Headers;
 };
-export type attendanceResponse = attendanceResponseSuccess;
-
 export const getAttendanceUrl = (
   memberId: string,
   params: AttendanceParams,
@@ -1188,8 +1172,8 @@ export const attendance = async (
   memberId: string,
   params: AttendanceParams,
   options?: RequestInit,
-): Promise<attendanceResponse> => {
-  return customInstance<attendanceResponse>(
+): Promise<attendanceResponseSuccess> => {
+  return customInstance<attendanceResponseSuccess>(
     getAttendanceUrl(memberId, params),
     {
       ...options,
@@ -1346,16 +1330,14 @@ export type summaryResponse200 = {
 export type summaryResponseSuccess = summaryResponse200 & {
   headers: Headers;
 };
-export type summaryResponse = summaryResponseSuccess;
-
 export const getSummaryUrl = () => {
   return `/api/v1/admin/dashboard/summary`;
 };
 
 export const summary = async (
   options?: RequestInit,
-): Promise<summaryResponse> => {
-  return customInstance<summaryResponse>(getSummaryUrl(), {
+): Promise<summaryResponseSuccess> => {
+  return customInstance<summaryResponseSuccess>(getSummaryUrl(), {
     ...options,
     method: 'GET',
   });
@@ -1485,8 +1467,6 @@ export type chartsResponse200 = {
 export type chartsResponseSuccess = chartsResponse200 & {
   headers: Headers;
 };
-export type chartsResponse = chartsResponseSuccess;
-
 export const getChartsUrl = (params: ChartsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1506,8 +1486,8 @@ export const getChartsUrl = (params: ChartsParams) => {
 export const charts = async (
   params: ChartsParams,
   options?: RequestInit,
-): Promise<chartsResponse> => {
-  return customInstance<chartsResponse>(getChartsUrl(params), {
+): Promise<chartsResponseSuccess> => {
+  return customInstance<chartsResponseSuccess>(getChartsUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -1645,8 +1625,6 @@ export type chatsResponse200 = {
 export type chatsResponseSuccess = chatsResponse200 & {
   headers: Headers;
 };
-export type chatsResponse = chatsResponseSuccess;
-
 export const getChatsUrl = (params: ChatsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1666,8 +1644,8 @@ export const getChatsUrl = (params: ChatsParams) => {
 export const chats = async (
   params: ChatsParams,
   options?: RequestInit,
-): Promise<chatsResponse> => {
-  return customInstance<chatsResponse>(getChatsUrl(params), {
+): Promise<chatsResponseSuccess> => {
+  return customInstance<chatsResponseSuccess>(getChatsUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -1802,8 +1780,6 @@ export type chatResponse200 = {
 export type chatResponseSuccess = chatResponse200 & {
   headers: Headers;
 };
-export type chatResponse = chatResponseSuccess;
-
 export const getChatUrl = (chatId: string) => {
   return `/api/v1/admin/chats/${chatId}`;
 };
@@ -1811,8 +1787,8 @@ export const getChatUrl = (chatId: string) => {
 export const chat = async (
   chatId: string,
   options?: RequestInit,
-): Promise<chatResponse> => {
-  return customInstance<chatResponse>(getChatUrl(chatId), {
+): Promise<chatResponseSuccess> => {
+  return customInstance<chatResponseSuccess>(getChatUrl(chatId), {
     ...options,
     method: 'GET',
   });
@@ -1950,8 +1926,6 @@ export type auditLogsResponse200 = {
 export type auditLogsResponseSuccess = auditLogsResponse200 & {
   headers: Headers;
 };
-export type auditLogsResponse = auditLogsResponseSuccess;
-
 export const getAuditLogsUrl = (params: AuditLogsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1971,8 +1945,8 @@ export const getAuditLogsUrl = (params: AuditLogsParams) => {
 export const auditLogs = async (
   params: AuditLogsParams,
   options?: RequestInit,
-): Promise<auditLogsResponse> => {
-  return customInstance<auditLogsResponse>(getAuditLogsUrl(params), {
+): Promise<auditLogsResponseSuccess> => {
+  return customInstance<auditLogsResponseSuccess>(getAuditLogsUrl(params), {
     ...options,
     method: 'GET',
   });

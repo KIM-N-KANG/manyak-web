@@ -40,16 +40,14 @@ export type getUsersMePersonasResponseSuccess =
   getUsersMePersonasResponse200 & {
     headers: Headers;
   };
-export type getUsersMePersonasResponse = getUsersMePersonasResponseSuccess;
-
 export const getGetUsersMePersonasUrl = () => {
   return `/api/v1/users/me/personas`;
 };
 
 export const getUsersMePersonas = async (
   options?: RequestInit,
-): Promise<getUsersMePersonasResponse> => {
-  return customInstance<getUsersMePersonasResponse>(
+): Promise<getUsersMePersonasResponseSuccess> => {
+  return customInstance<getUsersMePersonasResponseSuccess>(
     getGetUsersMePersonasUrl(),
     {
       ...options,
@@ -203,8 +201,6 @@ export type postUsersMePersonasResponseSuccess =
   postUsersMePersonasResponse201 & {
     headers: Headers;
   };
-export type postUsersMePersonasResponse = postUsersMePersonasResponseSuccess;
-
 export const getPostUsersMePersonasUrl = () => {
   return `/api/v1/users/me/personas`;
 };
@@ -212,8 +208,8 @@ export const getPostUsersMePersonasUrl = () => {
 export const postUsersMePersonas = async (
   createUserPersonaRequest: CreateUserPersonaRequest,
   options?: RequestInit,
-): Promise<postUsersMePersonasResponse> => {
-  return customInstance<postUsersMePersonasResponse>(
+): Promise<postUsersMePersonasResponseSuccess> => {
+  return customInstance<postUsersMePersonasResponseSuccess>(
     getPostUsersMePersonasUrl(),
     {
       ...options,
@@ -303,9 +299,6 @@ export type deleteUsersMePersonasByPersonaIdResponseSuccess =
   deleteUsersMePersonasByPersonaIdResponse204 & {
     headers: Headers;
   };
-export type deleteUsersMePersonasByPersonaIdResponse =
-  deleteUsersMePersonasByPersonaIdResponseSuccess;
-
 export const getDeleteUsersMePersonasByPersonaIdUrl = (personaId: string) => {
   return `/api/v1/users/me/personas/${personaId}`;
 };
@@ -313,8 +306,8 @@ export const getDeleteUsersMePersonasByPersonaIdUrl = (personaId: string) => {
 export const deleteUsersMePersonasByPersonaId = async (
   personaId: string,
   options?: RequestInit,
-): Promise<deleteUsersMePersonasByPersonaIdResponse> => {
-  return customInstance<deleteUsersMePersonasByPersonaIdResponse>(
+): Promise<deleteUsersMePersonasByPersonaIdResponseSuccess> => {
+  return customInstance<deleteUsersMePersonasByPersonaIdResponseSuccess>(
     getDeleteUsersMePersonasByPersonaIdUrl(personaId),
     {
       ...options,
@@ -401,9 +394,6 @@ export type patchUsersMePersonasByPersonaIdResponseSuccess =
   patchUsersMePersonasByPersonaIdResponse200 & {
     headers: Headers;
   };
-export type patchUsersMePersonasByPersonaIdResponse =
-  patchUsersMePersonasByPersonaIdResponseSuccess;
-
 export const getPatchUsersMePersonasByPersonaIdUrl = (personaId: string) => {
   return `/api/v1/users/me/personas/${personaId}`;
 };
@@ -412,8 +402,8 @@ export const patchUsersMePersonasByPersonaId = async (
   personaId: string,
   updateUserPersonaRequest: UpdateUserPersonaRequest,
   options?: RequestInit,
-): Promise<patchUsersMePersonasByPersonaIdResponse> => {
-  return customInstance<patchUsersMePersonasByPersonaIdResponse>(
+): Promise<patchUsersMePersonasByPersonaIdResponseSuccess> => {
+  return customInstance<patchUsersMePersonasByPersonaIdResponseSuccess>(
     getPatchUsersMePersonasByPersonaIdUrl(personaId),
     {
       ...options,

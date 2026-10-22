@@ -32,8 +32,6 @@ export type statsResponse200 = {
 export type statsResponseSuccess = statsResponse200 & {
   headers: Headers;
 };
-export type statsResponse = statsResponseSuccess;
-
 export const getStatsUrl = (params?: StatsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -53,8 +51,8 @@ export const getStatsUrl = (params?: StatsParams) => {
 export const stats = async (
   params?: StatsParams,
   options?: RequestInit,
-): Promise<statsResponse> => {
-  return customInstance<statsResponse>(getStatsUrl(params), {
+): Promise<statsResponseSuccess> => {
+  return customInstance<statsResponseSuccess>(getStatsUrl(params), {
     ...options,
     method: 'GET',
   });

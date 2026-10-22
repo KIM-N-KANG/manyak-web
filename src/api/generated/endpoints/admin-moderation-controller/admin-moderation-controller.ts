@@ -40,8 +40,6 @@ export type releaseResponse200 = {
 export type releaseResponseSuccess = releaseResponse200 & {
   headers: Headers;
 };
-export type releaseResponse = releaseResponseSuccess;
-
 export const getReleaseUrl = (submissionId: string) => {
   return `/api/v1/admin/moderation/holds/${submissionId}/release`;
 };
@@ -50,8 +48,8 @@ export const release = async (
   submissionId: string,
   adminOperationReason: AdminOperationReason,
   options?: RequestInit,
-): Promise<releaseResponse> => {
-  return customInstance<releaseResponse>(getReleaseUrl(submissionId), {
+): Promise<releaseResponseSuccess> => {
+  return customInstance<releaseResponseSuccess>(getReleaseUrl(submissionId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -130,8 +128,6 @@ export type holdsResponse200 = {
 export type holdsResponseSuccess = holdsResponse200 & {
   headers: Headers;
 };
-export type holdsResponse = holdsResponseSuccess;
-
 export const getHoldsUrl = (params: HoldsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -151,8 +147,8 @@ export const getHoldsUrl = (params: HoldsParams) => {
 export const holds = async (
   params: HoldsParams,
   options?: RequestInit,
-): Promise<holdsResponse> => {
-  return customInstance<holdsResponse>(getHoldsUrl(params), {
+): Promise<holdsResponseSuccess> => {
+  return customInstance<holdsResponseSuccess>(getHoldsUrl(params), {
     ...options,
     method: 'GET',
   });
