@@ -501,16 +501,15 @@ const CHAT_MODELS_ROUTE = '**/api/v1/chats/models';
 
 /**
  * E2E가 응답할 채팅 모델 목록. 서버 기본 모델 표와 같고, 라이트 가격은 정책의 deprecated 턴 비용과 같다.
- * 실제 응답의 기본 여부 키는 `isDefault`라 생성 타입(`default`)과 다르지만 앱은 이 값을 읽지 않는다.
  */
 export const CHAT_MODELS_FIXTURE = [
   {
     code: 'LITE',
     name: '라이트',
     turnCost: CREDIT_POLICY_FIXTURE.chatTurnCost,
-    default: false,
+    isDefault: false,
   },
-  { code: 'AURORA', name: '오로라', turnCost: 50, default: true },
+  { code: 'AURORA', name: '오로라', turnCost: 50, isDefault: true },
 ] as const satisfies Required<ChatModelResponse>[];
 
 /**

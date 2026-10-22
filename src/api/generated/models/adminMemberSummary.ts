@@ -12,5 +12,5 @@ export interface AdminMemberSummary {
   nickname?: string;
   status?: AdminMemberSummaryStatus;
   createdAt?: string;
-  admin?: boolean;
+  isAdmin?: boolean;
 }

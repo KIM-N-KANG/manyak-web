@@ -9,5 +9,5 @@
 export interface AdminPushEffectiveTextResponse {
   title?: string;
   body?: string;
-  default?: boolean;
+  isDefault?: boolean;
 }
