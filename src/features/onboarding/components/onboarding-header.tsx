@@ -48,7 +48,7 @@ export function OnboardingHeader({
       <button type="button" aria-label="맨 위로 이동" onClick={onLogoClick}>
         <ManyakLogo className="h-6 w-auto text-primary" />
       </button>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <Button type="button" size="sm" variant="secondary" onClick={onBrowse}>
           {ONBOARDING_HEADER_BROWSE_LABEL}
         </Button>
