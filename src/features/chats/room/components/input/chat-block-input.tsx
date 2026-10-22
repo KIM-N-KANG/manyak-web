@@ -1,5 +1,7 @@
 'use client';
 
+import { type ReactNode } from 'react';
+
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -17,7 +19,6 @@ import { INPUT_BLOCK_LABELS, INPUT_BLOCK_PLACEHOLDERS } from '../../constants';
 import { type InputBlock, type InputBlockType } from '../../utils/input-blocks';
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatSettingsButton } from './chat-settings-sheet';
-import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 import { LockedInputOverlay } from './locked-input-overlay';
 import { SendButtonIcon } from './send-button-icon';
 
@@ -33,8 +34,8 @@ type ChatBlockInputProps = {
   isStreaming: boolean;
   choicesEnabled: boolean;
   onOpenSettings: () => void;
-  /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
-  realtimeImageEnabled: boolean;
+  /** 전송 버튼 왼쪽에 두는 AI 모델 선택 버튼 */
+  modelSelect: ReactNode;
   /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
   onLockedTap: () => void;
 };
@@ -51,7 +52,7 @@ export function ChatBlockInput({
   isStreaming,
   choicesEnabled,
   onOpenSettings,
-  realtimeImageEnabled,
+  modelSelect,
   onLockedTap,
 }: ChatBlockInputProps) {
   const { request: requestDiscard, dialogProps } =
@@ -151,8 +152,8 @@ export function ChatBlockInput({
           대사 추가
         </Button>
         <ChatSettingsButton onClick={onOpenSettings} />
-        <div className="ml-auto flex items-center gap-2">
-          <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
+        <div className="ml-auto flex items-center gap-1">
+          {modelSelect}
           <Button
             type="button"
             size="icon-sm"

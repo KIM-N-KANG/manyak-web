@@ -1,6 +1,7 @@
 'use client';
 
 import { CreditMark } from '@/components/common/credit-mark';
+import { Badge } from '@/components/ui/badge';
 import { formatCreditAmount } from '@/constants/credit';
 import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
@@ -13,24 +14,24 @@ import { calcChatTurnCost } from '../../utils/chat-turn-cost';
 type ChatTurnCreditCostProps = {
   /** 실시간 이미지 비용을 턴 비용에 합산해 보일지 여부 */
   withRealtimeImage?: boolean;
-  className?: string;
+  /** 고급 모델 비용으로 보일지 여부 */
+  advancedModel?: boolean;
 };
 
 export function ChatTurnCreditCost({
   withRealtimeImage = false,
-  className,
+  advancedModel = false,
 }: ChatTurnCreditCostProps) {
   const trials = useTrials();
   const policy = useCreditPolicy();
   const turnRemaining = getTrialRemaining(trials, 'chatTurn');
   const imageRemaining = getTrialRemaining(trials, 'chatImage');
-  const baseClassName =
-    'flex shrink-0 items-center gap-1 text-xs text-foreground-secondary';
 
   const { full, discounted } = calcChatTurnCost({
     chatTurnCost: policy?.chatTurnCost,
     chatImageCost: policy?.chatImageCost,
     withRealtimeImage,
+    advancedModel,
     turnRemaining,
     imageRemaining,
   });
@@ -39,17 +40,17 @@ export function ChatTurnCreditCost({
     full !== undefined && discounted !== undefined && discounted < full;
 
   return (
-    <span
+    <Badge
+      variant="secondary"
       className={cn(
-        baseClassName,
+        'gap-1 text-foreground-secondary',
         discounted === undefined && 'animate-pulse',
-        className,
       )}>
       <CreditMark className="size-3" />
       {showsStrike && <s>{formatCreditAmount(full)}</s>}
       <span>
         {buildChatTurnCreditCostLabel(formatCreditAmount(discounted))}
       </span>
-    </span>
+    </Badge>
   );
 }

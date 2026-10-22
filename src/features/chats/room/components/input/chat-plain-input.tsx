@@ -1,6 +1,6 @@
 'use client';
 
-import { type SubmitEvent } from 'react';
+import { type ReactNode, type SubmitEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +11,6 @@ import {
 
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatSettingsButton } from './chat-settings-sheet';
-import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 import { LockedInputOverlay } from './locked-input-overlay';
 import { SendButtonIcon } from './send-button-icon';
 
@@ -26,8 +25,8 @@ type ChatPlainInputProps = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   choicesEnabled: boolean;
   onOpenSettings: () => void;
-  /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
-  realtimeImageEnabled: boolean;
+  /** 전송 버튼 왼쪽에 두는 AI 모델 선택 버튼 */
+  modelSelect: ReactNode;
   /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
   onLockedTap: () => void;
 };
@@ -43,7 +42,7 @@ export function ChatPlainInput({
   textareaRef,
   choicesEnabled,
   onOpenSettings,
-  realtimeImageEnabled,
+  modelSelect,
   onLockedTap,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
@@ -99,8 +98,8 @@ export function ChatPlainInput({
               상황 추가
             </Button>
             <ChatSettingsButton onClick={onOpenSettings} />
-            <div className="ml-auto flex items-center gap-2">
-              <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
+            <div className="ml-auto flex items-center gap-1">
+              {modelSelect}
               <Button
                 type="submit"
                 variant="default"
