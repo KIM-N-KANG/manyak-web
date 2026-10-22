@@ -11,16 +11,16 @@ import { buildChatTurnCreditCostLabel } from '../../constants';
 import { calcChatTurnCost } from '../../utils/chat-turn-cost';
 
 type ChatTurnCreditCostProps = {
+  /** 고른 채팅 모델의 턴 이프 비용(모르면 undefined) */
+  turnCost: number | undefined;
   /** 실시간 이미지 비용을 턴 비용에 합산해 보일지 여부 */
   withRealtimeImage?: boolean;
-  /** 고급 모델 비용으로 보일지 여부 */
-  advancedModel?: boolean;
   className?: string;
 };
 
 export function ChatTurnCreditCost({
+  turnCost,
   withRealtimeImage = false,
-  advancedModel = false,
   className,
 }: ChatTurnCreditCostProps) {
   const trials = useTrials();
@@ -31,10 +31,9 @@ export function ChatTurnCreditCost({
     'flex shrink-0 items-center gap-1 text-xs text-foreground-secondary';
 
   const { full, discounted } = calcChatTurnCost({
-    chatTurnCost: policy?.chatTurnCost,
+    turnCost,
     chatImageCost: policy?.chatImageCost,
     withRealtimeImage,
-    advancedModel,
     turnRemaining,
     imageRemaining,
   });

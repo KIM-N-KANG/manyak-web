@@ -3,6 +3,7 @@ import { expect, test as base } from '@playwright/test';
 import { APP_BANNER_DISMISSED_KEY } from '@/lib/app-banner';
 
 import {
+  CHAT_MODELS_FIXTURE,
   CONSENTS_FIXTURE,
   CREDIT_POLICY_FIXTURE,
   CREDIT_PRODUCTS_FIXTURE,
@@ -66,6 +67,7 @@ export {
   mockSignupConsentSignIn,
 } from './auth';
 export {
+  CHAT_MODELS_FIXTURE,
   CONSENTS_FIXTURE,
   CREDIT_POLICY_FIXTURE,
   CREDIT_PRODUCTS_FIXTURE,

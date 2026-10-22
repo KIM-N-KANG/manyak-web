@@ -1,14 +1,10 @@
-import { ADVANCED_CHAT_TURN_COST } from '../constants';
-
 type ChatTurnCostInput = {
-  /** 서버 정책의 채팅 턴 이프 비용(조회 전이면 undefined) */
-  chatTurnCost: number | undefined;
+  /** 고른 채팅 모델의 턴 이프 비용(조회 전이면 undefined) */
+  turnCost: number | undefined;
   /** 서버 정책의 실시간 이미지 이프 비용(조회 전이면 undefined) */
   chatImageCost: number | undefined;
   /** 실시간 이미지가 켜져 있어 이미지 비용을 합산할지 여부 */
   withRealtimeImage: boolean;
-  /** 고급 모델을 골랐는지 여부. 고급은 임시 고정 비용을 쓰고 턴 체험을 적용하지 않는다 */
-  advancedModel?: boolean;
   /** 채팅 턴 체험 잔여(응답 전 undefined, 무제한 null) */
   turnRemaining: number | null | undefined;
   /** 실시간 이미지 체험 잔여(응답 전 undefined, 무제한 null) */
@@ -39,14 +35,12 @@ export const isTrialFree = (remaining: number | null | undefined) =>
  * @returns 정가와 체험 적용가
  */
 export function calcChatTurnCost({
-  chatTurnCost,
+  turnCost,
   chatImageCost,
   withRealtimeImage,
-  advancedModel = false,
   turnRemaining,
   imageRemaining,
 }: ChatTurnCostInput): ChatTurnCost {
-  const turnCost = advancedModel ? ADVANCED_CHAT_TURN_COST : chatTurnCost;
   const imageCost = withRealtimeImage ? chatImageCost : 0;
   const imageKnown = !withRealtimeImage || imageRemaining !== undefined;
 
@@ -63,7 +57,7 @@ export function calcChatTurnCost({
   return {
     full,
     discounted:
-      (!advancedModel && isTrialFree(turnRemaining) ? 0 : turnCost) +
+      (isTrialFree(turnRemaining) ? 0 : turnCost) +
       (isTrialFree(imageRemaining) ? 0 : imageCost),
   };
 }
