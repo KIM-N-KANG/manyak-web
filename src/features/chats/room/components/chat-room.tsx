@@ -484,6 +484,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           isStreaming={isStreaming}
           realtimeImageEnabled={realtimeImageEnabled}
           turnCost={turnCost}
+          modelCode={modelCode}
           onRealtimeImageEnabledChange={setRealtimeImageEnabled}
           realtimeImageNudgeOpen={realtimeImageNudge.isOpen}
           onRealtimeImageNudgeClose={realtimeImageNudge.close}

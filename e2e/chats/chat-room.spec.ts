@@ -14,6 +14,7 @@ import {
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_SETTINGS_COPY,
   CHAT_STREAM_LOADING_COPY,
+  CHAT_TURN_COST_INFO_COPY,
   REALTIME_IMAGE_NUDGE_DELAY_MS,
 } from '@/features/chats/room/constants';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
@@ -155,7 +156,7 @@ test.describe('채팅 스트리밍', () => {
       formatCreditAmount(chatTurnCost + chatImageCost),
     );
     await expect(
-      badge.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(page.getByText(/잔여 체험 횟수/)).toHaveCount(0);
 
@@ -318,9 +319,9 @@ test.describe('채팅 스트리밍', () => {
     await expect(badge).toHaveCSS('font-size', '12px');
     await expect(badge).toHaveClass(/text-foreground-secondary/);
     await expect(badge.locator('s')).toHaveCount(0);
-    await expect(badge.locator('xpath=..')).toHaveCSS('column-gap', '8px');
+    await expect(badge.locator('xpath=../..')).toHaveCSS('column-gap', '4px');
     await expect(
-      badge.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
 
@@ -445,7 +446,7 @@ test.describe('채팅 스트리밍', () => {
     await expect(
       page
         .getByText(auroraCost, { exact: true })
-        .locator('xpath=../following-sibling::*[1]'),
+        .locator('xpath=../../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
 
     // 모델은 서버가 채팅마다 저장하므로 다시 들어오면 상세가 준 모델을 보인다.
@@ -491,6 +492,54 @@ test.describe('채팅 스트리밍', () => {
     await page.reload();
     await modelButton(page).click();
     await expect(longResponse).toBeChecked();
+  });
+
+  test('전송 버튼 옆 비용 버튼을 누르면 항목별 비용과 남은 무료 체험을 팝오버로 보인다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, {
+      chatTurn: { used: 2, limit: 5 },
+      chatImage: { used: 5, limit: 5 },
+    });
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatDetail(undefined, undefined, AURORA_MODEL.code),
+        ),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page
+      .getByRole('button', { name: CHAT_TURN_COST_INFO_COPY.trigger })
+      .click();
+
+    const popover = page.getByRole('dialog', {
+      name: CHAT_TURN_COST_INFO_COPY.title,
+    });
+
+    // 턴 체험이 남아 AI 응답은 무료, 이미지 체험은 다 써서 이미지 정가만 낸다.
+    await expect(popover).toContainText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+      ),
+    );
+    await expect(popover.getByText(AURORA_MODEL.name)).toBeVisible();
+    await expect(
+      popover.getByText(CHAT_TURN_COST_INFO_COPY.buildTrialRemaining(3)),
+    ).toBeVisible();
+    await expect(
+      popover.getByText(CHAT_TURN_COST_INFO_COPY.trialExhausted),
+    ).toBeVisible();
+    // 체험 턴은 서버가 라이트로 답하므로 오로라를 고른 회원에게 알린다.
+    await expect(
+      popover.getByText(
+        CHAT_TURN_COST_INFO_COPY.buildTrialModelNote(LITE_MODEL.name),
+      ),
+    ).toBeVisible();
   });
 
   test('회원의 모델 변경이 실패하면 이전 모델로 되돌리고 실패를 알린다', async ({

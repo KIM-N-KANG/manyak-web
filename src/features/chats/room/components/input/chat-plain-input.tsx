@@ -11,7 +11,7 @@ import {
 
 import { submitOnShortcut } from '../../utils/submit-shortcut';
 import { ChatSettingsButton } from './chat-settings-sheet';
-import { ChatTurnCreditCost } from './chat-turn-credit-cost';
+import { ChatTurnCostInfo } from './chat-turn-cost-info';
 import { LockedInputOverlay } from './locked-input-overlay';
 import { SendButtonIcon } from './send-button-icon';
 
@@ -30,6 +30,8 @@ type ChatPlainInputProps = {
   realtimeImageEnabled: boolean;
   /** 고른 채팅 모델의 턴 이프 비용(모르면 undefined) */
   turnCost: number | undefined;
+  /** 지금 적용 중인 모델 코드(모르면 undefined). 비용 안내에 모델 이름을 보인다 */
+  modelCode: string | undefined;
   /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
   onLockedTap: () => void;
 };
@@ -47,6 +49,7 @@ export function ChatPlainInput({
   onOpenSettings,
   realtimeImageEnabled,
   turnCost,
+  modelCode,
   onLockedTap,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
@@ -102,10 +105,11 @@ export function ChatPlainInput({
               상황 추가
             </Button>
             <ChatSettingsButton onClick={onOpenSettings} />
-            <div className="ml-auto flex items-center gap-2">
-              <ChatTurnCreditCost
+            <div className="ml-auto flex items-center gap-1">
+              <ChatTurnCostInfo
                 withRealtimeImage={realtimeImageEnabled}
                 turnCost={turnCost}
+                modelCode={modelCode}
               />
               <Button
                 type="submit"
