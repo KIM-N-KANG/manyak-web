@@ -42,9 +42,6 @@ export type getStoriesSubmissionsByIdResponseSuccess =
   getStoriesSubmissionsByIdResponse200 & {
     headers: Headers;
   };
-export type getStoriesSubmissionsByIdResponse =
-  getStoriesSubmissionsByIdResponseSuccess;
-
 export const getGetStoriesSubmissionsByIdUrl = (id: string) => {
   return `/api/v1/stories/submissions/${id}`;
 };
@@ -52,8 +49,8 @@ export const getGetStoriesSubmissionsByIdUrl = (id: string) => {
 export const getStoriesSubmissionsById = async (
   id: string,
   options?: RequestInit,
-): Promise<getStoriesSubmissionsByIdResponse> => {
-  return customInstance<getStoriesSubmissionsByIdResponse>(
+): Promise<getStoriesSubmissionsByIdResponseSuccess> => {
+  return customInstance<getStoriesSubmissionsByIdResponseSuccess>(
     getGetStoriesSubmissionsByIdUrl(id),
     {
       ...options,
@@ -220,8 +217,6 @@ export type resubmitResponse202 = {
 export type resubmitResponseSuccess = resubmitResponse202 & {
   headers: Headers;
 };
-export type resubmitResponse = resubmitResponseSuccess;
-
 export const getResubmitUrl = (id: string) => {
   return `/api/v1/stories/submissions/${id}`;
 };
@@ -230,8 +225,8 @@ export const resubmit = async (
   id: string,
   createGeneralStoryRequest: CreateGeneralStoryRequest,
   options?: RequestInit,
-): Promise<resubmitResponse> => {
-  return customInstance<resubmitResponse>(getResubmitUrl(id), {
+): Promise<resubmitResponseSuccess> => {
+  return customInstance<resubmitResponseSuccess>(getResubmitUrl(id), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -311,9 +306,6 @@ export type deleteStoriesSubmissionsByIdResponseSuccess =
   deleteStoriesSubmissionsByIdResponse204 & {
     headers: Headers;
   };
-export type deleteStoriesSubmissionsByIdResponse =
-  deleteStoriesSubmissionsByIdResponseSuccess;
-
 export const getDeleteStoriesSubmissionsByIdUrl = (id: string) => {
   return `/api/v1/stories/submissions/${id}`;
 };
@@ -321,8 +313,8 @@ export const getDeleteStoriesSubmissionsByIdUrl = (id: string) => {
 export const deleteStoriesSubmissionsById = async (
   id: string,
   options?: RequestInit,
-): Promise<deleteStoriesSubmissionsByIdResponse> => {
-  return customInstance<deleteStoriesSubmissionsByIdResponse>(
+): Promise<deleteStoriesSubmissionsByIdResponseSuccess> => {
+  return customInstance<deleteStoriesSubmissionsByIdResponseSuccess>(
     getDeleteStoriesSubmissionsByIdUrl(id),
     {
       ...options,
@@ -409,9 +401,6 @@ export type getStoriesSubmissionsResponseSuccess =
   getStoriesSubmissionsResponse200 & {
     headers: Headers;
   };
-export type getStoriesSubmissionsResponse =
-  getStoriesSubmissionsResponseSuccess;
-
 export const getGetStoriesSubmissionsUrl = (
   params?: GetStoriesSubmissionsParams,
 ) => {
@@ -433,8 +422,8 @@ export const getGetStoriesSubmissionsUrl = (
 export const getStoriesSubmissions = async (
   params?: GetStoriesSubmissionsParams,
   options?: RequestInit,
-): Promise<getStoriesSubmissionsResponse> => {
-  return customInstance<getStoriesSubmissionsResponse>(
+): Promise<getStoriesSubmissionsResponseSuccess> => {
+  return customInstance<getStoriesSubmissionsResponseSuccess>(
     getGetStoriesSubmissionsUrl(params),
     {
       ...options,

@@ -45,8 +45,6 @@ export type templateResponse200 = {
 export type templateResponseSuccess = templateResponse200 & {
   headers: Headers;
 };
-export type templateResponse = templateResponseSuccess;
-
 export const getTemplateUrl = (templateKey: string) => {
   return `/api/v1/admin/push/templates/${templateKey}`;
 };
@@ -54,8 +52,8 @@ export const getTemplateUrl = (templateKey: string) => {
 export const template = async (
   templateKey: string,
   options?: RequestInit,
-): Promise<templateResponse> => {
-  return customInstance<templateResponse>(getTemplateUrl(templateKey), {
+): Promise<templateResponseSuccess> => {
+  return customInstance<templateResponseSuccess>(getTemplateUrl(templateKey), {
     ...options,
     method: 'GET',
   });
@@ -196,9 +194,6 @@ export type putAdminPushTemplatesByTemplateKeyResponseSuccess =
   putAdminPushTemplatesByTemplateKeyResponse200 & {
     headers: Headers;
   };
-export type putAdminPushTemplatesByTemplateKeyResponse =
-  putAdminPushTemplatesByTemplateKeyResponseSuccess;
-
 export const getPutAdminPushTemplatesByTemplateKeyUrl = (
   templateKey: string,
 ) => {
@@ -209,8 +204,8 @@ export const putAdminPushTemplatesByTemplateKey = async (
   templateKey: string,
   adminPushTemplateRequest: AdminPushTemplateRequest,
   options?: RequestInit,
-): Promise<putAdminPushTemplatesByTemplateKeyResponse> => {
-  return customInstance<putAdminPushTemplatesByTemplateKeyResponse>(
+): Promise<putAdminPushTemplatesByTemplateKeyResponseSuccess> => {
+  return customInstance<putAdminPushTemplatesByTemplateKeyResponseSuccess>(
     getPutAdminPushTemplatesByTemplateKeyUrl(templateKey),
     {
       ...options,
@@ -304,8 +299,6 @@ export type resetResponse200 = {
 export type resetResponseSuccess = resetResponse200 & {
   headers: Headers;
 };
-export type resetResponse = resetResponseSuccess;
-
 export const getResetUrl = (templateKey: string) => {
   return `/api/v1/admin/push/templates/${templateKey}`;
 };
@@ -314,8 +307,8 @@ export const reset = async (
   templateKey: string,
   adminPushReasonRequest: AdminPushReasonRequest,
   options?: RequestInit,
-): Promise<resetResponse> => {
-  return customInstance<resetResponse>(getResetUrl(templateKey), {
+): Promise<resetResponseSuccess> => {
+  return customInstance<resetResponseSuccess>(getResetUrl(templateKey), {
     ...options,
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -395,9 +388,6 @@ export type getAdminPushCampaignsResponseSuccess =
   getAdminPushCampaignsResponse200 & {
     headers: Headers;
   };
-export type getAdminPushCampaignsResponse =
-  getAdminPushCampaignsResponseSuccess;
-
 export const getGetAdminPushCampaignsUrl = (
   params?: GetAdminPushCampaignsParams,
 ) => {
@@ -419,8 +409,8 @@ export const getGetAdminPushCampaignsUrl = (
 export const getAdminPushCampaigns = async (
   params?: GetAdminPushCampaignsParams,
   options?: RequestInit,
-): Promise<getAdminPushCampaignsResponse> => {
-  return customInstance<getAdminPushCampaignsResponse>(
+): Promise<getAdminPushCampaignsResponseSuccess> => {
+  return customInstance<getAdminPushCampaignsResponseSuccess>(
     getGetAdminPushCampaignsUrl(params),
     {
       ...options,
@@ -585,9 +575,6 @@ export type postAdminPushCampaignsResponseSuccess =
   postAdminPushCampaignsResponse201 & {
     headers: Headers;
   };
-export type postAdminPushCampaignsResponse =
-  postAdminPushCampaignsResponseSuccess;
-
 export const getPostAdminPushCampaignsUrl = () => {
   return `/api/v1/admin/push/campaigns`;
 };
@@ -595,8 +582,8 @@ export const getPostAdminPushCampaignsUrl = () => {
 export const postAdminPushCampaigns = async (
   adminCampaignRequest: AdminCampaignRequest,
   options?: RequestInit,
-): Promise<postAdminPushCampaignsResponse> => {
-  return customInstance<postAdminPushCampaignsResponse>(
+): Promise<postAdminPushCampaignsResponseSuccess> => {
+  return customInstance<postAdminPushCampaignsResponseSuccess>(
     getPostAdminPushCampaignsUrl(),
     {
       ...options,
@@ -684,8 +671,6 @@ export type retryResponse200 = {
 export type retryResponseSuccess = retryResponse200 & {
   headers: Headers;
 };
-export type retryResponse = retryResponseSuccess;
-
 export const getRetryUrl = (campaignId: string) => {
   return `/api/v1/admin/push/campaigns/${campaignId}/retry`;
 };
@@ -694,8 +679,8 @@ export const retry = async (
   campaignId: string,
   adminPushReasonRequest: AdminPushReasonRequest,
   options?: RequestInit,
-): Promise<retryResponse> => {
-  return customInstance<retryResponse>(getRetryUrl(campaignId), {
+): Promise<retryResponseSuccess> => {
+  return customInstance<retryResponseSuccess>(getRetryUrl(campaignId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -774,8 +759,6 @@ export type cancelResponse200 = {
 export type cancelResponseSuccess = cancelResponse200 & {
   headers: Headers;
 };
-export type cancelResponse = cancelResponseSuccess;
-
 export const getCancelUrl = (campaignId: string) => {
   return `/api/v1/admin/push/campaigns/${campaignId}/cancel`;
 };
@@ -784,8 +767,8 @@ export const cancel = async (
   campaignId: string,
   adminPushReasonRequest: AdminPushReasonRequest,
   options?: RequestInit,
-): Promise<cancelResponse> => {
-  return customInstance<cancelResponse>(getCancelUrl(campaignId), {
+): Promise<cancelResponseSuccess> => {
+  return customInstance<cancelResponseSuccess>(getCancelUrl(campaignId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -865,9 +848,6 @@ export type getAdminPushCampaignsByCampaignIdResponseSuccess =
   getAdminPushCampaignsByCampaignIdResponse200 & {
     headers: Headers;
   };
-export type getAdminPushCampaignsByCampaignIdResponse =
-  getAdminPushCampaignsByCampaignIdResponseSuccess;
-
 export const getGetAdminPushCampaignsByCampaignIdUrl = (campaignId: string) => {
   return `/api/v1/admin/push/campaigns/${campaignId}`;
 };
@@ -875,8 +855,8 @@ export const getGetAdminPushCampaignsByCampaignIdUrl = (campaignId: string) => {
 export const getAdminPushCampaignsByCampaignId = async (
   campaignId: string,
   options?: RequestInit,
-): Promise<getAdminPushCampaignsByCampaignIdResponse> => {
-  return customInstance<getAdminPushCampaignsByCampaignIdResponse>(
+): Promise<getAdminPushCampaignsByCampaignIdResponseSuccess> => {
+  return customInstance<getAdminPushCampaignsByCampaignIdResponseSuccess>(
     getGetAdminPushCampaignsByCampaignIdUrl(campaignId),
     {
       ...options,
@@ -1052,8 +1032,6 @@ export type targetCountResponse200 = {
 export type targetCountResponseSuccess = targetCountResponse200 & {
   headers: Headers;
 };
-export type targetCountResponse = targetCountResponseSuccess;
-
 export const getTargetCountUrl = (params?: TargetCountParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1073,8 +1051,8 @@ export const getTargetCountUrl = (params?: TargetCountParams) => {
 export const targetCount = async (
   params?: TargetCountParams,
   options?: RequestInit,
-): Promise<targetCountResponse> => {
-  return customInstance<targetCountResponse>(getTargetCountUrl(params), {
+): Promise<targetCountResponseSuccess> => {
+  return customInstance<targetCountResponseSuccess>(getTargetCountUrl(params), {
     ...options,
     method: 'GET',
   });

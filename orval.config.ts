@@ -30,6 +30,8 @@ export default defineConfig({
           path: 'src/api/mutator/custom-instance.ts',
           name: 'customInstance',
         },
+        // customInstance가 non-2xx를 FetchError로 던지므로 응답 타입에는 2xx만 남긴다.
+        fetch: { forceSuccessResponse: true },
       },
     },
     hooks: {

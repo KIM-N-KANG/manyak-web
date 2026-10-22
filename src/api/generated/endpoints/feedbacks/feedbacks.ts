@@ -36,10 +36,6 @@ export type createFeedbackResponseError = createFeedbackResponse400 & {
   headers: Headers;
 };
 
-export type createFeedbackResponse =
-  | createFeedbackResponseSuccess
-  | createFeedbackResponseError;
-
 export const getCreateFeedbackUrl = () => {
   return `/api/v1/feedbacks`;
 };
@@ -51,8 +47,8 @@ export const getCreateFeedbackUrl = () => {
 export const createFeedback = async (
   createFeedbackRequest: CreateFeedbackRequest,
   options?: RequestInit,
-): Promise<createFeedbackResponse> => {
-  return customInstance<createFeedbackResponse>(getCreateFeedbackUrl(), {
+): Promise<createFeedbackResponseSuccess> => {
+  return customInstance<createFeedbackResponseSuccess>(getCreateFeedbackUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },

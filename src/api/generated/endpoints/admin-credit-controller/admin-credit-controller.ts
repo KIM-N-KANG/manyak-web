@@ -43,9 +43,6 @@ export type putAdminCreditsPoliciesByPolicyKeyResponseSuccess =
   putAdminCreditsPoliciesByPolicyKeyResponse200 & {
     headers: Headers;
   };
-export type putAdminCreditsPoliciesByPolicyKeyResponse =
-  putAdminCreditsPoliciesByPolicyKeyResponseSuccess;
-
 export const getPutAdminCreditsPoliciesByPolicyKeyUrl = (policyKey: string) => {
   return `/api/v1/admin/credits/policies/${policyKey}`;
 };
@@ -54,8 +51,8 @@ export const putAdminCreditsPoliciesByPolicyKey = async (
   policyKey: string,
   adminCreditPolicyRequest: AdminCreditPolicyRequest,
   options?: RequestInit,
-): Promise<putAdminCreditsPoliciesByPolicyKeyResponse> => {
-  return customInstance<putAdminCreditsPoliciesByPolicyKeyResponse>(
+): Promise<putAdminCreditsPoliciesByPolicyKeyResponseSuccess> => {
+  return customInstance<putAdminCreditsPoliciesByPolicyKeyResponseSuccess>(
     getPutAdminCreditsPoliciesByPolicyKeyUrl(policyKey),
     {
       ...options,
@@ -146,9 +143,6 @@ export type deleteAdminCreditsPoliciesByPolicyKeyResponseSuccess =
   deleteAdminCreditsPoliciesByPolicyKeyResponse200 & {
     headers: Headers;
   };
-export type deleteAdminCreditsPoliciesByPolicyKeyResponse =
-  deleteAdminCreditsPoliciesByPolicyKeyResponseSuccess;
-
 export const getDeleteAdminCreditsPoliciesByPolicyKeyUrl = (
   policyKey: string,
 ) => {
@@ -159,8 +153,8 @@ export const deleteAdminCreditsPoliciesByPolicyKey = async (
   policyKey: string,
   adminCreditPolicyDeleteRequest: AdminCreditPolicyDeleteRequest,
   options?: RequestInit,
-): Promise<deleteAdminCreditsPoliciesByPolicyKeyResponse> => {
-  return customInstance<deleteAdminCreditsPoliciesByPolicyKeyResponse>(
+): Promise<deleteAdminCreditsPoliciesByPolicyKeyResponseSuccess> => {
+  return customInstance<deleteAdminCreditsPoliciesByPolicyKeyResponseSuccess>(
     getDeleteAdminCreditsPoliciesByPolicyKeyUrl(policyKey),
     {
       ...options,
@@ -254,8 +248,6 @@ export type adjustResponse200 = {
 export type adjustResponseSuccess = adjustResponse200 & {
   headers: Headers;
 };
-export type adjustResponse = adjustResponseSuccess;
-
 export const getAdjustUrl = () => {
   return `/api/v1/admin/credits/adjustments`;
 };
@@ -263,8 +255,8 @@ export const getAdjustUrl = () => {
 export const adjust = async (
   adminCreditAdjustmentRequest: AdminCreditAdjustmentRequest,
   options?: RequestInit,
-): Promise<adjustResponse> => {
-  return customInstance<adjustResponse>(getAdjustUrl(), {
+): Promise<adjustResponseSuccess> => {
+  return customInstance<adjustResponseSuccess>(getAdjustUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -343,16 +335,14 @@ export type policiesResponse200 = {
 export type policiesResponseSuccess = policiesResponse200 & {
   headers: Headers;
 };
-export type policiesResponse = policiesResponseSuccess;
-
 export const getPoliciesUrl = () => {
   return `/api/v1/admin/credits/policies`;
 };
 
 export const policies = async (
   options?: RequestInit,
-): Promise<policiesResponse> => {
-  return customInstance<policiesResponse>(getPoliciesUrl(), {
+): Promise<policiesResponseSuccess> => {
+  return customInstance<policiesResponseSuccess>(getPoliciesUrl(), {
     ...options,
     method: 'GET',
   });

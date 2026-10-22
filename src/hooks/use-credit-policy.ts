@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
-  type getCreditPoliciesResponse,
+  type getCreditPoliciesResponseSuccess,
   getGetCreditPoliciesQueryKey,
   useGetCreditPolicies,
 } from '@/api/generated/endpoints/credits/credits';
@@ -11,7 +11,7 @@ import type { CreditPolicyResponse } from '@/api/generated/models';
 
 /** 조회 응답에서 정책 본문만 꺼낸다. 성공(200)이 아니면 값이 없는 것으로 본다. */
 const toPolicy = (
-  response: getCreditPoliciesResponse | undefined,
+  response: getCreditPoliciesResponseSuccess | undefined,
 ): CreditPolicyResponse | undefined =>
   response?.status === 200 ? response.data : undefined;
 
@@ -46,7 +46,7 @@ export function useCreditPolicySnapshot() {
 
   return () =>
     toPolicy(
-      queryClient.getQueryData<getCreditPoliciesResponse>(
+      queryClient.getQueryData<getCreditPoliciesResponseSuccess>(
         getGetCreditPoliciesQueryKey(),
       ),
     );

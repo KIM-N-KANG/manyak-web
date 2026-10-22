@@ -53,10 +53,6 @@ export type getUsersMeConsentsResponseError = (
   headers: Headers;
 };
 
-export type getUsersMeConsentsResponse =
-  | getUsersMeConsentsResponseSuccess
-  | getUsersMeConsentsResponseError;
-
 export const getGetUsersMeConsentsUrl = () => {
   return `/api/v1/users/me/consents`;
 };
@@ -67,8 +63,8 @@ export const getGetUsersMeConsentsUrl = () => {
  */
 export const getUsersMeConsents = async (
   options?: RequestInit,
-): Promise<getUsersMeConsentsResponse> => {
-  return customInstance<getUsersMeConsentsResponse>(
+): Promise<getUsersMeConsentsResponseSuccess> => {
+  return customInstance<getUsersMeConsentsResponseSuccess>(
     getGetUsersMeConsentsUrl(),
     {
       ...options,
@@ -248,10 +244,6 @@ export type postUsersMeConsentsResponseError = (
   headers: Headers;
 };
 
-export type postUsersMeConsentsResponse =
-  | postUsersMeConsentsResponseSuccess
-  | postUsersMeConsentsResponseError;
-
 export const getPostUsersMeConsentsUrl = () => {
   return `/api/v1/users/me/consents`;
 };
@@ -263,8 +255,8 @@ export const getPostUsersMeConsentsUrl = () => {
 export const postUsersMeConsents = async (
   userConsentRequest: UserConsentRequest,
   options?: RequestInit,
-): Promise<postUsersMeConsentsResponse> => {
-  return customInstance<postUsersMeConsentsResponse>(
+): Promise<postUsersMeConsentsResponseSuccess> => {
+  return customInstance<postUsersMeConsentsResponseSuccess>(
     getPostUsersMeConsentsUrl(),
     {
       ...options,

@@ -32,8 +32,6 @@ export type analyticsResponse200 = {
 export type analyticsResponseSuccess = analyticsResponse200 & {
   headers: Headers;
 };
-export type analyticsResponse = analyticsResponseSuccess;
-
 export const getAnalyticsUrl = (params?: AnalyticsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -53,8 +51,8 @@ export const getAnalyticsUrl = (params?: AnalyticsParams) => {
 export const analytics = async (
   params?: AnalyticsParams,
   options?: RequestInit,
-): Promise<analyticsResponse> => {
-  return customInstance<analyticsResponse>(getAnalyticsUrl(params), {
+): Promise<analyticsResponseSuccess> => {
+  return customInstance<analyticsResponseSuccess>(getAnalyticsUrl(params), {
     ...options,
     method: 'GET',
   });

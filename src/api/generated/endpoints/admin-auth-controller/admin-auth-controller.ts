@@ -27,8 +27,6 @@ export type loginResponse200 = {
 export type loginResponseSuccess = loginResponse200 & {
   headers: Headers;
 };
-export type loginResponse = loginResponseSuccess;
-
 export const getLoginUrl = () => {
   return `/api/v1/admin/auth/login/google`;
 };
@@ -36,8 +34,8 @@ export const getLoginUrl = () => {
 export const login = async (
   adminLoginRequest: AdminLoginRequest,
   options?: RequestInit,
-): Promise<loginResponse> => {
-  return customInstance<loginResponse>(getLoginUrl(), {
+): Promise<loginResponseSuccess> => {
+  return customInstance<loginResponseSuccess>(getLoginUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },

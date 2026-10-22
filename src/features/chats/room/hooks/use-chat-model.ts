@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
-  type getChatDetailResponse,
+  type getChatDetailResponseSuccess,
   getGetChatDetailQueryKey,
   useChangeModel,
   useGetModels,
@@ -51,7 +51,7 @@ export function useChatModel(
       : models.find((model) => model.code === modelCode)?.turnCost;
 
   const setChatModel = (model: string | undefined) =>
-    queryClient.setQueryData<getChatDetailResponse>(
+    queryClient.setQueryData<getChatDetailResponseSuccess>(
       getGetChatDetailQueryKey(chatId),
       (prev) =>
         prev?.status === 200

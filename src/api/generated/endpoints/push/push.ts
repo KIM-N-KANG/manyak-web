@@ -63,8 +63,6 @@ export type registerResponseError = (
   headers: Headers;
 };
 
-export type registerResponse = registerResponseSuccess | registerResponseError;
-
 export const getRegisterUrl = () => {
   return `/api/v1/users/me/push-tokens`;
 };
@@ -76,8 +74,8 @@ export const getRegisterUrl = () => {
 export const register = async (
   pushTokenRegisterRequest: PushTokenRegisterRequest,
   options?: RequestInit,
-): Promise<registerResponse> => {
-  return customInstance<registerResponse>(getRegisterUrl(), {
+): Promise<registerResponseSuccess> => {
+  return customInstance<registerResponseSuccess>(getRegisterUrl(), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -182,10 +180,6 @@ export type unregisterResponseError = (
   headers: Headers;
 };
 
-export type unregisterResponse =
-  | unregisterResponseSuccess
-  | unregisterResponseError;
-
 export const getUnregisterUrl = () => {
   return `/api/v1/users/me/push-tokens`;
 };
@@ -197,8 +191,8 @@ export const getUnregisterUrl = () => {
 export const unregister = async (
   pushTokenDeleteRequest: PushTokenDeleteRequest,
   options?: RequestInit,
-): Promise<unregisterResponse> => {
-  return customInstance<unregisterResponse>(getUnregisterUrl(), {
+): Promise<unregisterResponseSuccess> => {
+  return customInstance<unregisterResponseSuccess>(getUnregisterUrl(), {
     ...options,
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -297,10 +291,6 @@ export type getPushSettingsResponseError = (
   headers: Headers;
 };
 
-export type getPushSettingsResponse =
-  | getPushSettingsResponseSuccess
-  | getPushSettingsResponseError;
-
 export const getGetPushSettingsUrl = () => {
   return `/api/v1/users/me/push-settings`;
 };
@@ -311,11 +301,14 @@ export const getGetPushSettingsUrl = () => {
  */
 export const getPushSettings = async (
   options?: RequestInit,
-): Promise<getPushSettingsResponse> => {
-  return customInstance<getPushSettingsResponse>(getGetPushSettingsUrl(), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getPushSettingsResponseSuccess> => {
+  return customInstance<getPushSettingsResponseSuccess>(
+    getGetPushSettingsUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetPushSettingsQueryKey = () => {
@@ -485,10 +478,6 @@ export type updatePushSettingsResponseError = (
   headers: Headers;
 };
 
-export type updatePushSettingsResponse =
-  | updatePushSettingsResponseSuccess
-  | updatePushSettingsResponseError;
-
 export const getUpdatePushSettingsUrl = () => {
   return `/api/v1/users/me/push-settings`;
 };
@@ -500,8 +489,8 @@ export const getUpdatePushSettingsUrl = () => {
 export const updatePushSettings = async (
   pushSettingsUpdateRequest: PushSettingsUpdateRequest,
   options?: RequestInit,
-): Promise<updatePushSettingsResponse> => {
-  return customInstance<updatePushSettingsResponse>(
+): Promise<updatePushSettingsResponseSuccess> => {
+  return customInstance<updatePushSettingsResponseSuccess>(
     getUpdatePushSettingsUrl(),
     {
       ...options,

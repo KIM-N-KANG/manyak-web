@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   getGetPublicStoriesQueryKey,
   getGetStoryDetailQueryKey,
-  type getStoryDetailResponse,
+  type getStoryDetailResponseSuccess,
   useLikeStory,
   useUnlikeStory,
 } from '@/api/generated/endpoints/stories/stories';
@@ -35,27 +35,31 @@ export function useStoryLike(storyId: string, isLiked: boolean) {
     setIsPending(true);
 
     const queryKey = getGetStoryDetailQueryKey(storyId);
-    let previous: getStoryDetailResponse | undefined;
+    let previous: getStoryDetailResponseSuccess | undefined;
 
     try {
       await queryClient.cancelQueries({ queryKey });
-      previous = queryClient.getQueryData<getStoryDetailResponse>(queryKey);
+      previous =
+        queryClient.getQueryData<getStoryDetailResponseSuccess>(queryKey);
 
-      queryClient.setQueryData<getStoryDetailResponse>(queryKey, (previous) => {
-        if (previous?.status !== 200) return previous;
+      queryClient.setQueryData<getStoryDetailResponseSuccess>(
+        queryKey,
+        (previous) => {
+          if (previous?.status !== 200) return previous;
 
-        return {
-          ...previous,
-          data: {
-            ...previous.data,
-            isLiked: !isLiked,
-            likeCount: Math.max(
-              0,
-              (previous.data.likeCount ?? 0) + (isLiked ? -1 : 1),
-            ),
-          },
-        };
-      });
+          return {
+            ...previous,
+            data: {
+              ...previous.data,
+              isLiked: !isLiked,
+              likeCount: Math.max(
+                0,
+                (previous.data.likeCount ?? 0) + (isLiked ? -1 : 1),
+              ),
+            },
+          };
+        },
+      );
 
       const response = await (isLiked ? unlike : like).mutateAsync({ storyId });
 

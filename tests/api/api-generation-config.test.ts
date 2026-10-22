@@ -52,6 +52,7 @@ test('orval config reads backend OpenAPI and generates API plus Zod outputs', ()
   assert.match(source, /client:\s*'zod'/);
   assert.match(source, /target:\s*'src\/api\/generated\/zod\/index\.ts'/);
   assert.match(source, /afterAllFilesWrite:\s*'prettier --write'/);
+  assert.match(source, /forceSuccessResponse:\s*true/);
 });
 
 test('custom mutator preserves request behavior expected by generated clients', () => {
@@ -85,11 +86,11 @@ test('generated clients call the custom mutator with URL and request init', () =
 
   assert.match(
     apiSource,
-    /customInstance<createSimpleStoryResponse>\(\s*getCreateSimpleStoryUrl\(\),/,
+    /customInstance<createSimpleStoryResponseSuccess>\(\s*getCreateSimpleStoryUrl\(\),/,
   );
   assert.match(
     apiSource,
-    /customInstance<getStoryDetailResponse>\(\s*getGetStoryDetailUrl\(storyId\),/,
+    /customInstance<getStoryDetailResponseSuccess>\(\s*getGetStoryDetailUrl\(storyId\),/,
   );
 });
 
