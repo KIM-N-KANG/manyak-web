@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { ArrowDown01Icon, RulerIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { ChatModelResponse } from '@/api/generated/models';
@@ -11,15 +11,20 @@ import { Button } from '@/components/ui/button';
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { Label } from '@/components/ui/label';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { cn } from '@/lib/utils';
 
-import { CHAT_MODEL_COPY } from '../../constants';
+import {
+  CHAT_LONG_RESPONSE_ENABLED_STORAGE_KEY,
+  CHAT_MODEL_COPY,
+} from '../../constants';
+import { useStoredToggle } from '../../hooks/use-stored-toggle';
+import { SettingRow } from '../input/chat-settings-sheet';
 import { ChatTurnCreditCost } from '../input/chat-turn-credit-cost';
 
 type ChatModelDrawerProps = {
@@ -42,6 +47,8 @@ export function ChatModelDrawer({
   const container = useAppFrameContainer();
   const [isOpen, setIsOpen] = useState(false);
   const current = models.find((model) => model.code === modelCode);
+  const { enabled: longResponseEnabled, setEnabled: setLongResponseEnabled } =
+    useStoredToggle(CHAT_LONG_RESPONSE_ENABLED_STORAGE_KEY, false);
 
   const handleSelect = (next: string) => {
     setIsOpen(false);
@@ -61,25 +68,43 @@ export function ChatModelDrawer({
         />
       </DrawerTrigger>
       <DrawerContent container={container}>
-        <DrawerHeader className="gap-2 px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
+        <DrawerHeader className="px-4 pt-4 pb-0 text-left group-data-[swipe-axis=y]/drawer-popup:text-left">
           <DrawerTitle className="text-xl leading-snug font-bold">
             {CHAT_MODEL_COPY.title}
           </DrawerTitle>
-          <DrawerDescription>{CHAT_MODEL_COPY.description}</DrawerDescription>
         </DrawerHeader>
-        <div
-          role="radiogroup"
-          aria-label={CHAT_MODEL_COPY.title}
-          className="flex min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain px-4 pt-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {models.map((model) => (
-            <ChatModelOption
-              key={model.code}
-              model={model}
-              checked={model.code === modelCode}
-              withRealtimeImage={withRealtimeImage}
-              onSelect={handleSelect}
+        <div className="flex min-h-0 flex-col gap-8 overflow-y-auto overscroll-contain pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <section className="flex flex-col">
+            <div className="mb-2 px-4">
+              <Label>{CHAT_MODEL_COPY.group}</Label>
+            </div>
+            <div
+              role="radiogroup"
+              aria-label={CHAT_MODEL_COPY.group}
+              className="flex flex-col gap-2 px-4">
+              {models.map((model) => (
+                <ChatModelOption
+                  key={model.code}
+                  model={model}
+                  checked={model.code === modelCode}
+                  withRealtimeImage={withRealtimeImage}
+                  onSelect={handleSelect}
+                />
+              ))}
+            </div>
+          </section>
+          {/* 긴 응답은 채팅 설정처럼 바로 반영되고 시트는 열린 채 남는다. */}
+          <section className="flex flex-col">
+            <div className="mb-2 px-4">
+              <Label>{CHAT_MODEL_COPY.responseLength.group}</Label>
+            </div>
+            <SettingRow
+              icon={RulerIcon}
+              copy={CHAT_MODEL_COPY.responseLength}
+              checked={longResponseEnabled}
+              onCheckedChange={setLongResponseEnabled}
             />
-          ))}
+          </section>
         </div>
       </DrawerContent>
     </Drawer>

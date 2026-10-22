@@ -414,7 +414,9 @@ test.describe('채팅 스트리밍', () => {
     );
 
     await modelButton(page).click();
-    await expect(sheet.getByText(CHAT_MODEL_COPY.description)).toBeVisible();
+    await expect(
+      sheet.getByRole('radiogroup', { name: CHAT_MODEL_COPY.group }),
+    ).toBeVisible();
     await expect(liteOption).toBeChecked();
     await expect(auroraOption).not.toBeChecked();
     await expect(
@@ -457,6 +459,38 @@ test.describe('채팅 스트리밍', () => {
     await sheet.getByText(AURORA_MODEL.name).click();
     await expect(sheet).toBeHidden();
     expect(changes).toHaveLength(1);
+  });
+
+  test('채팅 응답 시트의 긴 응답 스위치는 기본 꺼짐이고, 켜면 시트가 열린 채 남으며 다시 들어와도 유지된다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await modelButton(page).click();
+
+    const longResponse = modelSheet(page).getByRole('switch', {
+      name: CHAT_MODEL_COPY.responseLength.label,
+    });
+
+    await expect(
+      modelSheet(page).getByText(CHAT_MODEL_COPY.responseLength.description),
+    ).toBeVisible();
+    await expect(longResponse).not.toBeChecked();
+    await longResponse.click();
+    await expect(longResponse).toBeChecked();
+    await expect(modelSheet(page)).toBeVisible();
+
+    // 서버 필드가 없어 기기에만 저장한다.
+    await page.reload();
+    await modelButton(page).click();
+    await expect(longResponse).toBeChecked();
   });
 
   test('회원의 모델 변경이 실패하면 이전 모델로 되돌리고 실패를 알린다', async ({

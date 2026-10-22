@@ -7,6 +7,10 @@ export const CHAT_INPUT_MODE_STORAGE_KEY = 'manyak:chat-input-mode';
 
 export const CHAT_CHOICES_ENABLED_STORAGE_KEY = 'manyak:chat-choices-enabled';
 
+/** 긴 응답 설정. 서버 필드가 생기기 전이라 기기에만 저장하고 요청에는 싣지 않는다. */
+export const CHAT_LONG_RESPONSE_ENABLED_STORAGE_KEY =
+  'manyak:chat-long-response-enabled';
+
 export const DEFAULT_CHAT_INPUT_MODE: ChatInputMode = 'block';
 
 /**
@@ -75,16 +79,21 @@ export const CHAT_SETTINGS_COPY = {
  */
 export const CHAT_TRIAL_MODEL_CODE = 'LITE';
 
-/** 채팅방 헤더 AI 모델 선택 버튼과 시트의 문구. 모델 이름과 순서는 서버 모델 목록을 따른다. */
+/** 채팅방 헤더 AI 모델 선택 버튼과 채팅 응답 시트의 문구. 모델 이름과 순서는 서버 모델 목록을 따른다. */
 export const CHAT_MODEL_COPY = {
   trigger: 'AI 모델 선택',
-  title: 'AI 모델 선택',
-  description: '턴마다 이프가 사용되고, 다시 만들 때도 같은 이프가 사용돼요',
+  title: '채팅 응답',
+  group: 'AI 모델',
   /** 모델 코드별 칸 설명. 모르는 코드는 설명 없이 이름과 비용만 보인다 */
   optionDescriptions: {
-    LITE: '빠르고 가볍게 이야기를 이어가요',
-    AURORA: '더 풍부하고 섬세하게 이야기를 이어가요',
+    LITE: '빠르고 가볍게 주고받아요',
+    AURORA: '풍부한 묘사로 몰입감을 더해요',
   } as Record<string, string | undefined>,
+  responseLength: {
+    group: '응답 길이',
+    label: '긴 응답',
+    description: '한 번에 더 많은 장면을 보여줘요',
+  },
 } as const;
 
 /** 채팅방 헤더 메뉴 시트의 문구. 항목 순서는 화면 순서 그대로다. */
