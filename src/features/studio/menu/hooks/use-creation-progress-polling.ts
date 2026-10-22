@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import {
-  type getCreationRequestResponse,
+  type getCreationRequestResponseSuccess,
   useGetCreationRequest,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
@@ -160,7 +160,7 @@ export function useCreationProgressPolling(
  */
 function isStorylineSettled(
   stage: InFlightCreationRequest['stage'],
-  data: getCreationRequestResponse | undefined,
+  data: getCreationRequestResponseSuccess | undefined,
   error: unknown,
 ): boolean {
   if (stage !== 'STORYLINE_GENERATION') {

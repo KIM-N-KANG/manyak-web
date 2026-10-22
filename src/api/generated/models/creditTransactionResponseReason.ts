@@ -22,5 +22,7 @@ export const CreditTransactionResponseReason = {
   REFUND: 'REFUND',
   PURCHASE: 'PURCHASE',
   PURCHASE_REVERSAL: 'PURCHASE_REVERSAL',
+  ADMIN_GRANT: 'ADMIN_GRANT',
+  ADMIN_REVOKE: 'ADMIN_REVOKE',
   EXPIRE: 'EXPIRE',
 } as const;

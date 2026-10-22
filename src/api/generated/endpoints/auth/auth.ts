@@ -63,8 +63,6 @@ export type refreshResponseError = (refreshResponse400 | refreshResponse401) & {
   headers: Headers;
 };
 
-export type refreshResponse = refreshResponseSuccess | refreshResponseError;
-
 export const getRefreshUrl = () => {
   return `/api/v1/auth/token/refresh`;
 };
@@ -76,8 +74,8 @@ export const getRefreshUrl = () => {
 export const refresh = async (
   refreshTokenRequest: RefreshTokenRequest,
   options?: RequestInit,
-): Promise<refreshResponse> => {
-  return customInstance<refreshResponse>(getRefreshUrl(), {
+): Promise<refreshResponseSuccess> => {
+  return customInstance<refreshResponseSuccess>(getRefreshUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -173,8 +171,6 @@ export type startResponseError = (startResponse400 | startResponse401) & {
   headers: Headers;
 };
 
-export type startResponse = startResponseSuccess | startResponseError;
-
 export const getStartUrl = (provider: 'google' | 'kakao') => {
   return `/api/v1/auth/social/${provider}`;
 };
@@ -187,8 +183,8 @@ export const start = async (
   provider: 'google' | 'kakao',
   socialLoginRequest: SocialLoginRequest,
   options?: RequestInit,
-): Promise<startResponse> => {
-  return customInstance<startResponse>(getStartUrl(provider), {
+): Promise<startResponseSuccess> => {
+  return customInstance<startResponseSuccess>(getStartUrl(provider), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -290,8 +286,6 @@ export type completeResponseError = (
   headers: Headers;
 };
 
-export type completeResponse = completeResponseSuccess | completeResponseError;
-
 export const getCompleteUrl = () => {
   return `/api/v1/auth/social/complete`;
 };
@@ -303,8 +297,8 @@ export const getCompleteUrl = () => {
 export const complete = async (
   userConsentRequest: UserConsentRequest,
   options?: RequestInit,
-): Promise<completeResponse> => {
-  return customInstance<completeResponse>(getCompleteUrl(), {
+): Promise<completeResponseSuccess> => {
+  return customInstance<completeResponseSuccess>(getCompleteUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -403,8 +397,6 @@ export type migrateResponseError = (migrateResponse400 | migrateResponse401) & {
   headers: Headers;
 };
 
-export type migrateResponse = migrateResponseSuccess | migrateResponseError;
-
 export const getMigrateUrl = () => {
   return `/api/v1/auth/migrate`;
 };
@@ -416,8 +408,8 @@ export const getMigrateUrl = () => {
 export const migrate = async (
   migrationRequest: MigrationRequest,
   options?: RequestInit,
-): Promise<migrateResponse> => {
-  return customInstance<migrateResponse>(getMigrateUrl(), {
+): Promise<migrateResponseSuccess> => {
+  return customInstance<migrateResponseSuccess>(getMigrateUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -508,8 +500,6 @@ export type logoutResponseError = logoutResponse400 & {
   headers: Headers;
 };
 
-export type logoutResponse = logoutResponseSuccess | logoutResponseError;
-
 export const getLogoutUrl = () => {
   return `/api/v1/auth/logout`;
 };
@@ -521,8 +511,8 @@ export const getLogoutUrl = () => {
 export const logout = async (
   logoutRequest: LogoutRequest,
   options?: RequestInit,
-): Promise<logoutResponse> => {
-  return customInstance<logoutResponse>(getLogoutUrl(), {
+): Promise<logoutResponseSuccess> => {
+  return customInstance<logoutResponseSuccess>(getLogoutUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -621,10 +611,6 @@ export type loginWithKakaoResponseError = (
   headers: Headers;
 };
 
-export type loginWithKakaoResponse =
-  | loginWithKakaoResponseSuccess
-  | loginWithKakaoResponseError;
-
 export const getLoginWithKakaoUrl = () => {
   return `/api/v1/auth/login/kakao`;
 };
@@ -636,8 +622,8 @@ export const getLoginWithKakaoUrl = () => {
 export const loginWithKakao = async (
   socialLoginRequest: SocialLoginRequest,
   options?: RequestInit,
-): Promise<loginWithKakaoResponse> => {
-  return customInstance<loginWithKakaoResponse>(getLoginWithKakaoUrl(), {
+): Promise<loginWithKakaoResponseSuccess> => {
+  return customInstance<loginWithKakaoResponseSuccess>(getLoginWithKakaoUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -736,10 +722,6 @@ export type loginWithGoogleResponseError = (
   headers: Headers;
 };
 
-export type loginWithGoogleResponse =
-  | loginWithGoogleResponseSuccess
-  | loginWithGoogleResponseError;
-
 export const getLoginWithGoogleUrl = () => {
   return `/api/v1/auth/login/google`;
 };
@@ -751,13 +733,16 @@ export const getLoginWithGoogleUrl = () => {
 export const loginWithGoogle = async (
   socialLoginRequest: SocialLoginRequest,
   options?: RequestInit,
-): Promise<loginWithGoogleResponse> => {
-  return customInstance<loginWithGoogleResponse>(getLoginWithGoogleUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(socialLoginRequest),
-  });
+): Promise<loginWithGoogleResponseSuccess> => {
+  return customInstance<loginWithGoogleResponseSuccess>(
+    getLoginWithGoogleUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(socialLoginRequest),
+    },
+  );
 };
 
 export const getLoginWithGoogleMutationOptions = <
@@ -866,8 +851,6 @@ export type linkResponseError = (
   headers: Headers;
 };
 
-export type linkResponse = linkResponseSuccess | linkResponseError;
-
 export const getLinkUrl = (provider: string) => {
   return `/api/v1/auth/links/${provider}`;
 };
@@ -886,8 +869,8 @@ export const link = async (
   provider: string,
   accountLinkRequest: AccountLinkRequest,
   options?: RequestInit,
-): Promise<linkResponse> => {
-  return customInstance<linkResponse>(getLinkUrl(provider), {
+): Promise<linkResponseSuccess> => {
+  return customInstance<linkResponseSuccess>(getLinkUrl(provider), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -990,10 +973,6 @@ export type reauthenticateResponseError = (
   headers: Headers;
 };
 
-export type reauthenticateResponse =
-  | reauthenticateResponseSuccess
-  | reauthenticateResponseError;
-
 export const getReauthenticateUrl = () => {
   return `/api/v1/auth/links/reauth`;
 };
@@ -1007,8 +986,8 @@ export const getReauthenticateUrl = () => {
 export const reauthenticate = async (
   socialReauthRequest: SocialReauthRequest,
   options?: RequestInit,
-): Promise<reauthenticateResponse> => {
-  return customInstance<reauthenticateResponse>(getReauthenticateUrl(), {
+): Promise<reauthenticateResponseSuccess> => {
+  return customInstance<reauthenticateResponseSuccess>(getReauthenticateUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -1099,8 +1078,6 @@ export type meResponseError = meResponse401 & {
   headers: Headers;
 };
 
-export type meResponse = meResponseSuccess | meResponseError;
-
 export const getMeUrl = () => {
   return `/api/v1/auth/me`;
 };
@@ -1109,8 +1086,8 @@ export const getMeUrl = () => {
  * Authorization: Bearer <accessToken> 의 sub(공개 식별자)로 사용자를 조회합니다. 토큰이 없거나 만료·위조됐으면 401, 토큰의 사용자가 더 이상 존재하지 않으면 401로 응답합니다.
  * @summary 현재 로그인 사용자 조회
  */
-export const me = async (options?: RequestInit): Promise<meResponse> => {
-  return customInstance<meResponse>(getMeUrl(), {
+export const me = async (options?: RequestInit): Promise<meResponseSuccess> => {
+  return customInstance<meResponseSuccess>(getMeUrl(), {
     ...options,
     method: 'GET',
   });

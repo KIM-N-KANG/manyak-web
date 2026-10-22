@@ -52,8 +52,6 @@ export type withdrawResponseError = withdrawResponse401 & {
   headers: Headers;
 };
 
-export type withdrawResponse = withdrawResponseSuccess | withdrawResponseError;
-
 export const getWithdrawUrl = () => {
   return `/api/v1/users/me`;
 };
@@ -64,8 +62,8 @@ export const getWithdrawUrl = () => {
  */
 export const withdraw = async (
   options?: RequestInit,
-): Promise<withdrawResponse> => {
-  return customInstance<withdrawResponse>(getWithdrawUrl(), {
+): Promise<withdrawResponseSuccess> => {
+  return customInstance<withdrawResponseSuccess>(getWithdrawUrl(), {
     ...options,
     method: 'DELETE',
   });
@@ -172,10 +170,6 @@ export type updateProfileResponseError = (
   headers: Headers;
 };
 
-export type updateProfileResponse =
-  | updateProfileResponseSuccess
-  | updateProfileResponseError;
-
 export const getUpdateProfileUrl = () => {
   return `/api/v1/users/me`;
 };
@@ -187,8 +181,8 @@ export const getUpdateProfileUrl = () => {
 export const updateProfile = async (
   updateProfileRequest: UpdateProfileRequest,
   options?: RequestInit,
-): Promise<updateProfileResponse> => {
-  return customInstance<updateProfileResponse>(getUpdateProfileUrl(), {
+): Promise<updateProfileResponseSuccess> => {
+  return customInstance<updateProfileResponseSuccess>(getUpdateProfileUrl(), {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -279,10 +273,6 @@ export type getMyStoriesResponseError = getMyStoriesResponse401 & {
   headers: Headers;
 };
 
-export type getMyStoriesResponse =
-  | getMyStoriesResponseSuccess
-  | getMyStoriesResponseError;
-
 export const getGetMyStoriesUrl = (params?: GetMyStoriesParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -306,11 +296,14 @@ export const getGetMyStoriesUrl = (params?: GetMyStoriesParams) => {
 export const getMyStories = async (
   params?: GetMyStoriesParams,
   options?: RequestInit,
-): Promise<getMyStoriesResponse> => {
-  return customInstance<getMyStoriesResponse>(getGetMyStoriesUrl(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getMyStoriesResponseSuccess> => {
+  return customInstance<getMyStoriesResponseSuccess>(
+    getGetMyStoriesUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetMyStoriesQueryKey = (params?: GetMyStoriesParams) => {
@@ -456,10 +449,6 @@ export type getMyChatsResponseError = getMyChatsResponse401 & {
   headers: Headers;
 };
 
-export type getMyChatsResponse =
-  | getMyChatsResponseSuccess
-  | getMyChatsResponseError;
-
 export const getGetMyChatsUrl = (params?: GetMyChatsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -483,8 +472,8 @@ export const getGetMyChatsUrl = (params?: GetMyChatsParams) => {
 export const getMyChats = async (
   params?: GetMyChatsParams,
   options?: RequestInit,
-): Promise<getMyChatsResponse> => {
-  return customInstance<getMyChatsResponse>(getGetMyChatsUrl(params), {
+): Promise<getMyChatsResponseSuccess> => {
+  return customInstance<getMyChatsResponseSuccess>(getGetMyChatsUrl(params), {
     ...options,
     method: 'GET',
   });
@@ -633,10 +622,6 @@ export type listPresetsResponseError = listPresetsResponse401 & {
   headers: Headers;
 };
 
-export type listPresetsResponse =
-  | listPresetsResponseSuccess
-  | listPresetsResponseError;
-
 export const getListPresetsUrl = () => {
   return `/api/v1/profile-presets`;
 };
@@ -647,8 +632,8 @@ export const getListPresetsUrl = () => {
  */
 export const listPresets = async (
   options?: RequestInit,
-): Promise<listPresetsResponse> => {
-  return customInstance<listPresetsResponse>(getListPresetsUrl(), {
+): Promise<listPresetsResponseSuccess> => {
+  return customInstance<listPresetsResponseSuccess>(getListPresetsUrl(), {
     ...options,
     method: 'GET',
   });

@@ -46,13 +46,13 @@ export const PutBody = zod.object({
       short: zod.boolean().optional(),
       double: zod.boolean().optional(),
       bigDecimal: zod.boolean().optional(),
-      textual: zod.boolean().optional(),
-      boolean: zod.boolean().optional(),
-      binary: zod.boolean().optional(),
       bigInteger: zod.boolean().optional(),
       valueNode: zod.boolean().optional(),
       object: zod.boolean().optional(),
       pojo: zod.boolean().optional(),
+      textual: zod.boolean().optional(),
+      boolean: zod.boolean().optional(),
+      binary: zod.boolean().optional(),
       number: zod.boolean().optional(),
       array: zod.boolean().optional(),
       empty: zod.boolean().optional(),
@@ -452,6 +452,91 @@ export const CancelStorylineRatingParams = zod.object({
 
 export const CancelStorylineRatingResponse = zod.void();
 
+export const TemplateParams = zod.object({
+  templateKey: zod.string(),
+});
+
+export const TemplateResponse = zod.unknown();
+
+export const PutAdminPushTemplatesByTemplateKeyParams = zod.object({
+  templateKey: zod.string(),
+});
+
+export const putAdminPushTemplatesByTemplateKeyBodyTitleMin = 0;
+export const putAdminPushTemplatesByTemplateKeyBodyTitleMax = 100;
+
+export const putAdminPushTemplatesByTemplateKeyBodyBodyMin = 0;
+export const putAdminPushTemplatesByTemplateKeyBodyBodyMax = 300;
+
+export const putAdminPushTemplatesByTemplateKeyBodyReasonMin = 0;
+export const putAdminPushTemplatesByTemplateKeyBodyReasonMax = 500;
+
+export const PutAdminPushTemplatesByTemplateKeyBody = zod.object({
+  title: zod
+    .string()
+    .min(putAdminPushTemplatesByTemplateKeyBodyTitleMin)
+    .max(putAdminPushTemplatesByTemplateKeyBodyTitleMax),
+  body: zod
+    .string()
+    .min(putAdminPushTemplatesByTemplateKeyBodyBodyMin)
+    .max(putAdminPushTemplatesByTemplateKeyBodyBodyMax),
+  effectiveFrom: zod.iso.datetime({ offset: true }).nullish(),
+  effectiveUntil: zod.iso.datetime({ offset: true }).nullish(),
+  reason: zod
+    .string()
+    .min(putAdminPushTemplatesByTemplateKeyBodyReasonMin)
+    .max(putAdminPushTemplatesByTemplateKeyBodyReasonMax),
+});
+
+export const PutAdminPushTemplatesByTemplateKeyResponse = zod.unknown();
+
+export const ResetParams = zod.object({
+  templateKey: zod.string(),
+});
+
+export const resetBodyReasonMin = 0;
+export const resetBodyReasonMax = 500;
+
+export const ResetBody = zod.object({
+  reason: zod.string().min(resetBodyReasonMin).max(resetBodyReasonMax),
+});
+
+export const ResetResponse = zod.unknown();
+
+export const PutAdminCreditsPoliciesByPolicyKeyParams = zod.object({
+  policyKey: zod.string(),
+});
+
+export const putAdminCreditsPoliciesByPolicyKeyBodyReasonMin = 0;
+export const putAdminCreditsPoliciesByPolicyKeyBodyReasonMax = 500;
+
+export const PutAdminCreditsPoliciesByPolicyKeyBody = zod.object({
+  amount: zod.number().optional(),
+  effectiveUntil: zod.iso.datetime({ offset: true }).nullish(),
+  reason: zod
+    .string()
+    .min(putAdminCreditsPoliciesByPolicyKeyBodyReasonMin)
+    .max(putAdminCreditsPoliciesByPolicyKeyBodyReasonMax),
+});
+
+export const PutAdminCreditsPoliciesByPolicyKeyResponse = zod.unknown();
+
+export const DeleteAdminCreditsPoliciesByPolicyKeyParams = zod.object({
+  policyKey: zod.string(),
+});
+
+export const deleteAdminCreditsPoliciesByPolicyKeyBodyReasonMin = 0;
+export const deleteAdminCreditsPoliciesByPolicyKeyBodyReasonMax = 500;
+
+export const DeleteAdminCreditsPoliciesByPolicyKeyBody = zod.object({
+  reason: zod
+    .string()
+    .min(deleteAdminCreditsPoliciesByPolicyKeyBodyReasonMin)
+    .max(deleteAdminCreditsPoliciesByPolicyKeyBodyReasonMax),
+});
+
+export const DeleteAdminCreditsPoliciesByPolicyKeyResponse = zod.unknown();
+
 /**
  * raw body HMAC 검증 후 결제 적립·환불 회수를 처리합니다. 타임스탬프·서명 오류 401, JSON 오류 400, 시크릿 미설정 503.
  * @summary 그로블 결제 웹훅 수신
@@ -590,13 +675,13 @@ export const UnlikeStoryResponse = zod.void();
  * 클라이언트가 S3에 직접 올릴 수 있는 서명 URL을 발급합니다(KNK-1126). 파일이 서버를 지나지 않습니다. 서명에 `Content-Type`·`Content-Length`가 고정되므로 클라이언트는 요청한 값 그대로 PUT해야 합니다. 객체 키는 서버가 정하며 만료는 10분입니다. PUT을 마친 뒤 그 `objectKey`를 표지 교체(`PATCH /stories/{storyId}`의 `thumbnailObjectKey`)나 인물 이미지 연결 요청에 넣습니다. 회원 소유 스토리만이며 게스트 소유(이관 전) 스토리는 400입니다.
  * @summary 이미지 업로드용 presigned URL 발급
  */
-export const PresignParams = zod.object({
+export const PostStoriesByStoryIdImagesPresignParams = zod.object({
   storyId: zod.string().describe('스토리 ID(공개 식별자)'),
 });
 
-export const presignBodyContentLengthMax = 5242880;
+export const postStoriesByStoryIdImagesPresignBodyContentLengthMax = 5242880;
 
-export const PresignBody = zod
+export const PostStoriesByStoryIdImagesPresignBody = zod
   .object({
     kind: zod
       .enum(['COVER', 'CHARACTER'])
@@ -610,7 +695,7 @@ export const PresignBody = zod
     contentLength: zod
       .number()
       .min(1)
-      .max(presignBodyContentLengthMax)
+      .max(postStoriesByStoryIdImagesPresignBodyContentLengthMax)
       .nullable()
       .describe(
         '바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다',
@@ -618,7 +703,7 @@ export const PresignBody = zod
   })
   .describe('이미지 업로드용 presigned URL 발급 요청');
 
-export const PresignResponse = zod.void();
+export const PostStoriesByStoryIdImagesPresignResponse = zod.void();
 
 /**
  * 선택한 스토리라인과 추가 정보를 AI 서버에 전달해 최종 스토리를 생성하고 저장합니다. 응답으로 받은 id는 클라이언트 로컬스토리지에 저장해 내 스토리 목록 구성에 사용합니다.
@@ -1668,6 +1753,284 @@ export const ReauthenticateBody = zod
 
 export const ReauthenticateResponse = zod.void();
 
+export const getAdminPushCampaignsQueryPageDefault = 1;
+export const getAdminPushCampaignsQuerySizeDefault = 20;
+export const getAdminPushCampaignsQuerySortDefault = `createdAt`;
+export const getAdminPushCampaignsQueryOrderDefault = `desc`;
+
+export const GetAdminPushCampaignsQueryParams = zod.object({
+  status: zod
+    .enum(['SCHEDULED', 'SENDING', 'SENT', 'CANCELED', 'FAILED'])
+    .optional(),
+  page: zod.number().default(getAdminPushCampaignsQueryPageDefault),
+  size: zod.number().default(getAdminPushCampaignsQuerySizeDefault),
+  sort: zod.string().default(getAdminPushCampaignsQuerySortDefault),
+  order: zod.string().default(getAdminPushCampaignsQueryOrderDefault),
+});
+
+export const GetAdminPushCampaignsResponse = zod.unknown();
+
+export const postAdminPushCampaignsBodyTitleMin = 0;
+export const postAdminPushCampaignsBodyTitleMax = 100;
+
+export const postAdminPushCampaignsBodyBodyMin = 0;
+export const postAdminPushCampaignsBodyBodyMax = 300;
+
+export const postAdminPushCampaignsBodyReasonMin = 0;
+export const postAdminPushCampaignsBodyReasonMax = 500;
+
+export const PostAdminPushCampaignsBody = zod.object({
+  title: zod
+    .string()
+    .min(postAdminPushCampaignsBodyTitleMin)
+    .max(postAdminPushCampaignsBodyTitleMax),
+  body: zod
+    .string()
+    .min(postAdminPushCampaignsBodyBodyMin)
+    .max(postAdminPushCampaignsBodyBodyMax),
+  scheduledAt: zod.iso.datetime({ offset: true }).nullish(),
+  reason: zod
+    .string()
+    .min(postAdminPushCampaignsBodyReasonMin)
+    .max(postAdminPushCampaignsBodyReasonMax),
+});
+
+export const PostAdminPushCampaignsResponse = zod.void();
+
+export const RetryParams = zod.object({
+  campaignId: zod.uuid(),
+});
+
+export const retryBodyReasonMin = 0;
+export const retryBodyReasonMax = 500;
+
+export const RetryBody = zod.object({
+  reason: zod.string().min(retryBodyReasonMin).max(retryBodyReasonMax),
+});
+
+export const RetryResponse = zod.unknown();
+
+export const CancelParams = zod.object({
+  campaignId: zod.uuid(),
+});
+
+export const cancelBodyReasonMin = 0;
+export const cancelBodyReasonMax = 500;
+
+export const CancelBody = zod.object({
+  reason: zod.string().min(cancelBodyReasonMin).max(cancelBodyReasonMax),
+});
+
+export const CancelResponse = zod.unknown();
+
+export const GetAdminOriginalsQueryParams = zod.object({
+  query: zod.record(zod.string(), zod.string()),
+});
+
+export const GetAdminOriginalsResponse = zod.unknown();
+
+export const PostAdminOriginalsResponse = zod.void();
+
+export const PostAdminOriginalsByStoryIdImagesPresignParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const postAdminOriginalsByStoryIdImagesPresignBodyContentLengthMax = 5242880;
+
+export const PostAdminOriginalsByStoryIdImagesPresignBody = zod
+  .object({
+    kind: zod
+      .enum(['COVER', 'CHARACTER'])
+      .nullable()
+      .describe('업로드 대상. 객체 키 prefix가 갈린다'),
+    contentType: zod
+      .string()
+      .min(1)
+      .nullable()
+      .describe('image\/jpeg · image\/png · image\/webp 중 하나'),
+    contentLength: zod
+      .number()
+      .min(1)
+      .max(postAdminOriginalsByStoryIdImagesPresignBodyContentLengthMax)
+      .nullable()
+      .describe(
+        '바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다',
+      ),
+  })
+  .describe('이미지 업로드용 presigned URL 발급 요청');
+
+export const PostAdminOriginalsByStoryIdImagesPresignResponse = zod.void();
+
+export const presignDraftBodyContentLengthMax = 5242880;
+
+export const PresignDraftBody = zod
+  .object({
+    kind: zod
+      .enum(['COVER', 'CHARACTER'])
+      .nullable()
+      .describe('업로드 대상. 객체 키 prefix가 갈린다'),
+    contentType: zod
+      .string()
+      .min(1)
+      .nullable()
+      .describe('image\/jpeg · image\/png · image\/webp 중 하나'),
+    contentLength: zod
+      .number()
+      .min(1)
+      .max(presignDraftBodyContentLengthMax)
+      .nullable()
+      .describe(
+        '바이트 크기(1~5,242,880). 클라이언트는 이 값 그대로 PUT해야 한다',
+      ),
+  })
+  .describe('이미지 업로드용 presigned URL 발급 요청');
+
+export const PresignDraftResponse = zod.void();
+
+export const getAdminNoticesQueryQueryQMax = 50;
+
+export const getAdminNoticesQueryQuerySizeMax = 100;
+
+export const getAdminNoticesQueryQueryOrderRegExp = new RegExp('asc|desc');
+
+export const GetAdminNoticesQueryParams = zod.object({
+  query: zod.object({
+    q: zod.string().min(1).max(getAdminNoticesQueryQueryQMax).nullish(),
+    status: zod.enum(['DRAFT', 'PUBLISHED']).nullish(),
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(getAdminNoticesQueryQuerySizeMax).optional(),
+    sort: zod.string().optional(),
+    order: zod.string().regex(getAdminNoticesQueryQueryOrderRegExp).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+  }),
+});
+
+export const GetAdminNoticesResponse = zod.unknown();
+
+export const postAdminNoticesBodyTitleMin = 0;
+export const postAdminNoticesBodyTitleMax = 100;
+
+export const postAdminNoticesBodyBodyMin = 0;
+export const postAdminNoticesBodyBodyMax = 5000;
+
+export const postAdminNoticesBodyReasonMin = 0;
+export const postAdminNoticesBodyReasonMax = 500;
+
+export const PostAdminNoticesBody = zod.object({
+  title: zod
+    .string()
+    .min(postAdminNoticesBodyTitleMin)
+    .max(postAdminNoticesBodyTitleMax),
+  body: zod
+    .string()
+    .min(postAdminNoticesBodyBodyMin)
+    .max(postAdminNoticesBodyBodyMax),
+  reason: zod
+    .string()
+    .min(postAdminNoticesBodyReasonMin)
+    .max(postAdminNoticesBodyReasonMax),
+});
+
+export const PostAdminNoticesResponse = zod.void();
+
+export const UnpublishParams = zod.object({
+  noticeId: zod.uuid(),
+});
+
+export const unpublishBodyReasonMin = 0;
+export const unpublishBodyReasonMax = 500;
+
+export const UnpublishBody = zod.object({
+  reason: zod.string().min(unpublishBodyReasonMin).max(unpublishBodyReasonMax),
+});
+
+export const UnpublishResponse = zod.unknown();
+
+export const PublishParams = zod.object({
+  noticeId: zod.uuid(),
+});
+
+export const publishBodyReasonMin = 0;
+export const publishBodyReasonMax = 500;
+
+export const PublishBody = zod.object({
+  notify: zod.boolean().optional(),
+  notificationKind: zod.enum(['SERVICE', 'MARKETING']).nullish(),
+  reason: zod.string().min(publishBodyReasonMin).max(publishBodyReasonMax),
+});
+
+export const PublishResponse = zod.unknown();
+
+export const ReleaseParams = zod.object({
+  submissionId: zod.uuid(),
+});
+
+export const releaseBodyReasonMin = 0;
+export const releaseBodyReasonMax = 500;
+
+export const ReleaseBody = zod.object({
+  reason: zod.string().min(releaseBodyReasonMin).max(releaseBodyReasonMax),
+});
+
+export const ReleaseResponse = zod.unknown();
+
+export const SuspendParams = zod.object({
+  memberId: zod.uuid(),
+});
+
+export const suspendBodyReasonMin = 0;
+export const suspendBodyReasonMax = 500;
+
+export const SuspendBody = zod.object({
+  reason: zod.string().min(suspendBodyReasonMin).max(suspendBodyReasonMax),
+});
+
+export const SuspendResponse = zod.unknown();
+
+export const UnsuspendParams = zod.object({
+  memberId: zod.uuid(),
+});
+
+export const unsuspendBodyReasonMin = 0;
+export const unsuspendBodyReasonMax = 500;
+
+export const UnsuspendBody = zod.object({
+  reason: zod.string().min(unsuspendBodyReasonMin).max(unsuspendBodyReasonMax),
+});
+
+export const UnsuspendResponse = zod.unknown();
+
+export const adjustBodyAmountMax = 100000;
+
+export const adjustBodyIdempotencyKeyMin = 0;
+export const adjustBodyIdempotencyKeyMax = 64;
+
+export const adjustBodyIdempotencyKeyRegExp = new RegExp('[A-Za-z0-9-]+');
+export const adjustBodyReasonMin = 0;
+export const adjustBodyReasonMax = 500;
+
+export const AdjustBody = zod.object({
+  memberId: zod.uuid().optional(),
+  type: zod.enum(['GRANT', 'REVOKE']).optional(),
+  amount: zod.number().min(1).max(adjustBodyAmountMax).optional(),
+  expiresInDays: zod.number().nullish(),
+  idempotencyKey: zod
+    .string()
+    .min(adjustBodyIdempotencyKeyMin)
+    .max(adjustBodyIdempotencyKeyMax)
+    .regex(adjustBodyIdempotencyKeyRegExp),
+  reason: zod.string().min(adjustBodyReasonMin).max(adjustBodyReasonMax),
+});
+
+export const AdjustResponse = zod.unknown();
+
+export const LoginBody = zod.object({
+  idToken: zod.string().min(1),
+});
+
+export const LoginResponse = zod.unknown();
+
 /**
  * 계정을 soft delete(DELETED)로 전환하고 닉네임 익명화·프로필 이미지 제거·소셜 연결 삭제·refresh 전체 폐기를 수행합니다. 소유 스토리는 공개 상태가 유지되며 작성자는 익명화된 닉네임으로 표시됩니다. 탈퇴 즉시 잔여 access 토큰은 전면 무효화되므로 재탈퇴를 포함한 이후 요청은 401입니다.
  * @summary 회원 탈퇴
@@ -1703,16 +2066,16 @@ export const DeleteUsersMePersonasByPersonaIdParams = zod.object({
 
 export const DeleteUsersMePersonasByPersonaIdResponse = zod.void();
 
-export const UpdateParams = zod.object({
+export const PatchUsersMePersonasByPersonaIdParams = zod.object({
   personaId: zod.string(),
 });
 
-export const UpdateBody = zod.object({
+export const PatchUsersMePersonasByPersonaIdBody = zod.object({
   name: zod.string().nullish(),
   description: zod.string().nullish(),
 });
 
-export const UpdateResponse = zod.unknown();
+export const PatchUsersMePersonasByPersonaIdResponse = zod.unknown();
 
 /**
  * 목록에서 선택한 스토리의 상세 정보와 플레이 시작에 필요한 정보를 조회합니다.
@@ -1995,6 +2358,114 @@ export const UpdateStoryBody = zod
 export const UpdateStoryResponse = zod.unknown();
 
 /**
+ * 프롤로그와 지금까지의 사용자 입력, AI 이어쓰기 결과를 조회합니다.
+ * @summary 채팅 상세 조회
+ */
+export const GetChatDetailParams = zod.object({
+  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
+});
+
+export const GetChatDetailResponse = zod.unknown();
+
+/**
+ * 채팅을 소프트 삭제합니다. 삭제된 채팅은 목록·상세 조회에서 제외됩니다. 인증은 선택이며 회원 소유 채팅은 소유자만(타인·미인증 403), 소유자 없는 게스트 채팅은 허용합니다.
+ * @summary 채팅 삭제
+ */
+export const DeleteChatParams = zod.object({
+  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
+});
+
+export const DeleteChatResponse = zod.void();
+
+/**
+ * 소유자가 모델을 변경합니다. 진행 중인 턴은 시작 시 모델과 가격을 유지하며 다음 턴부터 적용합니다.
+ * @summary 채팅 모델 변경
+ */
+export const ChangeModelParams = zod.object({
+  chatId: zod.string(),
+});
+
+export const ChangeModelBody = zod
+  .object({
+    model: zod.string().min(1),
+  })
+  .describe('다음 턴부터 적용할 채팅 모델');
+
+export const ChangeModelResponse = zod.unknown();
+
+export const GetAdminOriginalsByStoryIdParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const GetAdminOriginalsByStoryIdResponse = zod.unknown();
+
+export const PatchAdminOriginalsByStoryIdParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const PatchAdminOriginalsByStoryIdResponse = zod.unknown();
+
+export const GetAdminNoticesByNoticeIdParams = zod.object({
+  noticeId: zod.uuid(),
+});
+
+export const GetAdminNoticesByNoticeIdResponse = zod.unknown();
+
+export const DeleteAdminNoticesByNoticeIdParams = zod.object({
+  noticeId: zod.uuid(),
+});
+
+export const deleteAdminNoticesByNoticeIdBodyReasonMin = 0;
+export const deleteAdminNoticesByNoticeIdBodyReasonMax = 500;
+
+export const DeleteAdminNoticesByNoticeIdBody = zod.object({
+  reason: zod
+    .string()
+    .min(deleteAdminNoticesByNoticeIdBodyReasonMin)
+    .max(deleteAdminNoticesByNoticeIdBodyReasonMax),
+});
+
+export const DeleteAdminNoticesByNoticeIdResponse = zod.void();
+
+export const PatchAdminNoticesByNoticeIdParams = zod.object({
+  noticeId: zod.uuid(),
+});
+
+export const patchAdminNoticesByNoticeIdBodyTitleMax = 100;
+
+export const patchAdminNoticesByNoticeIdBodyTitleRegExp = new RegExp(
+  '(?sU).*\\S.*',
+);
+export const patchAdminNoticesByNoticeIdBodyBodyMax = 5000;
+
+export const patchAdminNoticesByNoticeIdBodyBodyRegExp = new RegExp(
+  '(?sU).*\\S.*',
+);
+export const patchAdminNoticesByNoticeIdBodyReasonMin = 0;
+export const patchAdminNoticesByNoticeIdBodyReasonMax = 500;
+
+export const PatchAdminNoticesByNoticeIdBody = zod.object({
+  title: zod
+    .string()
+    .min(1)
+    .max(patchAdminNoticesByNoticeIdBodyTitleMax)
+    .regex(patchAdminNoticesByNoticeIdBodyTitleRegExp)
+    .nullish(),
+  body: zod
+    .string()
+    .min(1)
+    .max(patchAdminNoticesByNoticeIdBodyBodyMax)
+    .regex(patchAdminNoticesByNoticeIdBodyBodyRegExp)
+    .nullish(),
+  reason: zod
+    .string()
+    .min(patchAdminNoticesByNoticeIdBodyReasonMin)
+    .max(patchAdminNoticesByNoticeIdBodyReasonMax),
+});
+
+export const PatchAdminNoticesByNoticeIdResponse = zod.unknown();
+
+/**
  * 인증 선택. 게스트는 X-Manyak-Device-Id 필수. 회원 스토리라인 limit은 null(무제한).
  * @summary 체험 사용량·한도 조회
  */
@@ -2207,6 +2678,21 @@ export const GetChatShareResponse = zod.unknown();
  */
 export const ListPresetsResponse = zod.unknown();
 
+export const getNoticesQueryLimitDefault = 20;
+
+export const GetNoticesQueryParams = zod.object({
+  limit: zod.number().default(getNoticesQueryLimitDefault),
+  cursor: zod.string().optional(),
+});
+
+export const GetNoticesResponse = zod.unknown();
+
+export const GetNoticesByNoticeIdParams = zod.object({
+  noticeId: zod.string(),
+});
+
+export const GetNoticesByNoticeIdResponse = zod.unknown();
+
 /**
  * 인증 없이 설정 순서대로 상품 6종의 총량과 웹 가격을 조회합니다.
  * @summary 이프 충전 상품 목록
@@ -2221,30 +2707,11 @@ export const ProductsResponse = zod.unknown();
  *             - `inviteMonthlyCap`만 이프가 아니라 월 적립 **횟수**이며, **초대자 몫에만** 걸립니다(제출자 몫은 상한 없음).
  *             - `storyCreationCost`는 **간편 제작**에만 듭니다(일반 제작은 무료).
  *             - `storyCreationCost`·`chatTurnCost`는 회원의 무료 체험 잔여를 소진한 뒤 적용되는 단가입니다(게스트는 디바이스 한도를 씁니다).
- *             - 변경 반영은 서버의 정책 스냅샷 갱신 주기를 따릅니다(기본 설정 기준 약 1분).
+ *             - `chatTurnCost`는 deprecated이며 LITE 가격을 즉시 반영합니다. 모델별 가격은 GET /api/v1/chats/models를 사용하세요.
+ *             - 다른 정책 변경은 서버의 스냅샷 갱신 주기를 따릅니다(기본 약 1분).
  * @summary 이프 적립·소모 수치 조회
  */
 export const GetCreditPoliciesResponse = zod.unknown();
-
-/**
- * 프롤로그와 지금까지의 사용자 입력, AI 이어쓰기 결과를 조회합니다.
- * @summary 채팅 상세 조회
- */
-export const GetChatDetailParams = zod.object({
-  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
-});
-
-export const GetChatDetailResponse = zod.unknown();
-
-/**
- * 채팅을 소프트 삭제합니다. 삭제된 채팅은 목록·상세 조회에서 제외됩니다. 인증은 선택이며 회원 소유 채팅은 소유자만(타인·미인증 403), 소유자 없는 게스트 채팅은 허용합니다.
- * @summary 채팅 삭제
- */
-export const DeleteChatParams = zod.object({
-  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
-});
-
-export const DeleteChatResponse = zod.void();
 
 /**
  * 보관 중인 생성 이벤트를 처음부터 재생하고 새 이벤트를 이어서 받습니다. 생성과 과금을 반복하지 않습니다. 큐 대기 중 스트림이 없어도 생성 중 키가 해당 ID이면 기다립니다. completed 또는 error 수신 시 종료합니다.
@@ -2260,20 +2727,368 @@ export const ResumeGenerationParams = zod.object({
 export const ResumeGenerationResponse = zod.unknown();
 
 /**
+ * 노출 중인 모델과 회원 체험 소진 후 턴 가격을 노출 순서로 반환합니다. 인증은 선택입니다.
+ * @summary 채팅 모델 목록
+ */
+export const GetModelsResponse = zod.unknown();
+
+/**
  * Authorization: Bearer <accessToken> 의 sub(공개 식별자)로 사용자를 조회합니다. 토큰이 없거나 만료·위조됐으면 401, 토큰의 사용자가 더 이상 존재하지 않으면 401로 응답합니다.
  * @summary 현재 로그인 사용자 조회
  */
 export const MeResponse = zod.unknown();
 
+export const storiesQueryRequestSizeMax = 100;
+
+export const storiesQueryRequestOrderRegExp = new RegExp('asc|desc');
+export const storiesQueryRequestQMax = 50;
+
+export const storiesQueryRequestSupportingCharacterCountMin = 0;
+export const storiesQueryRequestSupportingCharacterCountMax = 5;
+
+export const StoriesQueryParams = zod.object({
+  request: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(storiesQueryRequestSizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(storiesQueryRequestOrderRegExp).optional(),
+    q: zod.string().min(1).max(storiesQueryRequestQMax).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    aiFrom: zod.string().nullish(),
+    aiTo: zod.string().nullish(),
+    aiFeature: zod.string().nullish(),
+    aiStatus: zod.string().nullish(),
+    hasLatency: zod.boolean().nullish(),
+    scope: zod.string().nullish(),
+    genre: zod.string().nullish(),
+    visibility: zod.string().nullish(),
+    moderationStatus: zod.string().nullish(),
+    memberId: zod.uuid().nullish(),
+    supportingCharacterCount: zod
+      .number()
+      .min(storiesQueryRequestSupportingCharacterCountMin)
+      .max(storiesQueryRequestSupportingCharacterCountMax)
+      .nullish(),
+    chatFrom: zod.string().nullish(),
+    chatTo: zod.string().nullish(),
+    creationFrom: zod.string().nullish(),
+    creationTo: zod.string().nullish(),
+  }),
+});
+
+export const StoriesResponse = zod.unknown();
+
+export const StoryParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const StoryResponse = zod.unknown();
+
+export const StatsQueryParams = zod.object({
+  from: zod.iso.date().optional(),
+  to: zod.iso.date().optional(),
+  type: zod
+    .enum([
+      'STORY_COMPLETED',
+      'STORY_MODERATION_COMPLETED',
+      'ATTENDANCE_REMINDER',
+      'PROMOTION',
+      'NOTICE',
+    ])
+    .optional(),
+  kind: zod.enum(['SERVICE', 'MARKETING']).optional(),
+});
+
+export const StatsResponse = zod.unknown();
+
+export const GetAdminPushCampaignsByCampaignIdParams = zod.object({
+  campaignId: zod.uuid(),
+});
+
+export const GetAdminPushCampaignsByCampaignIdResponse = zod.unknown();
+
+export const TargetCountQueryParams = zod.object({
+  kind: zod.enum(['SERVICE', 'MARKETING']).optional(),
+});
+
+export const TargetCountResponse = zod.unknown();
+
+export const paymentsQueryRequestSizeMax = 100;
+
+export const paymentsQueryRequestOrderRegExp = new RegExp('asc|desc');
+export const paymentsQueryRequestQMax = 50;
+
+export const PaymentsQueryParams = zod.object({
+  request: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(paymentsQueryRequestSizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(paymentsQueryRequestOrderRegExp).optional(),
+    q: zod.string().min(1).max(paymentsQueryRequestQMax).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    status: zod.enum(['PENDING', 'COMPLETED', 'REFUNDED']).nullish(),
+    memberId: zod.uuid().nullish(),
+  }),
+});
+
+export const PaymentsResponse = zod.unknown();
+
+export const PaymentParams = zod.object({
+  orderId: zod.uuid(),
+});
+
+export const PaymentResponse = zod.unknown();
+
+export const holdsQueryQuerySizeMax = 100;
+
+export const holdsQueryQueryOrderRegExp = new RegExp('asc|desc');
+
+export const HoldsQueryParams = zod.object({
+  query: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(holdsQueryQuerySizeMax).optional(),
+    sort: zod.string().optional(),
+    order: zod.string().regex(holdsQueryQueryOrderRegExp).optional(),
+    limit: zod.string().nullish(),
+    cursor: zod.string().nullish(),
+    offset: zod.number().optional(),
+  }),
+});
+
+export const HoldsResponse = zod.unknown();
+
+export const membersQueryQuerySizeMax = 100;
+
+export const membersQueryQueryOrderRegExp = new RegExp('asc|desc');
+export const membersQueryQueryQMax = 50;
+
+export const membersQueryQueryChatBucketMin = 0;
+export const membersQueryQueryChatBucketMax = 4;
+
+export const MembersQueryParams = zod.object({
+  query: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(membersQueryQuerySizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(membersQueryQueryOrderRegExp).optional(),
+    q: zod.string().min(1).max(membersQueryQueryQMax).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    status: zod.enum(['ACTIVE', 'SUSPENDED', 'DELETED']).nullish(),
+    excludeDeleted: zod.boolean().nullish(),
+    chatBucket: zod
+      .number()
+      .min(membersQueryQueryChatBucketMin)
+      .max(membersQueryQueryChatBucketMax)
+      .nullish(),
+    chatFrom: zod.string().nullish(),
+    chatTo: zod.string().nullish(),
+    creditDirection: zod.string().nullish(),
+    creditDate: zod.string().nullish(),
+    attendanceDate: zod.string().nullish(),
+  }),
+});
+
+export const MembersResponse = zod.unknown();
+
+export const MemberParams = zod.object({
+  memberId: zod.uuid(),
+});
+
+export const MemberResponse = zod.unknown();
+
+export const TransactionsParams = zod.object({
+  memberId: zod.uuid(),
+});
+
+export const transactionsQueryQuerySizeMax = 100;
+
+export const transactionsQueryQueryOrderRegExp = new RegExp('asc|desc');
+
+export const TransactionsQueryParams = zod.object({
+  query: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(transactionsQueryQuerySizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(transactionsQueryQueryOrderRegExp).optional(),
+  }),
+});
+
+export const TransactionsResponse = zod.unknown();
+
+export const AttendanceParams = zod.object({
+  memberId: zod.uuid(),
+});
+
+export const attendanceQueryQuerySizeMax = 100;
+
+export const attendanceQueryQueryOrderRegExp = new RegExp('asc|desc');
+
+export const AttendanceQueryParams = zod.object({
+  query: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(attendanceQueryQuerySizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(attendanceQueryQueryOrderRegExp).optional(),
+  }),
+});
+
+export const AttendanceResponse = zod.unknown();
+
+export const SummaryResponse = zod.unknown();
+
+export const ChartsQueryParams = zod.object({
+  request: zod.object({
+    days: zod.number().optional(),
+  }),
+});
+
+export const ChartsResponse = zod.unknown();
+
+export const analyticsQueryDaysDefault = 30;
+
+export const AnalyticsQueryParams = zod.object({
+  days: zod.number().default(analyticsQueryDaysDefault),
+});
+
+export const AnalyticsResponse = zod.unknown();
+
+export const PoliciesResponse = zod.unknown();
+
+export const chatsQueryRequestSizeMax = 100;
+
+export const chatsQueryRequestOrderRegExp = new RegExp('asc|desc');
+export const chatsQueryRequestQMax = 50;
+
+export const chatsQueryRequestTurnBucketMin = 0;
+export const chatsQueryRequestTurnBucketMax = 10;
+
+export const ChatsQueryParams = zod.object({
+  request: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(chatsQueryRequestSizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(chatsQueryRequestOrderRegExp).optional(),
+    q: zod.string().min(1).max(chatsQueryRequestQMax).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    aiFrom: zod.string().nullish(),
+    aiTo: zod.string().nullish(),
+    aiFeature: zod.string().nullish(),
+    aiStatus: zod.string().nullish(),
+    hasLatency: zod.boolean().nullish(),
+    storyId: zod.uuid().nullish(),
+    memberId: zod.uuid().nullish(),
+    startedAs: zod.string().nullish(),
+    turnBucket: zod
+      .number()
+      .min(chatsQueryRequestTurnBucketMin)
+      .max(chatsQueryRequestTurnBucketMax)
+      .nullish(),
+    hasFirstMessage: zod.boolean().nullish(),
+    turnDate: zod.string().nullish(),
+  }),
+});
+
+export const ChatsResponse = zod.unknown();
+
+export const ChatParams = zod.object({
+  chatId: zod.uuid(),
+});
+
+export const ChatResponse = zod.unknown();
+
+export const auditLogsQueryRequestSizeMax = 100;
+
+export const auditLogsQueryRequestOrderRegExp = new RegExp('asc|desc');
+export const auditLogsQueryRequestQMax = 50;
+
+export const auditLogsQueryRequestTargetIdMax = 255;
+
+export const AuditLogsQueryParams = zod.object({
+  request: zod.object({
+    page: zod.number().min(1).optional(),
+    size: zod.number().min(1).max(auditLogsQueryRequestSizeMax).optional(),
+    cursor: zod.string().nullish(),
+    limit: zod.string().nullish(),
+    sort: zod.string().nullish(),
+    order: zod.string().regex(auditLogsQueryRequestOrderRegExp).optional(),
+    q: zod.string().min(1).max(auditLogsQueryRequestQMax).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    adminId: zod.uuid().nullish(),
+    action: zod
+      .enum([
+        'MEMBER_SEARCHED',
+        'MEMBER_VIEWED',
+        'MEMBER_SUSPENDED',
+        'MEMBER_UNSUSPENDED',
+        'CREDIT_GRANTED',
+        'CREDIT_REVOKED',
+        'CREDIT_POLICY_UPSERTED',
+        'CREDIT_POLICY_DELETED',
+        'PUSH_CAMPAIGN_CREATED',
+        'PUSH_CAMPAIGN_CANCELED',
+        'PUSH_CAMPAIGN_RETRIED',
+        'PUSH_TEMPLATE_UPSERTED',
+        'PUSH_TEMPLATE_RESET',
+        'NOTICE_CREATED',
+        'NOTICE_UPDATED',
+        'NOTICE_PUBLISHED',
+        'NOTICE_UNPUBLISHED',
+        'NOTICE_DELETED',
+        'ORIGINAL_CREATED',
+        'ORIGINAL_UPDATED',
+        'ORIGINAL_THUMBNAIL_DELETED',
+        'SUBMISSION_HOLD_RELEASED',
+      ])
+      .nullish(),
+    targetType: zod
+      .enum([
+        'MEMBER_QUERY',
+        'MEMBER',
+        'CREDIT_POLICY',
+        'PUSH_CAMPAIGN',
+        'PUSH_TEMPLATE',
+        'NOTICE',
+        'SUBMISSION',
+        'STORY',
+      ])
+      .nullish(),
+    category: zod.enum(['CHANGE', 'ACCESS']).nullish(),
+    targetId: zod
+      .string()
+      .min(1)
+      .max(auditLogsQueryRequestTargetIdMax)
+      .nullish(),
+  }),
+});
+
+export const AuditLogsResponse = zod.unknown();
+
 /**
  * 표지 URL과 프리셋 키를 모두 지워 표지를 null로 만듭니다. 표지가 없어도 204입니다(멱등). 검수 중에는 409입니다. S3 객체는 지난 채팅 카드에서 참조할 수 있어 지우지 않습니다.
  * @summary 표지 삭제
  */
-export const DeleteThumbnailParams = zod.object({
+export const DeleteStoriesByStoryIdThumbnailParams = zod.object({
   storyId: zod.string().describe('스토리 ID(공개 식별자)'),
 });
 
-export const DeleteThumbnailResponse = zod.void();
+export const DeleteStoriesByStoryIdThumbnailResponse = zod.void();
 
 /**
  * 인물 이미지 참조를 지웁니다(KNK-1126). 없어도 204입니다(멱등). **S3 객체는 남깁니다** — 지난 채팅 본문의 이미지 마커가 그 객체를 가리키고 있어 지우면 옛 대화가 깨집니다.
@@ -2286,3 +3101,13 @@ export const DeleteCharacterImageParams = zod.object({
 });
 
 export const DeleteCharacterImageResponse = zod.void();
+
+export const DeleteAdminOriginalsByStoryIdThumbnailParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const DeleteAdminOriginalsByStoryIdThumbnailBody = zod.object({
+  reason: zod.string().optional(),
+});
+
+export const DeleteAdminOriginalsByStoryIdThumbnailResponse = zod.unknown();

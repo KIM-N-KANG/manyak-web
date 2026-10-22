@@ -17,6 +17,8 @@ type ChatInputProps = {
   composer: ReturnType<typeof useChatComposer>;
   isStreaming: boolean;
   realtimeImageEnabled: boolean;
+  /** 고른 채팅 모델의 턴 이프 비용(모르면 undefined) */
+  turnCost: number | undefined;
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
   /** 실시간 이미지 안내로 설정 시트를 열고 해당 항목을 강조하는지 여부 */
   realtimeImageNudgeOpen: boolean;
@@ -32,6 +34,7 @@ export function ChatInput({
   composer,
   isStreaming,
   realtimeImageEnabled,
+  turnCost,
   onRealtimeImageEnabledChange,
   realtimeImageNudgeOpen,
   onRealtimeImageNudgeClose,
@@ -86,6 +89,7 @@ export function ChatInput({
           choicesEnabled={choicesEnabled}
           onOpenSettings={openSettings}
           realtimeImageEnabled={realtimeImageEnabled}
+          turnCost={turnCost}
           onLockedTap={handleLockedTap}
         />
         {settingsSheet}
@@ -107,6 +111,7 @@ export function ChatInput({
         choicesEnabled={choicesEnabled}
         onOpenSettings={openSettings}
         realtimeImageEnabled={realtimeImageEnabled}
+        turnCost={turnCost}
         onLockedTap={handleLockedTap}
       />
       {settingsSheet}

@@ -74,10 +74,6 @@ export type redeemInviteCodeResponseError = (
   headers: Headers;
 };
 
-export type redeemInviteCodeResponse =
-  | redeemInviteCodeResponseSuccess
-  | redeemInviteCodeResponseError;
-
 export const getRedeemInviteCodeUrl = () => {
   return `/api/v1/users/me/invite/redeem`;
 };
@@ -89,13 +85,16 @@ export const getRedeemInviteCodeUrl = () => {
 export const redeemInviteCode = async (
   inviteRedeemRequest: InviteRedeemRequest,
   options?: RequestInit,
-): Promise<redeemInviteCodeResponse> => {
-  return customInstance<redeemInviteCodeResponse>(getRedeemInviteCodeUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(inviteRedeemRequest),
-  });
+): Promise<redeemInviteCodeResponseSuccess> => {
+  return customInstance<redeemInviteCodeResponseSuccess>(
+    getRedeemInviteCodeUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(inviteRedeemRequest),
+    },
+  );
 };
 
 export const getRedeemInviteCodeMutationOptions = <
@@ -184,10 +183,6 @@ export type getMyInviteResponseError = getMyInviteResponse401 & {
   headers: Headers;
 };
 
-export type getMyInviteResponse =
-  | getMyInviteResponseSuccess
-  | getMyInviteResponseError;
-
 export const getGetMyInviteUrl = () => {
   return `/api/v1/users/me/invite`;
 };
@@ -198,8 +193,8 @@ export const getGetMyInviteUrl = () => {
  */
 export const getMyInvite = async (
   options?: RequestInit,
-): Promise<getMyInviteResponse> => {
-  return customInstance<getMyInviteResponse>(getGetMyInviteUrl(), {
+): Promise<getMyInviteResponseSuccess> => {
+  return customInstance<getMyInviteResponseSuccess>(getGetMyInviteUrl(), {
     ...options,
     method: 'GET',
   });

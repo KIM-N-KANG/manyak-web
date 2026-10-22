@@ -35,6 +35,8 @@ type ChatBlockInputProps = {
   onOpenSettings: () => void;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
   realtimeImageEnabled: boolean;
+  /** 고른 채팅 모델의 턴 이프 비용(모르면 undefined) */
+  turnCost: number | undefined;
   /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
   onLockedTap: () => void;
 };
@@ -52,6 +54,7 @@ export function ChatBlockInput({
   choicesEnabled,
   onOpenSettings,
   realtimeImageEnabled,
+  turnCost,
   onLockedTap,
 }: ChatBlockInputProps) {
   const { request: requestDiscard, dialogProps } =
@@ -152,7 +155,10 @@ export function ChatBlockInput({
         </Button>
         <ChatSettingsButton onClick={onOpenSettings} />
         <div className="ml-auto flex items-center gap-2">
-          <ChatTurnCreditCost withRealtimeImage={realtimeImageEnabled} />
+          <ChatTurnCreditCost
+            withRealtimeImage={realtimeImageEnabled}
+            turnCost={turnCost}
+          />
           <Button
             type="button"
             size="icon-sm"

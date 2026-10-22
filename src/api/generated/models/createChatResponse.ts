@@ -22,4 +22,6 @@ export interface CreateChatResponse {
   /** 생성 시각 */
   createdAt?: string;
   persona?: ChatPersonaResponse | null;
+  /** 채팅 모델 코드. 상세는 비활성 모델을 기본 모델로 대체한 유효 코드 */
+  model?: string;
 }

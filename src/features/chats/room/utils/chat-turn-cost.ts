@@ -1,6 +1,6 @@
 type ChatTurnCostInput = {
-  /** 서버 정책의 채팅 턴 이프 비용(조회 전이면 undefined) */
-  chatTurnCost: number | undefined;
+  /** 고른 채팅 모델의 턴 이프 비용(조회 전이면 undefined) */
+  turnCost: number | undefined;
   /** 서버 정책의 실시간 이미지 이프 비용(조회 전이면 undefined) */
   chatImageCost: number | undefined;
   /** 실시간 이미지가 켜져 있어 이미지 비용을 합산할지 여부 */
@@ -28,14 +28,14 @@ export const isTrialFree = (remaining: number | null | undefined) =>
   remaining === null || (typeof remaining === 'number' && remaining > 0);
 
 /**
- * 전송 버튼 옆에 보일 채팅 턴 정가와 체험 적용가를 계산한다.
+ * 채팅 턴 정가와 체험 적용가를 계산한다.
  * 실시간 이미지를 합산할 때만 이미지 정책값·잔여를 요구한다.
  *
  * @param input 정책 비용·실시간 이미지 여부·체험 잔여
  * @returns 정가와 체험 적용가
  */
 export function calcChatTurnCost({
-  chatTurnCost,
+  turnCost,
   chatImageCost,
   withRealtimeImage,
   turnRemaining,
@@ -44,11 +44,11 @@ export function calcChatTurnCost({
   const imageCost = withRealtimeImage ? chatImageCost : 0;
   const imageKnown = !withRealtimeImage || imageRemaining !== undefined;
 
-  if (chatTurnCost === undefined || imageCost === undefined) {
+  if (turnCost === undefined || imageCost === undefined) {
     return { full: undefined, discounted: undefined };
   }
 
-  const full = chatTurnCost + imageCost;
+  const full = turnCost + imageCost;
 
   if (turnRemaining === undefined || !imageKnown) {
     return { full, discounted: undefined };
@@ -57,7 +57,7 @@ export function calcChatTurnCost({
   return {
     full,
     discounted:
-      (isTrialFree(turnRemaining) ? 0 : chatTurnCost) +
+      (isTrialFree(turnRemaining) ? 0 : turnCost) +
       (isTrialFree(imageRemaining) ? 0 : imageCost),
   };
 }

@@ -3,12 +3,14 @@ import { type Page } from '@playwright/test';
 import { formatCreditAmount } from '@/constants/credit';
 import { DEFAULT_TITLE } from '@/constants/site';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-story';
 import {
   buildChatTurnCreditCostLabel,
   CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
   CHAT_MENU_COPY,
+  CHAT_MODEL_COPY,
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_SETTINGS_COPY,
   CHAT_STREAM_LOADING_COPY,
@@ -18,8 +20,10 @@ import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
 import { mockMemberSession } from '../fixtures/auth';
+import { oneLine } from '../fixtures/copy';
 import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
+  CHAT_MODELS_FIXTURE,
   CREDIT_POLICY_FIXTURE,
   enableRealtimeImage,
   EXHAUSTED_TRIALS,
@@ -75,12 +79,30 @@ const closeChatSettings = async (page: Page) => {
   ).toBeHidden();
 };
 
+// 헤더의 AI 모델 선택 버튼. 이름은 숨김 접두어 + 모델 라벨이다.
+const modelButton = (page: Page) =>
+  page
+    .getByRole('banner')
+    .getByRole('button', { name: CHAT_MODEL_COPY.trigger });
+
+const modelSheet = (page: Page) =>
+  page.getByRole('dialog', { name: CHAT_MODEL_COPY.title });
+
+const [LITE_MODEL, AURORA_MODEL] = CHAT_MODELS_FIXTURE;
+
+// 모델 시트 칸의 한 턴 비용 배지(이프 마크 + 취소선 정가 + 적용가).
+const modelCostBadge = (page: Page, modelName: string) =>
+  modelSheet(page)
+    .locator('label', { hasText: modelName })
+    .locator('[data-slot="badge"]');
+
 const choicesSwitch = (page: Page) =>
   page.getByRole('switch', { name: CHAT_SETTINGS_COPY.choices.label });
 
 const chatDetail = (
   turns: unknown[] = [],
   suggestedInputs: string[] = ['던전에 진입한다', '주변을 둘러본다'],
+  model: string = LITE_MODEL.code,
 ) => ({
   id: 'c1',
   storyId: 's1',
@@ -88,6 +110,7 @@ const chatDetail = (
   prologue: '안개 낀 계곡 앞에 한 용사가 섰다.',
   turns,
   suggestedInputs,
+  model,
 });
 
 const sse = (events: string[]) => events.join('');
@@ -342,6 +365,168 @@ test.describe('채팅 스트리밍', () => {
         { exact: true },
       ),
     ).toBeVisible();
+  });
+
+  test('회원이 헤더 모델 시트에서 다른 모델을 고르면 채팅 모델 변경을 요청하고 버튼 라벨과 전송 버튼 옆 비용이 바뀌며 다시 들어와도 유지된다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, EXHAUSTED_TRIALS);
+
+    let model: string = LITE_MODEL.code;
+    const changes: unknown[] = [];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'PATCH') {
+        const body = route.request().postDataJSON() as { model: string };
+
+        changes.push(body);
+        model = body.model;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 'c1', model }),
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail(undefined, undefined, model)),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const { chatImageCost } = CREDIT_POLICY_FIXTURE;
+    const sheet = modelSheet(page);
+    const liteOption = sheet.getByRole('radio').first();
+    const auroraOption = sheet.getByRole('radio').last();
+    const auroraCost = buildChatTurnCreditCostLabel(
+      formatCreditAmount(AURORA_MODEL.turnCost + chatImageCost),
+    );
+
+    // 버튼은 서버 모델 이름만 보이고 비용은 전송 버튼 왼쪽에 둔다.
+    await expect(modelButton(page)).toHaveText(
+      `${CHAT_MODEL_COPY.trigger}${LITE_MODEL.name}`,
+    );
+
+    await modelButton(page).click();
+    await expect(sheet.getByText(CHAT_MODEL_COPY.description)).toBeVisible();
+    await expect(liteOption).toBeChecked();
+    await expect(auroraOption).not.toBeChecked();
+    await expect(
+      sheet.getByText(CHAT_MODEL_COPY.optionDescriptions.AURORA!),
+    ).toBeVisible();
+    // 모델별 비용은 실시간 이미지 비용을 합산한 한 턴 비용이고, 고른 칸 배지만 프라이머리 글씨다.
+    await expect(modelCostBadge(page, LITE_MODEL.name)).toHaveText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(LITE_MODEL.turnCost + chatImageCost),
+      ),
+    );
+    await expect(modelCostBadge(page, LITE_MODEL.name)).toHaveClass(
+      /text-primary/,
+    );
+    await expect(modelCostBadge(page, AURORA_MODEL.name)).toHaveText(
+      auroraCost,
+    );
+    await expect(modelCostBadge(page, AURORA_MODEL.name)).toHaveClass(
+      /text-foreground-secondary/,
+    );
+
+    await sheet.getByText(AURORA_MODEL.name).click();
+    await expect(sheet).toBeHidden();
+    await expect(modelButton(page)).toContainText(AURORA_MODEL.name);
+    await expect.poll(() => changes).toEqual([{ model: AURORA_MODEL.code }]);
+    await expect(
+      page
+        .getByText(auroraCost, { exact: true })
+        .locator('xpath=../following-sibling::*[1]'),
+    ).toHaveAttribute('data-tour', 'send');
+
+    // 모델은 서버가 채팅마다 저장하므로 다시 들어오면 상세가 준 모델을 보인다.
+    await page.reload();
+    await expect(modelButton(page)).toContainText(AURORA_MODEL.name);
+    await expect(page.getByText(auroraCost, { exact: true })).toBeVisible();
+
+    // 이미 고른 모델을 다시 눌러도 시트가 닫히고 변경을 요청하지 않는다.
+    await modelButton(page).click();
+    await expect(auroraOption).toBeChecked();
+    await sheet.getByText(AURORA_MODEL.name).click();
+    await expect(sheet).toBeHidden();
+    expect(changes).toHaveLength(1);
+  });
+
+  test('회원의 모델 변경이 실패하면 이전 모델로 되돌리고 실패를 알린다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'PATCH') {
+        await route.fulfill({ status: 500, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await modelButton(page).click();
+    await modelSheet(page).getByText(AURORA_MODEL.name).click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.CHAT_MODEL_CHANGE_FAILED),
+    ).toBeVisible();
+    await expect(modelButton(page)).toContainText(LITE_MODEL.name);
+  });
+
+  test('게스트는 체험 모델을 적용 중으로 보이고, 다른 모델을 누르면 변경 요청 없이 로그인 시트를 연다', async ({
+    page,
+  }) => {
+    const changes: string[] = [];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'PATCH') {
+        changes.push(route.request().url());
+        await route.fulfill({ status: 200, body: '{}' });
+
+        return;
+      }
+
+      // 새 채팅은 서버 기본 모델로 만들어지지만, 게스트 턴은 체험 모델로 응답한다.
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatDetail(undefined, undefined, AURORA_MODEL.code),
+        ),
+      });
+    });
+    await mockTrials(page, EXHAUSTED_TRIALS);
+
+    await page.goto('/chats/c1');
+    await expect(modelButton(page)).toContainText(LITE_MODEL.name);
+    await modelButton(page).click();
+
+    const sheet = modelSheet(page);
+
+    await sheet.getByText(AURORA_MODEL.name).click();
+    await expect(sheet).toBeHidden();
+    await expect(
+      page.getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
+    ).toBeVisible();
+
+    // 로그인 시트가 열린 동안 뒤 화면은 접근성 트리에서 빠지므로 닫고 확인한다.
+    await page.keyboard.press('Escape');
+    await expect(modelButton(page)).toContainText(LITE_MODEL.name);
+    expect(changes).toEqual([]);
   });
 
   test('프롤로그와 추천 입력을 보여준다 (US-6-1)', async ({ page }) => {

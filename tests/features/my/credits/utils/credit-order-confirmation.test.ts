@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { getUsersMeCreditsOrdersByOrderIdResponse } from '@/api/generated/endpoints/credits/credits';
+import type { getUsersMeCreditsOrdersByOrderIdResponseSuccess } from '@/api/generated/endpoints/credits/credits';
 import {
   CREDIT_ORDER_MAX_ATTEMPTS,
   resolveCreditOrderConfirmation,
@@ -9,7 +9,7 @@ import { FetchError } from '@/lib/custom-fetch';
 
 function order(
   status: 'PENDING' | 'COMPLETED' | 'REFUNDED',
-): getUsersMeCreditsOrdersByOrderIdResponse {
+): getUsersMeCreditsOrdersByOrderIdResponseSuccess {
   return {
     status: 200,
     headers: new Headers(),

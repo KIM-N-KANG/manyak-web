@@ -62,10 +62,6 @@ export type rateStorylineResponseError = (
   headers: Headers;
 };
 
-export type rateStorylineResponse =
-  | rateStorylineResponseSuccess
-  | rateStorylineResponseError;
-
 export const getRateStorylineUrl = (storylineId: number) => {
   return `/api/v1/stories/simple/storylines/${storylineId}/rating`;
 };
@@ -78,8 +74,8 @@ export const rateStoryline = async (
   storylineId: number,
   storylineRatingRequest: StorylineRatingRequest,
   options?: RequestInit,
-): Promise<rateStorylineResponse> => {
-  return customInstance<rateStorylineResponse>(
+): Promise<rateStorylineResponseSuccess> => {
+  return customInstance<rateStorylineResponseSuccess>(
     getRateStorylineUrl(storylineId),
     {
       ...options,
@@ -178,10 +174,6 @@ export type cancelStorylineRatingResponseError =
     headers: Headers;
   };
 
-export type cancelStorylineRatingResponse =
-  | cancelStorylineRatingResponseSuccess
-  | cancelStorylineRatingResponseError;
-
 export const getCancelStorylineRatingUrl = (storylineId: number) => {
   return `/api/v1/stories/simple/storylines/${storylineId}/rating`;
 };
@@ -193,8 +185,8 @@ export const getCancelStorylineRatingUrl = (storylineId: number) => {
 export const cancelStorylineRating = async (
   storylineId: number,
   options?: RequestInit,
-): Promise<cancelStorylineRatingResponse> => {
-  return customInstance<cancelStorylineRatingResponse>(
+): Promise<cancelStorylineRatingResponseSuccess> => {
+  return customInstance<cancelStorylineRatingResponseSuccess>(
     getCancelStorylineRatingUrl(storylineId),
     {
       ...options,
@@ -318,10 +310,6 @@ export type createSimpleStoryResponseError = (
   headers: Headers;
 };
 
-export type createSimpleStoryResponse =
-  | createSimpleStoryResponseSuccess
-  | createSimpleStoryResponseError;
-
 export const getCreateSimpleStoryUrl = () => {
   return `/api/v1/stories/simple`;
 };
@@ -333,13 +321,16 @@ export const getCreateSimpleStoryUrl = () => {
 export const createSimpleStory = async (
   createSimpleStoryRequest: CreateSimpleStoryRequest,
   options?: RequestInit,
-): Promise<createSimpleStoryResponse> => {
-  return customInstance<createSimpleStoryResponse>(getCreateSimpleStoryUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(createSimpleStoryRequest),
-  });
+): Promise<createSimpleStoryResponseSuccess> => {
+  return customInstance<createSimpleStoryResponseSuccess>(
+    getCreateSimpleStoryUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(createSimpleStoryRequest),
+    },
+  );
 };
 
 export const getCreateSimpleStoryMutationOptions = <
@@ -443,10 +434,6 @@ export type generateSimpleStorylinesResponseError = (
   headers: Headers;
 };
 
-export type generateSimpleStorylinesResponse =
-  | generateSimpleStorylinesResponseSuccess
-  | generateSimpleStorylinesResponseError;
-
 export const getGenerateSimpleStorylinesUrl = () => {
   return `/api/v1/stories/simple/storylines`;
 };
@@ -458,8 +445,8 @@ export const getGenerateSimpleStorylinesUrl = () => {
 export const generateSimpleStorylines = async (
   generateSimpleStorylinesRequest: GenerateSimpleStorylinesRequest,
   options?: RequestInit,
-): Promise<generateSimpleStorylinesResponse> => {
-  return customInstance<generateSimpleStorylinesResponse>(
+): Promise<generateSimpleStorylinesResponseSuccess> => {
+  return customInstance<generateSimpleStorylinesResponseSuccess>(
     getGenerateSimpleStorylinesUrl(),
     {
       ...options,
@@ -552,8 +539,6 @@ export type getSimpleStoryTagsResponseSuccess =
   getSimpleStoryTagsResponse200 & {
     headers: Headers;
   };
-export type getSimpleStoryTagsResponse = getSimpleStoryTagsResponseSuccess;
-
 export const getGetSimpleStoryTagsUrl = () => {
   return `/api/v1/stories/simple/tags`;
 };
@@ -564,8 +549,8 @@ export const getGetSimpleStoryTagsUrl = () => {
  */
 export const getSimpleStoryTags = async (
   options?: RequestInit,
-): Promise<getSimpleStoryTagsResponse> => {
-  return customInstance<getSimpleStoryTagsResponse>(
+): Promise<getSimpleStoryTagsResponseSuccess> => {
+  return customInstance<getSimpleStoryTagsResponseSuccess>(
     getGetSimpleStoryTagsUrl(),
     {
       ...options,
@@ -731,10 +716,6 @@ export type getCreationRequestResponseError = getCreationRequestResponse404 & {
   headers: Headers;
 };
 
-export type getCreationRequestResponse =
-  | getCreationRequestResponseSuccess
-  | getCreationRequestResponseError;
-
 export const getGetCreationRequestUrl = (requestId: string) => {
   return `/api/v1/stories/simple/creation-requests/${requestId}`;
 };
@@ -746,8 +727,8 @@ export const getGetCreationRequestUrl = (requestId: string) => {
 export const getCreationRequest = async (
   requestId: string,
   options?: RequestInit,
-): Promise<getCreationRequestResponse> => {
-  return customInstance<getCreationRequestResponse>(
+): Promise<getCreationRequestResponseSuccess> => {
+  return customInstance<getCreationRequestResponseSuccess>(
     getGetCreationRequestUrl(requestId),
     {
       ...options,

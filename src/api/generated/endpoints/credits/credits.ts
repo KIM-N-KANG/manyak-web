@@ -76,10 +76,6 @@ export type postUsersMeCreditsOrdersResponseError = (
   headers: Headers;
 };
 
-export type postUsersMeCreditsOrdersResponse =
-  | postUsersMeCreditsOrdersResponseSuccess
-  | postUsersMeCreditsOrdersResponseError;
-
 export const getPostUsersMeCreditsOrdersUrl = () => {
   return `/api/v1/users/me/credits/orders`;
 };
@@ -91,8 +87,8 @@ export const getPostUsersMeCreditsOrdersUrl = () => {
 export const postUsersMeCreditsOrders = async (
   createCreditOrderRequest: CreateCreditOrderRequest,
   options?: RequestInit,
-): Promise<postUsersMeCreditsOrdersResponse> => {
-  return customInstance<postUsersMeCreditsOrdersResponse>(
+): Promise<postUsersMeCreditsOrdersResponseSuccess> => {
+  return customInstance<postUsersMeCreditsOrdersResponseSuccess>(
     getPostUsersMeCreditsOrdersUrl(),
     {
       ...options,
@@ -201,10 +197,6 @@ export type claimAttendanceResponseError = (
   headers: Headers;
 };
 
-export type claimAttendanceResponse =
-  | claimAttendanceResponseSuccess
-  | claimAttendanceResponseError;
-
 export const getClaimAttendanceUrl = () => {
   return `/api/v1/users/me/credits/attendance`;
 };
@@ -215,11 +207,14 @@ export const getClaimAttendanceUrl = () => {
  */
 export const claimAttendance = async (
   options?: RequestInit,
-): Promise<claimAttendanceResponse> => {
-  return customInstance<claimAttendanceResponse>(getClaimAttendanceUrl(), {
-    ...options,
-    method: 'POST',
-  });
+): Promise<claimAttendanceResponseSuccess> => {
+  return customInstance<claimAttendanceResponseSuccess>(
+    getClaimAttendanceUrl(),
+    {
+      ...options,
+      method: 'POST',
+    },
+  );
 };
 
 export const getClaimAttendanceMutationOptions = <
@@ -306,10 +301,6 @@ export type getMyCreditsResponseError = getMyCreditsResponse401 & {
   headers: Headers;
 };
 
-export type getMyCreditsResponse =
-  | getMyCreditsResponseSuccess
-  | getMyCreditsResponseError;
-
 export const getGetMyCreditsUrl = () => {
   return `/api/v1/users/me/credits`;
 };
@@ -320,8 +311,8 @@ export const getGetMyCreditsUrl = () => {
  */
 export const getMyCredits = async (
   options?: RequestInit,
-): Promise<getMyCreditsResponse> => {
-  return customInstance<getMyCreditsResponse>(getGetMyCreditsUrl(), {
+): Promise<getMyCreditsResponseSuccess> => {
+  return customInstance<getMyCreditsResponseSuccess>(getGetMyCreditsUrl(), {
     ...options,
     method: 'GET',
   });
@@ -472,10 +463,6 @@ export type getMyCreditTransactionsResponseError = (
   headers: Headers;
 };
 
-export type getMyCreditTransactionsResponse =
-  | getMyCreditTransactionsResponseSuccess
-  | getMyCreditTransactionsResponseError;
-
 export const getGetMyCreditTransactionsUrl = (
   params?: GetMyCreditTransactionsParams,
 ) => {
@@ -509,8 +496,8 @@ export const getGetMyCreditTransactionsUrl = (
 export const getMyCreditTransactions = async (
   params?: GetMyCreditTransactionsParams,
   options?: RequestInit,
-): Promise<getMyCreditTransactionsResponse> => {
-  return customInstance<getMyCreditTransactionsResponse>(
+): Promise<getMyCreditTransactionsResponseSuccess> => {
+  return customInstance<getMyCreditTransactionsResponseSuccess>(
     getGetMyCreditTransactionsUrl(params),
     {
       ...options,
@@ -698,10 +685,6 @@ export type getUsersMeCreditsOrdersByOrderIdResponseError = (
   headers: Headers;
 };
 
-export type getUsersMeCreditsOrdersByOrderIdResponse =
-  | getUsersMeCreditsOrdersByOrderIdResponseSuccess
-  | getUsersMeCreditsOrdersByOrderIdResponseError;
-
 export const getGetUsersMeCreditsOrdersByOrderIdUrl = (orderId: string) => {
   return `/api/v1/users/me/credits/orders/${orderId}`;
 };
@@ -713,8 +696,8 @@ export const getGetUsersMeCreditsOrdersByOrderIdUrl = (orderId: string) => {
 export const getUsersMeCreditsOrdersByOrderId = async (
   orderId: string,
   options?: RequestInit,
-): Promise<getUsersMeCreditsOrdersByOrderIdResponse> => {
-  return customInstance<getUsersMeCreditsOrdersByOrderIdResponse>(
+): Promise<getUsersMeCreditsOrdersByOrderIdResponseSuccess> => {
+  return customInstance<getUsersMeCreditsOrdersByOrderIdResponseSuccess>(
     getGetUsersMeCreditsOrdersByOrderIdUrl(orderId),
     {
       ...options,
@@ -891,8 +874,6 @@ export type productsResponse200 = {
 export type productsResponseSuccess = productsResponse200 & {
   headers: Headers;
 };
-export type productsResponse = productsResponseSuccess;
-
 export const getProductsUrl = () => {
   return `/api/v1/credits/products`;
 };
@@ -903,8 +884,8 @@ export const getProductsUrl = () => {
  */
 export const products = async (
   options?: RequestInit,
-): Promise<productsResponse> => {
-  return customInstance<productsResponse>(getProductsUrl(), {
+): Promise<productsResponseSuccess> => {
+  return customInstance<productsResponseSuccess>(getProductsUrl(), {
     ...options,
     method: 'GET',
   });
@@ -1037,8 +1018,6 @@ export type getCreditPoliciesResponse200 = {
 export type getCreditPoliciesResponseSuccess = getCreditPoliciesResponse200 & {
   headers: Headers;
 };
-export type getCreditPoliciesResponse = getCreditPoliciesResponseSuccess;
-
 export const getGetCreditPoliciesUrl = () => {
   return `/api/v1/credits/policies`;
 };
@@ -1051,16 +1030,20 @@ export const getGetCreditPoliciesUrl = () => {
  *             - `inviteMonthlyCap`만 이프가 아니라 월 적립 **횟수**이며, **초대자 몫에만** 걸립니다(제출자 몫은 상한 없음).
  *             - `storyCreationCost`는 **간편 제작**에만 듭니다(일반 제작은 무료).
  *             - `storyCreationCost`·`chatTurnCost`는 회원의 무료 체험 잔여를 소진한 뒤 적용되는 단가입니다(게스트는 디바이스 한도를 씁니다).
- *             - 변경 반영은 서버의 정책 스냅샷 갱신 주기를 따릅니다(기본 설정 기준 약 1분).
+ *             - `chatTurnCost`는 deprecated이며 LITE 가격을 즉시 반영합니다. 모델별 가격은 GET /api/v1/chats/models를 사용하세요.
+ *             - 다른 정책 변경은 서버의 스냅샷 갱신 주기를 따릅니다(기본 약 1분).
  * @summary 이프 적립·소모 수치 조회
  */
 export const getCreditPolicies = async (
   options?: RequestInit,
-): Promise<getCreditPoliciesResponse> => {
-  return customInstance<getCreditPoliciesResponse>(getGetCreditPoliciesUrl(), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getCreditPoliciesResponseSuccess> => {
+  return customInstance<getCreditPoliciesResponseSuccess>(
+    getGetCreditPoliciesUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetCreditPoliciesQueryKey = () => {

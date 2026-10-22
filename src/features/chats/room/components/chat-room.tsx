@@ -50,6 +50,7 @@ import {
   type ChatInputMode,
   useChatInputMode,
 } from '../hooks/use-chat-input-mode';
+import { useChatModel } from '../hooks/use-chat-model';
 import { useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
 import { useRealtimeImageNudge } from '../hooks/use-realtime-image-nudge';
@@ -116,6 +117,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     prologue,
     turns,
     suggestedInputs,
+    model: chatModel,
     generatingTurn,
     isLoading,
     isError,
@@ -133,6 +135,16 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
       DEFAULT_REALTIME_IMAGE_ENABLED,
     );
+  const {
+    models,
+    modelCode,
+    turnCost,
+    select: selectModel,
+  } = useChatModel(chatId, chatModel, {
+    isMember: sessionStatus === 'authenticated',
+    fallbackTurnCost: policy?.chatTurnCost,
+    onGuestSelect: () => setLoginOpen(true),
+  });
   const [realtimeImageNudgeRequested, setRealtimeImageNudgeRequested] =
     useState(false);
   const { choicesStatus, generate: generateChoicesForTurn } = useChatChoices(
@@ -217,7 +229,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     if (creditBalance === undefined) return false;
 
     const cost = calcChatTurnCost({
-      chatTurnCost: policy?.chatTurnCost,
+      turnCost,
       chatImageCost: policy?.chatImageCost,
       withRealtimeImage: realtimeImageEnabled,
       turnRemaining: getTrialRemaining(trials, 'chatTurn'),
@@ -440,6 +452,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           storyTitle={storyTitle}
           turnCount={turns.length}
           hidden={isHeaderHidden && !tour.isOpen}
+          models={models}
+          modelCode={modelCode}
+          onModelSelect={selectModel}
+          realtimeImageEnabled={realtimeImageEnabled}
         />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages
@@ -467,6 +483,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           composer={composer}
           isStreaming={isStreaming}
           realtimeImageEnabled={realtimeImageEnabled}
+          turnCost={turnCost}
           onRealtimeImageEnabledChange={setRealtimeImageEnabled}
           realtimeImageNudgeOpen={realtimeImageNudge.isOpen}
           onRealtimeImageNudgeClose={realtimeImageNudge.close}

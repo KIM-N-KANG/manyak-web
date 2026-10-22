@@ -44,10 +44,6 @@ export type getGuestsConsentsResponseError = getGuestsConsentsResponse400 & {
   headers: Headers;
 };
 
-export type getGuestsConsentsResponse =
-  | getGuestsConsentsResponseSuccess
-  | getGuestsConsentsResponseError;
-
 export const getGetGuestsConsentsUrl = () => {
   return `/api/v1/guests/consents`;
 };
@@ -58,11 +54,14 @@ export const getGetGuestsConsentsUrl = () => {
  */
 export const getGuestsConsents = async (
   options?: RequestInit,
-): Promise<getGuestsConsentsResponse> => {
-  return customInstance<getGuestsConsentsResponse>(getGetGuestsConsentsUrl(), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getGuestsConsentsResponseSuccess> => {
+  return customInstance<getGuestsConsentsResponseSuccess>(
+    getGetGuestsConsentsUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getGetGuestsConsentsQueryKey = () => {
@@ -222,10 +221,6 @@ export type postGuestsConsentsResponseError = postGuestsConsentsResponse400 & {
   headers: Headers;
 };
 
-export type postGuestsConsentsResponse =
-  | postGuestsConsentsResponseSuccess
-  | postGuestsConsentsResponseError;
-
 export const getPostGuestsConsentsUrl = () => {
   return `/api/v1/guests/consents`;
 };
@@ -237,8 +232,8 @@ export const getPostGuestsConsentsUrl = () => {
 export const postGuestsConsents = async (
   guestConsentRequest: GuestConsentRequest,
   options?: RequestInit,
-): Promise<postGuestsConsentsResponse> => {
-  return customInstance<postGuestsConsentsResponse>(
+): Promise<postGuestsConsentsResponseSuccess> => {
+  return customInstance<postGuestsConsentsResponseSuccess>(
     getPostGuestsConsentsUrl(),
     {
       ...options,

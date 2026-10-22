@@ -41,9 +41,6 @@ export type getUsersMeStoryDraftsByDraftIdResponseSuccess =
   getUsersMeStoryDraftsByDraftIdResponse200 & {
     headers: Headers;
   };
-export type getUsersMeStoryDraftsByDraftIdResponse =
-  getUsersMeStoryDraftsByDraftIdResponseSuccess;
-
 export const getGetUsersMeStoryDraftsByDraftIdUrl = (draftId: string) => {
   return `/api/v1/users/me/story-drafts/${draftId}`;
 };
@@ -51,8 +48,8 @@ export const getGetUsersMeStoryDraftsByDraftIdUrl = (draftId: string) => {
 export const getUsersMeStoryDraftsByDraftId = async (
   draftId: string,
   options?: RequestInit,
-): Promise<getUsersMeStoryDraftsByDraftIdResponse> => {
-  return customInstance<getUsersMeStoryDraftsByDraftIdResponse>(
+): Promise<getUsersMeStoryDraftsByDraftIdResponseSuccess> => {
+  return customInstance<getUsersMeStoryDraftsByDraftIdResponseSuccess>(
     getGetUsersMeStoryDraftsByDraftIdUrl(draftId),
     {
       ...options,
@@ -223,8 +220,6 @@ export type putResponse200 = {
 export type putResponseSuccess = putResponse200 & {
   headers: Headers;
 };
-export type putResponse = putResponseSuccess;
-
 export const getPutUrl = (draftId: string) => {
   return `/api/v1/users/me/story-drafts/${draftId}`;
 };
@@ -233,8 +228,8 @@ export const put = async (
   draftId: string,
   putStoryDraftRequest: PutStoryDraftRequest,
   options?: RequestInit,
-): Promise<putResponse> => {
-  return customInstance<putResponse>(getPutUrl(draftId), {
+): Promise<putResponseSuccess> => {
+  return customInstance<putResponseSuccess>(getPutUrl(draftId), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -312,9 +307,6 @@ export type deleteUsersMeStoryDraftsByDraftIdResponseSuccess =
   deleteUsersMeStoryDraftsByDraftIdResponse204 & {
     headers: Headers;
   };
-export type deleteUsersMeStoryDraftsByDraftIdResponse =
-  deleteUsersMeStoryDraftsByDraftIdResponseSuccess;
-
 export const getDeleteUsersMeStoryDraftsByDraftIdUrl = (draftId: string) => {
   return `/api/v1/users/me/story-drafts/${draftId}`;
 };
@@ -322,8 +314,8 @@ export const getDeleteUsersMeStoryDraftsByDraftIdUrl = (draftId: string) => {
 export const deleteUsersMeStoryDraftsByDraftId = async (
   draftId: string,
   options?: RequestInit,
-): Promise<deleteUsersMeStoryDraftsByDraftIdResponse> => {
-  return customInstance<deleteUsersMeStoryDraftsByDraftIdResponse>(
+): Promise<deleteUsersMeStoryDraftsByDraftIdResponseSuccess> => {
+  return customInstance<deleteUsersMeStoryDraftsByDraftIdResponseSuccess>(
     getDeleteUsersMeStoryDraftsByDraftIdUrl(draftId),
     {
       ...options,
@@ -410,17 +402,14 @@ export type getUsersMeStoryDraftsResponseSuccess =
   getUsersMeStoryDraftsResponse200 & {
     headers: Headers;
   };
-export type getUsersMeStoryDraftsResponse =
-  getUsersMeStoryDraftsResponseSuccess;
-
 export const getGetUsersMeStoryDraftsUrl = () => {
   return `/api/v1/users/me/story-drafts`;
 };
 
 export const getUsersMeStoryDrafts = async (
   options?: RequestInit,
-): Promise<getUsersMeStoryDraftsResponse> => {
-  return customInstance<getUsersMeStoryDraftsResponse>(
+): Promise<getUsersMeStoryDraftsResponseSuccess> => {
+  return customInstance<getUsersMeStoryDraftsResponseSuccess>(
     getGetUsersMeStoryDraftsUrl(),
     {
       ...options,

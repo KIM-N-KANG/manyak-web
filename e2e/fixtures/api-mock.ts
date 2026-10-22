@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 
 import type {
   ArtStyleCatalogItem,
+  ChatModelResponse,
   CreditPolicyResponse,
   CreditProductResponse,
   GenerateSimpleStorylinesResponse,
@@ -45,6 +46,10 @@ export async function mockApi(page: Page): Promise<void> {
   // 이프 수치 문구는 공개 정책 조회를 따라간다. 목이 없으면 catch-all의 `[]`가 내려가
   // 모든 수치가 자리표시(000)로 그려지므로, 픽스처 수치를 응답해 문구를 결정적으로 만든다.
   await mockCreditPolicies(page);
+
+  // 채팅방 모델 버튼과 턴 비용은 채팅 모델 목록을 따라간다. catch-all의 `[]`면 모델 버튼이 사라지고
+  // 비용이 자리표시로 남으므로 서버 기본 모델 표와 같은 목록을 응답한다.
+  await mockChatModels(page);
 
   // 체험 잔여 문구는 서버 체험 조회를 따라간다. 목이 없으면 catch-all의 `[]`가
   // 내려가 잔여가 자리표시로 남으므로, 모든 체험이 남은 상태를 기본으로 응답한다.
@@ -488,6 +493,37 @@ export async function mockCreditPolicies(
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(policy),
+    });
+  });
+}
+
+const CHAT_MODELS_ROUTE = '**/api/v1/chats/models';
+
+/**
+ * E2E가 응답할 채팅 모델 목록. 서버 기본 모델 표와 같고, 라이트 가격은 정책의 deprecated 턴 비용과 같다.
+ * 실제 응답의 기본 여부 키는 `isDefault`라 생성 타입(`default`)과 다르지만 앱은 이 값을 읽지 않는다.
+ */
+export const CHAT_MODELS_FIXTURE = [
+  {
+    code: 'LITE',
+    name: '라이트',
+    turnCost: CREDIT_POLICY_FIXTURE.chatTurnCost,
+    default: false,
+  },
+  { code: 'AURORA', name: '오로라', turnCost: 50, default: true },
+] as const satisfies Required<ChatModelResponse>[];
+
+/**
+ * 채팅 모델 목록 조회를 목킹한다.
+ *
+ * @param page 대상 페이지
+ */
+export async function mockChatModels(page: Page): Promise<void> {
+  await page.route(CHAT_MODELS_ROUTE, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(CHAT_MODELS_FIXTURE),
     });
   });
 }
