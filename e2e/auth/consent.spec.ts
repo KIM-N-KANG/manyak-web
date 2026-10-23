@@ -18,7 +18,6 @@ import {
   PUSH_SETTINGS_FIXTURE,
   seedPendingLogin,
   seedStoryIds,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -83,10 +82,6 @@ const mockSignOut = async (page: Page) => {
 };
 
 test.describe('로그인 직후 필수 동의 게이트', () => {
-  test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
-  });
-
   test('이미 필수 동의를 마친 회원은 시트 없이 바로 회원 기능을 쓴다', async ({
     page,
   }) => {
@@ -716,10 +711,6 @@ const readPendingLogin = (page: Page) =>
  * 가입을 완료해야 세션이 생긴다. OAuth 복귀는 탭 표시와 BFF 대기 조회 목으로 대신한다.
  */
 test.describe('동의 전 가입 대기(세션 없음)', () => {
-  test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
-  });
-
   test('가입 동의를 마쳐야 세션이 생기고, 그 뒤에 회원 기능이 시작된다', async ({
     page,
   }) => {

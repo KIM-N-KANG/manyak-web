@@ -11,7 +11,6 @@ import {
   seedChatIds,
   seedStoryIds,
   skipChatTour,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -146,9 +145,7 @@ test.describe('채팅 목록', () => {
   test('진행 중인 채팅이 없으면 앱과 같이 한 줄 안내만 표시한다 (US-5-4·KNK-1355)', async ({
     page,
   }) => {
-    // 채팅 ID를 심지 않으면 목록이 비어 있고, 온보딩을 건너뛰어 다이얼로그가 뜨지 않게 한다.
-    await skipOnboarding(page);
-
+    // 채팅 ID를 심지 않으면 목록이 비어 있다.
     await page.goto('/chats');
 
     await expect(page.getByText(CHAT_LIST_COPY.emptyTitle)).toBeVisible();
@@ -158,7 +155,7 @@ test.describe('채팅 목록', () => {
   test('진행 중인 채팅은 없지만 스토리가 있어도 같은 한 줄 안내만 표시한다 (US-5-4·KNK-1355)', async ({
     page,
   }) => {
-    // 스토리 ID를 심으면 채팅이 없어도 온보딩 게이팅을 통과한다.
+    // 스토리 ID만 있고 채팅 ID는 없다.
     await seedStoryIds(page, ['s1']);
 
     await page.goto('/chats');
@@ -169,7 +166,6 @@ test.describe('채팅 목록', () => {
 
   test('로그인 상태에서는 서버의 내 채팅 목록을 보여준다', async ({ page }) => {
     // 로컬 ID 없이 회원 목록 API만으로 카드를 그린다(이관도 발동하지 않음).
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me/chats**', async (route) => {
       await route.fulfill({
@@ -187,7 +183,6 @@ test.describe('채팅 목록', () => {
   test('로그인 상태에서 채팅은 없지만 서버에 스토리가 있어도 한 줄 안내만 표시한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me/chats**', async (route) => {
       await route.fulfill({
@@ -223,7 +218,6 @@ test.describe('채팅방 삭제 뒤로가기 (KNK-1610)', () => {
   test('채팅 목록에서 연 방을 삭제하면 채팅 목록으로 돌아가고 채팅 목록이 두 번 쌓이지 않는다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await skipChatTour(page);
     await seedChatIds(page, ['c1']);
     await page.route(CHATS_BATCH, (route) =>
@@ -371,7 +365,6 @@ test.describe('채팅 카드 옵션 (KNK-1186)', () => {
   test('회원은 카드 옵션에서 참조 스토리를 신고할 수 있다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me/chats**', async (route) => {
       await route.fulfill({
@@ -411,7 +404,6 @@ test.describe('채팅 목록 긴 글', () => {
   test('공백 없는 긴 제목과 미리보기도 카드 폭 안에서 말줄임한다 (CHAT-LIST-20)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me/chats**', (route) =>
       route.fulfill({

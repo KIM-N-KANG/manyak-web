@@ -50,10 +50,9 @@ export const ANDROID_PLAY_STORE_URL = `https://play.google.com/store/apps/detail
 
 /**
  * 배너를 띄우지 않는 경로다. 문서 화면은 Android 앱 WebView가 열어 앱 안에서 앱 열기를
- * 권하지 않도록, 온보딩은 첫 방문 소개를 가리지 않도록 뺀다.
+ * 권하지 않도록 뺀다.
  */
 const EXCLUDED_PATHS: readonly string[] = [
-  APP_PATH.ONBOARDING,
   APP_PATH.ABOUT,
   APP_PATH.TERMS,
   APP_PATH.PRIVACY,

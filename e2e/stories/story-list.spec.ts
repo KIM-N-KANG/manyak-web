@@ -29,7 +29,6 @@ import {
   isPublicStoriesUrl,
   mockPublicStories,
   seedStoryIds,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -95,8 +94,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('기존 제작 URL을 새 studio URL로 이동시킨다 (KNK-994)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     await page.goto(APP_PATH.LEGACY.CREATE);
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
 
@@ -114,7 +111,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('FAB는 제작 방식 선택 화면으로 이동하고, 일반 제작은 입력 탭을 바꾸고 입력 없이 닫으면 묻지 않고 제작 탭으로 나간다 (STORY-LIST-38)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     // 일반 제작은 회원 전용이다. 게스트 흐름은 STORY-GENERAL-23에서 다룬다.
     await mockMemberSession(page);
     await page.goto(APP_PATH.MAIN.STUDIO);
@@ -364,8 +360,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('홈을 위에서 당기면 공개 목록을 다시 읽고 그동안 기존 카드를 유지한다 (STORY-LIST-30)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     let originalsRequestCount = 0;
     let releaseRefetch: () => void = () => {};
 
@@ -443,7 +437,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('당기다 손가락이 시작점 위로 넘어가면 표시자와 목록이 제자리로 돌아온다 (KNK-1640)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto(APP_PATH.MAIN.STORIES);
 
     const scroller = page.getByRole('region', {
@@ -476,7 +469,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
 
     await page.goto('/');
@@ -501,8 +493,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('만든 스토리가 없는 제작 화면은 한 줄 안내와 FAB만 표시한다 (KNK-988·KNK-1355)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(
@@ -523,7 +513,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('홈 카드는 제작자를 보여주고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (KNK-983·KNK-1426)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockPublicStories(page, [
       { ...originalStory('o1', '마냑의 첫 이야기'), isOriginal: true },
       {
@@ -551,7 +540,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('아래로 스크롤하면 필터 바를 숨기고 위로 스크롤하면 다시 보인다 (KNK-1426)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockPublicStories(
       page,
       Array.from({ length: 12 }, (_, index) =>
@@ -609,7 +597,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('상세에서 돌아오거나 탭을 오가도 목록 스크롤 위치를 유지한다 (KNK-1613)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockPublicStories(
       page,
       Array.from({ length: 12 }, (_, index) =>
@@ -660,7 +647,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('당겨도 필터 바는 제자리에 있고 표시자는 바 아래에 나타난다 (KNK-1570)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
 
     await page.goto('/');
@@ -697,8 +683,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('필터·정렬을 바꾸면 URL과 요청에 반영하고 상세에서 돌아와도 유지한다 (KNK-1421)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     const requests: URLSearchParams[] = [];
 
     await page.route(isPublicStoriesUrl, async (route) => {
@@ -792,8 +776,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('목록 끝에 닿으면 같은 필터·정렬로 다음 페이지를 이어 붙인다 (KNK-1421)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     const requests: URLSearchParams[] = [];
 
     await page.route(isPublicStoriesUrl, async (route) => {
@@ -841,7 +823,6 @@ test.describe('홈·제작 스토리 목록', () => {
     page,
   }) => {
     await mockMemberSession(page);
-    await skipOnboarding(page);
     await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
 
     await page.goto('/');
@@ -879,7 +860,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('공개 스토리가 없으면 필터 줄 아래에 빈 안내를 보여준다 (KNK-1421)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockPublicStories(page, []);
 
     await page.goto('/');
@@ -891,8 +871,6 @@ test.describe('홈·제작 스토리 목록', () => {
   });
 
   test('공개 목록 로드에 실패하면 다시 시도로 복구한다', async ({ page }) => {
-    await skipOnboarding(page);
-
     let callCount = 0;
 
     await page.route(isPublicStoriesUrl, async (route) => {
@@ -929,8 +907,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('공개 목록 로딩 중에는 카드 구조에 맞는 스켈레톤을 보여준다 (KNK-988)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     let releaseResponse!: () => void;
     const responseGate = new Promise<void>((resolve) => {
       releaseResponse = resolve;
@@ -1000,8 +976,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('게스트는 헤더의 로그인 버튼으로 로그인 화면에 간다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     await page.goto('/');
     await page
       .getByRole('banner')
@@ -1012,7 +986,6 @@ test.describe('홈·제작 스토리 목록', () => {
   });
 
   test('로그인 상태에서는 메인 헤더에 로그인 버튼이 없다', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
 
     for (const pathname of [
@@ -1135,7 +1108,6 @@ test.describe('홈·제작 스토리 목록', () => {
     page,
   }) => {
     // 로컬 ID 없이 회원 목록 API만으로 카드를 그린다(이관도 발동하지 않음).
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me/stories**', async (route) => {
       await route.fulfill({
@@ -1164,7 +1136,6 @@ test.describe('홈·제작 스토리 목록', () => {
   }) => {
     const longText = 'ㄹㄱㅇㅇㅇ222ㅇㅇ123213'.repeat(4);
 
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me/stories**', async (route) => {
       await route.fulfill({
@@ -1192,7 +1163,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('홈 카드의 공백 없는 긴 제목도 카드 폭 안에서 말줄임한다 (STORY-LIST-41)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockPublicStories(page, [
       originalStory('o1', `제목${UNBROKEN_TEXT}`),
     ]);
@@ -1206,7 +1176,6 @@ test.describe('홈·제작 스토리 목록', () => {
   test('로그인 상태에서 스토리를 삭제하면 목록에서 사라진다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
 
     let deleted = false;

@@ -12,11 +12,14 @@ import { RetryListStatus } from '@/components/common/retry-list-status';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
+import { CreateTutorialDialog } from '@/features/stories/_shared/components/create-tutorial-dialog';
 import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
+import { useCreateTutorial } from '@/features/stories/_shared/hooks/use-create-tutorial';
 import { takeStoryCompletionRequest } from '@/features/stories/_shared/utils/creation-request-storage';
 import { DRAFT_CARD_LIMIT } from '@/features/stories/_shared/utils/draft-card-limit';
 import { mergeDraftCards } from '@/features/stories/_shared/utils/merge-draft-cards';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
+import { leaveLayers } from '@/lib/history-layers';
 import { track } from '@/observability/analytics';
 
 import { CREATED_STORY_LIST_COPY } from '../constants';
@@ -61,6 +64,10 @@ export function CreatedStoryList() {
     stories.some((story) => story.id === storyId);
   const visibleCompletionRecords = completionRecords.filter(
     (record) => !isStoryListed(record.createdStoryId),
+  );
+  // 간편 제작 첫 진입 안내의 마지막 단계는 완성 중 카드가 보일 때 연다.
+  const tutorial = useCreateTutorial(
+    visibleCompletionRecords.length > 0 ? 'completing' : null,
   );
   const completedRequestIds = completionRecords
     .filter((record) => isStoryListed(record.createdStoryId))
@@ -193,6 +200,17 @@ export function CreatedStoryList() {
       {stateKey === 'list' ? (
         <CreateStoryFab onCreate={handleCreateClick} />
       ) : null}
+      {tutorial.stage !== null && (
+        <CreateTutorialDialog
+          stage={tutorial.stage}
+          onPrimary={() => {
+            // 하단 탭과 같이 홈 탭으로 바꾼다. 대화창의 뒤로가기 기록을 먼저 소비한다.
+            leaveLayers(() => router.replace(APP_PATH.MAIN.STORIES));
+            tutorial.handlePrimary();
+          }}
+          onSecondary={tutorial.handleSecondary}
+        />
+      )}
     </>
   );
 }

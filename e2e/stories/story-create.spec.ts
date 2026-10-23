@@ -42,19 +42,17 @@ import {
   mockMemberSession,
   mockTrials,
   skipChatTour,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
-// 완성 제출 뒤 돌아오는 제작 탭의 온보딩 게이트와 채팅 화면의 안내 투어가 뜨지 않게 한다.
+// 채팅 화면의 안내 투어가 뜨지 않게 한다.
 // 제작은 회원 전용이라 회원 세션으로 진행하고, 제작 탭 목록은 회원 목록(/users/me/stories)을 쓴다.
 test.beforeEach(async ({ page }) => {
-  await skipOnboarding(page);
   await skipChatTour(page);
   await mockMemberSession(page);
 });
 
-// 스토리 생성 4단계 funnel(/studio/story/simple, (story) 레이아웃이라 온보딩 게이팅 없음).
+// 스토리 생성 4단계 funnel(/studio/story/simple).
 // API 순서: GET /stories/simple/tags → POST /stories/simple/storylines
 //           → POST /stories/simple(제출 직후 /studio 복귀) → 완성 중 카드가 5초마다
 //           GET /creation-requests/{id} → 완성되면 레코드 제거·목록 카드로 전환(채팅 자동 생성 없음)

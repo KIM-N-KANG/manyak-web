@@ -31,7 +31,7 @@ afterEach(() => {
 
 describe('track 공통 프로퍼티', () => {
   it('기본은 is_logged_in=false이고 user_id가 없다', () => {
-    track('client_onboarding_viewed');
+    track('client_storyList_viewed');
 
     const payload = debugSpy.mock.calls[0][2] as Record<string, unknown>;
 
@@ -41,7 +41,7 @@ describe('track 공통 프로퍼티', () => {
 
   it('setAnalyticsUser 후에는 is_logged_in=true와 user_id가 붙는다', () => {
     setAnalyticsUser('user-1');
-    track('client_onboarding_viewed');
+    track('client_storyList_viewed');
 
     const payload = debugSpy.mock.calls[0][2] as Record<string, unknown>;
 
@@ -52,7 +52,7 @@ describe('track 공통 프로퍼티', () => {
   it('resetAnalyticsUser 후에는 게스트 상태로 돌아간다', () => {
     setAnalyticsUser('user-1');
     resetAnalyticsUser();
-    track('client_onboarding_viewed');
+    track('client_storyList_viewed');
 
     const payload = debugSpy.mock.calls[0][2] as Record<string, unknown>;
 

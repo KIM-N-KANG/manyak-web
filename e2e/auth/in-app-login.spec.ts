@@ -15,7 +15,6 @@ import {
   mockSignupConsent,
   mockSignupConsentSignIn,
   seedStoryIds,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -121,7 +120,6 @@ for (const userAgent of [
       test(`${path}에서 로그인 화면을 열고 팝업 차단 시 재시도할 수 있다`, async ({
         page,
       }) => {
-        await skipOnboarding(page);
         await page.addInitScript(() => {
           window.open = () => null;
         });
@@ -157,8 +155,6 @@ test.describe('인앱 소셜 로그인', () => {
     page,
     context,
   }) => {
-    await skipOnboarding(page);
-
     const requests = await mockGooglePopup(page);
     const callbackUrl = `${APP_PATH.MAIN.STORIES}?login=complete#return`;
     const loginUrl = `${APP_PATH.LOGIN}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
@@ -194,7 +190,6 @@ test.describe('인앱 소셜 로그인', () => {
     page,
     context,
   }) => {
-    await skipOnboarding(page);
     await seedStoryIds(page, ['11111111-1111-4111-8111-111111111111']);
 
     // 로그인 시작 때 이전 대기를 비우고, 팝업 인증이 끝나야 서버가 대기를 남긴다. 그 전까지
@@ -287,7 +282,6 @@ test.describe('인앱 소셜 로그인', () => {
       browserName !== 'chromium',
       '현재 WebKit 환경은 공급자 목 응답의 COOP로 창 참조 단절이 재현되지 않는다.',
     );
-    await skipOnboarding(page);
     await page.clock.install();
     await page.addInitScript(() => {
       const open = window.open.bind(window);
@@ -341,7 +335,6 @@ test.describe('인앱 소셜 로그인', () => {
     page,
     context,
   }) => {
-    await skipOnboarding(page);
     await page.clock.install();
 
     const requests = await mockGooglePopup(page);
@@ -380,7 +373,6 @@ test.describe('인앱 소셜 로그인', () => {
   test('Kakao 로그인은 인앱의 같은 탭에서 기존 callbackUrl로 시작한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.route('**/api/auth/providers', (route) =>
       route.fulfill({
         json: { kakao: { id: 'kakao', name: 'Kakao', type: 'oidc' } },
@@ -427,7 +419,6 @@ test.describe('인앱 게스트 이용', () => {
   test('인앱에서도 전면 차단 없이 제작 스토리 목록을 이용한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await seedStoryIds(page, ['s1']);
     await page.route('**/api/v1/stories/batch', async (route) => {
       await route.fulfill({
