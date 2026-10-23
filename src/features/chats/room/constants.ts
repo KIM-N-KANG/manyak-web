@@ -148,7 +148,4 @@ export const CHAT_TURN_COST_INFO_COPY = {
   total: '합계',
   buildTrialRemaining: (count: number) => `무료 체험 ${count}회 남음`,
   trialUnlimited: '무료 체험 무제한',
-  /** 턴 체험이 남은 회원이 다른 모델을 골랐을 때. 서버는 체험 턴을 체험 모델로 답한다 */
-  buildTrialModelNote: (modelName: string) =>
-    `무료 체험 턴은 ${modelName} 모델로 답해요`,
 } as const;

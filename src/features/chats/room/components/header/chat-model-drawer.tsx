@@ -156,6 +156,7 @@ function ChatModelOption({
           )}>
           <ChatTurnCreditCost
             turnCost={model.turnCost}
+            modelCode={model.code}
             withRealtimeImage={withRealtimeImage}
             className="text-inherit"
           />

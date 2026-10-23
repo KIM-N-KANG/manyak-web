@@ -549,7 +549,7 @@ test.describe('채팅 스트리밍', () => {
     await expect(longResponseSwitch).not.toBeChecked();
   });
 
-  test('전송 버튼 옆 비용 버튼을 누르면 항목별 비용, 남은 무료 체험, 긴 응답을 팝오버로 보인다', async ({
+  test('전송 버튼 옆 비용 버튼을 누르면 항목별 비용과 긴 응답을 팝오버로 보이고, 턴 체험은 라이트에만 적용한다', async ({
     page,
   }) => {
     await mockMemberSession(page);
@@ -577,10 +577,12 @@ test.describe('채팅 스트리밍', () => {
       name: CHAT_TURN_COST_INFO_COPY.title,
     });
 
-    // 턴 체험이 남아 AI 응답은 무료, 이미지 체험은 다 써서 이미지 정가만 낸다.
+    // 턴 체험은 라이트에만 적용되므로 오로라는 체험이 남아도 정가, 이미지 체험은 다 써서 정가다.
     await expect(popover).toContainText(
       buildChatTurnCreditCostLabel(
-        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+        formatCreditAmount(
+          AURORA_MODEL.turnCost + CREDIT_POLICY_FIXTURE.chatImageCost,
+        ),
       ),
     );
     await expect(
@@ -588,21 +590,36 @@ test.describe('채팅 스트리밍', () => {
         CHAT_TURN_COST_INFO_COPY.buildLongResponseDetail(AURORA_MODEL.name),
       ),
     ).toBeVisible();
+    // 적용되지 않는 턴 체험과 다 쓴 이미지 체험은 체험 줄 없이 항목 이름만 남는다.
     await expect(
       popover.getByText(CHAT_TURN_COST_INFO_COPY.buildTrialRemaining(3)),
-    ).toBeVisible();
-    // 다 쓴 이미지 체험은 체험 줄 없이 항목 이름만 남는다.
+    ).toHaveCount(0);
     await expect(
       popover.locator('dt', {
         hasText: CHAT_TURN_COST_INFO_COPY.realtimeImage,
       }),
     ).toHaveText(CHAT_TURN_COST_INFO_COPY.realtimeImage);
-    // 체험 턴은 서버가 라이트로 답하므로 오로라를 고른 회원에게 알린다.
-    await expect(
-      popover.getByText(
-        CHAT_TURN_COST_INFO_COPY.buildTrialModelNote(LITE_MODEL.name),
+
+    // 모델 시트에서도 라이트만 턴 체험을 적용하고 오로라는 취소선 없이 정가를 보인다.
+    await page.keyboard.press('Escape');
+    await modelButton(page).click();
+
+    const liteBadge = modelCostBadge(page, LITE_MODEL.name);
+    const auroraBadge = modelCostBadge(page, AURORA_MODEL.name);
+
+    await expect(liteBadge.locator('s')).toHaveText(
+      formatCreditAmount(
+        LITE_MODEL.turnCost + CREDIT_POLICY_FIXTURE.chatImageCost,
       ),
-    ).toBeVisible();
+    );
+    await expect(auroraBadge).toHaveText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(
+          AURORA_MODEL.turnCost + CREDIT_POLICY_FIXTURE.chatImageCost,
+        ),
+      ),
+    );
+    await expect(auroraBadge.locator('s')).toHaveCount(0);
   });
 
   test('회원의 모델 변경이 실패하면 이전 모델로 되돌리고 실패를 알린다', async ({

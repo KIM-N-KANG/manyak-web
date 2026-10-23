@@ -13,7 +13,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { formatCreditAmount } from '@/constants/credit';
-import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
 import { useTrials } from '@/hooks/use-trials';
@@ -21,10 +20,13 @@ import { cn } from '@/lib/utils';
 
 import {
   buildChatTurnCreditCostLabel,
-  CHAT_TRIAL_MODEL_CODE,
   CHAT_TURN_COST_INFO_COPY as COPY,
 } from '../../constants';
-import { calcChatTurnCost, isTrialFree } from '../../utils/chat-turn-cost';
+import {
+  calcChatTurnCost,
+  getModelTurnRemaining,
+  isTrialFree,
+} from '../../utils/chat-turn-cost';
 import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 
 type ChatTurnCostInfoProps = {
@@ -50,17 +52,14 @@ export function ChatTurnCostInfo({
 }: ChatTurnCostInfoProps) {
   const trials = useTrials();
   const policy = useCreditPolicy();
-  const { isMember } = useMemberAccess();
   const { data: modelsData } = useGetModels();
   const models = modelsData?.status === 200 ? modelsData.data : [];
   const modelName = models.find((model) => model.code === modelCode)?.name;
-  const trialModelName = models.find(
-    (model) => model.code === CHAT_TRIAL_MODEL_CODE,
-  )?.name;
   const turnRemaining = getTrialRemaining(trials, 'chatTurn');
   const imageRemaining = getTrialRemaining(trials, 'chatImage');
   const { full, discounted } = calcChatTurnCost({
     turnCost,
+    modelCode,
     chatImageCost: policy?.chatImageCost,
     withRealtimeImage,
     turnRemaining,
@@ -68,11 +67,6 @@ export function ChatTurnCostInfo({
   });
   const showsStrike =
     full !== undefined && discounted !== undefined && discounted < full;
-  const showsTrialModelNote =
-    isMember &&
-    isTrialFree(turnRemaining) &&
-    modelCode !== CHAT_TRIAL_MODEL_CODE &&
-    trialModelName !== undefined;
 
   return (
     <Popover>
@@ -88,6 +82,7 @@ export function ChatTurnCostInfo({
         <span className="sr-only">{COPY.trigger}</span>
         <ChatTurnCreditCost
           turnCost={turnCost}
+          modelCode={modelCode}
           withRealtimeImage={withRealtimeImage}
         />
         <HugeiconsIcon
@@ -112,7 +107,7 @@ export function ChatTurnCostInfo({
                 : modelName
             }
             cost={turnCost}
-            remaining={turnRemaining}
+            remaining={getModelTurnRemaining(turnRemaining, modelCode)}
           />
           {withRealtimeImage && (
             <CostRow
@@ -138,11 +133,6 @@ export function ChatTurnCostInfo({
             </dd>
           </div>
         </dl>
-        {showsTrialModelNote && (
-          <p className="rounded-md bg-muted px-3 py-2 text-xs text-foreground-secondary">
-            {COPY.buildTrialModelNote(trialModelName)}
-          </p>
-        )}
       </PopoverContent>
     </Popover>
   );

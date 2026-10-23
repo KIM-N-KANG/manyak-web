@@ -233,6 +233,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
     const cost = calcChatTurnCost({
       turnCost,
+      modelCode,
       chatImageCost: policy?.chatImageCost,
       withRealtimeImage: realtimeImageEnabled,
       turnRemaining: getTrialRemaining(trials, 'chatTurn'),
