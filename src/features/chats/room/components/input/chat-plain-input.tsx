@@ -32,6 +32,8 @@ type ChatPlainInputProps = {
   turnCost: number | undefined;
   /** 지금 적용 중인 모델 코드(모르면 undefined). 비용 안내에 모델 이름을 보인다 */
   modelCode: string | undefined;
+  /** 이 채팅의 긴 응답 설정. 비용 안내에 함께 보인다 */
+  longResponse: boolean;
   /** 응답 생성 중 잠긴 입력창을 눌렀을 때 호출된다 */
   onLockedTap: () => void;
 };
@@ -50,6 +52,7 @@ export function ChatPlainInput({
   realtimeImageEnabled,
   turnCost,
   modelCode,
+  longResponse,
   onLockedTap,
 }: ChatPlainInputProps) {
   const hasInput = value.trim().length > 0;
@@ -110,6 +113,7 @@ export function ChatPlainInput({
                 withRealtimeImage={realtimeImageEnabled}
                 turnCost={turnCost}
                 modelCode={modelCode}
+                longResponse={longResponse}
               />
               <Button
                 type="submit"

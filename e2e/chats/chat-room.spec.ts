@@ -549,7 +549,7 @@ test.describe('채팅 스트리밍', () => {
     await expect(longResponseSwitch).not.toBeChecked();
   });
 
-  test('전송 버튼 옆 비용 버튼을 누르면 항목별 비용과 남은 무료 체험을 팝오버로 보인다', async ({
+  test('전송 버튼 옆 비용 버튼을 누르면 항목별 비용, 남은 무료 체험, 긴 응답을 팝오버로 보인다', async ({
     page,
   }) => {
     await mockMemberSession(page);
@@ -561,9 +561,10 @@ test.describe('채팅 스트리밍', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          chatDetail(undefined, undefined, AURORA_MODEL.code),
-        ),
+        body: JSON.stringify({
+          ...chatDetail(undefined, undefined, AURORA_MODEL.code),
+          longResponse: true,
+        }),
       });
     });
 
@@ -582,13 +583,20 @@ test.describe('채팅 스트리밍', () => {
         formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
       ),
     );
-    await expect(popover.getByText(AURORA_MODEL.name)).toBeVisible();
+    await expect(
+      popover.getByText(
+        CHAT_TURN_COST_INFO_COPY.buildLongResponseDetail(AURORA_MODEL.name),
+      ),
+    ).toBeVisible();
     await expect(
       popover.getByText(CHAT_TURN_COST_INFO_COPY.buildTrialRemaining(3)),
     ).toBeVisible();
+    // 다 쓴 이미지 체험은 체험 줄 없이 항목 이름만 남는다.
     await expect(
-      popover.getByText(CHAT_TURN_COST_INFO_COPY.trialExhausted),
-    ).toBeVisible();
+      popover.locator('dt', {
+        hasText: CHAT_TURN_COST_INFO_COPY.realtimeImage,
+      }),
+    ).toHaveText(CHAT_TURN_COST_INFO_COPY.realtimeImage);
     // 체험 턴은 서버가 라이트로 답하므로 오로라를 고른 회원에게 알린다.
     await expect(
       popover.getByText(
