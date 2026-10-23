@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 import type { SimpleStoryTagListItemResponse } from '@/api/generated/models';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleChip } from '@/components/ui/toggle-chip';
-import { SKELETON_TAG_CHIP_WIDTH_CLASSES } from '@/features/stories/_shared/constants/tag';
+import {
+  SKELETON_TAG_CHIP_WIDTH_CLASSES,
+  TAG_LOAD_RETRY_LABEL,
+} from '@/features/stories/_shared/constants/tag';
 
 type TagChipGridProps = {
   /** 스켈레톤·칩 key를 화면 안에서 유일하게 만들기 위한 접두사 */
@@ -15,6 +18,8 @@ type TagChipGridProps = {
   isMaxSelectionReached: boolean;
   isLoadingTags: boolean;
   hasTagsError: boolean;
+  /** 목록을 받지 못했을 때 다시 조회한다. */
+  onRetryTags: () => void;
   disabled: boolean;
   /** 직접 추가를 허용하는 카테고리에서만 넘긴다. */
   addTagTrigger?: ReactNode;
@@ -31,6 +36,7 @@ export function TagChipGrid({
   isMaxSelectionReached,
   isLoadingTags,
   hasTagsError,
+  onRetryTags,
   disabled,
   addTagTrigger,
   onTogglePredefinedTag,
@@ -47,9 +53,12 @@ export function TagChipGrid({
           />
         ))}
       {hasTagsError && (
-        <p className="py-2 text-sm text-destructive">
-          키워드를 불러오지 못했어요
-        </p>
+        <button
+          type="button"
+          className="py-2 text-sm text-destructive underline-offset-4 hover:underline"
+          onClick={onRetryTags}>
+          {TAG_LOAD_RETRY_LABEL}
+        </button>
       )}
       {!isLoadingTags &&
         predefinedTags.map((tag) => {

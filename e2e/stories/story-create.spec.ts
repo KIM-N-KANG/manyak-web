@@ -4,6 +4,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
+import { TAG_LOAD_RETRY_LABEL } from '@/features/stories/_shared/constants/tag';
 import {
   PENDING_CREATION_REQUEST_STORAGE_KEY,
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
@@ -28,6 +29,7 @@ import {
 import {
   ART_STYLE_CATALOG_FIXTURE,
   GENRE_CATALOG_FIXTURE,
+  isGenreCatalogUrl,
   mockArtStyleCatalog,
 } from '../fixtures/api-mock';
 import { readCreationStorage } from '../fixtures/storage';
@@ -183,6 +185,47 @@ test.describe('스토리 생성', () => {
     await expect(validationError).toBeHidden();
     await addButton.click();
     await expect(page.getByRole('button', { name: '타임루프' })).toBeVisible();
+  });
+
+  test('장르와 특징 키워드를 받지 못하면 칩 자리의 다시 시도로 다시 불러온다 (STORY-KEYWORD-07)', async ({
+    page,
+  }) => {
+    let failGenres = true;
+    let failTags = true;
+
+    await page.route(isGenreCatalogUrl, async (route) => {
+      if (failGenres) {
+        await route.fulfill({ status: 500, json: {} });
+
+        return;
+      }
+
+      await route.fallback();
+    });
+    await page.route(TAGS, async (route) => {
+      await route.fulfill(
+        failTags ? { status: 500, json: {} } : { json: tags },
+      );
+    });
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+
+    const retry = page.getByRole('button', { name: TAG_LOAD_RETRY_LABEL });
+
+    await expect(retry).toBeVisible();
+    failGenres = false;
+    await retry.click();
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await expect(retry).toHaveCount(0);
+
+    await page.getByRole('button', { name: '다음', exact: true }).click();
+    await expect(retry).toBeVisible();
+    failTags = false;
+    await retry.click();
+    await expect(
+      page.getByRole('button', { name: '용감한', exact: true }),
+    ).toBeVisible();
+    await expect(retry).toHaveCount(0);
   });
 
   test('장르는 검색으로 고르고, 대표 밖 장르는 칩 끝에 붙어 해제해도 남으며 요청에는 제공 장르 id만 싣는다 (KNK-1542)', async ({
