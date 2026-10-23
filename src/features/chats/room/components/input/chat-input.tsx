@@ -21,6 +21,8 @@ type ChatInputProps = {
   turnCost: number | undefined;
   /** 지금 적용 중인 모델 코드(모르면 undefined) */
   modelCode: string | undefined;
+  /** 이 채팅의 긴 응답 설정. 비용 안내에 함께 보인다 */
+  longResponse: boolean;
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
   /** 실시간 이미지 안내로 설정 시트를 열고 해당 항목을 강조하는지 여부 */
   realtimeImageNudgeOpen: boolean;
@@ -38,6 +40,7 @@ export function ChatInput({
   realtimeImageEnabled,
   turnCost,
   modelCode,
+  longResponse,
   onRealtimeImageEnabledChange,
   realtimeImageNudgeOpen,
   onRealtimeImageNudgeClose,
@@ -94,6 +97,7 @@ export function ChatInput({
           realtimeImageEnabled={realtimeImageEnabled}
           turnCost={turnCost}
           modelCode={modelCode}
+          longResponse={longResponse}
           onLockedTap={handleLockedTap}
         />
         {settingsSheet}
@@ -117,6 +121,7 @@ export function ChatInput({
         realtimeImageEnabled={realtimeImageEnabled}
         turnCost={turnCost}
         modelCode={modelCode}
+        longResponse={longResponse}
         onLockedTap={handleLockedTap}
       />
       {settingsSheet}

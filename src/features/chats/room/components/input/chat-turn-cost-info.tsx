@@ -13,7 +13,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { formatCreditAmount } from '@/constants/credit';
-import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
 import { useTrials } from '@/hooks/use-trials';
@@ -21,10 +20,13 @@ import { cn } from '@/lib/utils';
 
 import {
   buildChatTurnCreditCostLabel,
-  CHAT_TRIAL_MODEL_CODE,
   CHAT_TURN_COST_INFO_COPY as COPY,
 } from '../../constants';
-import { calcChatTurnCost, isTrialFree } from '../../utils/chat-turn-cost';
+import {
+  calcChatTurnCost,
+  getModelTurnRemaining,
+  isTrialFree,
+} from '../../utils/chat-turn-cost';
 import { ChatTurnCreditCost } from './chat-turn-credit-cost';
 
 type ChatTurnCostInfoProps = {
@@ -32,6 +34,8 @@ type ChatTurnCostInfoProps = {
   turnCost: number | undefined;
   /** 지금 적용 중인 모델 코드(모르면 undefined) */
   modelCode: string | undefined;
+  /** 긴 응답이 켜져 있으면 AI 응답 항목에 함께 보인다 */
+  longResponse: boolean;
   /** 실시간 이미지가 켜져 있으면 이미지 비용을 합산한다 */
   withRealtimeImage: boolean;
 };
@@ -43,21 +47,19 @@ type ChatTurnCostInfoProps = {
 export function ChatTurnCostInfo({
   turnCost,
   modelCode,
+  longResponse,
   withRealtimeImage,
 }: ChatTurnCostInfoProps) {
   const trials = useTrials();
   const policy = useCreditPolicy();
-  const { isMember } = useMemberAccess();
   const { data: modelsData } = useGetModels();
   const models = modelsData?.status === 200 ? modelsData.data : [];
   const modelName = models.find((model) => model.code === modelCode)?.name;
-  const trialModelName = models.find(
-    (model) => model.code === CHAT_TRIAL_MODEL_CODE,
-  )?.name;
   const turnRemaining = getTrialRemaining(trials, 'chatTurn');
   const imageRemaining = getTrialRemaining(trials, 'chatImage');
   const { full, discounted } = calcChatTurnCost({
     turnCost,
+    modelCode,
     chatImageCost: policy?.chatImageCost,
     withRealtimeImage,
     turnRemaining,
@@ -65,11 +67,6 @@ export function ChatTurnCostInfo({
   });
   const showsStrike =
     full !== undefined && discounted !== undefined && discounted < full;
-  const showsTrialModelNote =
-    isMember &&
-    isTrialFree(turnRemaining) &&
-    modelCode !== CHAT_TRIAL_MODEL_CODE &&
-    trialModelName !== undefined;
 
   return (
     <Popover>
@@ -85,6 +82,7 @@ export function ChatTurnCostInfo({
         <span className="sr-only">{COPY.trigger}</span>
         <ChatTurnCreditCost
           turnCost={turnCost}
+          modelCode={modelCode}
           withRealtimeImage={withRealtimeImage}
         />
         <HugeiconsIcon
@@ -103,9 +101,13 @@ export function ChatTurnCostInfo({
         <dl className="flex flex-col gap-3">
           <CostRow
             label={COPY.turn}
-            detail={modelName}
+            detail={
+              longResponse && modelName
+                ? COPY.buildLongResponseDetail(modelName)
+                : modelName
+            }
             cost={turnCost}
-            remaining={turnRemaining}
+            remaining={getModelTurnRemaining(turnRemaining, modelCode)}
           />
           {withRealtimeImage && (
             <CostRow
@@ -131,11 +133,6 @@ export function ChatTurnCostInfo({
             </dd>
           </div>
         </dl>
-        {showsTrialModelNote && (
-          <p className="rounded-md bg-muted px-3 py-2 text-xs text-foreground-secondary">
-            {COPY.buildTrialModelNote(trialModelName)}
-          </p>
-        )}
       </PopoverContent>
     </Popover>
   );
@@ -153,16 +150,16 @@ type CostRowProps = {
 
 /**
  * 비용 내역 한 줄. 라벨 아래에 남은 무료 체험을 적고, 체험이 남은 항목은 정가에 취소선을 긋고 0을 보인다.
- * 체험 줄은 무료로 적용되면 프라이머리, 다 썼으면 옅은 글씨로 금액과 이어 읽히게 한다.
+ * 체험 줄은 무료로 적용될 때만 보이고, 다 쓴 항목은 생략한다.
  */
 function CostRow({ label, detail, cost, remaining }: CostRowProps) {
   const free = isTrialFree(remaining);
 
   let trialText: string | undefined;
 
+  // 체험을 다 쓴 항목은 정가만 보이면 충분해 체험 줄을 생략한다.
   if (remaining === null) trialText = COPY.trialUnlimited;
-  else if (remaining === 0) trialText = COPY.trialExhausted;
-  else if (remaining !== undefined)
+  else if (remaining !== undefined && remaining > 0)
     trialText = COPY.buildTrialRemaining(remaining);
 
   return (
@@ -174,15 +171,7 @@ function CostRow({ label, detail, cost, remaining }: CostRowProps) {
             <span className="truncate text-foreground-secondary">{detail}</span>
           )}
         </span>
-        {trialText && (
-          <span
-            className={cn(
-              'text-xs',
-              free ? 'text-primary' : 'text-foreground-tertiary',
-            )}>
-            {trialText}
-          </span>
-        )}
+        {trialText && <span className="text-xs text-primary">{trialText}</span>}
       </dt>
       <dd
         className={cn(

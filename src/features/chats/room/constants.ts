@@ -143,11 +143,9 @@ export const CHAT_TURN_COST_INFO_COPY = {
   title: '한 턴에 쓰는 이프',
   turn: 'AI 응답',
   realtimeImage: '실시간 이미지',
+  /** 긴 응답이 켜졌을 때 AI 응답 항목의 모델 이름 옆 표시 */
+  buildLongResponseDetail: (modelName: string) => `${modelName}, 긴 응답`,
   total: '합계',
   buildTrialRemaining: (count: number) => `무료 체험 ${count}회 남음`,
-  trialExhausted: '무료 체험 모두 사용',
   trialUnlimited: '무료 체험 무제한',
-  /** 턴 체험이 남은 회원이 다른 모델을 골랐을 때. 서버는 체험 턴을 체험 모델로 답한다 */
-  buildTrialModelNote: (modelName: string) =>
-    `무료 체험 턴은 ${modelName} 모델로 답해요`,
 } as const;

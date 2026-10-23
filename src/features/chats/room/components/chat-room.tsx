@@ -233,6 +233,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
 
     const cost = calcChatTurnCost({
       turnCost,
+      modelCode,
       chatImageCost: policy?.chatImageCost,
       withRealtimeImage: realtimeImageEnabled,
       turnRemaining: getTrialRemaining(trials, 'chatTurn'),
@@ -458,7 +459,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           models={models}
           modelCode={modelCode}
           onModelSelect={selectModel}
-          realtimeImageEnabled={realtimeImageEnabled}
           longResponse={longResponse}
           onLongResponseChange={setLongResponse}
         />
@@ -490,6 +490,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           realtimeImageEnabled={realtimeImageEnabled}
           turnCost={turnCost}
           modelCode={modelCode}
+          longResponse={longResponse}
           onRealtimeImageEnabledChange={setRealtimeImageEnabled}
           realtimeImageNudgeOpen={realtimeImageNudge.isOpen}
           onRealtimeImageNudgeClose={realtimeImageNudge.close}
