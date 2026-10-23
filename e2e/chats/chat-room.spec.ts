@@ -423,17 +423,15 @@ test.describe('채팅 스트리밍', () => {
     await expect(
       sheet.getByText(CHAT_MODEL_COPY.optionDescriptions.AURORA!),
     ).toBeVisible();
-    // 모델별 비용은 실시간 이미지 비용을 합산한 한 턴 비용이고, 고른 칸 배지만 프라이머리 글씨다.
+    // 모델별 비용은 실시간 이미지 비용을 빼고 그 모델의 턴 비용만 보이며, 고른 칸 배지만 프라이머리 글씨다.
     await expect(modelCostBadge(page, LITE_MODEL.name)).toHaveText(
-      buildChatTurnCreditCostLabel(
-        formatCreditAmount(LITE_MODEL.turnCost + chatImageCost),
-      ),
+      buildChatTurnCreditCostLabel(formatCreditAmount(LITE_MODEL.turnCost)),
     );
     await expect(modelCostBadge(page, LITE_MODEL.name)).toHaveClass(
       /text-primary/,
     );
     await expect(modelCostBadge(page, AURORA_MODEL.name)).toHaveText(
-      auroraCost,
+      buildChatTurnCreditCostLabel(formatCreditAmount(AURORA_MODEL.turnCost)),
     );
     await expect(modelCostBadge(page, AURORA_MODEL.name)).toHaveClass(
       /text-foreground-secondary/,
@@ -608,16 +606,10 @@ test.describe('채팅 스트리밍', () => {
     const auroraBadge = modelCostBadge(page, AURORA_MODEL.name);
 
     await expect(liteBadge.locator('s')).toHaveText(
-      formatCreditAmount(
-        LITE_MODEL.turnCost + CREDIT_POLICY_FIXTURE.chatImageCost,
-      ),
+      formatCreditAmount(LITE_MODEL.turnCost),
     );
     await expect(auroraBadge).toHaveText(
-      buildChatTurnCreditCostLabel(
-        formatCreditAmount(
-          AURORA_MODEL.turnCost + CREDIT_POLICY_FIXTURE.chatImageCost,
-        ),
-      ),
+      buildChatTurnCreditCostLabel(formatCreditAmount(AURORA_MODEL.turnCost)),
     );
     await expect(auroraBadge.locator('s')).toHaveCount(0);
   });

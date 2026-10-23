@@ -459,7 +459,6 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           models={models}
           modelCode={modelCode}
           onModelSelect={selectModel}
-          realtimeImageEnabled={realtimeImageEnabled}
           longResponse={longResponse}
           onLongResponseChange={setLongResponse}
         />

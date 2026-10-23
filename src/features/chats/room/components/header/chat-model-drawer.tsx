@@ -30,8 +30,6 @@ type ChatModelDrawerProps = {
   modelCode: string;
   /** 모델 항목을 누르면 호출된다. 시트는 먼저 닫힌다 */
   onSelect: (modelCode: string) => void;
-  /** 실시간 이미지가 켜져 있으면 비용에 이미지 비용을 합산한다 */
-  withRealtimeImage: boolean;
   /** 이 채팅의 긴 응답 설정 */
   longResponse: boolean;
   onLongResponseChange: (longResponse: boolean) => void;
@@ -41,7 +39,6 @@ export function ChatModelDrawer({
   models,
   modelCode,
   onSelect,
-  withRealtimeImage,
   longResponse,
   onLongResponseChange,
 }: ChatModelDrawerProps) {
@@ -86,7 +83,6 @@ export function ChatModelDrawer({
                   key={model.code}
                   model={model}
                   checked={model.code === modelCode}
-                  withRealtimeImage={withRealtimeImage}
                   onSelect={handleSelect}
                 />
               ))}
@@ -113,16 +109,10 @@ export function ChatModelDrawer({
 type ChatModelOptionProps = {
   model: ChatModelResponse;
   checked: boolean;
-  withRealtimeImage: boolean;
   onSelect: (modelCode: string) => void;
 };
 
-function ChatModelOption({
-  model,
-  checked,
-  withRealtimeImage,
-  onSelect,
-}: ChatModelOptionProps) {
+function ChatModelOption({ model, checked, onSelect }: ChatModelOptionProps) {
   const description =
     model.code === undefined
       ? undefined
@@ -157,7 +147,6 @@ function ChatModelOption({
           <ChatTurnCreditCost
             turnCost={model.turnCost}
             modelCode={model.code}
-            withRealtimeImage={withRealtimeImage}
             className="text-inherit"
           />
         </Badge>
