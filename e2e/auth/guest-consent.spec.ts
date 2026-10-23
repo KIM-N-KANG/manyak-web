@@ -15,12 +15,11 @@ import {
   mockMemberSession,
   mockTrials,
   skipChatTour,
-  skipOnboarding,
+  skipCreateTutorial,
   test,
 } from '../fixtures/test';
 
 test.beforeEach(async ({ page }) => {
-  await skipOnboarding(page);
   await skipChatTour(page);
   await page.addInitScript(() =>
     localStorage.setItem('manyak:chat-input-mode', 'plain'),
@@ -515,6 +514,8 @@ test('새 브라우저 컨텍스트는 이전 컨텍스트의 동의를 공유�
   const isolated = await browser.newContext({
     baseURL: new URL(page.url()).origin,
   });
+
+  await skipCreateTutorial(isolated);
 
   try {
     const fresh = await isolated.newPage();

@@ -13,7 +13,6 @@ import {
   seedChatIds,
   skipChatChoicesHint,
   skipChatTour,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 import {
@@ -83,8 +82,6 @@ test.describe('채팅 비주얼', () => {
   });
 
   test('채팅 목록 빈 상태 (CHAT-LIST-04)', async ({ page }) => {
-    await skipOnboarding(page);
-
     await page.goto('/chats');
 
     await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();

@@ -5,12 +5,7 @@ import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { completeStory } from '../fixtures/story-generation';
-import {
-  expect,
-  mockMemberSession,
-  skipOnboarding,
-  test,
-} from '../fixtures/test';
+import { expect, mockMemberSession, test } from '../fixtures/test';
 
 /**
  * 스토리 완성의 회원 이프 게이팅 스펙(QA STORY-LIMIT-06).
@@ -60,9 +55,8 @@ const goToAdditionalInfoStep = async (page: Page) => {
 };
 
 test.describe('스토리 완성 이프 게이팅', () => {
-  // 완성 제출 뒤 돌아오는 제작 탭의 온보딩 게이트를 건너뛰고 회원 세션으로 진행한다.
+  // 회원 세션으로 진행한다.
   test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route(TAGS, async (route) => {
       await route.fulfill({ json: tags });

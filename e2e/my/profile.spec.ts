@@ -11,7 +11,7 @@ import {
 import { DRAFT_EXIT_WARNING_COPY } from '@/features/stories/_shared/constants/draft-exit-warning';
 
 import { mockGuestSession, mockMemberSession } from '../fixtures/auth';
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 const presetUrl = (key: string) =>
   `https://api.manyak.app/profile-presets/${encodeURIComponent(key)}.png`;
@@ -85,7 +85,6 @@ async function mockProfileApi(
 }
 
 async function openProfileEdit(page: Page) {
-  await skipOnboarding(page);
   await mockMemberSession(page, { nickname: ME.nickname });
   await page.goto(APP_PATH.MAIN.MY);
   await page.getByRole('link', { name: /프로필 수정/ }).click();
@@ -170,7 +169,6 @@ test.describe('프로필 수정', () => {
     page,
   }) => {
     await mockProfileApi(page);
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: ME.nickname });
     await page.goto(APP_PATH.MY_PROFILE_EDIT);
     await expect(nicknameInput(page)).toHaveValue(ME.nickname ?? '');
@@ -249,7 +247,6 @@ test.describe('프로필 수정', () => {
   test('게스트가 주소로 열면 로그인 화면으로 보낸다 (KNK-1148)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockGuestSession(page);
     await page.goto(APP_PATH.MY_PROFILE_EDIT);
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.LOGIN}$`));

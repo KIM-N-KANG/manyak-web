@@ -12,7 +12,7 @@ import {
 import { SUBMISSION_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 const PROLOGUE_REASON = '마약 사용을 직접 권장합니다.';
 
@@ -81,7 +81,6 @@ const isSubmissionList = (url: URL) =>
   url.pathname === '/api/v1/stories/submissions';
 
 async function openStudio(page: Page, list: unknown[]) {
-  await skipOnboarding(page);
   await mockMemberSession(page);
   await page.route(isSubmissionList, (route: Route) =>
     route.fulfill({ json: list }),
@@ -108,7 +107,6 @@ test.describe('제작 탭 검수 제출본', () => {
       list = list.slice(1);
       await route.fulfill({ status: 204 });
     });
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route(isSubmissionList, (route: Route) =>
       route.fulfill({ json: list }),
@@ -248,7 +246,6 @@ test.describe('제작 탭 검수 제출본', () => {
     await page.route('**/api/v1/stories/submissions/missing', (route) =>
       route.fulfill({ status: 404, json: { status: 404 } }),
     );
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.goto(APP_PATH.STUDIO.STORY.GENERAL_SUBMISSION('pending'));
 

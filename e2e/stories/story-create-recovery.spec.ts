@@ -23,7 +23,6 @@ import {
   mockGuestSession,
   mockMemberSession,
   seedStoryIds,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -149,8 +148,6 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
   test('진행 중인 스토리라인 POST는 제작 탭과 퍼널 재진입에서도 복구 조회보다 우선한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     let releaseGeneration!: () => void;
     const generationReady = new Promise<void>((resolve) => {
       releaseGeneration = resolve;
@@ -224,7 +221,6 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
   test('진행 중인 POST가 없는 완성 복구의 404는 초안과 실패 안내로 전환한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await seedStoryCompletionRequests(page, [completionRecord]);
     await page.route(CREATION_REQUEST, async (route) => {
       await route.fulfill({
@@ -273,7 +269,6 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
     test(`완성 카드 교체는 새 목록을 기다리며 기존 카드 위치를 유지한다 (${scenario.name})`, async ({
       page,
     }) => {
-      await skipOnboarding(page);
       await page.emulateMedia({
         reducedMotion: scenario.reducedMotion ? 'reduce' : 'no-preference',
       });
@@ -626,7 +621,6 @@ test.describe('스토리 생성 백그라운드 복귀', () => {
 
 test.describe('이어서 만들기 진행 카드', () => {
   test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
   });
 

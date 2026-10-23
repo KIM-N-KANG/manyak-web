@@ -2,13 +2,11 @@ import type { Page } from '@playwright/test';
 
 import { formatCreditAmount } from '@/constants/credit';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
-import { ONBOARDING_TITLE_LINES } from '@/features/onboarding/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
   mockMemberSession,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -35,7 +33,6 @@ async function mockMyInvite(
 }
 
 async function prepareMemberInvitePage(page: Page): Promise<void> {
-  await skipOnboarding(page);
   await mockMemberSession(page);
   await mockMyInvite(page);
 }
@@ -79,7 +76,6 @@ test.describe('폐기된 초대 링크', () => {
 
 test.describe('친구 초대 페이지 (/my/invite)', () => {
   test('게스트는 로그인 페이지로 이동한다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.goto('/my/invite');
 
     await expect(page).toHaveURL(/\/login$/);
@@ -122,7 +118,6 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
         viewedEvents.push(message.text());
       }
     });
-    await skipOnboarding(page);
     await mockMemberSession(page, { inviteOnboardingPending: true });
     await mockMyInvite(page);
     await page.goto('/my/invite');
@@ -207,7 +202,6 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   test('초대자 월 보상 상한에 도달해도 코드 복사와 공유를 허용한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await mockMyInvite(page, {
       inviteCode: INVITE_CODE,
@@ -332,7 +326,6 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   test('코드 조회 실패 후 재시도할 수 있고 입력 폼은 계속 사용할 수 있다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
 
     let requestCount = 0;
@@ -367,7 +360,6 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   test('캐시된 코드의 백그라운드 재조회가 실패해도 기존 코드와 공유 액션을 유지한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await mockKakaoSdk(page);
 
@@ -421,7 +413,6 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   test('조회 응답에 코드가 없어도 실패 안내와 입력 폼을 표시한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await mockMyInvite(page, {
       monthlyRewardCount: 3,
@@ -518,7 +509,6 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
 
 test.describe('신규 가입 초대 코드 바텀 시트', () => {
   async function preparePendingMember(page: Page): Promise<void> {
-    await skipOnboarding(page);
     await mockMemberSession(page, { inviteOnboardingPending: true });
   }
 
@@ -619,7 +609,6 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
   test('세션 상태 저장에 실패하면 다이얼로그를 유지하고 재시도를 안내한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, {
       inviteOnboardingPending: true,
       sessionUpdateStatus: 500,
@@ -647,7 +636,6 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
   test('코드 적립 후 세션 저장에 실패하면 코드를 다시 받지 않고 상태 저장 재시도를 제공한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, {
       inviteOnboardingPending: true,
       sessionUpdateStatus: 500,
@@ -686,50 +674,6 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
     await expect(page.getByText('창을 닫지 못했어요')).toHaveCount(0);
   });
 
-  test('열려 있던 게스트 온보딩은 인증 전환 시 닫혀 초대 바텀 시트와 겹치지 않는다', async ({
-    page,
-  }) => {
-    let isAuthenticated = false;
-
-    await page.route('**/api/auth/session', (route) =>
-      route.fulfill({
-        json: isAuthenticated
-          ? {
-              user: { id: 'user-1', name: '배고픈 송아지', image: null },
-              expires: '2099-01-01T00:00:00.000Z',
-              inviteOnboardingPending: true,
-            }
-          : null,
-      }),
-    );
-    await page.goto('/');
-
-    await expect(
-      page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
-    ).toBeVisible();
-
-    isAuthenticated = true;
-    await page.evaluate(() => {
-      const channel = new BroadcastChannel('next-auth');
-
-      channel.postMessage({
-        event: 'session',
-        data: { trigger: 'getSession' },
-      });
-      channel.close();
-    });
-
-    await expect(
-      page.getByRole('heading', {
-        name: INVITE_REWARD_COPY.onboardingTitle,
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: ONBOARDING_TITLE_LINES.join(' ') }),
-    ).toHaveCount(0);
-    await expect(page.getByRole('dialog')).toHaveCount(1);
-  });
-
   test('코드 입력 성공 시 다이얼로그를 닫고 새로고침 후에도 다시 열지 않는다', async ({
     page,
   }) => {
@@ -763,8 +707,6 @@ test.describe('신규 가입 초대 코드 바텀 시트', () => {
   test('코드 적립 후 세션 저장이 끝날 때까지 폼과 등록 스피너를 유지하고 실패 안내를 보이지 않는다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     let pending = true;
     let markUpdateReceived = () => {};
     let releaseUpdate = () => {};

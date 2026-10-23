@@ -49,7 +49,7 @@ import {
   seedDraftResumeIntent,
   seedPendingCreationRequests,
 } from '../fixtures/storage';
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 import { waitForToastToClose } from '../fixtures/toast';
 
 const UPLOAD_URL = 'https://upload.e2e.test/cover';
@@ -120,7 +120,6 @@ async function readPreviewRatio(page: Page) {
 }
 
 async function openGeneralCreate(page: Page) {
-  await skipOnboarding(page);
   await mockMemberSession(page);
   await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
   await expect(
@@ -929,7 +928,6 @@ test.describe('일반 제작 임시 저장', () => {
   test('제작 탭에서 연 일반 제작을 닫으면 제작 탭으로 돌아가고 제작 탭이 두 번 쌓이지 않는다 (KNK-1610)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.goto(APP_PATH.MAIN.STORIES);
     await page.goto(APP_PATH.MAIN.STUDIO);
@@ -1056,7 +1054,6 @@ test.describe('일반 제작 임시 저장', () => {
         ),
       ),
     });
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.goto(APP_PATH.STUDIO.STORY.GENERAL);
 
@@ -1077,7 +1074,6 @@ test.describe('일반 제작 임시 저장', () => {
         }),
       ],
     });
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.goto(APP_PATH.MAIN.STUDIO);
     await draftCard(page)
@@ -1357,7 +1353,6 @@ test.describe('일반 제작 등록', () => {
     await page.route('**/api/v1/stories/simple/tags', (route) =>
       route.fulfill({ json: [{ id: 1, name: '판타지', category: 'GENRE' }] }),
     );
-    await skipOnboarding(page);
     await mockMemberSession(page);
     // 제작 탭에서 제작 방식 선택을 거쳐 일반 제작을 고른다.
     await page.goto(APP_PATH.MAIN.STUDIO);
@@ -1555,7 +1550,6 @@ test.describe('일반 제작 등록', () => {
   test('게스트는 제작 방식 선택에서 일반 제작을 고르면 로그인 시트를 보고, 주소로 들어오면 로그인 화면으로 간다 (STORY-GENERAL-23)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockGuestSession(page);
 
     // 세션 조회로 게스트가 확정되기 전에 누르면 링크가 일반 제작으로 이동해 게이트가 로그인 화면으로
@@ -1636,7 +1630,6 @@ test.describe('일반 제작 서버 임시 저장', () => {
     page.getByRole('article', { name: CREATION_PROGRESS_CARD_COPY.draftTitle });
 
   async function openStudio(page: Page) {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.goto(APP_PATH.MAIN.STUDIO);
   }

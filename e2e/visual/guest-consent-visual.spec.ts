@@ -1,13 +1,12 @@
 import { GUEST_CONSENT_COPY as COPY } from '@/features/auth/_shared/constants/guest-consent';
 
 import { prepareStoryGeneration } from '../fixtures/story-generation';
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 import { VISUAL_FIXED_NOW, waitForFonts } from '../fixtures/visual';
 
 for (const theme of ['light', 'dark']) {
   test(`게스트 동의 안내와 상세 (${theme})`, async ({ page }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
-    await skipOnboarding(page);
     await page.addInitScript(
       (value) => localStorage.setItem('theme', value),
       theme,

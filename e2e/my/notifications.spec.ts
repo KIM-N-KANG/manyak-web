@@ -9,7 +9,6 @@ import {
   expect,
   mockMemberSession,
   mockPushSettings,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -19,10 +18,6 @@ const PUSH_SETTINGS = '**/api/v1/users/me/push-settings';
 // 브라우저 알림 줄은 항상 "지원하지 않음"이며, 권한 요청·토큰 등록·제작 직후 프롬프트는
 // 실기기에서 수동 검증한다. 여기서는 설정 조회·전체 교체 저장·처리 결과 통지만 다룬다.
 test.describe('알림 설정', () => {
-  test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
-  });
-
   test('게스트는 로그인으로 이동한다', async ({ page }) => {
     await page.goto(APP_PATH.MY_NOTIFICATIONS);
 

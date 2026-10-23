@@ -14,7 +14,7 @@ import {
 } from '@/features/studio/general/constants';
 
 import { mockGuestSession, mockMemberSession } from '../fixtures/auth';
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 const STORY_ID = 's1';
 const STORY_DETAIL = `**/api/v1/stories/${STORY_ID}`;
@@ -102,7 +102,6 @@ async function setup(
 ) {
   const patches: Record<string, unknown>[] = [];
 
-  await skipOnboarding(page);
   await mockMemberSession(page);
   await page.route(COVER_URL, (route) =>
     route.fulfill({ contentType: 'image/png', body: COVER_PNG }),
@@ -597,7 +596,6 @@ test.describe('스토리 수정', () => {
   });
 
   test('게스트는 로그인 화면으로 보낸다 (STORY-EDIT-08)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockGuestSession(page);
     await page.goto(APP_PATH.STORY_EDIT(STORY_ID));
 

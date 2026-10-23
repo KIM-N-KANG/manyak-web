@@ -1,4 +1,4 @@
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 import { waitForFonts } from '../fixtures/visual';
 
 /**
@@ -8,8 +8,6 @@ import { waitForFonts } from '../fixtures/visual';
 
 test.describe('약관·개인정보 비주얼', () => {
   test('서비스 이용약관 상단 (LEGAL-DOC)', async ({ page }) => {
-    await skipOnboarding(page);
-
     await page.goto('/terms');
 
     await expect(
@@ -20,8 +18,6 @@ test.describe('약관·개인정보 비주얼', () => {
   });
 
   test('개인정보 처리방침 상단 (LEGAL-DOC)', async ({ page }) => {
-    await skipOnboarding(page);
-
     await page.goto('/privacy');
 
     await expect(

@@ -1,6 +1,6 @@
 import { APP_PATH } from '@/constants/app-path';
 
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 // iOS Safari는 16px 미만 입력 칸에 포커스하면 화면을 확대하므로 viewport에 maximum-scale=1을 둔다.
 // Next는 클라이언트 이동마다 viewport 메타를 새 요소로 바꾸므로, 이동한 뒤에도 남아 있는지 확인한다.
@@ -9,7 +9,6 @@ test('iOS에서만 화면을 이동해도 입력 칸 자동 확대 방지를 유
   page,
   browserName,
 }) => {
-  await skipOnboarding(page);
   await page.goto(APP_PATH.MAIN.STORIES);
 
   const viewport = page.locator('meta[name="viewport"]');

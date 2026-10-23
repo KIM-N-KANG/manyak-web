@@ -28,6 +28,7 @@ type SupportingCharacterListProps = {
   canAddCharacter: boolean;
   isLoadingTags: boolean;
   hasTagsError: boolean;
+  onRetryTags: () => void;
   disabled: boolean;
   isFeatureMaxReached: (characterId: string) => boolean;
   isDuplicateName: (characterId: string) => boolean;
@@ -57,6 +58,7 @@ export function SupportingCharacterList({
   canAddCharacter,
   isLoadingTags,
   hasTagsError,
+  onRetryTags,
   disabled,
   isFeatureMaxReached,
   isDuplicateName,
@@ -118,6 +120,7 @@ export function SupportingCharacterList({
                 featureDescription={CHARACTER_FEATURE_RANDOM_DESCRIPTION}
                 isLoadingTags={isLoadingTags}
                 hasTagsError={hasTagsError}
+                onRetryTags={onRetryTags}
                 disabled={disabled}
                 nameErrorMessage={
                   isDuplicateName(character.id)

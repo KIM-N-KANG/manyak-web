@@ -11,7 +11,6 @@ import {
   isPublicStoriesUrl,
   mockMemberSession,
   seedStoryIds,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -34,7 +33,6 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   page,
 }) => {
   await mockMemberSession(page);
-  await skipOnboarding(page);
 
   let current = { ...story };
   const methods: string[] = [];

@@ -12,7 +12,6 @@ import {
   UserMessageBubble,
 } from '@/features/chats/_shared/components/chat-message-bubble';
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
-import { markOnboardingSeen } from '@/features/onboarding/utils/onboarding-storage';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 /**
@@ -95,8 +94,6 @@ export function SharedChatView({
           render={<Link href={APP_PATH.STUDIO.STORY.SIMPLE} />}
           onClick={() => {
             track('client_chatShare_ctaButton_clicked', { story_id: storyId });
-
-            markOnboardingSeen();
           }}>
           나만의 스토리 만들고 채팅하기
         </Button>

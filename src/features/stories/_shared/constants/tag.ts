@@ -24,3 +24,6 @@ export const SKELETON_TAG_CHIP_WIDTH_CLASSES = [
   'w-16',
   'w-28',
 ] as const;
+
+/** 칩 목록(장르, 인물 특징 키워드)을 받지 못했을 때 칩 자리에 두는 다시 시도 버튼 문구다. */
+export const TAG_LOAD_RETRY_LABEL = '키워드를 불러오지 못했어요. 다시 시도';

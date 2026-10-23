@@ -6,7 +6,7 @@ import {
   type InviteCodeErrorType,
   type InviteCodeSource,
 } from '@/features/my/invite/utils/invite-code';
-import { type OnboardingButtonSource } from '@/features/onboarding/constants';
+import { type CreateTutorialStage } from '@/features/stories/_shared/constants/create-tutorial';
 import { type AppBannerVariant } from '@/lib/app-banner';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { type InAppBrowser } from '@/lib/in-app-browser';
@@ -72,11 +72,6 @@ export type AnalyticsEventProps = {
     has_detail: boolean;
   };
   client_report_failed: { target_type: 'story'; error_type: string };
-  // onboarding
-  client_onboarding_viewed: void;
-  client_onboarding_createButton_clicked: OnboardingButtonSource;
-  client_onboarding_browseButton_clicked: OnboardingButtonSource;
-  client_onboarding_playStoreBadge_clicked: void;
   // storyList
   client_storyList_viewed: void;
   client_storyList_loginButton_clicked: void;
@@ -153,6 +148,9 @@ export type AnalyticsEventProps = {
     story_id: string;
     genres?: string[];
   };
+  client_storyCreate_tutorialStep_viewed: { stage: CreateTutorialStage };
+  client_storyCreate_tutorialSkipButton_clicked: { stage: CreateTutorialStage };
+  client_storyCreate_tutorial_completed: { action: 'originals' | 'close' };
   // generalCreate
   client_generalCreate_viewed: void;
   client_storyEdit_viewed: { story_id: string };

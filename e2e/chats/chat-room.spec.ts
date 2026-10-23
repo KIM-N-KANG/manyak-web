@@ -32,12 +32,10 @@ import {
   mockTrials,
   seedChatIds,
   skipChatTour,
-  skipOnboarding,
   test,
   TRIALS_FIXTURE,
 } from '../fixtures/test';
 
-// 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
 // SSE 포맷: started → (token | character_image)×N → completed | error
 const CHAT_DETAIL = '**/api/v1/chats/c1';
@@ -1537,7 +1535,6 @@ test.describe('생성 이어받기 (KNK-1691)', () => {
   }) => {
     let detailCallCount = 0;
 
-    await skipOnboarding(page);
     await page.route('**/api/v1/users/me/chats**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -1907,7 +1904,6 @@ test.describe('채팅 삭제', () => {
   test('메뉴 드로어에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await seedChatIds(page, ['c1']);
     await page.route(CHAT_DETAIL, async (route) => {
       if (route.request().method() === 'DELETE') {
@@ -1937,7 +1933,6 @@ test.describe('채팅 삭제', () => {
   test('메뉴 드로어와 설정 시트는 뒤로가기로 닫히고 채팅방에 남는다 (KNK-1613)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -1967,7 +1962,6 @@ test.describe('채팅 삭제', () => {
   test('삭제 확인 다이얼로그는 뒤로가기로 닫히고 삭제 중에는 뒤로가기를 무시한다 (KNK-1613)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await seedChatIds(page, ['c1']);
     await page.route(CHAT_DETAIL, async (route) => {
       if (route.request().method() === 'DELETE') {
@@ -2011,7 +2005,6 @@ test.describe('채팅 삭제', () => {
   test('로그인 상태에서 채팅을 삭제하면 목록에서 사라진다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
 
     let deleted = false;
@@ -2902,7 +2895,6 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
   test('회원은 옵션 메뉴의 신고하기로 참조 스토리를 신고할 수 있다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
@@ -2946,7 +2938,6 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
   });
 
   test('게스트의 메뉴 드로어에는 신고하기가 없다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -2972,7 +2963,6 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
   test('참조 스토리가 삭제된 채팅은 헤더에 삭제된 스토리를 보여주고 신고할 수 없다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({

@@ -1,11 +1,6 @@
 import { PENDING_CREDIT_ORDER_STORAGE_KEY } from '@/features/my/credits/utils/pending-credit-order-storage';
 
-import {
-  expect,
-  seedPendingCreditOrder,
-  skipOnboarding,
-  test,
-} from '../fixtures/test';
+import { expect, seedPendingCreditOrder, test } from '../fixtures/test';
 
 // 프록시는 리프레시 확정 거절·복구 불가 시 응답에 이 헤더를 실어 클라이언트에 능동 로그아웃을 알린다.
 const SESSION_EXPIRED_HEADER = 'x-manyak-session-expired';
@@ -19,7 +14,6 @@ test.describe('세션 만료 능동 로그아웃', () => {
   test('세션 만료 헤더를 받으면 로그인 페이지로 강제 이동한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     // 결제창에 나갔다 만료된 계정의 대기 주문은 다음 계정에 넘어가면 안 된다.
     await seedPendingCreditOrder(page, 'order-1');
 

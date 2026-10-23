@@ -12,15 +12,9 @@ import {
   SPACED_LONG_TEXT,
   UNBROKEN_TEXT,
 } from '../fixtures/layout';
-import {
-  expect,
-  seedStoryIds,
-  skipChatTour,
-  skipOnboarding,
-  test,
-} from '../fixtures/test';
+import { expect, seedStoryIds, skipChatTour, test } from '../fixtures/test';
 
-// 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다. (/stories/[id]는 온보딩 게이팅 없음)
+// 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다.
 const STORY_DETAIL = '**/api/v1/stories/s1';
 
 const storyDetail = {
@@ -470,7 +464,6 @@ test.describe('스토리 상세', () => {
   test('공유 링크처럼 새 탭에서 바로 열면 헤더 뒤로가기가 홈 탭으로 이동한다 (KNK-1461)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.route(STORY_DETAIL, fulfillStoryDetail);
 
     await page.goto('/stories/s1');
@@ -658,7 +651,6 @@ test.describe('스토리 상세', () => {
     page,
   }) => {
     await mockMemberSession(page);
-    await skipOnboarding(page);
     await skipChatTour(page);
     await page.route(STORY_DETAIL, fulfillStoryDetail);
     await page.route('**/api/v1/chats', async (route) => {
@@ -908,7 +900,6 @@ test.describe('스토리 상세 옵션 메뉴 (KNK-1186)', () => {
 
 test.describe('스토리 상세 뒤로가기 (KNK-1610)', () => {
   const mockStudioStory = async (page: Page) => {
-    await skipOnboarding(page);
     await skipChatTour(page);
     await seedStoryIds(page, ['s1']);
     await page.route('**/api/v1/stories/batch', (route) =>

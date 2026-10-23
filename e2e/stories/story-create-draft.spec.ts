@@ -23,12 +23,7 @@ import {
 } from '../fixtures/api-mock';
 import { readCreationStorage } from '../fixtures/storage';
 import { seedPendingCreationRequests } from '../fixtures/storage';
-import {
-  expect,
-  mockMemberSession,
-  skipOnboarding,
-  test,
-} from '../fixtures/test';
+import { expect, mockMemberSession, test } from '../fixtures/test';
 import { waitForToastToClose } from '../fixtures/toast';
 
 // 편집 임시 저장(draft): 임시 저장 버튼·단계 이동·화면 숨김 때 제작 상태를 저장하고
@@ -112,7 +107,6 @@ test.describe('스토리 임시 저장·재개', () => {
 
   // 제작은 회원 전용이라 회원 세션으로 진행한다.
   test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     drafts = await mockStoryDrafts(page);
     await page.route(TAGS, async (route) => {

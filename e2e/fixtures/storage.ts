@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 
 import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
@@ -12,10 +12,9 @@ import {
 } from '@/features/chats/room/constants';
 import { PENDING_CREDIT_ORDER_STORAGE_KEY } from '@/features/my/credits/utils/pending-credit-order-storage';
 import {
-  ONBOARDING_SEEN_COOKIE,
-  ONBOARDING_SEEN_STORAGE_KEY,
-  ONBOARDING_SEEN_VALUE,
-} from '@/features/onboarding/constants';
+  CREATE_TUTORIAL_DONE,
+  CREATE_TUTORIAL_STORAGE_KEY,
+} from '@/features/stories/_shared/constants/create-tutorial';
 import { CREATION_DB_NAME } from '@/features/stories/_shared/utils/creation-db';
 import {
   type PendingCreationRequest,
@@ -26,29 +25,25 @@ import { DRAFT_RESUME_INTENT_STORAGE_KEY } from '@/features/stories/_shared/util
 import { CREATED_STORY_IDS_STORAGE_KEY } from '@/features/stories/_shared/utils/story-id-storage';
 
 /**
- * 온보딩을 "이미 봄"으로 표시해 온보딩 페이지로 리다이렉트되지 않게 한다(US-8-3).
- * 서버(proxy) 판정용 쿠키와 클라이언트 가드용 로컬스토리지를 함께 심는다.
+ * 간편 제작 첫 진입 안내를 "끝까지 봄"으로 표시해 자동 노출을 막는다(KNK-1804).
+ * 기본 `context` 픽스처가 모든 스펙에 적용하므로, `browser.newContext()`로 직접 만든 컨텍스트에만 부른다.
+ *
+ * @param target 안내를 끌 컨텍스트 또는 페이지
  */
-export async function skipOnboarding(page: Page): Promise<void> {
-  await page.context().addCookies([
-    {
-      name: ONBOARDING_SEEN_COOKIE,
-      value: ONBOARDING_SEEN_VALUE,
-      domain: 'localhost',
-      path: '/',
-    },
-  ]);
-  await page.addInitScript(
+export async function skipCreateTutorial(
+  target: BrowserContext | Page,
+): Promise<void> {
+  await target.addInitScript(
     ([key, value]) => {
       window.localStorage.setItem(key, value);
     },
-    [ONBOARDING_SEEN_STORAGE_KEY, ONBOARDING_SEEN_VALUE] as const,
+    [CREATE_TUTORIAL_STORAGE_KEY, CREATE_TUTORIAL_DONE] as const,
   );
 }
 
 /**
  * 로컬스토리지에 "보관 중인 스토리 ID" 목록을 심는다.
- * 스토리 목록 화면은 이 ID로 batch 조회하며, ID가 있으면 온보딩 게이팅도 통과한다.
+ * 스토리 목록 화면은 이 ID로 batch 조회한다.
  */
 export async function seedStoryIds(
   page: Page,
@@ -64,7 +59,7 @@ export async function seedStoryIds(
 
 /**
  * 로컬스토리지에 "보관 중인 채팅 ID" 목록을 심는다.
- * 채팅 목록 화면은 이 ID로 batch 조회하며, ID가 있으면 온보딩 게이팅도 통과한다.
+ * 채팅 목록 화면은 이 ID로 batch 조회한다.
  */
 export async function seedChatIds(
   page: Page,

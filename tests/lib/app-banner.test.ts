@@ -180,11 +180,6 @@ describe('resolveAppBannerVariant', () => {
       expect(resolve(UA.androidWebView, { pathname })).toBeNull();
     },
   );
-
-  it('온보딩에는 띄우지 않는다', () => {
-    expect(resolve(UA.androidChrome, { pathname: '/onboarding' })).toBeNull();
-    expect(resolve(UA.iosSafari, { pathname: '/onboarding' })).toBeNull();
-  });
 });
 
 describe('supportsHomeScreenImageGuide', () => {
