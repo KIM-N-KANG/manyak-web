@@ -54,6 +54,7 @@ export function useChatDetail(chatId: string) {
     turns: (detail?.turns ?? []) as ChatTurnResponse[],
     suggestedInputs: detail?.suggestedInputs ?? [],
     model: detail?.model,
+    longResponse: detail?.longResponse,
     generatingTurn: detail?.generatingTurn ?? null,
     // 캐시가 있어도 들어온 뒤 새로 받기 전까지는 로딩으로 두어, 낡은 화면에서 보내거나 고르지 않게 한다.
     isLoading: query.isPending || !query.isFetchedAfterMount,

@@ -19,11 +19,7 @@ import { Label } from '@/components/ui/label';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { cn } from '@/lib/utils';
 
-import {
-  CHAT_LONG_RESPONSE_ENABLED_STORAGE_KEY,
-  CHAT_MODEL_COPY,
-} from '../../constants';
-import { useStoredToggle } from '../../hooks/use-stored-toggle';
+import { CHAT_MODEL_COPY } from '../../constants';
 import { SettingRow } from '../input/chat-settings-sheet';
 import { ChatTurnCreditCost } from '../input/chat-turn-credit-cost';
 
@@ -36,6 +32,9 @@ type ChatModelDrawerProps = {
   onSelect: (modelCode: string) => void;
   /** 실시간 이미지가 켜져 있으면 비용에 이미지 비용을 합산한다 */
   withRealtimeImage: boolean;
+  /** 이 채팅의 긴 응답 설정 */
+  longResponse: boolean;
+  onLongResponseChange: (longResponse: boolean) => void;
 };
 
 export function ChatModelDrawer({
@@ -43,12 +42,12 @@ export function ChatModelDrawer({
   modelCode,
   onSelect,
   withRealtimeImage,
+  longResponse,
+  onLongResponseChange,
 }: ChatModelDrawerProps) {
   const container = useAppFrameContainer();
   const [isOpen, setIsOpen] = useState(false);
   const current = models.find((model) => model.code === modelCode);
-  const { enabled: longResponseEnabled, setEnabled: setLongResponseEnabled } =
-    useStoredToggle(CHAT_LONG_RESPONSE_ENABLED_STORAGE_KEY, false);
 
   const handleSelect = (next: string) => {
     setIsOpen(false);
@@ -101,8 +100,8 @@ export function ChatModelDrawer({
             <SettingRow
               icon={RulerIcon}
               copy={CHAT_MODEL_COPY.responseLength}
-              checked={longResponseEnabled}
-              onCheckedChange={setLongResponseEnabled}
+              checked={longResponse}
+              onCheckedChange={onLongResponseChange}
             />
           </section>
         </div>

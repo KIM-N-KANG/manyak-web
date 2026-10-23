@@ -118,6 +118,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turns,
     suggestedInputs,
     model: chatModel,
+    longResponse: chatLongResponse,
     generatingTurn,
     isLoading,
     isError,
@@ -140,7 +141,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     modelCode,
     turnCost,
     select: selectModel,
-  } = useChatModel(chatId, chatModel, {
+    longResponse,
+    setLongResponse,
+  } = useChatModel(chatId, chatModel, chatLongResponse, {
     isMember: sessionStatus === 'authenticated',
     fallbackTurnCost: policy?.chatTurnCost,
     onGuestSelect: () => setLoginOpen(true),
@@ -456,6 +459,8 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           modelCode={modelCode}
           onModelSelect={selectModel}
           realtimeImageEnabled={realtimeImageEnabled}
+          longResponse={longResponse}
+          onLongResponseChange={setLongResponse}
         />
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatMessages

@@ -24,4 +24,6 @@ export interface CreateChatResponse {
   persona?: ChatPersonaResponse | null;
   /** 채팅 모델 코드. 상세는 비활성 모델을 기본 모델로 대체한 유효 코드 */
   model?: string;
+  /** 출력 분량. false는 짧은 응답, true는 긴 응답 */
+  longResponse?: boolean;
 }

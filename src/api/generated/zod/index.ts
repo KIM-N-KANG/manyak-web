@@ -2378,20 +2378,26 @@ export const DeleteChatParams = zod.object({
 export const DeleteChatResponse = zod.void();
 
 /**
- * 소유자가 모델을 변경합니다. 진행 중인 턴은 시작 시 모델과 가격을 유지하며 다음 턴부터 적용합니다.
- * @summary 채팅 모델 변경
+ * model과 longResponse 중 보낸 필드만 변경합니다. 하나 이상 필수이며 null은 거절합니다. 진행 중 턴은 시작 시 모델, 가격, 출력 분량을 유지합니다.
+ * @summary 채팅 설정 변경
  */
-export const ChangeModelParams = zod.object({
+export const ChangeSettingsParams = zod.object({
   chatId: zod.string(),
 });
 
-export const ChangeModelBody = zod
+export const ChangeSettingsBody = zod
   .object({
-    model: zod.string().min(1),
+    model: zod
+      .string()
+      .optional()
+      .describe('노출 중인 모델 코드. 생략하면 유지'),
+    longResponse: zod.boolean().optional().describe('출력 분량. 생략하면 유지'),
   })
-  .describe('다음 턴부터 적용할 채팅 모델');
+  .describe(
+    '채팅 설정 변경. model과 longResponse 중 하나 이상 필수, null은 거절',
+  );
 
-export const ChangeModelResponse = zod.unknown();
+export const ChangeSettingsResponse = zod.unknown();
 
 export const GetAdminOriginalsByStoryIdParams = zod.object({
   storyId: zod.uuid(),

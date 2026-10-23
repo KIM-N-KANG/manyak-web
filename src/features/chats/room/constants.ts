@@ -7,10 +7,6 @@ export const CHAT_INPUT_MODE_STORAGE_KEY = 'manyak:chat-input-mode';
 
 export const CHAT_CHOICES_ENABLED_STORAGE_KEY = 'manyak:chat-choices-enabled';
 
-/** 긴 응답 설정. 서버 필드가 생기기 전이라 기기에만 저장하고 요청에는 싣지 않는다. */
-export const CHAT_LONG_RESPONSE_ENABLED_STORAGE_KEY =
-  'manyak:chat-long-response-enabled';
-
 export const DEFAULT_CHAT_INPUT_MODE: ChatInputMode = 'block';
 
 /**

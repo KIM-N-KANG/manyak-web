@@ -6,10 +6,8 @@
  * OpenAPI spec version: v1
  */
 
-/**
- * 다음 턴부터 적용할 채팅 모델
- */
-export interface ChangeChatModelRequest {
-  /** @minLength 1 */
-  model: string;
+export interface ChangeChatSettingsResponse {
+  id?: string;
+  model?: string;
+  longResponse?: boolean;
 }

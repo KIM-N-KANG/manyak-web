@@ -29,6 +29,9 @@ type ChatRoomHeaderProps = {
   onModelSelect: (modelCode: string) => void;
   /** 실시간 이미지가 켜져 있으면 모델 시트의 비용에 이미지 비용을 합산한다 */
   realtimeImageEnabled: boolean;
+  /** 이 채팅의 긴 응답 설정. 채팅 응답 시트의 스위치가 바꾼다 */
+  longResponse: boolean;
+  onLongResponseChange: (longResponse: boolean) => void;
 };
 
 /**
@@ -45,6 +48,8 @@ export function ChatRoomHeader({
   modelCode,
   onModelSelect,
   realtimeImageEnabled,
+  longResponse,
+  onLongResponseChange,
 }: ChatRoomHeaderProps) {
   const router = useRouter();
 
@@ -88,6 +93,8 @@ export function ChatRoomHeader({
               modelCode={modelCode}
               onSelect={onModelSelect}
               withRealtimeImage={realtimeImageEnabled}
+              longResponse={longResponse}
+              onLongResponseChange={onLongResponseChange}
             />
           )}
         <ChatMenuDrawer

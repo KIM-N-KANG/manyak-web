@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import {
   type getChatDetailResponseSuccess,
   getGetChatDetailQueryKey,
-  useChangeModel,
+  useChangeSettings,
   useGetModels,
 } from '@/api/generated/endpoints/chats/chats';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
@@ -23,7 +23,7 @@ type UseChatModelOptions = {
 };
 
 /**
- * 채팅방의 AI 모델 목록, 적용 중인 모델과 그 턴 비용, 모델 변경을 다루는 훅.
+ * 채팅방의 AI 모델 목록, 적용 중인 모델과 그 턴 비용, 채팅 설정(모델, 긴 응답) 변경을 다루는 훅.
  *
  * 모델은 서버가 채팅마다 저장하고 채팅 상세가 적용 중인 모델을 준다. 게스트의 턴은 서버가 고른 모델과
  * 무관하게 체험 모델로 응답하므로 체험 모델을 적용 중으로 보이고, 다른 모델을 고르면 로그인을 유도한다.
@@ -31,17 +31,19 @@ type UseChatModelOptions = {
  *
  * @param chatId 채팅 ID
  * @param chatModel 채팅 상세가 준 모델 코드
+ * @param chatLongResponse 채팅 상세가 준 긴 응답 설정
  * @param options 회원 여부, 대신 쓸 턴 비용, 게스트 선택 콜백
- * @returns 모델 목록, 적용 중인 모델 코드와 턴 비용, 모델을 바꾸는 함수
+ * @returns 모델 목록, 적용 중인 모델 코드와 턴 비용, 모델을 바꾸는 함수, 긴 응답 설정과 그것을 바꾸는 함수
  */
 export function useChatModel(
   chatId: string,
   chatModel: string | undefined,
+  chatLongResponse: boolean | undefined,
   { isMember, fallbackTurnCost, onGuestSelect }: UseChatModelOptions,
 ) {
   const queryClient = useQueryClient();
   const { data } = useGetModels();
-  const { mutate } = useChangeModel();
+  const { mutate } = useChangeSettings();
   const models = data?.status === 200 ? data.data : [];
   const modelCode =
     chatModel === undefined || isMember ? chatModel : CHAT_TRIAL_MODEL_CODE;
@@ -50,12 +52,20 @@ export function useChatModel(
       ? fallbackTurnCost
       : models.find((model) => model.code === modelCode)?.turnCost;
 
-  const setChatModel = (model: string | undefined) =>
+  // 서버가 값을 주지 않으면(긴 응답 배포 전) 서버 기본값인 짧은 응답으로 본다.
+  const longResponse = chatLongResponse ?? false;
+
+  const patchChatDetail = (
+    settings: Pick<
+      getChatDetailResponseSuccess['data'],
+      'model' | 'longResponse'
+    >,
+  ) =>
     queryClient.setQueryData<getChatDetailResponseSuccess>(
       getGetChatDetailQueryKey(chatId),
       (prev) =>
         prev?.status === 200
-          ? { ...prev, data: { ...prev.data, model } }
+          ? { ...prev, data: { ...prev.data, ...settings } }
           : prev,
     );
 
@@ -72,17 +82,43 @@ export function useChatModel(
       return;
     }
 
-    setChatModel(next);
+    patchChatDetail({ model: next });
     mutate(
       { chatId, data: { model: next } },
       {
         onError: () => {
-          setChatModel(chatModel);
+          patchChatDetail({ model: chatModel });
           toast.error(TOAST_MESSAGE.CHAT_MODEL_CHANGE_FAILED);
         },
       },
     );
   };
 
-  return { models, modelCode, turnCost, select };
+  /**
+   * 긴 응답을 켜고 끈다. 모델과 같이 채팅마다 서버에 저장하고, 화면을 먼저 바꾼 뒤 서버가 거절하면 되돌린다.
+   * 게스트도 자기 채팅의 설정을 바꿀 수 있어 로그인을 요구하지 않는다.
+   */
+  const setLongResponse = (next: boolean) => {
+    if (next === longResponse) return;
+
+    patchChatDetail({ longResponse: next });
+    mutate(
+      { chatId, data: { longResponse: next } },
+      {
+        onError: () => {
+          patchChatDetail({ longResponse: chatLongResponse });
+          toast.error(TOAST_MESSAGE.CHAT_LONG_RESPONSE_CHANGE_FAILED);
+        },
+      },
+    );
+  };
+
+  return {
+    models,
+    modelCode,
+    turnCost,
+    select,
+    longResponse,
+    setLongResponse,
+  };
 }
