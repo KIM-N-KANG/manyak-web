@@ -40,5 +40,6 @@ export interface CreateSimpleStoryRequest {
    * @nullable
    */
   draftId?: string | null;
-  regenerated?: boolean;
+  /** @nullable */
+  isRegenerated?: boolean | null;
 }

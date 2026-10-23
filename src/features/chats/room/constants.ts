@@ -75,16 +75,21 @@ export const CHAT_SETTINGS_COPY = {
  */
 export const CHAT_TRIAL_MODEL_CODE = 'LITE';
 
-/** 채팅방 헤더 AI 모델 선택 버튼과 시트의 문구. 모델 이름과 순서는 서버 모델 목록을 따른다. */
+/** 채팅방 헤더 AI 모델 선택 버튼과 채팅 응답 시트의 문구. 모델 이름과 순서는 서버 모델 목록을 따른다. */
 export const CHAT_MODEL_COPY = {
   trigger: 'AI 모델 선택',
-  title: 'AI 모델 선택',
-  description: '턴마다 이프가 사용되고, 다시 만들 때도 같은 이프가 사용돼요',
+  title: '채팅 응답',
+  group: 'AI 모델',
   /** 모델 코드별 칸 설명. 모르는 코드는 설명 없이 이름과 비용만 보인다 */
   optionDescriptions: {
-    LITE: '빠르고 가볍게 이야기를 이어가요',
-    AURORA: '더 풍부하고 섬세하게 이야기를 이어가요',
+    LITE: '빠르고 가볍게 주고받아요',
+    AURORA: '풍부한 묘사로 몰입감을 더해요',
   } as Record<string, string | undefined>,
+  responseLength: {
+    group: '응답 길이',
+    label: '긴 응답',
+    description: '한 번에 더 많은 장면을 보여줘요',
+  },
 } as const;
 
 /** 채팅방 헤더 메뉴 시트의 문구. 항목 순서는 화면 순서 그대로다. */
@@ -131,3 +136,18 @@ export const CHAT_CHOICES_HINT_SEEN_VALUE = 'true';
  */
 export const buildChatTurnCreditCostLabel = (amount: string) =>
   `${amount} 이프`;
+
+/** 전송 버튼 옆 비용 버튼과 이프 안내 팝오버의 문구. */
+export const CHAT_TURN_COST_INFO_COPY = {
+  trigger: '이프 안내',
+  title: '한 턴에 쓰는 이프',
+  turn: 'AI 응답',
+  realtimeImage: '실시간 이미지',
+  total: '합계',
+  buildTrialRemaining: (count: number) => `무료 체험 ${count}회 남음`,
+  trialExhausted: '무료 체험 모두 사용',
+  trialUnlimited: '무료 체험 무제한',
+  /** 턴 체험이 남은 회원이 다른 모델을 골랐을 때. 서버는 체험 턴을 체험 모델로 답한다 */
+  buildTrialModelNote: (modelName: string) =>
+    `무료 체험 턴은 ${modelName} 모델로 답해요`,
+} as const;

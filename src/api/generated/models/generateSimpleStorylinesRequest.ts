@@ -38,5 +38,6 @@ export interface GenerateSimpleStorylinesRequest {
    * @nullable
    */
   parentCreationId?: string | null;
-  regenerated?: boolean;
+  /** @nullable */
+  isRegenerated?: boolean | null;
 }

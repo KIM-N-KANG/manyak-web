@@ -56,7 +56,7 @@ export function DraftSaveButton({
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="secondary"
       disabled={disabled || isSaving}
       onClick={handleClick}
       className={cn('relative', isSaving && 'disabled:opacity-100')}>

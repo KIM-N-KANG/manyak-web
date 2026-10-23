@@ -758,7 +758,7 @@ export const CreateSimpleStoryBody = zod
       .uuid()
       .nullish()
       .describe('생성 요청 기록과 같은 트랜잭션에서 삭제할 내 초안 ID'),
-    regenerated: zod.boolean().optional(),
+    isRegenerated: zod.boolean().nullish(),
   })
   .describe('간편 제작 스토리 생성 요청');
 
@@ -878,7 +878,7 @@ export const GenerateSimpleStorylinesBody = zod
       .describe(
         '재생성이면 직전 생성의 creation_id(=그 요청의 requestId). 서버가 이 값을 검증해 \*\*통과한 경우에만\*\* AI 호출 헤더로 전달합니다(자기참조 아님·해당 요청 존재·소유 연속성). 검증에 실패해도 이 요청은 정상 처리되며(400이 아닙니다) 체인 헤더만 생략됩니다. 실패 사유는 서버에 기록되므로, 재생성 체인이 이어지지 않았다면 이 값이 유효했는지 확인하세요.',
       ),
-    regenerated: zod.boolean().optional(),
+    isRegenerated: zod.boolean().nullish(),
   })
   .describe('간편 제작 스토리라인 생성 요청');
 
@@ -2378,20 +2378,26 @@ export const DeleteChatParams = zod.object({
 export const DeleteChatResponse = zod.void();
 
 /**
- * 소유자가 모델을 변경합니다. 진행 중인 턴은 시작 시 모델과 가격을 유지하며 다음 턴부터 적용합니다.
- * @summary 채팅 모델 변경
+ * model과 longResponse 중 보낸 필드만 변경합니다. 하나 이상 필수이며 null은 거절합니다. 진행 중 턴은 시작 시 모델, 가격, 출력 분량을 유지합니다.
+ * @summary 채팅 설정 변경
  */
-export const ChangeModelParams = zod.object({
+export const ChangeSettingsParams = zod.object({
   chatId: zod.string(),
 });
 
-export const ChangeModelBody = zod
+export const ChangeSettingsBody = zod
   .object({
-    model: zod.string().min(1),
+    model: zod
+      .string()
+      .optional()
+      .describe('노출 중인 모델 코드. 생략하면 유지'),
+    longResponse: zod.boolean().optional().describe('출력 분량. 생략하면 유지'),
   })
-  .describe('다음 턴부터 적용할 채팅 모델');
+  .describe(
+    '채팅 설정 변경. model과 longResponse 중 하나 이상 필수, null은 거절',
+  );
 
-export const ChangeModelResponse = zod.unknown();
+export const ChangeSettingsResponse = zod.unknown();
 
 export const GetAdminOriginalsByStoryIdParams = zod.object({
   storyId: zod.uuid(),

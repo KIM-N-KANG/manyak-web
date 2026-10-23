@@ -138,10 +138,12 @@ function StoryListToolbarView({ query, onChange }: StoryListToolbarViewProps) {
               onChange({ ...query, sort: value })
             }>
             {STORY_LIST_SORT_OPTIONS.map((option) => (
+              // 장르 검색 목록처럼 고른 항목에 회색 배경을 깔아 체크 표시와 함께 보인다.
               <DropdownMenuRadioItem
                 key={option.value}
                 value={option.value}
-                closeOnClick>
+                closeOnClick
+                className="data-checked:bg-muted">
                 {option.label}
               </DropdownMenuRadioItem>
             ))}

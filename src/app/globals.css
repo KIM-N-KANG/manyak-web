@@ -246,6 +246,30 @@
   }
 }
 
+/* 하단 스크롤 페이드 기본값. shadcn scroll-fade-b는 높이를 min(12%, 40px)로 두고 내용을 직선으로 지워,
+   장면 그림처럼 색이 많은 내용 위에서는 페이드가 시작하고 끝나는 자리가 띠처럼 보인다.
+   높이 상한을 56px로 올리고 스크림 곡선(처음과 끝이 완만한 곡선)으로 지운다.
+   유틸이 마스크 변수를 레이어 안에서 정하므로 레이어 밖 규칙으로 덮는다.
+   높이는 상속 변수라 자리마다 scroll-fade-b-* 유틸로 바꿀 수 있다. */
+:root {
+  --scroll-fade-b-size: min(12%, calc(var(--spacing) * 14));
+}
+
+.scroll-fade-b {
+  --scroll-fade-mask: linear-gradient(
+    to bottom,
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    rgb(0 0 0 / 0.951) calc(100% - var(--scroll-fade-b, 0px) * 0.845),
+    rgb(0 0 0 / 0.825) calc(100% - var(--scroll-fade-b, 0px) * 0.71),
+    rgb(0 0 0 / 0.648) calc(100% - var(--scroll-fade-b, 0px) * 0.588),
+    rgb(0 0 0 / 0.45) calc(100% - var(--scroll-fade-b, 0px) * 0.471),
+    rgb(0 0 0 / 0.259) calc(100% - var(--scroll-fade-b, 0px) * 0.353),
+    rgb(0 0 0 / 0.104) calc(100% - var(--scroll-fade-b, 0px) * 0.225),
+    rgb(0 0 0 / 0.013) calc(100% - var(--scroll-fade-b, 0px) * 0.081),
+    transparent 100%
+  );
+}
+
 /* useDragScroll이 붙은 가로 스크롤 영역의 커서. 칩·탭처럼 누를 수 있는 자식은
    자기 커서를 유지하고, 끄는 동안에는 포인터 위치와 무관하게 grabbing을 보인다. */
 [data-drag-scrollable] {

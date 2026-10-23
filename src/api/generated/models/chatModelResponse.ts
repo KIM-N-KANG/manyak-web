@@ -13,5 +13,5 @@ export interface ChatModelResponse {
   code?: string;
   name?: string;
   turnCost?: number;
-  default?: boolean;
+  isDefault?: boolean;
 }

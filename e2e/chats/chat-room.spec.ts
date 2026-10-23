@@ -14,6 +14,7 @@ import {
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_SETTINGS_COPY,
   CHAT_STREAM_LOADING_COPY,
+  CHAT_TURN_COST_INFO_COPY,
   REALTIME_IMAGE_NUDGE_DELAY_MS,
 } from '@/features/chats/room/constants';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
@@ -155,7 +156,7 @@ test.describe('채팅 스트리밍', () => {
       formatCreditAmount(chatTurnCost + chatImageCost),
     );
     await expect(
-      badge.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(page.getByText(/잔여 체험 횟수/)).toHaveCount(0);
 
@@ -318,9 +319,9 @@ test.describe('채팅 스트리밍', () => {
     await expect(badge).toHaveCSS('font-size', '12px');
     await expect(badge).toHaveClass(/text-foreground-secondary/);
     await expect(badge.locator('s')).toHaveCount(0);
-    await expect(badge.locator('xpath=..')).toHaveCSS('column-gap', '8px');
+    await expect(badge.locator('xpath=../..')).toHaveCSS('column-gap', '4px');
     await expect(
-      badge.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
 
@@ -414,7 +415,9 @@ test.describe('채팅 스트리밍', () => {
     );
 
     await modelButton(page).click();
-    await expect(sheet.getByText(CHAT_MODEL_COPY.description)).toBeVisible();
+    await expect(
+      sheet.getByRole('radiogroup', { name: CHAT_MODEL_COPY.group }),
+    ).toBeVisible();
     await expect(liteOption).toBeChecked();
     await expect(auroraOption).not.toBeChecked();
     await expect(
@@ -443,7 +446,7 @@ test.describe('채팅 스트리밍', () => {
     await expect(
       page
         .getByText(auroraCost, { exact: true })
-        .locator('xpath=../following-sibling::*[1]'),
+        .locator('xpath=../../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
 
     // 모델은 서버가 채팅마다 저장하므로 다시 들어오면 상세가 준 모델을 보인다.
@@ -457,6 +460,141 @@ test.describe('채팅 스트리밍', () => {
     await sheet.getByText(AURORA_MODEL.name).click();
     await expect(sheet).toBeHidden();
     expect(changes).toHaveLength(1);
+  });
+
+  test('채팅 응답 시트의 긴 응답 스위치는 채팅 상세 값을 보이고, 켜면 채팅 설정 변경을 요청하며 시트가 열린 채 남고 다시 들어와도 유지된다', async ({
+    page,
+  }) => {
+    let longResponse = false;
+    const changes: unknown[] = [];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'PATCH') {
+        const body = route.request().postDataJSON() as {
+          longResponse: boolean;
+        };
+
+        changes.push(body);
+        longResponse = body.longResponse;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: 'c1',
+            model: LITE_MODEL.code,
+            longResponse,
+          }),
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...chatDetail(), longResponse }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await modelButton(page).click();
+
+    const longResponseSwitch = modelSheet(page).getByRole('switch', {
+      name: CHAT_MODEL_COPY.responseLength.label,
+    });
+
+    await expect(
+      modelSheet(page).getByText(CHAT_MODEL_COPY.responseLength.description),
+    ).toBeVisible();
+    await expect(longResponseSwitch).not.toBeChecked();
+    await longResponseSwitch.click();
+    await expect(longResponseSwitch).toBeChecked();
+    await expect(modelSheet(page)).toBeVisible();
+    await expect.poll(() => changes).toEqual([{ longResponse: true }]);
+
+    // 긴 응답은 서버가 채팅마다 저장하므로 다시 들어오면 상세가 준 값을 보인다.
+    await page.reload();
+    await modelButton(page).click();
+    await expect(longResponseSwitch).toBeChecked();
+  });
+
+  test('긴 응답 설정 변경이 실패하면 스위치를 되돌리고 실패를 알린다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'PATCH') {
+        await route.fulfill({ status: 500, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...chatDetail(), longResponse: false }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await modelButton(page).click();
+
+    const longResponseSwitch = modelSheet(page).getByRole('switch', {
+      name: CHAT_MODEL_COPY.responseLength.label,
+    });
+
+    await longResponseSwitch.click();
+    await expect(
+      page.getByText(TOAST_MESSAGE.CHAT_LONG_RESPONSE_CHANGE_FAILED),
+    ).toBeVisible();
+    await expect(longResponseSwitch).not.toBeChecked();
+  });
+
+  test('전송 버튼 옆 비용 버튼을 누르면 항목별 비용과 남은 무료 체험을 팝오버로 보인다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, {
+      chatTurn: { used: 2, limit: 5 },
+      chatImage: { used: 5, limit: 5 },
+    });
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatDetail(undefined, undefined, AURORA_MODEL.code),
+        ),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page
+      .getByRole('button', { name: CHAT_TURN_COST_INFO_COPY.trigger })
+      .click();
+
+    const popover = page.getByRole('dialog', {
+      name: CHAT_TURN_COST_INFO_COPY.title,
+    });
+
+    // 턴 체험이 남아 AI 응답은 무료, 이미지 체험은 다 써서 이미지 정가만 낸다.
+    await expect(popover).toContainText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(CREDIT_POLICY_FIXTURE.chatImageCost),
+      ),
+    );
+    await expect(popover.getByText(AURORA_MODEL.name)).toBeVisible();
+    await expect(
+      popover.getByText(CHAT_TURN_COST_INFO_COPY.buildTrialRemaining(3)),
+    ).toBeVisible();
+    await expect(
+      popover.getByText(CHAT_TURN_COST_INFO_COPY.trialExhausted),
+    ).toBeVisible();
+    // 체험 턴은 서버가 라이트로 답하므로 오로라를 고른 회원에게 알린다.
+    await expect(
+      popover.getByText(
+        CHAT_TURN_COST_INFO_COPY.buildTrialModelNote(LITE_MODEL.name),
+      ),
+    ).toBeVisible();
   });
 
   test('회원의 모델 변경이 실패하면 이전 모델로 되돌리고 실패를 알린다', async ({

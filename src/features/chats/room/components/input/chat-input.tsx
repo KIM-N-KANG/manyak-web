@@ -19,6 +19,8 @@ type ChatInputProps = {
   realtimeImageEnabled: boolean;
   /** 고른 채팅 모델의 턴 이프 비용(모르면 undefined) */
   turnCost: number | undefined;
+  /** 지금 적용 중인 모델 코드(모르면 undefined) */
+  modelCode: string | undefined;
   onRealtimeImageEnabledChange: (enabled: boolean) => void;
   /** 실시간 이미지 안내로 설정 시트를 열고 해당 항목을 강조하는지 여부 */
   realtimeImageNudgeOpen: boolean;
@@ -35,6 +37,7 @@ export function ChatInput({
   isStreaming,
   realtimeImageEnabled,
   turnCost,
+  modelCode,
   onRealtimeImageEnabledChange,
   realtimeImageNudgeOpen,
   onRealtimeImageNudgeClose,
@@ -90,6 +93,7 @@ export function ChatInput({
           onOpenSettings={openSettings}
           realtimeImageEnabled={realtimeImageEnabled}
           turnCost={turnCost}
+          modelCode={modelCode}
           onLockedTap={handleLockedTap}
         />
         {settingsSheet}
@@ -112,6 +116,7 @@ export function ChatInput({
         onOpenSettings={openSettings}
         realtimeImageEnabled={realtimeImageEnabled}
         turnCost={turnCost}
+        modelCode={modelCode}
         onLockedTap={handleLockedTap}
       />
       {settingsSheet}
