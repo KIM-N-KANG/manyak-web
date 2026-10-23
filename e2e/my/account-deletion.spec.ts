@@ -9,12 +9,7 @@ import {
   ACCOUNT_DELETION_TITLE_LINES,
 } from '@/features/my/account-deletion/constants';
 
-import {
-  expect,
-  mockMemberSession,
-  skipOnboarding,
-  test,
-} from '../fixtures/test';
+import { expect, mockMemberSession, test } from '../fixtures/test';
 
 test.describe('회원 탈퇴 페이지 (/my/account-deletion)', () => {
   const checkAllConfirmations = async (page: Page) => {
@@ -24,7 +19,6 @@ test.describe('회원 탈퇴 페이지 (/my/account-deletion)', () => {
   };
 
   test('게스트는 로그인 페이지로 이동한다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.goto('/my/account-deletion');
 
     await expect(page).toHaveURL(/\/login$/);
@@ -33,7 +27,6 @@ test.describe('회원 탈퇴 페이지 (/my/account-deletion)', () => {
   test('회원은 마이의 회원 탈퇴 메뉴로 확인 페이지에 진입한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.goto('/my');
 
@@ -54,7 +47,6 @@ test.describe('회원 탈퇴 페이지 (/my/account-deletion)', () => {
   test('모든 확인 항목을 체크해야 회원 탈퇴하기 버튼이 활성화된다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.goto('/my/account-deletion');
 
@@ -72,7 +64,6 @@ test.describe('회원 탈퇴 페이지 (/my/account-deletion)', () => {
   test('회원 탈퇴 API 성공 후 로그아웃하고 마이 페이지로 이동한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
 
     let withdrawalRequestCount = 0;
@@ -121,7 +112,6 @@ test.describe('회원 탈퇴 페이지 (/my/account-deletion)', () => {
   test('회원 탈퇴 API 실패 시 페이지에 남아 다시 시도할 수 있다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me', (route) =>
       route.fulfill({ status: 500, json: { code: 'SERVER_ERROR' } }),

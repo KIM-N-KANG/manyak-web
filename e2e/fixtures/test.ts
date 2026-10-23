@@ -25,21 +25,28 @@ import {
   PUSH_SETTINGS_FIXTURE,
   TRIALS_FIXTURE,
 } from './api-mock';
+import { skipCreateTutorial } from './storage';
 
-type AppBannerOptions = {
+type FixtureOptions = {
   /** 참이면 앱 안내 배너를 숨기지 않는다. 기본은 거짓이라 기존 스펙에는 배너가 뜨지 않는다. */
   appBanner: boolean;
+  /** 참이면 간편 제작 첫 진입 안내를 끄지 않는다. 기본은 거짓이라 기존 스펙에는 안내가 뜨지 않는다. */
+  createTutorial: boolean;
 };
 
-// 모든 테스트에 API 안전망을 자동 적용하고, 배너 스펙이 아니면 새 탭까지 앱 안내 배너를 닫아 둔다.
-export const test = base.extend<AppBannerOptions>({
+// 모든 테스트에 API 안전망을 자동 적용하고, 옵션으로 켜지 않으면 새 탭까지 앱 안내 배너와
+// 간편 제작 첫 진입 안내를 닫아 둔다.
+export const test = base.extend<FixtureOptions>({
   appBanner: [false, { option: true }],
-  context: async ({ context, appBanner }, use) => {
+  createTutorial: [false, { option: true }],
+  context: async ({ context, appBanner, createTutorial }, use) => {
     if (!appBanner) {
       await context.addInitScript((key) => {
         window.sessionStorage.setItem(key, '1');
       }, APP_BANNER_DISMISSED_KEY);
     }
+
+    if (!createTutorial) await skipCreateTutorial(context);
 
     await use(context);
   },
@@ -59,7 +66,7 @@ export {
   seedStoryIds,
   skipChatChoicesHint,
   skipChatTour,
-  skipOnboarding,
+  skipCreateTutorial,
 } from './storage';
 export {
   mockGuestSession,

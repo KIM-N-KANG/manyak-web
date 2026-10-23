@@ -11,7 +11,7 @@ import {
 } from '@/features/my/personas/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 const PERSONAS = '**/api/v1/users/me/personas';
 const PERSONA = '**/api/v1/users/me/personas/*';
@@ -61,7 +61,6 @@ async function mockPersonaApi(page: Page, initial: UserPersonaResponse[]) {
 }
 
 async function openPersonaList(page: Page) {
-  await skipOnboarding(page);
   await mockMemberSession(page);
   await page.goto(APP_PATH.MAIN.MY);
   await page.getByRole('link', { name: PERSONA_MENU_COPY.menuLabel }).click();
@@ -214,7 +213,6 @@ test.describe('페르소나 관리', () => {
   test('게스트가 관리 화면에 들어오면 로그인 화면으로 보낸다 (KNK-1469)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto(APP_PATH.MY_PERSONAS);
 
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.LOGIN}$`));

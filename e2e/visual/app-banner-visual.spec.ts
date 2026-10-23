@@ -6,7 +6,7 @@ import {
 } from '@/constants/app-banner';
 import { APP_PATH } from '@/constants/app-path';
 
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 import { USER_AGENT } from '../fixtures/user-agents';
 import { waitForAnimations, waitForFonts } from '../fixtures/visual';
 
@@ -24,7 +24,6 @@ test.use({ appBanner: true });
  * @returns 배너 영역 로케이터
  */
 async function openHomeWithBanner(page: Page) {
-  await skipOnboarding(page);
   await page.goto(APP_PATH.MAIN.STORIES);
 
   const region = page.getByRole('region', {

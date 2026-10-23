@@ -1,4 +1,4 @@
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 // 모든 백엔드 호출은 /api 프록시를 거치며, 피드백 등록은 POST /api/v1/feedbacks 다.
 // fixture의 기본 모킹(**/api/**) 위에 더 구체적인 라우트를 등록해 응답을 제어한다
@@ -8,7 +8,6 @@ const FEEDBACK_ENDPOINT = '**/api/v1/feedbacks';
 test('주소로 바로 연 피드백의 헤더 뒤로가기는 마이 탭으로 간다 (KNK-1610)', async ({
   page,
 }) => {
-  await skipOnboarding(page);
   await page.goto('/my/feedback');
   await page
     .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
@@ -32,7 +31,6 @@ test.describe('피드백 제출', () => {
       });
     });
 
-    await skipOnboarding(page);
     await page.goto('/my/feedback');
 
     const feedbackActions = page
@@ -79,7 +77,6 @@ test.describe('피드백 제출', () => {
       });
     });
 
-    await skipOnboarding(page);
     await page.goto('/my/feedback');
 
     await page
@@ -96,7 +93,6 @@ test.describe('피드백 제출', () => {
   test('본문이 비어 있으면 버튼 위에 오류를 표시하고 입력하면 해제한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto('/my/feedback');
 
     const submit = page.getByRole('button', { name: '피드백 보내기' });
@@ -126,7 +122,6 @@ test.describe('피드백 제출', () => {
       });
     });
 
-    await skipOnboarding(page);
     await page.goto('/my/feedback');
     await page
       .getByRole('textbox', { name: '피드백 내용' })
@@ -158,7 +153,6 @@ test.describe('피드백 제출', () => {
       });
     });
 
-    await skipOnboarding(page);
     await page.goto('/my/feedback');
 
     await page

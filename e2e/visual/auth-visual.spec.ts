@@ -7,7 +7,6 @@ import {
   mockConsents,
   mockMemberSession,
   seedPendingLogin,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 import { VISUAL_FIXED_NOW, waitForFonts } from '../fixtures/visual';
@@ -28,8 +27,6 @@ test.describe('계정 비주얼', () => {
   test('로그인 페이지: 단일 CTA, 이관 안내·약관 고지 없음 (AUTH-LOGIN)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
-
     await page.goto('/login');
 
     await expect(
@@ -47,7 +44,6 @@ test.describe('계정 비주얼', () => {
     page,
   }) => {
     await page.clock.setFixedTime(VISUAL_FIXED_NOW);
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await seedPendingLogin(page);
     await mockConsents(page, PENDING_CONSENTS);

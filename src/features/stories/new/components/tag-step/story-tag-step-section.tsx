@@ -46,6 +46,7 @@ export function StoryTagStepSection({
     needsGenreReselection,
     showGenreSkeleton,
     hasGenreCatalogError,
+    retryGenreCatalog,
     protagonist,
     supportingCharacters,
     canAddSupportingCharacter,
@@ -174,6 +175,7 @@ export function StoryTagStepSection({
                 isMaxSelectionReached={isGenreMaxReached}
                 isLoadingTags={showGenreSkeleton}
                 hasTagsError={hasGenreCatalogError}
+                onRetryTags={retryGenreCatalog}
                 disabled={isGeneratingStorylines}
                 onTogglePredefinedTag={toggleGenreTag}
               />
@@ -197,6 +199,7 @@ export function StoryTagStepSection({
             isFeatureRequired={PROTAGONIST_CATEGORY.required}
             isLoadingTags={showTagsSkeleton}
             hasTagsError={simpleStoryTags.isError}
+            onRetryTags={() => void simpleStoryTags.refetch()}
             disabled={isGeneratingStorylines}
             onChangeName={(name) =>
               changeCharacterName('PROTAGONIST', protagonist.id, name)
@@ -230,6 +233,7 @@ export function StoryTagStepSection({
             canAddCharacter={canAddSupportingCharacter}
             isLoadingTags={showTagsSkeleton}
             hasTagsError={simpleStoryTags.isError}
+            onRetryTags={() => void simpleStoryTags.refetch()}
             disabled={isGeneratingStorylines}
             isFeatureMaxReached={(characterId) =>
               isFeatureMaxReached('SUPPORTING_CHARACTER', characterId)

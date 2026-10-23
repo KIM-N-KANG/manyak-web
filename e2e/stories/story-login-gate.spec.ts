@@ -9,7 +9,7 @@ import {
 import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
 import { seedPendingCreationRequests } from '../fixtures/storage';
-import { expect, seedStoryIds, skipOnboarding, test } from '../fixtures/test';
+import { expect, seedStoryIds, test } from '../fixtures/test';
 
 /**
  * 스토리 제작·채팅 시작의 게스트 동의 게이팅 스펙(FE-SCREEN-010 동의 모델·웹 사용자 모델).
@@ -56,7 +56,6 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
   test('게스트가 빈 제작 목록에서 동의 없이 제작 화면에 진입한다 (STORY-GATE-02)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto(APP_PATH.MAIN.STUDIO);
     // 빈 목록에도 별도 CTA 없이 FAB 하나만 둔다(KNK-1355).
     await page
@@ -142,7 +141,6 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
       },
     };
 
-    await skipOnboarding(page);
     await seedPendingCreationRequests(page, [draft]);
 
     await page.goto(APP_PATH.MAIN.STUDIO);

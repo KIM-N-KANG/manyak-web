@@ -56,6 +56,7 @@ type CharacterFormProps = {
   featureDescription?: string;
   isLoadingTags: boolean;
   hasTagsError: boolean;
+  onRetryTags: () => void;
   disabled: boolean;
   /** 이름 인풋 아래에 띄울 오류. 없으면 오류를 표시하지 않는다. */
   nameErrorMessage?: string;
@@ -80,6 +81,7 @@ export function CharacterForm({
   featureDescription,
   isLoadingTags,
   hasTagsError,
+  onRetryTags,
   disabled,
   nameErrorMessage,
   onRegisterNameInput,
@@ -173,6 +175,7 @@ export function CharacterForm({
           isMaxSelectionReached={isMaxSelectionReached}
           isLoadingTags={isLoadingTags}
           hasTagsError={hasTagsError}
+          onRetryTags={onRetryTags}
           disabled={disabled}
           addTagTrigger={
             <AddTagDialog

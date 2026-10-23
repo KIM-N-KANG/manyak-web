@@ -26,8 +26,8 @@ import { customInstance } from '../../../mutator/custom-instance';
 import type {
   ApiErrorResponse,
   BatchChatRequest,
-  ChangeChatModelRequest,
-  ChangeChatModelResponse,
+  ChangeChatSettingsRequest,
+  ChangeChatSettingsResponse,
   ChatChoicesResponse,
   ChatDetailResponse,
   ChatModelResponse,
@@ -1082,53 +1082,56 @@ export const useDeleteChat = <
 > => {
   return useMutation(getDeleteChatMutationOptions(options), queryClient);
 };
-export type changeModelResponse200 = {
-  data: ChangeChatModelResponse;
+export type changeSettingsResponse200 = {
+  data: ChangeChatSettingsResponse;
   status: 200;
 };
 
-export type changeModelResponseSuccess = changeModelResponse200 & {
+export type changeSettingsResponseSuccess = changeSettingsResponse200 & {
   headers: Headers;
 };
-export const getChangeModelUrl = (chatId: string) => {
+export const getChangeSettingsUrl = (chatId: string) => {
   return `/api/v1/chats/${chatId}`;
 };
 
 /**
- * 소유자가 모델을 변경합니다. 진행 중인 턴은 시작 시 모델과 가격을 유지하며 다음 턴부터 적용합니다.
- * @summary 채팅 모델 변경
+ * model과 longResponse 중 보낸 필드만 변경합니다. 하나 이상 필수이며 null은 거절합니다. 진행 중 턴은 시작 시 모델, 가격, 출력 분량을 유지합니다.
+ * @summary 채팅 설정 변경
  */
-export const changeModel = async (
+export const changeSettings = async (
   chatId: string,
-  changeChatModelRequest: ChangeChatModelRequest,
+  changeChatSettingsRequest: ChangeChatSettingsRequest,
   options?: RequestInit,
-): Promise<changeModelResponseSuccess> => {
-  return customInstance<changeModelResponseSuccess>(getChangeModelUrl(chatId), {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(changeChatModelRequest),
-  });
+): Promise<changeSettingsResponseSuccess> => {
+  return customInstance<changeSettingsResponseSuccess>(
+    getChangeSettingsUrl(chatId),
+    {
+      ...options,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(changeChatSettingsRequest),
+    },
+  );
 };
 
-export const getChangeModelMutationOptions = <
+export const getChangeSettingsMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof changeModel>>,
+    Awaited<ReturnType<typeof changeSettings>>,
     TError,
-    { chatId: string; data: BodyType<ChangeChatModelRequest> },
+    { chatId: string; data: BodyType<ChangeChatSettingsRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customInstance>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof changeModel>>,
+  Awaited<ReturnType<typeof changeSettings>>,
   TError,
-  { chatId: string; data: BodyType<ChangeChatModelRequest> },
+  { chatId: string; data: BodyType<ChangeChatSettingsRequest> },
   TContext
 > => {
-  const mutationKey = ['changeModel'];
+  const mutationKey = ['changeSettings'];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       'mutationKey' in options.mutation &&
@@ -1138,44 +1141,47 @@ export const getChangeModelMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof changeModel>>,
-    { chatId: string; data: BodyType<ChangeChatModelRequest> }
+    Awaited<ReturnType<typeof changeSettings>>,
+    { chatId: string; data: BodyType<ChangeChatSettingsRequest> }
   > = (props) => {
     const { chatId, data } = props ?? {};
 
-    return changeModel(chatId, data, requestOptions);
+    return changeSettings(chatId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type ChangeModelMutationResult = NonNullable<
-  Awaited<ReturnType<typeof changeModel>>
+export type ChangeSettingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof changeSettings>>
 >;
-export type ChangeModelMutationBody = BodyType<ChangeChatModelRequest>;
-export type ChangeModelMutationError = ErrorType<unknown>;
+export type ChangeSettingsMutationBody = BodyType<ChangeChatSettingsRequest>;
+export type ChangeSettingsMutationError = ErrorType<unknown>;
 
 /**
- * @summary 채팅 모델 변경
+ * @summary 채팅 설정 변경
  */
-export const useChangeModel = <TError = ErrorType<unknown>, TContext = unknown>(
+export const useChangeSettings = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof changeModel>>,
+      Awaited<ReturnType<typeof changeSettings>>,
       TError,
-      { chatId: string; data: BodyType<ChangeChatModelRequest> },
+      { chatId: string; data: BodyType<ChangeChatSettingsRequest> },
       TContext
     >;
     request?: SecondParameter<typeof customInstance>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
-  Awaited<ReturnType<typeof changeModel>>,
+  Awaited<ReturnType<typeof changeSettings>>,
   TError,
-  { chatId: string; data: BodyType<ChangeChatModelRequest> },
+  { chatId: string; data: BodyType<ChangeChatSettingsRequest> },
   TContext
 > => {
-  return useMutation(getChangeModelMutationOptions(options), queryClient);
+  return useMutation(getChangeSettingsMutationOptions(options), queryClient);
 };
 export type getChatShareResponse200 = {
   data: ChatShareResponse;

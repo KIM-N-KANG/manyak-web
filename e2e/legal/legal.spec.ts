@@ -2,7 +2,7 @@ import { formatDocumentTitle } from '@/constants/site';
 import { privacyContent } from '@/features/legal/content/privacy-content';
 import { termsContent } from '@/features/legal/content/terms-content';
 
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 test.describe('약관·개인정보 처리방침', () => {
   test('브라우저 탭 제목이 문서 제목 - 마냑이 된다', async ({ page }) => {
@@ -16,7 +16,6 @@ test.describe('약관·개인정보 처리방침', () => {
   test('로그인 화면은 약관 동의 고지·링크와 이관 안내를 두지 않는다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto('/login');
 
     await expect(
@@ -31,7 +30,6 @@ test.describe('약관·개인정보 처리방침', () => {
   });
 
   test('게스트도 /terms에 직접 접근할 수 있다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.goto('/terms');
 
     await expect(
@@ -47,7 +45,6 @@ test.describe('약관·개인정보 처리방침', () => {
   test('헤더에는 뒤로가기와 문서 제목 대신 링크 없는 로고가 보인다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto('/privacy');
 
     const header = page.getByRole('banner');

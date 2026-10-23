@@ -301,7 +301,8 @@ type SettingRowProps = {
   children?: ReactNode;
 };
 
-function SettingRow({
+/** 아이콘, 라벨, 설명과 스위치로 된 설정 행. 채팅 응답 시트도 같은 행을 쓴다. */
+export function SettingRow({
   icon,
   copy,
   titleAddon,

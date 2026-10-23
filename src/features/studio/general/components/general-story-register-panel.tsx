@@ -54,7 +54,7 @@ export function GeneralStoryRegisterPanel({
   storyVisibility,
   onStoryVisibilityChange,
 }: GeneralStoryRegisterPanelProps) {
-  const { catalog, isPending, isError } = useGenreCatalog();
+  const { catalog, isPending, isError, refetch } = useGenreCatalog();
   const selectedTagIds = getSelectedGenreTagIds(genres);
   const isGenreMaxReached = genres.selected.length >= genre.maxCount;
   const genreError = useRegisterError(REGISTER_ERROR_KEY.genre);
@@ -105,6 +105,7 @@ export function GeneralStoryRegisterPanel({
           isMaxSelectionReached={isGenreMaxReached}
           isLoadingTags={isPending}
           hasTagsError={isError}
+          onRetryTags={() => void refetch()}
           disabled={false}
           onTogglePredefinedTag={(id, pressed) =>
             changeGenre({ kind: 'tag', id }, pressed)

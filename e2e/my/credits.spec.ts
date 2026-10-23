@@ -23,7 +23,6 @@ import {
   mockCreditProducts,
   mockMemberSession,
   seedPendingCreditOrder,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -124,7 +123,6 @@ async function prepareMember(
   page: Page,
   options?: { creditBalance?: number; attendedToday?: boolean },
 ): Promise<void> {
-  await skipOnboarding(page);
   await mockMemberSession(page);
   await mockMe(page, options);
   await mockCreditProducts(page);
@@ -150,7 +148,6 @@ function createTransactions(count: number, prefix: string): Transaction[] {
 
 test.describe('이프 충전 (/my/credits)', () => {
   test('게스트는 로그인 페이지로 이동한다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.goto('/my/credits');
 
     await expect(page).toHaveURL(/\/login$/);

@@ -6,13 +6,12 @@ import {
   SERVICE_INFO_TITLE,
 } from '@/features/about/constants';
 
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 test.describe('서비스 안내', () => {
   test('마이의 기타 섹션에서 서비스 안내를 새 탭으로 연다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto('/my');
 
     const serviceInfoLink = page.getByRole('link', {
@@ -61,7 +60,6 @@ test.describe('서비스 안내', () => {
   });
 
   test('약관 및 정책 링크가 각 문서를 새 탭에서 연다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.goto('/about');
 
     for (const item of SERVICE_GUEST_INFO) {
@@ -105,7 +103,6 @@ test.describe('서비스 안내', () => {
   test('로고와 피드백 안내는 링크가 아니고 게스트 안내는 웹 전용임을 밝힌다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto('/about');
 
     await expect(

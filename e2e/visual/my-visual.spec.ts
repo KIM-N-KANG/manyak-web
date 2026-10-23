@@ -16,7 +16,6 @@ import {
   expect,
   mockCreditProducts,
   mockMemberSession,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
@@ -51,8 +50,6 @@ const mockAuthMe = async (page: Page) => {
 
 test.describe('마이 비주얼', () => {
   test('마이 게스트 상태 (MY-MENU)', async ({ page }) => {
-    await skipOnboarding(page);
-
     await page.goto('/my');
 
     await expect(page.getByText('게스트')).toBeVisible();
@@ -62,7 +59,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('마이 회원 상태: 프로필·이프 카드 (MY-MENU)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
 
@@ -75,7 +71,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('이프 충전 구매 탭 (MY-CREDITS)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
     await mockCreditProducts(page);
@@ -92,7 +87,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('이프 충전 무료 충전 탭 (MY-CREDITS)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
 
@@ -109,7 +103,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('이프 충전 내역 탭 (MY-CREDITS)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
     await page.route('**/api/v1/users/me/credits/transactions*', (route) =>
@@ -165,7 +158,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('계정 연동 확인 다이얼로그 (MY-MENU)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
 
@@ -186,7 +178,6 @@ test.describe('마이 비주얼', () => {
   test('계정 연동 실패: 다른 계정에 연결됨 다이얼로그 (MY-MENU)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
     // 연동 결과는 서버가 쿠키로 남기고 마이 페이지가 1회 소비한다(스펙 FE-SCREEN-008).
@@ -212,8 +203,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('피드백 폼 기본 상태 (MY-FEEDBACK)', async ({ page }) => {
-    await skipOnboarding(page);
-
     await page.goto('/my/feedback');
 
     await expect(
@@ -226,7 +215,6 @@ test.describe('마이 비주얼', () => {
   test('친구 초대 회원 상태: 내 코드·공유·등록 (MY-INVITE)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route('**/api/v1/users/me/invite', (route) =>
       route.fulfill({
@@ -259,7 +247,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('회원 탈퇴 확인 기본 상태 (MY-ACCOUNT-DELETION)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
 
     await page.goto('/my/account-deletion');
@@ -272,8 +259,6 @@ test.describe('마이 비주얼', () => {
   });
 
   test('서비스 안내 상단 (MY-INFO)', async ({ page }) => {
-    await skipOnboarding(page);
-
     await page.goto('/about');
 
     await expect(
@@ -295,7 +280,6 @@ test.describe('마이 다크 모드 비주얼', () => {
   test.use({ colorScheme: 'dark' });
 
   test('마이 회원 상태 (다크)', async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page, { nickname: '배고픈 송아지' });
     await mockAuthMe(page);
 

@@ -1,7 +1,7 @@
 import { APP_PATH } from '@/constants/app-path';
 import { NOT_FOUND_COPY } from '@/constants/not-found';
 
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 const HOME_FILLED_PATH =
   'M12.907 1.36366C12.3115 1.21521 11.6886 1.21521 11.093 1.36366';
@@ -13,9 +13,7 @@ const USER_FILLED_PATH =
   'M20 17.5C20 19.9853 20 22 12 22C4 22 4 19.9853 4 17.5';
 
 // 하단 탭으로 홈↔채팅↔제작↔마이를 오간다(US-8-1).
-// 온보딩 다이얼로그가 탭을 가리므로 스킵 상태에서 검증한다.
 test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page }) => {
-  await skipOnboarding(page);
   await page.goto('/');
 
   const bottomNav = page.getByRole('navigation', { name: '하단 네비게이션' });
@@ -121,8 +119,6 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
 test('없는 경로는 홈 링크만 두고, 앱 안에서 이동해 왔으면 이전 화면으로 버튼도 둔다 (KNK-1613)', async ({
   page,
 }) => {
-  await skipOnboarding(page);
-
   await page.goto('/no-such-page');
   await expect(page.getByText(NOT_FOUND_COPY.title)).toBeVisible();
   // 홈 링크는 Button이 Link를 감싸 role이 button이다.

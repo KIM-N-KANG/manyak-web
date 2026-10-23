@@ -13,6 +13,8 @@ import { calcChatTurnCost } from '../../utils/chat-turn-cost';
 type ChatTurnCreditCostProps = {
   /** 고른 채팅 모델의 턴 이프 비용(모르면 undefined) */
   turnCost: number | undefined;
+  /** 그 모델의 코드. 턴 체험은 체험 모델에만 적용된다 */
+  modelCode: string | undefined;
   /** 실시간 이미지 비용을 턴 비용에 합산해 보일지 여부 */
   withRealtimeImage?: boolean;
   className?: string;
@@ -20,6 +22,7 @@ type ChatTurnCreditCostProps = {
 
 export function ChatTurnCreditCost({
   turnCost,
+  modelCode,
   withRealtimeImage = false,
   className,
 }: ChatTurnCreditCostProps) {
@@ -32,6 +35,7 @@ export function ChatTurnCreditCost({
 
   const { full, discounted } = calcChatTurnCost({
     turnCost,
+    modelCode,
     chatImageCost: policy?.chatImageCost,
     withRealtimeImage,
     turnRemaining,

@@ -215,6 +215,7 @@ export function useStoryTagStep({
     needsGenreReselection: genreSelection.needsGenreReselection,
     showGenreSkeleton,
     hasGenreCatalogError: genreCatalog.isError,
+    retryGenreCatalog: () => void genreCatalog.refetch(),
     protagonist: characterInputs.protagonist,
     supportingCharacters: characterInputs.supportingCharacters,
     canAddSupportingCharacter: characterInputs.canAddSupportingCharacter,

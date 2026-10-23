@@ -2,12 +2,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { HOME_DESCRIPTION, SITE_URL } from '@/constants/site';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
 
-import {
-  expect,
-  mockMemberSession,
-  skipOnboarding,
-  test,
-} from '../fixtures/test';
+import { expect, mockMemberSession, test } from '../fixtures/test';
 
 test.skip(
   process.env.E2E_SEO !== '1',
@@ -44,7 +39,6 @@ test('홈의 첫 HTML에 설명, canonical, 제목이 있는 상세 링크를 �
       `<a[^>]+href="${APP_PATH.STORY_DETAIL(storyId)}"[^>]*>${title}</a>`,
     ),
   );
-  await skipOnboarding(page);
   await page.goto(APP_PATH.MAIN.STORIES);
 
   const card = page.locator('article').filter({

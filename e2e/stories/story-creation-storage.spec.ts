@@ -16,7 +16,6 @@ import {
   mockGuestConsents,
   mockGuestSession,
   mockMemberSession,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 import { waitForToastToClose } from '../fixtures/toast';
@@ -40,7 +39,6 @@ const draft: KeywordDraftRecord = {
 
 // 실제 IndexedDB와 Dexie의 탭 간 구독을 사용한다. API만 fixture로 대체한다.
 test.beforeEach(async ({ page }) => {
-  await skipOnboarding(page);
   await mockMemberSession(page);
 });
 
@@ -83,7 +81,6 @@ test('구 localStorage 초안을 한 번 이관하고 다른 탭의 삭제를 �
 
   await mockApi(other);
   await mockMemberSession(other);
-  await skipOnboarding(other);
   await other.goto(APP_PATH.MAIN.STUDIO);
   await expect(
     other.getByRole('article', {
@@ -216,7 +213,6 @@ test('다른 탭에서 세션이 종료되면 이전 편집기의 저장을 막�
   const other = await context.newPage();
 
   await mockApi(other);
-  await skipOnboarding(other);
   await other.goto(APP_PATH.MAIN.STUDIO);
   await other.evaluate(
     (key) => localStorage.setItem(key, String(Date.now())),

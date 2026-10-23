@@ -14,6 +14,7 @@ import {
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
   CHAT_SETTINGS_COPY,
   CHAT_STREAM_LOADING_COPY,
+  CHAT_TURN_COST_INFO_COPY,
   REALTIME_IMAGE_NUDGE_DELAY_MS,
 } from '@/features/chats/room/constants';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
@@ -31,12 +32,10 @@ import {
   mockTrials,
   seedChatIds,
   skipChatTour,
-  skipOnboarding,
   test,
   TRIALS_FIXTURE,
 } from '../fixtures/test';
 
-// 채팅 화면(/chats/[id])은 (chat) 레이아웃이라 온보딩 게이팅이 없다.
 // 상세: GET /api/v1/chats/{id}, 이어쓰기: POST /api/v1/chats/{id}/turns/stream (text/event-stream).
 // SSE 포맷: started → (token | character_image)×N → completed | error
 const CHAT_DETAIL = '**/api/v1/chats/c1';
@@ -155,7 +154,7 @@ test.describe('채팅 스트리밍', () => {
       formatCreditAmount(chatTurnCost + chatImageCost),
     );
     await expect(
-      badge.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(page.getByText(/잔여 체험 횟수/)).toHaveCount(0);
 
@@ -318,9 +317,9 @@ test.describe('채팅 스트리밍', () => {
     await expect(badge).toHaveCSS('font-size', '12px');
     await expect(badge).toHaveClass(/text-foreground-secondary/);
     await expect(badge.locator('s')).toHaveCount(0);
-    await expect(badge.locator('xpath=..')).toHaveCSS('column-gap', '8px');
+    await expect(badge.locator('xpath=../..')).toHaveCSS('column-gap', '4px');
     await expect(
-      badge.locator('xpath=following-sibling::*[1]'),
+      badge.locator('xpath=../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
     await expect(sendButton).toBeVisible();
 
@@ -414,23 +413,23 @@ test.describe('채팅 스트리밍', () => {
     );
 
     await modelButton(page).click();
-    await expect(sheet.getByText(CHAT_MODEL_COPY.description)).toBeVisible();
+    await expect(
+      sheet.getByRole('radiogroup', { name: CHAT_MODEL_COPY.group }),
+    ).toBeVisible();
     await expect(liteOption).toBeChecked();
     await expect(auroraOption).not.toBeChecked();
     await expect(
       sheet.getByText(CHAT_MODEL_COPY.optionDescriptions.AURORA!),
     ).toBeVisible();
-    // 모델별 비용은 실시간 이미지 비용을 합산한 한 턴 비용이고, 고른 칸 배지만 프라이머리 글씨다.
+    // 모델별 비용은 실시간 이미지 비용을 빼고 그 모델의 턴 비용만 보이며, 고른 칸 배지만 프라이머리 글씨다.
     await expect(modelCostBadge(page, LITE_MODEL.name)).toHaveText(
-      buildChatTurnCreditCostLabel(
-        formatCreditAmount(LITE_MODEL.turnCost + chatImageCost),
-      ),
+      buildChatTurnCreditCostLabel(formatCreditAmount(LITE_MODEL.turnCost)),
     );
     await expect(modelCostBadge(page, LITE_MODEL.name)).toHaveClass(
       /text-primary/,
     );
     await expect(modelCostBadge(page, AURORA_MODEL.name)).toHaveText(
-      auroraCost,
+      buildChatTurnCreditCostLabel(formatCreditAmount(AURORA_MODEL.turnCost)),
     );
     await expect(modelCostBadge(page, AURORA_MODEL.name)).toHaveClass(
       /text-foreground-secondary/,
@@ -443,7 +442,7 @@ test.describe('채팅 스트리밍', () => {
     await expect(
       page
         .getByText(auroraCost, { exact: true })
-        .locator('xpath=../following-sibling::*[1]'),
+        .locator('xpath=../../following-sibling::*[1]'),
     ).toHaveAttribute('data-tour', 'send');
 
     // 모델은 서버가 채팅마다 저장하므로 다시 들어오면 상세가 준 모델을 보인다.
@@ -457,6 +456,160 @@ test.describe('채팅 스트리밍', () => {
     await sheet.getByText(AURORA_MODEL.name).click();
     await expect(sheet).toBeHidden();
     expect(changes).toHaveLength(1);
+  });
+
+  test('채팅 응답 시트의 긴 응답 스위치는 채팅 상세 값을 보이고, 켜면 채팅 설정 변경을 요청하며 시트가 열린 채 남고 다시 들어와도 유지된다', async ({
+    page,
+  }) => {
+    let longResponse = false;
+    const changes: unknown[] = [];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'PATCH') {
+        const body = route.request().postDataJSON() as {
+          longResponse: boolean;
+        };
+
+        changes.push(body);
+        longResponse = body.longResponse;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: 'c1',
+            model: LITE_MODEL.code,
+            longResponse,
+          }),
+        });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...chatDetail(), longResponse }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await modelButton(page).click();
+
+    const longResponseSwitch = modelSheet(page).getByRole('switch', {
+      name: CHAT_MODEL_COPY.responseLength.label,
+    });
+
+    await expect(
+      modelSheet(page).getByText(CHAT_MODEL_COPY.responseLength.description),
+    ).toBeVisible();
+    await expect(longResponseSwitch).not.toBeChecked();
+    await longResponseSwitch.click();
+    await expect(longResponseSwitch).toBeChecked();
+    await expect(modelSheet(page)).toBeVisible();
+    await expect.poll(() => changes).toEqual([{ longResponse: true }]);
+
+    // 긴 응답은 서버가 채팅마다 저장하므로 다시 들어오면 상세가 준 값을 보인다.
+    await page.reload();
+    await modelButton(page).click();
+    await expect(longResponseSwitch).toBeChecked();
+  });
+
+  test('긴 응답 설정 변경이 실패하면 스위치를 되돌리고 실패를 알린다', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      if (route.request().method() === 'PATCH') {
+        await route.fulfill({ status: 500, body: '' });
+
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...chatDetail(), longResponse: false }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await modelButton(page).click();
+
+    const longResponseSwitch = modelSheet(page).getByRole('switch', {
+      name: CHAT_MODEL_COPY.responseLength.label,
+    });
+
+    await longResponseSwitch.click();
+    await expect(
+      page.getByText(TOAST_MESSAGE.CHAT_LONG_RESPONSE_CHANGE_FAILED),
+    ).toBeVisible();
+    await expect(longResponseSwitch).not.toBeChecked();
+  });
+
+  test('전송 버튼 옆 비용 버튼을 누르면 항목별 비용과 긴 응답을 팝오버로 보이고, 턴 체험은 라이트에만 적용한다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockTrials(page, {
+      chatTurn: { used: 2, limit: 5 },
+      chatImage: { used: 5, limit: 5 },
+    });
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...chatDetail(undefined, undefined, AURORA_MODEL.code),
+          longResponse: true,
+        }),
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page
+      .getByRole('button', { name: CHAT_TURN_COST_INFO_COPY.trigger })
+      .click();
+
+    const popover = page.getByRole('dialog', {
+      name: CHAT_TURN_COST_INFO_COPY.title,
+    });
+
+    // 턴 체험은 라이트에만 적용되므로 오로라는 체험이 남아도 정가, 이미지 체험은 다 써서 정가다.
+    await expect(popover).toContainText(
+      buildChatTurnCreditCostLabel(
+        formatCreditAmount(
+          AURORA_MODEL.turnCost + CREDIT_POLICY_FIXTURE.chatImageCost,
+        ),
+      ),
+    );
+    await expect(
+      popover.getByText(
+        CHAT_TURN_COST_INFO_COPY.buildLongResponseDetail(AURORA_MODEL.name),
+      ),
+    ).toBeVisible();
+    // 적용되지 않는 턴 체험과 다 쓴 이미지 체험은 체험 줄 없이 항목 이름만 남는다.
+    await expect(
+      popover.getByText(CHAT_TURN_COST_INFO_COPY.buildTrialRemaining(3)),
+    ).toHaveCount(0);
+    await expect(
+      popover.locator('dt', {
+        hasText: CHAT_TURN_COST_INFO_COPY.realtimeImage,
+      }),
+    ).toHaveText(CHAT_TURN_COST_INFO_COPY.realtimeImage);
+
+    // 모델 시트에서도 라이트만 턴 체험을 적용하고 오로라는 취소선 없이 정가를 보인다.
+    await page.keyboard.press('Escape');
+    await modelButton(page).click();
+
+    const liteBadge = modelCostBadge(page, LITE_MODEL.name);
+    const auroraBadge = modelCostBadge(page, AURORA_MODEL.name);
+
+    await expect(liteBadge.locator('s')).toHaveText(
+      formatCreditAmount(LITE_MODEL.turnCost),
+    );
+    await expect(auroraBadge).toHaveText(
+      buildChatTurnCreditCostLabel(formatCreditAmount(AURORA_MODEL.turnCost)),
+    );
+    await expect(auroraBadge.locator('s')).toHaveCount(0);
   });
 
   test('회원의 모델 변경이 실패하면 이전 모델로 되돌리고 실패를 알린다', async ({
@@ -1382,7 +1535,6 @@ test.describe('생성 이어받기 (KNK-1691)', () => {
   }) => {
     let detailCallCount = 0;
 
-    await skipOnboarding(page);
     await page.route('**/api/v1/users/me/chats**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -1752,7 +1904,6 @@ test.describe('채팅 삭제', () => {
   test('메뉴 드로어에서 채팅을 삭제하면 완료 안내가 뜨고 목록으로 돌아간다 (US-5-3)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await seedChatIds(page, ['c1']);
     await page.route(CHAT_DETAIL, async (route) => {
       if (route.request().method() === 'DELETE') {
@@ -1782,7 +1933,6 @@ test.describe('채팅 삭제', () => {
   test('메뉴 드로어와 설정 시트는 뒤로가기로 닫히고 채팅방에 남는다 (KNK-1613)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -1812,7 +1962,6 @@ test.describe('채팅 삭제', () => {
   test('삭제 확인 다이얼로그는 뒤로가기로 닫히고 삭제 중에는 뒤로가기를 무시한다 (KNK-1613)', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await seedChatIds(page, ['c1']);
     await page.route(CHAT_DETAIL, async (route) => {
       if (route.request().method() === 'DELETE') {
@@ -1856,7 +2005,6 @@ test.describe('채팅 삭제', () => {
   test('로그인 상태에서 채팅을 삭제하면 목록에서 사라진다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
 
     let deleted = false;
@@ -2747,7 +2895,6 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
   test('회원은 옵션 메뉴의 신고하기로 참조 스토리를 신고할 수 있다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
@@ -2791,7 +2938,6 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
   });
 
   test('게스트의 메뉴 드로어에는 신고하기가 없다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -2817,7 +2963,6 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
   test('참조 스토리가 삭제된 채팅은 헤더에 삭제된 스토리를 보여주고 신고할 수 없다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({

@@ -12,7 +12,6 @@ import {
   expect,
   mockPublicStories,
   seedStoryIds,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 import {
@@ -206,7 +205,6 @@ test.describe('스토리 비주얼', () => {
     test(`제작 목록 완성 대기 (${hasExistingStory ? '기존 목록' : '첫 스토리'})`, async ({
       page,
     }) => {
-      await skipOnboarding(page);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await seedStoryIds(page, hasExistingStory ? ['s1'] : []);
       await seedStoryCompletionRequests(page, [
@@ -315,8 +313,6 @@ test.describe('스토리 비주얼', () => {
   });
 
   test('제작 목록 빈 상태 (STORY-LIST)', async ({ page }) => {
-    await skipOnboarding(page);
-
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     await expect(page.getByText('아직 만든 스토리가 없어요')).toBeVisible();
@@ -468,7 +464,6 @@ test.describe('스토리 오버레이 비주얼', () => {
   });
 
   test('제작 카드 옵션 시트 (STORY-LIST)', async ({ page }) => {
-    await skipOnboarding(page);
     await seedStoryIds(page, ['s1']);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({

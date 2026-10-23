@@ -1,8 +1,7 @@
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 
 test.describe('로그인 화면', () => {
   test('카카오·Google 로그인 버튼을 세로로 보여준다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.goto('/login');
 
     const kakaoButton = page.getByRole('button', { name: /카카오로 시작하기/ });
@@ -28,7 +27,6 @@ test.describe('로그인 화면', () => {
   });
 
   test('마이의 로그인 버튼이 /login으로 이동한다', async ({ page }) => {
-    await skipOnboarding(page);
     await page.goto('/my');
     await page.getByRole('link', { name: '로그인' }).click();
 
@@ -38,7 +36,6 @@ test.describe('로그인 화면', () => {
   test('뒤로 갈 앱 히스토리가 없으면 스토리 목록으로 폴백한다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     // 딥링크·OAuth 리다이렉트 등으로 뒤로 갈 앱 히스토리가 없는 진입을 재현(직접 /login 진입)
     await page.goto('/login');
     await page
@@ -51,7 +48,6 @@ test.describe('로그인 화면', () => {
   test('앱 내에서 진입했으면 실제 뒤로가기로 이전 화면에 돌아간다', async ({
     page,
   }) => {
-    await skipOnboarding(page);
     await page.goto('/my');
     await page.getByRole('link', { name: '로그인' }).click();
     await expect(page).toHaveURL('/login');

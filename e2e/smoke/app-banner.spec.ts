@@ -14,7 +14,7 @@ import {
   buildAppIntentUrl,
 } from '@/lib/app-banner';
 
-import { expect, skipOnboarding, test } from '../fixtures/test';
+import { expect, test } from '../fixtures/test';
 import { USER_AGENT } from '../fixtures/user-agents';
 
 /**
@@ -56,10 +56,6 @@ async function startNewVisit(page: Page): Promise<void> {
 }
 
 test.use({ appBanner: true });
-
-test.beforeEach(async ({ page }) => {
-  await skipOnboarding(page);
-});
 
 test.describe('Android 브라우저', () => {
   test.use({ userAgent: USER_AGENT.androidChrome });

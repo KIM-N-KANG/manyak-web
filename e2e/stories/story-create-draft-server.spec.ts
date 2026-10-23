@@ -28,7 +28,6 @@ import {
   expect,
   mockGuestSession,
   mockMemberSession,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
@@ -225,7 +224,6 @@ const resumeFromStudio = async (page: Page) => {
 
 test.describe('간편 제작 임시 저장 서버 보관', () => {
   test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
     await mockMemberSession(page);
     await page.route(TAGS, async (route) => {
       await route.fulfill({ status: 200, json: tags });
@@ -731,7 +729,6 @@ test.describe('간편 제작 임시 저장 서버 보관', () => {
 
 test.describe('간편 제작 임시 저장 기기 안 유지', () => {
   test.beforeEach(async ({ page }) => {
-    await skipOnboarding(page);
     await page.route(TAGS, async (route) => {
       await route.fulfill({ status: 200, json: tags });
     });

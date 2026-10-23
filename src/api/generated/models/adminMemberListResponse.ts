@@ -19,5 +19,5 @@ export interface AdminMemberListResponse {
   chatCount?: number;
   /** @nullable */
   periodChatCount?: number | null;
-  admin?: boolean;
+  isAdmin?: boolean;
 }

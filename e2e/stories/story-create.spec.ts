@@ -4,6 +4,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
+import { TAG_LOAD_RETRY_LABEL } from '@/features/stories/_shared/constants/tag';
 import {
   PENDING_CREATION_REQUEST_STORAGE_KEY,
   STORY_COMPLETION_REQUESTS_STORAGE_KEY,
@@ -28,6 +29,7 @@ import {
 import {
   ART_STYLE_CATALOG_FIXTURE,
   GENRE_CATALOG_FIXTURE,
+  isGenreCatalogUrl,
   mockArtStyleCatalog,
 } from '../fixtures/api-mock';
 import { readCreationStorage } from '../fixtures/storage';
@@ -42,19 +44,17 @@ import {
   mockMemberSession,
   mockTrials,
   skipChatTour,
-  skipOnboarding,
   test,
 } from '../fixtures/test';
 
-// 완성 제출 뒤 돌아오는 제작 탭의 온보딩 게이트와 채팅 화면의 안내 투어가 뜨지 않게 한다.
+// 채팅 화면의 안내 투어가 뜨지 않게 한다.
 // 제작은 회원 전용이라 회원 세션으로 진행하고, 제작 탭 목록은 회원 목록(/users/me/stories)을 쓴다.
 test.beforeEach(async ({ page }) => {
-  await skipOnboarding(page);
   await skipChatTour(page);
   await mockMemberSession(page);
 });
 
-// 스토리 생성 4단계 funnel(/studio/story/simple, (story) 레이아웃이라 온보딩 게이팅 없음).
+// 스토리 생성 4단계 funnel(/studio/story/simple).
 // API 순서: GET /stories/simple/tags → POST /stories/simple/storylines
 //           → POST /stories/simple(제출 직후 /studio 복귀) → 완성 중 카드가 5초마다
 //           GET /creation-requests/{id} → 완성되면 레코드 제거·목록 카드로 전환(채팅 자동 생성 없음)
@@ -185,6 +185,47 @@ test.describe('스토리 생성', () => {
     await expect(validationError).toBeHidden();
     await addButton.click();
     await expect(page.getByRole('button', { name: '타임루프' })).toBeVisible();
+  });
+
+  test('장르와 특징 키워드를 받지 못하면 칩 자리의 다시 시도로 다시 불러온다 (STORY-KEYWORD-07)', async ({
+    page,
+  }) => {
+    let failGenres = true;
+    let failTags = true;
+
+    await page.route(isGenreCatalogUrl, async (route) => {
+      if (failGenres) {
+        await route.fulfill({ status: 500, json: {} });
+
+        return;
+      }
+
+      await route.fallback();
+    });
+    await page.route(TAGS, async (route) => {
+      await route.fulfill(
+        failTags ? { status: 500, json: {} } : { json: tags },
+      );
+    });
+
+    await page.goto(APP_PATH.STUDIO.STORY.SIMPLE);
+
+    const retry = page.getByRole('button', { name: TAG_LOAD_RETRY_LABEL });
+
+    await expect(retry).toBeVisible();
+    failGenres = false;
+    await retry.click();
+    await page.getByRole('button', { name: '판타지', exact: true }).click();
+    await expect(retry).toHaveCount(0);
+
+    await page.getByRole('button', { name: '다음', exact: true }).click();
+    await expect(retry).toBeVisible();
+    failTags = false;
+    await retry.click();
+    await expect(
+      page.getByRole('button', { name: '용감한', exact: true }),
+    ).toBeVisible();
+    await expect(retry).toHaveCount(0);
   });
 
   test('장르는 검색으로 고르고, 대표 밖 장르는 칩 끝에 붙어 해제해도 남으며 요청에는 제공 장르 id만 싣는다 (KNK-1542)', async ({

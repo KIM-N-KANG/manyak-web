@@ -23,5 +23,5 @@ export interface AdminMemberDetailResponse {
   storyCount?: number;
   /** @nullable */
   deletedAt?: string | null;
-  admin?: boolean;
+  isAdmin?: boolean;
 }
