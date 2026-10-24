@@ -7,6 +7,8 @@ import type {
   CreditProductResponse,
   GenerateSimpleStorylinesResponse,
   GenreCatalogResponse,
+  PublicNoticeItemResponse,
+  PublicNoticeResponse,
   PushSettingsResponse,
   PutStoryDraftRequest,
   TrialsResponse,
@@ -817,6 +819,89 @@ export async function mockGenreCatalog(
         ),
         featuredGenres: catalog.featuredGenres,
       },
+    });
+  });
+}
+
+/** 공지 목록(`GET /notices`) 요청. 상세(`/notices/{id}`)와 구분하려고 경로를 정확히 비교한다. */
+export const isNoticesUrl = (url: URL) => url.pathname === '/api/v1/notices';
+
+/** 공지 상세(`GET /notices/{noticeId}`) 요청. */
+export const isNoticeDetailUrl = (url: URL) =>
+  /^\/api\/v1\/notices\/[^/]+$/.test(url.pathname);
+
+/** E2E가 응답할 공지 목록 기본 픽스처. 최신순 두 건이다. */
+export const NOTICES_FIXTURE = [
+  {
+    noticeId: '11111111-1111-4111-8111-111111111111',
+    title: '10월 업데이트 안내: 공지사항이 생겼어요',
+    publishedAt: '2026-10-24T03:00:00Z',
+  },
+  {
+    noticeId: '22222222-2222-4222-8222-222222222222',
+    title: '서비스 점검 안내 (10/20 02:00~04:00)',
+    publishedAt: '2026-10-18T09:00:00Z',
+  },
+] as const satisfies Required<PublicNoticeItemResponse>[];
+
+/** E2E가 응답할 공지 상세 기본 픽스처. 본문에 줄바꿈이 있다. */
+export const NOTICE_DETAIL_FIXTURE = {
+  noticeId: NOTICES_FIXTURE[0].noticeId,
+  title: NOTICES_FIXTURE[0].title,
+  body: '안녕하세요, 마냑입니다.\n\n이제 공지사항에서 새 소식을 확인할 수 있어요.\n감사합니다.',
+  publishedAt: NOTICES_FIXTURE[0].publishedAt,
+  updatedAt: NOTICES_FIXTURE[0].publishedAt,
+} as const satisfies Required<PublicNoticeResponse>;
+
+type NoticesMockPage = {
+  items: PublicNoticeItemResponse[];
+  nextCursor?: string | null;
+};
+
+/**
+ * 공지 목록 조회를 목킹한다. `pages`를 여러 개 넘기면 `cursor` 쿼리가 없는 요청은 첫 페이지,
+ * 있는 요청은 그 커서 값과 같은 키의 페이지를 돌려준다. `status`를 넘기면 그 상태로 실패시킨다.
+ *
+ * @param page 대상 페이지
+ * @param pages 커서 키별 페이지. 첫 페이지 키는 `first`
+ * @param status 응답 상태(기본 200)
+ */
+export async function mockNotices(
+  page: Page,
+  pages: Record<string, NoticesMockPage> = {
+    first: { items: [...NOTICES_FIXTURE], nextCursor: null },
+  },
+  status = 200,
+): Promise<void> {
+  await page.route(isNoticesUrl, async (route) => {
+    const cursor = new URL(route.request().url()).searchParams.get('cursor');
+    const body = pages[cursor ?? 'first'] ?? { items: [], nextCursor: null };
+
+    await route.fulfill({
+      status,
+      contentType: 'application/json',
+      body: status === 200 ? JSON.stringify(body) : '{}',
+    });
+  });
+}
+
+/**
+ * 공지 상세 조회를 목킹한다.
+ *
+ * @param page 대상 페이지
+ * @param notice 응답할 공지(기본 픽스처)
+ * @param status 응답 상태(기본 200). 404면 미게시·삭제 공지를 재현한다
+ */
+export async function mockNoticeDetail(
+  page: Page,
+  notice: PublicNoticeResponse = NOTICE_DETAIL_FIXTURE,
+  status = 200,
+): Promise<void> {
+  await page.route(isNoticeDetailUrl, async (route) => {
+    await route.fulfill({
+      status,
+      contentType: 'application/json',
+      body: status === 200 ? JSON.stringify(notice) : '{}',
     });
   });
 }

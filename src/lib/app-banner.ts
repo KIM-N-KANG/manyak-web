@@ -43,10 +43,26 @@ const ANDROID_MARKET_REFERRER = encodeURIComponent(
 );
 
 /**
- * 앱 열기가 일어나지 않을 때 직접 여는 플레이스토어 주소다. 인스타그램 인앱 브라우저는
- * 앱이 없으면 intent 링크를 `S.browser_fallback_url`까지 무시하고 버리지만 이 주소는 연다.
+ * 앱 열기를 시도한 뒤 실패로 판단하기까지 기다리는 시간(ms)이다. 실패하면 사용자가
+ * 플레이스토어를 기다리는 시간이라 짧게 둔다. 앱이 이보다 늦게 뜨면 플레이스토어가 함께 열린다.
  */
-export const ANDROID_PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${ANDROID_APP_PACKAGE}&referrer=${ANDROID_MARKET_REFERRER}`;
+export const APP_OPEN_FALLBACK_DELAY_MS = 700;
+
+/**
+ * 앱 열기가 일어나지 않을 때 직접 여는 플레이스토어 주소를 만든다. 인스타그램 인앱 브라우저는
+ * 앱이 없으면 intent 링크를 `S.browser_fallback_url`까지 무시하고 버리지만 이 주소는 연다.
+ *
+ * @param referrer 인코딩된 설치 귀속값
+ * @returns 플레이스토어 https 주소
+ */
+export function buildPlayStoreUrl(referrer: string): string {
+  return `https://play.google.com/store/apps/details?id=${ANDROID_APP_PACKAGE}&referrer=${referrer}`;
+}
+
+/** 배너의 앱 열기가 실패했을 때 여는 플레이스토어 주소다. */
+export const ANDROID_PLAY_STORE_URL = buildPlayStoreUrl(
+  ANDROID_MARKET_REFERRER,
+);
 
 /**
  * 배너를 띄우지 않는 경로다. 문서 화면은 Android 앱 WebView가 열어 앱 안에서 앱 열기를
@@ -56,6 +72,7 @@ const EXCLUDED_PATHS: readonly string[] = [
   APP_PATH.ABOUT,
   APP_PATH.TERMS,
   APP_PATH.PRIVACY,
+  APP_PATH.APP,
 ];
 
 /** iOS의 Safari, Chrome 외 브라우저다. 홈 화면 추가 안내가 맞지 않아 뺀다. */
@@ -168,14 +185,53 @@ export function parseStoryDetailId(pathname: string): string | null {
  * 플레이스토어를 연다. 스토리 상세에서는 앱의 그 스토리를, 그 밖에는 앱 홈을 연다.
  *
  * @param pathname 현재 경로
+ * @param referrer 인코딩된 설치 귀속값. 기본은 배너 값
  * @returns intent:// 링크
  */
-export function buildAppIntentUrl(pathname: string): string {
+export function buildAppIntentUrl(
+  pathname: string,
+  referrer: string = ANDROID_MARKET_REFERRER,
+): string {
   const storyId = parseStoryDetailId(pathname);
   const path =
     storyId === null ? APP_PATH.MAIN.STORIES : APP_PATH.STORY_DETAIL(storyId);
 
-  return `intent://${ANDROID_APP_HOST}${path}#Intent;scheme=${ANDROID_APP_SCHEME};package=${ANDROID_APP_PACKAGE};S.market_referrer=${ANDROID_MARKET_REFERRER};end`;
+  return `intent://${ANDROID_APP_HOST}${path}#Intent;scheme=${ANDROID_APP_SCHEME};package=${ANDROID_APP_PACKAGE};S.market_referrer=${referrer};end`;
+}
+
+/**
+ * 외부 브라우저나 앱 전환을 시도한 뒤 대기 시간 안에 문서가 한 번도 숨겨지지 않으면 실패로
+ * 보고 콜백을 부른다. 전환에 성공하면 앱이 백그라운드로 가며 문서가 숨겨지므로, 그 뒤 대기 시간
+ * 안에 돌아와도 실패로 보지 않는다.
+ *
+ * @param onFail 전환에 실패했을 때 부를 함수
+ * @param delayMs 실패로 판단하기까지 기다리는 시간(ms)
+ * @returns 대기를 취소하는 함수
+ */
+export function scheduleEscapeFallback(
+  onFail: () => void,
+  delayMs: number,
+): () => void {
+  let timer = 0;
+
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'hidden') {
+      cancel();
+    }
+  }
+
+  function cancel() {
+    window.clearTimeout(timer);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }
+
+  timer = window.setTimeout(() => {
+    cancel();
+    onFail();
+  }, delayMs);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  return cancel;
 }
 
 /**

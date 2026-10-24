@@ -15,6 +15,8 @@ type MyMenuItemBaseProps = {
   subLabelPending?: boolean;
   /** 오른쪽 끝에 표시하는 현재 상태 문구. */
   trailingText?: string;
+  /** 라벨 바로 오른쪽에 붙는 작은 강조 배지 문구(새 공지 등). 짧은 명사구로 쓴다. */
+  badge?: string;
 };
 
 type MyMenuItemProps = MyMenuItemBaseProps &
@@ -42,6 +44,7 @@ export function MyMenuItem({
   subLabel,
   subLabelPending,
   trailingText,
+  badge,
   href,
   onClick,
   loading,
@@ -56,7 +59,14 @@ export function MyMenuItem({
     <>
       <HugeiconsIcon icon={icon} className="size-5" aria-hidden="true" />
       <span className="flex flex-1 flex-col text-left">
-        {label}
+        <span className="flex items-center gap-2">
+          {label}
+          {badge && (
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs leading-4 font-semibold text-destructive">
+              {badge}
+            </span>
+          )}
+        </span>
         {subLabel && (
           <span
             className={cn(
