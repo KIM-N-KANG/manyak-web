@@ -99,7 +99,7 @@ export function NoticeListScreen() {
       {showSkeleton ? <NoticeListSkeleton /> : null}
 
       {hasNotices ? (
-        <ul className="flex flex-col py-2">
+        <ul className="flex flex-col pb-2">
           {notices.map((notice) => (
             <li key={notice.noticeId}>
               <NoticeRow
@@ -172,7 +172,7 @@ function NoticeRow({ notice, isUnread }: NoticeRowProps) {
 
 function NoticeListSkeleton() {
   return (
-    <ul className="flex flex-col py-2" aria-hidden>
+    <ul className="flex flex-col pb-2" aria-hidden>
       {Array.from({ length: 8 }).map((_, index) => (
         <li key={index} className="flex flex-col gap-2 px-4 py-3">
           <Skeleton

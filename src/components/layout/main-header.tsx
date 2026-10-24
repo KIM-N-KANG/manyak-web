@@ -33,7 +33,7 @@ export function MainHeader() {
       </h1>
       {/* 홈, 채팅, 제작 헤더의 오른쪽 묶음. 게스트는 로그인 버튼 오른쪽에 공지 버튼을 둔다. */}
       {isNoticeTab && (
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1">
           {showLoginButton && (
             <Link
               href={APP_PATH.LOGIN}
