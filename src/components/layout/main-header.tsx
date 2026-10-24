@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import { buttonVariants } from '@/components/ui/button';
 import { APP_PATH } from '@/constants/app-path';
 import { getMainNavigationLabel } from '@/constants/main-navigation';
-import { NoticeHeaderButton } from '@/features/notices/_shared/components/notice-header-button';
+import { NotificationHeaderButton } from '@/features/notifications/_shared/components/notification-header-button';
 import { cn } from '@/lib/utils';
 import { track } from '@/observability/analytics';
 
@@ -31,7 +31,7 @@ export function MainHeader() {
       <h1 className={cn('text-xl font-semibold', isHome && 'sr-only')}>
         {title}
       </h1>
-      {/* 홈, 채팅, 제작 헤더의 오른쪽 묶음. 게스트는 로그인 버튼 오른쪽에 공지 버튼을 둔다. */}
+      {/* 홈, 채팅, 제작 헤더의 오른쪽 묶음. 게스트는 로그인 버튼 오른쪽에 종 버튼(공지사항)을, 회원은 종 버튼(알림함)만 둔다. */}
       {isNoticeTab && (
         <div className="ml-auto flex items-center gap-1">
           {showLoginButton && (
@@ -47,7 +47,7 @@ export function MainHeader() {
               로그인
             </Link>
           )}
-          <NoticeHeaderButton />
+          <NotificationHeaderButton />
         </div>
       )}
     </header>
