@@ -6,11 +6,13 @@
  * OpenAPI spec version: v1
  */
 import type { AnalyticsDay } from './analyticsDay';
+import type { DashboardPlatformCounts } from './dashboardPlatformCounts';
 
 export interface AdminAnalyticsResponse {
   asOf?: string;
   from?: string;
   to?: string;
-  todayActiveUsers?: number;
+  todayActiveUsers?: DashboardPlatformCounts | null;
   daily?: AnalyticsDay[];
+  pendingDates?: string[];
 }

@@ -5,12 +5,8 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { GetAdminPushCampaignsStatus } from './getAdminPushCampaignsStatus';
+import type { AdminCampaignListRequest } from './adminCampaignListRequest';
 
 export type GetAdminPushCampaignsParams = {
-  status?: GetAdminPushCampaignsStatus;
-  page?: number;
-  size?: number;
-  sort?: string;
-  order?: string;
+  query: AdminCampaignListRequest;
 };

@@ -21,6 +21,7 @@ export interface AdminMemberDetailResponse {
   periodChatCount?: number | null;
   creditBalance?: number;
   storyCount?: number;
+  turnCount?: number;
   /** @nullable */
   deletedAt?: string | null;
   isAdmin?: boolean;

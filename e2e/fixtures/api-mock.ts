@@ -835,11 +835,13 @@ export const NOTICES_FIXTURE = [
   {
     noticeId: '11111111-1111-4111-8111-111111111111',
     title: '10월 업데이트 안내: 공지사항이 생겼어요',
+    tag: 'UPDATE',
     publishedAt: '2026-10-24T03:00:00Z',
   },
   {
     noticeId: '22222222-2222-4222-8222-222222222222',
     title: '서비스 점검 안내 (10/20 02:00~04:00)',
+    tag: 'MAINTENANCE',
     publishedAt: '2026-10-18T09:00:00Z',
   },
 ] as const satisfies Required<PublicNoticeItemResponse>[];
@@ -848,6 +850,7 @@ export const NOTICES_FIXTURE = [
 export const NOTICE_DETAIL_FIXTURE = {
   noticeId: NOTICES_FIXTURE[0].noticeId,
   title: NOTICES_FIXTURE[0].title,
+  tag: NOTICES_FIXTURE[0].tag,
   body: '안녕하세요, 마냑입니다.\n\n이제 공지사항에서 새 소식을 확인할 수 있어요.\n감사합니다.',
   publishedAt: NOTICES_FIXTURE[0].publishedAt,
   updatedAt: NOTICES_FIXTURE[0].publishedAt,

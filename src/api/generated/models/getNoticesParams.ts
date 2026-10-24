@@ -5,8 +5,10 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { GetNoticesTag } from './getNoticesTag';
 
 export type GetNoticesParams = {
   limit?: number;
   cursor?: string;
+  tag?: GetNoticesTag;
 };

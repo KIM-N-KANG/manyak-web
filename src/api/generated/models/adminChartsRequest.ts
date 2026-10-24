@@ -5,7 +5,13 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { AdminChartsRequestDays } from './adminChartsRequestDays';
 
 export interface AdminChartsRequest {
-  days?: number;
+  /** @nullable */
+  days?: AdminChartsRequestDays;
+  /** @nullable */
+  from?: string | null;
+  /** @nullable */
+  to?: string | null;
 }

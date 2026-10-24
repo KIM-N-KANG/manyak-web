@@ -5,8 +5,11 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { UpdateNoticeRequestTag } from './updateNoticeRequestTag';
 
 export interface UpdateNoticeRequest {
+  /** @nullable */
+  tag?: UpdateNoticeRequestTag;
   /**
    * @minLength 1
    * @maxLength 100

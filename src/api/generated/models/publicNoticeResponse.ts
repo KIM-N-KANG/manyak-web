@@ -5,10 +5,12 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { PublicNoticeResponseTag } from './publicNoticeResponseTag';
 
 export interface PublicNoticeResponse {
   noticeId?: string;
   title?: string;
+  tag?: PublicNoticeResponseTag;
   body?: string;
   publishedAt?: string;
   updatedAt?: string;
