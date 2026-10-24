@@ -7,6 +7,9 @@ import type {
   CreditProductResponse,
   GenerateSimpleStorylinesResponse,
   GenreCatalogResponse,
+  NotificationItem,
+  NotificationPage,
+  NotificationUnreadCount,
   PublicNoticeItemResponse,
   PublicNoticeResponse,
   PushSettingsResponse,
@@ -835,11 +838,13 @@ export const NOTICES_FIXTURE = [
   {
     noticeId: '11111111-1111-4111-8111-111111111111',
     title: '10월 업데이트 안내: 공지사항이 생겼어요',
+    tag: 'UPDATE',
     publishedAt: '2026-10-24T03:00:00Z',
   },
   {
     noticeId: '22222222-2222-4222-8222-222222222222',
     title: '서비스 점검 안내 (10/20 02:00~04:00)',
+    tag: 'MAINTENANCE',
     publishedAt: '2026-10-18T09:00:00Z',
   },
 ] as const satisfies Required<PublicNoticeItemResponse>[];
@@ -848,6 +853,7 @@ export const NOTICES_FIXTURE = [
 export const NOTICE_DETAIL_FIXTURE = {
   noticeId: NOTICES_FIXTURE[0].noticeId,
   title: NOTICES_FIXTURE[0].title,
+  tag: NOTICES_FIXTURE[0].tag,
   body: '안녕하세요, 마냑입니다.\n\n이제 공지사항에서 새 소식을 확인할 수 있어요.\n감사합니다.',
   publishedAt: NOTICES_FIXTURE[0].publishedAt,
   updatedAt: NOTICES_FIXTURE[0].publishedAt,
@@ -904,4 +910,181 @@ export async function mockNoticeDetail(
       body: status === 200 ? JSON.stringify(notice) : '{}',
     });
   });
+}
+
+/** 알림 목록(`GET /users/me/notifications`) 요청. 읽음·안 읽은 수와 구분하려고 경로를 정확히 비교한다. */
+export const isNotificationsUrl = (url: URL) =>
+  url.pathname === '/api/v1/users/me/notifications';
+
+/** 안 읽은 알림 수(`GET /users/me/notifications/unread-count`) 요청. */
+export const isNotificationUnreadCountUrl = (url: URL) =>
+  url.pathname === '/api/v1/users/me/notifications/unread-count';
+
+/** 한 건 읽음(`POST /users/me/notifications/{id}/read`)과 모두 읽음(`POST .../read-all`) 요청. */
+export const isNotificationReadUrl = (url: URL) =>
+  /^\/api\/v1\/users\/me\/notifications\/(read-all|[^/]+\/read)$/.test(
+    url.pathname,
+  );
+
+/** E2E가 응답할 알림 기본 픽스처. 소식 두 건(공지·이벤트), 활동 두 건(완성·검토)이고 각 분류의 첫 건만 안 읽음이다. */
+export const NOTIFICATIONS_FIXTURE = {
+  NEWS: [
+    {
+      notificationId: 'aaaaaaaa-1111-4111-8111-111111111111',
+      category: 'NEWS',
+      type: 'NOTICE',
+      title: '10월 업데이트 안내: 공지사항이 생겼어요',
+      body: '이제 공지사항에서 새 소식을 확인할 수 있어요.',
+      deepLink:
+        'https://manyak.app/notices/11111111-1111-4111-8111-111111111111',
+      storyId: null,
+      noticeId: '11111111-1111-4111-8111-111111111111',
+      noticeTag: 'UPDATE',
+      createdAt: '2026-10-24T03:00:00Z',
+      readAt: null,
+    },
+    {
+      notificationId: 'aaaaaaaa-2222-4222-8222-222222222222',
+      category: 'NEWS',
+      type: 'PROMOTION',
+      title: '이번 주 추천 스토리',
+      body: '새로 올라온 인기 스토리를 만나 보세요.',
+      deepLink:
+        'https://manyak.app/stories/33333333-3333-4333-8333-333333333333',
+      storyId: '33333333-3333-4333-8333-333333333333',
+      noticeId: null,
+      noticeTag: null,
+      createdAt: '2026-10-20T09:00:00Z',
+      readAt: '2026-10-20T10:00:00Z',
+    },
+  ],
+  ACTIVITY: [
+    {
+      notificationId: 'bbbbbbbb-1111-4111-8111-111111111111',
+      category: 'ACTIVITY',
+      type: 'STORY_COMPLETED',
+      title: '스토리가 완성됐어요',
+      body: '달빛 아래 약속',
+      deepLink:
+        'https://manyak.app/stories/44444444-4444-4444-8444-444444444444',
+      storyId: '44444444-4444-4444-8444-444444444444',
+      noticeId: null,
+      noticeTag: null,
+      createdAt: '2026-10-24T02:00:00Z',
+      readAt: null,
+    },
+    {
+      notificationId: 'bbbbbbbb-2222-4222-8222-222222222222',
+      category: 'ACTIVITY',
+      type: 'STORY_MODERATION_COMPLETED',
+      title: '스토리 검토가 끝났어요',
+      body: '제출한 스토리가 등록됐어요.',
+      deepLink: 'https://manyak.app/studio',
+      storyId: null,
+      noticeId: null,
+      noticeTag: null,
+      createdAt: '2026-10-22T09:00:00Z',
+      readAt: '2026-10-22T09:30:00Z',
+    },
+  ],
+} as const satisfies Record<'NEWS' | 'ACTIVITY', Required<NotificationItem>[]>;
+
+/** 기본 픽스처에 맞는 안 읽은 수. */
+export const NOTIFICATION_UNREAD_FIXTURE = {
+  total: 2,
+  news: 1,
+  activity: 1,
+} as const satisfies Required<NotificationUnreadCount>;
+
+type NotificationsMockPages = Partial<
+  Record<'NEWS' | 'ACTIVITY', Record<string, NotificationPage>>
+>;
+
+/**
+ * 알림 목록 조회를 목킹한다. 분류(`category`)마다 커서 키별 페이지를 넘기며, `cursor` 쿼리가 없는 요청은
+ * `first` 페이지, 있는 요청은 그 커서 값과 같은 키의 페이지를 돌려준다. `status`를 넘기면 그 상태로 실패시킨다.
+ *
+ * @param page 대상 페이지
+ * @param pages 분류별·커서 키별 페이지(기본 픽스처는 분류마다 한 페이지)
+ * @param status 응답 상태(기본 200)
+ */
+export async function mockNotifications(
+  page: Page,
+  pages: NotificationsMockPages = {
+    NEWS: {
+      first: { items: [...NOTIFICATIONS_FIXTURE.NEWS], nextCursor: null },
+    },
+    ACTIVITY: {
+      first: { items: [...NOTIFICATIONS_FIXTURE.ACTIVITY], nextCursor: null },
+    },
+  },
+  status = 200,
+): Promise<void> {
+  await page.route(isNotificationsUrl, async (route) => {
+    const url = new URL(route.request().url());
+    const category = url.searchParams.get('category') as
+      | 'NEWS'
+      | 'ACTIVITY'
+      | null;
+    const cursor = url.searchParams.get('cursor');
+    const body = (category && pages[category]?.[cursor ?? 'first']) ?? {
+      items: [],
+      nextCursor: null,
+    };
+
+    await route.fulfill({
+      status,
+      contentType: 'application/json',
+      body: status === 200 ? JSON.stringify(body) : '{}',
+    });
+  });
+}
+
+/**
+ * 안 읽은 알림 수 조회를 목킹한다. `readCalls`(`mockNotificationReads`가 돌려준 목록)에 읽음 요청이 쌓인 뒤의
+ * 조회는 `afterRead`로 바뀐다.
+ *
+ * @param page 대상 페이지
+ * @param counts 처음 응답(기본은 픽스처에 맞는 2·1·1)
+ * @param readCalls 읽음 요청 기록. 넘기지 않으면 항상 `counts`를 돌려준다
+ * @param afterRead 읽음 요청 뒤 응답(기본은 전부 0)
+ */
+export async function mockNotificationUnreadCount(
+  page: Page,
+  counts: Required<NotificationUnreadCount> = NOTIFICATION_UNREAD_FIXTURE,
+  readCalls: readonly string[] = [],
+  afterRead: Required<NotificationUnreadCount> = {
+    total: 0,
+    news: 0,
+    activity: 0,
+  },
+): Promise<void> {
+  await page.route(isNotificationUnreadCountUrl, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(readCalls.length > 0 ? afterRead : counts),
+    });
+  });
+}
+
+/**
+ * 읽음 요청(한 건·모두)을 목킹하고 받은 요청 경로를 모은다. `status`를 넘기면 그 상태로 실패시킨다.
+ *
+ * @param page 대상 페이지
+ * @param status 응답 상태(기본 204)
+ * @returns 받은 읽음 요청의 `pathname` 목록(호출 순)
+ */
+export async function mockNotificationReads(
+  page: Page,
+  status = 204,
+): Promise<string[]> {
+  const calls: string[] = [];
+
+  await page.route(isNotificationReadUrl, async (route) => {
+    calls.push(new URL(route.request().url()).pathname);
+    await route.fulfill({ status });
+  });
+
+  return calls;
 }

@@ -18,6 +18,7 @@ import { useRefreshActiveQueries } from '@/hooks/use-refresh-active-queries';
 import { formatDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
+import { NoticeTagBadge } from '../../_shared/components/notice-tag-badge';
 import { NOTICE_COPY } from '../../_shared/constants';
 import {
   isNoticeUnread,
@@ -26,7 +27,7 @@ import {
 import { useNotices } from '../hooks/use-notices';
 
 /**
- * 공지사항 목록. 줄마다 제목과 게시일을 두고 게시 30일 안인데 아직 열지 않은 공지에는 빨간 점을 단다.
+ * 공지사항 목록. 줄마다 태그 배지, 제목, 게시일을 두고 게시 30일 안인데 아직 열지 않은 공지에는 빨간 점을 단다.
  * 읽음은 상세를 열 때 기록되므로 목록만 봐서는 점이 사라지지 않고, 상세에서 돌아오면 그 줄의 점만 꺼진다.
  */
 export function NoticeListScreen() {
@@ -155,7 +156,8 @@ function NoticeRow({ notice, isUnread }: NoticeRowProps) {
   return (
     <Link
       href={APP_PATH.NOTICE_DETAIL(notice.noticeId)}
-      className="flex flex-col gap-1 px-4 py-3">
+      className="flex flex-col gap-1 px-4 py-2">
+      <NoticeTagBadge tag={notice.tag} className="mb-0.5" />
       <p
         className={cn(
           'line-clamp-2 leading-6',
@@ -184,7 +186,8 @@ function NoticeListSkeleton() {
   return (
     <ul className="flex flex-col pb-2" aria-hidden>
       {Array.from({ length: 8 }).map((_, index) => (
-        <li key={index} className="flex flex-col gap-2 px-4 py-3">
+        <li key={index} className="flex flex-col gap-2 px-4 py-2">
+          <Skeleton className="h-5 w-14 rounded-4xl" />
           <Skeleton
             className={cn('h-5', index % 3 === 0 ? 'w-4/5' : 'w-3/5')}
           />

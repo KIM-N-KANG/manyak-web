@@ -15,6 +15,8 @@ export const APP_PATH = {
   /** 공지 게시 푸시의 딥링크(`https://manyak.app/notices/{noticeId}`)와 같은 경로다. */
   NOTICES: '/notices',
   NOTICE_DETAIL: (noticeId: string) => `/notices/${noticeId}`,
+  /** 회원 알림함. 받은 알림 내역을 소식·활동으로 나눠 본다. */
+  NOTIFICATIONS: '/notifications',
   MY_ACCOUNT_DELETION: '/my/account-deletion',
   MY_CREDITS: '/my/credits',
   /** 그로블 결제창의 이동 페이지·진입 페이지로 등록하는 복귀 화면이다. */

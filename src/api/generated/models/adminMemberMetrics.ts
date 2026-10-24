@@ -8,5 +8,7 @@
 
 export interface AdminMemberMetrics {
   total?: number;
+  active?: number;
+  withdrawn?: number;
   joinedToday?: number;
 }

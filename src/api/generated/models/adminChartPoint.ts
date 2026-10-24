@@ -11,4 +11,8 @@ export interface AdminChartPoint {
   label?: string;
   value?: number;
   link?: AdminChartLink;
+  /** @nullable */
+  chats?: number | null;
+  /** @nullable */
+  totalTurns?: number | null;
 }

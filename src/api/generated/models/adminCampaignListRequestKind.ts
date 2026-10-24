@@ -9,11 +9,11 @@
 /**
  * @nullable
  */
-export type PublishNoticeRequestNotificationKind =
-  | (typeof PublishNoticeRequestNotificationKind)[keyof typeof PublishNoticeRequestNotificationKind]
+export type AdminCampaignListRequestKind =
+  | (typeof AdminCampaignListRequestKind)[keyof typeof AdminCampaignListRequestKind]
   | null;
 
-export const PublishNoticeRequestNotificationKind = {
+export const AdminCampaignListRequestKind = {
   SERVICE: 'SERVICE',
   MARKETING: 'MARKETING',
 } as const;

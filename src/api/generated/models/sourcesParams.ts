@@ -6,6 +6,8 @@
  * OpenAPI spec version: v1
  */
 
-export type AnalyticsParams = {
-  days?: number;
+export type SourcesParams = {
+  from?: string;
+  to?: string;
+  days?: string;
 };

@@ -873,7 +873,8 @@ export function GeneralStoryCreateForm({
             ? GENERAL_STORY_EDIT_COPY.title
             : GENERAL_STORY_CREATE_COPY.title}
         </h1>
-        <div className="ml-auto flex items-center gap-1">
+        {/* 닫기 아이콘 글리프를 다른 헤더와 같은 오른쪽 16px에 맞추려고 버튼 여백만큼 당긴다. */}
+        <div className="-mr-2.5 ml-auto flex items-center gap-1">
           {!edit && (
             <DraftSaveButton
               isSaving={isSaving}

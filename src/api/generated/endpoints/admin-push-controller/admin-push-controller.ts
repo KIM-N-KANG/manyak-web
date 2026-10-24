@@ -389,7 +389,7 @@ export type getAdminPushCampaignsResponseSuccess =
     headers: Headers;
   };
 export const getGetAdminPushCampaignsUrl = (
-  params?: GetAdminPushCampaignsParams,
+  params: GetAdminPushCampaignsParams,
 ) => {
   const normalizedParams = new URLSearchParams();
 
@@ -407,7 +407,7 @@ export const getGetAdminPushCampaignsUrl = (
 };
 
 export const getAdminPushCampaigns = async (
-  params?: GetAdminPushCampaignsParams,
+  params: GetAdminPushCampaignsParams,
   options?: RequestInit,
 ): Promise<getAdminPushCampaignsResponseSuccess> => {
   return customInstance<getAdminPushCampaignsResponseSuccess>(
@@ -429,7 +429,7 @@ export const getGetAdminPushCampaignsQueryOptions = <
   TData = Awaited<ReturnType<typeof getAdminPushCampaigns>>,
   TError = ErrorType<unknown>,
 >(
-  params?: GetAdminPushCampaignsParams,
+  params: GetAdminPushCampaignsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -467,7 +467,7 @@ export function useGetAdminPushCampaigns<
   TData = Awaited<ReturnType<typeof getAdminPushCampaigns>>,
   TError = ErrorType<unknown>,
 >(
-  params: undefined | GetAdminPushCampaignsParams,
+  params: GetAdminPushCampaignsParams,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -494,7 +494,7 @@ export function useGetAdminPushCampaigns<
   TData = Awaited<ReturnType<typeof getAdminPushCampaigns>>,
   TError = ErrorType<unknown>,
 >(
-  params?: GetAdminPushCampaignsParams,
+  params: GetAdminPushCampaignsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -521,7 +521,7 @@ export function useGetAdminPushCampaigns<
   TData = Awaited<ReturnType<typeof getAdminPushCampaigns>>,
   TError = ErrorType<unknown>,
 >(
-  params?: GetAdminPushCampaignsParams,
+  params: GetAdminPushCampaignsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -541,7 +541,7 @@ export function useGetAdminPushCampaigns<
   TData = Awaited<ReturnType<typeof getAdminPushCampaigns>>,
   TError = ErrorType<unknown>,
 >(
-  params?: GetAdminPushCampaignsParams,
+  params: GetAdminPushCampaignsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<

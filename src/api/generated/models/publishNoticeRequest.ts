@@ -5,12 +5,8 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { PublishNoticeRequestNotificationKind } from './publishNoticeRequestNotificationKind';
 
 export interface PublishNoticeRequest {
-  notify?: boolean;
-  /** @nullable */
-  notificationKind?: PublishNoticeRequestNotificationKind;
   /**
    * @minLength 0
    * @maxLength 500

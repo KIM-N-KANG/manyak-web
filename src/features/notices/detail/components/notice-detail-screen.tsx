@@ -14,6 +14,7 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { FetchError } from '@/lib/custom-fetch';
 import { formatDate } from '@/lib/format-date';
 
+import { NoticeTagBadge } from '../../_shared/components/notice-tag-badge';
 import { NOTICE_COPY } from '../../_shared/constants';
 import { markNoticeRead } from '../../_shared/utils/notice-read-storage';
 
@@ -22,7 +23,7 @@ type NoticeDetailScreenProps = {
 };
 
 /**
- * 공지 상세. 제목, 게시일(고쳐 썼으면 수정일), 평문 본문을 줄바꿈만 살려 보여 준다.
+ * 공지 상세. 태그 배지, 제목, 게시일(고쳐 썼으면 수정일), 평문 본문을 줄바꿈만 살려 보여 준다.
  * 공지를 받으면 읽은 것으로 기록해 헤더 점과 목록 줄의 점을 끈다. 푸시 딥링크로 바로 들어와도 같다.
  */
 export function NoticeDetailScreen({ noticeId }: NoticeDetailScreenProps) {
@@ -70,6 +71,7 @@ export function NoticeDetailScreen({ noticeId }: NoticeDetailScreenProps) {
       {notice ? (
         <article className="flex flex-col gap-5 px-4 pt-4 pb-8">
           <header className="flex flex-col gap-2">
+            <NoticeTagBadge tag={notice.tag} className="mb-1 self-start" />
             <h1 className="text-xl leading-snug font-semibold break-keep">
               {notice.title}
             </h1>
@@ -120,6 +122,7 @@ function NoticeDetailSkeleton() {
   return (
     <div className="flex flex-col gap-5 px-4 pt-4" aria-hidden>
       <div className="flex flex-col gap-2">
+        <Skeleton className="h-5 w-14 rounded-4xl" />
         <Skeleton className="h-7 w-4/5" />
         <Skeleton className="h-4 w-28" />
       </div>

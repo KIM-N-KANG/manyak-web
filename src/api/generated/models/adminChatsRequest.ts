@@ -50,7 +50,7 @@ export interface AdminChatsRequest {
   startedAs?: string | null;
   /**
    * @minimum 0
-   * @maximum 10
+   * @maximum 12
    * @nullable
    */
   turnBucket?: number | null;
