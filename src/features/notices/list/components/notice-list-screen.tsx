@@ -7,12 +7,14 @@ import Link from 'next/link';
 import type { PublicNoticeItemResponse } from '@/api/generated/models';
 import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import { RetryListStatus } from '@/components/common/retry-list-status';
+import { PullToRefresh } from '@/components/motion/pull-to-refresh';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { APP_PATH } from '@/constants/app-path';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
+import { useRefreshActiveQueries } from '@/hooks/use-refresh-active-queries';
 import { formatDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +35,7 @@ export function NoticeListScreen() {
     null,
   );
   const readIds = useNoticeReadIds();
+  const refreshActiveQueries = useRefreshActiveQueries();
 
   const {
     notices,
@@ -93,43 +96,50 @@ export function NoticeListScreen() {
   }
 
   return (
-    <main
-      ref={setScrollElement}
-      className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain">
-      {showSkeleton ? <NoticeListSkeleton /> : null}
+    // 당기면 첫 페이지부터 다시 읽는다. 무한 목록 재조회는 받아 둔 페이지를 순서대로 다시 받는다.
+    <main className="flex min-h-0 flex-1 flex-col">
+      <PullToRefresh
+        ref={setScrollElement}
+        onRefresh={refreshActiveQueries}
+        className="h-full scroll-fade-b"
+        contentClassName="flex flex-col">
+        {showSkeleton ? <NoticeListSkeleton /> : null}
 
-      {hasNotices ? (
-        <ul className="flex flex-col pb-2">
-          {notices.map((notice) => (
-            <li key={notice.noticeId}>
-              <NoticeRow
-                notice={notice}
-                isUnread={isNoticeUnread(notice, readIds)}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : null}
+        {hasNotices ? (
+          <ul className="flex flex-col pb-2">
+            {notices.map((notice) => (
+              <li key={notice.noticeId}>
+                <NoticeRow
+                  notice={notice}
+                  isUnread={isNoticeUnread(notice, readIds)}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
-      {isFetchingNextPage ? (
-        <div className="flex justify-center py-4">
-          <Spinner aria-label={NOTICE_COPY.loadingMore} />
-        </div>
-      ) : null}
+        {isFetchingNextPage ? (
+          <div className="flex justify-center py-4">
+            <Spinner aria-label={NOTICE_COPY.loadingMore} />
+          </div>
+        ) : null}
 
-      {isFetchNextPageError && !isFetchingNextPage ? (
-        <div className="flex justify-center py-4">
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={() => void fetchNextPage()}>
-            {NOTICE_COPY.retry}
-          </Button>
-        </div>
-      ) : null}
+        {isFetchNextPageError && !isFetchingNextPage ? (
+          <div className="flex justify-center py-4">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => void fetchNextPage()}>
+              {NOTICE_COPY.retry}
+            </Button>
+          </div>
+        ) : null}
 
-      {hasNextPage ? <div ref={setSentinelElement} aria-hidden="true" /> : null}
+        {hasNextPage ? (
+          <div ref={setSentinelElement} aria-hidden="true" />
+        ) : null}
+      </PullToRefresh>
     </main>
   );
 }
