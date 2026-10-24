@@ -20,19 +20,25 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
-import type { AdminAnalyticsResponse, AnalyticsParams } from '../../models';
+import type {
+  AdminAnalyticsResponse,
+  GetAdminDashboardAnalyticsParams,
+} from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type analyticsResponse200 = {
+export type getAdminDashboardAnalyticsResponse200 = {
   data: AdminAnalyticsResponse;
   status: 200;
 };
 
-export type analyticsResponseSuccess = analyticsResponse200 & {
-  headers: Headers;
-};
-export const getAnalyticsUrl = (params?: AnalyticsParams) => {
+export type getAdminDashboardAnalyticsResponseSuccess =
+  getAdminDashboardAnalyticsResponse200 & {
+    headers: Headers;
+  };
+export const getGetAdminDashboardAnalyticsUrl = (
+  params: GetAdminDashboardAnalyticsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -48,69 +54,84 @@ export const getAnalyticsUrl = (params?: AnalyticsParams) => {
     : `/api/v1/admin/dashboard/analytics`;
 };
 
-export const analytics = async (
-  params?: AnalyticsParams,
+export const getAdminDashboardAnalytics = async (
+  params: GetAdminDashboardAnalyticsParams,
   options?: RequestInit,
-): Promise<analyticsResponseSuccess> => {
-  return customInstance<analyticsResponseSuccess>(getAnalyticsUrl(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getAdminDashboardAnalyticsResponseSuccess> => {
+  return customInstance<getAdminDashboardAnalyticsResponseSuccess>(
+    getGetAdminDashboardAnalyticsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getAnalyticsQueryKey = (params?: AnalyticsParams) => {
+export const getGetAdminDashboardAnalyticsQueryKey = (
+  params?: GetAdminDashboardAnalyticsParams,
+) => {
   return [
     `/api/v1/admin/dashboard/analytics`,
     ...(params ? [params] : []),
   ] as const;
 };
 
-export const getAnalyticsQueryOptions = <
-  TData = Awaited<ReturnType<typeof analytics>>,
+export const getGetAdminDashboardAnalyticsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: AnalyticsParams,
+  params: GetAdminDashboardAnalyticsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof analytics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getAnalyticsQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAdminDashboardAnalyticsQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof analytics>>> = ({
-    signal,
-  }) => analytics(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminDashboardAnalytics>>
+  > = ({ signal }) =>
+    getAdminDashboardAnalytics(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof analytics>>,
+    Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type AnalyticsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof analytics>>
+export type GetAdminDashboardAnalyticsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminDashboardAnalytics>>
 >;
-export type AnalyticsQueryError = ErrorType<unknown>;
+export type GetAdminDashboardAnalyticsQueryError = ErrorType<unknown>;
 
-export function useAnalytics<
-  TData = Awaited<ReturnType<typeof analytics>>,
+export function useGetAdminDashboardAnalytics<
+  TData = Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
   TError = ErrorType<unknown>,
 >(
-  params: undefined | AnalyticsParams,
+  params: GetAdminDashboardAnalyticsParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof analytics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof analytics>>,
+          Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
           TError,
-          Awaited<ReturnType<typeof analytics>>
+          Awaited<ReturnType<typeof getAdminDashboardAnalytics>>
         >,
         'initialData'
       >;
@@ -120,20 +141,24 @@ export function useAnalytics<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useAnalytics<
-  TData = Awaited<ReturnType<typeof analytics>>,
+export function useGetAdminDashboardAnalytics<
+  TData = Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: AnalyticsParams,
+  params: GetAdminDashboardAnalyticsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof analytics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof analytics>>,
+          Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
           TError,
-          Awaited<ReturnType<typeof analytics>>
+          Awaited<ReturnType<typeof getAdminDashboardAnalytics>>
         >,
         'initialData'
       >;
@@ -143,14 +168,18 @@ export function useAnalytics<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useAnalytics<
-  TData = Awaited<ReturnType<typeof analytics>>,
+export function useGetAdminDashboardAnalytics<
+  TData = Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: AnalyticsParams,
+  params: GetAdminDashboardAnalyticsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof analytics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -159,14 +188,18 @@ export function useAnalytics<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useAnalytics<
-  TData = Awaited<ReturnType<typeof analytics>>,
+export function useGetAdminDashboardAnalytics<
+  TData = Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: AnalyticsParams,
+  params: GetAdminDashboardAnalyticsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof analytics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminDashboardAnalytics>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -174,7 +207,10 @@ export function useAnalytics<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getAnalyticsQueryOptions(params, options);
+  const queryOptions = getGetAdminDashboardAnalyticsQueryOptions(
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

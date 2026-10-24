@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { CreateNoticeRequestTag } from './createNoticeRequestTag';
 
 export interface CreateNoticeRequest {
   /**
@@ -17,6 +18,7 @@ export interface CreateNoticeRequest {
    * @maxLength 5000
    */
   body: string;
+  tag?: CreateNoticeRequestTag;
   /**
    * @minLength 0
    * @maxLength 500

@@ -17,6 +17,15 @@ export const NOTICE_COPY = {
   updatedAt: '수정',
 } as const;
 
+/** 공지 태그의 표시 라벨. 서버 `tag` 값마다 짧은 명사 하나로 둔다. */
+export const NOTICE_TAG_LABEL = {
+  SERVICE: '서비스',
+  UPDATE: '업데이트',
+  MAINTENANCE: '점검',
+  EVENT: '이벤트',
+  PROMOTION: '혜택',
+} as const;
+
 /** 상세를 열어 읽은 공지 ID를 최신순 JSON 배열로 두는 localStorage 키다. */
 export const NOTICE_READ_STORAGE_KEY = 'manyak:notice-read-ids';
 

@@ -29,4 +29,6 @@ export interface AdminCampaignResponse {
   deliveredMembers?: number;
   deliveredDevices?: number;
   failedDevices?: number;
+  /** @nullable */
+  storyId?: string | null;
 }

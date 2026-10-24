@@ -7,7 +7,7 @@
  */
 
 /**
- * 노출 중인 채팅 모델과 회원 체험 소진 후 턴 가격
+ * 노출 중인 채팅 모델과 턴 가격. 회원 턴 체험은 LITE에만 적용
  */
 export interface ChatModelResponse {
   code?: string;

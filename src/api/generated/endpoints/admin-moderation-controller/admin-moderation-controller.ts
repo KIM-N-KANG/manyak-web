@@ -27,7 +27,10 @@ import type {
   AdminHoldPage,
   AdminHoldReleased,
   AdminOperationReason,
+  AdminPageResponseAdminSubmissionSummary,
+  AdminSubmissionDetail,
   HoldsParams,
+  SubmissionsParams,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -120,6 +123,320 @@ export const useRelease = <TError = ErrorType<unknown>, TContext = unknown>(
 > => {
   return useMutation(getReleaseMutationOptions(options), queryClient);
 };
+export type submissionsResponse200 = {
+  data: AdminPageResponseAdminSubmissionSummary;
+  status: 200;
+};
+
+export type submissionsResponseSuccess = submissionsResponse200 & {
+  headers: Headers;
+};
+export const getSubmissionsUrl = (params: SubmissionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/moderation/submissions?${stringifiedParams}`
+    : `/api/v1/admin/moderation/submissions`;
+};
+
+export const submissions = async (
+  params: SubmissionsParams,
+  options?: RequestInit,
+): Promise<submissionsResponseSuccess> => {
+  return customInstance<submissionsResponseSuccess>(getSubmissionsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSubmissionsQueryKey = (params?: SubmissionsParams) => {
+  return [
+    `/api/v1/admin/moderation/submissions`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getSubmissionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof submissions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: SubmissionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submissions>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSubmissionsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof submissions>>> = ({
+    signal,
+  }) => submissions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof submissions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SubmissionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof submissions>>
+>;
+export type SubmissionsQueryError = ErrorType<unknown>;
+
+export function useSubmissions<
+  TData = Awaited<ReturnType<typeof submissions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: SubmissionsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submissions>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof submissions>>,
+          TError,
+          Awaited<ReturnType<typeof submissions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSubmissions<
+  TData = Awaited<ReturnType<typeof submissions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: SubmissionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submissions>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof submissions>>,
+          TError,
+          Awaited<ReturnType<typeof submissions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSubmissions<
+  TData = Awaited<ReturnType<typeof submissions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: SubmissionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submissions>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useSubmissions<
+  TData = Awaited<ReturnType<typeof submissions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: SubmissionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submissions>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSubmissionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type submissionResponse200 = {
+  data: AdminSubmissionDetail;
+  status: 200;
+};
+
+export type submissionResponseSuccess = submissionResponse200 & {
+  headers: Headers;
+};
+export const getSubmissionUrl = (submissionId: string) => {
+  return `/api/v1/admin/moderation/submissions/${submissionId}`;
+};
+
+export const submission = async (
+  submissionId: string,
+  options?: RequestInit,
+): Promise<submissionResponseSuccess> => {
+  return customInstance<submissionResponseSuccess>(
+    getSubmissionUrl(submissionId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getSubmissionQueryKey = (submissionId: string) => {
+  return [`/api/v1/admin/moderation/submissions/${submissionId}`] as const;
+};
+
+export const getSubmissionQueryOptions = <
+  TData = Awaited<ReturnType<typeof submission>>,
+  TError = ErrorType<unknown>,
+>(
+  submissionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submission>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getSubmissionQueryKey(submissionId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof submission>>> = ({
+    signal,
+  }) => submission(submissionId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: submissionId !== null && submissionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof submission>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SubmissionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof submission>>
+>;
+export type SubmissionQueryError = ErrorType<unknown>;
+
+export function useSubmission<
+  TData = Awaited<ReturnType<typeof submission>>,
+  TError = ErrorType<unknown>,
+>(
+  submissionId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submission>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof submission>>,
+          TError,
+          Awaited<ReturnType<typeof submission>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSubmission<
+  TData = Awaited<ReturnType<typeof submission>>,
+  TError = ErrorType<unknown>,
+>(
+  submissionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submission>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof submission>>,
+          TError,
+          Awaited<ReturnType<typeof submission>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSubmission<
+  TData = Awaited<ReturnType<typeof submission>>,
+  TError = ErrorType<unknown>,
+>(
+  submissionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submission>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useSubmission<
+  TData = Awaited<ReturnType<typeof submission>>,
+  TError = ErrorType<unknown>,
+>(
+  submissionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof submission>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSubmissionQueryOptions(submissionId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export type holdsResponse200 = {
   data: AdminHoldPage;
   status: 200;

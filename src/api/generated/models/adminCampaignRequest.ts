@@ -24,4 +24,6 @@ export interface AdminCampaignRequest {
    * @maxLength 500
    */
   reason: string;
+  /** @nullable */
+  storyId?: string | null;
 }

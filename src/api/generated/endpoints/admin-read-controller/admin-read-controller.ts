@@ -28,6 +28,7 @@ import type {
   AdminPageResponseAdminAttendanceResponse,
   AdminPageResponseAdminAuditLogResponse,
   AdminPageResponseAdminChatResponse,
+  AdminPageResponseAdminCreditTransactionResponse,
   AdminPageResponseAdminMemberListResponse,
   AdminPageResponseAdminPaymentOrderResponse,
   AdminPageResponseAdminStoryListResponse,
@@ -38,6 +39,7 @@ import type {
   AuditLogsParams,
   ChartsParams,
   ChatsParams,
+  CreditTransactionsParams,
   MembersParams,
   PaymentsParams,
   StoriesParams,
@@ -203,79 +205,97 @@ export function useStories<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type storyResponse200 = {
+export type getAdminStoriesByStoryIdResponse200 = {
   data: AdminStoryDetailResponse;
   status: 200;
 };
 
-export type storyResponseSuccess = storyResponse200 & {
-  headers: Headers;
-};
-export const getStoryUrl = (storyId: string) => {
+export type getAdminStoriesByStoryIdResponseSuccess =
+  getAdminStoriesByStoryIdResponse200 & {
+    headers: Headers;
+  };
+export const getGetAdminStoriesByStoryIdUrl = (storyId: string) => {
   return `/api/v1/admin/stories/${storyId}`;
 };
 
-export const story = async (
+export const getAdminStoriesByStoryId = async (
   storyId: string,
   options?: RequestInit,
-): Promise<storyResponseSuccess> => {
-  return customInstance<storyResponseSuccess>(getStoryUrl(storyId), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getAdminStoriesByStoryIdResponseSuccess> => {
+  return customInstance<getAdminStoriesByStoryIdResponseSuccess>(
+    getGetAdminStoriesByStoryIdUrl(storyId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getStoryQueryKey = (storyId: string) => {
+export const getGetAdminStoriesByStoryIdQueryKey = (storyId: string) => {
   return [`/api/v1/admin/stories/${storyId}`] as const;
 };
 
-export const getStoryQueryOptions = <
-  TData = Awaited<ReturnType<typeof story>>,
+export const getGetAdminStoriesByStoryIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
   TError = ErrorType<unknown>,
 >(
   storyId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof story>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getStoryQueryKey(storyId);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAdminStoriesByStoryIdQueryKey(storyId);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof story>>> = ({
-    signal,
-  }) => story(storyId, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminStoriesByStoryId>>
+  > = ({ signal }) =>
+    getAdminStoriesByStoryId(storyId, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
     enabled: storyId !== null && storyId !== undefined,
     ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof story>>, TError, TData> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type StoryQueryResult = NonNullable<Awaited<ReturnType<typeof story>>>;
-export type StoryQueryError = ErrorType<unknown>;
+export type GetAdminStoriesByStoryIdQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminStoriesByStoryId>>
+>;
+export type GetAdminStoriesByStoryIdQueryError = ErrorType<unknown>;
 
-export function useStory<
-  TData = Awaited<ReturnType<typeof story>>,
+export function useGetAdminStoriesByStoryId<
+  TData = Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
   TError = ErrorType<unknown>,
 >(
   storyId: string,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof story>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof story>>,
+          Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
           TError,
-          Awaited<ReturnType<typeof story>>
+          Awaited<ReturnType<typeof getAdminStoriesByStoryId>>
         >,
         'initialData'
       >;
@@ -285,20 +305,24 @@ export function useStory<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useStory<
-  TData = Awaited<ReturnType<typeof story>>,
+export function useGetAdminStoriesByStoryId<
+  TData = Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
   TError = ErrorType<unknown>,
 >(
   storyId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof story>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof story>>,
+          Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
           TError,
-          Awaited<ReturnType<typeof story>>
+          Awaited<ReturnType<typeof getAdminStoriesByStoryId>>
         >,
         'initialData'
       >;
@@ -308,14 +332,18 @@ export function useStory<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useStory<
-  TData = Awaited<ReturnType<typeof story>>,
+export function useGetAdminStoriesByStoryId<
+  TData = Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
   TError = ErrorType<unknown>,
 >(
   storyId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof story>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -324,14 +352,18 @@ export function useStory<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useStory<
-  TData = Awaited<ReturnType<typeof story>>,
+export function useGetAdminStoriesByStoryId<
+  TData = Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
   TError = ErrorType<unknown>,
 >(
   storyId: string,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof story>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminStoriesByStoryId>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -339,7 +371,10 @@ export function useStory<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getStoryQueryOptions(storyId, options);
+  const queryOptions = getGetAdminStoriesByStoryIdQueryOptions(
+    storyId,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -1608,6 +1643,200 @@ export function useCharts<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getChartsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type creditTransactionsResponse200 = {
+  data: AdminPageResponseAdminCreditTransactionResponse;
+  status: 200;
+};
+
+export type creditTransactionsResponseSuccess =
+  creditTransactionsResponse200 & {
+    headers: Headers;
+  };
+export const getCreditTransactionsUrl = (params: CreditTransactionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/credits/transactions?${stringifiedParams}`
+    : `/api/v1/admin/credits/transactions`;
+};
+
+/**
+ * 팀 계정 제외를 적용하지 않아 대시보드의 지급·소진 합계와 다를 수 있습니다. 접속 기록은 남기지 않습니다.
+ * @summary 전체 이프 거래 내역
+ */
+export const creditTransactions = async (
+  params: CreditTransactionsParams,
+  options?: RequestInit,
+): Promise<creditTransactionsResponseSuccess> => {
+  return customInstance<creditTransactionsResponseSuccess>(
+    getCreditTransactionsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getCreditTransactionsQueryKey = (
+  params?: CreditTransactionsParams,
+) => {
+  return [
+    `/api/v1/admin/credits/transactions`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getCreditTransactionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof creditTransactions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: CreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof creditTransactions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getCreditTransactionsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof creditTransactions>>
+  > = ({ signal }) => creditTransactions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof creditTransactions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CreditTransactionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof creditTransactions>>
+>;
+export type CreditTransactionsQueryError = ErrorType<unknown>;
+
+export function useCreditTransactions<
+  TData = Awaited<ReturnType<typeof creditTransactions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: CreditTransactionsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof creditTransactions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creditTransactions>>,
+          TError,
+          Awaited<ReturnType<typeof creditTransactions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCreditTransactions<
+  TData = Awaited<ReturnType<typeof creditTransactions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: CreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof creditTransactions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creditTransactions>>,
+          TError,
+          Awaited<ReturnType<typeof creditTransactions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCreditTransactions<
+  TData = Awaited<ReturnType<typeof creditTransactions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: CreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof creditTransactions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 전체 이프 거래 내역
+ */
+
+export function useCreditTransactions<
+  TData = Awaited<ReturnType<typeof creditTransactions>>,
+  TError = ErrorType<unknown>,
+>(
+  params: CreditTransactionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof creditTransactions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCreditTransactionsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

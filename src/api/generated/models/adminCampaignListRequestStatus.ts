@@ -6,10 +6,14 @@
  * OpenAPI spec version: v1
  */
 
-export type GetAdminPushCampaignsStatus =
-  (typeof GetAdminPushCampaignsStatus)[keyof typeof GetAdminPushCampaignsStatus];
+/**
+ * @nullable
+ */
+export type AdminCampaignListRequestStatus =
+  | (typeof AdminCampaignListRequestStatus)[keyof typeof AdminCampaignListRequestStatus]
+  | null;
 
-export const GetAdminPushCampaignsStatus = {
+export const AdminCampaignListRequestStatus = {
   SCHEDULED: 'SCHEDULED',
   SENDING: 'SENDING',
   SENT: 'SENT',

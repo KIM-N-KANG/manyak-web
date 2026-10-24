@@ -6,11 +6,13 @@
  * OpenAPI spec version: v1
  */
 import type { AdminNoticeResponseStatus } from './adminNoticeResponseStatus';
+import type { AdminNoticeResponseTag } from './adminNoticeResponseTag';
 import type { NoticeAuthorResponse } from './noticeAuthorResponse';
 
 export interface AdminNoticeResponse {
   noticeId?: string;
   title?: string;
+  tag?: AdminNoticeResponseTag;
   /** @nullable */
   body?: string | null;
   status?: AdminNoticeResponseStatus;

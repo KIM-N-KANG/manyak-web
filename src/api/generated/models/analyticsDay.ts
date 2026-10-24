@@ -5,9 +5,10 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { DashboardPlatformCounts } from './dashboardPlatformCounts';
 
 export interface AnalyticsDay {
   date?: string;
-  activeUsers?: number;
-  newUsers?: number;
+  activeUsers?: DashboardPlatformCounts;
+  newUsers?: DashboardPlatformCounts;
 }

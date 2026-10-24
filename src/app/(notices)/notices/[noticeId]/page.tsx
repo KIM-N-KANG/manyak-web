@@ -1,5 +1,3 @@
-import type { Metadata } from 'next';
-
 import { BackHeader } from '@/components/layout/back-header';
 import { APP_PATH } from '@/constants/app-path';
 import { NOTICE_COPY } from '@/features/notices/_shared/constants';
@@ -7,10 +5,6 @@ import { NoticeDetailScreen } from '@/features/notices/detail/components/notice-
 
 type NoticeDetailPageProps = {
   params: Promise<{ noticeId: string }>;
-};
-
-export const metadata: Metadata = {
-  title: NOTICE_COPY.title,
 };
 
 export default async function NoticeDetailPage({

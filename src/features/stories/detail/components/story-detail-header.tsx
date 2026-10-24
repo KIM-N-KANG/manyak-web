@@ -116,7 +116,7 @@ export function StoryDetailHeader({
   return (
     <header
       ref={headerRef}
-      className="absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-2 px-2 text-[var(--story-header-color)]"
+      className="absolute inset-x-0 top-0 z-20 flex h-14 items-center gap-2 px-1.5 text-[var(--story-header-color)]"
       style={
         {
           '--story-header-alpha': heroElement ? 0 : 1,

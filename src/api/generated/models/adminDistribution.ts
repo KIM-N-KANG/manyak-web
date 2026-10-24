@@ -13,4 +13,5 @@ export interface AdminDistribution {
   description?: string;
   unit?: string;
   points?: AdminChartPoint[];
+  category?: string;
 }

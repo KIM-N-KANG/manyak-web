@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
-const buttonVariants = cva(
+const buttonVariantClasses = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
@@ -54,11 +54,18 @@ function Button({
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={buttonVariants({ variant, size, className })}
       render={render}
       {...props}
     />
   );
 }
+
+/**
+ * 버튼 클래스를 만든다. 기본 `border-transparent`와 변형의 `border-border`처럼 겹치는 유틸리티를 병합해
+ * 뒤에 온 변형 값이 이기게 한다. `className`으로 직접 쓰는 링크도 `Button`과 같은 결과를 받는다.
+ */
+const buttonVariants: typeof buttonVariantClasses = (props) =>
+  cn(buttonVariantClasses(props));
 
 export { Button, buttonVariants };

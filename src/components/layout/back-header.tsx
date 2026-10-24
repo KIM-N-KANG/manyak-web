@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useRouter } from 'next/navigation';
@@ -20,12 +22,15 @@ type BackHeaderProps = {
    * 화면에서 뒤로가기를 살린다.
    */
   fallbackWhen?: 'direct-entry' | 'no-history';
+  /** 제목 오른쪽 끝에 두는 화면 동작(모두 읽음 등). 없으면 제목이 끝까지 차지한다. */
+  action?: ReactNode;
 };
 
 export function BackHeader({
   title,
   fallbackHref,
   fallbackWhen = 'direct-entry',
+  action,
 }: BackHeaderProps) {
   const router = useRouter();
 
@@ -45,7 +50,7 @@ export function BackHeader({
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-2">
+    <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-1.5">
       <Button
         type="button"
         size="icon"
@@ -55,6 +60,7 @@ export function BackHeader({
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
       <span className="min-w-0 flex-1 truncate font-semibold">{title}</span>
+      {action}
     </header>
   );
 }
