@@ -12,7 +12,10 @@ const ANDROID_COPY: AppBannerVariantCopy = {
   actionLabel: '앱 열기',
 };
 
-/** 배너 변형별 문구다. 계약 문구의 정본은 하네스 3-2 웹 스펙 "앱 안내 배너"다. */
+/**
+ * 배너 변형별 문구다. 계약 문구의 정본은 하네스 3-2 웹 스펙 "앱 안내 배너"다.
+ * 문구는 375px 너비(iPhone SE)에서도 한 줄에 들어가는 길이로 둔다.
+ */
 export const APP_BANNER_VARIANT_COPY: Record<
   AppBannerVariant,
   AppBannerVariantCopy
@@ -20,12 +23,12 @@ export const APP_BANNER_VARIANT_COPY: Record<
   android_inapp: ANDROID_COPY,
   android_browser: ANDROID_COPY,
   ios_inapp: {
-    message: '외부 브라우저에서 이어서 볼 수 있어요',
+    message: '외부 브라우저에서 이어서 봐요',
     action: '열기',
     actionLabel: '외부 브라우저로 열기',
   },
   ios_browser: {
-    message: '홈 화면에 추가하면 앱처럼 열 수 있어요',
+    message: '홈 화면에 추가해 앱처럼 열어요',
     action: '추가하기',
     actionLabel: '홈 화면에 추가하기',
   },

@@ -1,9 +1,13 @@
+import type { Locator } from '@playwright/test';
+
+import { PULL_TO_REFRESH_COPY } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
 import {
   NOTICE_COPY,
   NOTICE_READ_STORAGE_KEY,
 } from '@/features/notices/_shared/constants';
 
+import { isNoticesUrl } from '../fixtures/api-mock';
 import {
   expect,
   mockMemberSession,
@@ -13,6 +17,34 @@ import {
   NOTICES_FIXTURE,
   test,
 } from '../fixtures/test';
+
+// 당김 새로고침은 터치 전용이라 스크롤러에 터치 이벤트를 직접 보낸다(Playwright 터치스크린은 탭만 지원).
+const dispatchTouch = (
+  scroller: Locator,
+  type: 'touchstart' | 'touchmove' | 'touchend',
+  x: number,
+  y: number,
+) =>
+  scroller.evaluate(
+    (element, { type, x, y }) => {
+      const touch = new Touch({
+        identifier: 1,
+        target: element,
+        clientX: x,
+        clientY: y,
+      });
+
+      element.dispatchEvent(
+        new TouchEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          touches: type === 'touchend' ? [] : [touch],
+          changedTouches: [touch],
+        }),
+      );
+    },
+    { type, x, y },
+  );
 
 test.describe('공지사항 (/notices)', () => {
   // 안 읽음 판정은 "게시 30일 안"을 기기 시각으로 재므로 픽스처 게시일 기준으로 시각을 고정한다.
@@ -309,5 +341,39 @@ test.describe('공지사항 (/notices)', () => {
     await expect(page.getByText(NOTICE_COPY.notFound)).toBeVisible();
     await page.getByRole('link', { name: NOTICE_COPY.backToList }).click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.NOTICES}$`));
+  });
+  test('목록을 아래로 당겼다 놓으면 첫 페이지부터 다시 조회한다 (MY-NOTICES-14)', async ({
+    page,
+  }) => {
+    await mockNotices(page);
+
+    let requestCount = 0;
+
+    page.on('request', (request) => {
+      if (isNoticesUrl(new URL(request.url()))) requestCount += 1;
+    });
+
+    await page.goto(APP_PATH.NOTICES);
+    await expect(page.getByText(NOTICES_FIXTURE[0].title!)).toBeVisible();
+    expect(requestCount).toBe(1);
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+    const box = await scroller.boundingBox();
+
+    if (!box) throw new Error('스크롤 영역을 찾지 못했다');
+
+    const x = box.x + box.width / 2;
+
+    await dispatchTouch(scroller, 'touchstart', x, box.y + 8);
+    await dispatchTouch(scroller, 'touchmove', x, box.y + 208);
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.release)).toBeVisible();
+    await dispatchTouch(scroller, 'touchend', x, box.y + 208);
+
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.refreshing)).toBeVisible();
+    await expect.poll(() => requestCount).toBe(2);
+    // 응답이 오는 동안 기존 목록을 유지한다.
+    await expect(page.getByText(NOTICES_FIXTURE[0].title!)).toBeVisible();
   });
 });
