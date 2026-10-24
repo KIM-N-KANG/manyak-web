@@ -47,7 +47,6 @@ export function useGenreSearch() {
     (results.isPlaceholderData || results.data === undefined);
   const showLoading = useDelayedLoading(isWaiting, {
     delay: GENRE_SEARCH_LOADING_DELAY_MS,
-    minDuration: 0,
   });
   const isFailed =
     !results.isFetching &&
