@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react';
 
+import { Settings02Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 import { BackHeader } from '@/components/layout/back-header';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { APP_PATH } from '@/constants/app-path';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
@@ -25,7 +28,8 @@ const TAB_PANEL_CLASS =
   'flex min-h-0 flex-1 flex-col overflow-hidden text-base';
 
 /**
- * 알림함. 뒤로가기 헤더(오른쪽에 "모두 읽음")와 소식·활동 탭 줄은 셸에 고정하고 탭 패널만 스크롤한다.
+ * 알림함. 뒤로가기 헤더(오른쪽에 간편 제작 헤더와 같은 보조 버튼 "모두 읽음"과 알림 설정 톱니 버튼)와
+ * 소식·활동 탭 줄은 셸에 고정하고 탭 패널만 스크롤한다.
  * 탭은 URL에 남기지 않고 화면 상태로만 둔다 — 진입점은 헤더 종 버튼 하나뿐이고 탭을 공유할 일이 없다.
  * 회원 전용이라 게스트는 로그인으로 보낸다.
  */
@@ -49,15 +53,21 @@ export function NotificationInboxScreen() {
         title={NOTIFICATION_COPY.title}
         fallbackHref={APP_PATH.MAIN.STORIES}
         action={
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-foreground-secondary"
-            disabled={!isMember || unread.total === 0 || isMarkingAllRead}
-            onClick={markAllRead}>
-            {NOTIFICATION_COPY.readAll}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!isMember || unread.total === 0 || isMarkingAllRead}
+              onClick={markAllRead}>
+              {NOTIFICATION_COPY.readAll}
+            </Button>
+            <Link
+              href={APP_PATH.MY_NOTIFICATIONS}
+              aria-label={NOTIFICATION_COPY.settingsButtonLabel}
+              className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+              <HugeiconsIcon icon={Settings02Icon} aria-hidden="true" />
+            </Link>
+          </div>
         }
       />
       <main className="flex min-h-0 flex-1 flex-col">

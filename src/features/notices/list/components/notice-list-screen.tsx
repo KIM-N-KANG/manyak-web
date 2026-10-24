@@ -156,7 +156,7 @@ function NoticeRow({ notice, isUnread }: NoticeRowProps) {
   return (
     <Link
       href={APP_PATH.NOTICE_DETAIL(notice.noticeId)}
-      className="flex flex-col gap-1 px-4 py-3">
+      className="flex flex-col gap-1 px-4 py-2">
       <NoticeTagBadge tag={notice.tag} className="mb-0.5" />
       <p
         className={cn(
@@ -186,7 +186,7 @@ function NoticeListSkeleton() {
   return (
     <ul className="flex flex-col pb-2" aria-hidden>
       {Array.from({ length: 8 }).map((_, index) => (
-        <li key={index} className="flex flex-col gap-2 px-4 py-3">
+        <li key={index} className="flex flex-col gap-2 px-4 py-2">
           <Skeleton className="h-5 w-14 rounded-4xl" />
           <Skeleton
             className={cn('h-5', index % 3 === 0 ? 'w-4/5' : 'w-3/5')}

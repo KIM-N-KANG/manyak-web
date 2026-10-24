@@ -83,6 +83,12 @@ test.describe('알림함 (/notifications)', () => {
     });
 
     await expect(newsTab).toHaveAttribute('aria-selected', 'true');
+    // 헤더 오른쪽에는 모두 읽음과 알림 설정 버튼이 나란히 있다.
+    await expect(
+      page
+        .getByRole('banner')
+        .getByRole('link', { name: NOTIFICATION_COPY.settingsButtonLabel }),
+    ).toHaveAttribute('href', APP_PATH.MY_NOTIFICATIONS);
     // 두 분류 모두 안 읽은 알림이 있어 탭 라벨 옆에 점이 있다.
     await expect(newsTab).toContainText(NOTIFICATION_COPY.unreadTab);
     await expect(activityTab).toContainText(NOTIFICATION_COPY.unreadTab);

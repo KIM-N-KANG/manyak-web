@@ -11,6 +11,8 @@ export const NOTIFICATION_COPY = {
   /** 카드 제목 옆 점의 보조 기술용 이름 */
   unreadCard: '안 읽음',
   readAll: '모두 읽음',
+  /** 헤더 오른쪽 끝 톱니 아이콘 버튼의 접근 이름. 알림 설정 화면으로 간다. */
+  settingsButtonLabel: '알림 설정',
   readAllFailed: '알림을 읽음 처리하지 못했어요',
   emptyNews: '아직 받은 소식이 없어요',
   emptyNewsDescription: '공지와 이벤트 소식이 여기에 모여요',
