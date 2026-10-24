@@ -226,10 +226,10 @@ export function AppBanner() {
                 className="size-10 shrink-0 rounded-[10px]"
               />
               <div className="flex min-w-0 flex-1 flex-col">
-                <p className="text-sm leading-snug font-semibold text-foreground">
+                <p className="truncate text-sm leading-snug font-semibold text-foreground">
                   {SITE_NAME}
                 </p>
-                <p className="text-xs leading-snug text-foreground-secondary">
+                <p className="truncate text-xs leading-snug text-foreground-secondary">
                   {APP_BANNER_VARIANT_COPY[variant].message}
                 </p>
               </div>
