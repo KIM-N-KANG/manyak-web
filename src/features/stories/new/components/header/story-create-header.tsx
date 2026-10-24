@@ -37,7 +37,8 @@ export function StoryCreateHeader({
       <header className="flex shrink-0 flex-col bg-background">
         <div className="flex h-14 items-center gap-2 px-4">
           <h1 className="font-semibold">스토리 간편 제작</h1>
-          <div className="ml-auto flex items-center gap-1">
+          {/* 닫기 아이콘 글리프를 다른 헤더와 같은 오른쪽 16px에 맞추려고 버튼 여백만큼 당긴다. */}
+          <div className="-mr-2.5 ml-auto flex items-center gap-1">
             <DraftSaveButton
               isSaving={isSavingDraft}
               disabled={!canSaveDraft}

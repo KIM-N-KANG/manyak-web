@@ -64,7 +64,7 @@ export function ChatRoomHeader({
   return (
     <header
       className={cn(
-        'absolute inset-x-0 top-0 z-10 flex h-(--chat-header-height) items-center gap-2 bg-background px-2 transition-[opacity,visibility] duration-200 ease-out motion-reduce:transition-none',
+        'absolute inset-x-0 top-0 z-10 flex h-(--chat-header-height) items-center gap-2 bg-background px-1.5 transition-[opacity,visibility] duration-200 ease-out motion-reduce:transition-none',
         hidden && 'invisible opacity-0',
       )}>
       <Button

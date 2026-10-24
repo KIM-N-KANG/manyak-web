@@ -50,7 +50,7 @@ export function BackHeader({
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-2">
+    <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-1.5">
       <Button
         type="button"
         size="icon"
