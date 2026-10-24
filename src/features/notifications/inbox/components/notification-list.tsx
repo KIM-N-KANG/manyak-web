@@ -119,7 +119,7 @@ export function NotificationList({
       {showSkeleton ? <NotificationListSkeleton /> : null}
 
       {hasNotifications ? (
-        <ul className="flex flex-col py-1">
+        <ul className="flex flex-col py-2">
           {notifications.map((item) => (
             <li key={item.notificationId}>
               <NotificationCard item={item} onRead={onRead} />

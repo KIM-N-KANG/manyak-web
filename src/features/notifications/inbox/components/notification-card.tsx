@@ -69,7 +69,7 @@ export function NotificationCard({ item, onRead }: NotificationCardProps) {
     </>
   );
 
-  const className = 'flex w-full flex-col px-4 py-3 text-left';
+  const className = 'flex w-full flex-col px-4 py-2 text-left';
 
   if (href) {
     return (
