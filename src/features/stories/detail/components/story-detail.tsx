@@ -68,7 +68,7 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
   const fetchedStory = data?.status === 200 ? data.data : undefined;
   const story: StoryDetailResponse | undefined =
     fetchedStory ?? (isPending ? initialStory : undefined);
-  const showSkeleton = useDelayedLoading(isPending && !story, { delay: 300 });
+  const showSkeleton = useDelayedLoading(isPending && !story);
   const isNotFound = error instanceof FetchError && error.status === 404;
 
   const router = useRouter();
