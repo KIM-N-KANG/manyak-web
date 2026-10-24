@@ -10,6 +10,8 @@ export const APP_PATH = {
   TERMS: '/terms',
   PRIVACY: '/privacy',
   ABOUT: '/about',
+  /** 메신저 공유용 앱 안내 경로다. 미리보기 메타를 내고 앱 또는 플레이스토어로 보낸다. */
+  APP: '/app',
   /** 공지 게시 푸시의 딥링크(`https://manyak.app/notices/{noticeId}`)와 같은 경로다. */
   NOTICES: '/notices',
   NOTICE_DETAIL: (noticeId: string) => `/notices/${noticeId}`,
