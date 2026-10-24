@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
+import { DEFAULT_TITLE } from '@/constants/site';
 import { NOTICE_COPY } from '@/features/notices/_shared/constants';
 import {
   NOTIFICATION_COPY,
@@ -39,6 +40,12 @@ test.describe('알림함 (/notifications)', () => {
     await page.clock.setFixedTime(new Date('2026-10-24T12:00:00Z'));
   });
 
+  test('회원이 직접 진입해도 기본 탭 제목을 유지한다', async ({ page }) => {
+    await mockInbox(page);
+    await page.goto(APP_PATH.NOTIFICATIONS);
+    await expect(page).toHaveTitle(DEFAULT_TITLE);
+  });
+
   test('게스트는 로그인으로 이동하고, 게스트 헤더 종 버튼은 공지사항으로 간다', async ({
     page,
   }) => {
@@ -71,6 +78,7 @@ test.describe('알림함 (/notifications)', () => {
 
     await button.click();
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.NOTIFICATIONS}$`));
+    await expect(page).toHaveTitle(DEFAULT_TITLE);
     await expect(
       page.getByRole('banner').getByText(NOTIFICATION_COPY.title),
     ).toBeVisible();
