@@ -5,7 +5,9 @@ import { APP_PATH } from '@/constants/app-path';
 import {
   NOTICE_COPY,
   NOTICE_READ_STORAGE_KEY,
+  NOTICE_TAG_LABEL,
 } from '@/features/notices/_shared/constants';
+import { NOTIFICATION_COPY } from '@/features/notifications/_shared/constants';
 
 import { isNoticesUrl } from '../fixtures/api-mock';
 import {
@@ -13,6 +15,7 @@ import {
   mockMemberSession,
   mockNoticeDetail,
   mockNotices,
+  mockNotificationUnreadCount,
   NOTICE_DETAIL_FIXTURE,
   NOTICES_FIXTURE,
   test,
@@ -76,11 +79,16 @@ test.describe('공지사항 (/notices)', () => {
     expect(noticeBox!.x).toBeGreaterThan(loginBox!.x + loginBox!.width);
   });
 
-  test('회원의 채팅, 제작 헤더에도 공지 버튼이 있고 로그인 버튼은 없다', async ({
+  test('회원의 채팅, 제작 헤더 종 버튼은 알림함으로 가고 로그인 버튼은 없다', async ({
     page,
   }) => {
     await mockMemberSession(page);
     await mockNotices(page);
+    await mockNotificationUnreadCount(page, {
+      total: 0,
+      news: 0,
+      activity: 0,
+    });
 
     for (const path of [APP_PATH.MAIN.CHATS, APP_PATH.MAIN.STUDIO]) {
       await page.goto(path);
@@ -88,14 +96,14 @@ test.describe('공지사항 (/notices)', () => {
       const header = page.getByRole('banner');
 
       await expect(
-        header.getByRole('link', { name: NOTICE_COPY.unreadButtonLabel }),
-      ).toBeVisible();
+        header.getByRole('link', { name: NOTIFICATION_COPY.buttonLabel }),
+      ).toHaveAttribute('href', APP_PATH.NOTIFICATIONS);
       await expect(header.getByRole('link', { name: '로그인' })).toBeHidden();
     }
 
     await page.goto(APP_PATH.MAIN.MY);
     await expect(
-      page.getByRole('banner').getByRole('link', { name: /공지사항/ }),
+      page.getByRole('banner').getByRole('link', { name: /알림|공지사항/ }),
     ).toBeHidden();
   });
 
@@ -145,6 +153,8 @@ test.describe('공지사항 (/notices)', () => {
     await expect(rows).toHaveCount(NOTICES_FIXTURE.length);
     await expect(rows.first()).toContainText(NOTICES_FIXTURE[0].title);
     await expect(rows.first()).toContainText('2026-10-24');
+    await expect(rows.first()).toContainText(NOTICE_TAG_LABEL.UPDATE);
+    await expect(rows.nth(1)).toContainText(NOTICE_TAG_LABEL.MAINTENANCE);
     await expect(rows.first()).toContainText(NOTICE_COPY.newBadge);
     await expect(rows.nth(1)).toContainText(NOTICE_COPY.newBadge);
 
@@ -304,6 +314,11 @@ test.describe('공지사항 (/notices)', () => {
         level: 1,
         name: NOTICE_DETAIL_FIXTURE.title,
       }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('article')
+        .getByText(NOTICE_TAG_LABEL.UPDATE, { exact: true }),
     ).toBeVisible();
     await expect(
       page.getByText(`${NOTICE_COPY.publishedAt} 2026-10-24`),
