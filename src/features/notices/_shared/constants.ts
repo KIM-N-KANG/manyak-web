@@ -17,5 +17,11 @@ export const NOTICE_COPY = {
   updatedAt: '수정',
 } as const;
 
-/** 마지막으로 공지 목록을 연 시점에 가장 최신이던 공지의 게시 시각(ISO)을 두는 localStorage 키다. */
-export const NOTICE_SEEN_STORAGE_KEY = 'manyak:notice-last-seen-published-at';
+/** 상세를 열어 읽은 공지 ID를 최신순 JSON 배열로 두는 localStorage 키다. */
+export const NOTICE_READ_STORAGE_KEY = 'manyak:notice-read-ids';
+
+/** 읽음 목록에 남기는 공지 ID 최대 개수다. 넘치면 오래된 것부터 버린다. */
+export const NOTICE_READ_IDS_LIMIT = 100;
+
+/** 게시된 지 이 일수 안인 공지만 안 읽음으로 센다. 오래된 공지는 열지 않아도 조용해진다. */
+export const NOTICE_UNREAD_WINDOW_DAYS = 30;

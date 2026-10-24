@@ -15,7 +15,7 @@ import { FetchError } from '@/lib/custom-fetch';
 import { formatDate } from '@/lib/format-date';
 
 import { NOTICE_COPY } from '../../_shared/constants';
-import { markNoticesSeen } from '../../_shared/utils/notice-seen-storage';
+import { markNoticeRead } from '../../_shared/utils/notice-read-storage';
 
 type NoticeDetailScreenProps = {
   noticeId: string;
@@ -23,7 +23,7 @@ type NoticeDetailScreenProps = {
 
 /**
  * 공지 상세. 제목, 게시일(고쳐 썼으면 수정일), 평문 본문을 줄바꿈만 살려 보여 준다.
- * 푸시 딥링크로 바로 들어와도 이 공지까지는 본 것으로 기록한다.
+ * 공지를 받으면 읽은 것으로 기록해 헤더 점과 목록 줄의 점을 끈다. 푸시 딥링크로 바로 들어와도 같다.
  */
 export function NoticeDetailScreen({ noticeId }: NoticeDetailScreenProps) {
   const { data, error, isPending, isError, refetch } =
@@ -33,8 +33,8 @@ export function NoticeDetailScreen({ noticeId }: NoticeDetailScreenProps) {
   const isNotFound = error instanceof FetchError && error.status === 404;
 
   useEffect(() => {
-    markNoticesSeen(notice?.publishedAt);
-  }, [notice?.publishedAt]);
+    markNoticeRead(notice?.noticeId);
+  }, [notice?.noticeId]);
 
   if (isNotFound) {
     return (

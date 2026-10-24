@@ -19,6 +19,7 @@ import { InviteMenuItem } from '@/features/my/_shared/components/invite-menu-ite
 import { MyMenuItem } from '@/features/my/_shared/components/my-menu-item';
 import { PERSONA_MENU_COPY } from '@/features/my/_shared/constants/persona';
 import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
+import { NoticeMenuItem } from '@/features/notices/_shared/components/notice-menu-item';
 import { track } from '@/observability/analytics';
 
 import { CreditBalanceCard } from './credit-balance-card';
@@ -74,18 +75,19 @@ export function MyScreen() {
         </div>
         <ThemeMenuItem />
       </section>
-      {isAuthenticated && (
-        <section className="flex flex-col">
-          <div className="mb-2 px-4">
-            <Label>알림</Label>
-          </div>
+      <section className="flex flex-col">
+        <div className="mb-2 px-4">
+          <Label>알림</Label>
+        </div>
+        {isAuthenticated && (
           <MyMenuItem
             icon={Notification01Icon}
             label={PUSH_SETTINGS_COPY.menuLabel}
             href={APP_PATH.MY_NOTIFICATIONS}
           />
-        </section>
-      )}
+        )}
+        <NoticeMenuItem />
+      </section>
       <section className="flex flex-col">
         <div className="mb-2 px-4">
           <Label>기타</Label>

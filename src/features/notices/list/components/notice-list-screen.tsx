@@ -19,24 +19,20 @@ import { cn } from '@/lib/utils';
 import { NOTICE_COPY } from '../../_shared/constants';
 import {
   isNoticeUnread,
-  markNoticesSeen,
-  readNoticeLastSeenAt,
-} from '../../_shared/utils/notice-seen-storage';
+  useNoticeReadIds,
+} from '../../_shared/utils/notice-read-storage';
 import { useNotices } from '../hooks/use-notices';
 
 /**
- * 공지사항 목록. 줄마다 제목과 게시일을 두고 마지막으로 본 뒤 게시된 공지에는 빨간 점을 단다.
- *
- * 화면을 연 시점의 "마지막으로 본 시각"을 붙들어 두고 비교하므로, 목록을 보는 동안에는 점이 유지되고
- * 다음에 다시 열 때부터 사라진다. 기록 자체는 첫 페이지를 받는 즉시 가장 최신 게시 시각으로 올린다.
+ * 공지사항 목록. 줄마다 제목과 게시일을 두고 게시 30일 안인데 아직 열지 않은 공지에는 빨간 점을 단다.
+ * 읽음은 상세를 열 때 기록되므로 목록만 봐서는 점이 사라지지 않고, 상세에서 돌아오면 그 줄의 점만 꺼진다.
  */
 export function NoticeListScreen() {
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
   const [sentinelElement, setSentinelElement] = useState<HTMLDivElement | null>(
     null,
   );
-  // 서버 렌더링에서는 null이고 이 값으로 그리는 점 표시는 목록을 받은 뒤에야 나타나므로 하이드레이션과 어긋나지 않는다.
-  const [lastSeenAtOnOpen] = useState(() => readNoticeLastSeenAt());
+  const readIds = useNoticeReadIds();
 
   const {
     notices,
@@ -50,11 +46,6 @@ export function NoticeListScreen() {
   } = useNotices();
   const showSkeleton = useDelayedLoading(isPending);
   const hasNotices = notices.length > 0;
-  const latestPublishedAt = notices[0]?.publishedAt;
-
-  useEffect(() => {
-    markNoticesSeen(latestPublishedAt);
-  }, [latestPublishedAt]);
 
   const isSentinelInView = useInView({
     target: sentinelElement,
@@ -113,7 +104,7 @@ export function NoticeListScreen() {
             <li key={notice.noticeId}>
               <NoticeRow
                 notice={notice}
-                isUnread={isNoticeUnread(notice.publishedAt, lastSeenAtOnOpen)}
+                isUnread={isNoticeUnread(notice, readIds)}
               />
             </li>
           ))}
@@ -154,7 +145,7 @@ function NoticeRow({ notice, isUnread }: NoticeRowProps) {
   return (
     <Link
       href={APP_PATH.NOTICE_DETAIL(notice.noticeId)}
-      className="flex flex-col gap-1 px-4 py-3 transition-colors active:bg-muted">
+      className="flex flex-col gap-1 px-4 py-3">
       <p
         className={cn(
           'line-clamp-2 leading-6',
