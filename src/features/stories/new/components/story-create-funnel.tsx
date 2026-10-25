@@ -7,6 +7,7 @@ import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
+import { CreditShortageSheet } from '@/features/my/_shared/components/credit-shortage-sheet';
 import { CreateTutorialDialog } from '@/features/stories/_shared/components/create-tutorial-dialog';
 import { DraftConflictDialog } from '@/features/stories/_shared/components/draft-conflict-dialog';
 import { useCreateTutorial } from '@/features/stories/_shared/hooks/use-create-tutorial';
@@ -30,6 +31,7 @@ export function StoryCreateFunnel() {
     retryEntry,
     guestLimitOpen,
     setGuestLimitOpen,
+    creditShortage,
     step,
     tagStep,
     isSavingDraft,
@@ -78,6 +80,7 @@ export function StoryCreateFunnel() {
         isEntryResolved &&
         !entryError &&
         !guestLimitOpen &&
+        !creditShortage.open &&
         !draftConflict.open &&
         !isCompletingStory,
       step,
@@ -112,6 +115,12 @@ export function StoryCreateFunnel() {
         <LoginRequiredSheet
           open={guestLimitOpen}
           onOpenChange={setGuestLimitOpen}
+        />
+        <CreditShortageSheet
+          open={creditShortage.open}
+          onOpenChange={creditShortage.onOpenChange}
+          trigger="story_create"
+          onCharge={creditShortage.onCharge}
         />
         <StoryCreateHeader
           step={step}

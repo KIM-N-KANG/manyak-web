@@ -2,14 +2,23 @@ import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { CREDIT_SHORTAGE_COPY } from '@/features/my/_shared/constants/credit-shortage';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
+import { mockStoryDrafts } from '../fixtures/api-mock';
 import { completeStory } from '../fixtures/story-generation';
-import { expect, mockMemberSession, test } from '../fixtures/test';
+import {
+  EXHAUSTED_TRIALS,
+  expect,
+  mockMemberSession,
+  mockTrials,
+  test,
+} from '../fixtures/test';
 
 /**
- * 스토리 완성의 회원 이프 게이팅 스펙(QA STORY-LIMIT-06).
- * 제작은 회원 전용이라 게스트 체험 한도 분기는 없고, 회원의 402는 이프 부족 토스트로 안내한다.
+ * 스토리 완성의 회원 이프 게이팅 스펙(QA STORY-LIMIT-06, STORY-LIMIT-12).
+ * 제작은 회원 전용이라 게스트 체험 한도 분기는 없다. 아는 잔액이 모자라면 퍼널에서 이프 부족 시트로 안내하고,
+ * 제작 탭으로 떠난 뒤 확정된 402는 이프 부족 토스트로 안내한다.
  * 게스트 진입 차단은 `stories/story-login-gate.spec.ts`가 검증한다.
  */
 const TAGS = '**/api/v1/stories/simple/tags';
@@ -98,5 +107,59 @@ test.describe('스토리 완성 이프 게이팅', () => {
     await expect(additionalInfoInput).toHaveValue(
       '비밀은 사라진 왕국의 문장이다',
     );
+  });
+
+  test('체험이 없고 아는 잔액이 완성 비용보다 적으면 요청 없이 시트를 띄우고, 충전은 초안을 저장한 뒤 이프 충전으로 바꿔 떠난다 (STORY-LIMIT-12)', async ({
+    page,
+  }) => {
+    const drafts = await mockStoryDrafts(page);
+
+    await mockTrials(page, EXHAUSTED_TRIALS);
+    await page.route('**/api/v1/auth/me', async (route) => {
+      await route.fulfill({
+        json: {
+          id: 'user-1',
+          nickname: '배고픈 송아지',
+          creditBalance: 0,
+          attendedToday: true,
+        },
+      });
+    });
+
+    let createRequested = false;
+
+    await page.route(CREATE_STORY, async (route) => {
+      createRequested = true;
+      await route.fulfill({
+        status: 402,
+        json: { code: 'INSUFFICIENT_CREDIT' },
+      });
+    });
+
+    await goToAdditionalInfoStep(page);
+    await page
+      .locator('textarea[aria-label="추가 정보 1"]')
+      .fill('비밀은 사라진 왕국의 문장이다');
+    await completeStory(page);
+
+    const sheet = page.getByRole('dialog');
+
+    await expect(
+      sheet.getByRole('heading', { name: CREDIT_SHORTAGE_COPY.title }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`${APP_PATH.STUDIO.STORY.SIMPLE}$`),
+    );
+
+    await sheet
+      .getByRole('button', { name: CREDIT_SHORTAGE_COPY.charge })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MY_CREDITS}$`));
+    expect(createRequested).toBe(false);
+    expect(drafts.puts).toHaveLength(1);
+    expect(drafts.puts[0].body.payload).toMatchObject({
+      step: 'additional-info',
+      additionalInfos: ['비밀은 사라진 왕국의 문장이다'],
+    });
   });
 });

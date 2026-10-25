@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
+import { useMe } from '@/api/generated/endpoints/auth/auth';
 import {
   getGetChatDetailQueryOptions,
   useCreateChat,
@@ -64,6 +65,7 @@ import {
 import { applyStorylinesGeneratedEffects } from '@/features/stories/_shared/utils/creation-side-effects';
 import { getDraftExitWarning } from '@/features/stories/_shared/utils/draft-exit-warning';
 import { toSimpleDraftRequest } from '@/features/stories/_shared/utils/simple-draft-payload';
+import { useCreditPolicy } from '@/hooks/use-credit-policy';
 import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { useTrials } from '@/hooks/use-trials';
@@ -74,6 +76,7 @@ import { track } from '@/observability/analytics';
 
 import type { StoryCreateStep } from '../types';
 import { mapStepToSpec } from '../utils/step-analytics';
+import { isStoryCreationCreditShort } from '../utils/story-creation-credit';
 import { getSelectedKeywordGroups } from '../utils/tag-categories';
 import { useAdditionalInfos } from './use-additional-infos';
 import { useCreationRequestRecovery } from './use-creation-request-recovery';
@@ -126,6 +129,13 @@ export function useStoryCreateFunnel() {
   const requestConsent = useGuestConsent();
   const trials = useTrials();
   const [guestLimitOpen, setGuestLimitOpen] = useState(false);
+  const [creditShortageOpen, setCreditShortageOpen] = useState(false);
+  const { data: meData } = useMe({
+    query: { enabled: sessionStatus === 'authenticated' },
+  });
+  const creditBalance =
+    meData?.status === 200 ? meData.data.creditBalance : undefined;
+  const storyCreationCost = useCreditPolicy()?.storyCreationCost;
   const awaitingAccess = useRef(false);
   const [step, setStep] = useState<StoryCreateStep>('keyword');
   const [generationRequest, setGenerationRequest] =
@@ -255,6 +265,20 @@ export function useStoryCreateFunnel() {
         return false;
       }
 
+      // 서버도 402로 막지만 완성 요청은 보내자마자 제작 탭으로 떠나므로, 아는 잔액으로 먼저 걸러 퍼널에서 안내한다.
+      if (
+        kind === 'storyCreation' &&
+        isStoryCreationCreditShort({
+          balance: creditBalance,
+          cost: storyCreationCost,
+          trialRemaining: getTrialRemaining(trials, kind),
+        })
+      ) {
+        setCreditShortageOpen(true);
+
+        return false;
+      }
+
       return true;
     } finally {
       awaitingAccess.current = false;
@@ -270,7 +294,7 @@ export function useStoryCreateFunnel() {
     setHasCompleteStoryError(true);
   };
 
-  // 완성 402 처리: 회원 이프 부족이면 토스트를 띄운다. 사유는 응답 바디 code로 구분하고
+  // 퍼널 안에서 받은 402 처리: 회원 이프 부족이면 이프 부족 시트를 띄운다. 사유는 응답 바디 code로 구분하고
   // (백엔드 KNK-524), 퍼널의 기존 에러 복귀(failToAdditionalInfo)는 호출부에서 그대로 수행된다.
   const showCreditShortageIfNeeded = (error: unknown) => {
     if (
@@ -285,7 +309,7 @@ export function useStoryCreateFunnel() {
       resolvePaymentRequiredReason(error, sessionStatus) ===
       'insufficient-credit'
     ) {
-      showCreditShortageToast('story_create');
+      setCreditShortageOpen(true);
     }
   };
 
@@ -790,6 +814,14 @@ export function useStoryCreateFunnel() {
   const exitToCreate = () =>
     leaveAfterCleanup(() => returnToMainTab(router, APP_PATH.MAIN.STUDIO));
 
+  // 이프 부족 시트의 충전: 지금 입력을 초안으로 저장한 뒤 퍼널 칸을 이프 충전으로 바꿔 떠난다. 뒤로가기는 퍼널에
+  // 들어오기 전 화면으로 가고, 초안은 제작 탭에서 이어서 만든다. 저장하지 못하면 퍼널에 머문다.
+  const chargeForCreditShortage = async () => {
+    if (!isDraftSaved && !(await writeDraft())) return;
+
+    leaveAfterCleanup(() => router.replace(APP_PATH.MY_CREDITS));
+  };
+
   // 스토리라인 생성 요청에 requestId를 부여하고 복구 레코드를 저장한 뒤 요청한다.
   // 일반 생성·재생성은 새 UUID를 쓰고, 실패한 같은 요청의 복구 재시도만 기존 ID를 재사용한다.
   //
@@ -1121,6 +1153,11 @@ export function useStoryCreateFunnel() {
   return {
     guestLimitOpen,
     setGuestLimitOpen,
+    creditShortage: {
+      open: creditShortageOpen,
+      onOpenChange: setCreditShortageOpen,
+      onCharge: chargeForCreditShortage,
+    },
     isEntryResolved: draft.isEntryResolved && epoch >= 0,
     entryError: draft.isError || (epoch >= 0 && currentEpoch !== epoch),
     retryEntry: draft.retry,
