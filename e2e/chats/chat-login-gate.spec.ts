@@ -1,8 +1,10 @@
 import { type Page } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GUEST_CONSENT_COPY } from '@/features/auth/_shared/constants/guest-consent';
 import { CHAT_MENU_COPY } from '@/features/chats/room/constants';
+import { CREDIT_SHORTAGE_COPY } from '@/features/my/_shared/constants/credit-shortage';
 
 import { oneLine } from '../fixtures/copy';
 import {
@@ -23,7 +25,7 @@ test.beforeEach(async ({ page }) => {
 /**
  * 채팅 전송·재생성·새 채팅 시작의 게스트 동의 게이팅과 회원 이프 게이팅 스펙
  * (웹 사용자 모델, §3-1-5 예외 처리 — QA CHAT-GATE-01~03·CHAT-LIMIT-03).
- * 게스트는 요청 없이 게스트 동의 시트를 보고, 회원의 402는 이프 부족 토스트로 안내한다.
+ * 게스트는 요청 없이 게스트 동의 시트를 보고, 회원의 402는 이프 부족 시트로 안내한다.
  */
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
@@ -56,6 +58,48 @@ const prepareChatRoom = async (page: Page, turns: unknown[] = []) => {
   await page.route(CHAT_DETAIL, async (route) => {
     await route.fulfill({ json: chatDetail(turns) });
   });
+};
+
+const ME_API = '**/api/v1/auth/me';
+const ATTENDANCE_API = '**/api/v1/users/me/credits/attendance';
+
+const creditShortageSheet = (page: Page) =>
+  page
+    .getByRole('dialog')
+    .getByRole('heading', { name: CREDIT_SHORTAGE_COPY.title });
+
+/** 잔액이 0인 회원 프로필을 목킹한다. 출석 여부는 호출할 때마다 읽어 출석 뒤 재조회에 반영한다. */
+const mockEmptyWallet = async (page: Page, attended: () => boolean) => {
+  await page.route(ME_API, async (route) => {
+    await route.fulfill({
+      json: {
+        id: 'user-1',
+        nickname: '배고픈 송아지',
+        creditBalance: 0,
+        attendedToday: attended(),
+      },
+    });
+  });
+};
+
+/** 잔액 0인 회원으로 채팅방에 들어와 입력을 채우고 전송해 이프 부족 시트를 연다(서버 요청 없이 선검사). */
+const openCreditShortageByPrecheck = async (
+  page: Page,
+  attended: () => boolean = () => false,
+) => {
+  await prepareChatRoom(page);
+  await mockMemberSession(page);
+  await mockTrials(page, EXHAUSTED_TRIALS);
+  await mockEmptyWallet(page, attended);
+
+  // 잔액을 알아야 선검사가 걸리므로 프로필 응답을 받은 뒤 보낸다.
+  const meLoaded = page.waitForResponse(ME_API);
+
+  await page.goto('/chats/c1');
+  await meLoaded;
+  await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
+  await page.getByRole('button', { name: '전송' }).click();
+  await expect(creditShortageSheet(page)).toBeVisible();
 };
 
 const chatLoginSheet = (page: Page) =>
@@ -210,7 +254,7 @@ test.describe('채팅 게스트 동의 게이트', () => {
       .toBeNull();
   });
 
-  test('회원이 서버 402(이프 부족)를 받으면 현재 화면에서 토스트만 띄운다 (CHAT-LIMIT-03)', async ({
+  test('회원이 서버 402(이프 부족)를 받으면 현재 화면에서 이프 부족 시트를 띄운다 (CHAT-LIMIT-03)', async ({
     page,
   }) => {
     await prepareChatRoom(page);
@@ -226,22 +270,20 @@ test.describe('채팅 게스트 동의 게이트', () => {
     await page.getByPlaceholder('이야기를 어떻게 이어갈까요?').fill('계속한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(creditShortageSheet(page)).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: CREDIT_SHORTAGE_COPY.charge }),
+    ).toBeVisible();
     await expect(page).toHaveURL(/\/chats\/c1$/);
   });
 
-  test('회원의 아는 잔액이 턴 비용에 못 미치면 요청 없이 토스트만 띄우고 입력을 유지한다 (CHAT-LIMIT-10)', async ({
+  test('회원의 아는 잔액이 턴 비용에 못 미치면 요청 없이 이프 부족 시트를 띄우고 입력을 유지한다 (CHAT-LIMIT-10)', async ({
     page,
   }) => {
     await prepareChatRoom(page);
     await mockMemberSession(page);
     await mockTrials(page, EXHAUSTED_TRIALS);
-    await page.route('**/api/v1/auth/me', async (route) => {
-      await route.fulfill({
-        json: { id: 'user-1', nickname: '배고픈 송아지', creditBalance: 0 },
-      });
-    });
+    await mockEmptyWallet(page, () => false);
 
     let streamRequested = false;
 
@@ -254,7 +296,7 @@ test.describe('채팅 게스트 동의 게이트', () => {
     });
 
     // 잔액을 알아야 선검사가 걸리므로 프로필 응답을 받은 뒤 보낸다.
-    const meLoaded = page.waitForResponse('**/api/v1/auth/me');
+    const meLoaded = page.waitForResponse(ME_API);
 
     await page.goto('/chats/c1');
     await meLoaded;
@@ -264,10 +306,79 @@ test.describe('채팅 게스트 동의 게이트', () => {
     await input.fill('계속한다');
     await page.getByRole('button', { name: '전송' }).click();
 
-    await expect(page.getByText(TOAST_MESSAGE.CREDIT_SHORTAGE)).toBeVisible();
+    await expect(creditShortageSheet(page)).toBeVisible();
     // 전송 모습(낙관적 버블)이 보였다 사라지지 않고 입력이 그대로 남는다.
     await expect(input).toHaveValue('계속한다');
     await expect(page.getByRole('log').getByText('계속한다')).toHaveCount(0);
     expect(streamRequested).toBe(false);
+  });
+
+  test('오늘 출석하지 않았으면 시트에서 바로 출석 체크하고, 끝나면 시트를 닫는다 (CHAT-LIMIT-11)', async ({
+    page,
+  }) => {
+    let attended = false;
+    let attendanceCalls = 0;
+
+    await page.route(ATTENDANCE_API, async (route) => {
+      attendanceCalls += 1;
+      attended = true;
+      await route.fulfill({ json: { rewarded: true, amount: 250 } });
+    });
+    await openCreditShortageByPrecheck(page, () => attended);
+
+    await page
+      .getByRole('button', { name: CREDIT_SHORTAGE_COPY.attendance })
+      .click();
+
+    await expect(
+      page.getByText(TOAST_MESSAGE.ATTENDANCE_CLAIMED(250)),
+    ).toBeVisible();
+    await expect(creditShortageSheet(page)).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    expect(attendanceCalls).toBe(1);
+  });
+
+  test('오늘 이미 출석했으면 출석 체크 버튼 없이 충전과 닫기만 둔다 (CHAT-LIMIT-12)', async ({
+    page,
+  }) => {
+    await openCreditShortageByPrecheck(page, () => true);
+
+    const sheet = page.getByRole('dialog');
+
+    await expect(
+      sheet.getByRole('button', { name: CREDIT_SHORTAGE_COPY.charge }),
+    ).toBeVisible();
+    await expect(
+      sheet.getByRole('button', { name: CREDIT_SHORTAGE_COPY.attendance }),
+    ).toHaveCount(0);
+
+    await sheet
+      .getByRole('button', { name: CREDIT_SHORTAGE_COPY.close })
+      .click();
+    await expect(creditShortageSheet(page)).toBeHidden();
+    await expect(
+      page.getByPlaceholder('이야기를 어떻게 이어갈까요?'),
+    ).toHaveValue('계속한다');
+  });
+
+  test('충전 버튼은 이프 충전으로 보내고, 뒤로가기로 돌아오면 입력을 되살린다 (CHAT-LIMIT-13)', async ({
+    page,
+  }) => {
+    await openCreditShortageByPrecheck(page, () => true);
+
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: CREDIT_SHORTAGE_COPY.charge })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MY_CREDITS}$`));
+
+    await page
+      .getByRole('button', { name: '이전 페이지로 돌아가기 버튼' })
+      .click();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    await expect(
+      page.getByPlaceholder('이야기를 어떻게 이어갈까요?'),
+    ).toHaveValue('계속한다');
+    await expect(creditShortageSheet(page)).toHaveCount(0);
   });
 });

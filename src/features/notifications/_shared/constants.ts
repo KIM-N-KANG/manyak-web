@@ -29,5 +29,6 @@ export const NOTIFICATION_TYPE_LABEL = {
   STORY_MODERATION_COMPLETED: '검토 결과',
   NOTICE: '공지',
   ATTENDANCE_REMINDER: '출석 체크',
+  CREDIT_EXPIRY_REMINDER: '이프 만료',
   PROMOTION: '이벤트',
 } as const;

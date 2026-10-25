@@ -10,6 +10,7 @@ import {
 
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
@@ -30,11 +31,12 @@ import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-req
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { resolvePaymentRequiredReason } from '@/features/auth/_shared/utils/guest-limit-error';
 import { getTrialRemaining } from '@/features/auth/_shared/utils/guest-trial';
-import { showCreditShortageToast } from '@/features/auth/_shared/utils/show-credit-shortage-toast';
 import { CHATS_BATCH_QUERY_KEY } from '@/features/chats/list/hooks/use-created-chats';
+import { CreditShortageSheet } from '@/features/my/_shared/components/credit-shortage-sheet';
 import { useCreditPolicy } from '@/hooks/use-credit-policy';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useTrials } from '@/hooks/use-trials';
+import { leaveLayers } from '@/lib/history-layers';
 import { track, useTrackOnView } from '@/observability/analytics';
 
 import {
@@ -76,6 +78,7 @@ type ChatRoomProps = {
 };
 
 export function ChatRoom({ chatId }: ChatRoomProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
   const requestConsent = useGuestConsent();
@@ -86,6 +89,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const creditBalance =
     meData?.status === 200 ? meData.data.creditBalance : undefined;
   const [loginOpen, setLoginOpen] = useState(false);
+  const [creditShortageOpen, setCreditShortageOpen] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const lastSubmitted = useRef<string | null>(null);
   const handlePaymentRequired = (error: unknown) => {
@@ -104,7 +108,7 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       resolvePaymentRequiredReason(error, sessionStatus) ===
       'insufficient-credit'
     ) {
-      showCreditShortageToast('chat_turn');
+      setCreditShortageOpen(true);
 
       return;
     }
@@ -258,10 +262,9 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
 
     // 서버도 402로 막지만, 그 뒤에 되돌리면 보낸 모습이 잠깐 보였다 사라진다. 아는 잔액으로
-    // 먼저 걸러 컴포저를 건드리지 않는다. 잔액은 화면이 서버와 어긋났을 수 있어 다시 읽는다.
+    // 먼저 걸러 컴포저를 건드리지 않는다. 잔액은 시트가 열리며 다시 읽는다.
     if (isCreditShort()) {
-      showCreditShortageToast('chat_turn');
-      void queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
+      setCreditShortageOpen(true);
 
       return false;
     }
@@ -314,6 +317,11 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       void send(text, source, selection);
     },
   });
+
+  const chargeForCreditShortage = () => {
+    saveChatLoginDraft(chatId, composer.serializeDraft());
+    leaveLayers(() => router.push(APP_PATH.MY_CREDITS));
+  };
 
   const [pendingFill, setPendingFill] = useState<{
     text: string;
@@ -512,6 +520,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           confirmLabel="바꾸기"
         />
         <LoginRequiredSheet open={loginOpen} onOpenChange={setLoginOpen} />
+        <CreditShortageSheet
+          open={creditShortageOpen}
+          onOpenChange={setCreditShortageOpen}
+          trigger="chat_turn"
+          onCharge={chargeForCreditShortage}
+        />
         {tour.isOpen && (
           <ChatTour
             inputMode={mode}
