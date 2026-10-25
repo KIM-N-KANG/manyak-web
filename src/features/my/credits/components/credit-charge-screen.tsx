@@ -13,30 +13,34 @@ import { APP_PATH } from '@/constants/app-path';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 
 import { CREDIT_CHARGE_COPY } from '../constants';
+import {
+  CREDIT_CHARGE_TAB,
+  type CreditChargeTab,
+} from '../utils/credit-charge-tab';
 import { CreditFreeChargeTab } from './credit-free-charge-tab';
 import { CreditHistoryTab } from './credit-history-tab';
 import { CreditOrderStatusCard } from './credit-order-status-card';
 import { CreditPurchaseTab } from './credit-purchase-tab';
 
-const PURCHASE_TAB = 'PURCHASE';
-const FREE_CHARGE_TAB = 'FREE_CHARGE';
-const HISTORY_TAB = 'HISTORY';
-
 /** 탭 패널이 스크롤러라 기본 text-sm이 마이 메뉴·내역 줄의 본문 크기를 줄인다. 되돌려 둔다. */
 const TAB_PANEL_CLASS = 'min-h-0 flex-1 overflow-hidden text-base';
 
+type CreditChargeScreenProps = {
+  /** 처음 열 탭. 페이지가 `?tab=` 쿼리로 정한다. */
+  initialTab: CreditChargeTab;
+};
+
 /**
- * 이프 충전. 잔액 상자와 탭 줄은 셸에 고정하고 탭 패널만 스크롤한다 —
+ * 이프 충전. 잔액 상자와 탭 줄은 셸에 고정하고 탭 패널만 스크롤한다.
  * 잔액은 어느 탭에서 무엇을 하든 계속 보여야 하는 값이다.
  *
- * 탭은 URL에 남기지 않고 화면 상태로만 둔다 — 진입 경로는 마이의 "충전" 하나뿐이고
- * 탭 자체를 공유·북마크할 일이 없다.
+ * 탭 전환은 URL에 남기지 않고 화면 상태로만 둔다. 알림 딥링크가 실어 오는 `?tab=` 쿼리는 처음 탭을 정하는 데만 쓴다.
  */
-export function CreditChargeScreen() {
+export function CreditChargeScreen({ initialTab }: CreditChargeScreenProps) {
   const router = useRouter();
   const { status } = useSession();
   const { isMember } = useMemberAccess();
-  const [activeTab, setActiveTab] = useState<string>(PURCHASE_TAB);
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   const isAuthenticated = status === 'authenticated';
 
@@ -51,6 +55,17 @@ export function CreditChargeScreen() {
       router.replace(APP_PATH.LOGIN);
     }
   }, [status, router]);
+
+  // 읽은 탭 쿼리는 주소에서 지운다. 남겨 두면 다른 탭에서 결제하고 돌아왔을 때 결제 전 칸으로 되감긴 주소가
+  // 쿼리 탭을 다시 연다. UTM 같은 다른 쿼리는 그대로 둔다.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+
+    if (!url.searchParams.has('tab')) return;
+
+    url.searchParams.delete('tab');
+    window.history.replaceState(null, '', url);
+  }, []);
 
   return (
     <main className="flex min-h-0 flex-1 flex-col">
@@ -78,34 +93,40 @@ export function CreditChargeScreen() {
         className="mt-4 flex min-h-0 flex-1 flex-col gap-0">
         <TabsList variant="line" className="w-full gap-0 border-b p-0">
           <TabsTrigger
-            value={PURCHASE_TAB}
+            value={CREDIT_CHARGE_TAB.PURCHASE}
             className="h-full rounded-none border-0 px-2 py-0 after:-bottom-px!">
             {CREDIT_CHARGE_COPY.purchaseTab}
           </TabsTrigger>
           <TabsTrigger
-            value={FREE_CHARGE_TAB}
+            value={CREDIT_CHARGE_TAB.FREE_CHARGE}
             className="h-full rounded-none border-0 px-2 py-0 after:-bottom-px!">
             {CREDIT_CHARGE_COPY.freeChargeTab}
           </TabsTrigger>
           <TabsTrigger
-            value={HISTORY_TAB}
+            value={CREDIT_CHARGE_TAB.HISTORY}
             className="h-full rounded-none border-0 px-2 py-0 after:-bottom-px!">
             {CREDIT_CHARGE_COPY.historyTab}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={PURCHASE_TAB} className={TAB_PANEL_CLASS}>
+        <TabsContent
+          value={CREDIT_CHARGE_TAB.PURCHASE}
+          className={TAB_PANEL_CLASS}>
           <CreditPurchaseTab />
         </TabsContent>
 
-        <TabsContent value={FREE_CHARGE_TAB} className={TAB_PANEL_CLASS}>
+        <TabsContent
+          value={CREDIT_CHARGE_TAB.FREE_CHARGE}
+          className={TAB_PANEL_CLASS}>
           <CreditFreeChargeTab
             attendedToday={me?.attendedToday ?? false}
             isMeReady={me !== undefined}
           />
         </TabsContent>
 
-        <TabsContent value={HISTORY_TAB} className={TAB_PANEL_CLASS}>
+        <TabsContent
+          value={CREDIT_CHARGE_TAB.HISTORY}
+          className={TAB_PANEL_CLASS}>
           <CreditHistoryTab enabled={isAuthenticated} />
         </TabsContent>
       </Tabs>
