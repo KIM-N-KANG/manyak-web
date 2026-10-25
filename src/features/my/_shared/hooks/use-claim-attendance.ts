@@ -8,8 +8,8 @@ import { useClaimAttendance as useClaimAttendanceMutation } from '@/api/generate
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 
 type UseClaimAttendanceOptions = {
-  /** 출석 보상이 실제 지급됐을 때(rewarded=true)만 호출된다. 이미 출석 응답은 토스트 안내만 한다. */
-  onRewarded?: () => void;
+  /** 출석 요청이 성공했을 때 부른다. 보상 지급과 이미 출석 응답 모두 오늘 출석이 끝난 상태다. */
+  onClaimed?: () => void;
 };
 
 /**
@@ -20,7 +20,7 @@ type UseClaimAttendanceOptions = {
  * @returns 출석 요청 함수와 요청 중 여부
  */
 export function useClaimAttendance({
-  onRewarded,
+  onClaimed,
 }: UseClaimAttendanceOptions = {}) {
   const queryClient = useQueryClient();
 
@@ -45,9 +45,7 @@ export function useClaimAttendance({
           queryKey: getMeQueryKey(),
         });
 
-        if (rewarded) {
-          onRewarded?.();
-        }
+        onClaimed?.();
       },
       onError: () => {
         toast.error(TOAST_MESSAGE.ATTENDANCE_FAILED);
