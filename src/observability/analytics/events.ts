@@ -18,7 +18,7 @@ export type StepName =
   | 'additionalInfo'
   | 'complete';
 
-/** 회원 이프 부족(402·INSUFFICIENT_CREDIT) 토스트를 띄운 유료 동작 지점. */
+/** 회원 이프 부족(402·INSUFFICIENT_CREDIT) 안내를 띄운 유료 동작 지점. */
 export type CreditShortageTrigger = 'story_create' | 'chat_turn';
 
 /** 스토리 카드가 속한 섹션. 오리지널 노출·클릭 기여를 내가 만든 스토리와 분리해 본다. */
@@ -57,8 +57,14 @@ export type AnalyticsEventProps = {
   client_appBanner_actionButton_clicked: AppBannerEventProps;
   client_appBanner_closeButton_clicked: { variant: AppBannerVariant };
   client_appBanner_escapeGuide_shown: void;
-  // credit shortage (회원 이프 부족 → 토스트 안내, 이벤트 이름은 하위 호환 유지)
+  // credit shortage (회원 이프 부족 → 바텀 시트 안내, 이벤트 이름은 하위 호환 유지)
   client_creditShortageDialog_shown: { trigger: CreditShortageTrigger };
+  client_creditShortageDialog_chargeButton_clicked: {
+    trigger: CreditShortageTrigger;
+  };
+  client_creditShortageDialog_attendanceButton_clicked: {
+    trigger: CreditShortageTrigger;
+  };
   // report (스토리 신고 시트 — 채팅에서 열어도 대상은 참조 스토리라 target_type은 story 고정)
   client_report_sheet_opened: {
     target_type: 'story';
