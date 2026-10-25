@@ -611,6 +611,31 @@ test.describe('이프 충전 (/my/credits)', () => {
     ).toHaveCount(0);
   });
 
+  test('알림 딥링크의 tab 쿼리로 처음 탭을 열고 주소에서 tab만 지운다', async ({
+    page,
+  }) => {
+    await prepareMember(page);
+    await mockTransactions(page, {
+      '': { items: [ATTENDANCE_TRANSACTION], nextCursor: null },
+    });
+
+    await page.goto(`${APP_PATH.MY_CREDITS}?tab=history&utm_source=push`);
+
+    await expect(
+      page.getByRole('tab', { name: CREDIT_CHARGE_COPY.historyTab }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText('출석 체크 보상')).toBeVisible();
+    // 다른 탭에서 결제하고 되감겨 와도 쿼리 탭이 다시 열리지 않게 tab만 지우고 UTM은 남긴다.
+    await expect(page).toHaveURL(/\/my\/credits\?utm_source=push$/);
+
+    await page.goto(`${APP_PATH.MY_CREDITS}?tab=free`);
+
+    await expect(
+      page.getByRole('tab', { name: CREDIT_CHARGE_COPY.freeChargeTab }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/\/my\/credits$/);
+  });
+
   test('다시 진입하면 첫 페이지부터 새로 조회한다', async ({ page }) => {
     await prepareMember(page);
 
