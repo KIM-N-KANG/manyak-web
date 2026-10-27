@@ -8,7 +8,7 @@ export const TOAST_MESSAGE = {
   STORY_DRAFT_TOO_LARGE: '내용이 길어서 임시 저장하지 못했어요',
   STORY_COMPLETED: '스토리가 완성되었어요',
   STORY_COMPLETE_FAILED: '스토리를 완성하지 못했어요',
-  STORY_CONTENT_REJECTED: '수위가 높아 만들 수 없어요. 내용을 바꿔 주세요',
+  STORY_CONTENT_REJECTED: '수위가 높아 만들 수 없어요',
   STORY_REVIEWING: '스토리를 검토하고 있어요',
   STORY_REVIEW_REJECTED: '스토리가 검토를 통과하지 못했어요',
   STORY_REVIEW_DELAYED: '검토가 늦어지고 있어요. 끝나면 제작 탭에 추가돼요',
