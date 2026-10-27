@@ -53,6 +53,7 @@ export function StoryCreateFunnel() {
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError,
+    isContentRejected,
     isCompletingStory,
     hasCompleteStoryError,
     handleRegenerateStorylines,
@@ -145,6 +146,7 @@ export function StoryCreateFunnel() {
           <StoryTagStepSection
             controller={tagStep}
             hasGenerateStorylinesError={hasGenerateStorylinesError}
+            isContentRejected={isContentRejected}
           />
         )}
 

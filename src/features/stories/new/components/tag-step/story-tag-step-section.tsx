@@ -29,12 +29,14 @@ import { SupportingCharacterList } from './supporting-character-list';
 type StoryTagStepSectionProps = {
   controller: StoryTagStepController;
   hasGenerateStorylinesError: boolean;
+  isContentRejected: boolean;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryTagStepSection({
   controller,
   hasGenerateStorylinesError,
+  isContentRejected,
   onScroll,
 }: StoryTagStepSectionProps) {
   const {
@@ -272,7 +274,10 @@ export function StoryTagStepSection({
       </Tabs>
       {hasGenerateStorylinesError && (
         <StoryCreateErrorMessage className="px-4">
-          {getGenerateStorylinesErrorMessage({ isRegeneration: false })}
+          {getGenerateStorylinesErrorMessage({
+            isRegeneration: false,
+            isContentRejected,
+          })}
         </StoryCreateErrorMessage>
       )}
     </StoryCreateStepLayout>
