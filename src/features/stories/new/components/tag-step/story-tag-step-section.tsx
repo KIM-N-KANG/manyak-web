@@ -91,6 +91,13 @@ export function StoryTagStepSection({
           <StoryCreateErrorMessage>
             {CHARACTER_NAME_DUPLICATE_FOOTER_ERROR}
           </StoryCreateErrorMessage>
+        ) : hasGenerateStorylinesError ? (
+          <StoryCreateErrorMessage>
+            {getGenerateStorylinesErrorMessage({
+              isRegeneration: false,
+              isContentRejected,
+            })}
+          </StoryCreateErrorMessage>
         ) : null
       }
       footer={
@@ -272,14 +279,6 @@ export function StoryTagStepSection({
           />
         </TabsContent>
       </Tabs>
-      {hasGenerateStorylinesError && (
-        <StoryCreateErrorMessage className="px-4">
-          {getGenerateStorylinesErrorMessage({
-            isRegeneration: false,
-            isContentRejected,
-          })}
-        </StoryCreateErrorMessage>
-      )}
     </StoryCreateStepLayout>
   );
 }
