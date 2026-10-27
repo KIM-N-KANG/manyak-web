@@ -29,12 +29,14 @@ import { SupportingCharacterList } from './supporting-character-list';
 type StoryTagStepSectionProps = {
   controller: StoryTagStepController;
   hasGenerateStorylinesError: boolean;
+  isContentRejected: boolean;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };
 
 export function StoryTagStepSection({
   controller,
   hasGenerateStorylinesError,
+  isContentRejected,
   onScroll,
 }: StoryTagStepSectionProps) {
   const {
@@ -88,6 +90,13 @@ export function StoryTagStepSection({
         ) : hasDuplicateNameError ? (
           <StoryCreateErrorMessage>
             {CHARACTER_NAME_DUPLICATE_FOOTER_ERROR}
+          </StoryCreateErrorMessage>
+        ) : hasGenerateStorylinesError ? (
+          <StoryCreateErrorMessage>
+            {getGenerateStorylinesErrorMessage({
+              isRegeneration: false,
+              isContentRejected,
+            })}
           </StoryCreateErrorMessage>
         ) : null
       }
@@ -270,11 +279,6 @@ export function StoryTagStepSection({
           />
         </TabsContent>
       </Tabs>
-      {hasGenerateStorylinesError && (
-        <StoryCreateErrorMessage className="px-4">
-          {getGenerateStorylinesErrorMessage({ isRegeneration: false })}
-        </StoryCreateErrorMessage>
-      )}
     </StoryCreateStepLayout>
   );
 }
