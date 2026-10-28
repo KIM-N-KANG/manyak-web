@@ -17,6 +17,8 @@ export const API_ERROR_CODE = {
   CHAT_TURN_IN_PROGRESS: 'CHAT_TURN_IN_PROGRESS',
   /** 보낸 마지막 턴이 서버의 마지막 턴과 다름(409). 상세를 다시 조회한다. */
   CHAT_TURN_STALE: 'CHAT_TURN_STALE',
+  /** AI가 입력 내용을 이유로 간편 제작 생성을 거절함(422). 같은 입력은 다시 거절되므로 입력을 고치게 한다. */
+  CONTENT_REJECTED: 'CONTENT_REJECTED',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODE)[keyof typeof API_ERROR_CODE];

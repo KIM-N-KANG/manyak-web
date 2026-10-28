@@ -25,6 +25,7 @@ import type {
   GenerateSimpleStorylinesResponse,
   SimpleStorylineResponse,
 } from '@/api/generated/models';
+import { API_ERROR_CODE } from '@/constants/api-error-code';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
@@ -70,7 +71,7 @@ import { usePreventPageLeave } from '@/hooks/use-prevent-page-leave';
 import { useSaveWhenBackgrounded } from '@/hooks/use-save-when-backgrounded';
 import { useTrials } from '@/hooks/use-trials';
 import { createClientId } from '@/lib/create-client-id';
-import { FetchError } from '@/lib/custom-fetch';
+import { FetchError, getApiErrorCode } from '@/lib/custom-fetch';
 import { returnToMainTab } from '@/lib/return-to-main-tab';
 import { track } from '@/observability/analytics';
 
@@ -165,6 +166,8 @@ export function useStoryCreateFunnel() {
   // 복구 조회가 실패를 알린 경우의 스토리라인 오류 표시(뮤테이션 isError를 대신한다).
   const [hasRecoveredGenerateError, setHasRecoveredGenerateError] =
     useState(false);
+  // AI가 입력 내용을 거절한 스토리라인 생성 실패. 같은 입력은 다시 거절되므로 키워드 단계로 돌려보낸다.
+  const [isContentRejected, setIsContentRejected] = useState(false);
   // 마지막 완성 요청. 같은 페이로드의 재시도는 requestId를 재사용해 서버 멱등 계약으로
   // 중복 생성·중복 과금을 막는다.
   const [lastCompletionRequest, setLastCompletionRequest] =
@@ -399,6 +402,11 @@ export function useStoryCreateFunnel() {
           ownedRequestIdRef.current = null;
           setHasRecoveredGenerateError(true);
           setSavedDraftKey(null);
+
+          if (getApiErrorCode(error) === API_ERROR_CODE.CONTENT_REJECTED) {
+            setIsContentRejected(true);
+            setStep('keyword');
+          }
         }
 
         showCreditShortageIfNeeded(error);
@@ -480,7 +488,9 @@ export function useStoryCreateFunnel() {
           )
             return;
 
-          if (
+          if (getApiErrorCode(error) === API_ERROR_CODE.CONTENT_REJECTED) {
+            toast.error(TOAST_MESSAGE.STORY_CONTENT_REJECTED);
+          } else if (
             resolvePaymentRequiredReason(error, sessionStatus) ===
             'insufficient-credit'
           ) {
@@ -885,6 +895,7 @@ export function useStoryCreateFunnel() {
     setSettledGenerationRequestId(null);
     setGenerationRequest(request);
     setHasRecoveredGenerateError(false);
+    setIsContentRejected(false);
     generateStorylines.mutate({ data: request });
   };
 
@@ -1185,6 +1196,7 @@ export function useStoryCreateFunnel() {
     isGeneratingStorylines,
     hasGenerateStorylinesError:
       generateStorylines.isError || hasRecoveredGenerateError,
+    isContentRejected,
     isCompletingStory:
       isPersisting || createStory.isPending || createChat.isPending,
     hasCompleteStoryError,
