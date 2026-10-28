@@ -24,7 +24,7 @@ const PENDING_CONSENTS: UserConsentResponse = {
 };
 
 test.describe('계정 비주얼', () => {
-  test('로그인 페이지: 단일 CTA, 이관 안내·약관 고지 없음 (AUTH-LOGIN)', async ({
+  test('로그인 페이지: 가입 혜택 배지와 문서 링크, 이관 안내·약관 고지 없음 (AUTH-LOGIN)', async ({
     page,
   }) => {
     await page.goto('/login');
@@ -35,7 +35,7 @@ test.describe('계정 비주얼', () => {
     await expect(page.getByText('계정마다 처음 로그인할 때')).toHaveCount(0);
     await expect(
       page.getByRole('link', { name: '서비스 이용약관', exact: true }),
-    ).toHaveCount(0);
+    ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('login-page.png');
   });

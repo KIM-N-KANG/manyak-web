@@ -364,10 +364,6 @@ export const GENERAL_STORY_REGISTER_COPY = {
     description:
       '스토리 상세의 주요 내용에 보이는 글이에요. 한 줄 소개보다 자세한 줄거리와 볼거리를 적어주세요',
   },
-  visibility: {
-    label: '공개',
-    description: '누구나 스토리를 찾아보고 플레이할 수 있어요',
-  },
   notice:
     '노골적인 성적 표현, 지나치게 잔혹한 묘사, 혐오를 부추기는 내용은 등록할 수 없어요. 이런 내용을 올리면 이용이 제한될 수 있어요',
 } as const;

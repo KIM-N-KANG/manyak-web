@@ -11,6 +11,7 @@ export interface CampaignTotals {
   activeUsersAverage?: number;
   newVisitors?: CampaignSegments;
   signups?: CampaignSegments;
+  androidSignups?: number;
   /** @nullable */
   adsShare?: number | null;
   storylineRequests?: number;

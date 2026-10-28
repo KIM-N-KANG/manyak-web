@@ -2,7 +2,6 @@ import { AlertCircleIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
-import { Switch } from '@/components/motion/switch';
 import {
   Field,
   FieldDescription,
@@ -11,6 +10,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { GenreSearchCombobox } from '@/features/stories/_shared/components/genre-search-combobox';
+import { StoryVisibilityField } from '@/features/stories/_shared/components/story-visibility-field';
 import { TagChipGrid } from '@/features/stories/_shared/components/tag-chip-grid';
 import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 import { useGenreCatalog } from '@/features/stories/_shared/hooks/use-genre-catalog';
@@ -27,9 +27,7 @@ import { REGISTER_ERROR_KEY } from '@/features/studio/general/utils/register-val
 import { GeneralStoryInputField } from './general-story-input-field';
 import { useRegisterError } from './general-story-register-errors';
 
-const { genre, description, visibility, notice } = GENERAL_STORY_REGISTER_COPY;
-
-const VISIBILITY_DESCRIPTION_ID = 'general-story-visibility-description';
+const { genre, description, notice } = GENERAL_STORY_REGISTER_COPY;
 
 const GENRE_SEARCH_ID = 'general-story-genre';
 
@@ -136,24 +134,10 @@ export function GeneralStoryRegisterPanel({
         onChange={onStoryDescriptionChange}
       />
 
-      <div className="flex items-center gap-4">
-        <Field className="flex-1 gap-2">
-          <FieldLabel>{visibility.label}</FieldLabel>
-          <FieldDescription
-            id={VISIBILITY_DESCRIPTION_ID}
-            className="text-foreground-secondary">
-            {visibility.description}
-          </FieldDescription>
-        </Field>
-        <Switch
-          checked={storyVisibility === 'PUBLIC'}
-          onCheckedChange={(checked) =>
-            onStoryVisibilityChange(checked ? 'PUBLIC' : 'PRIVATE')
-          }
-          ariaLabel={visibility.label}
-          ariaDescribedBy={VISIBILITY_DESCRIPTION_ID}
-        />
-      </div>
+      <StoryVisibilityField
+        value={storyVisibility}
+        onValueChange={onStoryVisibilityChange}
+      />
 
       <p className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-sm text-foreground-secondary">
         <HugeiconsIcon

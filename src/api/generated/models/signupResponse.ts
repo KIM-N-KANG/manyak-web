@@ -11,5 +11,8 @@ export interface SignupResponse {
   asOf?: string;
   from?: string;
   to?: string;
+  /** @nullable */
+  platformAsOf?: string | null;
+  pendingDates?: string[];
   daily?: SignupDay[];
 }

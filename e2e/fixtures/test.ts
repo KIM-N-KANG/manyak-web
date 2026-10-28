@@ -70,6 +70,7 @@ export {
   enableRealtimeImage,
   seedChatIds,
   seedGuestChatIds,
+  seedInviteOnboardingNextRun,
   seedPendingCreditOrder,
   seedPendingLogin,
   seedStoryIds,

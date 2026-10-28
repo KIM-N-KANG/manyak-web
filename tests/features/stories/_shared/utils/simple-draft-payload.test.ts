@@ -80,6 +80,7 @@ const additionalInfoRecord: StoryDraftRecord = {
   additionalInfos: ['비 오는 밤'],
   selectedRecommendations: ['주인공은 비밀을 품고 있다'],
   artStyle: 'WATERCOLOR',
+  visibility: 'PRIVATE',
 };
 
 /** PUT 본문을 서버가 돌려줄 상세로 바꾼다. */
@@ -148,6 +149,7 @@ describe('toSimpleDraftRequest', () => {
       additionalInfos: ['비 오는 밤'],
       selectedRecommendations: ['주인공은 비밀을 품고 있다'],
       artStyle: 'WATERCOLOR',
+      visibility: 'PRIVATE',
     });
   });
 });
@@ -215,13 +217,13 @@ describe('readSimpleDraftDetail', () => {
   });
 
   it('빠진 선택 필드는 기본값으로 채운다', () => {
-    const { artStyle, selectedRecommendations, ...rest } = toSimpleDraftRequest(
-      additionalInfoRecord,
-      null,
-    ).payload as unknown as Record<string, unknown>;
+    const { artStyle, selectedRecommendations, visibility, ...rest } =
+      toSimpleDraftRequest(additionalInfoRecord, null)
+        .payload as unknown as Record<string, unknown>;
 
     void artStyle;
     void selectedRecommendations;
+    void visibility;
 
     const result = readSimpleDraftDetail({
       ...toDetail(toSimpleDraftRequest(additionalInfoRecord, null)),
@@ -233,6 +235,8 @@ describe('readSimpleDraftDetail', () => {
     const record = result.kind === 'ok' ? result.record : null;
 
     expect(record?.stage === 'STORY_DRAFT' && record.artStyle).toBeFalsy();
+    // 공개 스위치 전 초안이나 웹 이전 버전 초안은 공개 범위가 없어 퍼널이 기본값인 공개로 연다.
+    expect(record?.stage === 'STORY_DRAFT' && record.visibility).toBeFalsy();
     expect(
       record?.stage === 'STORY_DRAFT' && record.selectedRecommendations,
     ).toEqual([]);

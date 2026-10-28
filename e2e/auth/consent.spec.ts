@@ -16,6 +16,7 @@ import {
   mockSignupConsent,
   mockSignupConsentSignIn,
   PUSH_SETTINGS_FIXTURE,
+  seedInviteOnboardingNextRun,
   seedPendingLogin,
   seedStoryIds,
   test,
@@ -151,6 +152,7 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
     let migrateCount = 0;
 
     await mockMemberSession(page, { inviteOnboardingPending: true });
+    await seedInviteOnboardingNextRun(page);
     await seedStoryIds(page, ['11111111-1111-4111-8111-111111111111']);
     await page.route(CONSENTS, async (route) => {
       await consentsReady;
@@ -182,6 +184,12 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
 
     await expect.poll(() => migrateCount).toBe(1);
     await expect.poll(() => myStoriesCount).toBeGreaterThan(0);
+    // 초대 코드 안내는 홈 탭에서만 연다.
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page
+      .getByRole('navigation', { name: '하단 네비게이션' })
+      .getByRole('link', { name: '홈', exact: true })
+      .click();
     await expect(page.getByRole('dialog')).toContainText(
       '지금은 건너뛰고 나중에 등록해도 돼요',
     );

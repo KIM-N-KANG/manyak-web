@@ -7,6 +7,7 @@
  */
 
 export type RetentionParams = {
+  cohort?: string;
   from?: string;
   to?: string;
   days?: string;

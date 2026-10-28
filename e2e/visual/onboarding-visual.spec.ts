@@ -5,6 +5,7 @@ import {
   CREDIT_POLICY_FIXTURE,
   expect,
   mockMemberSession,
+  seedInviteOnboardingNextRun,
   test,
 } from '../fixtures/test';
 import { waitForFonts } from '../fixtures/visual';
@@ -17,6 +18,7 @@ import { waitForFonts } from '../fixtures/visual';
 test.describe('온보딩 비주얼', () => {
   test('신규 가입 초대 코드 바텀 시트 (ONBD-INVITE)', async ({ page }) => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
+    await seedInviteOnboardingNextRun(page);
 
     await page.goto('/');
 

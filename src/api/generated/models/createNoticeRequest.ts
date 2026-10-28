@@ -18,7 +18,19 @@ export interface CreateNoticeRequest {
    * @maxLength 5000
    */
   body: string;
-  tag?: CreateNoticeRequestTag;
+  tag: CreateNoticeRequestTag;
+  /**
+   * @minLength 0
+   * @maxLength 100
+   * @pattern (?sU).*\S.*
+   */
+  notificationTitle: string;
+  /**
+   * @minLength 0
+   * @maxLength 300
+   * @pattern (?sU).*\S.*
+   */
+  notificationBody: string;
   /**
    * @minLength 0
    * @maxLength 500

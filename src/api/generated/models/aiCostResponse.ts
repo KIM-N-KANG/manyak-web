@@ -10,7 +10,8 @@ import type { AiCostTotals } from './aiCostTotals';
 import type { AiCostUnmapped } from './aiCostUnmapped';
 
 export interface AiCostResponse {
-  asOf?: string;
+  /** @nullable */
+  asOf?: string | null;
   from?: string;
   to?: string;
   currency?: string;
@@ -21,4 +22,7 @@ export interface AiCostResponse {
   pendingDates?: string[];
   usdKrwRate?: number;
   unmapped?: AiCostUnmapped[];
+  expiredDates?: string[];
+  retentionDays?: number;
+  retentionStartDate?: string;
 }

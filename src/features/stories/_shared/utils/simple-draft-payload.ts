@@ -1,5 +1,6 @@
 import type {
   CreateSimpleStoryRequest,
+  CreateSimpleStoryRequestVisibility,
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
   JsonNode,
@@ -25,6 +26,7 @@ type StoryDraftPayload = {
   additionalInfos: string[];
   selectedRecommendations: string[];
   artStyle: string | null;
+  visibility: CreateSimpleStoryRequestVisibility | null;
   createdStoryId: string | null;
   completionRequest: CreateSimpleStoryRequest | null;
 };
@@ -96,6 +98,7 @@ export function toSimpleDraftRequest(
     additionalInfos: record.additionalInfos,
     selectedRecommendations: record.selectedRecommendations,
     artStyle: record.artStyle ?? null,
+    visibility: record.visibility ?? null,
     createdStoryId: record.createdStoryId,
     completionRequest: record.completionRequest,
   };
@@ -210,6 +213,10 @@ export function readSimpleDraftDetail(
       selectedRecommendations: asStrings(payload.selectedRecommendations),
       ...(typeof payload.artStyle === 'string' && {
         artStyle: payload.artStyle,
+      }),
+      ...((payload.visibility === 'PUBLIC' ||
+        payload.visibility === 'PRIVATE') && {
+        visibility: payload.visibility,
       }),
       createdStoryId:
         typeof payload.createdStoryId === 'string'

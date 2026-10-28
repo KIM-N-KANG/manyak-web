@@ -8,6 +8,7 @@
 import type { ReachDays } from './reachDays';
 
 export type ReachParams = {
+  segment?: string;
   days?: ReachDays;
   from?: string;
   to?: string;

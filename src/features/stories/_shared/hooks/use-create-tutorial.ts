@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { useSession } from 'next-auth/react';
-
 import { track } from '@/observability/analytics';
 
 import {
@@ -24,17 +22,14 @@ const AUTO_OPEN_DELAY_MS = 200;
 /**
  * 간편 제작 첫 진입 안내의 열림 상태를 관리하는 훅. 화면이 안내를 받을 수 있는 상태가 되면 다음 단계를 열고,
  * 버튼이나 뒤로가기로 닫을 때 마친 단계를 기록한다. 열기만 하고 떠나면 다음 진입에 같은 단계를 다시 보인다.
- * 신규 가입 초대 코드 시트가 남아 있는 동안은 겹치지 않게 열지 않는다.
  *
  * @param screen 지금 화면이 안내를 받을 수 있는 상태(없으면 null)
  * @returns 열린 단계와 주 버튼, 보조 버튼 핸들러
  */
 export function useCreateTutorial(screen: CreateTutorialScreen | null) {
-  const { data: session } = useSession();
   const [next, setNext] = useState(readNextCreateTutorialStage);
   const [stage, setStage] = useState<CreateTutorialStage | null>(null);
-  const isBlocked = session?.inviteOnboardingPending === true;
-  const ready = isBlocked ? null : resolveCreateTutorialStage(next, screen);
+  const ready = resolveCreateTutorialStage(next, screen);
 
   useEffect(() => {
     if (stage !== null || ready === null) return;

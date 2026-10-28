@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
-import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
@@ -70,8 +69,7 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
             className="absolute top-0 left-0 w-18 rounded-tl-[11px] rounded-br-[6px] backdrop-blur-md"
           />
         )}
-        <div className="absolute right-2 bottom-2 flex items-center gap-1">
-          <StoryLikeCount likeCount={story.likeCount ?? 0} size="sm" />
+        <div className="absolute right-2 bottom-2">
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
         </div>
       </AspectRatio>

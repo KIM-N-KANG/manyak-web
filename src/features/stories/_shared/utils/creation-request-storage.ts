@@ -1,5 +1,6 @@
 import type {
   CreateSimpleStoryRequest,
+  CreateSimpleStoryRequestVisibility,
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
   SimpleStoryCharacterRequestGender,
@@ -109,6 +110,8 @@ export type PendingCreationRequest =
       selectedRecommendations: string[];
       /** 고른 화풍 코드다. 화풍 선택 도입 전에 저장한 레코드에는 없다. */
       artStyle?: string;
+      /** 공개 범위다. 공개 스위치 도입 전에 저장한 레코드에는 없고, 없으면 스위치 기본값인 공개로 읽는다. */
+      visibility?: CreateSimpleStoryRequestVisibility;
       createdStoryId: string | null;
       completionRequest: CreateSimpleStoryRequest | null;
     } & ServerDraftLink)
@@ -377,6 +380,9 @@ function isPendingCreationRequest(
       isStringArray(parsed.additionalInfos) &&
       isStringArray(parsed.selectedRecommendations) &&
       (parsed.artStyle === undefined || typeof parsed.artStyle === 'string') &&
+      (parsed.visibility === undefined ||
+        parsed.visibility === 'PUBLIC' ||
+        parsed.visibility === 'PRIVATE') &&
       (parsed.createdStoryId === null ||
         typeof parsed.createdStoryId === 'string') &&
       (parsed.completionRequest === null ||
@@ -882,6 +888,14 @@ export function markPendingStoryCreated(
   });
 }
 
+/**
+ * 아직 스토리가 만들어지지 않은 완성 요청을 추가 정보 단계의 편집 초안으로 되돌린다.
+ * 제출한 화풍과 공개 범위를 되살려 같은 입력의 재시도가 같은 requestId를 쓰게 한다.
+ *
+ * @param requestId 되돌릴 완성 요청 ID
+ * @param epoch 쓰기를 허용할 제작 세션 epoch
+ * @returns 초안으로 되돌렸으면 true, 요청이 없거나 이미 스토리가 만들어졌으면 false
+ */
 export function demotePendingCompletionToDraft(
   requestId: string,
   epoch = getCreationEpoch(),
@@ -905,6 +919,8 @@ export function demotePendingCompletionToDraft(
       selectedRecommendations: current.selectedRecommendations ?? [],
       // 제출한 화풍을 되살려야 같은 입력의 재시도가 같은 requestId를 쓴다.
       artStyle: current.completionRequest.artStyle ?? undefined,
+      // 공개 스위치 전에 보낸 요청은 공개 범위가 없어 서버가 비공개로 받았다.
+      visibility: current.completionRequest.visibility ?? 'PRIVATE',
       createdStoryId: null,
       completionRequest: current.completionRequest,
       ...(current.draftId !== undefined && {

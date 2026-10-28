@@ -12,6 +12,16 @@ export interface RetentionCohort {
   /** @nullable */
   d1?: number | null;
   /** @nullable */
+  d2?: number | null;
+  /** @nullable */
+  d3?: number | null;
+  /** @nullable */
+  d4?: number | null;
+  /** @nullable */
+  d5?: number | null;
+  /** @nullable */
+  d6?: number | null;
+  /** @nullable */
   d7?: number | null;
   /** @nullable */
   d30?: number | null;
