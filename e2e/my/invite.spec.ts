@@ -1,12 +1,15 @@
 import type { Page } from '@playwright/test';
 
+import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
+import { INVITE_ONBOARDING_SIGNUP_RUN_STORAGE_KEY } from '@/features/my/_shared/utils/invite-onboarding-run';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
   mockMemberSession,
+  seedInviteOnboardingNextRun,
   test,
 } from '../fixtures/test';
 
@@ -118,20 +121,23 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
         viewedEvents.push(message.text());
       }
     });
-    await mockMemberSession(page, { inviteOnboardingPending: true });
+    await mockMemberSession(page);
     await mockMyInvite(page);
     await page.goto('/my/invite');
 
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect.poll(() => viewedEvents.length).toBe(1);
 
-    const updateResponse = page.waitForResponse(
+    // 탭이 다시 보이면 Auth.js가 세션을 다시 받아 새 세션 객체로 렌더한다.
+    const refetchResponse = page.waitForResponse(
       (response) =>
         response.url().includes('/api/auth/session') &&
-        response.request().method() === 'POST',
+        response.request().method() === 'GET',
     );
 
-    await page.keyboard.press('Escape');
-    await updateResponse;
+    await page.evaluate(() =>
+      document.dispatchEvent(new Event('visibilitychange')),
+    );
+    await refetchResponse;
     await page.waitForTimeout(200);
 
     expect(viewedEvents).toHaveLength(1);
@@ -507,7 +513,60 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
   });
 });
 
+test.describe('신규 가입 초대 코드 바텀 시트 표시 시점', () => {
+  const bottomNavigation = (page: Page) =>
+    page.getByRole('navigation', { name: '하단 네비게이션' });
+
+  test('가입한 접속에서는 새로고침해도 띄우지 않고 탭을 새로 연 다음 접속의 홈에서 띄운다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page, { inviteOnboardingPending: true });
+    await page.goto('/');
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => window.sessionStorage.getItem(key),
+          INVITE_ONBOARDING_SIGNUP_RUN_STORAGE_KEY,
+        ),
+      )
+      .toBe('user-1');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    await page.reload();
+    await expect(bottomNavigation(page)).toBeVisible();
+    await page.waitForTimeout(400);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    // 탭을 닫았다 다시 연 접속처럼 탭 저장소만 비운다.
+    await page.evaluate(() => window.sessionStorage.clear());
+    await page.reload();
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
+
+  test('다음 접속이어도 홈 탭에 가기 전에는 띄우지 않는다', async ({
+    page,
+  }) => {
+    await mockMemberSession(page, { inviteOnboardingPending: true });
+    await seedInviteOnboardingNextRun(page);
+    await page.goto(APP_PATH.MAIN.MY);
+
+    await expect(bottomNavigation(page)).toBeVisible();
+    await page.waitForTimeout(400);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    await bottomNavigation(page)
+      .getByRole('link', { name: '홈', exact: true })
+      .click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
+});
+
 test.describe('신규 가입 초대 코드 바텀 시트', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedInviteOnboardingNextRun(page);
+  });
+
   async function preparePendingMember(page: Page): Promise<void> {
     await mockMemberSession(page, { inviteOnboardingPending: true });
   }

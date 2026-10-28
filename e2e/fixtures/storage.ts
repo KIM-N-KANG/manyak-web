@@ -10,6 +10,7 @@ import {
   CHAT_TOUR_SEEN_STORAGE_KEY,
   CHAT_TOUR_SEEN_VALUE,
 } from '@/features/chats/room/constants';
+import { INVITE_ONBOARDING_SEEN_STORAGE_KEY } from '@/features/my/_shared/utils/invite-onboarding-run';
 import { PENDING_CREDIT_ORDER_STORAGE_KEY } from '@/features/my/credits/utils/pending-credit-order-storage';
 import {
   CREATE_TUTORIAL_DONE,
@@ -179,6 +180,25 @@ export async function seedStoryCompletionRequests(
  * OAuth 복귀·같은 탭 새로고침처럼 가입 동의 시트가 이어져야 하는 상태를 재현한다. 심지 않으면
  * 세션 없는 화면은 가입 대기를 조회하지 않는다.
  */
+/**
+ * 신규 가입 초대 코드 안내 대기를 이전 접속에서 이미 본 상태를 심는다.
+ * 가입한 접속이 끝난 다음 접속이 되어 안내가 홈 탭에서 열린다.
+ *
+ * @param page 대상 페이지
+ * @param userId 안내 대기 중인 회원 ID. `mockMemberSession` 기본값과 같다
+ */
+export async function seedInviteOnboardingNextRun(
+  page: Page,
+  userId = 'user-1',
+): Promise<void> {
+  await page.addInitScript(
+    ([key, id]) => {
+      window.localStorage.setItem(key, id);
+    },
+    [INVITE_ONBOARDING_SEEN_STORAGE_KEY, userId] as const,
+  );
+}
+
 export async function seedPendingLogin(page: Page): Promise<void> {
   await page.addInitScript((key) => {
     window.sessionStorage.setItem(key, '1');
