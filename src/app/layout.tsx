@@ -6,6 +6,7 @@ import Script from 'next/script';
 import { maruburi, pretendard } from '@/assets/fonts/fonts';
 import { AppBanner } from '@/components/layout/app-banner';
 import { InAppBrowserObserver } from '@/components/layout/in-app-browser-observer';
+import { InAppScrollAnchor } from '@/components/layout/in-app-scroll-anchor';
 import { IosInputZoomLock } from '@/components/layout/ios-input-zoom-lock';
 import { AmplitudeProvider } from '@/components/providers/amplitude-provider';
 import { AnalyticsUserSync } from '@/components/providers/analytics-user-sync';
@@ -98,6 +99,7 @@ export default function RootLayout({
       {/* suppressHydrationWarning: 카카오톡 iOS 웹뷰가 body에 -webkit-text-size-adjust 스타일을 주입해 속성 불일치 경고가 발생 */}
       <body className="font-sans text-foreground" suppressHydrationWarning>
         <IosInputZoomLock />
+        <InAppScrollAnchor />
         <AmplitudeProvider>
           <MetaPixelProvider>
             <AuthSessionProvider>

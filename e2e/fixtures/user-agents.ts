@@ -10,6 +10,8 @@ export const USER_AGENT = {
     'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/129.0.6668.69 Mobile/15E148 Safari/604.1',
   iosKakao:
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 KAKAOTALK 10.8.0',
+  iosThreads:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Barcelona 365.0.0.21.82 (iPhone15,2; iOS 18_6; ko_KR; ko; scale=3.00; 1179x2556)',
   // 알려진 앱 토큰도 Safari 토큰도 없는 iOS 인앱 브라우저다.
   iosUnknownApp:
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
