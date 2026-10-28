@@ -35,6 +35,7 @@ import type {
   AdminPageResponseAdminTransactionResponse,
   AdminPaymentDetailResponse,
   AdminStoryDetailResponse,
+  AdminStorySettingsResponse,
   AttendanceParams,
   AuditLogsParams,
   ChartsParams,
@@ -375,6 +376,166 @@ export function useGetAdminStoriesByStoryId<
     storyId,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type storySettingsResponse200 = {
+  data: AdminStorySettingsResponse;
+  status: 200;
+};
+
+export type storySettingsResponseSuccess = storySettingsResponse200 & {
+  headers: Headers;
+};
+export const getStorySettingsUrl = (storyId: string) => {
+  return `/api/v1/admin/stories/${storyId}/settings`;
+};
+
+/**
+ * 삭제된 스토리를 포함한 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태, 삭제 시각과 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.
+ * @summary 스토리 설정
+ */
+export const storySettings = async (
+  storyId: string,
+  options?: RequestInit,
+): Promise<storySettingsResponseSuccess> => {
+  return customInstance<storySettingsResponseSuccess>(
+    getStorySettingsUrl(storyId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getStorySettingsQueryKey = (storyId: string) => {
+  return [`/api/v1/admin/stories/${storyId}/settings`] as const;
+};
+
+export const getStorySettingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof storySettings>>,
+  TError = ErrorType<unknown>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof storySettings>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getStorySettingsQueryKey(storyId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof storySettings>>> = ({
+    signal,
+  }) => storySettings(storyId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: storyId !== null && storyId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof storySettings>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type StorySettingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof storySettings>>
+>;
+export type StorySettingsQueryError = ErrorType<unknown>;
+
+export function useStorySettings<
+  TData = Awaited<ReturnType<typeof storySettings>>,
+  TError = ErrorType<unknown>,
+>(
+  storyId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof storySettings>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof storySettings>>,
+          TError,
+          Awaited<ReturnType<typeof storySettings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStorySettings<
+  TData = Awaited<ReturnType<typeof storySettings>>,
+  TError = ErrorType<unknown>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof storySettings>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof storySettings>>,
+          TError,
+          Awaited<ReturnType<typeof storySettings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStorySettings<
+  TData = Awaited<ReturnType<typeof storySettings>>,
+  TError = ErrorType<unknown>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof storySettings>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 스토리 설정
+ */
+
+export function useStorySettings<
+  TData = Awaited<ReturnType<typeof storySettings>>,
+  TError = ErrorType<unknown>,
+>(
+  storyId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof storySettings>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getStorySettingsQueryOptions(storyId, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

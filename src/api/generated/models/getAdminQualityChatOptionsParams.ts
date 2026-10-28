@@ -8,6 +8,7 @@
 import type { GetAdminQualityChatOptionsDays } from './getAdminQualityChatOptionsDays';
 
 export type GetAdminQualityChatOptionsParams = {
+  segment?: string;
   days?: GetAdminQualityChatOptionsDays;
   from?: string;
   to?: string;

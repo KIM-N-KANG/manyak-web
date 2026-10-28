@@ -5,10 +5,10 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { AdminNoticeResponse } from './adminNoticeResponse';
+import type { AdminNoticeItemResponse } from './adminNoticeItemResponse';
 
 export interface AdminNoticePageResponse {
-  items?: AdminNoticeResponse[];
+  items?: AdminNoticeItemResponse[];
   page?: number;
   size?: number;
   totalElements?: number;

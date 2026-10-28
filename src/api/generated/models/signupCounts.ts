@@ -10,5 +10,4 @@ export interface SignupCounts {
   total?: number;
   google?: number;
   kakao?: number;
-  other?: number;
 }

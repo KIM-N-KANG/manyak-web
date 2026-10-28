@@ -58,4 +58,6 @@ export interface AdminChatsRequest {
   hasFirstMessage?: boolean | null;
   /** @nullable */
   turnDate?: string | null;
+  /** @nullable */
+  deleted?: string | null;
 }

@@ -29,6 +29,8 @@ import type {
   CreationParams,
   GetAdminCampaignsAnalyticsParams,
   GetAdminCampaignsFunnelsStoryDetailParams,
+  PushOpensParams,
+  PushOpensResponse,
   SourcesParams,
 } from '../../models';
 
@@ -322,6 +324,166 @@ export function useSources<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getSourcesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type pushOpensResponse200 = {
+  data: PushOpensResponse;
+  status: 200;
+};
+
+export type pushOpensResponseSuccess = pushOpensResponse200 & {
+  headers: Headers;
+};
+export const getPushOpensUrl = (params?: PushOpensParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/campaigns/push-opens?${stringifiedParams}`
+    : `/api/v1/admin/campaigns/push-opens`;
+};
+
+export const pushOpens = async (
+  params?: PushOpensParams,
+  options?: RequestInit,
+): Promise<pushOpensResponseSuccess> => {
+  return customInstance<pushOpensResponseSuccess>(getPushOpensUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getPushOpensQueryKey = (params?: PushOpensParams) => {
+  return [
+    `/api/v1/admin/campaigns/push-opens`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getPushOpensQueryOptions = <
+  TData = Awaited<ReturnType<typeof pushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: PushOpensParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof pushOpens>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPushOpensQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof pushOpens>>> = ({
+    signal,
+  }) => pushOpens(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof pushOpens>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PushOpensQueryResult = NonNullable<
+  Awaited<ReturnType<typeof pushOpens>>
+>;
+export type PushOpensQueryError = ErrorType<unknown>;
+
+export function usePushOpens<
+  TData = Awaited<ReturnType<typeof pushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | PushOpensParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof pushOpens>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof pushOpens>>,
+          TError,
+          Awaited<ReturnType<typeof pushOpens>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePushOpens<
+  TData = Awaited<ReturnType<typeof pushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: PushOpensParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof pushOpens>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof pushOpens>>,
+          TError,
+          Awaited<ReturnType<typeof pushOpens>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePushOpens<
+  TData = Awaited<ReturnType<typeof pushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: PushOpensParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof pushOpens>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function usePushOpens<
+  TData = Awaited<ReturnType<typeof pushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: PushOpensParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof pushOpens>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPushOpensQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

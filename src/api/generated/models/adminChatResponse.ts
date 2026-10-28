@@ -19,4 +19,6 @@ export interface AdminChatResponse {
   creditsSpent?: number;
   /** @nullable */
   firstMessageSeconds?: number | null;
+  /** @nullable */
+  deletedAt?: string | null;
 }

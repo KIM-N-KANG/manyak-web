@@ -15,6 +15,7 @@ export interface CampaignDay {
   newVisitorsBySource?: CampaignSources;
   signups?: CampaignSegments;
   cumulativeSignups?: CampaignSegments;
+  androidSignups?: number;
   storylineRequests?: number;
   completionRequests?: number;
   chatMessages?: number;
