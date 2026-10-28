@@ -663,17 +663,18 @@ export function GeneralStoryCreateForm({
     setIsReviewing(true);
 
     // 위쪽 토스트가 헤더의 닫기를 오래 가리지 않게 짧게 띄우고, 검토가 이어지는 동안은 등록하기 스피너가 알린다.
-    // 공개 범위만 바꾼 수정은 검수 없이 바로 반영되므로 띄우지 않는다.
-    if (
-      !editRequest ||
-      Object.keys(editRequest).some((field) => field !== 'visibility')
-    ) {
+    const showReviewingToast = () =>
       toast(TOAST_MESSAGE.STORY_REVIEWING, {
         id: REVIEW_TOAST_ID,
         duration: DRAFT_SAVED_TOAST_DURATION_MS,
         icon: <Spinner className="size-4" />,
       });
-    }
+    const isVisibilityOnly =
+      editRequest &&
+      Object.keys(editRequest).every((field) => field === 'visibility');
+
+    // 공개 범위만 바꾼 수정은 검수 없이 바로 반영되므로 띄우지 않는다.
+    if (!isVisibilityOnly) showReviewingToast();
 
     let submissionId: string | undefined;
 
@@ -700,6 +701,9 @@ export function GeneralStoryCreateForm({
 
         submissionId =
           response.status === 202 ? response.data.submissionId : undefined;
+
+        if (submissionId && isVisibilityOnly && !controller.signal.aborted)
+          showReviewingToast();
       } else {
         const rejectedId = rejectedSubmissionIdRef.current;
         const response = rejectedId
