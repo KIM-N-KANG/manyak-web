@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
+import { LoginLegalLinks } from '@/features/auth/_shared/components/login-legal-links';
+import { SignupBenefitBadge } from '@/features/auth/_shared/components/signup-benefit-badge';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
@@ -62,8 +63,9 @@ export function LoginRequiredSheet({
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex min-h-0 w-full flex-col gap-4 overflow-y-auto overscroll-contain px-4 pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <div className="flex flex-col gap-2">
+        <div className="flex min-h-0 w-full flex-col items-center overflow-y-auto overscroll-contain px-4 pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <SignupBenefitBadge />
+          <div className="mt-2 flex w-full flex-col gap-2">
             <Button
               type="button"
               size="lg"
@@ -92,9 +94,9 @@ export function LoginRequiredSheet({
               </LoadingButtonContent>
             </Button>
           </div>
-          <DrawerDescription className="text-center text-sm leading-relaxed whitespace-pre-line text-foreground-secondary">
-            {LOGIN_COPY.linkNotice}
-          </DrawerDescription>
+          <div className="mt-3">
+            <LoginLegalLinks />
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

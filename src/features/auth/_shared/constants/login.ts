@@ -4,8 +4,6 @@
  */
 export const LOGIN_COPY = {
   title: '로그인하고 나만의 스토리를\n어디서든 이어서 즐겨보세요',
-  linkNotice:
-    '소셜 계정 하나로 먼저 로그인한 뒤 다른 계정을 연동하면,\n어느 계정으로 로그인해도 똑같이 이용할 수 있어요',
   loginButton: '로그인하기',
   /** 가입 혜택 배지 "지금 가입하고 N 이프 받기"의 조각. N은 서버 `signupReward`다. */
   signupBenefit: { prefix: '지금 가입하고', unit: '이프', suffix: '받기' },

@@ -191,6 +191,30 @@ for (const member of [false, true]) {
   });
 }
 
+test('로그인 시트의 약관 링크로 나갔다 돌아오면 뒤로가기 한 번에 이전 화면으로 간다 (KNK-1900)', async ({
+  page,
+}) => {
+  await page.route(DETAIL, (route) => route.fulfill({ json: story }));
+  await page.goto(APP_PATH.MAIN.STORIES);
+  await page.goto(APP_PATH.STORY_DETAIL('s1'));
+  await page
+    .getByRole('button', { name: STORY_LIKE_COPY.like, exact: true })
+    .click();
+  await page
+    .getByRole('dialog', { name: oneLine(LOGIN_COPY.title) })
+    .getByRole('link', { name: LOGIN_COPY.legalTerms, exact: true })
+    .click();
+  await expect(page).toHaveURL(APP_PATH.TERMS);
+
+  await page.goBack();
+  await expect(page).toHaveURL(APP_PATH.STORY_DETAIL('s1'));
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // 시트가 쌓은 히스토리 칸이 남아 있으면 이 뒤로가기가 상세에 머문다.
+  await page.goBack();
+  await expect(page).toHaveURL(APP_PATH.MAIN.STORIES);
+});
+
 test('게스트는 좋아요 요청 없이 로그인 시트를 열고 닫아도 상세에 머문다', async ({
   page,
 }) => {
@@ -211,7 +235,13 @@ test('게스트는 좋아요 요청 없이 로그인 시트를 열고 닫아도 
   });
 
   await expect(sheet).toBeVisible();
-  await expect(sheet.getByText(oneLine(LOGIN_COPY.linkNotice))).toBeVisible();
+  await expect(sheet.getByText(LOGIN_COPY.signupBenefit.prefix)).toBeVisible();
+  await expect(
+    sheet.getByRole('link', { name: LOGIN_COPY.legalTerms, exact: true }),
+  ).toBeVisible();
+  await expect(
+    sheet.getByRole('link', { name: LOGIN_COPY.legalPrivacy, exact: true }),
+  ).toBeVisible();
   await expect(
     sheet.getByRole('button', { name: '카카오로 시작하기' }),
   ).toBeVisible();

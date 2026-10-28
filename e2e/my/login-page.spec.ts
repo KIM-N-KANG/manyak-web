@@ -2,7 +2,6 @@ import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 
-import { oneLine } from '../fixtures/copy';
 import { CREDIT_POLICY_FIXTURE, expect, test } from '../fixtures/test';
 
 test.describe('로그인 화면', () => {
@@ -54,7 +53,6 @@ test.describe('로그인 화면', () => {
     await expect(badge).toBeVisible();
     await expect(terms).toHaveAttribute('href', APP_PATH.TERMS);
     await expect(privacy).toHaveAttribute('href', APP_PATH.PRIVACY);
-    await expect(page.getByText(oneLine(LOGIN_COPY.linkNotice))).toHaveCount(0);
 
     const badgeBox = await badge.boundingBox();
     const kakaoBox = await kakaoButton.boundingBox();
