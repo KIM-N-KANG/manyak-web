@@ -42,3 +42,29 @@ const IN_APP_BROWSER_PATTERN =
 export function isInAppBrowser(userAgent: string): boolean {
   return IN_APP_BROWSER_PATTERN.test(userAgent);
 }
+
+/**
+ * 문서 스크롤 위치를 1px에 붙잡아 인앱 브라우저의 당겨서 닫기 제스처가 앱 안쪽 스크롤을 가로채지 않게 한다.
+ *
+ * 앱은 프레임 안 컨테이너가 스크롤해 문서 위치가 늘 0이다. 인앱 브라우저는 WebView 문서 위치만 보므로
+ * 목록을 내린 뒤 위로 스크롤해도 페이지 최상단에서 당긴 것으로 보고 브라우저를 끌어내린다.
+ * 문서를 1px 더 길게 두고 위치를 1로 유지하면 최상단으로 보지 않는다. 0으로 내려갔을 때만 되돌려,
+ * iOS가 입력 칸을 키보드 위로 올리려 문서를 더 내린 위치는 건드리지 않는다.
+ *
+ * @returns 여분 높이와 스크롤 리스너를 걷어 내는 해제 함수
+ */
+export function anchorDocumentScroll(): () => void {
+  const { style } = document.body;
+  const keepOffset = () => {
+    if (window.scrollY < 1) window.scrollTo(0, 1);
+  };
+
+  style.paddingBottom = '1px';
+  keepOffset();
+  window.addEventListener('scroll', keepOffset, { passive: true });
+
+  return () => {
+    window.removeEventListener('scroll', keepOffset);
+    style.removeProperty('padding-bottom');
+  };
+}
