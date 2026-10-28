@@ -20,6 +20,7 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 - 특정 도메인의 화면 코드(`src/app`, `src/features`)를 변경했다면 커밋 전에 대응하는 `e2e/` 스펙과 스모크를 Mobile Chrome으로 통과시키세요. 예: `pnpm test:e2e e2e/stories e2e/smoke --project="Mobile Chrome"`
 - 여러 도메인이 함께 쓰는 코드(`src/components`, 루트 레이아웃, 프로바이더, `src/lib`, `src/api`, `src/observability`)를 변경했다면 커밋 전에 전체 `pnpm test:e2e`를 통과시키세요.
 - E2E 수정이나 오류 재현 시에는 커밋 전이 아니어도 필요한 스펙을 실행합니다.
+- E2E를 실행하기 전에 에이전트가 띄운 `pnpm dev`는 끄고, 브라우저 화면 확인은 E2E가 끝난 뒤에 다시 띄워서 합니다. Turbopack 개발 서버 하나가 코어 7~8개를 쓰기 때문에 E2E의 프로덕션 빌드, 테스트 브라우저와 겹치면 CPU가 포화됩니다. 사용자가 직접 켜 둔 개발 서버는 건드리지 않습니다.
 
 ## API 레이어 (Orval)
 
