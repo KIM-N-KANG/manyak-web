@@ -8,6 +8,7 @@
 
 export type QualityParams = {
   platform?: string;
+  segment?: string;
   from?: string;
   to?: string;
   days?: string;

@@ -835,7 +835,7 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toHaveCount(0);
   });
 
-  test('홈·제작 카드는 채팅 횟수를 축약해 표시한다 (KNK-1421)', async ({
+  test('홈, 제작 카드는 채팅 횟수를 축약해 표시하고 홈 카드는 좋아요 수를 숨긴다 (KNK-1421, KNK-1900)', async ({
     page,
   }) => {
     await seedStoryIds(page, ['s1']);
@@ -851,6 +851,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.goto('/');
 
     await expect(page.getByText('누적 턴 수 12.3K')).toBeVisible();
+    await expect(page.getByText(STORY_LIKE_COPY.count)).toHaveCount(0);
 
     await page.goto(APP_PATH.MAIN.STUDIO);
 

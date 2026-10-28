@@ -1,8 +1,12 @@
 'use client';
 
-import type { SimpleStorylineResponse } from '@/api/generated/models';
+import type {
+  CreateSimpleStoryRequestVisibility,
+  SimpleStorylineResponse,
+} from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Button } from '@/components/ui/button';
+import { StoryVisibilityField } from '@/features/stories/_shared/components/story-visibility-field';
 
 import { ART_STYLE_REQUIRED_ERROR } from '../../constants';
 import type { AdditionalInfoInput } from '../../types';
@@ -24,6 +28,7 @@ type StoryAdditionalInfoStepSectionProps = {
   canAddAdditionalInfo: boolean;
   artStyle: string | null;
   hasArtStyleError: boolean;
+  visibility: CreateSimpleStoryRequestVisibility;
   onToggleRecommendation: (recommendation: string, pressed: boolean) => void;
   onAddAdditionalInfo: () => void;
   onRemoveAdditionalInfo: (id: string) => void;
@@ -36,6 +41,7 @@ type StoryAdditionalInfoStepSectionProps = {
     element: HTMLTextAreaElement | null,
   ) => void;
   onArtStyleChange: (code: string) => void;
+  onVisibilityChange: (value: CreateSimpleStoryRequestVisibility) => void;
   onCompleteStory: () => void;
   onBackToStorylineSelect: () => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
@@ -51,12 +57,14 @@ export function StoryAdditionalInfoStepSection({
   canAddAdditionalInfo,
   artStyle,
   hasArtStyleError,
+  visibility,
   onToggleRecommendation,
   onAddAdditionalInfo,
   onRemoveAdditionalInfo,
   onChangeAdditionalInfo,
   onRegisterAdditionalInfoInput,
   onArtStyleChange,
+  onVisibilityChange,
   onCompleteStory,
   onBackToStorylineSelect,
   onScroll,
@@ -125,6 +133,14 @@ export function StoryAdditionalInfoStepSection({
             disabled={isCompletingStory}
             onValueChange={onArtStyleChange}
           />
+
+          <div className="px-4">
+            <StoryVisibilityField
+              value={visibility}
+              disabled={isCompletingStory}
+              onValueChange={onVisibilityChange}
+            />
+          </div>
 
           {hasCompleteStoryError && (
             <StoryCreateErrorMessage className="px-4">

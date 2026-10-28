@@ -6,7 +6,9 @@
  * OpenAPI spec version: v1
  */
 import type { ChatOptionDayByModel } from './chatOptionDayByModel';
+import type { ChatOptionDayPlatformTurnsByModel } from './chatOptionDayPlatformTurnsByModel';
 import type { ChatOptionDayTurnsByModel } from './chatOptionDayTurnsByModel';
+import type { PlatformCounts } from './platformCounts';
 
 export interface ChatOptionDay {
   date?: string;
@@ -14,4 +16,8 @@ export interface ChatOptionDay {
   withPersona?: number;
   byModel?: ChatOptionDayByModel;
   turnsByModel?: ChatOptionDayTurnsByModel;
+  chatStarts?: PlatformCounts | null;
+  personaChatStarts?: PlatformCounts | null;
+  /** @nullable */
+  platformTurnsByModel?: ChatOptionDayPlatformTurnsByModel;
 }

@@ -23,7 +23,9 @@ export const PutBody = zod.object({
   schemaVersion: zod.number().optional(),
   payload: zod
     .object({
+      container: zod.boolean().optional(),
       string: zod.boolean().optional(),
+      number: zod.boolean().optional(),
       nodeType: zod
         .enum([
           'ARRAY',
@@ -49,11 +51,9 @@ export const PutBody = zod.object({
       textual: zod.boolean().optional(),
       boolean: zod.boolean().optional(),
       binary: zod.boolean().optional(),
+      floatingPointNumber: zod.boolean().optional(),
       missingNode: zod.boolean().optional(),
       integralNumber: zod.boolean().optional(),
-      floatingPointNumber: zod.boolean().optional(),
-      number: zod.boolean().optional(),
-      container: zod.boolean().optional(),
       array: zod.boolean().optional(),
       empty: zod.boolean().optional(),
       null: zod.boolean().optional(),
@@ -739,6 +739,8 @@ export const createSimpleStoryBodyAdditionalInfosItemMax = 100;
 export const createSimpleStoryBodyAdditionalInfosMin = 0;
 export const createSimpleStoryBodyAdditionalInfosMax = 13;
 
+export const createSimpleStoryBodyVisibilityDefault = `PRIVATE`;
+
 export const CreateSimpleStoryBody = zod
   .object({
     requestId: zod
@@ -773,6 +775,12 @@ export const CreateSimpleStoryBody = zod
       .nullish()
       .describe(
         '활성 화풍 코드. 누락·null이면 ANIME. 미등록·비활성·빈 문자열은 400. NONE도 기존 제작가 유지',
+      ),
+    visibility: zod
+      .enum(['PUBLIC', 'PRIVATE'])
+      .default(createSimpleStoryBodyVisibilityDefault)
+      .describe(
+        '공개 범위. PUBLIC 또는 PRIVATE이며 생략하면 PRIVATE. 게스트도 PUBLIC을 지정할 수 있고, 회원 계정으로 이관된 뒤 공개 목록과 검색에 실립니다.',
       ),
     draftId: zod
       .uuid()
@@ -1952,6 +1960,18 @@ export const postAdminNoticesBodyTitleMax = 100;
 export const postAdminNoticesBodyBodyMin = 0;
 export const postAdminNoticesBodyBodyMax = 5000;
 
+export const postAdminNoticesBodyNotificationTitleMin = 0;
+export const postAdminNoticesBodyNotificationTitleMax = 100;
+
+export const postAdminNoticesBodyNotificationTitleRegExp = new RegExp(
+  '(?sU).*\\S.*',
+);
+export const postAdminNoticesBodyNotificationBodyMin = 0;
+export const postAdminNoticesBodyNotificationBodyMax = 300;
+
+export const postAdminNoticesBodyNotificationBodyRegExp = new RegExp(
+  '(?sU).*\\S.*',
+);
 export const postAdminNoticesBodyReasonMin = 0;
 export const postAdminNoticesBodyReasonMax = 500;
 
@@ -1964,9 +1984,17 @@ export const PostAdminNoticesBody = zod.object({
     .string()
     .min(postAdminNoticesBodyBodyMin)
     .max(postAdminNoticesBodyBodyMax),
-  tag: zod
-    .enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])
-    .optional(),
+  tag: zod.enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION']),
+  notificationTitle: zod
+    .string()
+    .min(postAdminNoticesBodyNotificationTitleMin)
+    .max(postAdminNoticesBodyNotificationTitleMax)
+    .regex(postAdminNoticesBodyNotificationTitleRegExp),
+  notificationBody: zod
+    .string()
+    .min(postAdminNoticesBodyNotificationBodyMin)
+    .max(postAdminNoticesBodyNotificationBodyMax)
+    .regex(postAdminNoticesBodyNotificationBodyRegExp),
   reason: zod
     .string()
     .min(postAdminNoticesBodyReasonMin)
@@ -2000,6 +2028,20 @@ export const PublishBody = zod.object({
 });
 
 export const PublishResponse = zod.unknown();
+
+export const TakedownParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const TakedownBody = zod.object({
+  reasonCode: zod
+    .enum(['SEXUAL_CONTENT', 'COPYRIGHT_INFRINGEMENT', 'HATE_SPEECH', 'ETC'])
+    .optional(),
+  reasonDetail: zod.string().nullish(),
+  memo: zod.string().nullish(),
+});
+
+export const TakedownResponse = zod.unknown();
 
 export const ReleaseParams = zod.object({
   submissionId: zod.uuid(),
@@ -2476,6 +2518,15 @@ export const PatchAdminNoticesByNoticeIdParams = zod.object({
   noticeId: zod.uuid(),
 });
 
+export const patchAdminNoticesByNoticeIdBodyNotificationTitleMax = 100;
+
+export const patchAdminNoticesByNoticeIdBodyNotificationTitleRegExp =
+  new RegExp('(?sU).*\\S.*');
+export const patchAdminNoticesByNoticeIdBodyNotificationBodyMax = 300;
+
+export const patchAdminNoticesByNoticeIdBodyNotificationBodyRegExp = new RegExp(
+  '(?sU).*\\S.*',
+);
 export const patchAdminNoticesByNoticeIdBodyTitleMax = 100;
 
 export const patchAdminNoticesByNoticeIdBodyTitleRegExp = new RegExp(
@@ -2492,6 +2543,18 @@ export const patchAdminNoticesByNoticeIdBodyReasonMax = 500;
 export const PatchAdminNoticesByNoticeIdBody = zod.object({
   tag: zod
     .enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])
+    .nullish(),
+  notificationTitle: zod
+    .string()
+    .min(1)
+    .max(patchAdminNoticesByNoticeIdBodyNotificationTitleMax)
+    .regex(patchAdminNoticesByNoticeIdBodyNotificationTitleRegExp)
+    .nullish(),
+  notificationBody: zod
+    .string()
+    .min(1)
+    .max(patchAdminNoticesByNoticeIdBodyNotificationBodyMax)
+    .regex(patchAdminNoticesByNoticeIdBodyNotificationBodyRegExp)
     .nullish(),
   title: zod
     .string()
@@ -2817,6 +2880,7 @@ export const SignupsQueryParams = zod.object({
 export const SignupsResponse = zod.unknown();
 
 export const SessionsQueryParams = zod.object({
+  segment: zod.string().optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
@@ -2824,7 +2888,17 @@ export const SessionsQueryParams = zod.object({
 
 export const SessionsResponse = zod.unknown();
 
+export const SessionLengthsQueryParams = zod.object({
+  segment: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const SessionLengthsResponse = zod.unknown();
+
 export const RetentionQueryParams = zod.object({
+  cohort: zod.string().optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
@@ -2874,10 +2948,12 @@ export const StoriesQueryParams = zod.object({
       .min(storiesQueryRequestSupportingCharacterCountMin)
       .max(storiesQueryRequestSupportingCharacterCountMax)
       .nullish(),
+    creationMode: zod.string().nullish(),
     chatFrom: zod.string().nullish(),
     chatTo: zod.string().nullish(),
     creationFrom: zod.string().nullish(),
     creationTo: zod.string().nullish(),
+    deleted: zod.string().nullish(),
   }),
 });
 
@@ -2889,8 +2965,19 @@ export const GetAdminStoriesByStoryIdParams = zod.object({
 
 export const GetAdminStoriesByStoryIdResponse = zod.unknown();
 
+/**
+ * 삭제된 스토리를 포함한 모든 스토리의 현재 저장값 원문과 이미지 전부를 검수 상태, 삭제 시각과 함께 돌려줍니다. 승인 전 제출본은 반영하지 않으며 접속 기록은 남기지 않습니다.
+ * @summary 스토리 설정
+ */
+export const StorySettingsParams = zod.object({
+  storyId: zod.uuid(),
+});
+
+export const StorySettingsResponse = zod.unknown();
+
 export const QualityQueryParams = zod.object({
   platform: zod.string().optional(),
+  segment: zod.string().optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
@@ -2899,6 +2986,7 @@ export const QualityQueryParams = zod.object({
 export const QualityResponse = zod.unknown();
 
 export const GetAdminQualityChatOptionsQueryParams = zod.object({
+  segment: zod.string().optional(),
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
@@ -2921,7 +3009,9 @@ export const StatsQueryParams = zod.object({
     .enum([
       'STORY_COMPLETED',
       'STORY_MODERATION_COMPLETED',
+      'STORY_TAKEN_DOWN',
       'ATTENDANCE_REMINDER',
+      'CREDIT_EXPIRY_REMINDER',
       'PROMOTION',
       'NOTICE',
     ])
@@ -3184,6 +3274,7 @@ export const CreditTransactionsResponse = zod.unknown();
 export const PoliciesResponse = zod.unknown();
 
 export const ReachQueryParams = zod.object({
+  segment: zod.string().optional(),
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
@@ -3239,6 +3330,7 @@ export const ChatsQueryParams = zod.object({
       .nullish(),
     hasFirstMessage: zod.boolean().nullish(),
     turnDate: zod.string().nullish(),
+    deleted: zod.string().nullish(),
   }),
 });
 
@@ -3259,6 +3351,14 @@ export const SourcesQueryParams = zod.object({
 });
 
 export const SourcesResponse = zod.unknown();
+
+export const PushOpensQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const PushOpensResponse = zod.unknown();
 
 export const GetAdminCampaignsFunnelsStoryDetailQueryParams = zod.object({
   storyId: zod.uuid().optional(),
@@ -3330,6 +3430,7 @@ export const AuditLogsQueryParams = zod.object({
         'ORIGINAL_CREATED',
         'ORIGINAL_UPDATED',
         'ORIGINAL_THUMBNAIL_DELETED',
+        'STORY_TAKEN_DOWN',
         'SUBMISSION_HOLD_RELEASED',
       ])
       .nullish(),

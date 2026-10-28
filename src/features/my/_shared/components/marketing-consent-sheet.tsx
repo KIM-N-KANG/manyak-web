@@ -21,6 +21,7 @@ import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { MARKETING_CONSENT_COPY } from '../constants/push-copy';
 import { useMarketingConsent } from '../hooks/use-marketing-consent';
 import { usePushPromptState } from '../hooks/use-push-prompt-state';
+import { shouldDeferInviteOnboarding } from '../utils/invite-onboarding-run';
 import {
   clearMarketingConsentAnswer,
   clearMarketingConsentReask,
@@ -42,7 +43,8 @@ export function MarketingConsentSheet() {
     userId !== null &&
     reaskUserId === userId &&
     promptState === 'granted' &&
-    session?.inviteOnboardingPending !== true;
+    (session?.inviteOnboardingPending !== true ||
+      shouldDeferInviteOnboarding(userId));
   const settingsQuery = useGetPushSettings({
     query: { enabled: reaskCandidate },
   });

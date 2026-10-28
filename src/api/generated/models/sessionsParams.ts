@@ -7,6 +7,7 @@
  */
 
 export type SessionsParams = {
+  segment?: string;
   from?: string;
   to?: string;
   days?: string;

@@ -29,7 +29,7 @@ const story = {
 const countText = (count: number) =>
   `${STORY_LIKE_COPY.count} ${formatCompactCount(count)}`;
 
-test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 반영한다', async ({
+test('등록, 취소, 재진입에 좋아요 상태와 수를 반영하고 홈 카드에는 수를 표시하지 않는다', async ({
   page,
 }) => {
   await mockMemberSession(page);
@@ -58,8 +58,12 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   });
 
   await page.goto(APP_PATH.MAIN.STORIES);
-  await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
-  await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
+
+  const card = page.getByRole('link', { name: `${story.title} 상세 보기` });
+
+  await expect(card).toBeVisible();
+  await expect(page.getByText(countText(999), { exact: true })).toHaveCount(0);
+  await card.click();
 
   const like = page.getByRole('button', {
     name: STORY_LIKE_COPY.like,
@@ -82,8 +86,9 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   release();
   await expect(unlike).toBeEnabled();
   await page.goBack();
-  await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
-  await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
+  await expect(card).toBeVisible();
+  await expect(page.getByText(countText(1000), { exact: true })).toHaveCount(0);
+  await card.click();
   await page.getByRole('button', { name: STORY_LIKE_COPY.unlike }).click();
   await expect(like).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
@@ -186,6 +191,30 @@ for (const member of [false, true]) {
   });
 }
 
+test('로그인 시트의 약관 링크로 나갔다 돌아오면 뒤로가기 한 번에 이전 화면으로 간다 (KNK-1900)', async ({
+  page,
+}) => {
+  await page.route(DETAIL, (route) => route.fulfill({ json: story }));
+  await page.goto(APP_PATH.MAIN.STORIES);
+  await page.goto(APP_PATH.STORY_DETAIL('s1'));
+  await page
+    .getByRole('button', { name: STORY_LIKE_COPY.like, exact: true })
+    .click();
+  await page
+    .getByRole('dialog', { name: oneLine(LOGIN_COPY.title) })
+    .getByRole('link', { name: LOGIN_COPY.legalTerms, exact: true })
+    .click();
+  await expect(page).toHaveURL(APP_PATH.TERMS);
+
+  await page.goBack();
+  await expect(page).toHaveURL(APP_PATH.STORY_DETAIL('s1'));
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // 시트가 쌓은 히스토리 칸이 남아 있으면 이 뒤로가기가 상세에 머문다.
+  await page.goBack();
+  await expect(page).toHaveURL(APP_PATH.MAIN.STORIES);
+});
+
 test('게스트는 좋아요 요청 없이 로그인 시트를 열고 닫아도 상세에 머문다', async ({
   page,
 }) => {
@@ -206,7 +235,13 @@ test('게스트는 좋아요 요청 없이 로그인 시트를 열고 닫아도 
   });
 
   await expect(sheet).toBeVisible();
-  await expect(sheet.getByText(oneLine(LOGIN_COPY.linkNotice))).toBeVisible();
+  await expect(sheet.getByText(LOGIN_COPY.signupBenefit.prefix)).toBeVisible();
+  await expect(
+    sheet.getByRole('link', { name: LOGIN_COPY.legalTerms, exact: true }),
+  ).toBeVisible();
+  await expect(
+    sheet.getByRole('link', { name: LOGIN_COPY.legalPrivacy, exact: true }),
+  ).toBeVisible();
   await expect(
     sheet.getByRole('button', { name: '카카오로 시작하기' }),
   ).toBeVisible();

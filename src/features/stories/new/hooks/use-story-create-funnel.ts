@@ -21,6 +21,7 @@ import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/stor
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type {
   CreateSimpleStoryRequest,
+  CreateSimpleStoryRequestVisibility,
   GenerateSimpleStorylinesRequest,
   GenerateSimpleStorylinesResponse,
   SimpleStorylineResponse,
@@ -216,6 +217,8 @@ export function useStoryCreateFunnel() {
   // 화풍은 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 유지한다.
   // 화풍은 필수지만 처음에는 고르지 않은 상태로 두고, 완성을 누를 때 검증한다.
   const [artStyle, setArtStyle] = useState<string | null>(null);
+  const [visibility, setVisibility] =
+    useState<CreateSimpleStoryRequestVisibility>('PUBLIC');
   const [hasArtStyleError, setHasArtStyleError] = useState(false);
 
   const selectArtStyle = (code: string) => {
@@ -611,6 +614,7 @@ export function useStoryCreateFunnel() {
     restoreAdditionalInfos(record.additionalInfos);
     setArtStyle(record.artStyle ?? null);
     setHasArtStyleError(false);
+    setVisibility(record.visibility ?? 'PUBLIC');
     setCreatedStoryId(record.createdStoryId);
     setLastCompletionRequest(record.completionRequest);
     setHasCompleteStoryError(false);
@@ -688,6 +692,7 @@ export function useStoryCreateFunnel() {
           additionalInfos: additionalInfos.map(({ value }) => value),
           selectedRecommendations: [...selectedRecommendations],
           artStyle: artStyle ?? undefined,
+          visibility,
           createdStoryId,
           completionRequest: lastCompletionRequest,
         }
@@ -1045,6 +1050,7 @@ export function useStoryCreateFunnel() {
         ...getSubmittedAdditionalInfos(),
       ],
       artStyle,
+      visibility,
     };
     // 같은 페이로드의 재시도는 requestId를 재사용한다. 서버가 이미 완성했다면(응답 유실)
     // AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
@@ -1054,6 +1060,8 @@ export function useStoryCreateFunnel() {
       lastRequest.simpleCreationId === payload.simpleCreationId &&
       lastRequest.storylineId === payload.storylineId &&
       lastRequest.artStyle === payload.artStyle &&
+      // 공개 범위가 빠진 이전 요청은 서버가 비공개로 받았다.
+      (lastRequest.visibility ?? 'PRIVATE') === payload.visibility &&
       JSON.stringify(lastRequest.additionalInfos ?? []) ===
         JSON.stringify(payload.additionalInfos);
     const request: CreateSimpleStoryRequest = {
@@ -1192,6 +1200,8 @@ export function useStoryCreateFunnel() {
     artStyle,
     hasArtStyleError,
     selectArtStyle,
+    visibility,
+    changeVisibility: setVisibility,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError:

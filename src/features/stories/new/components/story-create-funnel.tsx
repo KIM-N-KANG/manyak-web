@@ -50,6 +50,8 @@ export function StoryCreateFunnel() {
     artStyle,
     hasArtStyleError,
     selectArtStyle,
+    visibility,
+    changeVisibility,
     canCompleteStory,
     isGeneratingStorylines,
     hasGenerateStorylinesError,
@@ -178,12 +180,14 @@ export function StoryCreateFunnel() {
               canAddAdditionalInfo={canAddAdditionalInfo}
               artStyle={artStyle}
               hasArtStyleError={hasArtStyleError}
+              visibility={visibility}
               onToggleRecommendation={handleToggleRecommendation}
               onAddAdditionalInfo={addAdditionalInfo}
               onRemoveAdditionalInfo={removeAdditionalInfo}
               onChangeAdditionalInfo={changeAdditionalInfo}
               onRegisterAdditionalInfoInput={registerAdditionalInfoInput}
               onArtStyleChange={selectArtStyle}
+              onVisibilityChange={changeVisibility}
               onCompleteStory={handleCompleteStory}
               onBackToStorylineSelect={handleBackToStorylineSelect}
             />

@@ -11,6 +11,7 @@ export interface SessionResponse {
   asOf?: string;
   from?: string;
   to?: string;
+  segment?: string;
   daily?: SessionDay[];
   pendingDates?: string[];
 }

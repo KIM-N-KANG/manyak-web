@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
@@ -13,9 +14,11 @@ import {
   DrawerDescription,
   DrawerHeader,
 } from '@/components/ui/drawer';
+import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
+import { shouldDeferInviteOnboarding } from '@/features/my/_shared/utils/invite-onboarding-run';
 import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { useCreditPolicySnapshot } from '@/hooks/use-credit-policy';
 import { track } from '@/observability/analytics';
@@ -26,6 +29,7 @@ import { InviteOnboardingTitle } from './invite-onboarding-title';
 
 export function InviteOnboardingSheet() {
   const { data: session, update } = useSession();
+  const pathname = usePathname();
   const { isMember } = useMemberAccess();
   const container = useAppFrameContainer();
   const readCreditPolicy = useCreditPolicySnapshot();
@@ -45,7 +49,9 @@ export function InviteOnboardingSheet() {
     (isMember || isCompleting) &&
     userId !== null &&
     session?.inviteOnboardingPending === true &&
-    dismissedUserId !== userId;
+    dismissedUserId !== userId &&
+    !shouldDeferInviteOnboarding(userId) &&
+    pathname === APP_PATH.MAIN.STORIES;
 
   useEffect(() => {
     if (isOpen && shownUserIdRef.current !== userId) {

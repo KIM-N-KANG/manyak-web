@@ -59,6 +59,8 @@ export interface AdminStoriesRequest {
    */
   supportingCharacterCount?: number | null;
   /** @nullable */
+  creationMode?: string | null;
+  /** @nullable */
   chatFrom?: string | null;
   /** @nullable */
   chatTo?: string | null;
@@ -66,4 +68,6 @@ export interface AdminStoriesRequest {
   creationFrom?: string | null;
   /** @nullable */
   creationTo?: string | null;
+  /** @nullable */
+  deleted?: string | null;
 }

@@ -16,6 +16,20 @@ export interface UpdateNoticeRequest {
    * @nullable
    * @pattern (?sU).*\S.*
    */
+  notificationTitle?: string | null;
+  /**
+   * @minLength 1
+   * @maxLength 300
+   * @nullable
+   * @pattern (?sU).*\S.*
+   */
+  notificationBody?: string | null;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   * @nullable
+   * @pattern (?sU).*\S.*
+   */
   title?: string | null;
   /**
    * @minLength 1

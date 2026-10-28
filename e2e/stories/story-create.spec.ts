@@ -4,6 +4,7 @@ import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import { TAG_LOAD_RETRY_LABEL } from '@/features/stories/_shared/constants/tag';
 import {
   PENDING_CREATION_REQUEST_STORAGE_KEY,
@@ -1057,6 +1058,44 @@ test.describe('스토리 생성', () => {
       .poll(() => completionRequests)
       .toEqual([expect.objectContaining({ artStyle: anime.code })]);
   });
+
+  for (const visibility of ['PUBLIC', 'PRIVATE'] as const) {
+    test(`이미지 스타일 아래 공개 스위치가 켜진 채 시작하고 완성 요청에 ${visibility}를 싣는다 (KNK-1900)`, async ({
+      page,
+    }) => {
+      await reachAdditionalInfo(page);
+
+      const visibilitySwitch = page.getByRole('switch', {
+        name: STORY_VISIBILITY_COPY.PUBLIC,
+      });
+      const artStyles = page.getByRole('radiogroup', {
+        name: ART_STYLE_SECTION_LABEL,
+      });
+
+      await expect(visibilitySwitch).toBeChecked();
+
+      const artStylesBox = await artStyles.boundingBox();
+      const switchBox = await visibilitySwitch.boundingBox();
+
+      expect(switchBox!.y).toBeGreaterThan(artStylesBox!.y);
+
+      if (visibility === 'PRIVATE') {
+        await visibilitySwitch.click();
+        await expect(visibilitySwitch).not.toBeChecked();
+      }
+
+      const completionRequests: unknown[] = [];
+
+      await page.route(CREATE_STORY, async (route) => {
+        completionRequests.push(route.request().postDataJSON());
+        await route.fulfill({ status: 500 });
+      });
+      await completeStory(page);
+      await expect
+        .poll(() => completionRequests)
+        .toEqual([expect.objectContaining({ visibility })]);
+    });
+  }
 
   test('스크롤해야 보이는 이미지 스타일을 골라도 앱 프레임이 밀리지 않는다 (KNK-1468)', async ({
     page,

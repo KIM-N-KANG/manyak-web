@@ -34,6 +34,8 @@ import type {
   ReachParams,
   RetentionParams,
   RetentionResponse,
+  SessionLengthResponse,
+  SessionLengthsParams,
   SessionResponse,
   SessionsParams,
   SignupResponse,
@@ -348,6 +350,169 @@ export function useSessions<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getSessionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type sessionLengthsResponse200 = {
+  data: SessionLengthResponse;
+  status: 200;
+};
+
+export type sessionLengthsResponseSuccess = sessionLengthsResponse200 & {
+  headers: Headers;
+};
+export const getSessionLengthsUrl = (params?: SessionLengthsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/users/session-lengths?${stringifiedParams}`
+    : `/api/v1/admin/users/session-lengths`;
+};
+
+export const sessionLengths = async (
+  params?: SessionLengthsParams,
+  options?: RequestInit,
+): Promise<sessionLengthsResponseSuccess> => {
+  return customInstance<sessionLengthsResponseSuccess>(
+    getSessionLengthsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getSessionLengthsQueryKey = (params?: SessionLengthsParams) => {
+  return [
+    `/api/v1/admin/users/session-lengths`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getSessionLengthsQueryOptions = <
+  TData = Awaited<ReturnType<typeof sessionLengths>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SessionLengthsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof sessionLengths>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSessionLengthsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof sessionLengths>>> = ({
+    signal,
+  }) => sessionLengths(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof sessionLengths>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SessionLengthsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof sessionLengths>>
+>;
+export type SessionLengthsQueryError = ErrorType<unknown>;
+
+export function useSessionLengths<
+  TData = Awaited<ReturnType<typeof sessionLengths>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SessionLengthsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof sessionLengths>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof sessionLengths>>,
+          TError,
+          Awaited<ReturnType<typeof sessionLengths>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSessionLengths<
+  TData = Awaited<ReturnType<typeof sessionLengths>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SessionLengthsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof sessionLengths>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof sessionLengths>>,
+          TError,
+          Awaited<ReturnType<typeof sessionLengths>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSessionLengths<
+  TData = Awaited<ReturnType<typeof sessionLengths>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SessionLengthsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof sessionLengths>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useSessionLengths<
+  TData = Awaited<ReturnType<typeof sessionLengths>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SessionLengthsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof sessionLengths>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSessionLengthsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

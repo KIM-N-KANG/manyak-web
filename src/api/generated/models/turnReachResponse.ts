@@ -6,12 +6,19 @@
  * OpenAPI spec version: v1
  */
 import type { GuestConversion } from './guestConversion';
+import type { PlatformReach } from './platformReach';
 import type { ReachSegment } from './reachSegment';
 
 export interface TurnReachResponse {
   asOf?: string;
   from?: string;
   to?: string;
+  segment?: string;
+  /** @nullable */
+  platformAsOf?: string | null;
+  pendingDates?: string[];
   segments?: ReachSegment[];
   guestToMember?: GuestConversion;
+  /** @nullable */
+  platforms?: PlatformReach[] | null;
 }

@@ -25,6 +25,14 @@ export interface AdminStoryDetailResponse {
   chatCount?: number;
   totalTurns?: number;
   createdAt?: string;
+  /** @nullable */
+  deletedAt?: string | null;
+  /** @nullable */
+  takenDownAt?: string | null;
+  /** @nullable */
+  takedownReason?: string | null;
+  /** @nullable */
+  takedownReasonDetail?: string | null;
   retention?: AdminRetention[];
   recentChats?: AdminChatResponse[];
 }

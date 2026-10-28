@@ -30,11 +30,101 @@ import type {
   AdminPageResponseAdminSubmissionSummary,
   AdminSubmissionDetail,
   HoldsParams,
+  StoryTakedownRequest,
+  StoryTakedownResponse,
   SubmissionsParams,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export type takedownResponse200 = {
+  data: StoryTakedownResponse;
+  status: 200;
+};
+
+export type takedownResponseSuccess = takedownResponse200 & {
+  headers: Headers;
+};
+export const getTakedownUrl = (storyId: string) => {
+  return `/api/v1/admin/moderation/stories/${storyId}/takedown`;
+};
+
+export const takedown = async (
+  storyId: string,
+  storyTakedownRequest: StoryTakedownRequest,
+  options?: RequestInit,
+): Promise<takedownResponseSuccess> => {
+  return customInstance<takedownResponseSuccess>(getTakedownUrl(storyId), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(storyTakedownRequest),
+  });
+};
+
+export const getTakedownMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof takedown>>,
+    TError,
+    { storyId: string; data: BodyType<StoryTakedownRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof takedown>>,
+  TError,
+  { storyId: string; data: BodyType<StoryTakedownRequest> },
+  TContext
+> => {
+  const mutationKey = ['takedown'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof takedown>>,
+    { storyId: string; data: BodyType<StoryTakedownRequest> }
+  > = (props) => {
+    const { storyId, data } = props ?? {};
+
+    return takedown(storyId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TakedownMutationResult = NonNullable<
+  Awaited<ReturnType<typeof takedown>>
+>;
+export type TakedownMutationBody = BodyType<StoryTakedownRequest>;
+export type TakedownMutationError = ErrorType<unknown>;
+
+export const useTakedown = <TError = ErrorType<unknown>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof takedown>>,
+      TError,
+      { storyId: string; data: BodyType<StoryTakedownRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof takedown>>,
+  TError,
+  { storyId: string; data: BodyType<StoryTakedownRequest> },
+  TContext
+> => {
+  return useMutation(getTakedownMutationOptions(options), queryClient);
+};
 export type releaseResponse200 = {
   data: AdminHoldReleased;
   status: 200;

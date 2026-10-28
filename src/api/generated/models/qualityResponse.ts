@@ -6,12 +6,15 @@
  * OpenAPI spec version: v1
  */
 import type { QualityDay } from './qualityDay';
+import type { StoryCompletionDay } from './storyCompletionDay';
 
 export interface QualityResponse {
   asOf?: string;
   from?: string;
   to?: string;
   platform?: string;
+  segment?: string;
   daily?: QualityDay[];
   pendingDates?: string[];
+  storyCompletion?: StoryCompletionDay[];
 }

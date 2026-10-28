@@ -11,5 +11,9 @@ export interface ChatOptionResponse {
   asOf?: string;
   from?: string;
   to?: string;
+  segment?: string;
+  /** @nullable */
+  platformAsOf?: string | null;
+  pendingDates?: string[];
   daily?: ChatOptionDay[];
 }

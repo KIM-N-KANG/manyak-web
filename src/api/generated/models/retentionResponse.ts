@@ -11,6 +11,7 @@ export interface RetentionResponse {
   asOf?: string;
   from?: string;
   to?: string;
+  cohort?: string;
   platforms?: RetentionPlatform[];
   pendingDates?: string[];
 }

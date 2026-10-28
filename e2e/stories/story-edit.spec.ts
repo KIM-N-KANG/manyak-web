@@ -4,11 +4,11 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GENRE_SEARCH_COPY } from '@/features/stories/_shared/constants/genre';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
   GENERAL_STORY_EDIT_COPY,
-  GENERAL_STORY_REGISTER_COPY,
   GENERAL_STORY_REVIEW_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
@@ -374,7 +374,7 @@ test.describe('스토리 수정', () => {
     await page.getByRole('tab', { name: PUBLISH_TAB, exact: true }).click();
     await page
       .getByRole('switch', {
-        name: GENERAL_STORY_REGISTER_COPY.visibility.label,
+        name: STORY_VISIBILITY_COPY.PUBLIC,
       })
       .click();
     await save(page);

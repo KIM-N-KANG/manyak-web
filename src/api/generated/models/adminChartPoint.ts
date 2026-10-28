@@ -15,4 +15,6 @@ export interface AdminChartPoint {
   chats?: number | null;
   /** @nullable */
   totalTurns?: number | null;
+  /** @nullable */
+  users?: number | null;
 }
