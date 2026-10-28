@@ -1,4 +1,9 @@
-import { expect, test } from '../fixtures/test';
+import { APP_PATH } from '@/constants/app-path';
+import { formatCreditAmount } from '@/constants/credit';
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
+
+import { oneLine } from '../fixtures/copy';
+import { CREDIT_POLICY_FIXTURE, expect, test } from '../fixtures/test';
 
 test.describe('로그인 화면', () => {
   test('카카오·Google 로그인 버튼을 세로로 보여준다', async ({ page }) => {
@@ -24,6 +29,42 @@ test.describe('로그인 화면', () => {
     await expect(
       page.getByRole('navigation', { name: '하단 네비게이션' }),
     ).toBeHidden();
+  });
+
+  test('버튼 위에 서버 가입 보상 배지를, 아래에 약관과 처리방침 링크를 둔다 (KNK-1900)', async ({
+    page,
+  }) => {
+    await page.goto(APP_PATH.LOGIN);
+
+    const { prefix, unit, suffix } = LOGIN_COPY.signupBenefit;
+    const badge = page.getByText(
+      `${prefix} ${formatCreditAmount(CREDIT_POLICY_FIXTURE.signupReward)} ${unit} ${suffix}`,
+      { exact: true },
+    );
+    const kakaoButton = page.getByRole('button', { name: /카카오로 시작하기/ });
+    const terms = page.getByRole('link', {
+      name: LOGIN_COPY.legalTerms,
+      exact: true,
+    });
+    const privacy = page.getByRole('link', {
+      name: LOGIN_COPY.legalPrivacy,
+      exact: true,
+    });
+
+    await expect(badge).toBeVisible();
+    await expect(terms).toHaveAttribute('href', APP_PATH.TERMS);
+    await expect(privacy).toHaveAttribute('href', APP_PATH.PRIVACY);
+    await expect(page.getByText(oneLine(LOGIN_COPY.linkNotice))).toHaveCount(0);
+
+    const badgeBox = await badge.boundingBox();
+    const kakaoBox = await kakaoButton.boundingBox();
+    const termsBox = await terms.boundingBox();
+
+    expect(badgeBox!.y).toBeLessThan(kakaoBox!.y);
+    expect(termsBox!.y).toBeGreaterThan(kakaoBox!.y);
+
+    await terms.click();
+    await expect(page).toHaveURL(APP_PATH.TERMS);
   });
 
   test('마이의 로그인 버튼이 /login으로 이동한다', async ({ page }) => {

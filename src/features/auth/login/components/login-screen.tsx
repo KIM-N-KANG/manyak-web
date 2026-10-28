@@ -13,6 +13,8 @@ import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { GoogleLogo } from '@/features/auth/_shared/components/google-logo';
 import { KakaoLogo } from '@/features/auth/_shared/components/kakao-logo';
+import { LoginLegalLinks } from '@/features/auth/_shared/components/login-legal-links';
+import { SignupBenefitBadge } from '@/features/auth/_shared/components/signup-benefit-badge';
 import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
 import {
   SOCIAL_LOGIN_PENDING_LABEL,
@@ -86,8 +88,9 @@ export function LoginScreen() {
               {LOGIN_COPY.title}
             </p>
           </div>
-          <div className="flex w-full flex-col items-center gap-4">
-            <div className="flex w-full flex-col gap-2">
+          <div className="flex w-full flex-col items-center">
+            <SignupBenefitBadge />
+            <div className="mt-2 flex w-full flex-col gap-2">
               <Button
                 type="button"
                 size="lg"
@@ -116,9 +119,9 @@ export function LoginScreen() {
                 </LoadingButtonContent>
               </Button>
             </div>
-            <p className="text-center text-sm leading-relaxed whitespace-pre-line text-foreground-secondary">
-              {LOGIN_COPY.linkNotice}
-            </p>
+            <div className="mt-3">
+              <LoginLegalLinks />
+            </div>
           </div>
         </div>
       </main>

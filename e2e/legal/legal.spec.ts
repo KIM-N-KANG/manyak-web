@@ -13,7 +13,7 @@ test.describe('약관·개인정보 처리방침', () => {
     await expect(page).toHaveTitle(formatDocumentTitle(privacyContent.title));
   });
 
-  test('로그인 화면은 약관 동의 고지·링크와 이관 안내를 두지 않는다', async ({
+  test('로그인 화면은 약관 동의 고지와 이관 안내 없이 문서 열람 링크만 둔다', async ({
     page,
   }) => {
     await page.goto('/login');
@@ -25,8 +25,8 @@ test.describe('약관·개인정보 처리방침', () => {
     // 약관·개인정보 처리방침 동의는 로그인 직후 동의 시트에서 명시적으로 받는다(auth/consent).
     await expect(page.getByText('동의하는 것으로 간주해요')).toHaveCount(0);
     await expect(
-      page.getByRole('link', { name: '서비스 이용약관', exact: true }),
-    ).toHaveCount(0);
+      page.getByRole('link', { name: termsContent.title, exact: true }),
+    ).toHaveAttribute('href', '/terms');
   });
 
   test('게스트도 /terms에 직접 접근할 수 있다', async ({ page }) => {
