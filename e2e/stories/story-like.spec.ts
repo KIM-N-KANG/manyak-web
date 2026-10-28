@@ -29,7 +29,7 @@ const story = {
 const countText = (count: number) =>
   `${STORY_LIKE_COPY.count} ${formatCompactCount(count)}`;
 
-test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 반영한다', async ({
+test('등록, 취소, 재진입에 좋아요 상태와 수를 반영하고 홈 카드에는 수를 표시하지 않는다', async ({
   page,
 }) => {
   await mockMemberSession(page);
@@ -58,8 +58,12 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   });
 
   await page.goto(APP_PATH.MAIN.STORIES);
-  await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
-  await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
+
+  const card = page.getByRole('link', { name: `${story.title} 상세 보기` });
+
+  await expect(card).toBeVisible();
+  await expect(page.getByText(countText(999), { exact: true })).toHaveCount(0);
+  await card.click();
 
   const like = page.getByRole('button', {
     name: STORY_LIKE_COPY.like,
@@ -82,8 +86,9 @@ test('등록·취소·재진입과 목록 복귀에 좋아요 상태와 수를 �
   release();
   await expect(unlike).toBeEnabled();
   await page.goBack();
-  await expect(page.getByText(countText(1000), { exact: true })).toBeVisible();
-  await page.getByRole('link', { name: `${story.title} 상세 보기` }).click();
+  await expect(card).toBeVisible();
+  await expect(page.getByText(countText(1000), { exact: true })).toHaveCount(0);
+  await card.click();
   await page.getByRole('button', { name: STORY_LIKE_COPY.unlike }).click();
   await expect(like).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByText(countText(999), { exact: true })).toBeVisible();
