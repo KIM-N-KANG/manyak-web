@@ -8,6 +8,7 @@ import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_COVER_COPY,
   GENERAL_STORY_EDIT_COPY,
+  GENERAL_STORY_REGISTER_COPY,
   GENERAL_STORY_REVIEW_COPY,
   GENERAL_STORY_TABS,
   GENERAL_STORY_TEXT_FIELDS,
@@ -362,6 +363,25 @@ test.describe('스토리 수정', () => {
       new RegExp(`${APP_PATH.STORY_DETAIL(STORY_ID)}$`),
     );
     expect(patches).toEqual([{ title: '막차 뒤의 역' }]);
+  });
+
+  test('공개 범위만 바꿨는데 접수(202)되면 검토 중 안내를 띄운다 (STORY-EDIT-21)', async ({
+    page,
+  }) => {
+    const patches = await setup(page);
+
+    await openEditFromDetail(page);
+    await page.getByRole('tab', { name: PUBLISH_TAB, exact: true }).click();
+    await page
+      .getByRole('switch', {
+        name: GENERAL_STORY_REGISTER_COPY.visibility.label,
+      })
+      .click();
+    await save(page);
+
+    await expect(page.getByText(TOAST_MESSAGE.STORY_REVIEWING)).toBeVisible();
+    await expect(page.getByText(TOAST_MESSAGE.STORY_EDITED)).toBeVisible();
+    expect(patches).toEqual([{ visibility: 'PUBLIC' }]);
   });
 
   test('주변 인물의 인물 소개를 현재 값으로 채우고, 고쳐 저장하면 인물 목록에 실어 보낸다 (STORY-EDIT-16)', async ({
