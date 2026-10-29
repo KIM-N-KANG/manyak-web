@@ -22,8 +22,8 @@
 ## 정본과 영향 범위
 
 - [공통 프로필 계약](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-화면과-진입)
-- [웹 화면 전환 계약](../../../../knk-harness/docs/domain/APP/CLIENT/WEB/3-2-INTERACTION-FLOWS.md#3-2-1-기록과-뒤로가기)
-- [히스토리 처리 구조](../../../../knk-harness/docs/domain/APP/CLIENT/WEB/4-4-EXECUTION.md#4-4-1-이동과-레이어-정리)
+- [웹 화면 전환 계약](../../../../knk-harness/docs/ui/WEB/3-2-INTERACTION-FLOWS.md#3-2-1-기록과-뒤로가기)
+- [히스토리 처리 구조](../../../../knk-harness/docs/ui/WEB/4-4-EXECUTION.md#4-4-1-이동과-레이어-정리)
 - [마이 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/5-1-VERIFICATION.md#5-1-15-my-profile-프로필-수정-myprofileedit-fe-screen-008-knk-1148): MY-PROFILE-01, 04, 09, 10
 - [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-EDIT-03, 20
 

@@ -24,8 +24,8 @@ Next.js 스트리밍은 유지한다. 첫 HTML에 실제 본문 요소가 포함
 
 ## 정본 문서
 
-- [웹 검색 노출 계약](../../../../knk-harness/docs/domain/APP/CLIENT/WEB/2-2-REQUIREMENTS.md#2-2-2-문서와-검색)
-- [웹 라우팅 설계](../../../../knk-harness/docs/domain/APP/CLIENT/WEB/4-4-EXECUTION.md#4-4-1-이동과-레이어-정리)
+- [웹 검색 노출 계약](../../../../knk-harness/docs/ui/WEB/2-2-REQUIREMENTS.md#2-2-2-문서와-검색)
+- [웹 라우팅 설계](../../../../knk-harness/docs/ui/WEB/4-4-EXECUTION.md#4-4-1-이동과-레이어-정리)
 - [W-029](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/DECISIONS.md#w-029)
 - [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-LIST-43, STORY-DETAIL-26, 27, 51
 

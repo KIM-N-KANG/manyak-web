@@ -86,11 +86,11 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 
 ## 하네스 문서 동기화
 
-[도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 관련 도메인을 선택하고 `CLIENT/` 공통 문서와 `CLIENT/WEB/` 문서를 단계마다 함께 확인합니다. 앱 셸은 [공용 클라이언트](../knk-harness/docs/domain/APP/CLIENT/AGENTS.md)와 [APP WEB](../knk-harness/docs/domain/APP/CLIENT/WEB/AGENTS.md), 브라우저 기술 규칙은 [WEB 기반](../knk-harness/docs/platform/WEB/AGENTS.md)을 따릅니다.
+[도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 관련 도메인을 선택하고 `CLIENT/` 공통 문서와 `CLIENT/WEB/` 문서를 단계마다 함께 확인합니다. 앱 셸은 [공용 클라이언트](../knk-harness/docs/ui/AGENTS.md)와 [공통 UI WEB](../knk-harness/docs/ui/WEB/AGENTS.md), 브라우저 기술 규칙은 [WEB 기반](../knk-harness/docs/platform/WEB/AGENTS.md)을 따릅니다.
 
 동작 변경은 코드와 하네스 문서를 같은 작업 단위에서 갱신합니다. 브랜치와 PR을 만들 때 두 저장소에 같은 Jira 키를 사용합니다. 이 규칙만으로 작업 범위를 PR 생성까지 넓히지 않습니다. Jira 키가 없으면 필요한 단계에서 확인하며 키 없이 가능한 조사와 검토는 진행합니다.
 
-아래 경로는 해당 도메인의 `CLIENT/` 기준입니다. 앱 기능은 `docs/domain/APP/CLIENT/`, 공통 기술 규칙은 `docs/platform/WEB/`에서 같은 역할의 문서를 찾습니다.
+아래 경로는 해당 도메인의 `CLIENT/` 기준입니다. 앱 기능은 `docs/ui/`, 공통 기술 규칙은 `docs/platform/WEB/`에서 같은 역할의 문서를 찾습니다.
 
 | 바꾼 것 | 갱신할 문서 |
 | --- | --- |
