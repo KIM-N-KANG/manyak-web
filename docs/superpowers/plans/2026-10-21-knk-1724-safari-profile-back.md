@@ -25,7 +25,7 @@
 - [웹 화면 전환 계약](../../../../knk-harness/docs/spec/3-2-web-spec.md#화면-전환-규칙)
 - [히스토리 처리 구조](../../../../knk-harness/docs/design/1-1-web-design.md#히스토리-처리)
 - [마이 QA](../../../../knk-harness/docs/qa/my.md): MY-PROFILE-01, 04, 09, 10
-- [스토리 QA](../../../../knk-harness/docs/qa/stories.md): STORY-EDIT-03, 20
+- [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-EDIT-03, 20
 
 기존 복귀 계약을 복구하므로 Spec 변경 대상은 없다. 사용자 문구, API, 저장 데이터, 화면 디자인은 바꾸지 않는다. 공통 히스토리 코드를 변경하므로 타입 검사, 린트, 단위 테스트와 전체 로컬 E2E를 실행한다.
 

@@ -118,7 +118,7 @@ pnpm test:e2e
 - [웹 Spec](../../../../knk-harness/docs/spec/3-2-web-spec.md): 비동기 초기화, 저장 완료와 이탈, 이관 및 실패 계약을 반영합니다. 공통 Spec과 충돌하는 정책은 결정 후 함께 정리합니다.
 - [웹 Design](../../../../knk-harness/docs/design/1-1-web-design.md): 두 localStorage 목록을 Dexie DB, 이관, 트랜잭션, 구독 및 세션 정리 구조로 교체합니다.
 - [웹 ADR](../../../../knk-harness/docs/adr/1-2-web-adr.md): 구현 시 다음 미사용 ID로 후속 결정을 추가합니다. W-017의 localStorage 저장 결정 중 대체 범위를 명시하고 기존 Accepted 기록은 보존합니다.
-- [스토리 QA](../../../../knk-harness/docs/qa/stories.md): STORY-DRAFT, STORY-FINAL, STORY-RECOVER 관련 케이스와 신규 이관 및 다중 탭 검증을 연결합니다. [인증 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/5-1-VERIFICATION.md)에는 로그아웃과 계정 격리 검증을 연결합니다.
+- [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-DRAFT, STORY-FINAL, STORY-RECOVER 관련 케이스와 신규 이관 및 다중 탭 검증을 연결합니다. [인증 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/5-1-VERIFICATION.md)에는 로그아웃과 계정 격리 검증을 연결합니다.
 - 현재 `docs/planning/client-tracking.md`는 없습니다. 작업 상태와 검증 근거는 Jira와 이 계획에 남깁니다. 백엔드와 Android 소유 문서는 변경하지 않습니다.
 
 ## 설계 근거
