@@ -81,7 +81,7 @@
 
 ## 계약 결정 및 릴리스 제약
 
-1. **제출 직전 저장 실패:** [공통 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-7-저장과-이탈)의 당시 §3-1-4는 저장 실패 시 제출 차단을 요구하지만, [웹 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md)의 당시 §3-2-3과 현재 코드는 화면에 남아 생성을 계속하고 성공 시 채팅방으로 이동하는 폴백을 가집니다. 사용자의 구현 진행 승인에 따라 권장안인 입력 보존과 제출 차단을 적용하고 웹 Spec을 공통 계약에 맞췄습니다.
+1. **제출 직전 저장 실패:** [공통 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/REQUIREMENTS.md#저장과-이탈)의 당시 §3-1-4는 저장 실패 시 제출 차단을 요구하지만, [웹 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md)의 당시 §3-2-3과 현재 코드는 화면에 남아 생성을 계속하고 성공 시 채팅방으로 이동하는 폴백을 가집니다. 사용자의 구현 진행 승인에 따라 권장안인 입력 보존과 제출 차단을 적용하고 웹 Spec을 공통 계약에 맞췄습니다.
 2. **이탈 저장 실패:** 비동기 flush 실패 시 기존 입력과 화면을 유지합니다. 저장 실패와 조회 실패 문구는 상수, E2E, Spec에 함께 반영했습니다.
 3. **구버전 탭과 롤백:** 일회 이관 이후 구버전 탭이 쓰는 데이터의 지원 범위를 릴리스 전에 확정합니다. 자동 병합이나 이중 쓰기를 이번 계획의 숨은 기본값으로 두지 않습니다.
 
@@ -118,7 +118,7 @@ pnpm test:e2e
 - [웹 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md): 비동기 초기화, 저장 완료와 이탈, 이관 및 실패 계약을 반영합니다. 공통 Spec과 충돌하는 정책은 결정 후 함께 정리합니다.
 - [웹 Design](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md): 두 localStorage 목록을 Dexie DB, 이관, 트랜잭션, 구독 및 세션 정리 구조로 교체합니다.
 - [웹 ADR](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/DECISIONS.md): 구현 시 다음 미사용 ID로 후속 결정을 추가합니다. W-017의 localStorage 저장 결정 중 대체 범위를 명시하고 기존 Accepted 기록은 보존합니다.
-- [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-DRAFT, STORY-FINAL, STORY-RECOVER 관련 케이스와 신규 이관 및 다중 탭 검증을 연결합니다. [인증 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/5-1-VERIFICATION.md)에는 로그아웃과 계정 격리 검증을 연결합니다.
+- [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/VERIFICATION.md): STORY-DRAFT, STORY-FINAL, STORY-RECOVER 관련 케이스와 신규 이관 및 다중 탭 검증을 연결합니다. [인증 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/VERIFICATION.md)에는 로그아웃과 계정 격리 검증을 연결합니다.
 - 현재 `docs/planning/client-tracking.md`는 없습니다. 작업 상태와 검증 근거는 Jira와 이 계획에 남깁니다. 백엔드와 Android 소유 문서는 변경하지 않습니다.
 
 ## 설계 근거
