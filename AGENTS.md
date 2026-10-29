@@ -86,21 +86,21 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 
 ## 하네스 문서 동기화
 
-[도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 관련 도메인을 선택하고 `CLIENT/` 공통 문서와 `CLIENT/WEB/` 문서를 단계마다 함께 확인합니다. 앱 셸은 [공용 클라이언트](../knk-harness/docs/experience/AGENTS.md)와 [공통 사용자 경험 WEB](../knk-harness/docs/experience/WEB/AGENTS.md), 브라우저 기술 규칙은 [WEB 기반](../knk-harness/docs/platform/WEB/AGENTS.md)을 따릅니다.
+[도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 관련 도메인을 선택하고 `CLIENT/` 공통 문서와 `CLIENT/WEB/` 문서를 단계마다 함께 확인합니다. 앱 셸은 [공용 클라이언트](../knk-harness/docs/domain/APP/CLIENT/AGENTS.md)와 [APP WEB](../knk-harness/docs/domain/APP/CLIENT/WEB/AGENTS.md), 브라우저 기술 규칙은 [WEB 기반](../knk-harness/docs/platform/WEB/AGENTS.md)을 따릅니다.
 
 동작 변경은 코드와 하네스 문서를 같은 작업 단위에서 갱신합니다. 브랜치와 PR을 만들 때 두 저장소에 같은 Jira 키를 사용합니다. 이 규칙만으로 작업 범위를 PR 생성까지 넓히지 않습니다. Jira 키가 없으면 필요한 단계에서 확인하며 키 없이 가능한 조사와 검토는 진행합니다.
 
-아래 경로는 해당 도메인의 `CLIENT/` 기준입니다. 앱 기능은 `docs/experience/`, 공통 기술 규칙은 `docs/platform/WEB/`에서 같은 역할의 문서를 찾습니다.
+아래 경로는 해당 도메인의 `CLIENT/` 기준입니다. 앱 기능은 `docs/domain/APP/CLIENT/`, 공통 기술 규칙은 `docs/platform/WEB/`에서 같은 역할의 문서를 찾습니다.
 
 | 바꾼 것 | 갱신할 문서 |
 | --- | --- |
-| 사용자 목표와 성공 조건 | `USER-STORY.md`, `REQUIREMENTS.md` |
-| 화면, 문구, 이동과 상호작용 | 공통과 WEB의 `INFORMATION-ARCHITECTURE.md`, `INTERACTION-FLOWS.md`, `LAYOUT.md` |
-| API 사용, 상태와 실행 순서 | 공통과 WEB의 `CONTRACT.md`, `COMPONENT-ARCHITECTURE.md`, `STATE-MANAGEMENT.md`, `EXECUTION.md` |
-| 검증 케이스와 E2E 대응 | `WEB/VERIFICATION.md` |
+| 사용자 목표와 성공 조건 | `2-1-USER-STORY.md`, `2-2-REQUIREMENTS.md` |
+| 화면, 문구, 이동과 상호작용 | 공통과 WEB의 `3-1`, `3-2`, `3-3` 문서 |
+| API 사용, 상태와 실행 순서 | 공통과 WEB의 `4-1`, `4-2`, `4-3`, `4-4` 문서 |
+| 검증 케이스와 E2E 대응 | `WEB/5-1-VERIFICATION.md` |
 | 중요한 선택의 이유 | 공통 또는 `WEB/DECISIONS.md` |
 | 분석 이벤트, 프로퍼티와 수집 제한 | 하네스 `docs/reference/ANALYTICS.md` |
-| 배포와 환경 설정 | 공용 WEB의 `DEPLOYMENT.md`, 하네스 `docs/operations/DEPLOYMENT.md` |
+| 배포와 환경 설정 | 공용 WEB의 `6-DEPLOYMENT.md`, 하네스 `docs/operations/DEPLOYMENT.md` |
 | 용어 | 하네스 `docs/reference/GLOSSARY.md` |
 
 - 관련 절을 전체로 읽고 검색은 보조로 사용합니다. 화면 동작과 E2E가 바뀌면 대응 QA 케이스와 자동화 컬럼을 함께 갱신합니다.
@@ -108,7 +108,7 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 - 코드와 계약이 다르면 차이를 기록하고 승인 없이 계약을 코드에 맞추지 않습니다. 확정된 결정은 덮어쓰지 않고 후속 기록에 대체 ID와 범위를 남깁니다.
 - 도메인의 `BACKEND/`, `AI/`, `CLIENT/ANDROID/`와 백엔드 및 AI 플랫폼 기반과 결정 기록은 다른 팀원 소유입니다. 웹 변경이 해당 계약에 걸리면 임의로 고치지 않고 사용자에게 알립니다.
 
-- 문서의 절을 참조할 때는 현재 제목과 앵커를 확인하고 링크로 연결합니다. 없는 절을 가리키면 링크가 조용히 깨집니다.
+- 문서에 걸린 절 참조(`§3-1-3` 등)를 새로 쓸 때는 실제로 존재하는 절인지 확인합니다. 없는 절을 가리키면 링크가 조용히 깨집니다.
 - **사용자에게 보이는 문구(카피)를 바꾸면 상수 정의·E2E 단언·문서 리터럴을 함께 확인하세요.** 실제 렌더 값은 코드 상수(예: `src/constants/site.ts`)에서 관리합니다. 승인된 사용자 문구 계약과 다르면 함께 정정하며 코드 상수의 변경만으로 제품 계약 승인을 대신하지 않습니다. 스펙은 계약 문구를 소유하고 구현 상수 위치는 design에서 연결하며, QA 케이스는 문자열 대신 스펙 절을 참조합니다.
 - **E2E에서 사용자 문구를 단언할 때는 리터럴 대신 상수를 import 하세요** (`e2e/`에서도 `@/` 별칭이 동작합니다).
 - 스펙 문서 갱신 대상이 없다고 판단했다면 그 사실을 작업 보고에 함께 적어, 확인을 건너뛴 것과 구분되게 하세요.

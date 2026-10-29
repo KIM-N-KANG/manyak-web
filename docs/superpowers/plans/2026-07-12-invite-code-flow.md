@@ -53,8 +53,8 @@
 - `e2e/fixtures/auth.ts`: stateful pending-session mock.
 - `e2e/my/invite.spec.ts`: code sharing, redemption, errors, and onboarding.
 - `knk-harness/docs/reference/GLOSSARY.md`: inviter-only monthly cap wording.
-- `knk-harness/docs/domain/PAYMENT/CLIENT/REQUIREMENTS.md`: inviter-only monthly cap wording.
-- `knk-harness/docs/domain/PAYMENT/BACKEND/CONTRACT.md`: acceptance wording.
+- `knk-harness/docs/domain/PAYMENT/CLIENT/2-2-REQUIREMENTS.md`: inviter-only monthly cap wording.
+- `knk-harness/docs/domain/PAYMENT/BACKEND/4-2-CONTRACT.md`: acceptance wording.
 - `knk-harness/docs/reference/ANALYTICS.md`: analytics description wording.
 
 ### Delete
@@ -992,8 +992,8 @@ git commit -m "[KNK-566] Feat: 신규 가입 초대 코드 다이얼로그 추�
 **Files:**
 
 - Modify in `knk-harness`: `docs/reference/GLOSSARY.md`
-- Modify in `knk-harness`: `docs/domain/PAYMENT/CLIENT/REQUIREMENTS.md`
-- Modify in `knk-harness`: `docs/domain/PAYMENT/BACKEND/CONTRACT.md`
+- Modify in `knk-harness`: `docs/domain/PAYMENT/CLIENT/2-2-REQUIREMENTS.md`
+- Modify in `knk-harness`: `docs/domain/PAYMENT/BACKEND/4-2-CONTRACT.md`
 - Modify in `knk-harness`: `docs/reference/ANALYTICS.md`
 
 **Interfaces:** None. This task makes the written policy match the already approved inviter-only cap.

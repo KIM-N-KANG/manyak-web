@@ -24,10 +24,10 @@ Next.js 스트리밍은 유지한다. 첫 HTML에 실제 본문 요소가 포함
 
 ## 정본 문서
 
-- [웹 검색 노출 계약](../../../../knk-harness/docs/experience/WEB/REQUIREMENTS.md#문서와-검색)
-- [웹 라우팅 설계](../../../../knk-harness/docs/experience/WEB/EXECUTION.md#이동과-레이어-정리)
+- [웹 검색 노출 계약](../../../../knk-harness/docs/domain/APP/CLIENT/WEB/2-2-REQUIREMENTS.md#2-2-2-문서와-검색)
+- [웹 라우팅 설계](../../../../knk-harness/docs/domain/APP/CLIENT/WEB/4-4-EXECUTION.md#4-4-1-이동과-레이어-정리)
 - [W-029](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/DECISIONS.md#w-029)
-- [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/VERIFICATION.md): STORY-LIST-43, STORY-DETAIL-26, 27, 51
+- [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-LIST-43, STORY-DETAIL-26, 27, 51
 
 기존 공통 화면 구성과 API 계약은 그대로여서 공통 client spec과 backend spec은 수정하지 않는다. 웹의 초기 렌더링과 버튼 대기 계약은 웹 spec에 기록한다.
 

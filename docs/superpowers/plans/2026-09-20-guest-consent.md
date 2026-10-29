@@ -12,8 +12,8 @@
 
 ## 근거
 
-- [웹 게스트 계약](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/INTERACTION-FLOWS.md#게스트-이용-동의)
-- [웹 내부 구조](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/EXECUTION.md#동의-게이트와-이관)
+- [웹 게스트 계약](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/3-2-INTERACTION-FLOWS.md#3-2-1-게스트-이용-동의)
+- [웹 내부 구조](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/4-4-EXECUTION.md#4-4-3-동의-게이트와-이관)
 - [토스 UX Writing 원칙](https://toss.tech/article/21022): 짧고 익숙한 표현, 예측 가능한 버튼 결과에 적용
 - [개인정보 보호법 제15조](https://www.law.go.kr/LSW/lsLinkCommonInfo.do?lsJoLnkSeq=1029334399): 목적, 항목, 보유기간, 거부 권리와 제한 고지 확인
 - [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage): 브라우저 및 시크릿 세션 저장 범위
