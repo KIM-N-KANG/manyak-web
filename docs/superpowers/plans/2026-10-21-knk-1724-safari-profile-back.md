@@ -24,7 +24,7 @@
 - [공통 프로필 계약](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-화면과-진입)
 - [웹 화면 전환 계약](../../../../knk-harness/docs/ui/WEB/3-2-INTERACTION-FLOWS.md#3-2-1-기록과-뒤로가기)
 - [히스토리 처리 구조](../../../../knk-harness/docs/ui/WEB/4-4-EXECUTION.md#4-4-1-이동과-레이어-정리)
-- [마이 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/5-1-VERIFICATION.md#5-1-15-my-profile-프로필-수정-myprofileedit-fe-screen-008-knk-1148): MY-PROFILE-01, 04, 09, 10
+- [마이 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/5-1-VERIFICATION.md#5-1-15-my-profile-프로필-수정-myprofileedit): MY-PROFILE-01, 04, 09, 10
 - [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-EDIT-03, 20
 
 기존 복귀 계약을 복구하므로 Spec 변경 대상은 없다. 사용자 문구, API, 저장 데이터, 화면 디자인은 바꾸지 않는다. 공통 히스토리 코드를 변경하므로 타입 검사, 린트, 단위 테스트와 전체 로컬 E2E를 실행한다.
