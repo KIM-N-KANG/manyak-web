@@ -6,7 +6,7 @@
 
 ## 승인된 변경 목표와 적용 조건
 
-초안 하나와 requestId별 완성 요청을 분리하고 요청 영속 성공 후 제작 탭으로 돌아옵니다. 스토리라인 생성·복구와 편집 자동 저장은 유지합니다. 실패 카드 UX·완료 분석 변경은 [추적 문서](../../../../knk-harness/docs/planning/client-tracking.md#계약-확인-항목)의 제품 확인 후 확정합니다. 그 전에는 잠정 UI를 승인된 계약으로 옮기지 않습니다.
+초안 하나와 requestId별 완성 요청을 분리하고 요청 영속 성공 후 제작 탭으로 돌아옵니다. 스토리라인 생성·복구와 편집 자동 저장은 유지합니다. 실패 카드 UX·완료 분석 변경은 [당시 추적 문서](https://github.com/KIM-N-KANG/knk-harness/blob/40d7748e1d6fe2d2a6c231a25239a2abee7447cd/docs/planning/client-tracking.md#계약-확인-항목)의 제품 확인 후 확정합니다. 그 전에는 잠정 UI를 승인된 계약으로 옮기지 않습니다.
 
 ## 변경 순서
 

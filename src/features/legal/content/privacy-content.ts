@@ -3,8 +3,8 @@ import type { LegalDocument } from '../types';
 /**
  * 개인정보 처리방침 본문. 이 파일이 정본이며 별도 마크다운 원본은 두지 않는다.
  *
- * 화면·콘텐츠 계약은 knk-harness `docs/spec/3-1-client-spec.md`의 FE-SCREEN-010,
- * 실제 처리 근거는 `design/1-1-web-design.md`, `spec/6-analytics.md`, `design/4-deployment.md`와 각 서비스
+ * 화면·콘텐츠 계약은 knk-harness `docs/domain/ACCOUNT/CLIENT/3-1-INFORMATION-ARCHITECTURE.md`의 FE-SCREEN-010,
+ * 실제 처리 근거는 `docs/domain/ACCOUNT/CLIENT/WEB/4-4-EXECUTION.md`, `docs/REFERENCE/ANALYTICS.md`, `design/4-deployment.md`와 각 서비스
  * 레포지토리 구현이다. 개정 시 시행일·버전과 부칙을 함께 갱신하며, 공개 전 법률 전문가의
  * 검토를 권장한다.
  */

@@ -1,5 +1,7 @@
 # Invite Code Flow Implementation Plan
 
+이 문서의 실행 예시와 과거 수치는 작성 당시 기록입니다. 현재 계약은 [PAYMENT](../../../../knk-harness/docs/domain/PAYMENT/CLIENT/AGENTS.md)와 [ACCOUNT](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/AGENTS.md)를 확인합니다. 이전 경로는 [당시 하네스](https://github.com/KIM-N-KANG/knk-harness/blob/8aa505cbf7a5390e67ca48a42fb94d89d21eb3ad/docs/)에서 확인합니다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace invite-link attribution with invite-code sharing and redemption on `/my/invite`, plus a one-time new-user invite-code `AlertDialog`.
@@ -50,10 +52,10 @@
 - `tests/lib/auth/backend-session.test.ts`: assert new-user propagation and remove cookie cases.
 - `e2e/fixtures/auth.ts`: stateful pending-session mock.
 - `e2e/my/invite.spec.ts`: code sharing, redemption, errors, and onboarding.
-- `knk-harness/docs/spec/0-glossary.md`: inviter-only monthly cap wording.
-- `knk-harness/docs/spec/1-background.md`: inviter-only monthly cap wording.
-- `knk-harness/docs/spec/4-backend-server-spec.md`: acceptance wording.
-- `knk-harness/docs/spec/6-analytics.md`: analytics description wording.
+- `knk-harness/docs/REFERENCE/GLOSSARY.md`: inviter-only monthly cap wording.
+- `knk-harness/docs/domain/PAYMENT/CLIENT/2-2-REQUIREMENTS.md`: inviter-only monthly cap wording.
+- `knk-harness/docs/domain/PAYMENT/BACKEND/4-2-CONTRACT.md`: acceptance wording.
+- `knk-harness/docs/REFERENCE/ANALYTICS.md`: analytics description wording.
 
 ### Delete
 
@@ -989,10 +991,10 @@ git commit -m "[KNK-566] Feat: 신규 가입 초대 코드 다이얼로그 추�
 
 **Files:**
 
-- Modify in `knk-harness`: `docs/spec/0-glossary.md`
-- Modify in `knk-harness`: `docs/spec/1-background.md`
-- Modify in `knk-harness`: `docs/spec/4-backend-server-spec.md`
-- Modify in `knk-harness`: `docs/spec/6-analytics.md`
+- Modify in `knk-harness`: `docs/REFERENCE/GLOSSARY.md`
+- Modify in `knk-harness`: `docs/domain/PAYMENT/CLIENT/2-2-REQUIREMENTS.md`
+- Modify in `knk-harness`: `docs/domain/PAYMENT/BACKEND/4-2-CONTRACT.md`
+- Modify in `knk-harness`: `docs/REFERENCE/ANALYTICS.md`
 
 **Interfaces:** None. This task makes the written policy match the already approved inviter-only cap.
 
