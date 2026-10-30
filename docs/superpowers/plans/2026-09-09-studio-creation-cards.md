@@ -2,11 +2,11 @@
 
 - 상태: 기존 하네스 전환안을 이관한 초안. 구현 착수 전 검토 필요.
 - 이관: KNK-1236. 기능 구현 티켓·일정은 미배정이며 이 티켓으로 제품 코드를 변경하지 않습니다.
-- 현재 동작: [웹 제작 계약](../../../../knk-harness/docs/spec/3-2-web-spec.md#웹-제작-흐름). 변경 목표: [공통 계약](../../../../knk-harness/docs/spec/3-1-client-spec.md#제작-카드와-다중-완성-진행), [C-004](../../../../knk-harness/docs/adr/1-1-client-adr.md#c-004).
+- 현재 동작: [웹 제작 계약](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md). 변경 목표: [공통 계약](../../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-2-탐색과-제작-목록), [C-004](../../../../knk-harness/docs/domain/STORY/CLIENT/DECISIONS.md#c-004).
 
 ## 승인된 변경 목표와 적용 조건
 
-초안 하나와 requestId별 완성 요청을 분리하고 요청 영속 성공 후 제작 탭으로 돌아옵니다. 스토리라인 생성·복구와 편집 자동 저장은 유지합니다. 실패 카드 UX·완료 분석 변경은 [추적 문서](../../../../knk-harness/docs/planning/client-tracking.md#계약-확인-항목)의 제품 확인 후 확정합니다. 그 전에는 잠정 UI를 승인된 계약으로 옮기지 않습니다.
+초안 하나와 requestId별 완성 요청을 분리하고 요청 영속 성공 후 제작 탭으로 돌아옵니다. 스토리라인 생성·복구와 편집 자동 저장은 유지합니다. 실패 카드 UX·완료 분석 변경은 [당시 추적 문서](https://github.com/KIM-N-KANG/knk-harness/blob/40d7748e1d6fe2d2a6c231a25239a2abee7447cd/docs/planning/client-tracking.md#계약-확인-항목)의 제품 확인 후 확정합니다. 그 전에는 잠정 UI를 승인된 계약으로 옮기지 않습니다.
 
 ## 변경 순서
 
