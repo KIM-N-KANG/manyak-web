@@ -66,6 +66,15 @@ function SelectTrigger({
   );
 }
 
+type SelectContentProps = SelectPrimitive.Popup.Props &
+  Pick<
+    SelectPrimitive.Positioner.Props,
+    'align' | 'alignOffset' | 'side' | 'sideOffset' | 'alignItemWithTrigger'
+  > & {
+    /** 목록 끝에 두되 스크롤해도 팝업 아래에 붙어 있는 영역. 이 영역을 가리는 스크롤 화살표는 두지 않는다. */
+    footer?: React.ReactNode;
+  };
+
 function SelectContent({
   className,
   children,
@@ -74,12 +83,9 @@ function SelectContent({
   align = 'center',
   alignOffset = 0,
   alignItemWithTrigger = true,
+  footer,
   ...props
-}: SelectPrimitive.Popup.Props &
-  Pick<
-    SelectPrimitive.Positioner.Props,
-    'align' | 'alignOffset' | 'side' | 'sideOffset' | 'alignItemWithTrigger'
-  >) {
+}: SelectContentProps) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Positioner
@@ -97,11 +103,16 @@ function SelectContent({
             className,
           )}
           {...props}>
-          <SelectScrollUpButton />
+          {!footer && <SelectScrollUpButton />}
           <SelectPrimitive.List className="flex flex-col gap-1">
             {children}
+            {footer && (
+              <div className="sticky -bottom-1 -mb-1 flex flex-col bg-popover pb-1">
+                {footer}
+              </div>
+            )}
           </SelectPrimitive.List>
-          <SelectScrollDownButton />
+          {!footer && <SelectScrollDownButton />}
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
     </SelectPrimitive.Portal>
@@ -134,7 +145,7 @@ function SelectItem({
         className,
       )}
       {...props}>
-      <SelectPrimitive.ItemText className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">
+      <SelectPrimitive.ItemText className="flex flex-1 shrink-0 items-center gap-2 whitespace-nowrap">
         {children}
       </SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator

@@ -1,26 +1,17 @@
-import { useState } from 'react';
-
 import { PlusSignIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 
-import { useGetUsersMePersonas as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { APP_PATH } from '@/constants/app-path';
-import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
-import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
-import { PERSONA_MAX_COUNT } from '@/features/my/_shared/constants/persona';
-import { markPersonaCreationOrigin } from '@/features/stories/_shared/utils/created-persona-selection';
 import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
-import { track } from '@/observability/analytics';
+import { useDetailPersonas } from '@/features/stories/detail/hooks/use-detail-personas';
 
 import { StoryInfoHeading } from './story-info-heading';
 
@@ -39,55 +30,17 @@ export function StoryPersonaSelect({
   value,
   onValueChange,
 }: StoryPersonaSelectProps) {
-  const router = useRouter();
-  const { isMember, isGuest } = useMemberAccess();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { data } = usePersonas({ query: { enabled: isMember } });
-  const personas = isMember && data?.status === 200 ? data.data : [];
-
-  const handleCreate = () => {
-    track('client_storyDetail_personaCreateButton_clicked', {
-      story_id: storyId,
-    });
-
-    if (isGuest) {
-      setIsLoginOpen(true);
-
-      return;
-    }
-
-    if (!isMember) {
-      return;
-    }
-
-    if (personas.length >= PERSONA_MAX_COUNT) {
-      toast.error(TOAST_MESSAGE.PERSONA_LIMIT_REACHED);
-
-      return;
-    }
-
-    markPersonaCreationOrigin(storyId);
-    router.push(APP_PATH.MY_PERSONA_NEW);
-  };
+  const { personas, createPersona, isLoginOpen, setIsLoginOpen } =
+    useDetailPersonas(storyId);
 
   const handleValueChange = (next: string) => {
     if (next === CREATE_PERSONA_VALUE) {
-      handleCreate();
+      createPersona();
 
       return;
     }
 
-    const nextPersonaId = next === DEFAULT_PROTAGONIST_VALUE ? null : next;
-
-    if (nextPersonaId === value) {
-      return;
-    }
-
-    track('client_storyDetail_persona_selected', {
-      story_id: storyId,
-      persona_type: nextPersonaId ? 'persona' : 'default',
-    });
-    onValueChange(nextPersonaId);
+    onValueChange(next === DEFAULT_PROTAGONIST_VALUE ? null : next);
   };
 
   return (
@@ -113,7 +66,20 @@ export function StoryPersonaSelect({
           aria-label={PERSONA_SELECT_COPY.selectLabel}>
           <SelectValue className="block min-w-0 truncate" />
         </SelectTrigger>
-        <SelectContent alignItemWithTrigger={false}>
+        <SelectContent
+          alignItemWithTrigger={false}
+          className="max-h-[min(var(--available-height),18.75rem)]"
+          footer={
+            <>
+              <SelectSeparator />
+              <SelectItem
+                value={CREATE_PERSONA_VALUE}
+                className="text-foreground-secondary">
+                <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
+                {PERSONA_SELECT_COPY.create}
+              </SelectItem>
+            </>
+          }>
           <SelectItem value={DEFAULT_PROTAGONIST_VALUE}>
             {PERSONA_SELECT_COPY.defaultProtagonist}
           </SelectItem>
@@ -129,16 +95,9 @@ export function StoryPersonaSelect({
               </SelectItem>
             ) : null,
           )}
-          <SelectItem value={CREATE_PERSONA_VALUE}>
-            <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-            {PERSONA_SELECT_COPY.create}
-          </SelectItem>
         </SelectContent>
       </Select>
-      <LoginRequiredSheet
-        open={isLoginOpen && isGuest}
-        onOpenChange={setIsLoginOpen}
-      />
+      <LoginRequiredSheet open={isLoginOpen} onOpenChange={setIsLoginOpen} />
     </div>
   );
 }

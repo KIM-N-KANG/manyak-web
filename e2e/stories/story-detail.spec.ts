@@ -12,6 +12,7 @@ import {
   SPACED_LONG_TEXT,
   UNBROKEN_TEXT,
 } from '../fixtures/layout';
+import { startChatFromDetail } from '../fixtures/story-detail';
 import { expect, seedStoryIds, skipChatTour, test } from '../fixtures/test';
 
 // 스토리 상세는 GET /api/v1/stories/{id} 로 단건 조회한다.
@@ -606,7 +607,7 @@ test.describe('스토리 상세', () => {
     // 두 번째 시작 설정을 선택하고 채팅을 시작한다
     await page.getByRole('combobox', { name: '채팅 시작 상황 선택' }).click();
     await page.getByRole('option', { name: '용의 둥지' }).click();
-    await page.getByRole('button', { name: '채팅 시작하기' }).click();
+    await startChatFromDetail(page);
 
     await expect(page).toHaveURL(/\/chats\/c1$/);
     expect(createChatBody).toMatchObject({
@@ -634,7 +635,7 @@ test.describe('스토리 상세', () => {
     });
 
     await page.goto('/stories/s1');
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await startChatFromDetail(page);
 
     const loadingSpinner = page.getByLabel('새 채팅 시작 중');
 
@@ -677,7 +678,7 @@ test.describe('스토리 상세', () => {
 
     await page.goto(APP_PATH.MAIN.STORIES);
     await page.goto(APP_PATH.STORY_DETAIL('s1'));
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await startChatFromDetail(page);
     await expect(page).toHaveURL(/\/chats\/c1$/);
 
     // 헤더 뒤로가기는 채팅 목록이 아니라 들어온 상세로 돌아간다.
@@ -963,7 +964,7 @@ test.describe('스토리 상세 뒤로가기 (KNK-1610)', () => {
     );
     await openDetailFromStudio(page);
 
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await startChatFromDetail(page);
     await expect(page).toHaveURL(/\/chats\/c1$/);
     await page.getByRole('button', { name: '채팅 메뉴' }).click();
     await page.getByRole('button', { name: '삭제하기' }).click();

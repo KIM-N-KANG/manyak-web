@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { getLayerEntryCount } from '@/lib/history-layers';
+import { getLayerEntryCount, prepareHistoryLayers } from '@/lib/history-layers';
 import {
   hasPreviousHistoryEntry,
   hasPreviousInAppEntry,
@@ -58,6 +58,8 @@ export function hasHistoryBelow(): boolean {
 
 export function InAppNavigationTracker() {
   useEffect(() => {
+    prepareHistoryLayers();
+
     if (landingHistoryLength === null) {
       landingHistoryLength = window.history.length;
     }

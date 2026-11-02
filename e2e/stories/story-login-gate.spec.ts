@@ -9,6 +9,7 @@ import {
 import { STORY_MODE_SELECT_COPY } from '@/features/studio/story/constants';
 
 import { seedPendingCreationRequests } from '../fixtures/storage';
+import { startChatFromDetail } from '../fixtures/story-detail';
 import { expect, seedStoryIds, test } from '../fixtures/test';
 
 /**
@@ -106,7 +107,7 @@ test.describe('스토리 제작 게스트 동의 게이트', () => {
     });
 
     await page.goto('/stories/s1');
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await startChatFromDetail(page);
 
     await expect(page).toHaveURL(/\/chats\/c-guest$/);
     expect(createChatCount).toBe(1);
