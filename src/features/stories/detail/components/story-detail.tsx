@@ -11,14 +11,12 @@ import {
   getStoryDetail,
   useGetStoryDetail,
 } from '@/api/generated/endpoints/stories/stories';
-import { useGetUsersMePersonas as usePersonas } from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
 import type { StoryDetailResponse } from '@/api/generated/models';
 import { FullscreenImageViewer } from '@/components/common/fullscreen-image-viewer';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
-import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { StoryLikeCount } from '@/features/stories/_shared/components/story-like-count';
 import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
@@ -27,9 +25,7 @@ import {
   useCreatedPersonaId,
 } from '@/features/stories/_shared/utils/created-persona-selection';
 import { consumePendingChatOpen } from '@/features/stories/_shared/utils/pending-chat-open';
-import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
 import { useStoryFooterBackground } from '@/features/stories/detail/hooks/use-story-footer-background';
-import { buildChatStartSummary } from '@/features/stories/detail/utils/chat-start-summary';
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useInView } from '@/hooks/use-in-view';
@@ -73,7 +69,6 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
 
   const router = useRouter();
 
-  // 일반 제작 승인처럼 끝난 화면을 이 상세로 바꾼 뒤 채팅방을 쌓아야 하면, 상세가 떠 주소가 확정된 지금 연다.
   useEffect(() => {
     const chatId = consumePendingChatOpen(storyId);
 
@@ -109,22 +104,6 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
   const createdPersonaId = useCreatedPersonaId(storyId);
   const [pickedPersonaId, setPickedPersonaId] = useState<string | null>(null);
   const personaId = createdPersonaId ?? pickedPersonaId;
-  const { isMember: canUsePersonas } = useMemberAccess();
-  const { data: personasData } = usePersonas({
-    query: { enabled: canUsePersonas },
-  });
-  const personaName =
-    personasData?.status === 200
-      ? personasData.data.find(({ id }) => id === personaId)?.name
-      : undefined;
-  const chatStartSummary = buildChatStartSummary(
-    personaName ?? PERSONA_SELECT_COPY.defaultProtagonist,
-    activeStartSettingIndex < 0
-      ? undefined
-      : (startSettings[activeStartSettingIndex].name ??
-          `시작 상황 ${activeStartSettingIndex + 1}`),
-  );
-
   const handlePersonaIdChange = (next: string | null) => {
     clearCreatedPersona();
     setPickedPersonaId(next);
@@ -280,9 +259,6 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
               isLoading={!fetchedStory}
               startSettingId={activeStartSettingId}
               personaId={personaId}
-              summary={chatStartSummary}
-              // 내가 만든 스토리로 판정된 때만 숨긴다. 판정 근거를 기다리며 숨겼다가 붙이면 하트가 뒤늦게
-              // 튀어나와 CTA 폭이 바뀌므로, 미리 보여 주고 조회가 끝날 때까지 CTA처럼 잠근다.
               canLike={!canDelete && story.isOwner !== true}
               isLiked={story.isLiked === true}
             />
