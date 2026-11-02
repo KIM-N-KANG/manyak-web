@@ -54,6 +54,15 @@ function getStack(): HistoryLayerStack {
 }
 
 /**
+ * 레이어 스택의 popstate 리스너를 미리 건다. 같은 window의 popstate 리스너는 등록 순서대로 불리므로 Next 앱
+ * 라우터보다 먼저 걸어야 한다. 늦게 걸면 뒤로가기로 돌아온 화면이 렌더 중에 연 오버레이의 더미를 그 뒤로가기가
+ * 소비해 오버레이가 바로 닫힌다. 앱 라우터의 효과보다 먼저 도는 루트 하위 컴포넌트의 효과에서 부른다.
+ */
+export function prepareHistoryLayers(): void {
+  getStack();
+}
+
+/**
  * 뒤로가기로 닫히는 레이어를 연다. `close`는 한 번에 소비되고, `guard`는 소비될 때마다 다시 쌓인다.
  *
  * @param options 레이어 종류와 뒤로가기 콜백
