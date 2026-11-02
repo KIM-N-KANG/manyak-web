@@ -36,6 +36,7 @@ import { returnToMainTab } from '@/lib/return-to-main-tab';
 import type { PublicStoryDetail } from '@/lib/stories/backend-story-client';
 import { track } from '@/observability/analytics';
 
+import { ChatStartSheet } from './chat-start-sheet';
 import { StoryDetailCta } from './story-detail-cta';
 import { StoryDetailHeader } from './story-detail-header';
 import { StoryDetailSkeleton } from './story-detail-skeleton';
@@ -95,19 +96,24 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
   const startSettings = story?.startSettings ?? [];
   const activeStartSetting =
     selectedStartSetting ?? startSettingValue(startSettings[0], 0);
-  const activeStartSettingIndex = startSettings.findIndex(
-    (setting, index) =>
-      startSettingValue(setting, index) === activeStartSetting,
-  );
-  const activeStartSettingId = startSettings[activeStartSettingIndex]?.id;
 
   const createdPersonaId = useCreatedPersonaId(storyId);
   const [pickedPersonaId, setPickedPersonaId] = useState<string | null>(null);
   const personaId = createdPersonaId ?? pickedPersonaId;
   const handlePersonaIdChange = (next: string | null) => {
+    if (next === personaId) {
+      return;
+    }
+
+    track('client_storyDetail_persona_selected', {
+      story_id: storyId,
+      persona_type: next ? 'persona' : 'default',
+    });
     clearCreatedPersona();
     setPickedPersonaId(next);
   };
+
+  const [isStartSheetOpen, setIsStartSheetOpen] = useState(false);
 
   const [isThumbnailViewerOpen, setIsThumbnailViewerOpen] = useState(false);
 
@@ -257,10 +263,20 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
             <StoryDetailCta
               storyId={storyId}
               isLoading={!fetchedStory}
-              startSettingId={activeStartSettingId}
-              personaId={personaId}
+              onStartClick={() => setIsStartSheetOpen(true)}
               canLike={!canDelete && story.isOwner !== true}
               isLiked={story.isLiked === true}
+            />
+
+            <ChatStartSheet
+              open={isStartSheetOpen}
+              onOpenChange={setIsStartSheetOpen}
+              storyId={storyId}
+              startSettings={startSettings}
+              selectedStartSetting={activeStartSetting}
+              onSelectedStartSettingChange={setSelectedStartSetting}
+              personaId={personaId}
+              onPersonaIdChange={handlePersonaIdChange}
             />
 
             {thumbnailUrl && (

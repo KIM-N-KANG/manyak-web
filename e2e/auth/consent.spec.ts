@@ -9,6 +9,7 @@ import { PUSH_CONSENT_NOTICE_COPY } from '@/features/my/_shared/constants/push-c
 import type { SignupConsentSummary } from '@/lib/auth/signup-consent';
 import { EXPIRES_AT_COOKIE } from '@/lib/auth/token-cookie-policy';
 
+import { startChatFromDetail } from '../fixtures/story-detail';
 import {
   CONSENTS_FIXTURE,
   expect,
@@ -319,7 +320,7 @@ test.describe('로그인 직후 필수 동의 게이트', () => {
 
     // 동의를 마친 뒤에야 회원 기능(채팅 시작)이 실제 요청으로 이어진다. 자동 재실행은 없다.
     expect(createChatCount).toBe(0);
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await startChatFromDetail(page);
     await expect(page).toHaveURL(/\/chats\/c1$/);
     expect(createChatCount).toBe(1);
   });

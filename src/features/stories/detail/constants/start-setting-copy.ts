@@ -10,3 +10,10 @@ export const PERSONA_SELECT_COPY = {
   defaultProtagonist: '스토리 기본 주인공',
   create: '페르소나 생성하기',
 } as const;
+
+export const CHAT_START_SHEET_COPY = {
+  title: '이대로 시작할까요?',
+  description: '페르소나와 시작 상황은 시작하기 전까지 바꿀 수 있어요',
+  startSetting: '시작 상황',
+  start: '채팅 시작하기',
+} as const;

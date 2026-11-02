@@ -4,17 +4,13 @@ import { useState } from 'react';
 
 import { useSession } from 'next-auth/react';
 
-import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { HeartFilledIcon } from '@/components/icons/heart-filled-icon';
 import { HeartOutlineIcon } from '@/components/icons/heart-outline-icon';
 import { Button } from '@/components/ui/button';
 import { LoginRequiredSheet } from '@/features/auth/_shared/components/login-required-sheet';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
-import { useStartChat } from '@/features/stories/_shared/hooks/use-start-chat';
-import { clearCreatedPersona } from '@/features/stories/_shared/utils/created-persona-selection';
 import { useStoryLike } from '@/features/stories/detail/hooks/use-story-like';
 import { cn } from '@/lib/utils';
-import { track } from '@/observability/analytics';
 
 type StoryDetailCtaProps = {
   storyId: string;
@@ -22,10 +18,8 @@ type StoryDetailCtaProps = {
   isLiked: boolean;
   /** 공개 초기 데이터를 브라우저 조회 응답으로 갱신할 때까지 시작과 좋아요를 막는다. */
   isLoading?: boolean;
-  /** 선택한 시작 설정 ID. 없으면 백엔드가 첫 시작 설정을 사용한다. */
-  startSettingId?: string;
-  /** 선택한 페르소나 ID. null이면 기본 주인공으로 시작한다. */
-  personaId?: string | null;
+  /** 채팅 시작 버튼을 누르면 호출된다. 상세는 채팅 시작 시트를 연다. */
+  onStartClick: () => void;
 };
 
 export function StoryDetailCta({
@@ -33,23 +27,11 @@ export function StoryDetailCta({
   canLike,
   isLiked,
   isLoading = false,
-  startSettingId,
-  personaId,
+  onStartClick,
 }: StoryDetailCtaProps) {
   const [isLikeLoginOpen, setIsLikeLoginOpen] = useState(false);
   const { status } = useSession();
   const { toggleLike, isPending: isLiking } = useStoryLike(storyId, isLiked);
-  const { startChat, isStarting } = useStartChat(storyId, {
-    startSettingId,
-    personaId,
-    onStart: () => {
-      clearCreatedPersona();
-      track('client_storyDetail_chatStartButton_clicked', {
-        story_id: storyId,
-        persona_type: personaId ? 'persona' : 'default',
-      });
-    },
-  });
 
   return (
     <>
@@ -89,15 +71,10 @@ export function StoryDetailCta({
           <Button
             type="button"
             size="lg"
-            className="relative min-w-0 flex-1"
-            aria-busy={isStarting}
-            disabled={isStarting || isLoading}
-            onClick={startChat}>
-            <LoadingButtonContent
-              isLoading={isStarting}
-              loadingLabel="새 채팅 시작 중">
-              새 채팅 시작하기
-            </LoadingButtonContent>
+            className="min-w-0 flex-1"
+            disabled={isLoading}
+            onClick={onStartClick}>
+            새 채팅 시작하기
           </Button>
         </div>
       </nav>
