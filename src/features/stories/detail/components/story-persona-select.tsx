@@ -5,6 +5,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -65,7 +66,18 @@ export function StoryPersonaSelect({
           aria-label={PERSONA_SELECT_COPY.selectLabel}>
           <SelectValue className="block min-w-0 truncate" />
         </SelectTrigger>
-        <SelectContent alignItemWithTrigger={false}>
+        <SelectContent
+          alignItemWithTrigger={false}
+          className="max-h-[min(var(--available-height),18.75rem)]"
+          footer={
+            <>
+              <SelectSeparator />
+              <SelectItem value={CREATE_PERSONA_VALUE}>
+                <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
+                {PERSONA_SELECT_COPY.create}
+              </SelectItem>
+            </>
+          }>
           <SelectItem value={DEFAULT_PROTAGONIST_VALUE}>
             {PERSONA_SELECT_COPY.defaultProtagonist}
           </SelectItem>
@@ -81,10 +93,6 @@ export function StoryPersonaSelect({
               </SelectItem>
             ) : null,
           )}
-          <SelectItem value={CREATE_PERSONA_VALUE}>
-            <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
-            {PERSONA_SELECT_COPY.create}
-          </SelectItem>
         </SelectContent>
       </Select>
       <LoginRequiredSheet open={isLoginOpen} onOpenChange={setIsLoginOpen} />
