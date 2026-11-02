@@ -6,6 +6,12 @@ import {
   Tick02Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  AnimatePresence,
+  m,
+  type Transition,
+  useReducedMotion,
+} from 'motion/react';
 
 import type { StoryStartSettingResponse } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
@@ -135,8 +141,26 @@ export function ChatStartSheet({
                 label={PERSONA_SELECT_COPY.title}
                 value={personaName}
                 expanded={expanded === 'persona'}
-                onToggle={() => toggle('persona')}>
-                <div role="radiogroup" aria-label={PERSONA_SELECT_COPY.title}>
+                onToggle={() => toggle('persona')}
+                footer={
+                  <button
+                    type="button"
+                    className={OPTION_CLASS_NAME}
+                    onClick={() => createPersona({ fromStartSheet: true })}>
+                    <HugeiconsIcon
+                      icon={PlusSignIcon}
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-foreground-secondary"
+                    />
+                    <span className="flex-1 text-foreground-secondary">
+                      {PERSONA_SELECT_COPY.create}
+                    </span>
+                  </button>
+                }>
+                <div
+                  role="radiogroup"
+                  aria-label={PERSONA_SELECT_COPY.title}
+                  className="flex flex-col gap-1">
                   <ChoiceOption
                     checked={personaId === null}
                     onSelect={() => selectPersona(null)}>
@@ -153,19 +177,6 @@ export function ChatStartSheet({
                     ) : null,
                   )}
                 </div>
-                <button
-                  type="button"
-                  className={OPTION_CLASS_NAME}
-                  onClick={() => createPersona({ fromStartSheet: true })}>
-                  <HugeiconsIcon
-                    icon={PlusSignIcon}
-                    aria-hidden="true"
-                    className="size-5 shrink-0 text-foreground-secondary"
-                  />
-                  <span className="flex-1 text-foreground-secondary">
-                    {PERSONA_SELECT_COPY.create}
-                  </span>
-                </button>
               </ChoiceSection>
 
               {setting && (
@@ -178,7 +189,8 @@ export function ChatStartSheet({
                   onToggle={() => toggle('startSetting')}>
                   <div
                     role="radiogroup"
-                    aria-label={CHAT_START_SHEET_COPY.startSetting}>
+                    aria-label={CHAT_START_SHEET_COPY.startSetting}
+                    className="flex flex-col gap-1">
                     {startSettings.map((option, index) => {
                       const value = startSettingValue(option, index);
 
@@ -222,6 +234,35 @@ export function ChatStartSheet({
 const OPTION_CLASS_NAME =
   'flex min-h-12 w-full items-center gap-3 rounded-lg px-2 py-3 text-left text-base outline-none transition-colors hover:bg-foreground/5 focus-visible:bg-foreground/5';
 
+/** 항목을 펼치고 접을 때 높이가 튀지 않고 멈추는 스프링. 공용 접이식 목록 항목과 같은 값이다. */
+const EXPAND_TRANSITION: Transition = {
+  type: 'spring',
+  bounce: 0,
+  visualDuration: 0.3,
+};
+
+/** 높이 0에서 내용 높이로 펼쳐지며 나타나고 거꾸로 접히며 사라지는 모션이다. */
+const COLLAPSE_MOTION_PROPS = {
+  initial: { height: 0, opacity: 0 },
+  animate: { height: 'auto', opacity: 1 },
+  exit: { height: 0, opacity: 0 },
+};
+
+/**
+ * 펼친 목록이 5줄 반 남짓으로 잘려 고른 항목이 아래에 숨으면, 그 항목이 목록 가운데 오도록 스크롤한다.
+ *
+ * @param list 펼친 목록의 스크롤 요소
+ */
+const revealCheckedOption = (list: HTMLDivElement | null) => {
+  const checked = list?.querySelector<HTMLElement>('[aria-checked="true"]');
+
+  if (!list || !checked) return;
+
+  list.scrollTo({
+    top: checked.offsetTop - (list.clientHeight - checked.offsetHeight) / 2,
+  });
+};
+
 type ChoiceSectionProps = {
   label: string;
   value: string;
@@ -232,6 +273,8 @@ type ChoiceSectionProps = {
   expandable?: boolean;
   onToggle: () => void;
   children: ReactNode;
+  /** 펼친 목록 아래에 스크롤과 상관없이 고정해 두는 동작이다. */
+  footer?: ReactNode;
 };
 
 function ChoiceSection({
@@ -242,27 +285,39 @@ function ChoiceSection({
   expandable = true,
   onToggle,
   children,
+  footer,
 }: ChoiceSectionProps) {
   const panelId = useId();
+  const transition = useReducedMotion() ? { duration: 0 } : EXPAND_TRANSITION;
   const summary = (
     <>
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
+      <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-sm text-foreground-secondary">{label}</span>
-        {!expanded && (
-          <span className="text-base font-semibold wrap-anywhere">{value}</span>
-        )}
-        {!expanded && detail && (
-          <span className="line-clamp-2 text-sm text-foreground-secondary">
-            {detail}
-          </span>
-        )}
+        <AnimatePresence initial={false}>
+          {!expanded && (
+            <m.span
+              key="value"
+              className="flex flex-col gap-1 overflow-hidden"
+              transition={transition}
+              {...COLLAPSE_MOTION_PROPS}>
+              <span className="pt-1 text-base font-semibold wrap-anywhere">
+                {value}
+              </span>
+              {detail && (
+                <span className="line-clamp-2 text-sm text-foreground-secondary">
+                  {detail}
+                </span>
+              )}
+            </m.span>
+          )}
+        </AnimatePresence>
       </span>
       {expandable && (
         <HugeiconsIcon
           icon={ArrowDown01Icon}
           aria-hidden="true"
           className={cn(
-            'size-5 shrink-0 text-foreground-secondary transition-transform duration-200',
+            'size-5 shrink-0 text-foreground-secondary transition-transform duration-300 ease-out motion-reduce:transition-none',
             expanded && 'rotate-180',
           )}
         />
@@ -284,13 +339,31 @@ function ChoiceSection({
       ) : (
         <div className="flex items-center gap-3 p-4">{summary}</div>
       )}
-      {expanded && (
-        <div
-          id={panelId}
-          className="flex animate-in flex-col px-2 pb-2 duration-200 fade-in-0">
-          {children}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <m.div
+            key="panel"
+            id={panelId}
+            className="overflow-hidden"
+            transition={transition}
+            {...COLLAPSE_MOTION_PROPS}>
+            <div
+              ref={revealCheckedOption}
+              className={cn(
+                'relative flex max-h-71 scroll-fade-b flex-col overflow-y-auto overscroll-contain px-2',
+                footer ? 'pb-1' : 'pb-2',
+              )}>
+              {children}
+            </div>
+            {footer && (
+              <div className="flex flex-col gap-1 px-2 pb-2">
+                <div aria-hidden="true" className="mx-2 h-px bg-border" />
+                {footer}
+              </div>
+            )}
+          </m.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
@@ -307,7 +380,7 @@ function ChoiceOption({ checked, onSelect, children }: ChoiceOptionProps) {
       type="button"
       role="radio"
       aria-checked={checked}
-      className={cn(OPTION_CLASS_NAME, checked && 'font-semibold text-primary')}
+      className={cn(OPTION_CLASS_NAME, checked && 'bg-foreground/5')}
       onClick={onSelect}>
       <span className="min-w-0 flex-1 wrap-anywhere">{children}</span>
       {checked && (
