@@ -42,7 +42,7 @@ export function getCreateTutorialMessage(
 ): string {
   switch (stage) {
     case 'intro':
-      return '반가워요! 키워드만 고르면\n세계관과 인물을 만들어 드려요.';
+      return '반가워요! 키워드로 스토리 만들고\n스토리 속 등장인물과 대화해 보세요.';
     case 'keyword':
       return '장르와 인물을 골라 주세요.\n내가 주인공인 1인칭 스토리예요.';
     case 'storyline': {

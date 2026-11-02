@@ -38,6 +38,18 @@ export const startSettingValue = (
   index: number,
 ) => setting?.id ?? String(index);
 
+/**
+ * 시작 설정의 표시 이름. 이름이 없는 설정은 순번으로 부른다.
+ *
+ * @param setting 대상 시작 설정
+ * @param index 목록 내 인덱스
+ * @returns 설정 이름 또는 "시작 상황 {순번}"
+ */
+export const startSettingLabel = (
+  setting: StoryStartSettingResponse,
+  index: number,
+) => setting.name ?? `시작 상황 ${index + 1}`;
+
 export function StoryStartSettings({
   storyId,
   startSettings,
@@ -72,7 +84,7 @@ export function StoryStartSettings({
             onValueChange={(next) => onValueChange(next as string)}
             items={startSettings.map((setting, index) => ({
               value: startSettingValue(setting, index),
-              label: setting.name ?? `시작 상황 ${index + 1}`,
+              label: startSettingLabel(setting, index),
             }))}>
             <SelectTrigger className="w-full" aria-label="채팅 시작 상황 선택">
               <SelectValue className="block min-w-0 truncate" />
@@ -85,7 +97,7 @@ export function StoryStartSettings({
                   value={startSettingValue(setting, index)}
                   className="h-auto min-h-10 py-2">
                   <span className="min-w-0 wrap-anywhere whitespace-normal">
-                    {setting.name ?? `시작 상황 ${index + 1}`}
+                    {startSettingLabel(setting, index)}
                   </span>
                 </SelectItem>
               ))}

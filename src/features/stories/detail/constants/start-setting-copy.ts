@@ -5,8 +5,15 @@ export const START_SETTING_INFO_COPY = {
 
 export const PERSONA_SELECT_COPY = {
   title: '페르소나',
-  info: '선택한 페르소나가 되어 스토리를 진행해요. 채팅을 시작하면 바꿀 수 없어요',
+  info: '선택한 페르소나가 되어 스토리를 진행해요. 채팅을 시작하기 전까지 바꿀 수 있어요',
   selectLabel: '페르소나 선택',
-  defaultProtagonist: '기본',
+  defaultProtagonist: '스토리 기본 주인공',
   create: '페르소나 생성하기',
+} as const;
+
+export const CHAT_START_SHEET_COPY = {
+  title: '이대로 시작할까요?',
+  description: '페르소나와 시작 상황은 시작하기 전까지 바꿀 수 있어요',
+  startSetting: '시작 상황',
+  start: '채팅 시작하기',
 } as const;

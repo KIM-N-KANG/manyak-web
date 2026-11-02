@@ -8,11 +8,17 @@ import {
   PERSONA_CREATE_COPY,
   PERSONA_CREATE_ERROR_COPY,
 } from '@/features/my/personas/constants';
-import { PERSONA_SELECT_COPY } from '@/features/stories/detail/constants/start-setting-copy';
-import { buildChatStartSummary } from '@/features/stories/detail/utils/chat-start-summary';
+import {
+  CHAT_START_SHEET_COPY,
+  PERSONA_SELECT_COPY,
+} from '@/features/stories/detail/constants/start-setting-copy';
 
 import { mockMemberSession } from '../fixtures/auth';
 import { oneLine } from '../fixtures/copy';
+import {
+  openChatStartSheet,
+  startChatFromDetail,
+} from '../fixtures/story-detail';
 import { expect, test } from '../fixtures/test';
 
 const STORY_DETAIL = '**/api/v1/stories/s1';
@@ -105,15 +111,6 @@ test.describe('스토리 상세 페르소나 선택', () => {
       PERSONA_SELECT_COPY.defaultProtagonist,
     );
 
-    const startButton = page.getByRole('button', { name: '새 채팅 시작하기' });
-
-    await expect(startButton).toContainText(
-      buildChatStartSummary(
-        PERSONA_SELECT_COPY.defaultProtagonist,
-        '계곡 입구',
-      ),
-    );
-
     await page
       .getByRole('button', { name: `${PERSONA_SELECT_COPY.title} 안내` })
       .click();
@@ -126,16 +123,96 @@ test.describe('스토리 상세 페르소나 선택', () => {
     ).toBeVisible();
     await page.getByRole('option', { name: '윤해솔' }).click();
     await expect(personaSelect(page)).toContainText('윤해솔');
-    await expect(startButton).toContainText(
-      buildChatStartSummary('윤해솔', '계곡 입구'),
-    );
 
-    await startButton.click();
+    await startChatFromDetail(page);
 
     await expect(page).toHaveURL(/\/chats\/c1$/);
     expect(createChatBody).toMatchObject({
       storyId: 's1',
       startSettingId: 'ss1',
+      personaId: 'p1',
+    });
+  });
+
+  test('채팅 시작 시트가 고른 값을 보여 주고, 시트에서 바꾼 값으로 채팅을 만든다 (KNK-1976)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(STORY_DETAIL, (route) =>
+      route.fulfill({
+        json: {
+          ...storyDetail,
+          startSettings: [
+            ...storyDetail.startSettings,
+            {
+              id: 'ss2',
+              name: '용의 둥지',
+              startSituation: '알이 깨어나기 직전이다',
+              endings: [],
+            },
+          ],
+        },
+      }),
+    );
+    await mockPersonas(page, [persona('p1', '윤해솔')]);
+
+    let createChatBody: Record<string, unknown> | undefined;
+
+    await page.route(CREATE_CHAT, async (route) => {
+      createChatBody = route.request().postDataJSON();
+      await route.fulfill({
+        status: 201,
+        json: { id: 'c1', storyId: 's1', prologue: '프롤로그' },
+      });
+    });
+
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+
+    let sheet = await openChatStartSheet(page);
+    const personaRow = () =>
+      sheet.getByRole('button', {
+        name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+        expanded: false,
+      });
+    const settingRow = () =>
+      sheet.getByRole('button', {
+        name: new RegExp(`^${CHAT_START_SHEET_COPY.startSetting}`),
+        expanded: false,
+      });
+
+    await expect(personaRow()).toContainText(
+      PERSONA_SELECT_COPY.defaultProtagonist,
+    );
+    await expect(settingRow()).toContainText('계곡 입구');
+    await expect(settingRow()).toContainText('용의 흔적을 따라왔다');
+
+    await personaRow().click();
+    await expect(
+      sheet.getByRole('radio', {
+        name: PERSONA_SELECT_COPY.defaultProtagonist,
+      }),
+    ).toBeChecked();
+    await sheet.getByRole('radio', { name: '윤해솔' }).click();
+    await expect(personaRow()).toContainText('윤해솔');
+
+    // 시트에서 바꾼 값은 본문 Select와 같은 상태다.
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+    await expect(personaSelect(page)).toContainText('윤해솔');
+
+    sheet = await openChatStartSheet(page);
+    await settingRow().click();
+    await sheet.getByRole('radio', { name: '용의 둥지' }).click();
+    await expect(settingRow()).toContainText('알이 깨어나기 직전이다');
+
+    await sheet
+      .getByRole('button', { name: CHAT_START_SHEET_COPY.start })
+      .click();
+
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+    expect(createChatBody).toMatchObject({
+      storyId: 's1',
+      startSettingId: 'ss2',
       personaId: 'p1',
     });
   });
@@ -158,7 +235,7 @@ test.describe('스토리 상세 페르소나 선택', () => {
     });
 
     await page.goto(APP_PATH.STORY_DETAIL('s1'));
-    await page.getByRole('button', { name: '새 채팅 시작하기' }).click();
+    await startChatFromDetail(page);
 
     await expect(page).toHaveURL(/\/chats\/c1$/);
     expect(createChatBody?.personaId ?? null).toBeNull();
@@ -280,6 +357,98 @@ test.describe('페르소나 생성', () => {
 
     // 돌아온 상세에서는 새 페르소나가 선택되어 있다
     await expect(personaSelect(page)).toContainText('윤해솔');
+  });
+
+  test('채팅 시작 시트에서 페르소나를 만들러 갔다가 돌아오면 시트가 다시 열린다 (KNK-1976)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockStoryDetail(page);
+    await mockPersonas(page, []);
+
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+
+    const sheet = await openChatStartSheet(page);
+    const goToCreate = async () => {
+      await sheet
+        .getByRole('button', {
+          name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+          expanded: false,
+        })
+        .click();
+      await sheet
+        .getByRole('button', { name: PERSONA_SELECT_COPY.create })
+        .click();
+      await expect(page).toHaveURL(new RegExp(`${APP_PATH.MY_PERSONA_NEW}$`));
+    };
+
+    // 만들지 않고 돌아와도 시트가 열려 있다.
+    await goToCreate();
+    await page.goBack();
+    await expect(sheet).toBeVisible();
+
+    // 만들고 돌아오면 새 페르소나를 고른 채로 시트가 열려 있다.
+    await goToCreate();
+    await page
+      .getByRole('textbox', { name: PERSONA_CREATE_COPY.nameLabel })
+      .fill('윤해솔');
+    await page
+      .getByRole('combobox', { name: PERSONA_CREATE_COPY.genderLabel })
+      .click();
+    await page.getByRole('option', { name: '여성' }).click();
+    await page
+      .getByRole('textbox', { name: PERSONA_CREATE_COPY.featureLabel })
+      .fill('## 성격\n차분하다');
+    await page
+      .getByRole('button', { name: PERSONA_CREATE_COPY.submit, exact: true })
+      .click();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.STORY_DETAIL('s1')}$`));
+    await expect(sheet).toBeVisible();
+    await expect(
+      sheet.getByRole('button', {
+        name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+        expanded: false,
+      }),
+    ).toContainText('윤해솔');
+  });
+
+  test('페르소나 생성 화면에 갔다가 뒤로 돌아오면 상세의 읽던 위치를 되찾는다 (KNK-1976)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(STORY_DETAIL, (route) =>
+      route.fulfill({
+        json: { ...storyDetail, description: '긴 주요 내용\n'.repeat(60) },
+      }),
+    );
+    await mockPersonas(page, []);
+
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+
+    const content = page.getByRole('main');
+    const scrollTop = () =>
+      content.evaluate((element) => Math.round(element.scrollTop));
+
+    await personaSelect(page).scrollIntoViewIfNeeded();
+
+    const readingTop = await scrollTop();
+
+    expect(readingTop).toBeGreaterThan(0);
+
+    await personaSelect(page).click();
+    await page
+      .getByRole('option', { name: PERSONA_SELECT_COPY.create })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MY_PERSONA_NEW}$`));
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.STORY_DETAIL('s1')}$`));
+    await expect.poll(scrollTop).toBe(readingTop);
+
+    // 같은 상세를 새로 열면 맨 위에서 시작한다.
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+    await expect.poll(scrollTop).toBe(0);
   });
 
   test('서버가 개수 상한으로 거절하면 상한 안내를 띄우고 머문다 (KNK-1469)', async ({

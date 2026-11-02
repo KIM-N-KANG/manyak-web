@@ -16,7 +16,7 @@
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [제작 저장소](../../../src/features/stories/_shared/utils/creation-request-storage.ts)                                                                                       | 초안과 완성 요청을 localStorage JSON 배열로 저장하고 한 건 변경에도 전체 목록을 다시 씁니다.                         | requestId별 레코드 읽기와 쓰기, 상태 검사와 변경을 같은 트랜잭션에 둡니다. |
 | [제작 퍼널](../../../src/features/stories/new/hooks/use-story-create-funnel.ts)                                                                                              | 소유 requestId가 바뀌면 기존 레코드를 먼저 지운 뒤 새 레코드를 씁니다. 완성 요청 추가와 초안 삭제도 따로 실행합니다. | 이전 초안 보존, 최초 시각 전달, 새 기록 삽입을 원자적으로 처리합니다.      |
-| [자동 저장](../../../src/features/stories/new/utils/draft-autosave.ts)                                                                                                       | 300ms 뒤 동기식 boolean 저장 결과를 받습니다.                                                                        | Promise 완료 기준의 상태 표시와 최신 입력 순서를 보장합니다.               |
+| [자동 저장](https://github.com/KIM-N-KANG/manyak-web/blob/a7dd25c58b45fb0300fa2d7a37d261843dd725bc/src/features/stories/new/utils/draft-autosave.ts)                                                                                                       | 300ms 뒤 동기식 boolean 저장 결과를 받습니다.                                                                        | Promise 완료 기준의 상태 표시와 최신 입력 순서를 보장합니다.               |
 | [초안 재개](../../../src/features/stories/new/hooks/use-story-create-draft.ts)                                                                                               | useState 초기화에서 저장소를 바로 읽습니다.                                                                          | 이관과 조회가 끝난 뒤 한 번 복원합니다.                                    |
 | [제작 목록 구독](../../../src/features/studio/menu/hooks/use-pending-creation-request.ts)                                                                                    | useSyncExternalStore와 커스텀 이벤트로 두 JSON 문자열을 구독합니다.                                                  | useLiveQuery로 IndexedDB를 구독합니다.                                     |
 | [퍼널 복구](../../../src/features/stories/new/hooks/use-creation-request-recovery.ts), [카드 폴링](../../../src/features/studio/menu/hooks/use-creation-progress-polling.ts) | 원 응답과 폴링이 저장소 상태를 확인하고 결과를 반영합니다.                                                           | 저장소 전환 성공을 기다린 뒤 해당 경로만 부수효과를 실행합니다.            |
@@ -81,7 +81,7 @@
 
 ## 계약 결정 및 릴리스 제약
 
-1. **제출 직전 저장 실패:** [공통 Spec](../../../../knk-harness/docs/spec/3-1-client-spec.md)의 §3-1-4는 저장 실패 시 제출 차단을 요구하지만, [웹 Spec](../../../../knk-harness/docs/spec/3-2-web-spec.md)의 §3-2-3과 현재 코드는 화면에 남아 생성을 계속하고 성공 시 채팅방으로 이동하는 폴백을 가집니다. 사용자의 구현 진행 승인에 따라 권장안인 입력 보존과 제출 차단을 적용하고 웹 Spec을 공통 계약에 맞췄습니다.
+1. **제출 직전 저장 실패:** [공통 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-7-저장과-이탈)의 당시 §3-1-4는 저장 실패 시 제출 차단을 요구하지만, [웹 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md)의 당시 §3-2-3과 현재 코드는 화면에 남아 생성을 계속하고 성공 시 채팅방으로 이동하는 폴백을 가집니다. 사용자의 구현 진행 승인에 따라 권장안인 입력 보존과 제출 차단을 적용하고 웹 Spec을 공통 계약에 맞췄습니다.
 2. **이탈 저장 실패:** 비동기 flush 실패 시 기존 입력과 화면을 유지합니다. 저장 실패와 조회 실패 문구는 상수, E2E, Spec에 함께 반영했습니다.
 3. **구버전 탭과 롤백:** 일회 이관 이후 구버전 탭이 쓰는 데이터의 지원 범위를 릴리스 전에 확정합니다. 자동 병합이나 이중 쓰기를 이번 계획의 숨은 기본값으로 두지 않습니다.
 
@@ -115,10 +115,10 @@ pnpm test:e2e
 
 ## 하네스 동기화
 
-- [웹 Spec](../../../../knk-harness/docs/spec/3-2-web-spec.md): 비동기 초기화, 저장 완료와 이탈, 이관 및 실패 계약을 반영합니다. 공통 Spec과 충돌하는 정책은 결정 후 함께 정리합니다.
-- [웹 Design](../../../../knk-harness/docs/design/1-1-web-design.md): 두 localStorage 목록을 Dexie DB, 이관, 트랜잭션, 구독 및 세션 정리 구조로 교체합니다.
-- [웹 ADR](../../../../knk-harness/docs/adr/1-2-web-adr.md): 구현 시 다음 미사용 ID로 후속 결정을 추가합니다. W-017의 localStorage 저장 결정 중 대체 범위를 명시하고 기존 Accepted 기록은 보존합니다.
-- [스토리 QA](../../../../knk-harness/docs/qa/stories.md): STORY-DRAFT, STORY-FINAL, STORY-RECOVER 관련 케이스와 신규 이관 및 다중 탭 검증을 연결합니다. [인증 QA](../../../../knk-harness/docs/qa/auth.md)에는 로그아웃과 계정 격리 검증을 연결합니다.
+- [웹 Spec](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md): 비동기 초기화, 저장 완료와 이탈, 이관 및 실패 계약을 반영합니다. 공통 Spec과 충돌하는 정책은 결정 후 함께 정리합니다.
+- [웹 Design](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/AGENTS.md): 두 localStorage 목록을 Dexie DB, 이관, 트랜잭션, 구독 및 세션 정리 구조로 교체합니다.
+- [웹 ADR](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/DECISIONS.md): 구현 시 다음 미사용 ID로 후속 결정을 추가합니다. W-017의 localStorage 저장 결정 중 대체 범위를 명시하고 기존 Accepted 기록은 보존합니다.
+- [스토리 QA](../../../../knk-harness/docs/domain/STORY/CLIENT/WEB/5-1-VERIFICATION.md): STORY-DRAFT, STORY-FINAL, STORY-RECOVER 관련 케이스와 신규 이관 및 다중 탭 검증을 연결합니다. [인증 QA](../../../../knk-harness/docs/domain/ACCOUNT/CLIENT/WEB/5-1-VERIFICATION.md)에는 로그아웃과 계정 격리 검증을 연결합니다.
 - 현재 `docs/planning/client-tracking.md`는 없습니다. 작업 상태와 검증 근거는 Jira와 이 계획에 남깁니다. 백엔드와 Android 소유 문서는 변경하지 않습니다.
 
 ## 설계 근거
