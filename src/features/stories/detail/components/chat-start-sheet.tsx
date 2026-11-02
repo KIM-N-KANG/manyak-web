@@ -156,7 +156,7 @@ export function ChatStartSheet({
                 <button
                   type="button"
                   className={OPTION_CLASS_NAME}
-                  onClick={createPersona}>
+                  onClick={() => createPersona({ fromStartSheet: true })}>
                   <HugeiconsIcon
                     icon={PlusSignIcon}
                     aria-hidden="true"

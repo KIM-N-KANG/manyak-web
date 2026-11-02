@@ -22,6 +22,8 @@ import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn
 import { useCreatedStoryIds } from '@/features/stories/_shared/hooks/use-created-story-ids';
 import {
   clearCreatedPersona,
+  clearStartSheetReturn,
+  isStartSheetReturn,
   useCreatedPersonaId,
 } from '@/features/stories/_shared/utils/created-persona-selection';
 import { consumePendingChatOpen } from '@/features/stories/_shared/utils/pending-chat-open';
@@ -117,7 +119,13 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
     setPickedPersonaId(next);
   };
 
-  const [isStartSheetOpen, setIsStartSheetOpen] = useState(false);
+  const [isStartSheetOpen, setIsStartSheetOpen] = useState(() =>
+    isStartSheetReturn(storyId),
+  );
+
+  useEffect(() => {
+    clearStartSheetReturn();
+  }, []);
 
   const [isThumbnailViewerOpen, setIsThumbnailViewerOpen] = useState(false);
 

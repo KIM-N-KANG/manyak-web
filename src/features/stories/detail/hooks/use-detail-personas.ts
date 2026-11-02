@@ -26,8 +26,14 @@ export function useDetailPersonas(storyId: string) {
   const { data } = usePersonas({ query: { enabled: isMember } });
   const personas = isMember && data?.status === 200 ? data.data : [];
 
-  /** 새 페르소나 만들기를 시작한다. 게스트는 로그인 시트를, 상한에 닿은 회원은 토스트를 띄운다. */
-  const createPersona = () => {
+  /**
+   * 새 페르소나 만들기를 시작한다. 게스트는 로그인 시트를, 상한에 닿은 회원은 토스트를 띄운다.
+   *
+   * @param options 채팅 시작 시트에서 시작했는지. 참이면 상세로 돌아올 때 시트를 다시 연다
+   */
+  const createPersona = ({
+    fromStartSheet = false,
+  }: { fromStartSheet?: boolean } = {}) => {
     track('client_storyDetail_personaCreateButton_clicked', {
       story_id: storyId,
     });
@@ -48,7 +54,7 @@ export function useDetailPersonas(storyId: string) {
       return;
     }
 
-    markPersonaCreationOrigin(storyId);
+    markPersonaCreationOrigin(storyId, { fromStartSheet });
     leaveLayers(() => router.push(APP_PATH.MY_PERSONA_NEW));
   };
 

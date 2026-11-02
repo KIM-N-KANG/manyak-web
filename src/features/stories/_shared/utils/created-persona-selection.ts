@@ -8,6 +8,8 @@ import { useSyncExternalStore } from 'react';
 
 let originStoryId: string | null = null;
 let created: { storyId: string; personaId: string } | null = null;
+/** 채팅 시작 시트에서 페르소나 생성으로 떠난 스토리. 그 상세로 돌아오면 시트를 다시 연다. */
+let startSheetOriginStoryId: string | null = null;
 
 const listeners = new Set<() => void>();
 
@@ -36,9 +38,30 @@ const emit = () => listeners.forEach((listener) => listener());
  * 페르소나 생성 화면으로 떠나는 스토리를 남긴다.
  *
  * @param storyId 출발 스토리 ID
+ * @param options 채팅 시작 시트에서 떠났는지
  */
-export function markPersonaCreationOrigin(storyId: string) {
+export function markPersonaCreationOrigin(
+  storyId: string,
+  { fromStartSheet = false }: { fromStartSheet?: boolean } = {},
+) {
   originStoryId = storyId;
+  startSheetOriginStoryId = fromStartSheet ? storyId : null;
+}
+
+/**
+ * 채팅 시작 시트에서 페르소나 생성으로 떠났다가 이 스토리 상세로 돌아왔는지 읽는다. 상세가 마운트 때 읽고
+ * {@link clearStartSheetReturn}으로 지운다.
+ *
+ * @param storyId 상세 스토리 ID
+ * @returns 시트를 다시 열어야 하면 true
+ */
+export function isStartSheetReturn(storyId: string) {
+  return startSheetOriginStoryId === storyId;
+}
+
+/** 시작 시트를 다시 열 표시를 지운다. 상세가 마운트되면 어느 스토리든 지워 한 번만 다시 연다. */
+export function clearStartSheetReturn() {
+  startSheetOriginStoryId = null;
 }
 
 /**

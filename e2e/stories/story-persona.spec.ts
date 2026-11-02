@@ -357,6 +357,58 @@ test.describe('페르소나 생성', () => {
     await expect(personaSelect(page)).toContainText('윤해솔');
   });
 
+  test('채팅 시작 시트에서 페르소나를 만들러 갔다가 돌아오면 시트가 다시 열린다 (KNK-1976)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await mockStoryDetail(page);
+    await mockPersonas(page, []);
+
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+
+    const sheet = await openChatStartSheet(page);
+    const goToCreate = async () => {
+      await sheet
+        .getByRole('button', {
+          name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+        })
+        .click();
+      await sheet
+        .getByRole('button', { name: PERSONA_SELECT_COPY.create })
+        .click();
+      await expect(page).toHaveURL(new RegExp(`${APP_PATH.MY_PERSONA_NEW}$`));
+    };
+
+    // 만들지 않고 돌아와도 시트가 열려 있다.
+    await goToCreate();
+    await page.goBack();
+    await expect(sheet).toBeVisible();
+
+    // 만들고 돌아오면 새 페르소나를 고른 채로 시트가 열려 있다.
+    await goToCreate();
+    await page
+      .getByRole('textbox', { name: PERSONA_CREATE_COPY.nameLabel })
+      .fill('윤해솔');
+    await page
+      .getByRole('combobox', { name: PERSONA_CREATE_COPY.genderLabel })
+      .click();
+    await page.getByRole('option', { name: '여성' }).click();
+    await page
+      .getByRole('textbox', { name: PERSONA_CREATE_COPY.featureLabel })
+      .fill('## 성격\n차분하다');
+    await page
+      .getByRole('button', { name: PERSONA_CREATE_COPY.submit, exact: true })
+      .click();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.STORY_DETAIL('s1')}$`));
+    await expect(sheet).toBeVisible();
+    await expect(
+      sheet.getByRole('button', {
+        name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+      }),
+    ).toContainText('윤해솔');
+  });
+
   test('페르소나 생성 화면에 갔다가 뒤로 돌아오면 상세의 읽던 위치를 되찾는다 (KNK-1976)', async ({
     page,
   }) => {
