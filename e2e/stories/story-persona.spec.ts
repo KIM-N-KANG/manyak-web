@@ -357,6 +357,44 @@ test.describe('페르소나 생성', () => {
     await expect(personaSelect(page)).toContainText('윤해솔');
   });
 
+  test('페르소나 생성 화면에 갔다가 뒤로 돌아오면 상세의 읽던 위치를 되찾는다 (KNK-1976)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route(STORY_DETAIL, (route) =>
+      route.fulfill({
+        json: { ...storyDetail, description: '긴 주요 내용\n'.repeat(60) },
+      }),
+    );
+    await mockPersonas(page, []);
+
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+
+    const content = page.getByRole('main');
+    const scrollTop = () =>
+      content.evaluate((element) => Math.round(element.scrollTop));
+
+    await personaSelect(page).scrollIntoViewIfNeeded();
+
+    const readingTop = await scrollTop();
+
+    expect(readingTop).toBeGreaterThan(0);
+
+    await personaSelect(page).click();
+    await page
+      .getByRole('option', { name: PERSONA_SELECT_COPY.create })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MY_PERSONA_NEW}$`));
+
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.STORY_DETAIL('s1')}$`));
+    await expect.poll(scrollTop).toBe(readingTop);
+
+    // 같은 상세를 새로 열면 맨 위에서 시작한다.
+    await page.goto(APP_PATH.STORY_DETAIL('s1'));
+    await expect.poll(scrollTop).toBe(0);
+  });
+
   test('서버가 개수 상한으로 거절하면 상한 안내를 띄우고 머문다 (KNK-1469)', async ({
     page,
   }) => {

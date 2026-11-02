@@ -29,6 +29,10 @@ import { useStoryFooterBackground } from '@/features/stories/detail/hooks/use-st
 import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useInView } from '@/hooks/use-in-view';
+import {
+  rememberScrollPosition,
+  useScrollRestoration,
+} from '@/hooks/use-scroll-restoration';
 import { FetchError } from '@/lib/custom-fetch';
 import { FADE_TRANSITION_PROPS } from '@/lib/motion';
 import { queryFnWithoutAbortSignal } from '@/lib/query-client';
@@ -141,6 +145,10 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
     metadataElement,
   );
 
+  useScrollRestoration(contentElement, APP_PATH.STORY_DETAIL(storyId), {
+    perHistoryEntry: true,
+  });
+
   const isTitleInView = useInView({
     target: titleElement,
     root: contentElement,
@@ -201,7 +209,14 @@ export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
             {...FADE_TRANSITION_PROPS}>
             <main
               ref={setContentElement}
-              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain bg-inherit">
+              className="flex min-h-0 flex-1 scroll-fade-b flex-col overflow-y-auto overscroll-contain bg-inherit"
+              onScroll={(event) =>
+                rememberScrollPosition(
+                  APP_PATH.STORY_DETAIL(storyId),
+                  event.currentTarget.scrollTop,
+                  { perHistoryEntry: true },
+                )
+              }>
               <div ref={setHeroElement} className="shrink-0 bg-background">
                 {thumbnailUrl ? (
                   <button
