@@ -172,10 +172,12 @@ test.describe('스토리 상세 페르소나 선택', () => {
     const personaRow = () =>
       sheet.getByRole('button', {
         name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+        expanded: false,
       });
     const settingRow = () =>
       sheet.getByRole('button', {
         name: new RegExp(`^${CHAT_START_SHEET_COPY.startSetting}`),
+        expanded: false,
       });
 
     await expect(personaRow()).toContainText(
@@ -371,6 +373,7 @@ test.describe('페르소나 생성', () => {
       await sheet
         .getByRole('button', {
           name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+          expanded: false,
         })
         .click();
       await sheet
@@ -405,6 +408,7 @@ test.describe('페르소나 생성', () => {
     await expect(
       sheet.getByRole('button', {
         name: new RegExp(`^${PERSONA_SELECT_COPY.title}`),
+        expanded: false,
       }),
     ).toContainText('윤해솔');
   });

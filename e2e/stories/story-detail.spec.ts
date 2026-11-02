@@ -607,7 +607,7 @@ test.describe('스토리 상세', () => {
     // 두 번째 시작 설정을 선택하고 채팅을 시작한다
     await page.getByRole('combobox', { name: '채팅 시작 상황 선택' }).click();
     await page.getByRole('option', { name: '용의 둥지' }).click();
-    await page.getByRole('button', { name: '채팅 시작하기' }).click();
+    await startChatFromDetail(page);
 
     await expect(page).toHaveURL(/\/chats\/c1$/);
     expect(createChatBody).toMatchObject({
