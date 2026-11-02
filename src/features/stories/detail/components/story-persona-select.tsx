@@ -72,7 +72,9 @@ export function StoryPersonaSelect({
           footer={
             <>
               <SelectSeparator />
-              <SelectItem value={CREATE_PERSONA_VALUE}>
+              <SelectItem
+                value={CREATE_PERSONA_VALUE}
+                className="text-foreground-secondary">
                 <HugeiconsIcon icon={PlusSignIcon} aria-hidden="true" />
                 {PERSONA_SELECT_COPY.create}
               </SelectItem>
