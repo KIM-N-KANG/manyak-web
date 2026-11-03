@@ -6,9 +6,9 @@ import {
   Alert02Icon,
   Calendar04Icon,
   CircleLock01Icon,
-  CircleUnlock01Icon,
   Delete02Icon,
   Edit02Icon,
+  Globe02Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
@@ -196,7 +196,24 @@ function CreatedStoryCardBody({
             <ManyakSymbolIcon className="size-8 text-foreground-tertiary" />
           </div>
         )}
-        {/* 표지가 홈 카드보다 좁아 큰 숫자 두 개가 한 줄에 안 들어가면 배지 단위로 줄바꿈한다. */}
+        {story.visibility ? (
+          <p
+            className={cn(
+              'absolute top-2 left-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+              story.visibility === 'PUBLIC'
+                ? 'bg-white/90 text-black'
+                : 'bg-black/20 text-white backdrop-blur-md',
+            )}>
+            <HugeiconsIcon
+              icon={
+                story.visibility === 'PUBLIC' ? Globe02Icon : CircleLock01Icon
+              }
+              className="size-3.5"
+              aria-hidden="true"
+            />
+            {STORY_VISIBILITY_COPY[story.visibility]}
+          </p>
+        ) : null}
         <div className="absolute inset-x-2 bottom-2 flex flex-wrap items-center justify-end gap-1">
           <StoryLikeCount likeCount={story.likeCount ?? 0} size="sm" />
           <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
@@ -240,20 +257,6 @@ function CreatedStoryCardBody({
             'mt-1 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-foreground-secondary',
             'text-sm',
           )}>
-          {story.visibility ? (
-            <div className="flex items-center gap-1 whitespace-nowrap">
-              <HugeiconsIcon
-                icon={
-                  story.visibility === 'PUBLIC'
-                    ? CircleUnlock01Icon
-                    : CircleLock01Icon
-                }
-                className={'size-3.5'}
-                aria-hidden="true"
-              />
-              <p>{STORY_VISIBILITY_COPY[story.visibility]}</p>
-            </div>
-          ) : null}
           {story.createdAt ? (
             <div className="flex items-center gap-1 whitespace-nowrap">
               <HugeiconsIcon

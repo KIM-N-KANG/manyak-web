@@ -235,7 +235,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
 
-    // 좋아요 수와 턴 수는 표지 배지로, 하단 메타 줄은 공개 범위와 제작일로 보인다.
+    // 좋아요 수와 턴 수, 공개 범위는 표지 배지로, 하단 메타 줄은 제작일로 보인다.
     const covers = page.locator('[data-slot="aspect-ratio"]');
 
     await expect(
@@ -247,10 +247,10 @@ test.describe('홈·제작 스토리 목록', () => {
       covers.nth(1).getByText(`${STORY_LIKE_COPY.count} 0`, { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText(STORY_VISIBILITY_COPY.PUBLIC, { exact: true }),
+      covers.first().getByText(STORY_VISIBILITY_COPY.PUBLIC, { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText(STORY_VISIBILITY_COPY.PRIVATE, { exact: true }),
+      covers.nth(1).getByText(STORY_VISIBILITY_COPY.PRIVATE, { exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole('main').getByRole('heading', { level: 2 }),
