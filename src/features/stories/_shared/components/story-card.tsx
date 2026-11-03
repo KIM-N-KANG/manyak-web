@@ -105,7 +105,7 @@ export function StoryCard({
         <p className="mt-1.5 flex items-center gap-1 text-[13px] leading-[18px] font-medium text-foreground-secondary">
           <HugeiconsIcon
             icon={BubbleChatIcon}
-            className="size-4"
+            className="size-3.5"
             aria-hidden="true"
           />
           <span>
