@@ -128,8 +128,11 @@ export const CHAT_TURN_EDIT_COPY = {
   submit: '보내기',
   confirm: {
     title: '입력을 수정할까요?',
+    /** 뒤에 이어진 턴이 있으면 사라질 턴 수를, 마지막 턴이면 응답이 바뀐다는 것을 알린다. */
     description: (laterCount: number) =>
-      `수정하면 이후 대화 ${laterCount}턴이 사라지며 되돌릴 수 없어요`,
+      laterCount > 0
+        ? `수정하면 이후 대화 ${laterCount}턴이 사라지며 되돌릴 수 없어요`
+        : '지금 응답은 새 응답으로 바뀌어요',
     cancel: '그대로 두기',
     confirm: '수정하기',
   },

@@ -315,8 +315,13 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const editingTurn = editing
     ? turns.find((turn) => turn.id === editing.turnId)
     : undefined;
-  // 고친 턴 뒤에 이어진 턴 수. 0보다 크면 확인을 받은 뒤 보낸다.
-  const [editConfirmCount, setEditConfirmCount] = useState<number | null>(null);
+  // 확인 창에 알릴, 고친 턴 뒤에 이어진 턴 수. 닫히는 동안 문구가 바뀌지 않게 열림과 따로 둔다.
+  const [editConfirm, setEditConfirm] = useState({
+    open: false,
+    laterCount: 0,
+  });
+  const closeEditConfirm = () =>
+    setEditConfirm((prev) => ({ ...prev, open: false }));
 
   const handleEdit = (turn: ChatTurnResponse) => {
     if (turn.id == null) return;
@@ -335,15 +340,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const submitEdit = async () => {
     if (!editingTurn || isStreaming || !(await canUseChat())) return;
 
-    const laterCount = turns.length - turnNumberOf(editingTurn);
-
-    if (laterCount > 0) {
-      setEditConfirmCount(laterCount);
-
-      return;
-    }
-
-    startEdit();
+    setEditConfirm({
+      open: true,
+      laterCount: turns.length - turnNumberOf(editingTurn),
+    });
   };
 
   const editor =
@@ -653,20 +653,24 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           confirmVariant="default"
         />
         <ConfirmAlertDialog
-          open={editConfirmCount !== null}
+          open={editConfirm.open}
           onOpenChange={(open) => {
-            if (!open) setEditConfirmCount(null);
+            if (!open) closeEditConfirm();
           }}
           onConfirm={() => {
-            setEditConfirmCount(null);
+            closeEditConfirm();
             startEdit();
           }}
           title={CHAT_TURN_EDIT_COPY.confirm.title}
           description={CHAT_TURN_EDIT_COPY.confirm.description(
-            editConfirmCount ?? 0,
+            editConfirm.laterCount,
           )}
           cancelLabel={CHAT_TURN_EDIT_COPY.confirm.cancel}
           confirmLabel={CHAT_TURN_EDIT_COPY.confirm.confirm}
+          // 뒤의 대화가 사라질 때만 위험색이다. 마지막 턴은 재생성처럼 응답만 바뀐다.
+          confirmVariant={
+            editConfirm.laterCount > 0 ? 'destructive' : 'default'
+          }
         />
         <ConfirmAlertDialog
           open={forkTarget !== null}

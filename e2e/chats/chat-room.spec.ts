@@ -2707,6 +2707,18 @@ test.describe('입력 수정과 포크 (KNK-2005)', () => {
         .getByRole('button', { name: CHAT_TURN_EDIT_COPY.submit })
         .click();
 
+      // 마지막 턴도 확인을 받는다. 사라질 턴이 없어 응답이 바뀐다는 것만 알린다.
+      const dialog = page.getByRole('alertdialog', {
+        name: CHAT_TURN_EDIT_COPY.confirm.title,
+      });
+
+      await expect(dialog).toContainText(
+        CHAT_TURN_EDIT_COPY.confirm.description(0),
+      );
+      await dialog
+        .getByRole('button', { name: CHAT_TURN_EDIT_COPY.confirm.confirm })
+        .click();
+
       await expect(page.getByText(editedTurn.aiOutput)).toBeVisible();
       await expect(page.getByText(editedTurn.userInput)).toBeVisible();
       await expect(page.getByText(firstTurn.aiOutput)).toBeHidden();
