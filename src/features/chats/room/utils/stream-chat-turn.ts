@@ -1,10 +1,12 @@
 import {
+  getEditChatTurnUrl,
   getRegenerateChatTurnUrl,
   getResumeGenerationUrl,
   getStreamChatTurnUrl,
 } from '@/api/generated/endpoints/chats/chats';
 import type {
   ContinueChatRequest,
+  EditChatRequest,
   RegenerateChatRequest,
 } from '@/api/generated/models';
 import { notifyIfSessionExpired } from '@/lib/auth/session-expiry';
@@ -97,6 +99,23 @@ export function streamRegenerateChatTurnRaw(
   signal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
   return requestSseStream(getRegenerateChatTurnUrl(chatId), body, signal);
+}
+
+/**
+ * 완료된 턴의 사용자 입력을 고쳐 그 턴부터 다시 생성하는 스트리밍 API를 호출한다.
+ * SSE 이벤트 계약은 이어쓰기와 같고, 턴이 없거나 숨긴 턴이면 서버가 동기 404로 거절한다.
+ *
+ * @param chatId 대상 채팅 ID
+ * @param body 입력 수정 요청 본문
+ * @param signal 요청 중단 시그널
+ * @returns SSE 응답 본문 스트림
+ */
+export function streamEditChatTurnRaw(
+  chatId: string,
+  body: EditChatRequest,
+  signal?: AbortSignal,
+): Promise<ReadableStream<Uint8Array>> {
+  return requestSseStream(getEditChatTurnUrl(chatId), body, signal);
 }
 
 /**

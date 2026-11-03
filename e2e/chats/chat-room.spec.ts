@@ -9,12 +9,15 @@ import { DELETED_STORY_LABEL } from '@/features/chats/_shared/constants/deleted-
 import {
   buildChatTurnCreditCostLabel,
   CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY,
+  CHAT_FORK_COPY,
   CHAT_MENU_COPY,
   CHAT_MODEL_COPY,
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
+  CHAT_REGENERATE_COPY,
   CHAT_SETTINGS_COPY,
   CHAT_STREAM_LOADING_COPY,
   CHAT_TURN_COST_INFO_COPY,
+  CHAT_TURN_EDIT_COPY,
   REALTIME_IMAGE_NUDGE_DELAY_MS,
 } from '@/features/chats/room/constants';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
@@ -94,6 +97,18 @@ const modelCostBadge = (page: Page, modelName: string) =>
   modelSheet(page)
     .locator('label', { hasText: modelName })
     .locator('[data-slot="badge"]');
+
+// 다시 생성 버튼과 그 확인 창. 확인해야 재생성 요청이 나간다.
+const regenerateButton = (page: Page) =>
+  page.getByRole('button', { name: CHAT_REGENERATE_COPY.trigger });
+
+const confirmRegenerate = async (page: Page) => {
+  await regenerateButton(page).click();
+  await page
+    .getByRole('alertdialog', { name: CHAT_REGENERATE_COPY.confirm.title })
+    .getByRole('button', { name: CHAT_REGENERATE_COPY.confirm.confirm })
+    .click();
+};
 
 const choicesSwitch = (page: Page) =>
   page.getByRole('switch', { name: CHAT_SETTINGS_COPY.choices.label });
@@ -2484,8 +2499,7 @@ test.describe('응답 재생성', () => {
 
     await page.goto('/chats/c1');
 
-    const regenerateButton = page.getByRole('button', { name: '다시 생성' });
-    const regenerateArea = regenerateButton.locator('xpath=..');
+    const regenerateArea = regenerateButton(page).locator('xpath=..');
     const choiceButton = page.getByRole('button', { name: '들어간다' });
     const choicesArea = choiceButton.locator('xpath=../..');
     const userMessage = page
@@ -2497,7 +2511,7 @@ test.describe('응답 재생성', () => {
     await expect(regenerateArea).toHaveCSS('padding-bottom', '20px');
     await expect(choicesArea).toHaveCSS('padding-top', '12px');
 
-    await regenerateButton.click();
+    await confirmRegenerate(page);
 
     // 새 본문으로 교체되고, 사용자 입력 버블은 유지된다.
     await expect(page.getByText('문이 굉음과 함께 부서졌다.')).toBeVisible();
@@ -2528,7 +2542,7 @@ test.describe('응답 재생성', () => {
     await expect(endingMessage.locator(':scope > *').first()).toHaveText(
       '엔딩 · 새드엔딩',
     );
-    await expect(page.getByRole('button', { name: '다시 생성' })).toBeHidden();
+    await expect(regenerateButton(page)).toBeHidden();
   });
 
   test('error 이벤트 수신 시 기존 본문을 복원하고 실패 토스트를 띄운다', async ({
@@ -2554,11 +2568,386 @@ test.describe('응답 재생성', () => {
 
     await page.goto('/chats/c1');
 
-    await page.getByRole('button', { name: '다시 생성' }).click();
+    await confirmRegenerate(page);
 
     await expect(page.getByText('응답 생성에 실패했어요')).toBeVisible();
     await expect(page.getByText('문이 서서히 열린다.')).toBeVisible();
-    await expect(page.getByRole('button', { name: '다시 생성' })).toBeVisible();
+    await expect(regenerateButton(page)).toBeVisible();
+  });
+
+  test('다시 생성 확인 창에서 그대로 두면 요청 없이 기존 응답을 유지한다 (CHAT-REGEN-10)', async ({
+    page,
+  }) => {
+    let regenerateCalled = false;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail([lastTurn])),
+      });
+    });
+    await page.route(CHAT_REGENERATE, async (route) => {
+      regenerateCalled = true;
+      await route.abort();
+    });
+
+    await page.goto('/chats/c1');
+    await regenerateButton(page).click();
+
+    const dialog = page.getByRole('alertdialog', {
+      name: CHAT_REGENERATE_COPY.confirm.title,
+    });
+
+    await expect(dialog).toContainText(
+      CHAT_REGENERATE_COPY.confirm.description,
+    );
+    await dialog
+      .getByRole('button', { name: CHAT_REGENERATE_COPY.confirm.cancel })
+      .click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText(lastTurn.aiOutput)).toBeVisible();
+    expect(regenerateCalled).toBe(false);
+  });
+});
+
+test.describe('입력 수정과 포크 (KNK-2005)', () => {
+  const CHAT_EDIT = '**/api/v1/chats/c1/turns/edit/stream';
+  const CHAT_FORK = '**/api/v1/chats/c1/fork';
+  const firstTurn = {
+    id: 1,
+    userInput: '문을 연다',
+    aiOutput: '문이 서서히 열린다.',
+    choices: [],
+    createdAt: '2026-06-01T00:00:00Z',
+  };
+  const secondTurn = {
+    id: 2,
+    userInput: '안으로 들어간다',
+    aiOutput: '어둠 속에서 무언가 움직인다.',
+    choices: [],
+    createdAt: '2026-06-01T00:01:00Z',
+  };
+  const editedTurn = {
+    id: 3,
+    userInput: '문을 두드린다',
+    aiOutput: '안쪽에서 대답이 들려온다.',
+    choices: [],
+    createdAt: '2026-06-01T00:02:00Z',
+  };
+  const editedStream = sse([
+    'event: started\ndata: {"chatId":"c1","generationId":"g-edit"}\n\n',
+    `event: token\ndata: {"text":"${editedTurn.aiOutput}"}\n\n`,
+    `event: completed\ndata: {"turnId":3,"aiOutput":"${editedTurn.aiOutput}"}\n\n`,
+  ]);
+  const editButtons = (page: Page) =>
+    page.getByRole('button', { name: CHAT_TURN_EDIT_COPY.trigger });
+  const forkButtons = (page: Page) =>
+    page.getByRole('button', { name: CHAT_FORK_COPY.trigger });
+  const editField = (page: Page) =>
+    page.getByRole('textbox', { name: CHAT_TURN_EDIT_COPY.field });
+
+  // 첫 상세는 before, 이후 상세는 after로 응답한다.
+  const routeDetail = async (
+    page: Page,
+    before: Record<string, unknown>,
+    after: Record<string, unknown> = before,
+  ) => {
+    let detailCallCount = 0;
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      detailCallCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(detailCallCount === 1 ? before : after),
+      });
+    });
+  };
+
+  test.describe('회원', () => {
+    test.beforeEach(async ({ page }) => {
+      await mockMemberSession(page);
+    });
+
+    test('마지막 턴의 입력을 그 자리에서 고쳐 보내면 새 응답으로 바뀐다 (CHAT-EDIT-01)', async ({
+      page,
+    }) => {
+      await routeDetail(
+        page,
+        chatDetail([firstTurn]),
+        chatDetail([editedTurn]),
+      );
+      await page.route(CHAT_EDIT, async (route) => {
+        expect(route.request().postDataJSON()).toEqual({
+          turnId: 1,
+          userInput: editedTurn.userInput,
+          userSource: 'typed',
+          realtimeImage: true,
+        });
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/event-stream',
+          body: editedStream,
+        });
+      });
+
+      await page.goto('/chats/c1');
+      await editButtons(page).click();
+
+      // 원래 입력을 채운 편집기가 버블 자리에 열리고, 그대로면 보낼 수 없다.
+      await expect(editField(page)).toHaveValue(firstTurn.userInput);
+      await expect(
+        page.getByRole('button', { name: CHAT_TURN_EDIT_COPY.submit }),
+      ).toBeDisabled();
+
+      await editField(page).fill(editedTurn.userInput);
+      await page
+        .getByRole('button', { name: CHAT_TURN_EDIT_COPY.submit })
+        .click();
+
+      await expect(page.getByText(editedTurn.aiOutput)).toBeVisible();
+      await expect(page.getByText(editedTurn.userInput)).toBeVisible();
+      await expect(page.getByText(firstTurn.aiOutput)).toBeHidden();
+      await expect(editField(page)).toBeHidden();
+    });
+
+    test('취소하면 요청 없이 원래 입력으로 돌아간다 (CHAT-EDIT-02)', async ({
+      page,
+    }) => {
+      let editCalled = false;
+
+      await routeDetail(page, chatDetail([firstTurn]));
+      await page.route(CHAT_EDIT, async (route) => {
+        editCalled = true;
+        await route.abort();
+      });
+
+      await page.goto('/chats/c1');
+      await editButtons(page).click();
+      await editField(page).fill('다른 입력');
+      await page
+        .getByRole('button', { name: CHAT_TURN_EDIT_COPY.cancel })
+        .click();
+
+      await expect(editField(page)).toBeHidden();
+      await expect(page.getByText(firstTurn.userInput)).toBeVisible();
+      expect(editCalled).toBe(false);
+    });
+
+    test('이전 턴을 고치면 사라질 대화 수를 확인받고, 생성 중에는 뒤의 턴을 숨긴다 (CHAT-EDIT-03)', async ({
+      page,
+    }) => {
+      let releaseStream: () => void = () => {};
+      const streamReleased = new Promise<void>((resolve) => {
+        releaseStream = resolve;
+      });
+
+      await routeDetail(
+        page,
+        chatDetail([firstTurn, secondTurn]),
+        chatDetail([editedTurn]),
+      );
+      await page.route(CHAT_EDIT, async (route) => {
+        await streamReleased;
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/event-stream',
+          body: editedStream,
+        });
+      });
+
+      await page.goto('/chats/c1');
+      await editButtons(page).first().click();
+      await editField(page).fill(editedTurn.userInput);
+      await page
+        .getByRole('button', { name: CHAT_TURN_EDIT_COPY.submit })
+        .click();
+
+      const dialog = page.getByRole('alertdialog', {
+        name: CHAT_TURN_EDIT_COPY.confirm.title,
+      });
+
+      await expect(dialog).toContainText(
+        CHAT_TURN_EDIT_COPY.confirm.description(1),
+      );
+      await dialog
+        .getByRole('button', { name: CHAT_TURN_EDIT_COPY.confirm.confirm })
+        .click();
+
+      // 생성 중에는 고친 입력이 대상 턴 자리에 보이고 뒤의 턴은 숨는다.
+      await expect(page.getByText(editedTurn.userInput)).toBeVisible();
+      await expect(page.getByText(secondTurn.aiOutput)).toBeHidden();
+      await expect(page.getByText(firstTurn.aiOutput)).toBeHidden();
+
+      releaseStream();
+
+      await expect(page.getByText(editedTurn.aiOutput)).toBeVisible();
+      await expect(page.getByText(secondTurn.userInput)).toBeHidden();
+    });
+
+    test('입력 수정이 error로 끝나면 숨긴 턴과 고치던 입력을 되살리고 실패를 알린다 (CHAT-EDIT-04)', async ({
+      page,
+    }) => {
+      await routeDetail(page, chatDetail([firstTurn, secondTurn]));
+      await page.route(CHAT_EDIT, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/event-stream',
+          body: sse([
+            'event: started\ndata: {"chatId":"c1","generationId":"g-edit"}\n\n',
+            'event: error\ndata: {"code":"CHAT_TURN_STALE"}\n\n',
+          ]),
+        });
+      });
+
+      await page.goto('/chats/c1');
+      await editButtons(page).first().click();
+      await editField(page).fill(editedTurn.userInput);
+      await page
+        .getByRole('button', { name: CHAT_TURN_EDIT_COPY.submit })
+        .click();
+      await page
+        .getByRole('alertdialog')
+        .getByRole('button', { name: CHAT_TURN_EDIT_COPY.confirm.confirm })
+        .click();
+
+      await expect(
+        page.getByText(TOAST_MESSAGE.RESPONSE_STREAM_FAILED),
+      ).toBeVisible();
+      await expect(page.getByText(secondTurn.aiOutput)).toBeVisible();
+      await expect(editField(page)).toHaveValue(editedTurn.userInput);
+    });
+
+    test('입력 수정 중에 다시 들어오면 대상 턴 자리에서 이어 받고 뒤의 턴은 숨긴다 (CHAT-EDIT-05)', async ({
+      page,
+    }) => {
+      await routeDetail(
+        page,
+        {
+          ...chatDetail([firstTurn, secondTurn]),
+          generatingTurn: {
+            type: 'EDIT',
+            userInput: editedTurn.userInput,
+            startedAt: '2026-06-01T00:02:00Z',
+            targetTurnId: firstTurn.id,
+            generationId: 'g-edit',
+          },
+        },
+        chatDetail([editedTurn]),
+      );
+      await page.route(CHAT_RESUME, async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/event-stream',
+          body: editedStream,
+        });
+      });
+
+      await page.goto('/chats/c1');
+
+      await expect(page.getByText(editedTurn.userInput)).toBeVisible();
+      await expect(page.getByText(firstTurn.aiOutput)).toBeHidden();
+      await expect(page.getByText(secondTurn.userInput)).toBeHidden();
+
+      await expect(page.getByText(editedTurn.aiOutput)).toBeVisible();
+      await expect(page.getByText(editedTurn.userInput)).toHaveCount(1);
+    });
+
+    test('AI 응답의 포크를 확인하면 그 턴까지 복사한 새 채팅으로 이동하고 뒤로가기는 원래 채팅이다 (CHAT-FORK-01)', async ({
+      page,
+    }) => {
+      await routeDetail(page, chatDetail([firstTurn, secondTurn]));
+      await page.route('**/api/v1/chats/c2', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ ...chatDetail([firstTurn]), id: 'c2' }),
+        });
+      });
+      await page.route(CHAT_FORK, async (route) => {
+        expect(route.request().postDataJSON()).toEqual({ turnId: 1 });
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: 'c2',
+            storyId: 's1',
+            prologue: '안개 낀 계곡 앞에 한 용사가 섰다.',
+            suggestedInputs: [],
+            createdAt: '2026-06-01T00:03:00Z',
+          }),
+        });
+      });
+
+      await page.goto('/chats/c1');
+      await expect(forkButtons(page)).toHaveCount(2);
+      await forkButtons(page).first().click();
+
+      const dialog = page.getByRole('alertdialog', {
+        name: CHAT_FORK_COPY.confirm.title,
+      });
+
+      await expect(dialog).toContainText(CHAT_FORK_COPY.confirm.description);
+      await dialog
+        .getByRole('button', { name: CHAT_FORK_COPY.confirm.confirm })
+        .click();
+
+      await expect(page).toHaveURL(/\/chats\/c2$/);
+      await expect(page.getByText(firstTurn.aiOutput)).toBeVisible();
+      await expect(page.getByText(secondTurn.aiOutput)).toBeHidden();
+
+      await page.goBack();
+      await expect(page).toHaveURL(/\/chats\/c1$/);
+      await expect(page.getByText(secondTurn.aiOutput)).toBeVisible();
+    });
+
+    test('포크가 실패하면 머무르며 실패를 알린다 (CHAT-FORK-02)', async ({
+      page,
+    }) => {
+      await routeDetail(page, chatDetail([firstTurn]));
+      await page.route(CHAT_FORK, async (route) => {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ status: 404, code: 'NOT_FOUND' }),
+        });
+      });
+
+      await page.goto('/chats/c1');
+      await forkButtons(page).click();
+      await page
+        .getByRole('alertdialog')
+        .getByRole('button', { name: CHAT_FORK_COPY.confirm.confirm })
+        .click();
+
+      await expect(
+        page.getByText(TOAST_MESSAGE.CHAT_FORK_FAILED),
+      ).toBeVisible();
+      await expect(page).toHaveURL(/\/chats\/c1$/);
+    });
+  });
+
+  test('게스트가 포크를 누르면 요청 없이 로그인 시트를 연다 (CHAT-FORK-03)', async ({
+    page,
+  }) => {
+    let forkCalled = false;
+
+    await routeDetail(page, chatDetail([firstTurn]));
+    await page.route(CHAT_FORK, async (route) => {
+      forkCalled = true;
+      await route.abort();
+    });
+
+    await page.goto('/chats/c1');
+    await forkButtons(page).click();
+
+    await expect(
+      page.getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
+    ).toBeVisible();
+    expect(forkCalled).toBe(false);
   });
 });
 
@@ -3122,7 +3511,7 @@ test.describe('실시간 이미지 기본값과 안내 (KNK-1508)', () => {
 
     const regenerated = page.waitForResponse(CHAT_REGENERATE);
 
-    await page.getByRole('button', { name: '다시 생성' }).click();
+    await confirmRegenerate(page);
     await regenerated;
     await page.waitForTimeout(REALTIME_IMAGE_NUDGE_DELAY_MS + 500);
 
