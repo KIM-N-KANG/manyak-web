@@ -5,10 +5,11 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { QualitySegment } from './qualitySegment';
 
 export type QualityParams = {
   platform?: string;
-  segment?: string;
+  segment?: QualitySegment;
   from?: string;
   to?: string;
   days?: string;

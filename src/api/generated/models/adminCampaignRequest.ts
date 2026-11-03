@@ -26,4 +26,6 @@ export interface AdminCampaignRequest {
   reason: string;
   /** @nullable */
   storyId?: string | null;
+  /** @nullable */
+  noticeId?: string | null;
 }

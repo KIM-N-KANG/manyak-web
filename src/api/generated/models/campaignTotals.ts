@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { CampaignDevices } from './campaignDevices';
 import type { CampaignSegments } from './campaignSegments';
 
 export interface CampaignTotals {
@@ -17,4 +18,5 @@ export interface CampaignTotals {
   storylineRequests?: number;
   completionRequests?: number;
   chatMessages?: number;
+  newVisitorsByDevice?: CampaignDevices;
 }

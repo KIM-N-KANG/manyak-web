@@ -7,6 +7,10 @@ export const CREATE_STORY_FAB_COPY = {
 /** 제작 화면의 빈 목록 안내 정본 문구다. 앱 `studio_stories_empty`와 같다. */
 export const CREATED_STORY_LIST_COPY = {
   emptyTitle: '아직 만든 스토리가 없어요',
+  /** 초안과 검수 제출본을 묶는 구역 제목이다. 초안 카드 제목 "만들고 있는 스토리"와 겹치지 않게 짧게 둔다. */
+  progressSection: '진행 중',
+  /** 완성 중 카드와 완성된 내 스토리를 묶는 구역 제목이다. 완성 중 카드가 같은 자리에서 스토리로 바뀌도록 함께 센다. */
+  storySection: '내 스토리',
 } as const;
 
 /**

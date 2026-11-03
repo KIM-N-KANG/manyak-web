@@ -247,15 +247,17 @@ test.describe('마이', () => {
     await expect(linkedAccounts.getByRole('button')).toHaveCount(0);
   });
 
-  test('하단 탭은 홈·채팅·제작·마이 4개다', async ({ page }) => {
+  test('하단 탭은 홈, 채팅, 제작, 탐색, 마이 5개다', async ({ page }) => {
     await page.goto('/my');
 
     const nav = page.getByRole('navigation', { name: '하단 네비게이션' });
 
-    await expect(nav.getByRole('link')).toHaveCount(4);
-    await expect(nav.getByRole('link', { name: /홈/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /채팅/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /제작/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /마이/ })).toBeVisible();
+    await expect(nav.getByRole('link')).toHaveText([
+      /홈/,
+      /채팅/,
+      /제작/,
+      /탐색/,
+      /마이/,
+    ]);
   });
 });

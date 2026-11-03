@@ -6,12 +6,13 @@
  * OpenAPI spec version: v1
  */
 import type { RetentionPlatform } from './retentionPlatform';
+import type { RetentionResponseCohort } from './retentionResponseCohort';
 
 export interface RetentionResponse {
   asOf?: string;
   from?: string;
   to?: string;
-  cohort?: string;
+  cohort?: RetentionResponseCohort;
   platforms?: RetentionPlatform[];
   pendingDates?: string[];
 }

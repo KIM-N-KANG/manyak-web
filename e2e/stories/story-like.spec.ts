@@ -8,7 +8,7 @@ import { formatCompactCount } from '@/lib/format-count';
 import { oneLine } from '../fixtures/copy';
 import {
   expect,
-  isPublicStoriesUrl,
+  mockHomeStories,
   mockMemberSession,
   seedStoryIds,
   test,
@@ -39,9 +39,7 @@ test('등록, 취소, 재진입에 좋아요 상태와 수를 반영하고 홈 �
   let release!: () => void;
 
   await page.route(DETAIL, (route) => route.fulfill({ json: current }));
-  await page.route(isPublicStoriesUrl, (route) =>
-    route.fulfill({ json: { items: [current], nextCursor: null } }),
-  );
+  await mockHomeStories(page, [current]);
   await page.route(LIKE, async (route) => {
     const method = route.request().method();
 

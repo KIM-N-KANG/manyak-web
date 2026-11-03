@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { AdminChatsRequestDeleted } from './adminChatsRequestDeleted';
 
 export interface AdminChatsRequest {
   /** @minimum 1 */
@@ -59,5 +60,5 @@ export interface AdminChatsRequest {
   /** @nullable */
   turnDate?: string | null;
   /** @nullable */
-  deleted?: string | null;
+  deleted?: AdminChatsRequestDeleted;
 }

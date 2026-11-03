@@ -1,15 +1,9 @@
-import { Suspense } from 'react';
-
 import type { Metadata, ResolvingMetadata } from 'next';
 
 import { APP_PATH } from '@/constants/app-path';
 import { HOME_DESCRIPTION, SITE_NAME, SITE_URL } from '@/constants/site';
-import {
-  HomeStoryList,
-  StoryList,
-} from '@/features/stories/list/components/home-story-list';
-import { DEFAULT_STORY_LIST_QUERY } from '@/features/stories/list/constants';
-import { fetchPublicStoriesOnServer } from '@/lib/stories/backend-story-client';
+import { HomeSections } from '@/features/stories/list/components/home-sections';
+import { fetchHomeOnServer } from '@/lib/stories/backend-story-client';
 
 /**
  * 루트의 브랜드 이미지를 유지하며 홈 설명과 대표 URL을 설정한다.
@@ -42,20 +36,11 @@ export async function generateMetadata(
 }
 
 export default async function StoriesPage() {
-  const initialPage =
-    (await fetchPublicStoriesOnServer(DEFAULT_STORY_LIST_QUERY)) ?? undefined;
+  const initialData = (await fetchHomeOnServer()) ?? undefined;
 
   return (
     <main className="flex flex-1 flex-col">
-      <Suspense
-        fallback={
-          <StoryList
-            query={DEFAULT_STORY_LIST_QUERY}
-            initialPage={initialPage}
-          />
-        }>
-        <HomeStoryList initialPage={initialPage} />
-      </Suspense>
+      <HomeSections initialData={initialData} />
     </main>
   );
 }

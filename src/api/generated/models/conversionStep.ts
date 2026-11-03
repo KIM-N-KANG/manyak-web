@@ -11,4 +11,8 @@ export interface ConversionStep {
   /** @nullable */
   turnNumber?: number | null;
   users?: number;
+  /** @nullable */
+  minTurnNumber?: number | null;
+  /** @nullable */
+  platform?: string | null;
 }

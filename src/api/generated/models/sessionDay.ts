@@ -10,4 +10,5 @@ import type { PlatformDecimals } from './platformDecimals';
 export interface SessionDay {
   date?: string;
   averageSessionSeconds?: PlatformDecimals;
+  sessionsPerUser?: PlatformDecimals;
 }

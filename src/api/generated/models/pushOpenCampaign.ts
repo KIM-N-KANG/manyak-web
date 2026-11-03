@@ -21,4 +21,20 @@ export interface PushOpenCampaign {
   pushOpens?: number | null;
   /** @nullable */
   pushOpenRate?: number | null;
+  /** @nullable */
+  webPushOpens?: number | null;
+  /** @nullable */
+  androidPushOpens?: number | null;
+  /** @nullable */
+  inboxOpens?: number | null;
+  /** @nullable */
+  webInboxOpens?: number | null;
+  /** @nullable */
+  androidInboxOpens?: number | null;
+  /** @nullable */
+  chattedMembers?: number | null;
+  /** @nullable */
+  chattedBeforeMembers?: number | null;
+  /** @nullable */
+  chatRate?: number | null;
 }

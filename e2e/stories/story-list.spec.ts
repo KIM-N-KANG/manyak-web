@@ -4,13 +4,11 @@ import { PULL_TO_REFRESH_COPY } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
 import { DRAFT_SAVE_BUTTON_LABEL } from '@/features/stories/_shared/components/draft-save-button';
 import { STORY_LIKE_COPY } from '@/features/stories/_shared/constants/story-like';
-import { STORY_LIST_ERROR_TITLE } from '@/features/stories/_shared/constants/story-list';
-import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import {
   STORY_LIST_COPY,
-  STORY_LIST_FILTER_OPTIONS,
-  STORY_LIST_SORT_OPTIONS,
-} from '@/features/stories/list/constants';
+  STORY_LIST_ERROR_TITLE,
+} from '@/features/stories/_shared/constants/story-list';
+import { STORY_VISIBILITY_COPY } from '@/features/stories/_shared/constants/story-visibility';
 import {
   GENERAL_STORY_CREATE_COPY,
   GENERAL_STORY_TABS,
@@ -26,8 +24,10 @@ import { mockMemberSession } from '../fixtures/auth';
 import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   expect,
-  isPublicStoriesUrl,
-  mockPublicStories,
+  isHomeStoriesUrl,
+  mockExploreStories,
+  mockHomeSections,
+  mockHomeStories,
   seedStoryIds,
   test,
 } from '../fixtures/test';
@@ -235,7 +235,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
     await expect(page.getByText('별빛 항해', { exact: true })).toBeVisible();
 
-    // 좋아요 수와 턴 수는 표지 배지로, 하단 메타 줄은 공개 범위와 제작일로 보인다.
+    // 좋아요 수와 턴 수, 공개 범위는 표지 배지로, 하단 메타 줄은 제작일로 보인다.
     const covers = page.locator('[data-slot="aspect-ratio"]');
 
     await expect(
@@ -247,11 +247,14 @@ test.describe('홈·제작 스토리 목록', () => {
       covers.nth(1).getByText(`${STORY_LIKE_COPY.count} 0`, { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText(STORY_VISIBILITY_COPY.PUBLIC, { exact: true }),
+      covers.first().getByText(STORY_VISIBILITY_COPY.PUBLIC, { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText(STORY_VISIBILITY_COPY.PRIVATE, { exact: true }),
+      covers.nth(1).getByText(STORY_VISIBILITY_COPY.PRIVATE, { exact: true }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('main').getByRole('heading', { level: 2 }),
+    ).toHaveText([`${CREATED_STORY_LIST_COPY.storySection}2`]);
     await page
       .getByRole('button', { name: '스토리 옵션 더보기' })
       .first()
@@ -265,7 +268,7 @@ test.describe('홈·제작 스토리 목록', () => {
     page,
   }) => {
     await seedStoryIds(page, ['s1']);
-    await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
+    await mockHomeStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
     await page.route(STORIES_BATCH, async (route) => {
       await route.fulfill({
         status: 200,
@@ -280,12 +283,8 @@ test.describe('홈·제작 스토리 목록', () => {
       page.getByText('마냑의 첫 이야기', { exact: true }),
     ).toBeVisible();
     await expect(page.getByText('용의 계곡', { exact: true })).toBeHidden();
-    // 섹션 제목 대신 필터 칩·정렬 줄을 둔다(KNK-1421).
     await expect(
-      page.getByRole('main').getByRole('heading', { level: 2 }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByRole('group', { name: STORY_LIST_COPY.filterGroupLabel }),
+      page.getByRole('main').getByRole('heading', { name: '인기 스토리' }),
     ).toBeVisible();
     // 홈 카드에는 옵션 버튼을 두지 않는다.
     await expect(
@@ -302,14 +301,10 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByText('마냑의 첫 이야기', { exact: true }),
     ).toBeHidden();
-    // 필터·정렬 줄은 홈에서만 헤더 아래에 둔다.
-    await expect(
-      page.getByRole('group', { name: STORY_LIST_COPY.filterGroupLabel }),
-    ).toHaveCount(0);
 
     await expect(
       page.getByRole('main').getByRole('heading', { level: 2 }),
-    ).toHaveCount(0);
+    ).toHaveText([`${CREATED_STORY_LIST_COPY.storySection}1`]);
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toBeVisible();
@@ -357,13 +352,13 @@ test.describe('홈·제작 스토리 목록', () => {
     expect(linkBox).toEqual(cardBox);
   });
 
-  test('홈을 위에서 당기면 공개 목록을 다시 읽고 그동안 기존 카드를 유지한다 (STORY-LIST-30)', async ({
+  test('홈을 위에서 당기면 홈 목록을 다시 읽고 그동안 기존 카드를 유지한다 (STORY-LIST-30)', async ({
     page,
   }) => {
     let originalsRequestCount = 0;
     let releaseRefetch: () => void = () => {};
 
-    await page.route(isPublicStoriesUrl, async (route) => {
+    await page.route(isHomeStoriesUrl, async (route) => {
       originalsRequestCount += 1;
 
       // 두 번째(당김) 조회는 붙잡아 새로고침 중 표시자를 관찰한다.
@@ -375,8 +370,13 @@ test.describe('홈·제작 스토리 목록', () => {
 
       await route.fulfill({
         json: {
-          items: [originalStory('o1', '마냑의 첫 이야기')],
-          nextCursor: null,
+          sections: [
+            {
+              id: null,
+              name: '인기 스토리',
+              items: [originalStory('o1', '마냑의 첫 이야기')],
+            },
+          ],
         },
       });
     });
@@ -469,7 +469,7 @@ test.describe('홈·제작 스토리 목록', () => {
   test('만든 스토리가 없는 게스트도 오리지널 스토리를 본다 (KNK-983)', async ({
     page,
   }) => {
-    await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
+    await mockHomeStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
 
     await page.goto('/');
 
@@ -510,98 +510,68 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
   });
 
-  test('홈 카드는 제작자를 보여주고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (KNK-983·KNK-1426)', async ({
+  test('홈 카드는 표지에 턴 수, 아래에 제목, 한 줄 소개와 장르를 보이고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (STORY-LIST-29)', async ({
     page,
   }) => {
-    await mockPublicStories(page, [
-      { ...originalStory('o1', '마냑의 첫 이야기'), isOriginal: true },
+    await mockHomeStories(page, [
+      {
+        ...originalStory('o1', '마냑의 첫 이야기'),
+        isOriginal: true,
+        turnCount: 302,
+      },
       {
         ...story('u1', '사용자 이야기'),
         author: { id: 2, nickname: '작가', profileImageUrl: null },
+        genres: ['로맨스 판타지', '아카데미', '미스터리', '성장'],
       },
     ]);
 
     await page.goto('/');
 
-    // 홈 카드는 닉네임 앞에 @를 붙인다
-    await expect(page.getByText('@마냑', { exact: true })).toBeVisible();
-    // 내가 만든 스토리 카드와 달리 한 줄 소개·장르는 노출하지 않는다.
-    await expect(page.getByText('한 줄 소개입니다')).toBeHidden();
-    // 필터와 무관하게 응답의 isOriginal인 카드에만 태그를 붙인다.
+    const originalCard = page
+      .getByRole('listitem')
+      .filter({ hasText: '마냑의 첫 이야기' });
+
+    await expect(originalCard.getByText('한 줄 소개입니다')).toBeVisible();
+    await expect(originalCard.getByText('누적 턴 수 302')).toBeVisible();
+    // 장르 배지는 너비를 재는 숨은 사본이 함께 있어 보이는 것만 고른다.
+    await expect(
+      originalCard
+        .getByText('판타지', { exact: true })
+        .filter({ visible: true }),
+    ).toBeVisible();
+    // 작성자는 상세에서 보이고 홈 카드에는 두지 않는다.
+    await expect(page.getByText(/^@/)).toHaveCount(0);
+
+    // 장르는 한 줄만 보이고 넘치면 나머지 수를 +N으로 줄인다.
+    const userCard = page
+      .getByRole('listitem')
+      .filter({ hasText: '사용자 이야기' });
+
+    await expect(
+      userCard.getByText(/^\+\d+$/).filter({ visible: true }),
+    ).toBeVisible();
+    // 응답의 isOriginal인 카드에만 표지 위 태그를 붙인다.
     await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
     await expect(
-      page
-        .getByRole('listitem')
-        .filter({ hasText: '마냑의 첫 이야기' })
-        .getByRole('img', { name: '오리지널' }),
+      originalCard.getByRole('img', { name: '오리지널' }),
     ).toBeVisible();
-  });
-
-  test('아래로 스크롤하면 필터 바를 숨기고 위로 스크롤하면 다시 보인다 (KNK-1426)', async ({
-    page,
-  }) => {
-    await mockPublicStories(
-      page,
-      Array.from({ length: 12 }, (_, index) =>
-        originalStory(`o${index + 1}`, `긴 목록 ${index + 1}`),
-      ),
-    );
-
-    await page.goto('/');
-    await expect(page.getByText('긴 목록 1', { exact: true })).toBeVisible();
-
-    const filterGroup = page.getByRole('group', {
-      name: STORY_LIST_COPY.filterGroupLabel,
-    });
-    const scroller = page.getByRole('region', {
-      name: PULL_TO_REFRESH_COPY.ariaLabel,
-    });
-
-    await expect(filterGroup).toBeVisible();
-
-    await scroller.evaluate((element) => element.scrollTo({ top: 300 }));
-    await expect(filterGroup).toBeHidden();
-
-    await scroller.evaluate((element) => element.scrollTo({ top: 200 }));
-    await expect(filterGroup).toBeVisible();
-
-    const navigation = page.getByRole('navigation', {
-      name: '하단 네비게이션',
-    });
-
-    await navigation.getByRole('link', { name: '제작' }).click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STUDIO}$`));
-
-    const fabLabel = page.getByText(CREATE_STORY_FAB_COPY.label, {
-      exact: true,
-    });
-
-    await expect
-      .poll(() =>
-        fabLabel.locator('..').evaluate((element) => element.clientWidth),
-      )
-      .toBeGreaterThan(0);
-
-    await navigation.getByRole('link', { name: '마이' }).click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.MY}$`));
-    await navigation.getByRole('link', { name: '홈', exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
-    await expect(filterGroup).toBeVisible();
-
-    await scroller.evaluate((element) => element.scrollTo({ top: 300 }));
-    await expect(filterGroup).toBeHidden();
-    await scroller.evaluate((element) => element.scrollTo({ top: 200 }));
-    await expect(filterGroup).toBeVisible();
   });
 
   test('상세에서 돌아오거나 탭을 오가도 목록 스크롤 위치를 유지한다 (KNK-1613)', async ({
     page,
   }) => {
-    await mockPublicStories(
+    await mockHomeSections(
       page,
-      Array.from({ length: 12 }, (_, index) =>
-        originalStory(`o${index + 1}`, `긴 목록 ${index + 1}`),
-      ),
+      Array.from({ length: 6 }, (_, section) => ({
+        id: `section-${section + 1}`,
+        name: `섹션 ${section + 1}`,
+        items: [1, 2].map((offset) => {
+          const index = section * 2 + offset;
+
+          return originalStory(`o${index}`, `긴 목록 ${index}`);
+        }),
+      })),
     );
 
     await page.goto('/');
@@ -644,186 +614,259 @@ test.describe('홈·제작 스토리 목록', () => {
       .toBe(leftAt);
   });
 
-  test('당겨도 필터 바는 제자리에 있고 표시자는 바 아래에 나타난다 (KNK-1570)', async ({
+  test('홈은 서버 순서대로 섹션을 쌓고 섹션마다 카드 두 장과 셋째 카드 16px을 보인다 (STORY-LIST-46)', async ({
     page,
   }) => {
-    await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
+    await mockHomeSections(page, [
+      {
+        id: 'section-1',
+        name: '지금 인기 있는 스토리',
+        items: [
+          originalStory('a1', '첫 카드'),
+          { ...story('a2', '작성자 없는 카드'), author: null },
+          originalStory('a3', '셋째 카드'),
+        ],
+      },
+      {
+        name: '오리지널 스토리',
+        items: [originalStory('b1', '오리지널 카드')],
+      },
+    ]);
 
     await page.goto('/');
-    await expect(
-      page.getByRole('link', { name: '마냑의 첫 이야기 상세 보기' }),
-    ).toBeVisible();
 
-    const filterGroup = page.getByRole('group', {
-      name: STORY_LIST_COPY.filterGroupLabel,
+    const main = page.getByRole('main');
+
+    await expect(main.getByRole('heading', { level: 2 })).toHaveText([
+      '지금 인기 있는 스토리',
+      '오리지널 스토리',
+    ]);
+
+    const row = main
+      .getByRole('region', { name: '지금 인기 있는 스토리' })
+      .getByRole('list');
+
+    await expect(row).toHaveCSS('overflow-x', 'auto');
+
+    const [rowWidth, cardWidth] = await row.evaluate((element) => [
+      element.clientWidth,
+      element.querySelector('li')?.getBoundingClientRect().width ?? 0,
+    ]);
+
+    // 왼쪽 여백 16px, 카드 두 장, 8px 간격 두 개 뒤에 셋째 카드가 16px만 보인다.
+    expect(16 + cardWidth * 2 + 8 * 2 + 16).toBeCloseTo(rowWidth, 0);
+
+    const authorlessCard = row
+      .getByRole('listitem')
+      .filter({ hasText: '작성자 없는 카드' });
+
+    await expect(
+      authorlessCard.getByRole('link', { name: '작성자 없는 카드 상세 보기' }),
+    ).toBeVisible();
+    await expect(authorlessCard.getByText(/^@/)).toHaveCount(0);
+  });
+
+  test('탐색 탭은 제작과 마이 사이에 있고, 탭으로 들어오면 새로 섞고 상세에서 돌아오면 순서와 위치를 유지한다 (STORY-LIST-47)', async ({
+    page,
+  }) => {
+    const explore = await mockExploreStories(page, [
+      Array.from({ length: 30 }, (_, index) =>
+        originalStory(`e${index + 1}`, `탐색 ${index + 1}`),
+      ),
+    ]);
+
+    await page.goto('/');
+
+    const navigation = page.getByRole('navigation', {
+      name: '하단 네비게이션',
     });
     const scroller = page.getByRole('region', {
       name: PULL_TO_REFRESH_COPY.ariaLabel,
     });
-    const restingFilterBox = await filterGroup.boundingBox();
+
+    await expect(navigation.getByRole('link')).toHaveText([
+      '홈',
+      '채팅',
+      '제작',
+      '탐색',
+      '마이',
+    ]);
+    await navigation.getByRole('link', { name: '탐색' }).click();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.EXPLORE}$`));
+    await expect(
+      page.getByRole('banner').getByRole('heading', { name: '탐색' }),
+    ).toBeVisible();
+
+    // 썸네일만 세 열로 붙여 놓고 턴 수, 제목과 작성자는 보이지 않는다.
+    const tiles = page.getByRole('main').getByRole('listitem');
+
+    await expect(tiles).toHaveCount(30);
+
+    const tops = await tiles.evaluateAll((items) =>
+      items.slice(0, 4).map((item) => item.getBoundingClientRect().top),
+    );
+
+    expect(new Set(tops.slice(0, 3)).size).toBe(1);
+    expect(tops[3]).toBeGreaterThan(tops[0]);
+    await expect(page.getByText('탐색 1', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('@마냑', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('누적 턴 수')).toHaveCount(0);
+
+    const link = page.getByRole('link', { name: '탐색 27 상세 보기' });
+
+    await link.scrollIntoViewIfNeeded();
+
+    const leftAt = await scroller.evaluate((element) => element.scrollTop);
+
+    expect(leftAt).toBeGreaterThan(0);
+    await link.click();
+    await expect(page).toHaveURL(/\/stories\/e27$/);
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.EXPLORE}$`));
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBe(leftAt);
+    expect(explore.cursors).toEqual([null]);
+
+    await navigation.getByRole('link', { name: '홈', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+    await navigation.getByRole('link', { name: '탐색' }).click();
+
+    await expect(link).toBeVisible();
+    expect(explore.cursors).toEqual([null, null]);
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBe(0);
+  });
+
+  test('탐색을 당겨서 새로고침하면 첫 페이지만 새로 섞어 받는다 (STORY-LIST-48)', async ({
+    page,
+  }) => {
+    const explore = await mockExploreStories(page, [
+      Array.from({ length: 20 }, (_, index) =>
+        originalStory(`p1-${index}`, `첫 페이지 ${index}`),
+      ),
+      [originalStory('p2', '다음 페이지')],
+    ]);
+
+    await page.goto(APP_PATH.MAIN.EXPLORE);
+    await page
+      .getByRole('link', { name: '첫 페이지 19 상세 보기' })
+      .scrollIntoViewIfNeeded();
+    await expect(
+      page.getByRole('link', { name: '다음 페이지 상세 보기' }),
+    ).toBeVisible();
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    await scroller.evaluate((element) => element.scrollTo({ top: 0 }));
+
     const box = await scroller.boundingBox();
 
-    if (!restingFilterBox || !box)
-      throw new Error('필터 바 또는 스크롤 영역을 찾지 못했다');
+    if (!box) throw new Error('스크롤 영역을 찾지 못했다');
 
     const x = box.x + box.width / 2;
+    const startY = box.y + 8;
 
-    await dispatchTouch(scroller, 'touchstart', x, box.y + 8);
-    await dispatchTouch(scroller, 'touchmove', x, box.y + 208);
+    await dispatchTouch(scroller, 'touchstart', x, startY);
 
-    const releaseLabel = page.getByText(PULL_TO_REFRESH_COPY.release);
+    for (let step = 1; step <= 10; step += 1) {
+      await dispatchTouch(scroller, 'touchmove', x, startY + step * 20);
+    }
 
-    await expect(releaseLabel).toBeVisible();
-    expect((await filterGroup.boundingBox())?.y).toBe(restingFilterBox.y);
-    expect((await releaseLabel.boundingBox())?.y).toBeGreaterThan(
-      restingFilterBox.y + restingFilterBox.height,
-    );
+    await dispatchTouch(scroller, 'touchend', x, startY + 200);
+
+    await expect.poll(() => explore.cursors.length).toBe(3);
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.refreshing)).toBeHidden();
+    await expect(
+      page.getByRole('link', { name: '다음 페이지 상세 보기' }),
+    ).toHaveCount(0);
+    expect(explore.cursors).toEqual([null, 'c1', null]);
   });
 
-  test('필터·정렬을 바꾸면 URL과 요청에 반영하고 상세에서 돌아와도 유지한다 (KNK-1421)', async ({
+  test('탐색을 새로 섞으면 칸 자리를 유지한 채 칸마다 새 표지로 바꾼다 (STORY-LIST-49)', async ({
     page,
   }) => {
-    const requests: URLSearchParams[] = [];
+    await mockExploreStories(page, [
+      Array.from({ length: 6 }, (_, index) =>
+        originalStory(`a${index}`, `이전 순서 ${index}`),
+      ),
+    ]);
 
-    await page.route(isPublicStoriesUrl, async (route) => {
-      const params = new URL(route.request().url()).searchParams;
+    await page.goto(APP_PATH.MAIN.EXPLORE);
 
-      requests.push(params);
-      await route.fulfill({
-        json: {
-          items: [
-            originalStory(
-              `${params.get('filter')}-${params.get('sort')}`,
-              `${params.get('filter')} ${params.get('sort')} 스토리`,
-            ),
-          ],
-          nextCursor: null,
-        },
-      });
+    const tiles = page.getByRole('main').getByRole('listitem');
+
+    await expect(
+      page.getByRole('link', { name: '이전 순서 0 상세 보기' }),
+    ).toBeVisible();
+
+    await mockExploreStories(page, [
+      Array.from({ length: 6 }, (_, index) =>
+        originalStory(`b${index}`, `새 순서 ${index}`),
+      ),
+    ]);
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
     });
-    await page.route('**/api/v1/stories/original-likes', (route) =>
-      route.fulfill({ json: originalStory('original-likes', '상세') }),
-    );
+    const box = await scroller.boundingBox();
 
-    await page.goto('/');
+    if (!box) throw new Error('스크롤 영역을 찾지 못했다');
 
-    const [allLabel, originalLabel] = STORY_LIST_FILTER_OPTIONS.map(
-      (option) => option.label,
-    );
-    const [popularLabel, , likesLabel] = STORY_LIST_SORT_OPTIONS.map(
-      (option) => option.label,
-    );
-    const allChip = page.getByRole('button', { name: allLabel, exact: true });
-    const originalChip = page.getByRole('button', {
-      name: originalLabel,
-      exact: true,
-    });
+    const x = box.x + box.width / 2;
+    const startY = box.y + 8;
 
-    // 기본은 전체와 인기순이다.
-    await expect(page.getByText('all popular 스토리')).toBeVisible();
-    expect(requests.at(-1)?.get('filter')).toBe('all');
-    expect(requests.at(-1)?.get('sort')).toBe('popular');
-    await expect(allChip).toHaveAttribute('aria-pressed', 'true');
+    await dispatchTouch(scroller, 'touchstart', x, startY);
+
+    for (let step = 1; step <= 10; step += 1) {
+      await dispatchTouch(scroller, 'touchmove', x, startY + step * 20);
+    }
+
+    await dispatchTouch(scroller, 'touchend', x, startY + 200);
+
     await expect(
-      page.getByRole('button', {
-        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${popularLabel}`,
-      }),
+      page.getByRole('link', { name: '새 순서 5 상세 보기' }),
     ).toBeVisible();
-
-    await originalChip.click();
-
-    await expect(page).toHaveURL(/\/\?filter=original$/);
-    await expect(page.getByText('original popular 스토리')).toBeVisible();
-    await expect(originalChip).toHaveAttribute('aria-pressed', 'true');
-
-    await page
-      .getByRole('button', {
-        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${popularLabel}`,
-      })
-      .click();
-    await expect(page.getByRole('menuitemradio').first()).toHaveText(
-      popularLabel,
-    );
-    await page.getByRole('menuitemradio', { name: likesLabel }).click();
-
-    await expect(page).toHaveURL(/\/\?filter=original&sort=likes$/);
-    await expect(page.getByText('original likes 스토리')).toBeVisible();
-    expect(requests.at(-1)?.get('filter')).toBe('original');
-    expect(requests.at(-1)?.get('sort')).toBe('likes');
-
-    await page
-      .getByRole('link', { name: 'original likes 스토리 상세 보기' })
-      .click();
-    await expect(page).toHaveURL(/\/stories\/original-likes$/);
-    await page.goBack();
-
-    await expect(page.getByText('original likes 스토리')).toBeVisible();
-    await expect(originalChip).toHaveAttribute('aria-pressed', 'true');
+    await expect(tiles).toHaveCount(6);
     await expect(
-      page.getByRole('button', {
-        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${likesLabel}`,
-      }),
-    ).toBeVisible();
-    await page.reload();
-    await expect(page.getByText('original likes 스토리')).toBeVisible();
-    await expect(
-      page.getByRole('button', {
-        name: `${STORY_LIST_COPY.sortTriggerLabel}: ${likesLabel}`,
-      }),
-    ).toBeVisible();
+      page.getByRole('link', { name: /이전 순서 \d 상세 보기/ }),
+    ).toHaveCount(0);
   });
 
-  test('목록 끝에 닿으면 같은 필터·정렬로 다음 페이지를 이어 붙인다 (KNK-1421)', async ({
+  test('탐색 목록 끝에 닿으면 받은 nextCursor로 다음 페이지를 이어 붙인다 (STORY-LIST-44)', async ({
     page,
   }) => {
-    const requests: URLSearchParams[] = [];
+    const explore = await mockExploreStories(page, [
+      Array.from({ length: 20 }, (_, index) =>
+        originalStory(`p1-${index}`, `첫 페이지 ${index}`),
+      ),
+      [originalStory('p2', '다음 페이지')],
+    ]);
 
-    await page.route(isPublicStoriesUrl, async (route) => {
-      const params = new URL(route.request().url()).searchParams;
+    await page.goto(APP_PATH.MAIN.EXPLORE);
 
-      requests.push(params);
-
-      if (params.get('cursor') === 'c1') {
-        await route.fulfill({
-          json: {
-            items: [originalStory('p2', '다음 페이지')],
-            nextCursor: null,
-          },
-        });
-
-        return;
-      }
-
-      await route.fulfill({
-        json: {
-          items: Array.from({ length: 20 }, (_, index) =>
-            originalStory(`p1-${index}`, `첫 페이지 ${index}`),
-          ),
-          nextCursor: 'c1',
-        },
-      });
-    });
-
-    await page.goto('/?sort=chats');
-
-    await expect(page.getByText('첫 페이지 0', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: '첫 페이지 0 상세 보기' }),
+    ).toBeVisible();
     await page
-      .getByText('첫 페이지 19', { exact: true })
+      .getByRole('link', { name: '첫 페이지 19 상세 보기' })
       .scrollIntoViewIfNeeded();
 
-    await expect(page.getByText('다음 페이지', { exact: true })).toBeVisible();
-
-    const nextRequest = requests.find((params) => params.get('cursor'));
-
-    expect(nextRequest?.get('filter')).toBe('all');
-    expect(nextRequest?.get('sort')).toBe('chats');
+    await expect(
+      page.getByRole('link', { name: '다음 페이지 상세 보기' }),
+    ).toBeVisible();
+    expect(explore.cursors).toEqual([null, 'c1']);
   });
 
   test('홈 카드에는 회원에게도 옵션 버튼을 두지 않는다 (KNK-1421)', async ({
     page,
   }) => {
     await mockMemberSession(page);
-    await mockPublicStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
+    await mockHomeStories(page, [originalStory('o1', '마냑의 첫 이야기')]);
 
     await page.goto('/');
 
@@ -839,7 +882,7 @@ test.describe('홈·제작 스토리 목록', () => {
     page,
   }) => {
     await seedStoryIds(page, ['s1']);
-    await mockPublicStories(page, [
+    await mockHomeStories(page, [
       { ...originalStory('o1', '마냑의 첫 이야기'), turnCount: 12345 },
     ]);
     await page.route(STORIES_BATCH, async (route) => {
@@ -858,23 +901,39 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(page.getByText('누적 턴 수 1.2K')).toBeVisible();
   });
 
-  test('공개 스토리가 없으면 필터 줄 아래에 빈 안내를 보여준다 (KNK-1421)', async ({
+  test('카드가 없는 섹션은 숨기고 모든 섹션이 비면 빈 안내를 보여준다 (STORY-LIST-45)', async ({
     page,
   }) => {
-    await mockPublicStories(page, []);
+    await mockHomeSections(page, [
+      { name: '인기 스토리', items: [] },
+      { name: '오리지널 스토리', items: [originalStory('o1', '마냑')] },
+    ]);
 
     await page.goto('/');
 
+    const main = page.getByRole('main');
+
     await expect(
-      page.getByRole('group', { name: STORY_LIST_COPY.filterGroupLabel }),
+      main.getByRole('heading', { name: '오리지널 스토리' }),
     ).toBeVisible();
+    await expect(
+      main.getByRole('heading', { name: '인기 스토리' }),
+    ).toHaveCount(0);
+
+    await mockHomeSections(page, [
+      { name: '인기 스토리', items: [] },
+      { name: '오리지널 스토리', items: [] },
+    ]);
+    await page.reload();
+
     await expect(page.getByText(STORY_LIST_COPY.empty)).toBeVisible();
+    await expect(main.getByRole('heading', { level: 2 })).toHaveCount(0);
   });
 
-  test('공개 목록 로드에 실패하면 다시 시도로 복구한다', async ({ page }) => {
+  test('홈 목록 로드에 실패하면 다시 시도로 복구한다', async ({ page }) => {
     let callCount = 0;
 
-    await page.route(isPublicStoriesUrl, async (route) => {
+    await page.route(isHomeStoriesUrl, async (route) => {
       callCount += 1;
 
       if (callCount === 1) {
@@ -885,17 +944,19 @@ test.describe('홈·제작 스토리 목록', () => {
 
       await route.fulfill({
         json: {
-          items: [originalStory('o1', '마냑의 첫 이야기')],
-          nextCursor: null,
+          sections: [
+            {
+              id: null,
+              name: '인기 스토리',
+              items: [originalStory('o1', '마냑의 첫 이야기')],
+            },
+          ],
         },
       });
     });
 
     await page.goto('/');
 
-    await expect(
-      page.getByRole('group', { name: STORY_LIST_COPY.filterGroupLabel }),
-    ).toBeVisible();
     await expect(page.getByText(STORY_LIST_ERROR_TITLE)).toBeVisible();
 
     await page.getByRole('button', { name: '다시 시도하기' }).click();
@@ -905,7 +966,7 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
   });
 
-  test('공개 목록 로딩 중에는 카드 구조에 맞는 스켈레톤을 보여준다 (KNK-988)', async ({
+  test('홈 목록 로딩 중에는 섹션 구조에 맞는 스켈레톤을 보여준다 (KNK-988)', async ({
     page,
   }) => {
     let releaseResponse!: () => void;
@@ -913,9 +974,9 @@ test.describe('홈·제작 스토리 목록', () => {
       releaseResponse = resolve;
     });
 
-    await page.route(isPublicStoriesUrl, async (route) => {
+    await page.route(isHomeStoriesUrl, async (route) => {
       await responseGate;
-      await route.fulfill({ json: { items: [], nextCursor: null } });
+      await route.fulfill({ json: { sections: [] } });
     });
 
     await page.goto('/');
@@ -925,8 +986,8 @@ test.describe('홈·제작 스토리 목록', () => {
     });
 
     await expect(loading).toBeVisible();
-    // 카드 6개의 썸네일·제목·제작자 3개씩이다.
-    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(18);
+    // 섹션 2개마다 제목 1개와 카드 3장의 썸네일, 제목, 한 줄 소개 두 줄, 장르 배지 두 개다.
+    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(38);
 
     releaseResponse();
     await expect(loading).toBeHidden();
@@ -954,12 +1015,20 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     const skeletonList = page.locator('main ul[aria-hidden="true"]');
-    const skeletonRows = skeletonList.locator(':scope > li');
+    const skeletonItems = skeletonList.locator(':scope > li');
+    const skeletonRows = skeletonItems.filter({
+      has: page.locator('[data-slot="aspect-ratio"]'),
+    });
     const firstRow = skeletonRows.first();
     const cover = firstRow.locator('[data-slot="aspect-ratio"]');
 
     await expect(skeletonList).toBeVisible();
+    // 첫 줄은 구역 제목 자리이고 그 아래에 카드 5줄이 온다.
+    await expect(skeletonItems).toHaveCount(6);
     await expect(skeletonRows).toHaveCount(5);
+    await expect(
+      skeletonItems.first().locator('[data-slot="skeleton"]'),
+    ).toHaveCount(1);
     await expect(firstRow).toHaveCSS('display', 'flex');
     await expect(firstRow).toHaveCSS('column-gap', '16px');
     await expect(firstRow).toHaveCSS('padding-top', '8px');
@@ -993,6 +1062,7 @@ test.describe('홈·제작 스토리 목록', () => {
       APP_PATH.MAIN.STORIES,
       APP_PATH.MAIN.CHATS,
       APP_PATH.MAIN.STUDIO,
+      APP_PATH.MAIN.EXPLORE,
       APP_PATH.MAIN.MY,
     ]) {
       await page.goto(pathname);
@@ -1164,9 +1234,7 @@ test.describe('홈·제작 스토리 목록', () => {
   test('홈 카드의 공백 없는 긴 제목도 카드 폭 안에서 말줄임한다 (STORY-LIST-41)', async ({
     page,
   }) => {
-    await mockPublicStories(page, [
-      originalStory('o1', `제목${UNBROKEN_TEXT}`),
-    ]);
+    await mockHomeStories(page, [originalStory('o1', `제목${UNBROKEN_TEXT}`)]);
 
     await page.goto('/');
 

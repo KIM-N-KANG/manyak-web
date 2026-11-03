@@ -73,6 +73,29 @@ test('경로 변수나 생성 인자 이름과 같은 operationId도 경로 기�
   );
 });
 
+test('매개변수 enum 이름이 스키마와 겹치는 operationId도 경로 기반 이름으로 바꾼다', async () => {
+  const spec = {
+    openapi: '3.1.0' as const,
+    info: { title: 'test', version: '1' },
+    paths: {
+      '/api/v1/admin/users/retention': {
+        get: {
+          operationId: 'retention',
+          parameters: [{ name: 'cohort', in: 'query' as const }],
+        },
+      },
+    },
+    components: { schemas: { RetentionCohort: { type: 'object' as const } } },
+  };
+
+  const result = await stabilizeOperationIds(spec);
+
+  assert.equal(
+    result.paths?.['/api/v1/admin/users/retention']?.get?.operationId,
+    'getAdminUsersRetention',
+  );
+});
+
 test('경로 기반 이름은 경로 변수를 By 접두어로 붙인다', () => {
   assert.equal(
     routeOperationId('delete', '/api/v1/users/me/personas/{personaId}'),

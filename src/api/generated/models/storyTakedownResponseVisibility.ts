@@ -10,6 +10,5 @@ export type StoryTakedownResponseVisibility =
   (typeof StoryTakedownResponseVisibility)[keyof typeof StoryTakedownResponseVisibility];
 
 export const StoryTakedownResponseVisibility = {
-  PUBLIC: 'PUBLIC',
   PRIVATE: 'PRIVATE',
 } as const;

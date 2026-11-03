@@ -7,10 +7,52 @@
  */
 import type { StoryTakedownRequestReasonCode } from './storyTakedownRequestReasonCode';
 
-export interface StoryTakedownRequest {
-  reasonCode?: StoryTakedownRequestReasonCode;
-  /** @nullable */
-  reasonDetail?: string | null;
-  /** @nullable */
-  memo?: string | null;
-}
+export type StoryTakedownRequest =
+  | ({
+      reasonCode: 'SEXUAL_CONTENT' | 'COPYRIGHT_INFRINGEMENT' | 'HATE_SPEECH';
+      /** @nullable */
+      reasonDetail?: null;
+    } & {
+      reasonCode: StoryTakedownRequestReasonCode;
+      /**
+       * ETC일 때 필수이며 다른 사유에서는 생략 또는 null
+       * @minLength 1
+       * @maxLength 100
+       * @nullable
+       * @pattern (?sU).*\S.*
+       */
+      reasonDetail?: string | null;
+      /**
+       * @minLength 1
+       * @maxLength 500
+       * @nullable
+       * @pattern (?sU).*\S.*
+       */
+      memo?: string | null;
+    })
+  | ({
+      reasonCode: 'ETC';
+      /**
+       * @minLength 1
+       * @maxLength 100
+       * @pattern (?sU).*\S.*
+       */
+      reasonDetail: string;
+    } & {
+      reasonCode: StoryTakedownRequestReasonCode;
+      /**
+       * ETC일 때 필수이며 다른 사유에서는 생략 또는 null
+       * @minLength 1
+       * @maxLength 100
+       * @nullable
+       * @pattern (?sU).*\S.*
+       */
+      reasonDetail?: string | null;
+      /**
+       * @minLength 1
+       * @maxLength 500
+       * @nullable
+       * @pattern (?sU).*\S.*
+       */
+      memo?: string | null;
+    });

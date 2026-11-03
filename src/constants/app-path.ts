@@ -3,6 +3,8 @@ export const APP_PATH = {
     STORIES: '/',
     CHATS: '/chats',
     STUDIO: '/studio',
+    /** 공개 스토리 전체를 무작위 순서로 넘겨 보는 탐색 탭이다. */
+    EXPLORE: '/explore',
     MY: '/my',
   },
   LOGIN: '/login',

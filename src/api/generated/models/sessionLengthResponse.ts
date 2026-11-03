@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { SessionLengthBin } from './sessionLengthBin';
+import type { SessionLengthDay } from './sessionLengthDay';
 import type { SessionLengthPlatform } from './sessionLengthPlatform';
 
 export interface SessionLengthResponse {
@@ -16,4 +17,5 @@ export interface SessionLengthResponse {
   pendingDates?: string[];
   bins?: SessionLengthBin[];
   platforms?: SessionLengthPlatform[];
+  daily?: SessionLengthDay[];
 }

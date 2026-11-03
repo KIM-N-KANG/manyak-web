@@ -5,7 +5,8 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { PlatformCounts } from './platformCounts';
+import type { MetricPlatformCounts } from './metricPlatformCounts';
+import type { MetricPlatformRates } from './metricPlatformRates';
 import type { SignupCounts } from './signupCounts';
 
 export interface SignupDay {
@@ -13,5 +14,7 @@ export interface SignupDay {
   signups?: SignupCounts;
   cumulativeSignups?: number;
   migratedFromGuest?: number;
-  signupsByPlatform?: PlatformCounts | null;
+  signupsByPlatform?: MetricPlatformCounts | null;
+  newVisitorsByPlatform?: MetricPlatformCounts | null;
+  signupRate?: MetricPlatformRates | null;
 }

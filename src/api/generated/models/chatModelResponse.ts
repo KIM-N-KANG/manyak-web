@@ -5,13 +5,15 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { ChatModelPromotionResponse } from './chatModelPromotionResponse';
 
 /**
- * 노출 중인 채팅 모델과 턴 가격. 회원 턴 체험은 LITE에만 적용
+ * 노출 중인 채팅 모델과 정가. 회원에게만 진행 중인 promotion 제공
  */
 export interface ChatModelResponse {
   code?: string;
   name?: string;
   turnCost?: number;
+  promotion?: ChatModelPromotionResponse | null;
   isDefault?: boolean;
 }

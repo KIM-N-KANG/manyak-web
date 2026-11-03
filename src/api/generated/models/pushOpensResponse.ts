@@ -20,4 +20,6 @@ export interface PushOpensResponse {
   /** @nullable */
   activityFrom?: string | null;
   activityTypes?: PushOpenActivity[];
+  /** @nullable */
+  androidMeasuredFrom?: string | null;
 }

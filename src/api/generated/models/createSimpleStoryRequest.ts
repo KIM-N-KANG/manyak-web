@@ -36,7 +36,7 @@ export interface CreateSimpleStoryRequest {
    * @nullable
    */
   artStyle?: string | null;
-  /** 공개 범위. PUBLIC 또는 PRIVATE이며 생략하면 PRIVATE. 게스트도 PUBLIC을 지정할 수 있고, 회원 계정으로 이관된 뒤 공개 목록과 검색에 실립니다. */
+  /** 공개 범위. PUBLIC 또는 PRIVATE이며 생략하면 PUBLIC. 게스트 공개 스토리도 작성자 없이 공개 목록과 검색에 실립니다. */
   visibility?: CreateSimpleStoryRequestVisibility;
   /**
    * 생성 요청 기록과 같은 트랜잭션에서 삭제할 내 초안 ID

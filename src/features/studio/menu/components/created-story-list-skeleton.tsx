@@ -4,6 +4,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function CreatedStoryListSkeleton() {
   return (
     <ul className="flex flex-col pb-2" aria-hidden>
+      <li className="px-4 pt-2 pb-1">
+        <Skeleton className="h-6 w-20" />
+      </li>
       {Array.from({ length: 5 }).map((_, index) => (
         <li key={index} className="flex gap-4 px-4 py-2">
           <AspectRatio ratio={3 / 4} className="w-32 shrink-0">
@@ -19,8 +22,7 @@ export function CreatedStoryListSkeleton() {
                 <Skeleton className="h-5 w-14 rounded-4xl" />
               </div>
             </div>
-            <div className="mt-1 flex justify-end gap-2">
-              <Skeleton className="h-5 w-12" />
+            <div className="mt-1 flex justify-end">
               <Skeleton className="h-5 w-18" />
             </div>
           </div>

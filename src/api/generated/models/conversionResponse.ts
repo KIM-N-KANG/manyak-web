@@ -12,7 +12,8 @@ export interface ConversionResponse {
   from?: string;
   to?: string;
   funnel?: string;
-  platform?: string;
+  /** @nullable */
+  platform?: string | null;
   /** @nullable */
   storyId?: string | null;
   steps?: ConversionStep[];
