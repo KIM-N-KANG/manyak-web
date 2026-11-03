@@ -986,8 +986,8 @@ test.describe('홈·제작 스토리 목록', () => {
     });
 
     await expect(loading).toBeVisible();
-    // 섹션 2개마다 제목 1개와 카드 3장의 썸네일, 제목, 제작자다.
-    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(20);
+    // 섹션 2개마다 제목 1개와 카드 3장의 썸네일, 제목, 한 줄 소개 두 줄, 장르 배지 두 개다.
+    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(38);
 
     releaseResponse();
     await expect(loading).toBeHidden();
@@ -1015,12 +1015,20 @@ test.describe('홈·제작 스토리 목록', () => {
     await page.goto(APP_PATH.MAIN.STUDIO);
 
     const skeletonList = page.locator('main ul[aria-hidden="true"]');
-    const skeletonRows = skeletonList.locator(':scope > li');
+    const skeletonItems = skeletonList.locator(':scope > li');
+    const skeletonRows = skeletonItems.filter({
+      has: page.locator('[data-slot="aspect-ratio"]'),
+    });
     const firstRow = skeletonRows.first();
     const cover = firstRow.locator('[data-slot="aspect-ratio"]');
 
     await expect(skeletonList).toBeVisible();
+    // 첫 줄은 구역 제목 자리이고 그 아래에 카드 5줄이 온다.
+    await expect(skeletonItems).toHaveCount(6);
     await expect(skeletonRows).toHaveCount(5);
+    await expect(
+      skeletonItems.first().locator('[data-slot="skeleton"]'),
+    ).toHaveCount(1);
     await expect(firstRow).toHaveCSS('display', 'flex');
     await expect(firstRow).toHaveCSS('column-gap', '16px');
     await expect(firstRow).toHaveCSS('padding-top', '8px');
