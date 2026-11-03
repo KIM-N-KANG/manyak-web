@@ -103,12 +103,12 @@ export function ExploreStoryList() {
             </Button>
           </div>
         )}
-        {hasNextPage && <div ref={setSentinelElement} aria-hidden="true" />}
+        {hasNextPage && (
+          <div ref={setSentinelElement} aria-hidden="true" className="h-1" />
+        )}
       </>
     );
   };
 
-  return (
-    <section className="flex flex-1 flex-col pb-4">{renderContent()}</section>
-  );
+  return <section className="flex flex-1 flex-col">{renderContent()}</section>;
 }

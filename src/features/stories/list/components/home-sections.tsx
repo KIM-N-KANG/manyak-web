@@ -64,7 +64,7 @@ export function HomeSections({ initialData }: HomeSectionsProps) {
   };
 
   return (
-    <section className="flex flex-1 flex-col gap-8 pt-2 pb-6">
+    <section className="flex flex-1 flex-col gap-8 pb-4">
       {renderContent()}
     </section>
   );

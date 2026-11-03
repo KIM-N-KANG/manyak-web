@@ -629,8 +629,8 @@ test.describe('홈·제작 스토리 목록', () => {
       element.querySelector('li')?.getBoundingClientRect().width ?? 0,
     ]);
 
-    // 왼쪽 여백 16px 뒤에 카드 두 장과 간격 두 개, 셋째 카드의 0.2장이 보인다.
-    expect(cardWidth * 2.2 + 24).toBeCloseTo(rowWidth - 16, 0);
+    // 왼쪽 여백 16px 뒤에 카드 두 장과 8px 간격 두 개, 셋째 카드의 0.2장이 보인다.
+    expect(cardWidth * 2.2 + 16).toBeCloseTo(rowWidth - 16, 0);
 
     const authorlessCard = row
       .getByRole('listitem')

@@ -29,9 +29,9 @@ export function HomeSectionRow({
       <ul
         {...dragScrollProps}
         data-drag-scrollable=""
-        className="scrollbar-none flex gap-3 overflow-x-auto overscroll-x-contain px-4">
+        className="scrollbar-none flex gap-2 overflow-x-auto overscroll-x-contain px-4">
         {stories.map((story, index) => (
-          <li key={story.id} className="w-[calc((100%-0.5rem)/2.2)] shrink-0">
+          <li key={story.id} className="w-[calc(100%/2.2)] shrink-0">
             <StoryCard
               story={story}
               position={index}
