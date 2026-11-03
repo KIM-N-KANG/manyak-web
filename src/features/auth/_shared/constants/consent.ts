@@ -21,15 +21,15 @@ export const CONSENT_SHEET_COPY = {
   submitPending: '동의 저장 중',
   logout: '로그아웃',
   logoutPending: '로그아웃 중',
-  retry: '다시 시도',
+  retry: '다시 시도하기',
   error: {
     retryable: '약관 동의 내역을 저장하지 못했어요',
     versionMismatch: '약관이 갱신되어 최신 내용으로 다시 확인해주세요',
     forbidden: '지금 계정으로는 서비스를 이용할 수 없어요',
   },
   loadError: {
-    title: '동의 상태를 확인하지 못했어요',
-    description: '잠시 후 다시 시도해주세요',
+    title: '약관 동의 내역을 불러오지 못했어요',
+    description: '확인이 끝나야 서비스를 이용할 수 있어요',
   },
   forbidden: {
     title: '지금 계정으로는 서비스를 이용할 수 없어요',
