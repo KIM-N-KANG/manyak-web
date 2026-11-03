@@ -1,5 +1,7 @@
 'use client';
 
+import type { ComponentProps } from 'react';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +21,8 @@ type ConfirmAlertDialogProps = {
   description: string;
   cancelLabel: string;
   confirmLabel: string;
+  /** 확인 버튼 변형. 기본값은 되돌릴 수 없는 동작의 `destructive`다. */
+  confirmVariant?: ComponentProps<typeof AlertDialogAction>['variant'];
 };
 
 export function ConfirmAlertDialog({
@@ -29,6 +33,7 @@ export function ConfirmAlertDialog({
   description,
   cancelLabel,
   confirmLabel,
+  confirmVariant = 'destructive',
 }: ConfirmAlertDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -41,7 +46,7 @@ export function ConfirmAlertDialog({
           <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             type="button"
-            variant="destructive"
+            variant={confirmVariant}
             onClick={onConfirm}>
             {confirmLabel}
           </AlertDialogAction>

@@ -72,7 +72,7 @@ export function NoticeDetailScreen({ noticeId }: NoticeDetailScreenProps) {
         <article className="flex flex-col gap-5 px-4 pt-4 pb-8">
           <header className="flex flex-col gap-2">
             <NoticeTagBadge tag={notice.tag} className="mb-1 self-start" />
-            <h1 className="text-xl leading-snug font-semibold break-keep">
+            <h1 className="text-xl leading-snug font-semibold">
               {notice.title}
             </h1>
             <NoticeDates

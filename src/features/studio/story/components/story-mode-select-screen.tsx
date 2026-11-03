@@ -74,7 +74,7 @@ export function StoryModeSelectScreen() {
               <Illustration />
               <div className="border-t border-border px-4 py-3.5">
                 <p className="leading-6 font-semibold">{copy.title}</p>
-                <p className="mt-1 text-sm leading-5 text-foreground-secondary">
+                <p className="mt-1 text-sm leading-5 break-keep text-foreground-secondary">
                   {copy.description}
                 </p>
               </div>

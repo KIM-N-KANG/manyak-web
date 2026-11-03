@@ -162,7 +162,7 @@ export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
             <h3 className="leading-6 font-semibold">{selected.name}</h3>
             {/* 소개 없이 만든 기존·일반 제작 인물은 description이 null이라 생략한다 */}
             {selected.description ? (
-              <div className="mt-1">
+              <div className="mt-1 break-keep">
                 <TextContent size="sm">{selected.description}</TextContent>
               </div>
             ) : null}

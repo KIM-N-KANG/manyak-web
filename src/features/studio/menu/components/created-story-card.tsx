@@ -230,7 +230,7 @@ function CreatedStoryCardBody({
           <div className="flex items-start gap-2">
             <p
               className={cn(
-                'line-clamp-2 min-w-0 flex-1 font-medium',
+                'line-clamp-2 min-w-0 flex-1 font-medium break-keep',
                 'leading-6',
               )}>
               {title}
@@ -242,7 +242,7 @@ function CreatedStoryCardBody({
           {introduction ? (
             <p
               className={cn(
-                'mt-1 text-foreground-secondary',
+                'mt-1 break-keep text-foreground-secondary',
                 'line-clamp-2 text-sm leading-5',
               )}>
               {story.oneLineIntro}
