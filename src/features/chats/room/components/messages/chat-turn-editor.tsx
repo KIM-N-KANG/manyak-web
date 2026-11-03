@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -21,12 +23,20 @@ export function ChatTurnEditor({
   original,
   disabled,
 }: ChatTurnEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const trimmed = editor.draft.trim();
   const canSubmit =
     !disabled && trimmed.length > 0 && trimmed !== original.trim();
 
+  // 열린 편집기가 헤더에 가리지 않게, 화면 밖으로 걸친 경우에만 헤더 아래까지 스크롤한다.
+  useEffect(() => {
+    containerRef.current?.scrollIntoView({ block: 'nearest' });
+  }, []);
+
   return (
-    <div className="flex flex-col gap-3 bg-muted px-4 py-5">
+    <div
+      ref={containerRef}
+      className="flex scroll-mt-(--chat-header-height) flex-col gap-3 bg-muted px-4 py-5">
       <Textarea
         aria-label={CHAT_TURN_EDIT_COPY.field}
         value={editor.draft}

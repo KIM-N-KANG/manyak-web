@@ -123,7 +123,10 @@ export function ChatMessages({
 
   return (
     <MessageScrollerProvider
-      autoScroll={!startedEmpty && !hasSent && replacingTurnId == null}
+      // 편집기가 열리며 늘어난 높이만큼 꼬리를 따라 내려가면 편집기가 헤더 밑으로 올라가므로 편집 중에는 끈다.
+      autoScroll={
+        !startedEmpty && !hasSent && replacingTurnId == null && editor == null
+      }
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={0}>
       <ReplacingTurnAnchor turnId={replacingTurnId} />
@@ -134,7 +137,10 @@ export function ChatMessages({
         )}>
         <MessageScrollerViewport
           ref={viewportRef}
-          className={cn(replacingTurnId != null && '[overflow-anchor:none]')}
+          className={cn(
+            (replacingTurnId != null || editor != null) &&
+              '[overflow-anchor:none]',
+          )}
           onPointerDown={() => {
             wasEditingRef.current =
               document.activeElement?.matches(EDITABLE_SELECTOR) ?? false;
