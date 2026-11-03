@@ -24,6 +24,9 @@ type UseInViewParams = {
 /**
  * IntersectionObserver로 대상 요소가 화면(또는 컨테이너)에 보이는지 관찰하는 훅.
  *
+ * 관찰 결과는 그 결과를 낸 요소에만 쓴다. 대상이 빠졌다가 다시 붙으면 새 요소의 첫 결과가 오기 전까지
+ * `initialInView`를 돌려준다. 목록이 줄어 끝 sentinel이 다시 붙을 때 지난 "보임" 값으로 다음 페이지를 부르지 않게 한다.
+ *
  * @param params 관찰 대상과 루트/마진/임계값 등의 옵션
  * @returns 대상이 화면(또는 컨테이너)에 보이는지 여부
  */
@@ -35,16 +38,21 @@ export function useInView({
   threshold = 0,
   initialInView = true,
 }: UseInViewParams) {
-  const [isInView, setIsInView] = useState(initialInView);
+  const [observed, setObserved] = useState<{
+    target: Element;
+    isInView: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!enabled || !target) return;
 
     const observer = new IntersectionObserver(
       ([entry]) =>
-        setIsInView(
-          entry.isIntersecting && entry.intersectionRatio >= threshold,
-        ),
+        setObserved({
+          target,
+          isInView:
+            entry.isIntersecting && entry.intersectionRatio >= threshold,
+        }),
       { root: root ?? null, rootMargin, threshold },
     );
 
@@ -53,5 +61,7 @@ export function useInView({
     return () => observer.disconnect();
   }, [enabled, target, root, rootMargin, threshold]);
 
-  return isInView;
+  return observed !== null && observed.target === target
+    ? observed.isInView
+    : initialInView;
 }
