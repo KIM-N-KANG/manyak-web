@@ -29,16 +29,21 @@ import { isStaleTurnError } from '../utils/regenerate';
 import {
   resumeChatGenerationRaw,
   streamChatTurnRaw,
+  streamEditChatTurnRaw,
   streamRegenerateChatTurnRaw,
 } from '../utils/stream-chat-turn';
 
-/** 생성 종류. 전송은 새 턴을 더하고, 재생성은 마지막 턴을 교체한다. */
-type GenerationKind = 'send' | 'regenerate';
+/** 생성 종류. 전송은 새 턴을 더하고, 재생성은 마지막 턴을 교체하며, 입력 수정은 고친 턴부터 새 턴 하나로 바꾼다. */
+export type GenerationKind = 'send' | 'regenerate' | 'edit';
 
 type FollowParams = {
   kind: GenerationKind;
   /** 생성을 시작한 시점의 확정 턴 개수. 끊긴 뒤 새 턴이 저장됐는지 가리는 기준이다. */
   baseTurnCount: number;
+  /** 실패 집계에 싣는 턴 번호. 전송은 새 턴, 재생성과 입력 수정은 대상 턴의 번호다. */
+  turnNumber: number;
+  /** 입력 수정 대상 턴 ID. 끊긴 뒤 이 턴이 숨겨졌으면 저장된 것이다. */
+  targetTurnId?: number;
   /** 처음 연결. 없으면 `generationId`로 재연결부터 시작한다(재진입). */
   open?: (signal: AbortSignal) => Promise<ReadableStream<Uint8Array>>;
   generationId?: string;
@@ -52,7 +57,7 @@ type UseChatStreamParams = {
   turns: ChatTurnResponse[];
   /** 상세의 생성 중인 턴. 있으면 화면에 들어오자마자 그 생성을 이어서 받는다. */
   generatingTurn: GeneratingTurnResponse | null;
-  /** 스트림 완료 시 호출되는 콜백. 턴 전송(`send`)과 응답 재생성(`regenerate`)을 구분해 받는다 */
+  /** 스트림 완료 시 호출되는 콜백. 턴 전송(`send`), 응답 재생성(`regenerate`), 입력 수정(`edit`)을 구분해 받는다 */
   onCompleted: (source: GenerationKind) => Promise<unknown> | unknown;
   /** 402(체험 한도, 이프 부족) 발생 시 호출되는 콜백 */
   onPaymentRequired?: (error: unknown) => void;
@@ -60,7 +65,7 @@ type UseChatStreamParams = {
   reload: () => Promise<ChatDetailResponse | undefined>;
   /** 서버가 받지 않은 입력(409)을 입력창에 되돌린다 */
   onUnsent?: (userInput: string) => void;
-  /** 실시간 이미지 생성 여부. 전송과 재생성 요청 본문에 그대로 싣는다 */
+  /** 실시간 이미지 생성 여부. 전송, 재생성, 입력 수정 요청 본문에 그대로 싣는다 */
   realtimeImage?: boolean;
 };
 
@@ -71,7 +76,7 @@ type UseChatStreamParams = {
  * 언마운트 시 진행 중인 수신만 중단한다.
  *
  * @param params 채팅 ID, 확정 턴과 생성 중인 턴, 완료와 실패 콜백, 상세 재조회 함수, 실시간 이미지 여부
- * @returns 진행 중인 턴, 스트리밍 여부와 전송, 재생성 동작
+ * @returns 진행 중인 턴, 스트리밍 여부, 진행 블록이 대신하는 턴 ID와 전송, 재생성, 입력 수정 동작
  */
 export function useChatStream({
   chatId,
@@ -86,9 +91,8 @@ export function useChatStream({
   const [streamingTurn, setStreamingTurn] = useState<StreamingTurn | null>(
     null,
   );
-  const [regeneratingTurnId, setRegeneratingTurnId] = useState<number | null>(
-    null,
-  );
+  // 재생성과 입력 수정에서 진행 블록이 대신하는 턴. 그 뒤의 턴은 진행 중에 숨긴다.
+  const [replacingTurnId, setReplacingTurnId] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -110,10 +114,10 @@ export function useChatStream({
     );
   };
 
-  const showFailure = (baseTurnCount: number) => {
+  const showFailure = (turnNumber: number) => {
     track('client_chat_streamError_shown', {
       chat_id: chatId,
-      turn_number: baseTurnCount + 1,
+      turn_number: turnNumber,
     });
     toast.error(TOAST_MESSAGE.RESPONSE_STREAM_FAILED);
   };
@@ -123,13 +127,12 @@ export function useChatStream({
    * - `completed`: 상세 재조회로 확정 턴을 받는다
    * - `error`: 저장된 턴이 있을 수 있어 상세를 확인한 뒤 실패 토스트를 띄운다(재생성은 기존 본문 복원)
    * - `lost`: 상세로 판단한다. 다른 생성이 진행 중이면 그 생성을 이어받고, 전송은 새 턴이 있으면 완료,
-   *   없으면 실패다. 따라가던 생성이 아직 진행 중이어도 곧바로 다시 따라가지 않는다(재진입이나 409로 이어받음).
-   *   재생성은 상세만으로 성공과 실패를 가리지 못해 확정 상태만 보인다
+   *   입력 수정은 고친 턴이 숨겨졌으면 완료, 아니면 실패다. 따라가던 생성이 아직 진행 중이어도 곧바로 다시
+   *   따라가지 않는다(재진입이나 409로 이어받음). 재생성은 상세만으로 성공과 실패를 가리지 못해 확정 상태만 보인다
    */
   const settle = async (
-    kind: GenerationKind,
     end: GenerationEnd,
-    baseTurnCount: number,
+    { kind, baseTurnCount, turnNumber, targetTurnId }: FollowParams,
   ) => {
     if (end.type === 'completed') {
       // 첫 턴의 AI 답변 정상 수신 = Meta 광고 전환 신호(StartTrial, 브라우저당 1회).
@@ -146,7 +149,7 @@ export function useChatStream({
     const detail = await reload();
 
     if (end.type === 'error') {
-      showFailure(kind === 'send' ? baseTurnCount : baseTurnCount - 1);
+      showFailure(turnNumber);
 
       return;
     }
@@ -154,29 +157,30 @@ export function useChatStream({
     const next = detail?.generatingTurn;
 
     if (next?.generationId && next.generationId !== end.generationId) {
-      void resume(next, detail?.turns?.length ?? 0);
+      void resume(next, detail?.turns ?? []);
 
       return;
     }
 
     if (kind === 'regenerate') return;
 
-    if (detail && (detail.turns?.length ?? 0) > baseTurnCount) {
-      await onCompleted('send');
+    const turnsAfter = detail?.turns ?? [];
+    const saved =
+      kind === 'send'
+        ? turnsAfter.length > baseTurnCount
+        : turnsAfter.every((turn) => turn.id !== targetTurnId);
+
+    if (detail && saved) {
+      await onCompleted(kind);
 
       return;
     }
 
-    showFailure(baseTurnCount);
+    showFailure(turnNumber);
   };
 
-  const follow = async ({
-    kind,
-    baseTurnCount,
-    open,
-    generationId,
-    unsentInput,
-  }: FollowParams) => {
+  const follow = async (params: FollowParams) => {
+    const { turnNumber, open, generationId, unsentInput } = params;
     const controller = new AbortController();
     const { signal } = controller;
 
@@ -200,7 +204,7 @@ export function useChatStream({
         signal,
       });
 
-      await settle(kind, end, baseTurnCount);
+      await settle(end, params);
     } catch (error) {
       // 방 이탈(언마운트)은 수신만 멈춘 것이다. 서버는 생성을 계속하고 다시 들어오면 이어받는다.
       if (signal.aborted) return;
@@ -225,13 +229,13 @@ export function useChatStream({
       const detail = await reload();
 
       if (detail?.generatingTurn) {
-        void resume(detail.generatingTurn, detail.turns?.length ?? 0);
+        void resume(detail.generatingTurn, detail.turns ?? []);
 
         return;
       }
 
       if (!conflicted) {
-        showFailure(kind === 'send' ? baseTurnCount : baseTurnCount - 1);
+        showFailure(turnNumber);
       }
     } finally {
       // 이어받기가 새 수신을 시작했으면 그쪽이 스트리밍 상태를 가진다.
@@ -239,7 +243,7 @@ export function useChatStream({
         abortRef.current = null;
         // 스트리밍 상태 해제 = 숨겼던 턴이 다시 보임(error 복원) 또는 재조회된 새 본문 표시.
         setStreamingTurn(null);
-        setRegeneratingTurnId(null);
+        setReplacingTurnId(null);
       }
     }
   };
@@ -261,6 +265,7 @@ export function useChatStream({
     return follow({
       kind: 'send',
       baseTurnCount,
+      turnNumber: baseTurnCount + 1,
       unsentInput: userInput,
       open: (signal) =>
         streamChatTurnRaw(
@@ -288,7 +293,7 @@ export function useChatStream({
 
     const turnId = turn.id;
 
-    setRegeneratingTurnId(turnId);
+    setReplacingTurnId(turnId);
     setStreamingTurn({
       userInput: turn.userInput ?? '',
       segments: [],
@@ -298,8 +303,40 @@ export function useChatStream({
     return follow({
       kind: 'regenerate',
       baseTurnCount: turns.length,
+      turnNumber: turns.length,
       open: (signal) =>
         streamRegenerateChatTurnRaw(chatId, { turnId, realtimeImage }, signal),
+    });
+  };
+
+  /**
+   * 완료된 턴의 사용자 입력을 고쳐 그 턴부터 다시 생성한다(CHAT 4-2-19 입력 수정).
+   * 진행 중에는 대상 턴 자리에 진행 블록을 두고 뒤의 턴을 숨긴다. 실패하면 숨긴 턴이 그대로 돌아온다.
+   *
+   * @param turn 입력을 고칠 턴
+   * @param userInput 고친 입력
+   */
+  const edit = (turn: ChatTurnResponse, userInput: string) => {
+    if (turn.id == null) {
+      return;
+    }
+
+    const turnId = turn.id;
+
+    setReplacingTurnId(turnId);
+    setStreamingTurn({ userInput, segments: [], realtimeImage });
+
+    return follow({
+      kind: 'edit',
+      baseTurnCount: turns.length,
+      turnNumber: turns.indexOf(turn) + 1,
+      targetTurnId: turnId,
+      open: (signal) =>
+        streamEditChatTurnRaw(
+          chatId,
+          { turnId, userInput, userSource: 'typed', realtimeImage },
+          signal,
+        ),
     });
   };
 
@@ -307,17 +344,32 @@ export function useChatStream({
    * 다른 화면이나 기기에서 시작한 생성을 이어받는다. 이벤트를 처음부터 다시 받아 생성 중 화면을 그린다.
    *
    * @param target 상세의 생성 중인 턴
-   * @param baseTurnCount 그 상세의 확정 턴 개수
+   * @param detailTurns 그 상세의 확정 턴 목록
    */
-  const resume = (target: GeneratingTurnResponse, baseTurnCount: number) => {
+  const resume = (
+    target: GeneratingTurnResponse,
+    detailTurns: ChatTurnResponse[],
+  ) => {
     const { generationId } = target;
 
     if (!generationId) return;
 
+    const baseTurnCount = detailTurns.length;
     const targetTurnId =
-      target.type === 'REGENERATE' ? (target.targetTurnId ?? null) : null;
+      target.type === 'REGENERATE' || target.type === 'EDIT'
+        ? (target.targetTurnId ?? null)
+        : null;
+    const kind: GenerationKind =
+      targetTurnId == null
+        ? 'send'
+        : target.type === 'EDIT'
+          ? 'edit'
+          : 'regenerate';
+    const targetIndex = detailTurns.findIndex(
+      (turn) => turn.id === targetTurnId,
+    );
 
-    setRegeneratingTurnId(targetTurnId);
+    setReplacingTurnId(targetTurnId);
     setStreamingTurn({
       userInput: target.userInput ?? '',
       segments: [],
@@ -326,8 +378,10 @@ export function useChatStream({
     });
 
     return follow({
-      kind: targetTurnId == null ? 'send' : 'regenerate',
+      kind,
       baseTurnCount,
+      turnNumber: targetIndex === -1 ? baseTurnCount + 1 : targetIndex + 1,
+      targetTurnId: targetTurnId ?? undefined,
       generationId,
     });
   };
@@ -338,7 +392,7 @@ export function useChatStream({
       generatingTurn &&
       (!abortRef.current || abortRef.current.signal.aborted)
     ) {
-      void resume(generatingTurn, turns.length);
+      void resume(generatingTurn, turns);
     }
   });
 
@@ -353,6 +407,7 @@ export function useChatStream({
     isStreaming: streamingTurn !== null,
     send,
     regenerate,
-    regeneratingTurnId,
+    edit,
+    replacingTurnId,
   };
 }

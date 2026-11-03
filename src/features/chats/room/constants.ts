@@ -96,6 +96,12 @@ export const CHAT_MODEL_COPY = {
 export const CHAT_MENU_COPY = {
   trigger: '채팅 메뉴',
   title: '채팅 메뉴',
+  creditHistory: {
+    title: '이프 내역',
+    back: '채팅 메뉴로 돌아가기',
+    refresh: '새로고침',
+    refreshing: '새로고침 중',
+  },
   newChat: '새 채팅 시작하기',
   share: '공유하기',
   report: STORY_REPORT_COPY.action,
@@ -106,6 +112,46 @@ export const CHAT_MENU_COPY = {
     cancel: '남겨두기',
     confirm: '삭제하기',
     pending: '삭제 중',
+  },
+} as const;
+
+/** 마지막 AI 응답의 다시 생성 버튼과 확인 창의 문구. */
+export const CHAT_REGENERATE_COPY = {
+  trigger: '다시 생성',
+  confirm: {
+    title: '응답을 다시 생성할까요?',
+    description: '지금 응답은 새 응답으로 바뀌어요',
+    cancel: '그대로 두기',
+    confirm: '다시 생성하기',
+  },
+} as const;
+
+/** 지난 턴의 사용자 입력을 그 자리에서 고치는 편집기와 확인 창의 문구. */
+export const CHAT_TURN_EDIT_COPY = {
+  trigger: '입력 수정',
+  field: '고칠 입력',
+  cancel: '취소',
+  submit: '보내기',
+  confirm: {
+    title: '입력을 수정할까요?',
+    /** 뒤에 이어진 턴이 있으면 사라질 턴 수를, 마지막 턴이면 응답이 바뀐다는 것을 알린다. */
+    description: (laterCount: number) =>
+      laterCount > 0
+        ? `수정하면 이후 대화 ${laterCount}턴이 사라지며 되돌릴 수 없어요`
+        : '지금 응답은 새 응답으로 바뀌어요',
+    cancel: '그대로 두기',
+    confirm: '수정하기',
+  },
+} as const;
+
+/** AI 응답까지 복사한 새 채팅을 만드는 포크 버튼과 확인 창의 문구. */
+export const CHAT_FORK_COPY = {
+  trigger: '여기서 새 채팅',
+  confirm: {
+    title: '여기서 새 채팅을 시작할까요?',
+    description: '지금 채팅은 그대로 두고 이 장면까지 복사해서 시작해요',
+    cancel: '닫기',
+    confirm: '새 채팅 시작하기',
   },
 } as const;
 

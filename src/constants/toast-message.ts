@@ -33,6 +33,7 @@ export const TOAST_MESSAGE = {
   STORY_REPORTED: '신고가 접수되었어요',
   STORY_REPORT_FAILED: '신고를 접수하지 못했어요',
   CHAT_START_FAILED: '채팅을 시작하지 못했어요',
+  CHAT_FORK_FAILED: '새 채팅을 시작하지 못했어요',
   PERSONA_CREATED: '페르소나를 생성했어요',
   PERSONA_CREATE_FAILED: '페르소나를 생성하지 못했어요',
   PERSONA_LIMIT_REACHED: '페르소나는 10개까지 만들 수 있어요',

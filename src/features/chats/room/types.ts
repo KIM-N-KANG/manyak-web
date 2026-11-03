@@ -13,3 +13,12 @@ export type StreamingTurn = {
   /** 전송 시점의 실시간 이미지 설정. 첫 이벤트 전 로딩에 장면 썸네일 자리를 보일지 정한다 */
   realtimeImage?: boolean;
 };
+
+/** 사용자 입력을 그 자리에서 고치는 중인 턴과 편집 동작. */
+export type TurnEditor = {
+  turnId: number;
+  draft: string;
+  onChange: (draft: string) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+};

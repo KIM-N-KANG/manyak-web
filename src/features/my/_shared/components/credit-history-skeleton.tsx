@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { CREDIT_HISTORY_COPY } from '../constants';
+import { CREDIT_HISTORY_COPY } from '../constants/credit-history';
 
 const PLACEHOLDER_ROW_COUNT = 8;
 

@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import type { ChoicesStatus } from '../../hooks/use-chat-choices';
 import { useInitialScrollSettled } from '../../hooks/use-initial-scroll-settled';
 import { useSpacerCollapse } from '../../hooks/use-spacer-collapse';
-import type { StreamingTurn } from '../../types';
+import type { StreamingTurn, TurnEditor } from '../../types';
 import {
   EDITABLE_SELECTOR,
   isHeaderToggleTap,
@@ -30,11 +30,11 @@ import { ChatChoices } from './chat-choices';
 import { ChatStreamingTurn } from './chat-streaming-turn';
 import { ChatTurnItem } from './chat-turn-item';
 
-type RegenerateAnchorProps = {
+type ReplacingTurnAnchorProps = {
   turnId: number | null;
 };
 
-function RegenerateAnchor({ turnId }: RegenerateAnchorProps) {
+function ReplacingTurnAnchor({ turnId }: ReplacingTurnAnchorProps) {
   const { scrollToMessage } = useMessageScroller();
 
   useEffect(() => {
@@ -51,7 +51,12 @@ type ChatMessagesProps = {
   turns: ChatTurnResponse[];
   suggestedInputs: string[];
   streamingTurn: StreamingTurn | null;
-  regeneratingTurnId: number | null;
+  /** 재생성과 입력 수정에서 진행 블록이 대신하는 턴. 그 뒤의 턴은 진행 중에 숨긴다. */
+  replacingTurnId: number | null;
+  /** 입력을 고치는 중인 턴의 편집기. 그 턴 뒤의 대화는 흐리게 둔다. */
+  editor: TurnEditor | null;
+  /** 입력 수정과 포크를 막을 때 true다. */
+  turnActionsDisabled: boolean;
   choicesEnabled: boolean;
   choicesStatus: ChoicesStatus | null;
   /** 첫 추천 입력 목록에 1회성 사용법 힌트를 보여줄지 여부. */
@@ -59,6 +64,8 @@ type ChatMessagesProps = {
   onSendChoice: (text: string, position: number, sourceTurnId?: number) => void;
   onFillChoice: (text: string, position: number, sourceTurnId?: number) => void;
   onRegenerate: (turn: ChatTurnResponse) => void;
+  onEdit: (turn: ChatTurnResponse) => void;
+  onFork: (turn: ChatTurnResponse) => void;
   onRetryChoices: () => void;
   onCharacterImageZoom: () => void;
   /** 메시지 영역의 빈 곳을 탭했을 때 호출한다. 입력 중 키보드를 닫으려는 탭은 제외한다. */
@@ -70,13 +77,17 @@ export function ChatMessages({
   turns,
   suggestedInputs,
   streamingTurn,
-  regeneratingTurnId,
+  replacingTurnId,
+  editor,
+  turnActionsDisabled,
   choicesEnabled,
   choicesStatus,
   showsChoicesHint,
   onSendChoice,
   onFillChoice,
   onRegenerate,
+  onEdit,
+  onFork,
   onRetryChoices,
   onCharacterImageZoom,
   onBackgroundTap,
@@ -102,13 +113,23 @@ export function ChatMessages({
   }, [streamingTurn, hasSent]);
 
   const lastTurnIndex = turns.length - 1;
+  const replacingIndex =
+    activeStreamingTurn && replacingTurnId != null
+      ? turns.findIndex((turn) => turn.id === replacingTurnId)
+      : -1;
+  const editingIndex = editor
+    ? turns.findIndex((turn) => turn.id === editor.turnId)
+    : -1;
 
   return (
     <MessageScrollerProvider
-      autoScroll={!startedEmpty && !hasSent && regeneratingTurnId == null}
+      // 편집기가 열리며 늘어난 높이만큼 꼬리를 따라 내려가면 편집기가 헤더 밑으로 올라가므로 편집 중에는 끈다.
+      autoScroll={
+        !startedEmpty && !hasSent && replacingTurnId == null && editor == null
+      }
       defaultScrollPosition={startedEmpty ? 'start' : 'end'}
       scrollPreviousItemPeek={0}>
-      <RegenerateAnchor turnId={regeneratingTurnId} />
+      <ReplacingTurnAnchor turnId={replacingTurnId} />
       <MessageScroller
         className={cn(
           'transition-opacity duration-150',
@@ -116,7 +137,10 @@ export function ChatMessages({
         )}>
         <MessageScrollerViewport
           ref={viewportRef}
-          className={cn(regeneratingTurnId != null && '[overflow-anchor:none]')}
+          className={cn(
+            (replacingTurnId != null || editor != null) &&
+              '[overflow-anchor:none]',
+          )}
           onPointerDown={() => {
             wasEditingRef.current =
               document.activeElement?.matches(EDITABLE_SELECTOR) ?? false;
@@ -141,22 +165,23 @@ export function ChatMessages({
             ) : null}
 
             {turns.map((turn, index) => {
+              // 입력 수정이 끝나면 대상 턴부터 새 턴 하나로 바뀌므로 진행 중에는 뒤의 턴을 숨긴다.
+              if (replacingIndex !== -1 && index > replacingIndex) return null;
+
               const isLast = !activeStreamingTurn && index === lastTurnIndex;
-              const isRegenerating =
-                activeStreamingTurn !== null &&
-                regeneratingTurnId != null &&
-                turn.id === regeneratingTurnId;
 
               return (
                 <MessageScrollerItem
                   key={turn.id ?? index}
                   messageId={turn.id != null ? String(turn.id) : undefined}
                   className={cn(
+                    'transition-opacity',
                     hasSent &&
                       index === lastTurnIndex &&
                       '[content-visibility:visible]',
+                    editingIndex !== -1 && index > editingIndex && 'opacity-40',
                   )}>
-                  {isRegenerating ? (
+                  {activeStreamingTurn && index === replacingIndex ? (
                     <ChatStreamingTurn
                       turn={activeStreamingTurn}
                       onCharacterImageZoom={onCharacterImageZoom}
@@ -165,11 +190,15 @@ export function ChatMessages({
                     <ChatTurnItem
                       turn={turn}
                       isLast={isLast}
+                      editor={index === editingIndex ? editor : null}
+                      actionsDisabled={turnActionsDisabled}
                       choicesEnabled={choicesEnabled}
                       choicesStatus={choicesStatus}
                       onSendChoice={onSendChoice}
                       onFillChoice={onFillChoice}
                       onRegenerate={onRegenerate}
+                      onEdit={onEdit}
+                      onFork={onFork}
                       onRetryChoices={onRetryChoices}
                       onCharacterImageZoom={onCharacterImageZoom}
                     />
@@ -189,7 +218,7 @@ export function ChatMessages({
               </MessageScrollerItem>
             ) : null}
 
-            {activeStreamingTurn && regeneratingTurnId == null ? (
+            {activeStreamingTurn && replacingTurnId == null ? (
               <MessageScrollerItem
                 scrollAnchor
                 className="[content-visibility:visible]">

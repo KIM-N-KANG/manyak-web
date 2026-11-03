@@ -230,6 +230,14 @@ export type AnalyticsEventProps = {
     chat_id: string;
     turn_number: number;
   };
+  client_chat_editButton_clicked: {
+    chat_id: string;
+    turn_number: number;
+  };
+  client_chat_forkButton_clicked: {
+    chat_id: string;
+    turn_number: number;
+  };
   client_chat_streamError_shown: { chat_id: string; turn_number: number };
   client_chat_loadError_shown: { chat_id: string };
   client_chat_characterImage_clicked: { chat_id: string };

@@ -15,6 +15,7 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 import { getMeQueryKey, useMe } from '@/api/generated/endpoints/auth/auth';
+import { useFork } from '@/api/generated/endpoints/chats/chats';
 import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type { ChatTurnResponse } from '@/api/generated/models';
@@ -41,7 +42,10 @@ import { track, useTrackOnView } from '@/observability/analytics';
 
 import {
   CHAT_CHOICES_ENABLED_STORAGE_KEY,
+  CHAT_FORK_COPY,
   CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY,
+  CHAT_REGENERATE_COPY,
+  CHAT_TURN_EDIT_COPY,
   DEFAULT_REALTIME_IMAGE_ENABLED,
 } from '../constants';
 import { useChatChoices } from '../hooks/use-chat-choices';
@@ -53,7 +57,7 @@ import {
   useChatInputMode,
 } from '../hooks/use-chat-input-mode';
 import { useChatModel } from '../hooks/use-chat-model';
-import { useChatStream } from '../hooks/use-chat-stream';
+import { type GenerationKind, useChatStream } from '../hooks/use-chat-stream';
 import { useChatTour } from '../hooks/use-chat-tour';
 import { useRealtimeImageNudge } from '../hooks/use-realtime-image-nudge';
 import { useStoredToggle } from '../hooks/use-stored-toggle';
@@ -158,7 +162,14 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     chatId,
     refetch,
   );
-  const handleStreamCompleted = async (source: 'send' | 'regenerate') => {
+  const [editing, setEditing] = useState<{
+    turnId: number;
+    draft: string;
+  } | null>(null);
+  const handleStreamCompleted = async (source: GenerationKind) => {
+    // 완료된 입력 수정만 편집기를 닫는다. 실패하면 고치던 입력이 편집기에 남아 다시 보낼 수 있다.
+    if (source === 'edit') setEditing(null);
+
     lastSubmitted.current = null;
     clearChatLoginDraft(chatId);
     void queryClient.invalidateQueries({ queryKey: getGetTrialsQueryKey() });
@@ -199,17 +210,23 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     }
   };
 
-  const { streamingTurn, isStreaming, send, regenerate, regeneratingTurnId } =
-    useChatStream({
-      chatId,
-      turns,
-      generatingTurn,
-      onCompleted: handleStreamCompleted,
-      onPaymentRequired: handlePaymentRequired,
-      reload,
-      onUnsent: (text) => composer.restoreDraft(text),
-      realtimeImage: realtimeImageEnabled,
-    });
+  const {
+    streamingTurn,
+    isStreaming,
+    send,
+    regenerate,
+    edit,
+    replacingTurnId,
+  } = useChatStream({
+    chatId,
+    turns,
+    generatingTurn,
+    onCompleted: handleStreamCompleted,
+    onPaymentRequired: handlePaymentRequired,
+    reload,
+    onUnsent: (text) => composer.restoreDraft(text),
+    realtimeImage: realtimeImageEnabled,
+  });
 
   const realtimeImageNudge = useRealtimeImageNudge(
     realtimeImageNudgeRequested,
@@ -272,7 +289,10 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     return true;
   };
 
-  const guardedRegenerate = async (turn: ChatTurnResponse): Promise<void> => {
+  const [regenerateTarget, setRegenerateTarget] =
+    useState<ChatTurnResponse | null>(null);
+
+  const guardedRegenerate = async (turn: ChatTurnResponse) => {
     track('client_chat_regenerateButton_clicked', {
       chat_id: chatId,
       turn_number: turns.length,
@@ -282,7 +302,102 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
       return;
     }
 
-    return regenerate(turn);
+    setRegenerateTarget(turn);
+  };
+
+  const confirmRegenerate = () => {
+    if (regenerateTarget && !isStreaming) void regenerate(regenerateTarget);
+
+    setRegenerateTarget(null);
+  };
+
+  const turnNumberOf = (turn: ChatTurnResponse) => turns.indexOf(turn) + 1;
+  const editingTurn = editing
+    ? turns.find((turn) => turn.id === editing.turnId)
+    : undefined;
+  // 확인 창에 알릴, 고친 턴 뒤에 이어진 턴 수. 닫히는 동안 문구가 바뀌지 않게 열림과 따로 둔다.
+  const [editConfirm, setEditConfirm] = useState({
+    open: false,
+    laterCount: 0,
+  });
+  const closeEditConfirm = () =>
+    setEditConfirm((prev) => ({ ...prev, open: false }));
+
+  const handleEdit = (turn: ChatTurnResponse) => {
+    if (turn.id == null) return;
+
+    track('client_chat_editButton_clicked', {
+      chat_id: chatId,
+      turn_number: turnNumberOf(turn),
+    });
+    setEditing({ turnId: turn.id, draft: turn.userInput ?? '' });
+  };
+
+  const startEdit = () => {
+    if (editing && editingTurn) void edit(editingTurn, editing.draft.trim());
+  };
+
+  const submitEdit = async () => {
+    if (!editingTurn || isStreaming || !(await canUseChat())) return;
+
+    setEditConfirm({
+      open: true,
+      laterCount: turns.length - turnNumberOf(editingTurn),
+    });
+  };
+
+  const editor =
+    editing && editingTurn
+      ? {
+          ...editing,
+          onChange: (draft: string) => setEditing({ ...editing, draft }),
+          onCancel: () => setEditing(null),
+          onSubmit: () => void submitEdit(),
+        }
+      : null;
+
+  const [forkTarget, setForkTarget] = useState<ChatTurnResponse | null>(null);
+  const forkChat = useFork({
+    mutation: {
+      onSuccess: (response) => {
+        const forkedChatId =
+          response.status === 201 ? response.data.id : undefined;
+
+        if (!forkedChatId) return;
+
+        void queryClient.invalidateQueries({
+          queryKey: getGetMyChatsQueryKey(),
+          refetchType: 'all',
+        });
+        // 확인 창을 닫으며 남은 히스토리 더미를 먼저 소비한다. 뒤로가기는 원래 채팅으로 돌아온다.
+        leaveLayers(() => router.push(APP_PATH.CHAT_ROOM(forkedChatId)));
+      },
+      onError: () => toast.error(TOAST_MESSAGE.CHAT_FORK_FAILED),
+    },
+  });
+
+  const handleFork = (turn: ChatTurnResponse) => {
+    track('client_chat_forkButton_clicked', {
+      chat_id: chatId,
+      turn_number: turnNumberOf(turn),
+    });
+
+    // 포크는 회원 전용이다(게스트 요청은 서버가 401로 거절한다).
+    if (sessionStatus === 'unauthenticated') {
+      setLoginOpen(true);
+
+      return;
+    }
+
+    setForkTarget(turn);
+  };
+
+  const confirmFork = () => {
+    if (forkTarget?.id != null) {
+      forkChat.mutate({ chatId, data: { turnId: forkTarget.id } });
+    }
+
+    setForkTarget(null);
   };
 
   const { mode, changeMode } = useChatInputMode();
@@ -476,13 +591,19 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
             turns={turns}
             suggestedInputs={suggestedInputs}
             streamingTurn={streamingTurn}
-            regeneratingTurnId={regeneratingTurnId}
+            replacingTurnId={replacingTurnId}
+            editor={editor}
+            turnActionsDisabled={
+              isStreaming || forkChat.isPending || forkChat.isSuccess
+            }
             choicesEnabled={choicesEnabled}
             choicesStatus={choicesStatus}
             showsChoicesHint={showsChoicesHint}
             onSendChoice={composer.sendChoice}
             onFillChoice={handleFillChoice}
             onRegenerate={guardedRegenerate}
+            onEdit={handleEdit}
+            onFork={handleFork}
             onRetryChoices={handleRetryChoices}
             onCharacterImageZoom={() =>
               track('client_chat_characterImage_clicked', { chat_id: chatId })
@@ -518,6 +639,50 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
           description="지금 작성 중인 내용은 사라져요"
           cancelLabel="그대로 두기"
           confirmLabel="바꾸기"
+        />
+        <ConfirmAlertDialog
+          open={regenerateTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setRegenerateTarget(null);
+          }}
+          onConfirm={confirmRegenerate}
+          title={CHAT_REGENERATE_COPY.confirm.title}
+          description={CHAT_REGENERATE_COPY.confirm.description}
+          cancelLabel={CHAT_REGENERATE_COPY.confirm.cancel}
+          confirmLabel={CHAT_REGENERATE_COPY.confirm.confirm}
+          confirmVariant="default"
+        />
+        <ConfirmAlertDialog
+          open={editConfirm.open}
+          onOpenChange={(open) => {
+            if (!open) closeEditConfirm();
+          }}
+          onConfirm={() => {
+            closeEditConfirm();
+            startEdit();
+          }}
+          title={CHAT_TURN_EDIT_COPY.confirm.title}
+          description={CHAT_TURN_EDIT_COPY.confirm.description(
+            editConfirm.laterCount,
+          )}
+          cancelLabel={CHAT_TURN_EDIT_COPY.confirm.cancel}
+          confirmLabel={CHAT_TURN_EDIT_COPY.confirm.confirm}
+          // 뒤의 대화가 사라질 때만 위험색이다. 마지막 턴은 재생성처럼 응답만 바뀐다.
+          confirmVariant={
+            editConfirm.laterCount > 0 ? 'destructive' : 'default'
+          }
+        />
+        <ConfirmAlertDialog
+          open={forkTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setForkTarget(null);
+          }}
+          onConfirm={confirmFork}
+          title={CHAT_FORK_COPY.confirm.title}
+          description={CHAT_FORK_COPY.confirm.description}
+          cancelLabel={CHAT_FORK_COPY.confirm.cancel}
+          confirmLabel={CHAT_FORK_COPY.confirm.confirm}
+          confirmVariant="default"
         />
         <LoginRequiredSheet open={loginOpen} onOpenChange={setLoginOpen} />
         <CreditShortageSheet

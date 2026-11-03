@@ -41,7 +41,7 @@ export function NotificationCard({ item, onRead }: NotificationCardProps) {
         </span>
         <span
           className={cn(
-            'line-clamp-2 leading-6 break-keep',
+            'line-clamp-2 leading-6',
             isUnread
               ? 'font-semibold text-foreground'
               : 'font-medium text-foreground-secondary',
@@ -57,7 +57,7 @@ export function NotificationCard({ item, onRead }: NotificationCardProps) {
         {item.body ? (
           <span
             className={cn(
-              'line-clamp-2 text-sm leading-5 break-keep',
+              'line-clamp-2 text-sm leading-5',
               isUnread
                 ? 'text-foreground-secondary'
                 : 'text-foreground-tertiary',
