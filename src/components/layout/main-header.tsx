@@ -22,7 +22,8 @@ export function MainHeader() {
   const isNoticeTab =
     isHome ||
     pathname === APP_PATH.MAIN.CHATS ||
-    pathname === APP_PATH.MAIN.STUDIO;
+    pathname === APP_PATH.MAIN.STUDIO ||
+    pathname === APP_PATH.MAIN.EXPLORE;
   const showLoginButton = status === 'unauthenticated' && isNoticeTab;
 
   return (
@@ -31,7 +32,7 @@ export function MainHeader() {
       <h1 className={cn('text-xl font-semibold', isHome && 'sr-only')}>
         {title}
       </h1>
-      {/* 홈, 채팅, 제작 헤더의 오른쪽 묶음. 게스트는 로그인 버튼 오른쪽에 종 버튼(공지사항)을, 회원은 종 버튼(알림함)만 둔다. */}
+      {/* 홈, 채팅, 제작, 탐색 헤더의 오른쪽 묶음. 게스트는 로그인 버튼 오른쪽에 종 버튼(공지사항)을, 회원은 종 버튼(알림함)만 둔다. */}
       {isNoticeTab && (
         <div className="ml-auto flex items-center gap-1">
           {showLoginButton && (

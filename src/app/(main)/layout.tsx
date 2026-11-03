@@ -2,6 +2,7 @@
 
 import { type UIEvent, useLayoutEffect, useRef, useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 
 import { BottomNavigationBar } from '@/components/layout/bottom-navigation-bar';
@@ -9,6 +10,7 @@ import { MainHeader } from '@/components/layout/main-header';
 import { MainScrollProvider } from '@/components/layout/main-scroll-context';
 import { PullToRefresh } from '@/components/motion/pull-to-refresh';
 import { APP_PATH } from '@/constants/app-path';
+import { reshuffleExploreStories } from '@/features/stories/_shared/utils/explore-stories-query';
 import { useRefreshActiveQueries } from '@/hooks/use-refresh-active-queries';
 import {
   rememberScrollPosition,
@@ -22,6 +24,8 @@ export default function MainLayout({
 }>) {
   const pathname = usePathname();
   const isStudio = pathname === APP_PATH.MAIN.STUDIO;
+  const isExplore = pathname === APP_PATH.MAIN.EXPLORE;
+  const queryClient = useQueryClient();
   const refreshActiveQueries = useRefreshActiveQueries();
   const scrollContainerRef = useRef<HTMLElement>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -53,7 +57,11 @@ export default function MainLayout({
         <MainScrollProvider value={{ hasScrolled, overlayContainer }}>
           <PullToRefresh
             ref={scrollContainerRef}
-            onRefresh={refreshActiveQueries}
+            onRefresh={
+              isExplore
+                ? () => reshuffleExploreStories(queryClient)
+                : refreshActiveQueries
+            }
             disabled={pathname === APP_PATH.MAIN.MY}
             onScroll={handleContentScroll}
             className="h-full"

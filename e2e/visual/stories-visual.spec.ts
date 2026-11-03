@@ -8,7 +8,13 @@ import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 import { mockMemberSession } from '../fixtures/auth';
 import { oneLine } from '../fixtures/copy';
 import { seedStoryCompletionRequests } from '../fixtures/storage';
-import { expect, mockHomeSections, seedStoryIds, test } from '../fixtures/test';
+import {
+  expect,
+  mockExploreStories,
+  mockHomeSections,
+  seedStoryIds,
+  test,
+} from '../fixtures/test';
 import {
   VISUAL_FIXED_NOW,
   waitForAnimations,
@@ -305,6 +311,26 @@ test.describe('스토리 비주얼', () => {
     ).toBeVisible();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('story-list-home-sections.png');
+  });
+
+  test('탐색 목록 (STORY-LIST)', async ({ page }) => {
+    await mockExploreStories(page, [
+      [
+        {
+          ...story('e1', '탐색 이야기'),
+          author: { id: 1, nickname: '마냑', profileImageUrl: null },
+        },
+        { ...story('e2', '작성자 없는 이야기'), author: null },
+      ],
+    ]);
+
+    await page.goto(APP_PATH.MAIN.EXPLORE);
+
+    await expect(
+      page.getByRole('link', { name: '탐색 이야기 상세 보기' }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('story-list-explore.png');
   });
 
   test('제작 목록 빈 상태 (STORY-LIST)', async ({ page }) => {

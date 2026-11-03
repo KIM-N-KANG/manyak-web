@@ -691,6 +691,10 @@ export async function mockPushSettings(
 export const isHomeStoriesUrl = (url: URL) =>
   url.pathname === '/api/v1/stories/home';
 
+/** 탐색 목록(`GET /stories/explore`) 요청. */
+export const isExploreStoriesUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories/explore';
+
 /** 홈 목록 목의 섹션. `id`를 생략하면 기본 섹션처럼 null로 응답한다. */
 export type HomeSectionFixture = {
   id?: string | null;
@@ -726,6 +730,36 @@ export async function mockHomeStories(
   items: unknown[],
 ): Promise<void> {
   await mockHomeSections(page, [{ name: '인기 스토리', items }]);
+}
+
+/**
+ * 탐색 목록을 페이지 단위로 목킹한다. `cursor` 없는 요청은 새로 섞은 첫 페이지로 보고 `pages[0]`을,
+ * `c{n}` 커서는 `pages[n]`을 응답한다. 마지막 페이지의 `nextCursor`는 null이다.
+ *
+ * @param page 대상 페이지
+ * @param pages 페이지마다 응답할 스토리 요약 목록
+ * @returns 받은 요청의 커서 기록. 커서 없는 요청은 null이다
+ */
+export async function mockExploreStories(
+  page: Page,
+  pages: unknown[][],
+): Promise<{ cursors: (string | null)[] }> {
+  const cursors: (string | null)[] = [];
+
+  await page.route(isExploreStoriesUrl, async (route) => {
+    const cursor = new URL(route.request().url()).searchParams.get('cursor');
+    const index = cursor ? Number(cursor.slice(1)) : 0;
+
+    cursors.push(cursor);
+    await route.fulfill({
+      json: {
+        items: pages[index] ?? [],
+        nextCursor: index + 1 < pages.length ? `c${index + 1}` : null,
+      },
+    });
+  });
+
+  return { cursors };
 }
 
 /**

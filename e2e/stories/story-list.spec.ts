@@ -25,6 +25,7 @@ import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   expect,
   isHomeStoriesUrl,
+  mockExploreStories,
   mockHomeSections,
   mockHomeStories,
   seedStoryIds,
@@ -641,6 +642,152 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(authorlessCard.getByText(/^@/)).toHaveCount(0);
   });
 
+  test('탐색 탭은 제작과 마이 사이에 있고, 탭으로 들어오면 새로 섞고 상세에서 돌아오면 순서와 위치를 유지한다 (STORY-LIST-47)', async ({
+    page,
+  }) => {
+    const explore = await mockExploreStories(page, [
+      Array.from({ length: 30 }, (_, index) =>
+        originalStory(`e${index + 1}`, `탐색 ${index + 1}`),
+      ),
+    ]);
+
+    await page.goto('/');
+
+    const navigation = page.getByRole('navigation', {
+      name: '하단 네비게이션',
+    });
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    await expect(navigation.getByRole('link')).toHaveText([
+      '홈',
+      '채팅',
+      '제작',
+      '탐색',
+      '마이',
+    ]);
+    await navigation.getByRole('link', { name: '탐색' }).click();
+
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.EXPLORE}$`));
+    await expect(
+      page.getByRole('banner').getByRole('heading', { name: '탐색' }),
+    ).toBeVisible();
+
+    // 썸네일만 세 열로 붙여 놓고 턴 수, 제목과 작성자는 보이지 않는다.
+    const tiles = page.getByRole('main').getByRole('listitem');
+
+    await expect(tiles).toHaveCount(30);
+
+    const tops = await tiles.evaluateAll((items) =>
+      items.slice(0, 4).map((item) => item.getBoundingClientRect().top),
+    );
+
+    expect(new Set(tops.slice(0, 3)).size).toBe(1);
+    expect(tops[3]).toBeGreaterThan(tops[0]);
+    await expect(page.getByText('탐색 1', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('@마냑', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('누적 턴 수')).toHaveCount(0);
+
+    const link = page.getByRole('link', { name: '탐색 27 상세 보기' });
+
+    await link.scrollIntoViewIfNeeded();
+
+    const leftAt = await scroller.evaluate((element) => element.scrollTop);
+
+    expect(leftAt).toBeGreaterThan(0);
+    await link.click();
+    await expect(page).toHaveURL(/\/stories\/e27$/);
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.EXPLORE}$`));
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBe(leftAt);
+    expect(explore.cursors).toEqual([null]);
+
+    await navigation.getByRole('link', { name: '홈', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.STORIES}$`));
+    await navigation.getByRole('link', { name: '탐색' }).click();
+
+    await expect(link).toBeVisible();
+    expect(explore.cursors).toEqual([null, null]);
+    await expect
+      .poll(() => scroller.evaluate((element) => element.scrollTop))
+      .toBe(0);
+  });
+
+  test('탐색을 당겨서 새로고침하면 첫 페이지만 새로 섞어 받는다 (STORY-LIST-48)', async ({
+    page,
+  }) => {
+    const explore = await mockExploreStories(page, [
+      Array.from({ length: 20 }, (_, index) =>
+        originalStory(`p1-${index}`, `첫 페이지 ${index}`),
+      ),
+      [originalStory('p2', '다음 페이지')],
+    ]);
+
+    await page.goto(APP_PATH.MAIN.EXPLORE);
+    await page
+      .getByRole('link', { name: '첫 페이지 19 상세 보기' })
+      .scrollIntoViewIfNeeded();
+    await expect(
+      page.getByRole('link', { name: '다음 페이지 상세 보기' }),
+    ).toBeVisible();
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+
+    await scroller.evaluate((element) => element.scrollTo({ top: 0 }));
+
+    const box = await scroller.boundingBox();
+
+    if (!box) throw new Error('스크롤 영역을 찾지 못했다');
+
+    const x = box.x + box.width / 2;
+    const startY = box.y + 8;
+
+    await dispatchTouch(scroller, 'touchstart', x, startY);
+
+    for (let step = 1; step <= 10; step += 1) {
+      await dispatchTouch(scroller, 'touchmove', x, startY + step * 20);
+    }
+
+    await dispatchTouch(scroller, 'touchend', x, startY + 200);
+
+    await expect.poll(() => explore.cursors.length).toBe(3);
+    await expect(page.getByText(PULL_TO_REFRESH_COPY.refreshing)).toBeHidden();
+    await expect(
+      page.getByRole('link', { name: '다음 페이지 상세 보기' }),
+    ).toHaveCount(0);
+    expect(explore.cursors).toEqual([null, 'c1', null]);
+  });
+
+  test('탐색 목록 끝에 닿으면 받은 nextCursor로 다음 페이지를 이어 붙인다 (STORY-LIST-44)', async ({
+    page,
+  }) => {
+    const explore = await mockExploreStories(page, [
+      Array.from({ length: 20 }, (_, index) =>
+        originalStory(`p1-${index}`, `첫 페이지 ${index}`),
+      ),
+      [originalStory('p2', '다음 페이지')],
+    ]);
+
+    await page.goto(APP_PATH.MAIN.EXPLORE);
+
+    await expect(
+      page.getByRole('link', { name: '첫 페이지 0 상세 보기' }),
+    ).toBeVisible();
+    await page
+      .getByRole('link', { name: '첫 페이지 19 상세 보기' })
+      .scrollIntoViewIfNeeded();
+
+    await expect(
+      page.getByRole('link', { name: '다음 페이지 상세 보기' }),
+    ).toBeVisible();
+    expect(explore.cursors).toEqual([null, 'c1']);
+  });
+
   test('홈 카드에는 회원에게도 옵션 버튼을 두지 않는다 (KNK-1421)', async ({
     page,
   }) => {
@@ -833,6 +980,7 @@ test.describe('홈·제작 스토리 목록', () => {
       APP_PATH.MAIN.STORIES,
       APP_PATH.MAIN.CHATS,
       APP_PATH.MAIN.STUDIO,
+      APP_PATH.MAIN.EXPLORE,
       APP_PATH.MAIN.MY,
     ]) {
       await page.goto(pathname);
