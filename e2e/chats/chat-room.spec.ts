@@ -20,6 +20,7 @@ import {
   CHAT_TURN_EDIT_COPY,
   REALTIME_IMAGE_NUDGE_DELAY_MS,
 } from '@/features/chats/room/constants';
+import { CREDIT_REASON_LABEL } from '@/features/my/_shared/constants/credit-history';
 import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 import { STORY_REPORT_COPY } from '@/features/stories/_shared/constants/story-report';
 
@@ -3331,6 +3332,7 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
     const menuItems = drawer.getByRole('button');
 
     await expect(menuItems).toHaveText([
+      CREDIT_CHARGE_COPY.historyButton,
       CREDIT_CHARGE_COPY.entryButton,
       CHAT_MENU_COPY.newChat,
       CHAT_MENU_COPY.share,
@@ -3396,10 +3398,186 @@ test.describe('채팅방 스토리 신고 (KNK-1186)', () => {
         .getByRole('dialog', { name: CHAT_MENU_COPY.title })
         .getByRole('button'),
     ).toHaveText([
+      CREDIT_CHARGE_COPY.historyButton,
       CREDIT_CHARGE_COPY.entryButton,
       CHAT_MENU_COPY.share,
       CHAT_MENU_COPY.delete,
     ]);
+  });
+});
+
+test.describe('채팅 메뉴의 이프 내역 (KNK-2022)', () => {
+  const ME_API = '**/api/v1/auth/me';
+  const TRANSACTIONS_API = '**/api/v1/users/me/credits/transactions*';
+
+  test.beforeEach(async ({ page }) => {
+    await mockMemberSession(page);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+    await page.route(ME_API, (route) =>
+      route.fulfill({
+        json: {
+          id: 'user-1',
+          nickname: '배고픈 송아지',
+          profileImageUrl: null,
+          profileThumbnailBase64: null,
+          status: 'ACTIVE',
+          creditBalance: 3160,
+          attendedToday: false,
+          linkedProviders: ['google'],
+        },
+      }),
+    );
+    await page.route(TRANSACTIONS_API, (route) =>
+      route.fulfill({
+        json: {
+          items: [
+            {
+              type: 'SPEND',
+              reason: 'CHAT_TURN',
+              amount: -20,
+              title: '유운잔검기',
+              expiresAt: null,
+              createdAt: '2026-08-31T09:00:00Z',
+            },
+          ],
+          nextCursor: null,
+        },
+      }),
+    );
+  });
+
+  test('내역을 누르면 같은 시트에서 이프 내역을 보고 돌아가기로 메뉴에 돌아온다', async ({
+    page,
+  }) => {
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CREDIT_CHARGE_COPY.historyButton })
+      .click();
+
+    const history = page.getByRole('dialog', {
+      name: CHAT_MENU_COPY.creditHistory.title,
+    });
+    const back = history.getByRole('button', {
+      name: CHAT_MENU_COPY.creditHistory.back,
+    });
+
+    await expect(history.getByRole('listitem')).toHaveText([
+      new RegExp(`${CREDIT_REASON_LABEL.CHAT_TURN}.*유운잔검기.*-20`),
+    ]);
+
+    await back.click();
+
+    const menu = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
+
+    await expect(
+      menu.getByRole('button', { name: CHAT_MENU_COPY.newChat }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+  });
+
+  test('새로고침은 첫 페이지부터 다시 읽어 최신 내역을 보인다', async ({
+    page,
+  }) => {
+    const requestedCursors: (string | null)[] = [];
+
+    await page.route(TRANSACTIONS_API, (route) => {
+      requestedCursors.push(
+        new URL(route.request().url()).searchParams.get('cursor'),
+      );
+
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              type: 'SPEND',
+              reason:
+                requestedCursors.length === 1 ? 'CHAT_TURN' : 'CHAT_IMAGE',
+              amount: requestedCursors.length === 1 ? -20 : -60,
+              title: '유운잔검기',
+              expiresAt: null,
+              createdAt: '2026-08-31T09:00:00Z',
+            },
+          ],
+          nextCursor: null,
+        },
+      });
+    });
+
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CREDIT_CHARGE_COPY.historyButton })
+      .click();
+
+    const history = page.getByRole('dialog', {
+      name: CHAT_MENU_COPY.creditHistory.title,
+    });
+
+    await expect(history.getByRole('listitem')).toContainText([
+      CREDIT_REASON_LABEL.CHAT_TURN!,
+    ]);
+
+    await history
+      .getByRole('button', { name: CHAT_MENU_COPY.creditHistory.refresh })
+      .click();
+
+    await expect(history.getByRole('listitem')).toContainText([
+      CREDIT_REASON_LABEL.CHAT_IMAGE!,
+    ]);
+    expect(requestedCursors).toEqual([null, null]);
+  });
+
+  test('내역에서 뒤로가기는 메뉴로 돌아오고, 한 번 더 누르면 시트를 닫고 채팅방에 머문다', async ({
+    page,
+  }) => {
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CREDIT_CHARGE_COPY.historyButton })
+      .click();
+    await expect(
+      page.getByRole('dialog', { name: CHAT_MENU_COPY.creditHistory.title }),
+    ).toBeVisible();
+
+    await page.goBack();
+    await expect(
+      page.getByRole('dialog', { name: CHAT_MENU_COPY.title }),
+    ).toBeVisible();
+
+    await page.goBack();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page).toHaveURL(/\/chats\/c1$/);
+  });
+
+  test('다시 열면 마지막에 본 내역이 아니라 메뉴부터 보인다', async ({
+    page,
+  }) => {
+    await page.goto('/chats/c1');
+
+    const trigger = page.getByRole('button', { name: CHAT_MENU_COPY.trigger });
+
+    await trigger.click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CREDIT_CHARGE_COPY.historyButton })
+      .click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+
+    await trigger.click();
+    await expect(
+      page.getByRole('dialog', { name: CHAT_MENU_COPY.title }),
+    ).toBeVisible();
   });
 });
 

@@ -2,6 +2,7 @@
 export const CREDIT_CHARGE_COPY = {
   title: '이프 충전',
   entryButton: '충전',
+  historyButton: '내역',
   balanceLabel: '내 이프',
   purchaseTab: '구매',
   freeChargeTab: '무료 충전',

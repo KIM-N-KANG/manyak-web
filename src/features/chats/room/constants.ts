@@ -96,6 +96,12 @@ export const CHAT_MODEL_COPY = {
 export const CHAT_MENU_COPY = {
   trigger: '채팅 메뉴',
   title: '채팅 메뉴',
+  creditHistory: {
+    title: '이프 내역',
+    back: '채팅 메뉴로 돌아가기',
+    refresh: '새로고침',
+    refreshing: '새로고침 중',
+  },
   newChat: '새 채팅 시작하기',
   share: '공유하기',
   report: STORY_REPORT_COPY.action,

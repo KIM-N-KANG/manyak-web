@@ -1,6 +1,12 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import {
   getGetMyCreditTransactionsQueryKey,
@@ -72,4 +78,45 @@ export function useCreditTransactions({
     /** 다음 페이지 조회가 실패한 상태. 자동 재요청을 멈추고 그 자리 재시도로 넘긴다. */
     isFetchNextPageError: query.isFetchNextPageError,
   };
+}
+/**
+ * 이프 내역을 첫 페이지부터 다시 읽는 함수와 진행 여부를 돌려준다.
+ *
+ * 받아 둔 뒷 페이지는 버리고 첫 페이지만 다시 받는다. 목록이 길어도 요청 한 번으로 최신 내역을 맨 위에 보이고,
+ * 다음 페이지는 새 첫 페이지의 커서로 다시 이어 받는다. 기존 첫 페이지는 응답이 올 때까지 유지한다.
+ *
+ * @returns 다시 읽기를 시작하고 끝나면 resolve하는 함수와 진행 여부
+ */
+export function useRefreshCreditTransactions() {
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const refresh = async () => {
+    setIsRefreshing(true);
+
+    queryClient.setQueryData<
+      InfiniteData<
+        Awaited<ReturnType<typeof getMyCreditTransactions>>,
+        string | undefined
+      >
+    >(CREDIT_TRANSACTIONS_QUERY_KEY, (data) =>
+      data
+        ? {
+            pages: data.pages.slice(0, 1),
+            pageParams: data.pageParams.slice(0, 1),
+          }
+        : data,
+    );
+
+    try {
+      await queryClient.refetchQueries({
+        queryKey: CREDIT_TRANSACTIONS_QUERY_KEY,
+        exact: true,
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  return { refresh, isRefreshing };
 }
