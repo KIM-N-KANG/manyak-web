@@ -763,6 +763,56 @@ test.describe('홈·제작 스토리 목록', () => {
     expect(explore.cursors).toEqual([null, 'c1', null]);
   });
 
+  test('탐색을 새로 섞으면 칸 자리를 유지한 채 칸마다 새 표지로 바꾼다 (STORY-LIST-49)', async ({
+    page,
+  }) => {
+    await mockExploreStories(page, [
+      Array.from({ length: 6 }, (_, index) =>
+        originalStory(`a${index}`, `이전 순서 ${index}`),
+      ),
+    ]);
+
+    await page.goto(APP_PATH.MAIN.EXPLORE);
+
+    const tiles = page.getByRole('main').getByRole('listitem');
+
+    await expect(
+      page.getByRole('link', { name: '이전 순서 0 상세 보기' }),
+    ).toBeVisible();
+
+    await mockExploreStories(page, [
+      Array.from({ length: 6 }, (_, index) =>
+        originalStory(`b${index}`, `새 순서 ${index}`),
+      ),
+    ]);
+
+    const scroller = page.getByRole('region', {
+      name: PULL_TO_REFRESH_COPY.ariaLabel,
+    });
+    const box = await scroller.boundingBox();
+
+    if (!box) throw new Error('스크롤 영역을 찾지 못했다');
+
+    const x = box.x + box.width / 2;
+    const startY = box.y + 8;
+
+    await dispatchTouch(scroller, 'touchstart', x, startY);
+
+    for (let step = 1; step <= 10; step += 1) {
+      await dispatchTouch(scroller, 'touchmove', x, startY + step * 20);
+    }
+
+    await dispatchTouch(scroller, 'touchend', x, startY + 200);
+
+    await expect(
+      page.getByRole('link', { name: '새 순서 5 상세 보기' }),
+    ).toBeVisible();
+    await expect(tiles).toHaveCount(6);
+    await expect(
+      page.getByRole('link', { name: /이전 순서 \d 상세 보기/ }),
+    ).toHaveCount(0);
+  });
+
   test('탐색 목록 끝에 닿으면 받은 nextCursor로 다음 페이지를 이어 붙인다 (STORY-LIST-44)', async ({
     page,
   }) => {

@@ -14,8 +14,8 @@ import { useDelayedLoading } from '@/hooks/use-delayed-loading';
 import { useInView } from '@/hooks/use-in-view';
 
 import { useExploreStories } from '../hooks/use-explore-stories';
+import { ExploreStoryCell } from './explore-story-cell';
 import { ExploreStoryGridSkeleton } from './explore-story-grid-skeleton';
-import { ExploreStoryTile } from './explore-story-tile';
 
 export function ExploreStoryList() {
   const [sentinelElement, setSentinelElement] = useState<HTMLDivElement | null>(
@@ -82,9 +82,7 @@ export function ExploreStoryList() {
       <>
         <ul className="grid grid-cols-3 gap-0.5">
           {stories.map((story, index) => (
-            <li key={story.id}>
-              <ExploreStoryTile story={story} position={index} />
-            </li>
+            <ExploreStoryCell key={index} story={story} position={index} />
           ))}
         </ul>
         {isFetchingNextPage && (
