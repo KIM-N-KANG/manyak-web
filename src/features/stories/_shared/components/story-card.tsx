@@ -17,9 +17,16 @@ type StoryCardProps = {
   position?: number;
   /** 카드가 속한 섹션. 분석에서 홈 목록과 내가 만든 스토리의 성과를 분리한다. */
   section: StoryCardSection;
+  /** 표지를 먼저 받을지. 생략하면 목록 앞 네 장만 먼저 받는다. */
+  priority?: boolean;
 };
 
-export function StoryCard({ story, position, section }: StoryCardProps) {
+export function StoryCard({
+  story,
+  position,
+  section,
+  priority = position != null && position < 4,
+}: StoryCardProps) {
   const storyId = story.id;
   const impressionRef = useImpression({
     object: 'storyCard',
@@ -49,7 +56,7 @@ export function StoryCard({ story, position, section }: StoryCardProps) {
             alt=""
             fill
             sizes="(max-width: 448px) calc(50vw - 20px), 204px"
-            priority={position != null && position < 4}
+            priority={priority}
             className="object-cover"
           />
         ) : (
