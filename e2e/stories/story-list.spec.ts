@@ -611,7 +611,7 @@ test.describe('홈·제작 스토리 목록', () => {
       .toBe(leftAt);
   });
 
-  test('홈은 서버 순서대로 섹션을 쌓고 섹션마다 카드를 가로로 2.2장 보인다 (STORY-LIST-46)', async ({
+  test('홈은 서버 순서대로 섹션을 쌓고 섹션마다 카드 두 장과 셋째 카드 16px을 보인다 (STORY-LIST-46)', async ({
     page,
   }) => {
     await mockHomeSections(page, [
@@ -650,8 +650,8 @@ test.describe('홈·제작 스토리 목록', () => {
       element.querySelector('li')?.getBoundingClientRect().width ?? 0,
     ]);
 
-    // 왼쪽 여백 16px 뒤에 카드 두 장과 8px 간격 두 개, 셋째 카드의 0.2장이 보인다.
-    expect(cardWidth * 2.2 + 16).toBeCloseTo(rowWidth - 16, 0);
+    // 왼쪽 여백 16px, 카드 두 장, 8px 간격 두 개 뒤에 셋째 카드가 16px만 보인다.
+    expect(16 + cardWidth * 2 + 8 * 2 + 16).toBeCloseTo(rowWidth, 0);
 
     const authorlessCard = row
       .getByRole('listitem')
