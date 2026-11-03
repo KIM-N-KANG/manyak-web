@@ -100,7 +100,7 @@ const modelCostBadge = (page: Page, modelName: string) =>
 
 // 다시 생성 버튼과 그 확인 창. 확인해야 재생성 요청이 나간다.
 const regenerateButton = (page: Page) =>
-  page.getByRole('button', { name: CHAT_REGENERATE_COPY.trigger });
+  page.getByRole('button', { name: CHAT_REGENERATE_COPY.trigger, exact: true });
 
 const confirmRegenerate = async (page: Page) => {
   await regenerateButton(page).click();
@@ -2642,28 +2642,33 @@ test.describe('입력 수정과 포크 (KNK-2005)', () => {
     `event: completed\ndata: {"turnId":3,"aiOutput":"${editedTurn.aiOutput}"}\n\n`,
   ]);
   const editButtons = (page: Page) =>
-    page.getByRole('button', { name: CHAT_TURN_EDIT_COPY.trigger });
+    page.getByRole('button', {
+      name: CHAT_TURN_EDIT_COPY.trigger,
+      exact: true,
+    });
   const forkButtons = (page: Page) =>
-    page.getByRole('button', { name: CHAT_FORK_COPY.trigger });
+    page.getByRole('button', { name: CHAT_FORK_COPY.trigger, exact: true });
   const editField = (page: Page) =>
     page.getByRole('textbox', { name: CHAT_TURN_EDIT_COPY.field });
 
-  // 첫 상세는 before, 이후 상세는 after로 응답한다.
+  // 생성 스트림이 응답하기 전까지는 before, 그 뒤로는 after로 응답한다. 진입 직후의 추천 생성처럼
+  // 상세를 여러 번 받아도 수정 전 상태가 유지되게 호출 횟수가 아니라 저장 여부로 나눈다.
   const routeDetail = async (
     page: Page,
     before: Record<string, unknown>,
     after: Record<string, unknown> = before,
   ) => {
-    let detailCallCount = 0;
+    const detail = { saved: false };
 
     await page.route(CHAT_DETAIL, async (route) => {
-      detailCallCount += 1;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(detailCallCount === 1 ? before : after),
+        body: JSON.stringify(detail.saved ? after : before),
       });
     });
+
+    return detail;
   };
 
   test.describe('회원', () => {
@@ -2674,11 +2679,12 @@ test.describe('입력 수정과 포크 (KNK-2005)', () => {
     test('마지막 턴의 입력을 그 자리에서 고쳐 보내면 새 응답으로 바뀐다 (CHAT-EDIT-01)', async ({
       page,
     }) => {
-      await routeDetail(
+      const detail = await routeDetail(
         page,
         chatDetail([firstTurn]),
         chatDetail([editedTurn]),
       );
+
       await page.route(CHAT_EDIT, async (route) => {
         expect(route.request().postDataJSON()).toEqual({
           turnId: 1,
@@ -2686,6 +2692,7 @@ test.describe('입력 수정과 포크 (KNK-2005)', () => {
           userSource: 'typed',
           realtimeImage: true,
         });
+        detail.saved = true;
         await route.fulfill({
           status: 200,
           contentType: 'text/event-stream',
@@ -2756,13 +2763,15 @@ test.describe('입력 수정과 포크 (KNK-2005)', () => {
         releaseStream = resolve;
       });
 
-      await routeDetail(
+      const detail = await routeDetail(
         page,
         chatDetail([firstTurn, secondTurn]),
         chatDetail([editedTurn]),
       );
+
       await page.route(CHAT_EDIT, async (route) => {
         await streamReleased;
+        detail.saved = true;
         await route.fulfill({
           status: 200,
           contentType: 'text/event-stream',
@@ -2835,7 +2844,7 @@ test.describe('입력 수정과 포크 (KNK-2005)', () => {
     test('입력 수정 중에 다시 들어오면 대상 턴 자리에서 이어 받고 뒤의 턴은 숨긴다 (CHAT-EDIT-05)', async ({
       page,
     }) => {
-      await routeDetail(
+      const detail = await routeDetail(
         page,
         {
           ...chatDetail([firstTurn, secondTurn]),
@@ -2849,8 +2858,10 @@ test.describe('입력 수정과 포크 (KNK-2005)', () => {
         },
         chatDetail([editedTurn]),
       );
+
       await page.route(CHAT_RESUME, async (route) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
+        detail.saved = true;
         await route.fulfill({
           status: 200,
           contentType: 'text/event-stream',
