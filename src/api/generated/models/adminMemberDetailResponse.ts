@@ -24,5 +24,7 @@ export interface AdminMemberDetailResponse {
   turnCount?: number;
   /** @nullable */
   deletedAt?: string | null;
+  /** @nullable */
+  periodTurnCount?: number | null;
   isAdmin?: boolean;
 }

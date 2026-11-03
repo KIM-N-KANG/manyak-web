@@ -31,6 +31,8 @@ export const routeOperationId = (method: string, route: string) =>
  * 백엔드에 같은 이름의 메서드가 추가되면 순번이 밀려 같은 생성 이름이 다른 API를 가리키므로, 겹치는 이름은 전부 경로로 고정한다.
  * operationId가 자기 경로 매개변수 이름이나 Orval이 생성 코드 안에서 쓰는 인자 이름(`options`, `params` 등)과 같으면
  * 생성 훅 안에서 인자가 함수를 가려 타입 오류가 나므로 같은 방식으로 바꾼다.
+ * Orval은 쿼리 매개변수의 enum 타입을 operationId와 매개변수 이름을 이어 붙여 만든다.
+ * 이 이름이 스키마 이름과 같으면(예: `retention` + `cohort`와 `RetentionCohort` 스키마) 한 파일에 같은 식별자가 두 번 생기므로 역시 경로로 바꾼다.
  * 그 밖의 이름은 그대로 둔다.
  */
 const GENERATED_ARGUMENT_NAMES = new Set([
@@ -63,11 +65,16 @@ export const stabilizeOperationIds = defineTransformer((spec) => {
     counts.set(base, (counts.get(base) ?? 0) + 1);
   }
 
+  const schemaNames = new Set(Object.keys(spec.components?.schemas ?? {}));
+
   for (const { method, route, operation, operationId } of operations) {
     const shadowed =
       GENERATED_ARGUMENT_NAMES.has(operationId) ||
       operation.parameters?.some(
-        (parameter) => 'name' in parameter && parameter.name === operationId,
+        (parameter) =>
+          'name' in parameter &&
+          (parameter.name === operationId ||
+            schemaNames.has(pascal(operationId) + pascal(parameter.name))),
       );
 
     if ((counts.get(baseName(operationId)) ?? 0) > 1 || shadowed) {

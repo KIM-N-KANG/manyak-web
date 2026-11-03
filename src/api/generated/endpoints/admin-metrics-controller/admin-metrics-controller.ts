@@ -25,14 +25,16 @@ import type {
   ActivityResponse,
   AiCostParams,
   AiCostResponse,
+  AppActivationParams,
+  AppActivationResponse,
   ChatOptionResponse,
   ConversionResponse,
   GetAdminConversionFunnelsByFunnelParams,
+  GetAdminConversionTurnReachParams,
   GetAdminQualityChatOptionsParams,
+  GetAdminUsersRetentionParams,
   QualityParams,
   QualityResponse,
-  ReachParams,
-  RetentionParams,
   RetentionResponse,
   SessionLengthResponse,
   SessionLengthsParams,
@@ -522,15 +524,18 @@ export function useSessionLengths<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type retentionResponse200 = {
+export type getAdminUsersRetentionResponse200 = {
   data: RetentionResponse;
   status: 200;
 };
 
-export type retentionResponseSuccess = retentionResponse200 & {
-  headers: Headers;
-};
-export const getRetentionUrl = (params?: RetentionParams) => {
+export type getAdminUsersRetentionResponseSuccess =
+  getAdminUsersRetentionResponse200 & {
+    headers: Headers;
+  };
+export const getGetAdminUsersRetentionUrl = (
+  params?: GetAdminUsersRetentionParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -546,69 +551,84 @@ export const getRetentionUrl = (params?: RetentionParams) => {
     : `/api/v1/admin/users/retention`;
 };
 
-export const retention = async (
-  params?: RetentionParams,
+export const getAdminUsersRetention = async (
+  params?: GetAdminUsersRetentionParams,
   options?: RequestInit,
-): Promise<retentionResponseSuccess> => {
-  return customInstance<retentionResponseSuccess>(getRetentionUrl(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getAdminUsersRetentionResponseSuccess> => {
+  return customInstance<getAdminUsersRetentionResponseSuccess>(
+    getGetAdminUsersRetentionUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getRetentionQueryKey = (params?: RetentionParams) => {
+export const getGetAdminUsersRetentionQueryKey = (
+  params?: GetAdminUsersRetentionParams,
+) => {
   return [
     `/api/v1/admin/users/retention`,
     ...(params ? [params] : []),
   ] as const;
 };
 
-export const getRetentionQueryOptions = <
-  TData = Awaited<ReturnType<typeof retention>>,
+export const getGetAdminUsersRetentionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminUsersRetention>>,
   TError = ErrorType<unknown>,
 >(
-  params?: RetentionParams,
+  params?: GetAdminUsersRetentionParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof retention>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminUsersRetention>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getRetentionQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAdminUsersRetentionQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof retention>>> = ({
-    signal,
-  }) => retention(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminUsersRetention>>
+  > = ({ signal }) =>
+    getAdminUsersRetention(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof retention>>,
+    Awaited<ReturnType<typeof getAdminUsersRetention>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type RetentionQueryResult = NonNullable<
-  Awaited<ReturnType<typeof retention>>
+export type GetAdminUsersRetentionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminUsersRetention>>
 >;
-export type RetentionQueryError = ErrorType<unknown>;
+export type GetAdminUsersRetentionQueryError = ErrorType<unknown>;
 
-export function useRetention<
-  TData = Awaited<ReturnType<typeof retention>>,
+export function useGetAdminUsersRetention<
+  TData = Awaited<ReturnType<typeof getAdminUsersRetention>>,
   TError = ErrorType<unknown>,
 >(
-  params: undefined | RetentionParams,
+  params: undefined | GetAdminUsersRetentionParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof retention>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminUsersRetention>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof retention>>,
+          Awaited<ReturnType<typeof getAdminUsersRetention>>,
           TError,
-          Awaited<ReturnType<typeof retention>>
+          Awaited<ReturnType<typeof getAdminUsersRetention>>
         >,
         'initialData'
       >;
@@ -618,20 +638,24 @@ export function useRetention<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useRetention<
-  TData = Awaited<ReturnType<typeof retention>>,
+export function useGetAdminUsersRetention<
+  TData = Awaited<ReturnType<typeof getAdminUsersRetention>>,
   TError = ErrorType<unknown>,
 >(
-  params?: RetentionParams,
+  params?: GetAdminUsersRetentionParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof retention>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminUsersRetention>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof retention>>,
+          Awaited<ReturnType<typeof getAdminUsersRetention>>,
           TError,
-          Awaited<ReturnType<typeof retention>>
+          Awaited<ReturnType<typeof getAdminUsersRetention>>
         >,
         'initialData'
       >;
@@ -641,14 +665,18 @@ export function useRetention<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useRetention<
-  TData = Awaited<ReturnType<typeof retention>>,
+export function useGetAdminUsersRetention<
+  TData = Awaited<ReturnType<typeof getAdminUsersRetention>>,
   TError = ErrorType<unknown>,
 >(
-  params?: RetentionParams,
+  params?: GetAdminUsersRetentionParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof retention>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminUsersRetention>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -657,14 +685,18 @@ export function useRetention<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useRetention<
-  TData = Awaited<ReturnType<typeof retention>>,
+export function useGetAdminUsersRetention<
+  TData = Awaited<ReturnType<typeof getAdminUsersRetention>>,
   TError = ErrorType<unknown>,
 >(
-  params?: RetentionParams,
+  params?: GetAdminUsersRetentionParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof retention>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminUsersRetention>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -672,7 +704,170 @@ export function useRetention<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getRetentionQueryOptions(params, options);
+  const queryOptions = getGetAdminUsersRetentionQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type appActivationResponse200 = {
+  data: AppActivationResponse;
+  status: 200;
+};
+
+export type appActivationResponseSuccess = appActivationResponse200 & {
+  headers: Headers;
+};
+export const getAppActivationUrl = (params?: AppActivationParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/users/app-activation?${stringifiedParams}`
+    : `/api/v1/admin/users/app-activation`;
+};
+
+export const appActivation = async (
+  params?: AppActivationParams,
+  options?: RequestInit,
+): Promise<appActivationResponseSuccess> => {
+  return customInstance<appActivationResponseSuccess>(
+    getAppActivationUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getAppActivationQueryKey = (params?: AppActivationParams) => {
+  return [
+    `/api/v1/admin/users/app-activation`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getAppActivationQueryOptions = <
+  TData = Awaited<ReturnType<typeof appActivation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appActivation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAppActivationQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof appActivation>>> = ({
+    signal,
+  }) => appActivation(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof appActivation>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AppActivationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof appActivation>>
+>;
+export type AppActivationQueryError = ErrorType<unknown>;
+
+export function useAppActivation<
+  TData = Awaited<ReturnType<typeof appActivation>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | AppActivationParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appActivation>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appActivation>>,
+          TError,
+          Awaited<ReturnType<typeof appActivation>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAppActivation<
+  TData = Awaited<ReturnType<typeof appActivation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appActivation>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appActivation>>,
+          TError,
+          Awaited<ReturnType<typeof appActivation>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAppActivation<
+  TData = Awaited<ReturnType<typeof appActivation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appActivation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useAppActivation<
+  TData = Awaited<ReturnType<typeof appActivation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appActivation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAppActivationQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -1347,15 +1542,18 @@ export function useAiCost<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-export type reachResponse200 = {
+export type getAdminConversionTurnReachResponse200 = {
   data: TurnReachResponse;
   status: 200;
 };
 
-export type reachResponseSuccess = reachResponse200 & {
-  headers: Headers;
-};
-export const getReachUrl = (params?: ReachParams) => {
+export type getAdminConversionTurnReachResponseSuccess =
+  getAdminConversionTurnReachResponse200 & {
+    headers: Headers;
+  };
+export const getGetAdminConversionTurnReachUrl = (
+  params?: GetAdminConversionTurnReachParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1371,67 +1569,84 @@ export const getReachUrl = (params?: ReachParams) => {
     : `/api/v1/admin/conversion/turn-reach`;
 };
 
-export const reach = async (
-  params?: ReachParams,
+export const getAdminConversionTurnReach = async (
+  params?: GetAdminConversionTurnReachParams,
   options?: RequestInit,
-): Promise<reachResponseSuccess> => {
-  return customInstance<reachResponseSuccess>(getReachUrl(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getAdminConversionTurnReachResponseSuccess> => {
+  return customInstance<getAdminConversionTurnReachResponseSuccess>(
+    getGetAdminConversionTurnReachUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getReachQueryKey = (params?: ReachParams) => {
+export const getGetAdminConversionTurnReachQueryKey = (
+  params?: GetAdminConversionTurnReachParams,
+) => {
   return [
     `/api/v1/admin/conversion/turn-reach`,
     ...(params ? [params] : []),
   ] as const;
 };
 
-export const getReachQueryOptions = <
-  TData = Awaited<ReturnType<typeof reach>>,
+export const getGetAdminConversionTurnReachQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
   TError = ErrorType<unknown>,
 >(
-  params?: ReachParams,
+  params?: GetAdminConversionTurnReachParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reach>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getReachQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAdminConversionTurnReachQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof reach>>> = ({
-    signal,
-  }) => reach(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminConversionTurnReach>>
+  > = ({ signal }) =>
+    getAdminConversionTurnReach(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof reach>>,
+    Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type ReachQueryResult = NonNullable<Awaited<ReturnType<typeof reach>>>;
-export type ReachQueryError = ErrorType<unknown>;
+export type GetAdminConversionTurnReachQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminConversionTurnReach>>
+>;
+export type GetAdminConversionTurnReachQueryError = ErrorType<unknown>;
 
-export function useReach<
-  TData = Awaited<ReturnType<typeof reach>>,
+export function useGetAdminConversionTurnReach<
+  TData = Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
   TError = ErrorType<unknown>,
 >(
-  params: undefined | ReachParams,
+  params: undefined | GetAdminConversionTurnReachParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reach>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof reach>>,
+          Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
           TError,
-          Awaited<ReturnType<typeof reach>>
+          Awaited<ReturnType<typeof getAdminConversionTurnReach>>
         >,
         'initialData'
       >;
@@ -1441,20 +1656,24 @@ export function useReach<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useReach<
-  TData = Awaited<ReturnType<typeof reach>>,
+export function useGetAdminConversionTurnReach<
+  TData = Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
   TError = ErrorType<unknown>,
 >(
-  params?: ReachParams,
+  params?: GetAdminConversionTurnReachParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reach>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof reach>>,
+          Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
           TError,
-          Awaited<ReturnType<typeof reach>>
+          Awaited<ReturnType<typeof getAdminConversionTurnReach>>
         >,
         'initialData'
       >;
@@ -1464,14 +1683,18 @@ export function useReach<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useReach<
-  TData = Awaited<ReturnType<typeof reach>>,
+export function useGetAdminConversionTurnReach<
+  TData = Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
   TError = ErrorType<unknown>,
 >(
-  params?: ReachParams,
+  params?: GetAdminConversionTurnReachParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reach>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -1480,14 +1703,18 @@ export function useReach<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useReach<
-  TData = Awaited<ReturnType<typeof reach>>,
+export function useGetAdminConversionTurnReach<
+  TData = Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
   TError = ErrorType<unknown>,
 >(
-  params?: ReachParams,
+  params?: GetAdminConversionTurnReachParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reach>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminConversionTurnReach>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -1495,7 +1722,10 @@ export function useReach<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getReachQueryOptions(params, options);
+  const queryOptions = getGetAdminConversionTurnReachQueryOptions(
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

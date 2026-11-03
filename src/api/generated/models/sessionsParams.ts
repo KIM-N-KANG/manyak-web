@@ -5,9 +5,10 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { SessionsSegment } from './sessionsSegment';
 
 export type SessionsParams = {
-  segment?: string;
+  segment?: SessionsSegment;
   from?: string;
   to?: string;
   days?: string;

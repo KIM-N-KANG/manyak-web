@@ -6,9 +6,10 @@
  * OpenAPI spec version: v1
  */
 import type { GetAdminQualityChatOptionsDays } from './getAdminQualityChatOptionsDays';
+import type { GetAdminQualityChatOptionsSegment } from './getAdminQualityChatOptionsSegment';
 
 export type GetAdminQualityChatOptionsParams = {
-  segment?: string;
+  segment?: GetAdminQualityChatOptionsSegment;
   days?: GetAdminQualityChatOptionsDays;
   from?: string;
   to?: string;

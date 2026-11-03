@@ -7,7 +7,7 @@
  */
 
 /**
- * 스토리 공개 여부. 기본 생성 시 PRIVATE입니다.
+ * 스토리 공개 여부. 간편 제작에서 생략하면 PUBLIC입니다.
  */
 export type StoryDetailResponseVisibility =
   (typeof StoryDetailResponseVisibility)[keyof typeof StoryDetailResponseVisibility];

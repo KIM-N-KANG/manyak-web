@@ -31,4 +31,6 @@ export interface AdminCampaignResponse {
   failedDevices?: number;
   /** @nullable */
   storyId?: string | null;
+  /** @nullable */
+  failureReason?: string | null;
 }

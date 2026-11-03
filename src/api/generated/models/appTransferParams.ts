@@ -5,11 +5,9 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { ReachDays } from './reachDays';
 
-export type ReachParams = {
-  segment?: string;
-  days?: ReachDays;
+export type AppTransferParams = {
   from?: string;
   to?: string;
+  days?: string;
 };

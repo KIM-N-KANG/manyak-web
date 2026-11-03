@@ -6,7 +6,7 @@
  * OpenAPI spec version: v1
  */
 
-export type MetricsParams = {
-  from?: string;
-  to?: string;
-};
+export interface ChatModelPromotionResponse {
+  turnCost?: number;
+  endsAt?: string;
+}

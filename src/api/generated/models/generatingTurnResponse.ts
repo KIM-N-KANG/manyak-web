@@ -5,9 +5,11 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { GeneratingTurnResponseType } from './generatingTurnResponseType';
 
 export interface GeneratingTurnResponse {
-  type?: string;
+  /** 생성 종류 */
+  type?: GeneratingTurnResponseType;
   userInput?: string;
   startedAt?: string;
   /** @nullable */

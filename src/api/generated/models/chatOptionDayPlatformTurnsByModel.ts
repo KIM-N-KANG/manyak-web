@@ -5,11 +5,11 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { PlatformCounts } from './platformCounts';
+import type { MetricPlatformCounts } from './metricPlatformCounts';
 
 /**
  * @nullable
  */
 export type ChatOptionDayPlatformTurnsByModel = {
-  [key: string]: PlatformCounts;
+  [key: string]: MetricPlatformCounts;
 } | null;

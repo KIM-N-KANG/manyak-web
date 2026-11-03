@@ -6,9 +6,10 @@
  * OpenAPI spec version: v1
  */
 
-export type ReachDays = (typeof ReachDays)[keyof typeof ReachDays];
+export type GetAdminConversionTurnReachDays =
+  (typeof GetAdminConversionTurnReachDays)[keyof typeof GetAdminConversionTurnReachDays];
 
-export const ReachDays = {
+export const GetAdminConversionTurnReachDays = {
   NUMBER_7: 7,
   NUMBER_30: 30,
   NUMBER_90: 90,

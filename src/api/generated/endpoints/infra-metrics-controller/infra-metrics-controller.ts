@@ -21,23 +21,26 @@ import { useQuery } from '@tanstack/react-query';
 import type { ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
+  GetAdminInfraMetricsParams,
   InfraDatabaseResponse,
   InfraMetricsResponse,
-  MetricsParams,
   TablesParams,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type metricsResponse200 = {
+export type getAdminInfraMetricsResponse200 = {
   data: InfraMetricsResponse;
   status: 200;
 };
 
-export type metricsResponseSuccess = metricsResponse200 & {
-  headers: Headers;
-};
-export const getMetricsUrl = (params?: MetricsParams) => {
+export type getAdminInfraMetricsResponseSuccess =
+  getAdminInfraMetricsResponse200 & {
+    headers: Headers;
+  };
+export const getGetAdminInfraMetricsUrl = (
+  params?: GetAdminInfraMetricsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -53,66 +56,81 @@ export const getMetricsUrl = (params?: MetricsParams) => {
     : `/api/v1/admin/infra/metrics`;
 };
 
-export const metrics = async (
-  params?: MetricsParams,
+export const getAdminInfraMetrics = async (
+  params?: GetAdminInfraMetricsParams,
   options?: RequestInit,
-): Promise<metricsResponseSuccess> => {
-  return customInstance<metricsResponseSuccess>(getMetricsUrl(params), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<getAdminInfraMetricsResponseSuccess> => {
+  return customInstance<getAdminInfraMetricsResponseSuccess>(
+    getGetAdminInfraMetricsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
-export const getMetricsQueryKey = (params?: MetricsParams) => {
+export const getGetAdminInfraMetricsQueryKey = (
+  params?: GetAdminInfraMetricsParams,
+) => {
   return [`/api/v1/admin/infra/metrics`, ...(params ? [params] : [])] as const;
 };
 
-export const getMetricsQueryOptions = <
-  TData = Awaited<ReturnType<typeof metrics>>,
+export const getGetAdminInfraMetricsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminInfraMetrics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: MetricsParams,
+  params?: GetAdminInfraMetricsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminInfraMetrics>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMetricsQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAdminInfraMetricsQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof metrics>>> = ({
-    signal,
-  }) => metrics(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminInfraMetrics>>
+  > = ({ signal }) =>
+    getAdminInfraMetrics(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof metrics>>,
+    Awaited<ReturnType<typeof getAdminInfraMetrics>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type MetricsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof metrics>>
+export type GetAdminInfraMetricsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminInfraMetrics>>
 >;
-export type MetricsQueryError = ErrorType<unknown>;
+export type GetAdminInfraMetricsQueryError = ErrorType<unknown>;
 
-export function useMetrics<
-  TData = Awaited<ReturnType<typeof metrics>>,
+export function useGetAdminInfraMetrics<
+  TData = Awaited<ReturnType<typeof getAdminInfraMetrics>>,
   TError = ErrorType<unknown>,
 >(
-  params: undefined | MetricsParams,
+  params: undefined | GetAdminInfraMetricsParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminInfraMetrics>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof metrics>>,
+          Awaited<ReturnType<typeof getAdminInfraMetrics>>,
           TError,
-          Awaited<ReturnType<typeof metrics>>
+          Awaited<ReturnType<typeof getAdminInfraMetrics>>
         >,
         'initialData'
       >;
@@ -122,20 +140,24 @@ export function useMetrics<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMetrics<
-  TData = Awaited<ReturnType<typeof metrics>>,
+export function useGetAdminInfraMetrics<
+  TData = Awaited<ReturnType<typeof getAdminInfraMetrics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: MetricsParams,
+  params?: GetAdminInfraMetricsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminInfraMetrics>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof metrics>>,
+          Awaited<ReturnType<typeof getAdminInfraMetrics>>,
           TError,
-          Awaited<ReturnType<typeof metrics>>
+          Awaited<ReturnType<typeof getAdminInfraMetrics>>
         >,
         'initialData'
       >;
@@ -145,14 +167,18 @@ export function useMetrics<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMetrics<
-  TData = Awaited<ReturnType<typeof metrics>>,
+export function useGetAdminInfraMetrics<
+  TData = Awaited<ReturnType<typeof getAdminInfraMetrics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: MetricsParams,
+  params?: GetAdminInfraMetricsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminInfraMetrics>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -161,14 +187,18 @@ export function useMetrics<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 
-export function useMetrics<
-  TData = Awaited<ReturnType<typeof metrics>>,
+export function useGetAdminInfraMetrics<
+  TData = Awaited<ReturnType<typeof getAdminInfraMetrics>>,
   TError = ErrorType<unknown>,
 >(
-  params?: MetricsParams,
+  params?: GetAdminInfraMetricsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminInfraMetrics>>,
+        TError,
+        TData
+      >
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -176,7 +206,7 @@ export function useMetrics<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMetricsQueryOptions(params, options);
+  const queryOptions = getGetAdminInfraMetricsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

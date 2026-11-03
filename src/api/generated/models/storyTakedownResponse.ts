@@ -9,10 +9,10 @@ import type { StoryTakedownResponseTakedownReason } from './storyTakedownRespons
 import type { StoryTakedownResponseVisibility } from './storyTakedownResponseVisibility';
 
 export interface StoryTakedownResponse {
-  storyId?: string;
-  visibility?: StoryTakedownResponseVisibility;
-  takedownReason?: StoryTakedownResponseTakedownReason;
+  storyId: string;
+  visibility: StoryTakedownResponseVisibility;
+  takedownReason: StoryTakedownResponseTakedownReason;
   /** @nullable */
-  takedownReasonDetail?: string | null;
-  takenDownAt?: string;
+  takedownReasonDetail: string | null;
+  takenDownAt: string;
 }

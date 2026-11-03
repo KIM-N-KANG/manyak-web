@@ -29,6 +29,7 @@ import type {
   BatchStoryRequest,
   CreateGeneralStoryRequest,
   GenreCatalogResponse,
+  GetExploreStoriesParams,
   GetLorebooksParams,
   GetPublicStoriesParams,
   GetStoriesGenresParams,
@@ -2279,6 +2280,205 @@ export function useGetStoriesGenres<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetStoriesGenresQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type getExploreStoriesResponse200 = {
+  data: StoryPageResponse;
+  status: 200;
+};
+
+export type getExploreStoriesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type getExploreStoriesResponseSuccess = getExploreStoriesResponse200 & {
+  headers: Headers;
+};
+export type getExploreStoriesResponseError = getExploreStoriesResponse400 & {
+  headers: Headers;
+};
+
+export const getGetExploreStoriesUrl = (params?: GetExploreStoriesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/stories/explore?${stringifiedParams}`
+    : `/api/v1/stories/explore`;
+};
+
+/**
+ * 표지가 있는 공개 스토리를 무작위 순서로 반환합니다. 회원은 자신의 스토리가 제외됩니다. 다음 커서는 같은 순서를 유지합니다.
+ * @summary 탐색 목록 조회
+ */
+export const getExploreStories = async (
+  params?: GetExploreStoriesParams,
+  options?: RequestInit,
+): Promise<getExploreStoriesResponseSuccess> => {
+  return customInstance<getExploreStoriesResponseSuccess>(
+    getGetExploreStoriesUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getGetExploreStoriesQueryKey = (
+  params?: GetExploreStoriesParams,
+) => {
+  return [`/api/v1/stories/explore`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetExploreStoriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getExploreStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetExploreStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getExploreStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetExploreStoriesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getExploreStories>>
+  > = ({ signal }) => getExploreStories(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getExploreStories>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetExploreStoriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getExploreStories>>
+>;
+export type GetExploreStoriesQueryError = ErrorType<void>;
+
+export function useGetExploreStories<
+  TData = Awaited<ReturnType<typeof getExploreStories>>,
+  TError = ErrorType<void>,
+>(
+  params: undefined | GetExploreStoriesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getExploreStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getExploreStories>>,
+          TError,
+          Awaited<ReturnType<typeof getExploreStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetExploreStories<
+  TData = Awaited<ReturnType<typeof getExploreStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetExploreStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getExploreStories>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getExploreStories>>,
+          TError,
+          Awaited<ReturnType<typeof getExploreStories>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetExploreStories<
+  TData = Awaited<ReturnType<typeof getExploreStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetExploreStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getExploreStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 탐색 목록 조회
+ */
+
+export function useGetExploreStories<
+  TData = Awaited<ReturnType<typeof getExploreStories>>,
+  TError = ErrorType<void>,
+>(
+  params?: GetExploreStoriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getExploreStories>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetExploreStoriesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

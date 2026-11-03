@@ -513,8 +513,15 @@ export const CHAT_MODELS_FIXTURE = [
     name: '라이트',
     turnCost: CREDIT_POLICY_FIXTURE.chatTurnCost,
     isDefault: false,
+    promotion: null,
   },
-  { code: 'AURORA', name: '오로라', turnCost: 50, isDefault: true },
+  {
+    code: 'AURORA',
+    name: '오로라',
+    turnCost: 50,
+    isDefault: true,
+    promotion: null,
+  },
 ] as const satisfies Required<ChatModelResponse>[];
 
 /**

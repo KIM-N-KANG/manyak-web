@@ -44,7 +44,7 @@ export interface StoryDetailResponse {
   likeCount?: number;
   /** 스토리 시작 설정 목록(등록 순서, KNK-515 복수화). 각 시작 설정에 추천 입력·엔딩이 종속된다. 시작 설정이 없는 스토리는 빈 배열입니다. */
   startSettings?: StoryStartSettingResponse[];
-  /** 스토리 공개 여부. 기본 생성 시 PRIVATE입니다. */
+  /** 스토리 공개 여부. 간편 제작에서 생략하면 PUBLIC입니다. */
   visibility?: StoryDetailResponseVisibility;
   /** 등록 상태 */
   status?: StoryDetailResponseStatus;

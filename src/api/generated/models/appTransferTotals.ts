@@ -5,10 +5,9 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { SourceUsers } from './sourceUsers';
 
-export type RetentionParams = {
-  cohort?: string;
-  from?: string;
-  to?: string;
-  days?: string;
-};
+export interface AppTransferTotals {
+  bannerNewUsers?: number;
+  newUsersBySource?: SourceUsers[];
+}

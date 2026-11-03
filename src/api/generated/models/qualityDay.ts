@@ -5,6 +5,7 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { QualityActivity } from './qualityActivity';
 import type { QualityDayMessagesByInputMode } from './qualityDayMessagesByInputMode';
 import type { QualityDayUsers } from './qualityDayUsers';
 
@@ -15,4 +16,5 @@ export interface QualityDay {
   /** @nullable */
   streamErrorRate?: number | null;
   users?: QualityDayUsers;
+  activity?: QualityActivity;
 }

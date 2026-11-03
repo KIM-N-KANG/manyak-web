@@ -23,10 +23,4 @@ export interface AdminNoticeResponse {
   createdBy?: NoticeAuthorResponse;
   createdAt?: string;
   updatedAt?: string;
-  /** @nullable */
-  notificationTitle?: string | null;
-  /** @nullable */
-  notificationBody?: string | null;
-  /** @nullable */
-  notified?: boolean | null;
 }
