@@ -252,6 +252,9 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByText(STORY_VISIBILITY_COPY.PRIVATE, { exact: true }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('main').getByRole('heading', { level: 2 }),
+    ).toHaveText([`${CREATED_STORY_LIST_COPY.storySection}2`]);
     await page
       .getByRole('button', { name: '스토리 옵션 더보기' })
       .first()
@@ -301,7 +304,7 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(
       page.getByRole('main').getByRole('heading', { level: 2 }),
-    ).toHaveCount(0);
+    ).toHaveText([`${CREATED_STORY_LIST_COPY.storySection}1`]);
     await expect(
       page.getByRole('link', { name: CREATE_STORY_FAB_COPY.accessibleLabel }),
     ).toBeVisible();
