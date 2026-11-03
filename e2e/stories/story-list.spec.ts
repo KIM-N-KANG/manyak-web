@@ -507,7 +507,7 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
   });
 
-  test('홈 카드는 제목, 한 줄 소개와 대화 수를 보이고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (STORY-LIST-29)', async ({
+  test('홈 카드는 표지에 턴 수, 아래에 제목, 한 줄 소개와 장르를 보이고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (STORY-LIST-29)', async ({
     page,
   }) => {
     await mockHomeStories(page, [
@@ -519,6 +519,7 @@ test.describe('홈·제작 스토리 목록', () => {
       {
         ...story('u1', '사용자 이야기'),
         author: { id: 2, nickname: '작가', profileImageUrl: null },
+        genres: ['로맨스 판타지', '아카데미', '미스터리', '성장'],
       },
     ]);
 
@@ -530,8 +531,23 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(originalCard.getByText('한 줄 소개입니다')).toBeVisible();
     await expect(originalCard.getByText('누적 턴 수 302')).toBeVisible();
+    // 장르 배지는 너비를 재는 숨은 사본이 함께 있어 보이는 것만 고른다.
+    await expect(
+      originalCard
+        .getByText('판타지', { exact: true })
+        .filter({ visible: true }),
+    ).toBeVisible();
     // 작성자는 상세에서 보이고 홈 카드에는 두지 않는다.
     await expect(page.getByText(/^@/)).toHaveCount(0);
+
+    // 장르는 한 줄만 보이고 넘치면 나머지 수를 +N으로 줄인다.
+    const userCard = page
+      .getByRole('listitem')
+      .filter({ hasText: '사용자 이야기' });
+
+    await expect(
+      userCard.getByText(/^\+\d+$/).filter({ visible: true }),
+    ).toBeVisible();
     // 응답의 isOriginal인 카드에만 표지 위 태그를 붙인다.
     await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
     await expect(

@@ -1,16 +1,15 @@
 'use client';
 
-import { BubbleChatIcon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryGenreBadges } from '@/features/stories/_shared/components/story-genre-badges';
+import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
-import { formatCompactCount } from '@/lib/format-count';
 import type { StoryCardSection } from '@/observability/analytics';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
@@ -78,6 +77,9 @@ export function StoryCard({
             className="absolute top-0 left-0 w-18 rounded-tl-[11px] rounded-br-[6px] backdrop-blur-md"
           />
         )}
+        <div className="absolute right-2 bottom-2">
+          <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
+        </div>
       </AspectRatio>
       <div className="flex min-w-0 flex-col px-1">
         <p className="line-clamp-1 text-base leading-6 font-semibold [word-break:normal] [text-wrap-style:auto]">
@@ -102,17 +104,11 @@ export function StoryCard({
         <p className="mt-0.5 line-clamp-2 min-h-10 text-sm leading-5 [word-break:normal] text-foreground-secondary [text-wrap-style:auto]">
           {story.oneLineIntro}
         </p>
-        <p className="mt-1.5 flex items-center gap-1 text-[13px] leading-[18px] font-medium text-foreground-secondary">
-          <HugeiconsIcon
-            icon={BubbleChatIcon}
-            className="size-3.5"
-            aria-hidden="true"
-          />
-          <span>
-            <span className="sr-only">누적 턴 수 </span>
-            {formatCompactCount(story.turnCount ?? 0)}
-          </span>
-        </p>
+        {story.genres.length > 0 ? (
+          <div className="mt-2">
+            <StoryGenreBadges genres={story.genres} size="sm" />
+          </div>
+        ) : null}
       </div>
     </article>
   );
