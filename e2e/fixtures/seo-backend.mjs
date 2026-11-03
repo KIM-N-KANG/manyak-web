@@ -53,6 +53,25 @@ createServer((request, response) => {
         nextCursor: null,
       }),
     );
+  } else if (pathname === '/api/v1/stories/home') {
+    response.end(
+      JSON.stringify({
+        sections: [
+          {
+            id: null,
+            name: '인기 스토리',
+            items: [
+              {
+                id: original.id,
+                title: original.title,
+                oneLineIntro: original.oneLineIntro,
+                isOriginal: true,
+              },
+            ],
+          },
+        ],
+      }),
+    );
   } else if (pathname === '/api/v1/stories/seo-original') {
     response.end(JSON.stringify(original));
   } else if (pathname === '/api/v1/stories/seo-private') {

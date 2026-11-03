@@ -21,14 +21,23 @@ import { useQuery } from '@tanstack/react-query';
 import type { ErrorType } from '../../../mutator/custom-instance';
 import { customInstance } from '../../../mutator/custom-instance';
 import type {
+  ActivationParams,
+  AppTransferParams,
+  AppTransferResponse,
+  CampaignActivationResponse,
   CampaignAnalyticsResponse,
   CampaignCreationResponse,
+  CampaignCreativeResponse,
+  CampaignPushOpensResponse,
+  CampaignReachResponse,
   CampaignSourceResponse,
   CampaignStoryResponse,
   Catalog200,
   CreationParams,
+  CreativesParams,
   GetAdminCampaignsAnalyticsParams,
   GetAdminCampaignsFunnelsStoryDetailParams,
+  GetAdminCampaignsReachParams,
   PushOpensParams,
   PushOpensResponse,
   SourcesParams,
@@ -333,6 +342,196 @@ export function useSources<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+export type getAdminCampaignsReachResponse200 = {
+  data: CampaignReachResponse;
+  status: 200;
+};
+
+export type getAdminCampaignsReachResponseSuccess =
+  getAdminCampaignsReachResponse200 & {
+    headers: Headers;
+  };
+export const getGetAdminCampaignsReachUrl = (
+  params?: GetAdminCampaignsReachParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/campaigns/reach?${stringifiedParams}`
+    : `/api/v1/admin/campaigns/reach`;
+};
+
+export const getAdminCampaignsReach = async (
+  params?: GetAdminCampaignsReachParams,
+  options?: RequestInit,
+): Promise<getAdminCampaignsReachResponseSuccess> => {
+  return customInstance<getAdminCampaignsReachResponseSuccess>(
+    getGetAdminCampaignsReachUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getGetAdminCampaignsReachQueryKey = (
+  params?: GetAdminCampaignsReachParams,
+) => {
+  return [
+    `/api/v1/admin/campaigns/reach`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetAdminCampaignsReachQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetAdminCampaignsReachParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAdminCampaignsReachQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAdminCampaignsReach>>
+  > = ({ signal }) =>
+    getAdminCampaignsReach(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAdminCampaignsReachQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminCampaignsReach>>
+>;
+export type GetAdminCampaignsReachQueryError = ErrorType<unknown>;
+
+export function useGetAdminCampaignsReach<
+  TData = Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | GetAdminCampaignsReachParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminCampaignsReach>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAdminCampaignsReach<
+  TData = Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetAdminCampaignsReachParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminCampaignsReach>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAdminCampaignsReach<
+  TData = Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetAdminCampaignsReachParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetAdminCampaignsReach<
+  TData = Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetAdminCampaignsReachParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAdminCampaignsReach>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAdminCampaignsReachQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export type pushOpensResponse200 = {
   data: PushOpensResponse;
   status: 200;
@@ -484,6 +683,181 @@ export function usePushOpens<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getPushOpensQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type campaignPushOpensResponse200 = {
+  data: CampaignPushOpensResponse;
+  status: 200;
+};
+
+export type campaignPushOpensResponseSuccess = campaignPushOpensResponse200 & {
+  headers: Headers;
+};
+export const getCampaignPushOpensUrl = (campaignId: string) => {
+  return `/api/v1/admin/campaigns/push-opens/${campaignId}`;
+};
+
+export const campaignPushOpens = async (
+  campaignId: string,
+  options?: RequestInit,
+): Promise<campaignPushOpensResponseSuccess> => {
+  return customInstance<campaignPushOpensResponseSuccess>(
+    getCampaignPushOpensUrl(campaignId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getCampaignPushOpensQueryKey = (campaignId: string) => {
+  return [`/api/v1/admin/campaigns/push-opens/${campaignId}`] as const;
+};
+
+export const getCampaignPushOpensQueryOptions = <
+  TData = Awaited<ReturnType<typeof campaignPushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  campaignId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof campaignPushOpens>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getCampaignPushOpensQueryKey(campaignId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof campaignPushOpens>>
+  > = ({ signal }) =>
+    campaignPushOpens(campaignId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: campaignId !== null && campaignId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof campaignPushOpens>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CampaignPushOpensQueryResult = NonNullable<
+  Awaited<ReturnType<typeof campaignPushOpens>>
+>;
+export type CampaignPushOpensQueryError = ErrorType<unknown>;
+
+export function useCampaignPushOpens<
+  TData = Awaited<ReturnType<typeof campaignPushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  campaignId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof campaignPushOpens>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof campaignPushOpens>>,
+          TError,
+          Awaited<ReturnType<typeof campaignPushOpens>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCampaignPushOpens<
+  TData = Awaited<ReturnType<typeof campaignPushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  campaignId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof campaignPushOpens>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof campaignPushOpens>>,
+          TError,
+          Awaited<ReturnType<typeof campaignPushOpens>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCampaignPushOpens<
+  TData = Awaited<ReturnType<typeof campaignPushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  campaignId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof campaignPushOpens>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCampaignPushOpens<
+  TData = Awaited<ReturnType<typeof campaignPushOpens>>,
+  TError = ErrorType<unknown>,
+>(
+  campaignId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof campaignPushOpens>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCampaignPushOpensQueryOptions(campaignId, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -838,6 +1212,486 @@ export function useCreation<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getCreationQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type activationResponse200 = {
+  data: CampaignActivationResponse;
+  status: 200;
+};
+
+export type activationResponseSuccess = activationResponse200 & {
+  headers: Headers;
+};
+export const getActivationUrl = (params?: ActivationParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/campaigns/funnels/activation?${stringifiedParams}`
+    : `/api/v1/admin/campaigns/funnels/activation`;
+};
+
+export const activation = async (
+  params?: ActivationParams,
+  options?: RequestInit,
+): Promise<activationResponseSuccess> => {
+  return customInstance<activationResponseSuccess>(getActivationUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getActivationQueryKey = (params?: ActivationParams) => {
+  return [
+    `/api/v1/admin/campaigns/funnels/activation`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getActivationQueryOptions = <
+  TData = Awaited<ReturnType<typeof activation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof activation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getActivationQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof activation>>> = ({
+    signal,
+  }) => activation(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof activation>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ActivationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof activation>>
+>;
+export type ActivationQueryError = ErrorType<unknown>;
+
+export function useActivation<
+  TData = Awaited<ReturnType<typeof activation>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | ActivationParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof activation>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof activation>>,
+          TError,
+          Awaited<ReturnType<typeof activation>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useActivation<
+  TData = Awaited<ReturnType<typeof activation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof activation>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof activation>>,
+          TError,
+          Awaited<ReturnType<typeof activation>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useActivation<
+  TData = Awaited<ReturnType<typeof activation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof activation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useActivation<
+  TData = Awaited<ReturnType<typeof activation>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ActivationParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof activation>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getActivationQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type creativesResponse200 = {
+  data: CampaignCreativeResponse;
+  status: 200;
+};
+
+export type creativesResponseSuccess = creativesResponse200 & {
+  headers: Headers;
+};
+export const getCreativesUrl = (params?: CreativesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/campaigns/creatives?${stringifiedParams}`
+    : `/api/v1/admin/campaigns/creatives`;
+};
+
+export const creatives = async (
+  params?: CreativesParams,
+  options?: RequestInit,
+): Promise<creativesResponseSuccess> => {
+  return customInstance<creativesResponseSuccess>(getCreativesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getCreativesQueryKey = (params?: CreativesParams) => {
+  return [
+    `/api/v1/admin/campaigns/creatives`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getCreativesQueryOptions = <
+  TData = Awaited<ReturnType<typeof creatives>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CreativesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof creatives>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getCreativesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof creatives>>> = ({
+    signal,
+  }) => creatives(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof creatives>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CreativesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof creatives>>
+>;
+export type CreativesQueryError = ErrorType<unknown>;
+
+export function useCreatives<
+  TData = Awaited<ReturnType<typeof creatives>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | CreativesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof creatives>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creatives>>,
+          TError,
+          Awaited<ReturnType<typeof creatives>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCreatives<
+  TData = Awaited<ReturnType<typeof creatives>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CreativesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof creatives>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creatives>>,
+          TError,
+          Awaited<ReturnType<typeof creatives>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCreatives<
+  TData = Awaited<ReturnType<typeof creatives>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CreativesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof creatives>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCreatives<
+  TData = Awaited<ReturnType<typeof creatives>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: CreativesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof creatives>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCreativesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type appTransferResponse200 = {
+  data: AppTransferResponse;
+  status: 200;
+};
+
+export type appTransferResponseSuccess = appTransferResponse200 & {
+  headers: Headers;
+};
+export const getAppTransferUrl = (params?: AppTransferParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/campaigns/app-transfer?${stringifiedParams}`
+    : `/api/v1/admin/campaigns/app-transfer`;
+};
+
+export const appTransfer = async (
+  params?: AppTransferParams,
+  options?: RequestInit,
+): Promise<appTransferResponseSuccess> => {
+  return customInstance<appTransferResponseSuccess>(getAppTransferUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAppTransferQueryKey = (params?: AppTransferParams) => {
+  return [
+    `/api/v1/admin/campaigns/app-transfer`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getAppTransferQueryOptions = <
+  TData = Awaited<ReturnType<typeof appTransfer>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppTransferParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appTransfer>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAppTransferQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof appTransfer>>> = ({
+    signal,
+  }) => appTransfer(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof appTransfer>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AppTransferQueryResult = NonNullable<
+  Awaited<ReturnType<typeof appTransfer>>
+>;
+export type AppTransferQueryError = ErrorType<unknown>;
+
+export function useAppTransfer<
+  TData = Awaited<ReturnType<typeof appTransfer>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | AppTransferParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appTransfer>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appTransfer>>,
+          TError,
+          Awaited<ReturnType<typeof appTransfer>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAppTransfer<
+  TData = Awaited<ReturnType<typeof appTransfer>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppTransferParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appTransfer>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appTransfer>>,
+          TError,
+          Awaited<ReturnType<typeof appTransfer>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAppTransfer<
+  TData = Awaited<ReturnType<typeof appTransfer>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppTransferParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appTransfer>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useAppTransfer<
+  TData = Awaited<ReturnType<typeof appTransfer>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AppTransferParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof appTransfer>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAppTransferQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

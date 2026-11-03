@@ -26,6 +26,9 @@ export const PutBody = zod.object({
       container: zod.boolean().optional(),
       string: zod.boolean().optional(),
       number: zod.boolean().optional(),
+      floatingPointNumber: zod.boolean().optional(),
+      missingNode: zod.boolean().optional(),
+      integralNumber: zod.boolean().optional(),
       nodeType: zod
         .enum([
           'ARRAY',
@@ -51,9 +54,6 @@ export const PutBody = zod.object({
       textual: zod.boolean().optional(),
       boolean: zod.boolean().optional(),
       binary: zod.boolean().optional(),
-      floatingPointNumber: zod.boolean().optional(),
-      missingNode: zod.boolean().optional(),
-      integralNumber: zod.boolean().optional(),
       array: zod.boolean().optional(),
       empty: zod.boolean().optional(),
       null: zod.boolean().optional(),
@@ -537,6 +537,48 @@ export const DeleteAdminCreditsPoliciesByPolicyKeyBody = zod.object({
 
 export const DeleteAdminCreditsPoliciesByPolicyKeyResponse = zod.unknown();
 
+export const PutAdminChatModelsByCodePromotionParams = zod.object({
+  code: zod.string(),
+});
+
+export const putAdminChatModelsByCodePromotionBodyTurnCostMin = 0;
+export const putAdminChatModelsByCodePromotionBodyTurnCostMax = 10000;
+
+export const putAdminChatModelsByCodePromotionBodyReasonMin = 0;
+export const putAdminChatModelsByCodePromotionBodyReasonMax = 500;
+
+export const PutAdminChatModelsByCodePromotionBody = zod.object({
+  turnCost: zod
+    .number()
+    .min(putAdminChatModelsByCodePromotionBodyTurnCostMin)
+    .max(putAdminChatModelsByCodePromotionBodyTurnCostMax)
+    .optional(),
+  startsAt: zod.iso.datetime({ offset: true }).optional(),
+  endsAt: zod.iso.datetime({ offset: true }).optional(),
+  reason: zod
+    .string()
+    .min(putAdminChatModelsByCodePromotionBodyReasonMin)
+    .max(putAdminChatModelsByCodePromotionBodyReasonMax),
+});
+
+export const PutAdminChatModelsByCodePromotionResponse = zod.unknown();
+
+export const DeleteAdminChatModelsByCodePromotionParams = zod.object({
+  code: zod.string(),
+});
+
+export const deleteAdminChatModelsByCodePromotionBodyReasonMin = 0;
+export const deleteAdminChatModelsByCodePromotionBodyReasonMax = 500;
+
+export const DeleteAdminChatModelsByCodePromotionBody = zod.object({
+  reason: zod
+    .string()
+    .min(deleteAdminChatModelsByCodePromotionBodyReasonMin)
+    .max(deleteAdminChatModelsByCodePromotionBodyReasonMax),
+});
+
+export const DeleteAdminChatModelsByCodePromotionResponse = zod.unknown();
+
 /**
  * raw body HMAC 검증 후 결제 적립·환불 회수를 처리합니다. 타임스탬프·서명 오류 401, JSON 오류 400, 시크릿 미설정 503.
  * @summary 그로블 결제 웹훅 수신
@@ -739,7 +781,7 @@ export const createSimpleStoryBodyAdditionalInfosItemMax = 100;
 export const createSimpleStoryBodyAdditionalInfosMin = 0;
 export const createSimpleStoryBodyAdditionalInfosMax = 13;
 
-export const createSimpleStoryBodyVisibilityDefault = `PRIVATE`;
+export const createSimpleStoryBodyVisibilityDefault = `PUBLIC`;
 
 export const CreateSimpleStoryBody = zod
   .object({
@@ -780,7 +822,7 @@ export const CreateSimpleStoryBody = zod
       .enum(['PUBLIC', 'PRIVATE'])
       .default(createSimpleStoryBodyVisibilityDefault)
       .describe(
-        '공개 범위. PUBLIC 또는 PRIVATE이며 생략하면 PRIVATE. 게스트도 PUBLIC을 지정할 수 있고, 회원 계정으로 이관된 뒤 공개 목록과 검색에 실립니다.',
+        '공개 범위. PUBLIC 또는 PRIVATE이며 생략하면 PUBLIC. 게스트 공개 스토리도 작성자 없이 공개 목록과 검색에 실립니다.',
       ),
     draftId: zod
       .uuid()
@@ -1433,6 +1475,39 @@ export const RegenerateChatTurnBody = zod
 export const RegenerateChatTurnResponse = zod.unknown();
 
 /**
+ * 대상 턴부터 숨기고 새 입력으로 생성합니다. 엔딩에 도달한 채팅도 허용하며 과금과 체험은 이어쓰기와 같습니다.
+ * @summary 채팅 입력 수정
+ */
+export const EditChatTurnParams = zod.object({
+  chatId: zod.string().describe('채팅 ID(공개 식별자)'),
+});
+
+export const EditChatTurnHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
+export const editChatTurnBodyUserInputMin = 0;
+export const editChatTurnBodyUserInputMax = 3000;
+
+export const editChatTurnBodyUserSourceRegExp = new RegExp(
+  'choice|edited_choice|typed',
+);
+
+export const EditChatTurnBody = zod
+  .object({
+    turnId: zod.number().optional(),
+    userInput: zod
+      .string()
+      .min(editChatTurnBodyUserInputMin)
+      .max(editChatTurnBodyUserInputMax),
+    userSource: zod.string().regex(editChatTurnBodyUserSourceRegExp).nullish(),
+    realtimeImage: zod.boolean().optional(),
+  })
+  .describe('채팅 입력 수정 요청');
+
+export const EditChatTurnResponse = zod.unknown();
+
+/**
  * 발급 시점까지의 채팅을 읽기 전용으로 여는 공유 링크를 발급합니다(스펙 §4-3-11). 요청 본문은 없습니다. 접근 규칙은 채팅 상세 조회와 동일하며(소유 채팅은 소유자만, 소유자 없는 게스트 채팅은 게스트만), 같은 커트라인으로 다시 호출하면 새로 만들지 않고 기존 공유를 그대로 반환합니다(멱등). 턴이 진행된 뒤 발급하면 새 커트라인의 공유가 새로 생기며, 기존 공유도 계속 유효합니다.
  * @summary 채팅 공유 발급
  */
@@ -1441,6 +1516,24 @@ export const CreateChatShareParams = zod.object({
 });
 
 export const CreateChatShareResponse = zod.void();
+
+/**
+ * 회원 소유 채팅을 대상 턴의 AI 응답까지 무료로 복사합니다. 원본은 바꾸지 않습니다.
+ * @summary 채팅 포크
+ */
+export const ForkParams = zod.object({
+  chatId: zod.string(),
+});
+
+export const ForkBody = zod.object({
+  turnId: zod
+    .number()
+    .min(1)
+    .optional()
+    .describe('복사할 마지막 턴의 turns[].id'),
+});
+
+export const ForkResponse = zod.void();
 
 /**
  * 클라이언트가 로컬스토리지에 보관 중인 chatId 목록으로 이전 채팅 목록을 조회합니다.
@@ -1636,9 +1729,13 @@ export const CompleteResponse = zod
   .describe('토큰 발급\/회전 응답');
 
 /**
- * 로그인 직후, 기기(localStorage)에 쌓인 게스트 스토리·채팅의 공개 ID 목록을 제출받아 요청자 계정으로 소유권을 이관(클레임)합니다. user_id가 NULL인 행에만 설정하며, 항목별 결과를 status로 반환합니다. 효과는 멱등하고, 일부 항목이 충돌해도 전체를 롤백하지 않습니다.
+ * 로그인 직후, 기기(localStorage)에 쌓인 게스트 스토리·채팅의 공개 ID 목록을 제출받아 요청자 계정으로 소유권을 이관(클레임)합니다. user_id가 NULL인 행에만 설정하며, 항목별 결과를 status로 반환합니다. 스토리는 완성 요청의 기기 해시와 X-Manyak-Device-Id가 일치해야 하며, 기기 기록이 없으면 발행된 공개 스토리의 이관을 거부합니다. 효과는 멱등하고, 일부 항목이 충돌해도 전체를 롤백하지 않습니다.
  * @summary 게스트 데이터 마이그레이션
  */
+export const MigrateHeader = zod.object({
+  'X-Manyak-Device-Id': zod.string().optional(),
+});
+
 export const migrateBodyStoryIdsMin = 0;
 export const migrateBodyStoryIdsMax = 100;
 
@@ -1839,6 +1936,7 @@ export const PostAdminPushCampaignsBody = zod.object({
     .min(postAdminPushCampaignsBodyReasonMin)
     .max(postAdminPushCampaignsBodyReasonMax),
   storyId: zod.uuid().nullish(),
+  noticeId: zod.uuid().nullish(),
 });
 
 export const PostAdminPushCampaignsResponse = zod.void();
@@ -1960,18 +2058,6 @@ export const postAdminNoticesBodyTitleMax = 100;
 export const postAdminNoticesBodyBodyMin = 0;
 export const postAdminNoticesBodyBodyMax = 5000;
 
-export const postAdminNoticesBodyNotificationTitleMin = 0;
-export const postAdminNoticesBodyNotificationTitleMax = 100;
-
-export const postAdminNoticesBodyNotificationTitleRegExp = new RegExp(
-  '(?sU).*\\S.*',
-);
-export const postAdminNoticesBodyNotificationBodyMin = 0;
-export const postAdminNoticesBodyNotificationBodyMax = 300;
-
-export const postAdminNoticesBodyNotificationBodyRegExp = new RegExp(
-  '(?sU).*\\S.*',
-);
 export const postAdminNoticesBodyReasonMin = 0;
 export const postAdminNoticesBodyReasonMax = 500;
 
@@ -1985,16 +2071,6 @@ export const PostAdminNoticesBody = zod.object({
     .min(postAdminNoticesBodyBodyMin)
     .max(postAdminNoticesBodyBodyMax),
   tag: zod.enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION']),
-  notificationTitle: zod
-    .string()
-    .min(postAdminNoticesBodyNotificationTitleMin)
-    .max(postAdminNoticesBodyNotificationTitleMax)
-    .regex(postAdminNoticesBodyNotificationTitleRegExp),
-  notificationBody: zod
-    .string()
-    .min(postAdminNoticesBodyNotificationBodyMin)
-    .max(postAdminNoticesBodyNotificationBodyMax)
-    .regex(postAdminNoticesBodyNotificationBodyRegExp),
   reason: zod
     .string()
     .min(postAdminNoticesBodyReasonMin)
@@ -2033,13 +2109,58 @@ export const TakedownParams = zod.object({
   storyId: zod.uuid(),
 });
 
-export const TakedownBody = zod.object({
-  reasonCode: zod
-    .enum(['SEXUAL_CONTENT', 'COPYRIGHT_INFRINGEMENT', 'HATE_SPEECH', 'ETC'])
-    .optional(),
-  reasonDetail: zod.string().nullish(),
-  memo: zod.string().nullish(),
-});
+export const takedownBodyTwoReasonDetailMax = 100;
+
+export const takedownBodyTwoReasonDetailRegExp = new RegExp('(?sU).*\\S.*');
+export const takedownBodyThreeReasonDetailMax = 100;
+
+export const takedownBodyThreeReasonDetailRegExp = new RegExp('(?sU).*\\S.*');
+export const takedownBodyThreeMemoMax = 500;
+
+export const takedownBodyThreeMemoRegExp = new RegExp('(?sU).*\\S.*');
+
+export const TakedownBody = zod
+  .union([
+    zod.object({
+      reasonCode: zod.enum([
+        'SEXUAL_CONTENT',
+        'COPYRIGHT_INFRINGEMENT',
+        'HATE_SPEECH',
+      ]),
+      reasonDetail: zod.null().optional(),
+    }),
+    zod.object({
+      reasonCode: zod.enum(['ETC']),
+      reasonDetail: zod
+        .string()
+        .min(1)
+        .max(takedownBodyTwoReasonDetailMax)
+        .regex(takedownBodyTwoReasonDetailRegExp),
+    }),
+  ])
+  .and(
+    zod.object({
+      reasonCode: zod.enum([
+        'SEXUAL_CONTENT',
+        'COPYRIGHT_INFRINGEMENT',
+        'HATE_SPEECH',
+        'ETC',
+      ]),
+      reasonDetail: zod
+        .string()
+        .min(1)
+        .max(takedownBodyThreeReasonDetailMax)
+        .regex(takedownBodyThreeReasonDetailRegExp)
+        .nullish()
+        .describe('ETC일 때 필수이며 다른 사유에서는 생략 또는 null'),
+      memo: zod
+        .string()
+        .min(1)
+        .max(takedownBodyThreeMemoMax)
+        .regex(takedownBodyThreeMemoRegExp)
+        .nullish(),
+    }),
+  );
 
 export const TakedownResponse = zod.unknown();
 
@@ -2081,6 +2202,59 @@ export const UnsuspendBody = zod.object({
 });
 
 export const UnsuspendResponse = zod.unknown();
+
+export const GetAdminHomeSectionsResponse = zod.unknown();
+
+export const postAdminHomeSectionsBodyNameMax = 30;
+
+export const postAdminHomeSectionsBodyItemLimitMax = 20;
+
+export const postAdminHomeSectionsBodyReasonMax = 500;
+
+export const PostAdminHomeSectionsBody = zod
+  .object({
+    name: zod
+      .string()
+      .min(1)
+      .max(postAdminHomeSectionsBodyNameMax)
+      .describe('이름. 앞뒤 공백 제거 후 1~30자'),
+    source: zod.enum(['MANUAL', 'FILTER']).describe('스토리 출처'),
+    storyIds: zod
+      .array(zod.string())
+      .nullish()
+      .describe('MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지'),
+    genres: zod
+      .array(zod.string())
+      .nullish()
+      .describe(
+        'FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거',
+      ),
+    originalOnly: zod.boolean().nullish().describe('FILTER 전용. 기본값 false'),
+    sort: zod
+      .enum(['popular', 'latest', 'likes', 'chats'])
+      .nullish()
+      .describe('FILTER 필수. 공개 목록 정렬'),
+    itemLimit: zod
+      .number()
+      .min(1)
+      .max(postAdminHomeSectionsBodyItemLimitMax)
+      .nullish()
+      .describe('카드 상한. 기본값 20'),
+    sortOrder: zod
+      .number()
+      .min(1)
+      .nullish()
+      .describe('노출 순서. 등록 생략 시 현재 최댓값 + 1'),
+    reason: zod
+      .string()
+      .min(1)
+      .max(postAdminHomeSectionsBodyReasonMax)
+      .describe('변경 사유 1~500자'),
+    isActive: zod.boolean().nullish().describe('활성 여부. 기본값 true'),
+  })
+  .describe('홈 섹션 등록 요청');
+
+export const PostAdminHomeSectionsResponse = zod.void();
 
 export const adjustBodyAmountMax = 100000;
 
@@ -2518,15 +2692,6 @@ export const PatchAdminNoticesByNoticeIdParams = zod.object({
   noticeId: zod.uuid(),
 });
 
-export const patchAdminNoticesByNoticeIdBodyNotificationTitleMax = 100;
-
-export const patchAdminNoticesByNoticeIdBodyNotificationTitleRegExp =
-  new RegExp('(?sU).*\\S.*');
-export const patchAdminNoticesByNoticeIdBodyNotificationBodyMax = 300;
-
-export const patchAdminNoticesByNoticeIdBodyNotificationBodyRegExp = new RegExp(
-  '(?sU).*\\S.*',
-);
 export const patchAdminNoticesByNoticeIdBodyTitleMax = 100;
 
 export const patchAdminNoticesByNoticeIdBodyTitleRegExp = new RegExp(
@@ -2543,18 +2708,6 @@ export const patchAdminNoticesByNoticeIdBodyReasonMax = 500;
 export const PatchAdminNoticesByNoticeIdBody = zod.object({
   tag: zod
     .enum(['SERVICE', 'UPDATE', 'MAINTENANCE', 'EVENT', 'PROMOTION'])
-    .nullish(),
-  notificationTitle: zod
-    .string()
-    .min(1)
-    .max(patchAdminNoticesByNoticeIdBodyNotificationTitleMax)
-    .regex(patchAdminNoticesByNoticeIdBodyNotificationTitleRegExp)
-    .nullish(),
-  notificationBody: zod
-    .string()
-    .min(1)
-    .max(patchAdminNoticesByNoticeIdBodyNotificationBodyMax)
-    .regex(patchAdminNoticesByNoticeIdBodyNotificationBodyRegExp)
     .nullish(),
   title: zod
     .string()
@@ -2576,8 +2729,82 @@ export const PatchAdminNoticesByNoticeIdBody = zod.object({
 
 export const PatchAdminNoticesByNoticeIdResponse = zod.unknown();
 
+export const DeleteAdminHomeSectionsBySectionIdParams = zod.object({
+  sectionId: zod.uuid(),
+});
+
+export const deleteAdminHomeSectionsBySectionIdBodyReasonMax = 500;
+
+export const DeleteAdminHomeSectionsBySectionIdBody = zod
+  .object({
+    reason: zod
+      .string()
+      .min(1)
+      .max(deleteAdminHomeSectionsBySectionIdBodyReasonMax)
+      .describe('변경 사유 1~500자'),
+  })
+  .describe('홈 섹션 삭제 요청');
+
+export const DeleteAdminHomeSectionsBySectionIdResponse = zod.void();
+
+export const PatchAdminHomeSectionsBySectionIdParams = zod.object({
+  sectionId: zod.uuid(),
+});
+
+export const patchAdminHomeSectionsBySectionIdBodyNameMax = 30;
+
+export const patchAdminHomeSectionsBySectionIdBodyItemLimitMax = 20;
+
+export const patchAdminHomeSectionsBySectionIdBodyReasonMax = 500;
+
+export const PatchAdminHomeSectionsBySectionIdBody = zod
+  .object({
+    name: zod
+      .string()
+      .min(1)
+      .max(patchAdminHomeSectionsBySectionIdBodyNameMax)
+      .nullish()
+      .describe('이름. 앞뒤 공백 제거 후 1~30자'),
+    source: zod.enum(['MANUAL', 'FILTER']).nullish().describe('스토리 출처'),
+    storyIds: zod
+      .array(zod.string())
+      .nullish()
+      .describe('MANUAL 필수. 스토리 공개 UUID 1~20개, 지정 순서 유지'),
+    genres: zod
+      .array(zod.string())
+      .nullish()
+      .describe(
+        'FILTER 전용. 활성 제공 장르 정식 이름 최대 10개. 빈 배열은 조건 제거',
+      ),
+    originalOnly: zod.boolean().nullish().describe('FILTER 전용. 기본값 false'),
+    sort: zod
+      .enum(['popular', 'latest', 'likes', 'chats'])
+      .nullish()
+      .describe('FILTER 필수. 공개 목록 정렬'),
+    itemLimit: zod
+      .number()
+      .min(1)
+      .max(patchAdminHomeSectionsBySectionIdBodyItemLimitMax)
+      .nullish()
+      .describe('카드 상한. 기본값 20'),
+    sortOrder: zod
+      .number()
+      .min(1)
+      .nullish()
+      .describe('노출 순서. 등록 생략 시 현재 최댓값 + 1'),
+    reason: zod
+      .string()
+      .min(1)
+      .max(patchAdminHomeSectionsBySectionIdBodyReasonMax)
+      .describe('변경 사유 1~500자'),
+    isActive: zod.boolean().nullish().describe('활성 여부. 기본값 true'),
+  })
+  .describe('홈 섹션 부분 수정. 보낸 필드만 반영 요청');
+
+export const PatchAdminHomeSectionsBySectionIdResponse = zod.unknown();
+
 /**
- * 인증 선택. 게스트는 X-Manyak-Device-Id 필수. 회원 스토리라인 limit은 null(무제한).
+ * 인증 선택. 게스트는 X-Manyak-Device-Id 필수. 회원 스토리라인과 LITE 무료 프로모션 진행 중 회원 chatTurn의 limit은 null(무제한).
  * @summary 체험 사용량·한도 조회
  */
 export const GetTrialsHeader = zod.object({
@@ -2776,6 +3003,8 @@ export const GetLorebooksQueryParams = zod.object({
 
 export const GetLorebooksResponse = zod.unknown();
 
+export const HomeResponse = zod.unknown();
+
 /**
  * 게스트 허용. query 원문 30자 이하, 공백과 대소문자를 무시하고 초성 및 별칭 검색. 빈 질의는 전체, 대표 목록은 항상 반환합니다.
  * @summary 제공 장르 조회와 검색
@@ -2785,6 +3014,25 @@ export const GetStoriesGenresQueryParams = zod.object({
 });
 
 export const GetStoriesGenresResponse = zod.unknown();
+
+/**
+ * 표지가 있는 공개 스토리를 무작위 순서로 반환합니다. 회원은 자신의 스토리가 제외됩니다. 다음 커서는 같은 순서를 유지합니다.
+ * @summary 탐색 목록 조회
+ */
+export const getExploreStoriesQueryLimitDefault = 20;
+
+export const GetExploreStoriesQueryParams = zod.object({
+  limit: zod
+    .number()
+    .default(getExploreStoriesQueryLimitDefault)
+    .describe('한 페이지 개수(기본 20, 1~50으로 보정)'),
+  cursor: zod
+    .string()
+    .optional()
+    .describe('이전 탐색 응답의 nextCursor. 생략하면 새 순서로 시작합니다.'),
+});
+
+export const GetExploreStoriesResponse = zod.unknown();
 
 /**
  * 게스트 허용. 활성 화풍만 노출 순서 오름차순으로 반환합니다.
@@ -2860,7 +3108,7 @@ export const ResumeGenerationParams = zod.object({
 export const ResumeGenerationResponse = zod.unknown();
 
 /**
- * 노출 중인 모델과 턴 가격을 노출 순서로 반환합니다. 회원 턴 체험은 LITE에만 적용됩니다. 인증은 선택입니다.
+ * 노출 중인 모델과 정가를 노출 순서로 반환합니다. 회원에게만 진행 중인 promotion을 제공합니다. 회원 턴 체험은 적용 가격이 양수인 LITE에만 적용됩니다. 인증은 선택입니다.
  * @summary 채팅 모델 목록
  */
 export const GetModelsResponse = zod.unknown();
@@ -2880,7 +3128,7 @@ export const SignupsQueryParams = zod.object({
 export const SignupsResponse = zod.unknown();
 
 export const SessionsQueryParams = zod.object({
-  segment: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
@@ -2889,7 +3137,7 @@ export const SessionsQueryParams = zod.object({
 export const SessionsResponse = zod.unknown();
 
 export const SessionLengthsQueryParams = zod.object({
-  segment: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
@@ -2897,14 +3145,22 @@ export const SessionLengthsQueryParams = zod.object({
 
 export const SessionLengthsResponse = zod.unknown();
 
-export const RetentionQueryParams = zod.object({
-  cohort: zod.string().optional(),
+export const GetAdminUsersRetentionQueryParams = zod.object({
+  cohort: zod.enum(['visitor', 'signup', 'first-chat']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
 });
 
-export const RetentionResponse = zod.unknown();
+export const GetAdminUsersRetentionResponse = zod.unknown();
+
+export const AppActivationQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const AppActivationResponse = zod.unknown();
 
 export const ActivityQueryParams = zod.object({
   from: zod.string().optional(),
@@ -2948,12 +3204,12 @@ export const StoriesQueryParams = zod.object({
       .min(storiesQueryRequestSupportingCharacterCountMin)
       .max(storiesQueryRequestSupportingCharacterCountMax)
       .nullish(),
-    creationMode: zod.string().nullish(),
+    creationMode: zod.enum(['GENERAL', 'SIMPLE']).nullish(),
     chatFrom: zod.string().nullish(),
     chatTo: zod.string().nullish(),
     creationFrom: zod.string().nullish(),
     creationTo: zod.string().nullish(),
-    deleted: zod.string().nullish(),
+    deleted: zod.enum(['include', 'only']).nullish(),
   }),
 });
 
@@ -2975,9 +3231,22 @@ export const StorySettingsParams = zod.object({
 
 export const StorySettingsResponse = zod.unknown();
 
+export const consumptionQueryRequestLimitMax = 50;
+
+export const ConsumptionQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+    limit: zod.number().min(1).max(consumptionQueryRequestLimitMax).optional(),
+  }),
+});
+
+export const ConsumptionResponse = zod.unknown();
+
 export const QualityQueryParams = zod.object({
   platform: zod.string().optional(),
-  segment: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
   days: zod.string().optional(),
@@ -2986,7 +3255,7 @@ export const QualityQueryParams = zod.object({
 export const QualityResponse = zod.unknown();
 
 export const GetAdminQualityChatOptionsQueryParams = zod.object({
-  segment: zod.string().optional(),
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
@@ -3062,6 +3331,16 @@ export const PaymentParams = zod.object({
 
 export const PaymentResponse = zod.unknown();
 
+export const GetAdminPaymentsMetricsQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const GetAdminPaymentsMetricsResponse = zod.unknown();
+
 export const submissionsQueryQMax = 50;
 
 export const submissionsQuerySizeMax = 100;
@@ -3092,6 +3371,16 @@ export const SubmissionParams = zod.object({
 });
 
 export const SubmissionResponse = zod.unknown();
+
+export const GetAdminModerationMetricsQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const GetAdminModerationMetricsResponse = zod.unknown();
 
 export const holdsQueryQuerySizeMax = 100;
 
@@ -3195,12 +3484,12 @@ export const AttendanceQueryParams = zod.object({
 
 export const AttendanceResponse = zod.unknown();
 
-export const MetricsQueryParams = zod.object({
+export const GetAdminInfraMetricsQueryParams = zod.object({
   from: zod.string().optional(),
   to: zod.string().optional(),
 });
 
-export const MetricsResponse = zod.unknown();
+export const GetAdminInfraMetricsResponse = zod.unknown();
 
 export const tablesQueryLimitDefault = 20;
 export const tablesQueryLimitMax = 100;
@@ -3273,14 +3562,24 @@ export const CreditTransactionsResponse = zod.unknown();
 
 export const PoliciesResponse = zod.unknown();
 
-export const ReachQueryParams = zod.object({
-  segment: zod.string().optional(),
+export const GetAdminCreditsMetricsQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const GetAdminCreditsMetricsResponse = zod.unknown();
+
+export const GetAdminConversionTurnReachQueryParams = zod.object({
+  segment: zod.enum(['all', 'guest', 'member']).optional(),
   days: zod.enum(['7', '30', '90']).optional(),
   from: zod.string().optional(),
   to: zod.string().optional(),
 });
 
-export const ReachResponse = zod.unknown();
+export const GetAdminConversionTurnReachResponse = zod.unknown();
 
 export const GetAdminConversionFunnelsByFunnelParams = zod.object({
   funnel: zod.string(),
@@ -3330,7 +3629,7 @@ export const ChatsQueryParams = zod.object({
       .nullish(),
     hasFirstMessage: zod.boolean().nullish(),
     turnDate: zod.string().nullish(),
-    deleted: zod.string().nullish(),
+    deleted: zod.enum(['include', 'only']).nullish(),
   }),
 });
 
@@ -3342,6 +3641,18 @@ export const ChatParams = zod.object({
 
 export const ChatResponse = zod.unknown();
 
+export const EngagementQueryParams = zod.object({
+  request: zod.object({
+    days: zod.enum(['7', '30', '90']).nullish(),
+    from: zod.string().nullish(),
+    to: zod.string().nullish(),
+  }),
+});
+
+export const EngagementResponse = zod.unknown();
+
+export const GetAdminChatModelsResponse = zod.unknown();
+
 export const CatalogResponse = zod.unknown();
 
 export const SourcesQueryParams = zod.object({
@@ -3352,6 +3663,15 @@ export const SourcesQueryParams = zod.object({
 
 export const SourcesResponse = zod.unknown();
 
+export const GetAdminCampaignsReachQueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const GetAdminCampaignsReachResponse = zod.unknown();
+
 export const PushOpensQueryParams = zod.object({
   from: zod.string().optional(),
   to: zod.string().optional(),
@@ -3359,6 +3679,12 @@ export const PushOpensQueryParams = zod.object({
 });
 
 export const PushOpensResponse = zod.unknown();
+
+export const CampaignPushOpensParams = zod.object({
+  campaignId: zod.uuid(),
+});
+
+export const CampaignPushOpensResponse = zod.unknown();
 
 export const GetAdminCampaignsFunnelsStoryDetailQueryParams = zod.object({
   storyId: zod.uuid().optional(),
@@ -3378,6 +3704,32 @@ export const CreationQueryParams = zod.object({
 });
 
 export const CreationResponse = zod.unknown();
+
+export const ActivationQueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const ActivationResponse = zod.unknown();
+
+export const CreativesQueryParams = zod.object({
+  campaign: zod.string().optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const CreativesResponse = zod.unknown();
+
+export const AppTransferQueryParams = zod.object({
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+  days: zod.string().optional(),
+});
+
+export const AppTransferResponse = zod.unknown();
 
 export const GetAdminCampaignsAnalyticsQueryParams = zod.object({
   campaign: zod.string().optional(),
@@ -3415,6 +3767,8 @@ export const AuditLogsQueryParams = zod.object({
         'MEMBER_UNSUSPENDED',
         'CREDIT_GRANTED',
         'CREDIT_REVOKED',
+        'CHAT_MODEL_PROMOTION_UPSERTED',
+        'CHAT_MODEL_PROMOTION_DELETED',
         'CREDIT_POLICY_UPSERTED',
         'CREDIT_POLICY_DELETED',
         'PUSH_CAMPAIGN_CREATED',
@@ -3428,6 +3782,9 @@ export const AuditLogsQueryParams = zod.object({
         'NOTICE_UNPUBLISHED',
         'NOTICE_DELETED',
         'ORIGINAL_CREATED',
+        'HOME_SECTION_CREATED',
+        'HOME_SECTION_UPDATED',
+        'HOME_SECTION_DELETED',
         'ORIGINAL_UPDATED',
         'ORIGINAL_THUMBNAIL_DELETED',
         'STORY_TAKEN_DOWN',
@@ -3439,11 +3796,13 @@ export const AuditLogsQueryParams = zod.object({
         'MEMBER_QUERY',
         'MEMBER',
         'CREDIT_POLICY',
+        'CHAT_MODEL',
         'PUSH_CAMPAIGN',
         'PUSH_TEMPLATE',
         'NOTICE',
         'SUBMISSION',
         'STORY',
+        'HOME_SECTION',
       ])
       .nullish(),
     category: zod.enum(['CHANGE', 'ACCESS']).nullish(),

@@ -10,7 +10,8 @@ import { oneLine } from '../fixtures/copy';
 import { seedStoryCompletionRequests } from '../fixtures/storage';
 import {
   expect,
-  mockPublicStories,
+  mockExploreStories,
+  mockHomeSections,
   seedStoryIds,
   test,
 } from '../fixtures/test';
@@ -287,21 +288,21 @@ test.describe('스토리 비주얼', () => {
     await expect(page).toHaveScreenshot('story-list-default.png');
   });
 
-  test('홈 오리지널 목록 (STORY-LIST)', async ({ page }) => {
-    await seedStoryIds(page, ['s1']);
-    await mockPublicStories(page, [
+  test('홈 섹션 목록 (STORY-LIST)', async ({ page }) => {
+    await mockHomeSections(page, [
       {
-        ...story('o1', '마냑의 첫 이야기'),
-        author: { id: 1, nickname: '마냑', profileImageUrl: null },
+        name: '인기 스토리',
+        items: [
+          {
+            ...story('o1', '마냑의 첫 이야기'),
+            author: { id: 1, nickname: '마냑', profileImageUrl: null },
+          },
+          { ...story('g1', '작성자 없는 이야기'), author: null },
+          story('o3', '세 번째 이야기'),
+        ],
       },
+      { name: '오리지널 스토리', items: [story('o4', '오리지널 이야기')] },
     ]);
-    await page.route(STORIES_BATCH, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([story('s1', '용의 계곡')]),
-      });
-    });
 
     await page.goto('/');
 
@@ -309,7 +310,27 @@ test.describe('스토리 비주얼', () => {
       page.getByText('마냑의 첫 이야기', { exact: true }),
     ).toBeVisible();
     await waitForFonts(page);
-    await expect(page).toHaveScreenshot('story-list-originals.png');
+    await expect(page).toHaveScreenshot('story-list-home-sections.png');
+  });
+
+  test('탐색 목록 (STORY-LIST)', async ({ page }) => {
+    await mockExploreStories(page, [
+      [
+        {
+          ...story('e1', '탐색 이야기'),
+          author: { id: 1, nickname: '마냑', profileImageUrl: null },
+        },
+        { ...story('e2', '작성자 없는 이야기'), author: null },
+      ],
+    ]);
+
+    await page.goto(APP_PATH.MAIN.EXPLORE);
+
+    await expect(
+      page.getByRole('link', { name: '탐색 이야기 상세 보기' }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('story-list-explore.png');
   });
 
   test('제작 목록 빈 상태 (STORY-LIST)', async ({ page }) => {

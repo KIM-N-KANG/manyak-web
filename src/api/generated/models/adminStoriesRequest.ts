@@ -5,6 +5,8 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { AdminStoriesRequestCreationMode } from './adminStoriesRequestCreationMode';
+import type { AdminStoriesRequestDeleted } from './adminStoriesRequestDeleted';
 
 export interface AdminStoriesRequest {
   /** @minimum 1 */
@@ -59,7 +61,7 @@ export interface AdminStoriesRequest {
    */
   supportingCharacterCount?: number | null;
   /** @nullable */
-  creationMode?: string | null;
+  creationMode?: AdminStoriesRequestCreationMode;
   /** @nullable */
   chatFrom?: string | null;
   /** @nullable */
@@ -69,5 +71,5 @@ export interface AdminStoriesRequest {
   /** @nullable */
   creationTo?: string | null;
   /** @nullable */
-  deleted?: string | null;
+  deleted?: AdminStoriesRequestDeleted;
 }

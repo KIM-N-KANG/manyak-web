@@ -21,8 +21,8 @@ export type StepName =
 /** 회원 이프 부족(402·INSUFFICIENT_CREDIT) 안내를 띄운 유료 동작 지점. */
 export type CreditShortageTrigger = 'story_create' | 'chat_turn';
 
-/** 스토리 카드가 속한 섹션. 오리지널 노출·클릭 기여를 내가 만든 스토리와 분리해 본다. */
-export type StoryCardSection = 'original' | 'created';
+/** 스토리 카드가 속한 섹션. 홈(`original`), 제작 탭의 내 스토리(`created`), 탐색 탭(`explore`)의 노출·클릭 기여를 나눠 본다. */
+export type StoryCardSection = 'original' | 'created' | 'explore';
 
 /** 채팅을 시작할 주인공. 페르소나 이름과 소개는 사용자 입력 원문이라 싣지 않는다(스펙 §6-7). */
 export type PersonaType = 'default' | 'persona';

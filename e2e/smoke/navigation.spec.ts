@@ -12,8 +12,8 @@ const CREATE_FILLED_PATH =
 const USER_FILLED_PATH =
   'M20 17.5C20 19.9853 20 22 12 22C4 22 4 19.9853 4 17.5';
 
-// 하단 탭으로 홈↔채팅↔제작↔마이를 오간다(US-8-1).
-test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page }) => {
+// 하단 탭으로 홈↔채팅↔제작↔탐색↔마이를 오간다(US-8-1).
+test('하단 탭으로 홈·채팅·제작·탐색·마이를 오간다', async ({ page }) => {
   await page.goto('/');
 
   const bottomNav = page.getByRole('navigation', { name: '하단 네비게이션' });
@@ -29,11 +29,12 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
   await expect(logo).toBeVisible();
   await expect(loginButton).toBeVisible();
   await expect(loginButton).toHaveCSS('height', '40px');
-  await expect(bottomNav.getByRole('link')).toHaveCount(4);
+  await expect(bottomNav.getByRole('link')).toHaveCount(5);
   await expect(bottomNav.locator('span')).toHaveText([
     '홈',
     '채팅',
     '제작',
+    '탐색',
     '마이',
   ]);
   await expect(homeLink.locator('path')).toHaveAttribute(
@@ -45,7 +46,7 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
     (element) => getComputedStyle(element).color,
   );
 
-  for (const label of ['채팅', '제작', '마이']) {
+  for (const label of ['채팅', '제작', '탐색', '마이']) {
     await expect(bottomNav.getByRole('link', { name: label })).toHaveCSS(
       'color',
       foregroundColor,
@@ -90,6 +91,18 @@ test('하단 탭으로 홈·채팅·제작·마이를 오간다', async ({ page 
     'd',
     new RegExp(`^${CREATE_FILLED_PATH}`),
   );
+
+  // 탐색으로 이동
+  const exploreLink = bottomNav.getByRole('link', { name: '탐색' });
+
+  await exploreLink.click();
+  await expect(page).toHaveURL(new RegExp(`${APP_PATH.MAIN.EXPLORE}$`));
+  await expect(
+    page.getByRole('heading', { level: 1, name: '탐색' }),
+  ).toBeVisible();
+  await expect(logo).toHaveCount(0);
+  await expect(loginButton).toBeVisible();
+  await expect(exploreLink).toHaveAttribute('aria-current', 'page');
 
   // 마이로 이동
   const myLink = bottomNav.getByRole('link', { name: '마이' });

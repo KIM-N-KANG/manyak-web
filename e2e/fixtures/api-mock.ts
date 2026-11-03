@@ -513,8 +513,15 @@ export const CHAT_MODELS_FIXTURE = [
     name: '라이트',
     turnCost: CREDIT_POLICY_FIXTURE.chatTurnCost,
     isDefault: false,
+    promotion: null,
   },
-  { code: 'AURORA', name: '오로라', turnCost: 50, isDefault: true },
+  {
+    code: 'AURORA',
+    name: '오로라',
+    turnCost: 50,
+    isDefault: true,
+    promotion: null,
+  },
 ] as const satisfies Required<ChatModelResponse>[];
 
 /**
@@ -680,23 +687,79 @@ export async function mockPushSettings(
   });
 }
 
-/** 홈 공개 스토리 목록(`GET /stories`) 요청. 하위 경로(`/stories/{id}` 등)와 구분하려고 경로를 정확히 비교한다. */
-export const isPublicStoriesUrl = (url: URL) =>
-  url.pathname === '/api/v1/stories';
+/** 홈 목록(`GET /stories/home`) 요청. 스토리 상세(`/stories/{id}`) 목과 구분하려고 경로를 정확히 비교한다. */
+export const isHomeStoriesUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories/home';
+
+/** 탐색 목록(`GET /stories/explore`) 요청. */
+export const isExploreStoriesUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories/explore';
+
+/** 홈 목록 목의 섹션. `id`를 생략하면 기본 섹션처럼 null로 응답한다. */
+export type HomeSectionFixture = {
+  id?: string | null;
+  name: string;
+  items: unknown[];
+};
 
 /**
- * 홈 공개 스토리 목록을 한 페이지(다음 커서 없음)로 목킹한다.
+ * 홈 목록을 주어진 섹션 그대로 목킹한다.
  *
  * @param page 대상 페이지
- * @param items 응답할 스토리 요약 목록
+ * @param sections 노출 순서대로 응답할 섹션
  */
-export async function mockPublicStories(
+export async function mockHomeSections(
+  page: Page,
+  sections: HomeSectionFixture[],
+): Promise<void> {
+  await page.route(isHomeStoriesUrl, async (route) => {
+    await route.fulfill({
+      json: { sections: sections.map((section) => ({ id: null, ...section })) },
+    });
+  });
+}
+
+/**
+ * 홈 목록을 "인기 스토리" 기본 섹션 하나로 목킹한다. 홈에 카드를 띄우기만 하는 스펙이 쓴다.
+ *
+ * @param page 대상 페이지
+ * @param items 섹션에 담을 스토리 요약 목록
+ */
+export async function mockHomeStories(
   page: Page,
   items: unknown[],
 ): Promise<void> {
-  await page.route(isPublicStoriesUrl, async (route) => {
-    await route.fulfill({ json: { items, nextCursor: null } });
+  await mockHomeSections(page, [{ name: '인기 스토리', items }]);
+}
+
+/**
+ * 탐색 목록을 페이지 단위로 목킹한다. `cursor` 없는 요청은 새로 섞은 첫 페이지로 보고 `pages[0]`을,
+ * `c{n}` 커서는 `pages[n]`을 응답한다. 마지막 페이지의 `nextCursor`는 null이다.
+ *
+ * @param page 대상 페이지
+ * @param pages 페이지마다 응답할 스토리 요약 목록
+ * @returns 받은 요청의 커서 기록. 커서 없는 요청은 null이다
+ */
+export async function mockExploreStories(
+  page: Page,
+  pages: unknown[][],
+): Promise<{ cursors: (string | null)[] }> {
+  const cursors: (string | null)[] = [];
+
+  await page.route(isExploreStoriesUrl, async (route) => {
+    const cursor = new URL(route.request().url()).searchParams.get('cursor');
+    const index = cursor ? Number(cursor.slice(1)) : 0;
+
+    cursors.push(cursor);
+    await route.fulfill({
+      json: {
+        items: pages[index] ?? [],
+        nextCursor: index + 1 < pages.length ? `c${index + 1}` : null,
+      },
+    });
   });
+
+  return { cursors };
 }
 
 /**

@@ -4,8 +4,6 @@ import { createContext, use } from 'react';
 
 interface MainScrollContextValue {
   hasScrolled: boolean;
-  /** 아래로 스크롤 중이라 홈 필터·정렬 바를 숨겨야 하는지 여부. 위로 스크롤하거나 목록 맨 위 근처면 거짓이다. */
-  isToolbarHidden: boolean;
   /** 스크롤 영역과 같은 박스를 가지는 positioned 래퍼. FAB처럼 스크롤을 따라가지 않는 오버레이의 포털 대상이다. */
   overlayContainer: HTMLElement | null;
 }

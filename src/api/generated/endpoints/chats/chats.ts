@@ -37,7 +37,10 @@ import type {
   CreateChatRequest,
   CreateChatResponse,
   CreateChatShareResponse,
+  EditChatRequest,
+  ForkChatRequest,
   RegenerateChatRequest,
+  SseEmitter,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -572,6 +575,107 @@ export const useRegenerateChatTurn = <
     queryClient,
   );
 };
+export type editChatTurnResponse200 = {
+  data: SseEmitter;
+  status: 200;
+};
+
+export type editChatTurnResponseSuccess = editChatTurnResponse200 & {
+  headers: Headers;
+};
+export const getEditChatTurnUrl = (chatId: string) => {
+  return `/api/v1/chats/${chatId}/turns/edit/stream`;
+};
+
+/**
+ * 대상 턴부터 숨기고 새 입력으로 생성합니다. 엔딩에 도달한 채팅도 허용하며 과금과 체험은 이어쓰기와 같습니다.
+ * @summary 채팅 입력 수정
+ */
+export const editChatTurn = async (
+  chatId: string,
+  editChatRequest: EditChatRequest,
+  options?: RequestInit,
+): Promise<editChatTurnResponseSuccess> => {
+  return customInstance<editChatTurnResponseSuccess>(
+    getEditChatTurnUrl(chatId),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(editChatRequest),
+    },
+  );
+};
+
+export const getEditChatTurnMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof editChatTurn>>,
+    TError,
+    { chatId: string; data: BodyType<EditChatRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof editChatTurn>>,
+  TError,
+  { chatId: string; data: BodyType<EditChatRequest> },
+  TContext
+> => {
+  const mutationKey = ['editChatTurn'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof editChatTurn>>,
+    { chatId: string; data: BodyType<EditChatRequest> }
+  > = (props) => {
+    const { chatId, data } = props ?? {};
+
+    return editChatTurn(chatId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type EditChatTurnMutationResult = NonNullable<
+  Awaited<ReturnType<typeof editChatTurn>>
+>;
+export type EditChatTurnMutationBody = BodyType<EditChatRequest>;
+export type EditChatTurnMutationError = ErrorType<unknown>;
+
+/**
+ * @summary 채팅 입력 수정
+ */
+export const useEditChatTurn = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof editChatTurn>>,
+      TError,
+      { chatId: string; data: BodyType<EditChatRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof editChatTurn>>,
+  TError,
+  { chatId: string; data: BodyType<EditChatRequest> },
+  TContext
+> => {
+  return useMutation(getEditChatTurnMutationOptions(options), queryClient);
+};
 export type createChatShareResponse201 = {
   data: CreateChatShareResponse;
   status: 201;
@@ -686,6 +790,131 @@ export const useCreateChatShare = <
   TContext
 > => {
   return useMutation(getCreateChatShareMutationOptions(options), queryClient);
+};
+export type forkResponse201 = {
+  data: CreateChatResponse;
+  status: 201;
+};
+
+export type forkResponse400 = {
+  data: CreateChatResponse;
+  status: 400;
+};
+
+export type forkResponse401 = {
+  data: CreateChatResponse;
+  status: 401;
+};
+
+export type forkResponse403 = {
+  data: CreateChatResponse;
+  status: 403;
+};
+
+export type forkResponse404 = {
+  data: CreateChatResponse;
+  status: 404;
+};
+
+export type forkResponseSuccess = forkResponse201 & {
+  headers: Headers;
+};
+export type forkResponseError = (
+  | forkResponse400
+  | forkResponse401
+  | forkResponse403
+  | forkResponse404
+) & {
+  headers: Headers;
+};
+
+export const getForkUrl = (chatId: string) => {
+  return `/api/v1/chats/${chatId}/fork`;
+};
+
+/**
+ * 회원 소유 채팅을 대상 턴의 AI 응답까지 무료로 복사합니다. 원본은 바꾸지 않습니다.
+ * @summary 채팅 포크
+ */
+export const fork = async (
+  chatId: string,
+  forkChatRequest: ForkChatRequest,
+  options?: RequestInit,
+): Promise<forkResponseSuccess> => {
+  return customInstance<forkResponseSuccess>(getForkUrl(chatId), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(forkChatRequest),
+  });
+};
+
+export const getForkMutationOptions = <
+  TError = ErrorType<CreateChatResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof fork>>,
+    TError,
+    { chatId: string; data: BodyType<ForkChatRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof fork>>,
+  TError,
+  { chatId: string; data: BodyType<ForkChatRequest> },
+  TContext
+> => {
+  const mutationKey = ['fork'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof fork>>,
+    { chatId: string; data: BodyType<ForkChatRequest> }
+  > = (props) => {
+    const { chatId, data } = props ?? {};
+
+    return fork(chatId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ForkMutationResult = NonNullable<Awaited<ReturnType<typeof fork>>>;
+export type ForkMutationBody = BodyType<ForkChatRequest>;
+export type ForkMutationError = ErrorType<CreateChatResponse>;
+
+/**
+ * @summary 채팅 포크
+ */
+export const useFork = <
+  TError = ErrorType<CreateChatResponse>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof fork>>,
+      TError,
+      { chatId: string; data: BodyType<ForkChatRequest> },
+      TContext
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof fork>>,
+  TError,
+  { chatId: string; data: BodyType<ForkChatRequest> },
+  TContext
+> => {
+  return useMutation(getForkMutationOptions(options), queryClient);
 };
 export type getChatsByIdsResponse200 = {
   data: ChatSummaryResponse[];
@@ -1585,7 +1814,7 @@ export const getGetModelsUrl = () => {
 };
 
 /**
- * 노출 중인 모델과 턴 가격을 노출 순서로 반환합니다. 회원 턴 체험은 LITE에만 적용됩니다. 인증은 선택입니다.
+ * 노출 중인 모델과 정가를 노출 순서로 반환합니다. 회원에게만 진행 중인 promotion을 제공합니다. 회원 턴 체험은 적용 가격이 양수인 LITE에만 적용됩니다. 인증은 선택입니다.
  * @summary 채팅 모델 목록
  */
 export const getModels = async (

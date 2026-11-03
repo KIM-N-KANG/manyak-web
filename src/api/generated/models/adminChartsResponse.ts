@@ -5,6 +5,8 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
+import type { AdminChartPreviousPeriod } from './adminChartPreviousPeriod';
+import type { AdminChartTotals } from './adminChartTotals';
 import type { AdminDailyMetrics } from './adminDailyMetrics';
 import type { AdminDistribution } from './adminDistribution';
 
@@ -14,4 +16,6 @@ export interface AdminChartsResponse {
   to?: string;
   daily?: AdminDailyMetrics[];
   distributions?: AdminDistribution[];
+  totals?: AdminChartTotals;
+  previous?: AdminChartPreviousPeriod;
 }

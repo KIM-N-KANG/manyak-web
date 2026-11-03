@@ -4,9 +4,11 @@ import {
   getGetPublicStoriesUrl,
   getGetStoryDetailUrl,
 } from '@/api/generated/endpoints/stories/stories';
+import { getHomeUrl } from '@/api/generated/endpoints/story-home-controller/story-home-controller';
 import type {
   GetPublicStoriesParams,
   StoryDetailResponse,
+  StoryHomeResponse,
   StoryPageResponse,
   StorySummaryResponse,
 } from '@/api/generated/models';
@@ -65,9 +67,18 @@ async function fetchPublicOnServer<T>(path: string): Promise<T | null> {
 }
 
 /**
- * 서버(BFF)에서 공개 스토리 목록의 첫 페이지를 백엔드에 직접 읽는다.
+ * 서버(BFF)에서 홈 섹션 목록을 백엔드에 직접 읽는다.
  *
- * 홈 서버 렌더가 검색 크롤러용 첫 HTML에 목록을 싣는 데 쓴다. 실패하면 홈은 클라이언트 조회로 폴백한다.
+ * 홈 서버 렌더가 검색 크롤러용 첫 HTML에 섹션을 싣는 데 쓴다. 실패하면 홈은 클라이언트 조회로 폴백한다.
+ *
+ * @returns 홈 목록 응답. 읽지 못하면 null
+ */
+export function fetchHomeOnServer(): Promise<StoryHomeResponse | null> {
+  return fetchPublicOnServer(getHomeUrl());
+}
+
+/**
+ * 서버(BFF)에서 공개 스토리 목록의 한 페이지를 백엔드에 직접 읽는다.
  *
  * @param params 필터·정렬
  * @returns 첫 페이지 응답. 읽지 못하면 null

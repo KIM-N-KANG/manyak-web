@@ -3,6 +3,8 @@ import type { ComponentType, SVGProps } from 'react';
 import {
   ChatRoundFilledIcon,
   ChatRoundOutlineIcon,
+  CompassFilledIcon,
+  CompassOutlineIcon,
   HomeFilledIcon,
   HomeOutlineIcon,
   PlusCircleFilledIcon,
@@ -37,6 +39,12 @@ export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
     label: '제작',
     activeIcon: PlusCircleFilledIcon,
     inactiveIcon: PlusCircleOutlineIcon,
+  },
+  {
+    href: APP_PATH.MAIN.EXPLORE,
+    label: '탐색',
+    activeIcon: CompassFilledIcon,
+    inactiveIcon: CompassOutlineIcon,
   },
   {
     href: APP_PATH.MAIN.MY,

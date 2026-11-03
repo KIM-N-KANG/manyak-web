@@ -6,7 +6,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
-  getGetPublicStoriesQueryKey,
   getGetStoryDetailQueryKey,
   type getStoryDetailResponseSuccess,
   useLikeStory,
@@ -78,9 +77,6 @@ export function useStoryLike(storyId: string, isLiked: boolean) {
     }
 
     void queryClient.invalidateQueries({ queryKey });
-    void queryClient.invalidateQueries({
-      queryKey: getGetPublicStoriesQueryKey(),
-    });
   };
 
   return { toggleLike, isPending };
