@@ -82,7 +82,7 @@ export function StoryCard({
         </div>
       </AspectRatio>
       <div className="flex min-w-0 flex-col px-1">
-        <p className="line-clamp-1 text-base leading-6 font-semibold [word-break:normal]">
+        <p className="line-clamp-1 text-base leading-6 font-semibold">
           {storyId != null ? (
             <Link
               href={APP_PATH.STORY_DETAIL(storyId)}
@@ -101,7 +101,7 @@ export function StoryCard({
             story.title
           )}
         </p>
-        <p className="mt-0.5 line-clamp-2 min-h-10 text-sm leading-5 [word-break:normal] text-foreground-secondary">
+        <p className="mt-0.5 line-clamp-2 min-h-10 text-sm leading-5 text-foreground-secondary">
           {story.oneLineIntro}
         </p>
         {story.genres.length > 0 ? (
