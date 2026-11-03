@@ -3,12 +3,12 @@ import type { Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
+import { CREDIT_HISTORY_COPY } from '@/features/my/_shared/constants/credit-history';
 import {
   buildAttendanceTitleLines,
   buildCreditBonusLabel,
   buildCreditProductLabel,
   CREDIT_CHARGE_COPY,
-  CREDIT_HISTORY_COPY,
   CREDIT_ORDER_COPY,
   CREDIT_PURCHASE_COPY,
   formatKrwPrice,

@@ -12,7 +12,7 @@ import {
   CREDIT_HISTORY_COPY,
   CREDIT_REASON_FALLBACK_LABEL,
   CREDIT_REASON_LABEL,
-} from '../constants';
+} from '../constants/credit-history';
 
 const DISPLAY_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

@@ -6,7 +6,7 @@ import {
   formatCreditDateLine,
   resolveCreditReasonLabel,
   resolveCreditSubtitle,
-} from '@/features/my/credits/utils/credit-transaction-display';
+} from '@/features/my/_shared/utils/credit-transaction-display';
 
 function createTransaction(
   overrides: Partial<CreditTransactionResponse> = {},
