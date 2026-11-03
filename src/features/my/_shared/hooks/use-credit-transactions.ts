@@ -1,6 +1,12 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import {
   getGetMyCreditTransactionsQueryKey,
@@ -24,6 +30,13 @@ type UseCreditTransactionsOptions = {
  *
  * `limit`·`type`은 서버 기본값(50건·전체)을 쓰고, 다음 페이지는 응답의 `nextCursor`를
  * 그대로 되돌려 준다 — 커서는 서버가 봉인한 불투명 문자열이라 파싱하거나 조립하지 않는다.
+ *
+ * 목록은 분류 필터 없이 이프 충전의 내역 탭과 채팅 메뉴의 내역이 함께 그린다. 잔액 정본은 프로필(`GET /auth/me`)이라
+ * 내역 금액을 합산해 잔액으로 쓰지 않는다. 구매는 목록에서 빠지고 만료 회수는 실제 만료보다 늦게 기록돼 합계가 어긋난다.
+ * 원장 줄에는 안정된 식별자가 없고 목록은 뒤로만 이어 붙어 화면은 순서를 키로 쓴다.
+ *
+ * 다음 페이지 실패도 쿼리 전체를 error로 만들므로 화면은 첫 조회 실패를 목록이 비었을 때로 좁힌다. 실패한 뒤에는
+ * 목록 끝에 머무는 동안 같은 실패를 반복하지 않도록 자동으로 다시 요청하지 않고 그 자리 재시도에 넘긴다.
  *
  * @param options 조회 활성화 여부
  * @returns 최신순으로 이어 붙인 내역과 페이지 상태
@@ -65,4 +78,45 @@ export function useCreditTransactions({
     /** 다음 페이지 조회가 실패한 상태. 자동 재요청을 멈추고 그 자리 재시도로 넘긴다. */
     isFetchNextPageError: query.isFetchNextPageError,
   };
+}
+/**
+ * 이프 내역을 첫 페이지부터 다시 읽는 함수와 진행 여부를 돌려준다.
+ *
+ * 받아 둔 뒷 페이지는 버리고 첫 페이지만 다시 받는다. 목록이 길어도 요청 한 번으로 최신 내역을 맨 위에 보이고,
+ * 다음 페이지는 새 첫 페이지의 커서로 다시 이어 받는다. 기존 첫 페이지는 응답이 올 때까지 유지한다.
+ *
+ * @returns 다시 읽기를 시작하고 끝나면 resolve하는 함수와 진행 여부
+ */
+export function useRefreshCreditTransactions() {
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const refresh = async () => {
+    setIsRefreshing(true);
+
+    queryClient.setQueryData<
+      InfiniteData<
+        Awaited<ReturnType<typeof getMyCreditTransactions>>,
+        string | undefined
+      >
+    >(CREDIT_TRANSACTIONS_QUERY_KEY, (data) =>
+      data
+        ? {
+            pages: data.pages.slice(0, 1),
+            pageParams: data.pageParams.slice(0, 1),
+          }
+        : data,
+    );
+
+    try {
+      await queryClient.refetchQueries({
+        queryKey: CREDIT_TRANSACTIONS_QUERY_KEY,
+        exact: true,
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  return { refresh, isRefreshing };
 }

@@ -14,9 +14,14 @@ import { CREDIT_CHARGE_COPY } from '@/features/my/credits/constants';
 type CreditBalanceCardProps = {
   /** 바깥 섹션 클래스. 카드는 바깥 여백을 갖지 않으므로 배치하는 쪽이 여백을 준다. */
   className?: string;
+  /** 주면 충전 왼쪽에 내역 버튼을 둔다. 내역을 그 자리에서 여는 채팅 메뉴가 넘긴다 */
+  onHistoryClick?: () => void;
 };
 
-export function CreditBalanceCard({ className }: CreditBalanceCardProps) {
+export function CreditBalanceCard({
+  className,
+  onHistoryClick,
+}: CreditBalanceCardProps) {
   const { status } = useSession();
   const { isMember } = useMemberAccess();
   const isAuthenticated = status === 'authenticated';
@@ -57,11 +62,22 @@ export function CreditBalanceCard({ className }: CreditBalanceCardProps) {
           )}
         </div>
         {/* 이프를 얻는 모든 수단은 이프 충전 화면이 소유한다 — 카드에는 진입 버튼만 둔다. */}
-        <Button
-          nativeButton={false}
-          render={<Link href={APP_PATH.MY_CREDITS} />}>
-          {CREDIT_CHARGE_COPY.entryButton}
-        </Button>
+        <div className="flex shrink-0 gap-1">
+          {onHistoryClick && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="bg-foreground/5 hover:bg-foreground/10 dark:hover:bg-foreground/10"
+              onClick={onHistoryClick}>
+              {CREDIT_CHARGE_COPY.historyButton}
+            </Button>
+          )}
+          <Button
+            nativeButton={false}
+            render={<Link href={APP_PATH.MY_CREDITS} />}>
+            {CREDIT_CHARGE_COPY.entryButton}
+          </Button>
+        </div>
       </div>
     </section>
   );
