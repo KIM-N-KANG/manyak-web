@@ -8,7 +8,6 @@ import {
   CircleLock01Icon,
   Delete02Icon,
   Edit02Icon,
-  Globe02Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
@@ -20,6 +19,7 @@ import {
   CardOptionsSheet,
   type CardOptionsSheetItem,
 } from '@/components/common/card-options-sheet';
+import { GlobeOutlineIcon } from '@/components/icons/globe-outline-icon';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
@@ -204,13 +204,15 @@ function CreatedStoryCardBody({
                 ? 'bg-white/90 text-black'
                 : 'bg-black/20 text-white backdrop-blur-md',
             )}>
-            <HugeiconsIcon
-              icon={
-                story.visibility === 'PUBLIC' ? Globe02Icon : CircleLock01Icon
-              }
-              className="size-3.5"
-              aria-hidden="true"
-            />
+            {story.visibility === 'PUBLIC' ? (
+              <GlobeOutlineIcon className="size-3.5" aria-hidden="true" />
+            ) : (
+              <HugeiconsIcon
+                icon={CircleLock01Icon}
+                className="size-3.5"
+                aria-hidden="true"
+              />
+            )}
             {STORY_VISIBILITY_COPY[story.visibility]}
           </p>
         ) : null}
