@@ -507,11 +507,15 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toBeVisible();
   });
 
-  test('홈 카드는 제작자를 보여주고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (KNK-983·KNK-1426)', async ({
+  test('홈 카드는 제목, 한 줄 소개와 대화 수를 보이고 오리지널 스토리에만 ORIGINAL 태그를 붙인다 (STORY-LIST-29)', async ({
     page,
   }) => {
     await mockHomeStories(page, [
-      { ...originalStory('o1', '마냑의 첫 이야기'), isOriginal: true },
+      {
+        ...originalStory('o1', '마냑의 첫 이야기'),
+        isOriginal: true,
+        turnCount: 302,
+      },
       {
         ...story('u1', '사용자 이야기'),
         author: { id: 2, nickname: '작가', profileImageUrl: null },
@@ -520,17 +524,18 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await page.goto('/');
 
-    // 홈 카드는 닉네임 앞에 @를 붙인다
-    await expect(page.getByText('@마냑', { exact: true })).toBeVisible();
-    // 내가 만든 스토리 카드와 달리 한 줄 소개·장르는 노출하지 않는다.
-    await expect(page.getByText('한 줄 소개입니다')).toBeHidden();
-    // 필터와 무관하게 응답의 isOriginal인 카드에만 태그를 붙인다.
+    const originalCard = page
+      .getByRole('listitem')
+      .filter({ hasText: '마냑의 첫 이야기' });
+
+    await expect(originalCard.getByText('한 줄 소개입니다')).toBeVisible();
+    await expect(originalCard.getByText('누적 턴 수 302')).toBeVisible();
+    // 작성자는 상세에서 보이고 홈 카드에는 두지 않는다.
+    await expect(page.getByText(/^@/)).toHaveCount(0);
+    // 응답의 isOriginal인 카드에만 표지 위 태그를 붙인다.
     await expect(page.getByRole('img', { name: '오리지널' })).toHaveCount(1);
     await expect(
-      page
-        .getByRole('listitem')
-        .filter({ hasText: '마냑의 첫 이야기' })
-        .getByRole('img', { name: '오리지널' }),
+      originalCard.getByRole('img', { name: '오리지널' }),
     ).toBeVisible();
   });
 

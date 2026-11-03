@@ -1,14 +1,16 @@
 'use client';
 
+import { BubbleChatIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { APP_PATH } from '@/constants/app-path';
-import { StoryTurnCount } from '@/features/stories/_shared/components/story-turn-count';
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
+import { formatCompactCount } from '@/lib/format-count';
 import type { StoryCardSection } from '@/observability/analytics';
 import { SCREEN, track, useImpression } from '@/observability/analytics';
 
@@ -76,13 +78,9 @@ export function StoryCard({
             className="absolute top-0 left-0 w-18 rounded-tl-[11px] rounded-br-[6px] backdrop-blur-md"
           />
         )}
-        <div className="absolute right-2 bottom-2">
-          <StoryTurnCount turnCount={story.turnCount ?? 0} size="sm" />
-        </div>
       </AspectRatio>
-      {/* 모든 줄이 1줄 고정이라 카드 높이가 저절로 같아진다 — 텍스트 영역에 고정 높이를 두지 않는다. */}
-      <div className="flex min-w-0 flex-col gap-0.5 px-1">
-        <p className="line-clamp-1 leading-6 font-medium">
+      <div className="flex min-w-0 flex-col px-1">
+        <p className="line-clamp-1 text-base leading-6 font-semibold [word-break:normal] [text-wrap-style:auto]">
           {storyId != null ? (
             <Link
               href={APP_PATH.STORY_DETAIL(storyId)}
@@ -101,11 +99,20 @@ export function StoryCard({
             story.title
           )}
         </p>
-        {story.author?.nickname != null && (
-          <p className="line-clamp-1 text-sm text-foreground-secondary">
-            @{story.author.nickname}
-          </p>
-        )}
+        <p className="mt-0.5 line-clamp-2 min-h-10 text-sm leading-5 [word-break:normal] text-foreground-secondary [text-wrap-style:auto]">
+          {story.oneLineIntro}
+        </p>
+        <p className="mt-1.5 flex items-center gap-1 text-[13px] leading-[18px] font-medium text-foreground-secondary">
+          <HugeiconsIcon
+            icon={BubbleChatIcon}
+            className="size-4"
+            aria-hidden="true"
+          />
+          <span>
+            <span className="sr-only">누적 턴 수 </span>
+            {formatCompactCount(story.turnCount ?? 0)}
+          </span>
+        </p>
       </div>
     </article>
   );
