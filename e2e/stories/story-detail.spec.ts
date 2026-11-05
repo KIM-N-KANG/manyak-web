@@ -251,7 +251,11 @@ test.describe('스토리 상세', () => {
     await expect(page.getByRole('button', { name: '이전 인물' })).toHaveCount(
       0,
     );
-    await page.getByRole('button', { name: '다음 인물' }).click();
+    // 원 밖이어도 화살표 쪽 세로 띠의 위쪽 끝을 누르면 확대 대신 다음 인물로 넘어간다
+    await page
+      .getByRole('button', { name: '다음 인물' })
+      .click({ position: { x: 44, y: 8 } });
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(
       picker.getByRole('button', { name: sansin.name }),
     ).toHaveAttribute('aria-pressed', 'true');
