@@ -251,7 +251,7 @@ function StudioSectionTitle({
   return (
     <h2
       className={cn(
-        'flex items-center gap-1.5 px-4 pb-1 text-base leading-6 font-semibold',
+        'flex items-center gap-1.5 px-4 pb-1 text-lg leading-7 font-semibold',
         isFollowing ? 'pt-6' : 'pt-2',
       )}>
       {title}
