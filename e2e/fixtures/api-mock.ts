@@ -762,6 +762,41 @@ export async function mockExploreStories(
   return { cursors };
 }
 
+/** 공개 스토리 검색(`GET /stories/search`) 요청. */
+export const isStorySearchUrl = (url: URL) =>
+  url.pathname === '/api/v1/stories/search';
+
+/**
+ * 공개 스토리 검색을 페이지 목록으로 목킹한다. 검색어와 관계없이 같은 페이지를 응답한다.
+ * 커서 없는 첫 요청은 `pages[0]`, `c{n}` 커서는 `pages[n]`을 응답한다. 마지막 페이지의 `nextCursor`는 null이다.
+ *
+ * @param page 대상 페이지
+ * @param pages 페이지마다 응답할 스토리 요약 목록
+ * @returns 받은 요청의 검색어와 커서 기록. 커서 없는 요청의 커서는 null이다
+ */
+export async function mockStorySearch(
+  page: Page,
+  pages: unknown[][],
+): Promise<{ requests: { q: string | null; cursor: string | null }[] }> {
+  const requests: { q: string | null; cursor: string | null }[] = [];
+
+  await page.route(isStorySearchUrl, async (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const cursor = params.get('cursor');
+    const index = cursor ? Number(cursor.slice(1)) : 0;
+
+    requests.push({ q: params.get('q'), cursor });
+    await route.fulfill({
+      json: {
+        items: pages[index] ?? [],
+        nextCursor: index + 1 < pages.length ? `c${index + 1}` : null,
+      },
+    });
+  });
+
+  return { requests };
+}
+
 /**
  * 가입 동의 대기 BFF(`/api/auth/signup-consent`)를 목킹한다. 요약이 없으면 대기가 없는
  * 404를 응답하고, 취소(DELETE)는 대기를 지운 뒤 204를 응답한다.

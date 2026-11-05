@@ -22,7 +22,7 @@ export type StepName =
 export type CreditShortageTrigger = 'story_create' | 'chat_turn';
 
 /** 스토리 카드가 속한 섹션. 홈(`original`), 제작 탭의 내 스토리(`created`), 탐색 탭(`explore`)의 노출·클릭 기여를 나눠 본다. */
-export type StoryCardSection = 'original' | 'created' | 'explore';
+export type StoryCardSection = 'original' | 'created' | 'explore' | 'search';
 
 /** 채팅을 시작할 주인공. 페르소나 이름과 소개는 사용자 입력 원문이라 싣지 않는다(스펙 §6-7). */
 export type PersonaType = 'default' | 'persona';

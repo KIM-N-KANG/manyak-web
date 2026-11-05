@@ -12,7 +12,12 @@ import { StoryGenreBadges } from '@/features/stories/_shared/components/story-ge
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 import { cn } from '@/lib/utils';
-import { SCREEN, track, useImpression } from '@/observability/analytics';
+import {
+  SCREEN,
+  type StoryCardSection,
+  track,
+  useImpression,
+} from '@/observability/analytics';
 
 import {
   TILE_EASE,
@@ -62,9 +67,15 @@ export const ExploreCellContext = createContext<ExploreCellState>({
 type ExploreStoryTileProps = {
   story: StoryListItem;
   position: number;
+  /** 카드 이벤트의 목록 구분. 탐색 그리드는 `explore`, 검색 결과는 `search`다. */
+  section: StoryCardSection;
 };
 
-export function ExploreStoryTile({ story, position }: ExploreStoryTileProps) {
+export function ExploreStoryTile({
+  story,
+  position,
+  section,
+}: ExploreStoryTileProps) {
   const { shownStoryId, onShown } = use(ExploreCellContext);
   const storyId = story.id;
   const impressionRef = useImpression({
@@ -76,7 +87,7 @@ export function ExploreStoryTile({ story, position }: ExploreStoryTileProps) {
         track('client_storyList_storyCard_impressed', {
           story_id: storyId,
           position,
-          section: 'explore',
+          section,
         });
       }
     },
@@ -167,7 +178,7 @@ export function ExploreStoryTile({ story, position }: ExploreStoryTileProps) {
             track('client_storyList_storyCard_clicked', {
               story_id: storyId,
               position,
-              section: 'explore',
+              section,
             })
           }
         />
