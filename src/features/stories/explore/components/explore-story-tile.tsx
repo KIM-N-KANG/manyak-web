@@ -134,7 +134,7 @@ export function ExploreStoryTile({ story, position }: ExploreStoryTileProps) {
       </div>
       <div
         aria-hidden="true"
-        className="flex flex-col px-3 pt-1 pb-3 text-white">
+        className="relative -mt-6 flex flex-col px-3 pb-3 text-white">
         <p className="line-clamp-1 text-sm leading-5 font-semibold">
           {story.title}
         </p>
