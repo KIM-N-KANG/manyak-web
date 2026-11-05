@@ -19,7 +19,7 @@ const searchStory = (id: string, title: string) => ({
 const tile = (title: string) => ({ name: `${title} 상세 보기` });
 
 test.describe('탐색 검색', () => {
-  test('탐색 검색바로 검색 화면을 열고 2자 이상만 검색하며 검색어를 주소와 최근 검색어에 남긴다 (STORY-SEARCH-01, STORY-SEARCH-02)', async ({
+  test('탐색 헤더 검색 버튼으로 검색 화면을 열고 2자 이상만 검색하며 검색어를 주소와 최근 검색어에 남긴다 (STORY-SEARCH-01, STORY-SEARCH-02)', async ({
     page,
   }) => {
     const search = await mockStorySearch(page, [
@@ -27,7 +27,10 @@ test.describe('탐색 검색', () => {
     ]);
 
     await page.goto(APP_PATH.MAIN.EXPLORE);
-    await page.getByRole('link', { name: EXPLORE_SEARCH_COPY.label }).click();
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: EXPLORE_SEARCH_COPY.label })
+      .click();
 
     await expect(page).toHaveURL(new RegExp(`${APP_PATH.EXPLORE_SEARCH()}$`));
 
