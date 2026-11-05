@@ -5,7 +5,7 @@ export function CreatedStoryListSkeleton() {
   return (
     <ul className="flex flex-col pb-2" aria-hidden>
       <li className="px-4 pt-2 pb-1">
-        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-7 w-20" />
       </li>
       {Array.from({ length: 5 }).map((_, index) => (
         <li key={index} className="flex gap-4 px-4 py-2">

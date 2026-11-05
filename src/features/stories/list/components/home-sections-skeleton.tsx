@@ -6,7 +6,7 @@ export function HomeSectionsSkeleton() {
     <div
       role="status"
       aria-label={STORY_LIST_COPY.loadingLabel}
-      className="flex flex-col gap-8">
+      className="flex flex-col gap-8 pt-2">
       {Array.from({ length: 2 }).map((_, sectionIndex) => (
         <div
           key={sectionIndex}

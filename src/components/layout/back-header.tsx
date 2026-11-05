@@ -13,7 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 
 type BackHeaderProps = {
-  title: string;
+  title?: string;
+  /** 제목 대신 뒤로가기 버튼 오른쪽을 채우는 내용(검색 입력 등). 있으면 제목을 그리지 않는다. */
+  children?: ReactNode;
   /** 앱 안에서 이동해 온 화면이 없을 때(주소나 알림으로 바로 연 경우) 대신 열 화면 */
   fallbackHref?: string;
   /**
@@ -31,6 +33,7 @@ export function BackHeader({
   fallbackHref,
   fallbackWhen = 'direct-entry',
   action,
+  children,
 }: BackHeaderProps) {
   const router = useRouter();
 
@@ -59,7 +62,9 @@ export function BackHeader({
         onClick={handleBack}>
         <HugeiconsIcon icon={ArrowLeft01Icon} aria-hidden="true" />
       </Button>
-      <span className="min-w-0 flex-1 truncate font-semibold">{title}</span>
+      {children ?? (
+        <span className="min-w-0 flex-1 truncate font-semibold">{title}</span>
+      )}
       {action}
     </header>
   );

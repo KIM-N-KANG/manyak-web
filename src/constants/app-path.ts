@@ -7,6 +7,11 @@ export const APP_PATH = {
     EXPLORE: '/explore',
     MY: '/my',
   },
+  /** 탐색 탭 검색바로 여는 스토리 검색 화면이다. 제출한 검색어를 `q`에 남겨 새로고침과 뒤로가기에서 유지한다. */
+  EXPLORE_SEARCH: (query?: string) =>
+    query
+      ? `/explore/search?q=${encodeURIComponent(query)}`
+      : '/explore/search',
   LOGIN: '/login',
   LOGIN_POPUP_COMPLETE: '/api/auth/popup-complete',
   TERMS: '/terms',

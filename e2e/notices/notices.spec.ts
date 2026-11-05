@@ -71,7 +71,7 @@ test.describe('공지사항 (/notices)', () => {
     }
   });
 
-  test('게스트 홈 헤더는 로그인 버튼 오른쪽에 공지 버튼을 두고, 안 본 공지가 있으면 새 공지 이름과 빨간 점을 보인다', async ({
+  test('게스트 홈 헤더는 공지 버튼 오른쪽 끝에 로그인 버튼을 두고, 안 본 공지가 있으면 새 공지 이름과 빨간 점을 보인다', async ({
     page,
   }) => {
     await mockNotices(page);
@@ -92,7 +92,7 @@ test.describe('공지사항 (/notices)', () => {
       noticeButton.boundingBox(),
     ]);
 
-    expect(noticeBox!.x).toBeGreaterThan(loginBox!.x + loginBox!.width);
+    expect(loginBox!.x).toBeGreaterThan(noticeBox!.x + noticeBox!.width);
   });
 
   test('회원의 채팅, 제작 헤더 종 버튼은 알림함으로 가고 로그인 버튼은 없다', async ({
