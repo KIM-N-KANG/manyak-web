@@ -666,6 +666,71 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(authorlessCard.getByText(/^@/)).toHaveCount(0);
   });
 
+  test('섹션 제목 오른쪽 화살표로 카드를 한 장씩 넘기고 끝에서는 그 방향 화살표를 끈다 (STORY-LIST-50)', async ({
+    page,
+  }) => {
+    await mockHomeSections(page, [
+      {
+        id: 'section-1',
+        name: '지금 인기 있는 스토리',
+        items: ['1', '2', '3', '4', '5'].map((id) =>
+          originalStory(`a${id}`, `카드 ${id}`),
+        ),
+      },
+      {
+        name: '오리지널 스토리',
+        items: [originalStory('b1', '오리지널 카드')],
+      },
+    ]);
+
+    await page.goto('/');
+
+    const main = page.getByRole('main');
+    const section = main.getByRole('region', { name: '지금 인기 있는 스토리' });
+    const row = section.getByRole('list');
+    const prev = section.getByRole('button', {
+      name: STORY_LIST_COPY.prevLabel,
+    });
+    const next = section.getByRole('button', {
+      name: STORY_LIST_COPY.nextLabel,
+    });
+
+    await expect(prev).toBeDisabled();
+    await expect(next).toBeEnabled();
+
+    await next.click();
+    await expect(prev).toBeEnabled();
+
+    // 한 번에 카드 한 장과 간격 8px만큼 넘긴다.
+    const cardStep = await row.evaluate(
+      (element) =>
+        (element.querySelector('li')?.getBoundingClientRect().width ?? 0) + 8,
+    );
+
+    await expect
+      .poll(async () =>
+        Math.abs(
+          (await row.evaluate((element) => element.scrollLeft)) - cardStep,
+        ),
+      )
+      .toBeLessThanOrEqual(1);
+
+    // 카드 5장 중 2장이 보이므로 세 번째에서 끝에 닿는다.
+    await next.click();
+    await next.click();
+    await expect(next).toBeDisabled();
+
+    await prev.click();
+    await prev.click();
+    await prev.click();
+    await expect(prev).toBeDisabled();
+
+    // 두 장 이하인 섹션은 넘길 카드가 없어 화살표를 두지 않는다.
+    await expect(
+      main.getByRole('region', { name: '오리지널 스토리' }).getByRole('button'),
+    ).toHaveCount(0);
+  });
+
   test('탐색 탭은 제작과 마이 사이에 있고, 탭으로 들어오면 새로 섞고 상세에서 돌아오면 순서와 위치를 유지한다 (STORY-LIST-47)', async ({
     page,
   }) => {
