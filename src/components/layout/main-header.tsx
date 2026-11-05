@@ -36,22 +36,9 @@ export function MainHeader() {
       <h1 className={cn('text-xl font-semibold', isHome && 'sr-only')}>
         {title}
       </h1>
-      {/* 홈, 채팅, 제작, 탐색 헤더의 오른쪽 묶음. 게스트는 로그인 버튼 오른쪽에 종 버튼(공지사항)을, 회원은 종 버튼(알림함)만 둔다. 탐색은 종 버튼 왼쪽에 검색 버튼을 둔다. */}
+      {/* 홈, 채팅, 제작, 탐색 헤더의 오른쪽 묶음. 게스트는 종 버튼(공지사항) 오른쪽 끝에 로그인 버튼을, 회원은 종 버튼(알림함)만 둔다. 탐색은 종 버튼 왼쪽에 검색 버튼을 둔다. */}
       {isNoticeTab && (
         <div className="ml-auto flex items-center gap-1">
-          {showLoginButton && (
-            <Link
-              href={APP_PATH.LOGIN}
-              className={buttonVariants({
-                variant: 'secondary',
-                size: 'default',
-              })}
-              onClick={() => {
-                track('client_storyList_loginButton_clicked');
-              }}>
-              로그인
-            </Link>
-          )}
           {isExplore && (
             <Link
               href={APP_PATH.EXPLORE_SEARCH()}
@@ -61,6 +48,20 @@ export function MainHeader() {
             </Link>
           )}
           <NotificationHeaderButton />
+          {showLoginButton && (
+            <Link
+              href={APP_PATH.LOGIN}
+              className={cn(
+                buttonVariants({ variant: 'secondary', size: 'default' }),
+                // 아이콘 버튼은 아이콘 양옆이 비어 보여 로그인 버튼 앞을 더 띄워 아이콘 사이와 비슷하게 보이게 한다.
+                'ml-2',
+              )}
+              onClick={() => {
+                track('client_storyList_loginButton_clicked');
+              }}>
+              로그인
+            </Link>
+          )}
         </div>
       )}
     </header>

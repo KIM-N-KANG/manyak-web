@@ -25,8 +25,7 @@ export function NoticeHeaderButton() {
       }
       className={cn(
         buttonVariants({ variant: 'ghost', size: 'icon' }),
-        // 헤더 좌우 여백(16px)에 아이콘 글리프를 맞추려고 버튼 여백만큼 당긴다.
-        'relative -mr-2.5',
+        'relative',
       )}>
       <HugeiconsIcon icon={Megaphone02Icon} aria-hidden="true" />
       {hasUnread ? (
