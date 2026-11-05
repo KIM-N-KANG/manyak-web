@@ -42,7 +42,8 @@ function InboxHeaderButton() {
       }
       className={cn(
         buttonVariants({ variant: 'ghost', size: 'icon' }),
-        // 헤더 좌우 여백(16px)에 아이콘 글리프를 맞추려고 버튼 여백만큼 당긴다.
+        // 회원은 종 버튼이 맨 오른쪽이라 헤더 좌우 여백(16px)에 아이콘 글리프를 맞추려고 버튼 여백만큼 당긴다.
+        // 게스트 공지 버튼은 오른쪽에 로그인 버튼이 오므로 당기지 않는다.
         'relative -mr-2.5',
       )}>
       <HugeiconsIcon icon={Notification01Icon} aria-hidden="true" />
