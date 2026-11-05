@@ -781,7 +781,10 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       firstTile.getByText('한 줄 소개입니다', { exact: true }),
     ).toBeVisible();
-    await expect(firstTile.getByText('판타지', { exact: true })).toBeVisible();
+    // 장르 배지는 너비를 재는 숨은 사본이 함께 있어 보이는 것만 고른다.
+    await expect(
+      firstTile.getByText('판타지', { exact: true }).filter({ visible: true }),
+    ).toBeVisible();
     await expect(page.getByText('@마냑', { exact: true })).toHaveCount(0);
     await expect(page.getByText('누적 턴 수')).toHaveCount(0);
 
