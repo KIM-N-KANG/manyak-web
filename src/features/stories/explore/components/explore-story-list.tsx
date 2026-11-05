@@ -80,7 +80,7 @@ export function ExploreStoryList() {
 
     return (
       <>
-        <ul className="grid grid-cols-3 gap-0.5">
+        <ul className="grid grid-cols-2 gap-0.5">
           {stories.map((story, index) => (
             <ExploreStoryCell key={index} story={story} position={index} />
           ))}

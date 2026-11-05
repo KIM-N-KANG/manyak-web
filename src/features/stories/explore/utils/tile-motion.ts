@@ -1,5 +1,5 @@
 /** 탐색 그리드의 열 수. */
-const COLUMNS = 3;
+const COLUMNS = 2;
 
 /** 대각선 한 칸마다 늦추는 시간(초). */
 const WAVE_STEP_SECONDS = 0.045;

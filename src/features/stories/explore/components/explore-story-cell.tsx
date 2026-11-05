@@ -17,7 +17,7 @@ export function ExploreStoryCell({ story, position }: ExploreStoryCellProps) {
   const [shownStoryId, setShownStoryId] = useState(story.id);
 
   return (
-    <li className="relative aspect-3/4 bg-muted">
+    <li className="relative grid bg-muted">
       <ExploreCellContext value={{ shownStoryId, onShown: setShownStoryId }}>
         <AnimatePresence initial={false}>
           <ExploreStoryTile key={story.id} story={story} position={position} />

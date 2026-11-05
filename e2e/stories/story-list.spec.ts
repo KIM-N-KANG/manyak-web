@@ -763,18 +763,24 @@ test.describe('홈·제작 스토리 목록', () => {
       page.getByRole('banner').getByRole('heading', { name: '탐색' }),
     ).toBeVisible();
 
-    // 썸네일만 세 열로 붙여 놓고 턴 수, 제목과 작성자는 보이지 않는다.
+    // 표지를 두 열로 붙여 놓고 표지 아래 글 영역에 제목과 한 줄 소개만 둔다. 턴 수와 작성자는 보이지 않는다.
     const tiles = page.getByRole('main').getByRole('listitem');
 
     await expect(tiles).toHaveCount(30);
 
     const tops = await tiles.evaluateAll((items) =>
-      items.slice(0, 4).map((item) => item.getBoundingClientRect().top),
+      items.slice(0, 3).map((item) => item.getBoundingClientRect().top),
     );
 
-    expect(new Set(tops.slice(0, 3)).size).toBe(1);
-    expect(tops[3]).toBeGreaterThan(tops[0]);
-    await expect(page.getByText('탐색 1', { exact: true })).toHaveCount(0);
+    expect(new Set(tops.slice(0, 2)).size).toBe(1);
+    expect(tops[2]).toBeGreaterThan(tops[0]);
+
+    const firstTile = tiles.first();
+
+    await expect(firstTile.getByText('탐색 1', { exact: true })).toBeVisible();
+    await expect(
+      firstTile.getByText('한 줄 소개입니다', { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText('@마냑', { exact: true })).toHaveCount(0);
     await expect(page.getByText('누적 턴 수')).toHaveCount(0);
 
