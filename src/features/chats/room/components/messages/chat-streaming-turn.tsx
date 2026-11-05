@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 
+import { Edit03Icon } from '@hugeicons/core-free-icons';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 
 import { ChatAiMessageContent } from '@/features/chats/_shared/components/chat-ai-message-content';
@@ -9,8 +10,10 @@ import {
 } from '@/features/chats/_shared/components/chat-message-bubble';
 import { EASE_OUT } from '@/lib/ease';
 
+import { CHAT_TURN_EDIT_COPY } from '../../constants';
 import type { StreamingTurn } from '../../types';
 import { ChatStreamLoading } from './chat-stream-loading';
+import { TurnActionButton } from './turn-action-button';
 
 type ChatStreamingTurnProps = {
   turn: StreamingTurn;
@@ -41,7 +44,17 @@ export function ChatStreamingTurn({
 
   return (
     <div>
-      <UserMessageBubble>{turn.userInput}</UserMessageBubble>
+      <UserMessageBubble
+        action={
+          <TurnActionButton
+            icon={Edit03Icon}
+            label={CHAT_TURN_EDIT_COPY.trigger}
+            disabled
+            onClick={() => {}}
+          />
+        }>
+        {turn.userInput}
+      </UserMessageBubble>
       {/* popLayout: 퇴장하는 로딩을 흐름에서 빼 본문이 같은 자리에 바로 들어오고, 로딩은 그 위에서 페이드 아웃한다. */}
       <div ref={wrapperRef} className="relative">
         <AnimatePresence mode="popLayout">
