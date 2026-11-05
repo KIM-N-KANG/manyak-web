@@ -763,7 +763,7 @@ test.describe('홈·제작 스토리 목록', () => {
       page.getByRole('banner').getByRole('heading', { name: '탐색' }),
     ).toBeVisible();
 
-    // 표지를 두 열로 붙여 놓고 표지 아래 글 영역에 제목과 한 줄 소개만 둔다. 턴 수와 작성자는 보이지 않는다.
+    // 표지를 두 열로 붙여 놓고 표지 아래 글 영역에 제목, 한 줄 소개와 장르만 둔다. 턴 수와 작성자는 보이지 않는다.
     const tiles = page.getByRole('main').getByRole('listitem');
 
     await expect(tiles).toHaveCount(30);
@@ -781,6 +781,7 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       firstTile.getByText('한 줄 소개입니다', { exact: true }),
     ).toBeVisible();
+    await expect(firstTile.getByText('판타지', { exact: true })).toBeVisible();
     await expect(page.getByText('@마냑', { exact: true })).toHaveCount(0);
     await expect(page.getByText('누적 턴 수')).toHaveCount(0);
 

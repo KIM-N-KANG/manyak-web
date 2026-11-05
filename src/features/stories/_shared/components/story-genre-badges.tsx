@@ -5,18 +5,28 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-type GenreBadgeSize = 'md' | 'sm';
+type GenreBadgeSize = 'md' | 'sm' | 'xs';
+
+type GenreBadgeTone = 'default' | 'inverse';
 
 type StoryGenreBadgesProps = {
   /** 한 줄에 들어가는 만큼 보이고 나머지는 "+N"으로 줄인다. 한 장르가 줄보다 길면 "+N" 자리를 남기고 말줄임한다. */
   genres: string[];
-  /** 배지 크기. 홈 카드처럼 좁은 자리에서는 작은 배지(12px)를 쓴다. */
+  /** 배지 크기. 홈 카드처럼 좁은 자리에서는 작은 배지(12px)를, 탐색 타일에서는 더 작은 배지(11px)를 쓴다. */
   size?: GenreBadgeSize;
+  /** 배지 색. 검은 바탕 위에서는 반투명 흰 배지(inverse)를 쓴다. */
+  tone?: GenreBadgeTone;
 };
 
 const BADGE_SIZE_CLASS: Record<GenreBadgeSize, string> = {
   md: 'h-7 px-3 py-1 text-sm',
   sm: 'h-5 px-2 py-0 text-xs',
+  xs: 'h-4.5 px-1.5 py-0 text-[11px]',
+};
+
+const BADGE_TONE_CLASS: Record<GenreBadgeTone, string> = {
+  default: 'text-foreground-secondary',
+  inverse: 'bg-white/15 text-white/80',
 };
 
 const GAP_PX = 4;
@@ -27,6 +37,7 @@ const useIsomorphicLayoutEffect =
 export function StoryGenreBadges({
   genres,
   size = 'md',
+  tone = 'default',
 }: StoryGenreBadgesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const genreMeasureRef = useRef<HTMLDivElement>(null);
@@ -92,29 +103,38 @@ export function StoryGenreBadges({
         className="pointer-events-none invisible absolute -z-10 flex">
         <div ref={genreMeasureRef} className="flex w-max gap-1">
           {genres.map((genre) => (
-            <GenreBadge key={genre} genre={genre} size={size} />
+            <GenreBadge key={genre} genre={genre} size={size} tone={tone} />
           ))}
         </div>
         <span ref={overflowMeasureRef} className="w-max">
-          <OverflowBadge count={88} size={size} />
+          <OverflowBadge count={88} size={size} tone={tone} />
         </span>
       </div>
 
       {genres.slice(0, visibleCount).map((genre) => (
-        <GenreBadge key={genre} genre={genre} size={size} />
+        <GenreBadge key={genre} genre={genre} size={size} tone={tone} />
       ))}
-      {hiddenCount > 0 && <OverflowBadge count={hiddenCount} size={size} />}
+      {hiddenCount > 0 && (
+        <OverflowBadge count={hiddenCount} size={size} tone={tone} />
+      )}
     </div>
   );
 }
 
-function GenreBadge({ genre, size }: { genre: string; size: GenreBadgeSize }) {
+type BadgeStyleProps = { size: GenreBadgeSize; tone: GenreBadgeTone };
+
+function GenreBadge({
+  genre,
+  size,
+  tone,
+}: BadgeStyleProps & { genre: string }) {
   return (
     <Badge
       variant="secondary"
       className={cn(
-        'min-w-0 shrink border-0 text-foreground-secondary',
+        'min-w-0 shrink border-0',
         BADGE_SIZE_CLASS[size],
+        BADGE_TONE_CLASS[tone],
       )}>
       <span className="truncate">{genre}</span>
     </Badge>
@@ -124,16 +144,15 @@ function GenreBadge({ genre, size }: { genre: string; size: GenreBadgeSize }) {
 function OverflowBadge({
   count,
   size,
-}: {
-  count: number;
-  size: GenreBadgeSize;
-}) {
+  tone,
+}: BadgeStyleProps & { count: number }) {
   return (
     <Badge
       variant="secondary"
       className={cn(
-        'border-0 text-foreground-secondary',
+        'border-0',
         BADGE_SIZE_CLASS[size],
+        BADGE_TONE_CLASS[tone],
       )}>
       +{count}
     </Badge>

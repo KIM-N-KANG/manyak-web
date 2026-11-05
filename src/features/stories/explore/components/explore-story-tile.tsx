@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { APP_PATH } from '@/constants/app-path';
+import { StoryGenreBadges } from '@/features/stories/_shared/components/story-genre-badges';
 import { ORIGINAL_TAG_SRC } from '@/features/stories/_shared/constants/story-card';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 import { cn } from '@/lib/utils';
@@ -141,6 +142,11 @@ export function ExploreStoryTile({ story, position }: ExploreStoryTileProps) {
         <p className="mt-0.5 line-clamp-2 min-h-8 text-xs leading-4 text-white/80">
           {story.oneLineIntro}
         </p>
+        <div className="mt-1.5 h-4.5">
+          {story.genres.length > 0 ? (
+            <StoryGenreBadges genres={story.genres} size="xs" tone="inverse" />
+          ) : null}
+        </div>
       </div>
       {story.isOriginal && (
         <Image

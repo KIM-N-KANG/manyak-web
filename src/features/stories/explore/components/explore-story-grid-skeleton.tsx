@@ -14,6 +14,7 @@ export function ExploreStoryGridSkeleton() {
             <Skeleton className="my-0.5 h-4 w-3/4" />
             <Skeleton className="mt-1.5 h-3 w-full" />
             <Skeleton className="mt-1 h-3 w-2/3" />
+            <Skeleton className="mt-1.5 h-4.5 w-12 rounded-4xl" />
           </div>
         </li>
       ))}
