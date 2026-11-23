@@ -6,6 +6,12 @@ import { SELECTED_TAGS_TRIGGER_LABEL } from '@/features/stories/new/constants';
 import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 
 import { mockMemberSession } from '../fixtures/auth';
+import {
+  CAPTURE_FIXED_NOW,
+  waitForAnimations,
+  waitForDarkTheme,
+  waitForFonts,
+} from '../fixtures/capture';
 import { oneLine } from '../fixtures/copy';
 import { seedStoryCompletionRequests } from '../fixtures/storage';
 import {
@@ -15,15 +21,9 @@ import {
   seedStoryIds,
   test,
 } from '../fixtures/test';
-import {
-  VISUAL_FIXED_NOW,
-  waitForAnimations,
-  waitForDarkTheme,
-  waitForFonts,
-} from '../fixtures/visual';
 
 /**
- * 홈 오리지널·제작 목록·상세·생성 퍼널의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
+ * 홈 오리지널·제작 목록·상세·생성 퍼널의 안정된 정적 상태를 캡처하는 화면 캡처 스펙.
  * 퍼널 진행·삭제 같은 동작 검증은 `stories/*.spec.ts`가 담당한다.
  */
 
@@ -34,8 +34,8 @@ const STORYLINES = '**/api/v1/stories/simple/storylines';
 
 /**
  * 1x1 반투명 빨강 PNG(RGBA 255,0,0,127). 썸네일 요청이 외부 네트워크로 나가지 않도록 목킹한다.
- * 투명 대신 유색을 쓰는 이유는 뷰어의 이미지 영역이 스냅샷에 뚜렷이 드러나야
- * 컨테이너 크기·위치 회귀를 잡을 수 있기 때문이다.
+ * 투명 대신 유색을 쓰는 이유는 뷰어의 이미지 영역이 캡처에 뚜렷이 드러나야
+ * 컨테이너 크기와 위치를 확인할 수 있기 때문이다.
  */
 const TINY_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -93,9 +93,9 @@ const tags = [
   { id: 4, name: '든든한', category: 'SUPPORTING_CHARACTER' },
 ];
 
-test.describe('스토리 좋아요 비주얼', () => {
+test.describe('스토리 좋아요 캡처', () => {
   test('좋아요 로그인 바텀 시트', async ({ page }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
     await page.route(STORY_DETAIL, (route) =>
       route.fulfill({ json: storyDetail }),
     );
@@ -114,7 +114,7 @@ test.describe('스토리 좋아요 비주얼', () => {
 
   for (const dark of [false, true]) {
     test(`좋아요 선택 상태 (${dark ? '다크' : '라이트'})`, async ({ page }) => {
-      await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+      await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
       await mockMemberSession(page);
 
       if (dark) {
@@ -146,12 +146,12 @@ test.describe('스토리 좋아요 비주얼', () => {
   }
 });
 
-test.describe('스토리 상세 CTA 배경 비주얼', () => {
+test.describe('스토리 상세 CTA 배경 캡처', () => {
   for (const dark of [false, true]) {
     test(`최하단 메타 정보와 CTA 배경 연결 (${dark ? '다크' : '라이트'})`, async ({
       page,
     }) => {
-      await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+      await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
       await mockMemberSession(page);
 
       if (dark)
@@ -197,9 +197,9 @@ test.describe('스토리 상세 CTA 배경 비주얼', () => {
   }
 });
 
-test.describe('스토리 비주얼', () => {
+test.describe('스토리 캡처', () => {
   test.beforeEach(async ({ page }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
   });
 
   for (const hasExistingStory of [false, true]) {
@@ -400,9 +400,9 @@ const storylinesResponse = {
  * 채팅 도메인이 이미 대표를 찍은 컴포넌트(확인 다이얼로그·팝오버)는 중복이라 제외하고,
  * 스토리 쪽에만 있는 패턴만 남긴다.
  */
-test.describe('스토리 오버레이 비주얼', () => {
+test.describe('스토리 오버레이 캡처', () => {
   test.beforeEach(async ({ page }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
     await page.route(TAGS, async (route) => {
       await route.fulfill({
         status: 200,
@@ -542,11 +542,11 @@ test.describe('스토리 오버레이 비주얼', () => {
 });
 
 /** 다크 모드 대표 스냅샷. 카드·FAB·하단 탭과 상세 히어로·배지·CTA의 토큰을 덮는다. */
-test.describe('스토리 다크 모드 비주얼', () => {
+test.describe('스토리 다크 모드 캡처', () => {
   test.use({ colorScheme: 'dark' });
 
   test.beforeEach(async ({ page }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
   });
 
   test('제작 목록 기본 상태 (다크)', async ({ page }) => {

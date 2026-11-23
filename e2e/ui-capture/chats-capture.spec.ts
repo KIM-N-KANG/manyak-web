@@ -4,6 +4,11 @@ import {
   CHAT_SETTINGS_COPY,
 } from '@/features/chats/room/constants';
 
+import {
+  CAPTURE_FIXED_NOW,
+  waitForDarkTheme,
+  waitForFonts,
+} from '../fixtures/capture';
 import { oneLine } from '../fixtures/copy';
 import {
   EXHAUSTED_TRIALS,
@@ -15,17 +20,11 @@ import {
   skipChatTour,
   test,
 } from '../fixtures/test';
-import {
-  VISUAL_FIXED_NOW,
-  waitForDarkTheme,
-  waitForFonts,
-} from '../fixtures/visual';
 
 /**
- * 채팅 화면의 안정된 정적 상태를 스크린샷으로 비교하는 비주얼 회귀 스펙.
- * 동작(요청 계약·이동·상태 전이)은 `chats/*.spec.ts`가 검증하고, 여기서는
- * CSS·레이아웃 회귀만 잡는다. 스트리밍 진행 중 같은 동적 상태는 다루지 않는다.
- * 기준 이미지는 Linux 렌더링만 정본이다(`playwright.config.ts`의 `ignoreSnapshots` 참고).
+ * 채팅 화면의 안정된 정적 상태를 캡처하는 화면 캡처 스펙.
+ * 동작(요청 계약, 이동, 상태 전이)은 `chats/*.spec.ts`가 검증하고, 여기서는
+ * CSS와 레이아웃을 확인할 화면만 남긴다. 스트리밍 진행 중 같은 동적 상태는 다루지 않는다.
  */
 
 const CHAT_DETAIL = '**/api/v1/chats/c1';
@@ -56,9 +55,9 @@ const chatDetail = (turns: unknown[] = []) => ({
   model: 'LITE',
 });
 
-test.describe('채팅 비주얼', () => {
+test.describe('채팅 캡처', () => {
   test.beforeEach(async ({ page }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
   });
 
   test('채팅 목록 기본 상태 (CHAT-LIST-02)', async ({ page }) => {
@@ -204,11 +203,11 @@ test.describe('채팅 비주얼', () => {
 /**
  * 오버레이(드로어·다이얼로그·팝오버)는 body로 포털되고 z-index·백드롭·포커스 트랩이
  * 얽혀 레이아웃이 깨지기 쉬우므로 별도로 고정한다. 같은 컴포넌트를 재사용하는 화면은
- * 대표 한 곳만 찍는다 — 여러 장을 찍어도 같은 회귀를 중복 검출할 뿐이다.
+ * 대표 한 곳만 찍는다. 여러 장을 찍어도 같은 내용을 중복해 확인할 뿐이다.
  */
-test.describe('채팅 오버레이 비주얼', () => {
+test.describe('채팅 오버레이 캡처', () => {
   test.beforeEach(async ({ page }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
     await page.route(CHAT_DETAIL, async (route) => {
       await route.fulfill({
         status: 200,
@@ -281,13 +280,13 @@ test.describe('채팅 오버레이 비주얼', () => {
 /**
  * 다크 모드 대표 스냅샷. next-themes가 `.dark`를 붙일 때까지 기다린 뒤 찍는다.
  * 전 화면을 2배로 찍지 않고, 시맨틱 토큰을 가장 많이 쓰는 화면만 고정해
- * 하드코딩 색상(`text-blue-500` 등) 회귀를 감지한다.
+ * 하드코딩 색상(`text-blue-500` 등)이 섞였는지 확인한다.
  */
-test.describe('채팅 다크 모드 비주얼', () => {
+test.describe('채팅 다크 모드 캡처', () => {
   test.use({ colorScheme: 'dark' });
 
   test.beforeEach(async ({ page }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
   });
 
   test('채팅방 대화 진행 상태 (다크)', async ({ page }) => {

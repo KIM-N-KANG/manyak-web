@@ -2,6 +2,7 @@ import type { UserConsentResponse } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';
 
+import { CAPTURE_FIXED_NOW, waitForFonts } from '../fixtures/capture';
 import {
   expect,
   mockConsents,
@@ -9,10 +10,9 @@ import {
   seedPendingLogin,
   test,
 } from '../fixtures/test';
-import { VISUAL_FIXED_NOW, waitForFonts } from '../fixtures/visual';
 
 /**
- * 로그인 화면·필수 동의 시트의 정적 상태를 비교하는 비주얼 회귀 스펙.
+ * 로그인 화면·필수 동의 시트의 정적 상태를 캡처하는 화면 캡처 스펙.
  * 뒤로가기·이동·동의 동작 검증은 `my/login-page.spec.ts`·`auth/consent.spec.ts`가 담당한다.
  */
 
@@ -23,7 +23,7 @@ const PENDING_CONSENTS: UserConsentResponse = {
   age14: { requiredVersion: '1', needsConsent: true },
 };
 
-test.describe('계정 비주얼', () => {
+test.describe('계정 캡처', () => {
   test('로그인 페이지: 가입 혜택 배지와 문서 링크, 이관 안내·약관 고지 없음 (AUTH-LOGIN)', async ({
     page,
   }) => {
@@ -43,7 +43,7 @@ test.describe('계정 비주얼', () => {
   test('로그인 직후 필수 동의 시트 초기 상태 (AUTH-CONSENT-03)', async ({
     page,
   }) => {
-    await page.clock.setFixedTime(VISUAL_FIXED_NOW);
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
     await mockMemberSession(page);
     await seedPendingLogin(page);
     await mockConsents(page, PENDING_CONSENTS);

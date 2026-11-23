@@ -11,6 +11,7 @@ import {
   serializeLinkResult,
 } from '@/lib/auth/link-account';
 
+import { waitForDarkTheme, waitForFonts } from '../fixtures/capture';
 import {
   CREDIT_PRODUCTS_FIXTURE,
   expect,
@@ -18,10 +19,9 @@ import {
   mockMemberSession,
   test,
 } from '../fixtures/test';
-import { waitForDarkTheme, waitForFonts } from '../fixtures/visual';
 
 /**
- * 마이·이프 충전·피드백·친구 초대·서비스 안내 화면의 안정된 정적 상태를 비교하는 비주얼 회귀 스펙.
+ * 마이·이프 충전·피드백·친구 초대·서비스 안내 화면의 안정된 정적 상태를 캡처하는 화면 캡처 스펙.
  * 메뉴 이동·폼 제출 같은 동작 검증은 `my/*.spec.ts`·`feedback/*.spec.ts`가 담당한다.
  */
 
@@ -48,7 +48,7 @@ const mockAuthMe = async (page: Page) => {
   );
 };
 
-test.describe('마이 비주얼', () => {
+test.describe('마이 캡처', () => {
   test('마이 게스트 상태 (MY-MENU)', async ({ page }) => {
     await page.goto('/my');
 
@@ -276,7 +276,7 @@ test.describe('마이 비주얼', () => {
 });
 
 /** 다크 모드 대표 스냅샷. 이프 카드·섹션 메뉴와 destructive(회원 탈퇴) 토큰을 덮는다. */
-test.describe('마이 다크 모드 비주얼', () => {
+test.describe('마이 다크 모드 캡처', () => {
   test.use({ colorScheme: 'dark' });
 
   test('마이 회원 상태 (다크)', async ({ page }) => {

@@ -6,12 +6,12 @@ import {
 } from '@/constants/app-banner';
 import { APP_PATH } from '@/constants/app-path';
 
+import { waitForAnimations, waitForFonts } from '../fixtures/capture';
 import { expect, test } from '../fixtures/test';
 import { USER_AGENT } from '../fixtures/user-agents';
-import { waitForAnimations, waitForFonts } from '../fixtures/visual';
 
 /**
- * 앱 안내 배너와 안내 시트의 정적 상태를 비교하는 비주얼 회귀 스펙. 노출 조건과
+ * 앱 안내 배너와 안내 시트의 정적 상태를 캡처하는 화면 캡처 스펙. 노출 조건과
  * 동작은 `smoke/app-banner.spec.ts`가 담당한다.
  */
 

@@ -1,6 +1,7 @@
 import { formatCreditAmount } from '@/constants/credit';
 import { buildInviteRewardCopy } from '@/features/my/invite/constants';
 
+import { waitForFonts } from '../fixtures/capture';
 import {
   CREDIT_POLICY_FIXTURE,
   expect,
@@ -8,14 +9,13 @@ import {
   seedInviteOnboardingNextRun,
   test,
 } from '../fixtures/test';
-import { waitForFonts } from '../fixtures/visual';
 
 /**
- * 신규 가입 초대 코드 바텀 시트의 정적 상태를 비교하는 비주얼 회귀 스펙.
+ * 신규 가입 초대 코드 바텀 시트의 정적 상태를 캡처하는 화면 캡처 스펙.
  * 노출 조건과 동작 검증은 `my/invite.spec.ts`가 담당한다.
  */
 
-test.describe('온보딩 비주얼', () => {
+test.describe('온보딩 캡처', () => {
   test('신규 가입 초대 코드 바텀 시트 (ONBD-INVITE)', async ({ page }) => {
     await mockMemberSession(page, { inviteOnboardingPending: true });
     await seedInviteOnboardingNextRun(page);
