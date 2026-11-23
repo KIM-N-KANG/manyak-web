@@ -32,3 +32,13 @@ pnpm-debug.log*
 .cache
 *.tsbuildinfo
 next-env.d.ts
+
+# 테스트, 에이전트 설정과 로컬 산출물은 이미지 빌드에 쓰지 않는다
+e2e
+tests
+.agents
+.claude
+.playwright
+AGENTS.md
+README.md
+skills-lock.json

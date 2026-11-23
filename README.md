@@ -2,14 +2,18 @@
 
 ## 기술 스택
 
-| 분류          | 사용 기술                                                                                   |
-| ------------- | ------------------------------------------------------------------------------------------- |
-| 프레임워크    | Next.js 16 (App Router), React 19, [React Compiler](https://react.dev/learn/react-compiler) |
-| 데이터 패칭   | TanStack Query, [Orval](https://orval.dev/) (OpenAPI 코드 생성)                             |
-| UI            | shadcn/ui, Base UI, Tailwind CSS v4, motion, Sonner, next-themes                            |
-| 검증/타입     | TypeScript, Zod                                                                             |
-| 테스트        | Vitest                                                                                      |
-| 패키지 매니저 | pnpm                                                                                        |
+| 분류        | 사용 기술                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| 프레임워크  | Next.js 16 (App Router), React 19, [React Compiler](https://react.dev/learn/react-compiler) |
+| 데이터 패칭 | TanStack Query, [Orval](https://orval.dev/) (OpenAPI 코드 생성)                             |
+| 인증        | Auth.js (next-auth)                                                                         |
+| UI          | shadcn/ui, Base UI, Tailwind CSS v4, motion, Sonner, next-themes                            |
+| 로컬 저장소 | Dexie (IndexedDB)                                                                           |
+| 검증과 타입 | TypeScript, Zod                                                                             |
+| 관측성      | Amplitude, Sentry                                                                           |
+| 웹 푸시     | Firebase Cloud Messaging                                                                    |
+| 테스트      | Vitest (단위), Playwright (E2E, 화면 캡처)                                                  |
+| 패키지 관리 | pnpm 12                                                                                     |
 
 > ⚠️ **React Compiler를 사용하므로 `useMemo`, `useCallback`을 직접 작성하지 않습니다.** 메모이제이션은 컴파일러가 처리합니다.
 
@@ -18,8 +22,8 @@
 ### 사전 요구사항
 
 - **Node.js 20+**
-- **pnpm 10+** (`brew install pnpm` 권장. `package.json`의 `packageManager`에 핀된 버전으로 자동 전환됩니다)
-- **백엔드 API 서버** — `API_BASE_URL`로 지정한 서버가 실행 중이어야 합니다. 로컬 서버(`http://localhost:8080`)나 공용 개발 서버를 사용할 수 있으며, API 코드 생성(`pnpm api:generate`)도 같은 서버의 OpenAPI 스펙(`/v3/api-docs`)을 참조합니다.
+- **pnpm 12** (`brew install pnpm` 권장. `package.json`의 `packageManager`에 핀된 버전으로 자동 전환됩니다)
+- **백엔드 API 서버**: `API_BASE_URL`로 지정한 서버가 실행 중이어야 합니다. 로컬 서버(`http://localhost:8080`)나 공용 개발 서버를 사용할 수 있으며, API 코드 생성(`pnpm api:generate`)도 같은 서버의 OpenAPI 스펙(`/v3/api-docs`)을 참조합니다.
 
 ### 설치 및 실행
 
@@ -54,9 +58,9 @@ pnpm api:generate
 
 위 명령은 `.env.local`의 `API_BASE_URL`을 읽고 `${API_BASE_URL}/v3/api-docs`에서 다음을 생성합니다. URL 끝의 `/`는 자동으로 제거하며, 값이 없으면 생성 전에 오류로 중단합니다.
 
-- `src/api/generated/endpoints` — TanStack Query 훅
-- `src/api/generated/models` — 타입 정의
-- `src/api/generated/zod` — Zod 스키마
+- `src/api/generated/endpoints`: TanStack Query 훅
+- `src/api/generated/models`: 타입 정의
+- `src/api/generated/zod`: Zod 스키마
 
 생성된 코드는 모든 요청을 공용 인스턴스(`src/api/mutator/custom-instance.ts`)를 통해 보냅니다.
 
@@ -66,21 +70,23 @@ pnpm api:generate
 
 ```
 src/
-├── app/                  # App Router (라우트, 레이아웃)
-│   ├── (main)/           # 메인 영역 (스토리 목록, 채팅 목록)
-│   ├── (story)/          # 스토리 생성·상세
+├── app/                  # App Router (라우트, 레이아웃, 메타데이터)
+│   ├── (main)/           # 하단 탭 화면 (홈, 탐색, 제작, 채팅 목록, 마이)
+│   ├── (story)/          # 스토리 생성, 상세, 수정, 탐색 검색
 │   ├── (chat)/           # 채팅방
+│   ├── (my)/             # 마이 하위 화면 (이프, 페르소나, 친구 초대, 피드백 등)
+│   ├── (auth)/           # 로그인
+│   ├── (share)/          # 공유 열람, 앱 이동
+│   ├── (notices)/ (notifications)/ (legal)/
 │   └── api/[...path]/    # 백엔드로 요청을 전달하는 프록시 라우트
-├── api/                  # Orval 생성 코드(generated) 및 요청 인스턴스(mutator)
-├── features/             # 도메인별 기능 모듈
-│   ├── stories/          # 스토리 (list, detail, new, components)
-│   └── chats/            # 채팅 (list, room, components)
-├── components/           # 공용 컴포넌트 (ui, common, layout, providers)
+├── api/                  # Orval 생성 코드(generated)와 요청 인스턴스(mutator)
+├── features/             # 도메인별 기능 (stories, studio, chats, my, auth, shares, notices 등)
+├── components/           # 공용 컴포넌트 (ui, common, layout, providers 등)
 ├── hooks/                # 공용 훅
-├── lib/                  # 유틸리티 (fetch, query-client, 포맷 등)
-├── constants/            # 상수
-├── types/                # 공용 타입
-└── assets/               # 정적 에셋
+├── lib/                  # 유틸리티 (fetch, 인증, 푸시, 쿼리 클라이언트 등)
+├── observability/        # Amplitude, Sentry 래퍼
+├── constants/            # 상수 (라우트 경로, 문구 등)
+└── assets/               # 폰트 등 정적 에셋
 ```
 
 - 라우트는 도메인별 [route group](https://nextjs.org/docs/app/building-your-application/routing/route-groups)으로 분리되어 있습니다.
@@ -89,14 +95,20 @@ src/
 
 ## 주요 스크립트
 
-| 명령                | 설명                               |
-| ------------------- | ---------------------------------- |
-| `pnpm dev`          | 개발 서버 실행                     |
-| `pnpm build`        | 프로덕션 빌드                      |
-| `pnpm start`        | 빌드된 앱 실행                     |
-| `pnpm test`         | Vitest 테스트 실행                 |
-| `pnpm test:watch`   | Vitest 워치 모드                   |
-| `pnpm typecheck`    | 타입 검사 (`tsc --noEmit`)         |
-| `pnpm lint`         | ESLint 검사                        |
-| `pnpm format`       | Prettier 포맷팅                    |
-| `pnpm api:generate` | OpenAPI 스펙으로부터 API 코드 생성 |
+| 명령                   | 설명                                                |
+| ---------------------- | --------------------------------------------------- |
+| `pnpm dev`             | 개발 서버 실행                                      |
+| `pnpm build`           | 프로덕션 빌드                                       |
+| `pnpm start`           | 빌드된 앱 실행                                      |
+| `pnpm test`            | Vitest 단위 테스트                                  |
+| `pnpm test:watch`      | Vitest 워치 모드                                    |
+| `pnpm test:e2e`        | Playwright E2E (프로덕션 빌드, 3100 포트)           |
+| `pnpm test:e2e:report` | 마지막 E2E HTML 리포트 열기                         |
+| `pnpm ui:capture`      | 목 데이터 화면 캡처를 `.playwright/capture/`에 저장 |
+| `pnpm ui:compare`      | 직전 캡처와 비교해 바뀐 화면 확인                   |
+| `pnpm typecheck`       | 타입 검사 (`tsc --noEmit`)                          |
+| `pnpm lint`            | ESLint 검사                                         |
+| `pnpm format`          | Prettier 포맷팅                                     |
+| `pnpm api:generate`    | OpenAPI 스펙으로부터 API 코드 생성                  |
+
+코딩 에이전트와 함께 작업할 때의 규칙과 스킬은 [AGENTS.md](AGENTS.md)에 있습니다.
