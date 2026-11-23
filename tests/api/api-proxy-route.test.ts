@@ -87,6 +87,40 @@ describe('api proxy route', () => {
     expect(new Headers(capturedRequest.init.headers).has('cookie')).toBe(false);
   });
 
+  it('백엔드 응답의 content-encoding과 content-length는 지우고 나머지 헤더는 그대로 넘긴다', async () => {
+    const originalFetch = globalThis.fetch;
+    const previousApiBaseUrl = process.env.API_BASE_URL;
+
+    process.env.API_BASE_URL = 'http://backend.test';
+    // Node fetch가 gzip 본문을 풀어 준 뒤의 응답처럼 본문은 평문이고 압축 헤더만 남아 있다.
+    globalThis.fetch = async () =>
+      new Response('{"ok":true}', {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Encoding': 'gzip',
+          'Content-Length': '31',
+          'X-Request-Id': 'backend-request',
+        },
+      });
+
+    try {
+      const response = await route.GET(
+        new Request('http://localhost:3000/api/v1/stories'),
+        routeContext(['v1', 'stories']),
+      );
+
+      expect(response.headers.has('content-encoding')).toBe(false);
+      expect(response.headers.has('content-length')).toBe(false);
+      expect(response.headers.get('content-type')).toBe('application/json');
+      expect(response.headers.get('x-request-id')).toBe('backend-request');
+      expect(await response.text()).toBe('{"ok":true}');
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.API_BASE_URL = previousApiBaseUrl;
+    }
+  });
+
   it('forwards mutation bodies and maps proxy paths onto API_BASE_URL prefixes', async () => {
     const originalFetch = globalThis.fetch;
     const previousApiBaseUrl = process.env.API_BASE_URL;

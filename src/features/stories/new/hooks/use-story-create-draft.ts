@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { toast } from 'sonner';
 
-import { getUsersMeStoryDraftsByDraftId } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+import { getUsersMeStoryDraftsByDraftId } from '@/api/generated/endpoints/story-drafts/story-drafts';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import type {

@@ -8,6 +8,10 @@
 import type { InfraMetricPoint } from './infraMetricPoint';
 
 export interface InfraSearchMetrics {
-  freeStorageBytes?: InfraMetricPoint[];
+  /** @nullable */
+  status?: string | null;
+  /** @nullable */
+  diskTotalBytes?: number | null;
+  diskAvailableBytes?: InfraMetricPoint[];
   jvmMemoryPressure?: InfraMetricPoint[];
 }

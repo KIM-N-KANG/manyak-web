@@ -5,8 +5,12 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { InfraRedisNode } from './infraRedisNode';
 
 export interface InfraRedisMetrics {
-  nodes?: InfraRedisNode[];
+  usedMemoryBytes?: number;
+  maxMemoryBytes?: number;
+  connectedClients?: number;
+  keys?: number;
+  /** @nullable */
+  aofLastWriteOk?: boolean | null;
 }

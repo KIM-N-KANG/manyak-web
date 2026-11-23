@@ -8,7 +8,7 @@ import {
   getGetUsersMeStoryDraftsQueryKey,
   put,
   useGetUsersMeStoryDrafts,
-} from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+} from '@/api/generated/endpoints/story-drafts/story-drafts';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { useCreationEpoch } from '@/features/stories/_shared/hooks/use-creation-epoch';
 import {

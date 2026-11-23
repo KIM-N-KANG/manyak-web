@@ -17,7 +17,7 @@ import {
   useGenerateSimpleStorylines,
   useGetSimpleStoryTags,
 } from '@/api/generated/endpoints/simple-story-creation/simple-story-creation';
-import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/story-drafts/story-drafts';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type {
   CreateSimpleStoryRequest,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useHome } from '@/api/generated/endpoints/story-home-controller/story-home-controller';
+import { useHome } from '@/api/generated/endpoints/stories/stories';
 import type { StoryHomeResponse } from '@/api/generated/models';
 import { EmptyListNotice } from '@/components/common/empty-list-notice';
 import { RetryListStatus } from '@/components/common/retry-list-status';

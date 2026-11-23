@@ -3,8 +3,8 @@ import { cache } from 'react';
 import {
   getGetPublicStoriesUrl,
   getGetStoryDetailUrl,
+  getHomeUrl,
 } from '@/api/generated/endpoints/stories/stories';
-import { getHomeUrl } from '@/api/generated/endpoints/story-home-controller/story-home-controller';
 import type {
   GetPublicStoriesParams,
   StoryDetailResponse,

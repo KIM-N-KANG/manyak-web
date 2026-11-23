@@ -7,7 +7,7 @@ import {
   getGetUsersMeStoryDraftsQueryKey,
   getUsersMeStoryDraftsByDraftId,
   put,
-} from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+} from '@/api/generated/endpoints/story-drafts/story-drafts';
 import type { PutStoryDraftRequest } from '@/api/generated/models';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {

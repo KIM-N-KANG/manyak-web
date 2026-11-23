@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { usePostUsersMeConsents } from '@/api/generated/endpoints/user/user';
+import { usePostUsersMeConsents } from '@/api/generated/endpoints/users/users';
 import type { UserConsentResponse } from '@/api/generated/models';
 import { LoadingButtonContent } from '@/components/common/loading-button-content';
 import { Checkbox } from '@/components/motion/checkbox';
