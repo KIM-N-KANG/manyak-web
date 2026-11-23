@@ -1,11 +1,11 @@
 ---
 name: ui-review
-description: manyak-web의 화면 변경을 PR 전에 검사해 달라는 요청에 사용합니다. 예를 들어 "UI 검사해줘", "화면 확인해줘", "PR 전에 화면 점검해줘"에 적용합니다. 바뀐 화면을 목 데이터로 캡처해 직접 보고(`pnpm ui:capture`, `pnpm ui:compare`), agent-browser로 개발 서버를 살펴보고, vercel-react-best-practices와 modern-web-guidance 기준으로 코드를 점검해 보고서를 만듭니다. 코드는 고치지 않고 보고만 합니다.
+description: manyak-web의 화면 변경을 PR 전에 검사해 달라는 요청에 사용합니다. 예를 들어 "UI 검사해줘", "화면 확인해줘", "PR 전에 화면 점검해줘"에 적용합니다. 바뀐 화면을 목 데이터로 캡처해 직접 보고(`pnpm ui:capture`, `pnpm ui:compare`), agent-browser로 개발 서버를 실행해 살펴본 뒤 보고서를 만듭니다. diff를 읽는 코드 리뷰는 pr-review 스킬이 맡습니다. 코드는 고치지 않고 보고만 합니다.
 ---
 
 # UI 검사 (manyak-web)
 
-비주얼 회귀 테스트 대신 쓰는 PR 전 화면 검사입니다. 결과는 사람이 판단할 보고서이고, 머지를 막는 관문은 PR CI의 E2E입니다.
+비주얼 회귀 테스트 대신 쓰는 PR 전 화면 검사입니다. 화면을 실행해서 보는 것만 맡고, 코드 규칙과 React 패턴 같은 diff 리뷰는 pr-review 스킬이 맡습니다. 결과는 사람이 판단할 보고서이고, 머지를 막는 관문은 PR CI의 E2E입니다.
 
 ## 원칙
 
@@ -64,19 +64,17 @@ description: manyak-web의 화면 변경을 PR 전에 검사해 달라는 요청
 - 증거 스크린샷은 `ab screenshot ./.playwright/review/<이름>.png`로 남깁니다. 문법이 `screenshot [selector] [path]`라서 `./` 없이 쓰면 경로가 선택자로 읽히고 임시 폴더에 저장됩니다. 고밀도 화면이라 1080px 넘게 저장되므로 Read 전에 `sips -Z 800 <파일>`로 줄입니다. 존재 확인이나 로딩 확인에는 스크린샷 대신 스냅샷을 씁니다.
 - 첫 `open`에서 Chrome 버전이 낮다는 경고가 나오면 `pnpm exec agent-browser install`로 갱신할 수 있습니다.
 
-## 4. 코드 점검
+## 4. 원인 위치 짚기
 
-- AGENTS.md의 "UI와 스타일", "레이아웃과 스크롤" 규칙: `h-dvh` 재선언, 앱 프레임 안의 `fixed`, `overflow-y-auto`의 `overscroll-contain` 누락, 헤더 높이 매직 넘버 보정, 하드코딩 색상, `cn()` 없이 합친 조건부 클래스
-- vercel-react-best-practices 스킬: 재렌더링, 번들 크기, 데이터 요청 순서. React Compiler를 쓰므로 `useMemo`, `useCallback` 추가는 제안하지 않습니다.
-- modern-web-guidance 스킬: 다이얼로그, 팝오버, 폼, 스크롤, 접근성처럼 웹 플랫폼 기능이 걸린 부분
-- 사용자 문구가 바뀌었으면 코드 상수와 하네스 명세 문구가 맞는지 봅니다.
+- 2번과 3번에서 찾은 문제마다 원인이 되는 컴포넌트와 스타일을 찾아 `파일:줄`로 적습니다. diff 전체를 규칙대로 훑는 리뷰는 하지 않습니다.
+- 고칠 방법을 제안할 때 웹 플랫폼 기능(다이얼로그, 팝오버, 폼, 스크롤, 대비)이 걸리면 modern-web-guidance 스킬을, 재렌더링이 원인이면 vercel-react-best-practices 스킬을 참고합니다. React Compiler를 쓰므로 `useMemo`, `useCallback` 추가는 제안하지 않습니다.
 
 ## 5. 보고
 
 ```markdown
 ## UI 검사 결과
 
-- 대상: 화면 목록, 기준 커밋, 실행한 단계(캡처, 비교, 직접 확인, 코드 점검)
+- 대상: 화면 목록, 기준 커밋, 실행한 단계(캡처, 비교, 직접 확인)
 - 문제: 심각도(높음, 보통, 낮음)별로 화면, 증거(캡처 경로나 명령 출력), 원인 위치(`파일:줄`), 제안
 - 확인하지 못한 것: 건너뛴 단계와 이유(회원 전용 화면을 직접 보지 못함, 비교 생략 등)
 ```
