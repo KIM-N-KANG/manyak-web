@@ -46,10 +46,10 @@ description: manyak-web의 기능 PR을 머지해 달라는 요청에 사용합�
 
 6. 1번에서 찾은 worktree가 있으면 정리합니다.
    - 이 세션이 그 worktree 안에 있으면 먼저 기본 체크아웃으로 나옵니다. 나올 수 없는 worktree(앱이 세션에 만들어 준 것)면 서버만 끄고 worktree는 남긴 채 세션을 보관하면 앱이 정리한다고 보고합니다.
-   - 그 worktree를 작업 폴더로 쓰는 프로세스를 찾습니다. 경로는 `git worktree list`가 보여 주는 실제 경로를 씁니다.
+   - 그 worktree를 작업 폴더로 쓰는 프로세스를 찾습니다. 경로는 `git worktree list`가 보여 주는 실제 경로를 씁니다. 출력의 COMMAND와 PID 열을 봅니다. 스킬을 인자와 함께 부르면 본문의 `$` 뒤 숫자가 인자로 바뀌므로, 이 스킬의 명령에는 그런 표기를 쓰지 않습니다.
 
      ```bash
-     lsof -d cwd -Fpcn 2>/dev/null | awk -v wt="<worktree>" '/^p/{p=substr($0,2)} /^c/{c=substr($0,2)} /^n/{n=substr($0,2); if (n==wt || index(n, wt"/")==1) print p, c, n}'
+     lsof -a -d cwd +D "<worktree>" 2>/dev/null
      ```
 
    - Claude Code 세션(`claude`)과 대화형 셸(`zsh`, `bash`)은 두고, 나머지(`next dev`, Playwright, pnpm 등)를 `kill <PID>`로 하나씩 끕니다. 끄기 전에 `lsof -a -p <PID> -iTCP -sTCP:LISTEN -P -n`으로 듣던 포트를 적어 두고, 끈 뒤 그 포트가 비었는지 확인합니다. 기본 체크아웃에서 사용자가 켠 개발 서버는 건드리지 않습니다.
