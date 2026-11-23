@@ -5,3 +5,6 @@ node_modules/
 coverage/
 pnpm-lock.yaml
 .pnpm-store/
+# skills CLI로 받은 외부 스킬은 받은 그대로 둔다
+.agents/skills/next-best-practices/
+.agents/skills/vercel-react-best-practices/
