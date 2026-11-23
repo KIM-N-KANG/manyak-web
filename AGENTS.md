@@ -92,19 +92,19 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (로컬 백엔드 :8080 �
 
 아래 경로는 해당 도메인의 `CLIENT/` 기준입니다. 앱 기능은 `docs/ui/`, 공통 기술 규칙은 `docs/platform/CLIENT/WEB/`에서 같은 역할의 문서를 찾습니다.
 
-| 바꾼 것 | 갱신할 문서 |
-| --- | --- |
-| 사용자 목표와 성공 조건 | `2-1-USER-STORY.md`, `2-2-REQUIREMENTS.md` |
-| 화면, 문구, 이동과 상호작용 | 공통과 WEB의 `3-1`, `3-2`, `3-3` 문서 |
-| API 사용, 상태와 실행 순서 | 공통과 WEB의 `4-1`, `4-2`, `4-3`, `4-4` 문서 |
-| 검증 케이스와 E2E 대응 | `WEB/5-1-VERIFICATION.md` |
-| 중요한 선택의 이유 | 공통 또는 `WEB/DECISIONS.md` |
-| 분석 이벤트, 프로퍼티와 수집 제한 | 하네스 `docs/reference/ANALYTICS.md` |
-| 배포와 환경 설정 | 공용 WEB의 `6-DEPLOYMENT.md`, 하네스 `docs/operations/DEPLOYMENT.md` |
-| 용어 | 하네스 `docs/reference/GLOSSARY.md` |
+| 바꾼 것                           | 갱신할 문서                                                          |
+| --------------------------------- | -------------------------------------------------------------------- |
+| 사용자 목표와 성공 조건           | `2-1-USER-STORY.md`, `2-2-REQUIREMENTS.md`                           |
+| 화면, 문구, 이동과 상호작용       | 공통과 WEB의 `3-1`, `3-2`, `3-3` 문서                                |
+| API 사용, 상태와 실행 순서        | 공통과 WEB의 `4-1`, `4-2`, `4-3`, `4-4` 문서                         |
+| 검증 케이스와 E2E 대응            | `WEB/5-1-VERIFICATION.md`                                            |
+| 중요한 선택의 이유                | 공통 또는 `WEB/DECISIONS.md`                                         |
+| 분석 이벤트, 프로퍼티와 수집 제한 | 하네스 `docs/reference/ANALYTICS.md`                                 |
+| 배포와 환경 설정                  | 공용 WEB의 `6-DEPLOYMENT.md`, 하네스 `docs/operations/DEPLOYMENT.md` |
+| 용어                              | 하네스 `docs/reference/GLOSSARY.md`                                  |
 
 - 관련 절을 전체로 읽고 검색은 보조로 사용합니다. 화면 동작과 E2E가 바뀌면 대응 QA 케이스와 자동화 컬럼을 함께 갱신합니다.
-- 일정, 진행과 미결 사항은 Jira, 적용과 검증 결과는 이 저장소의 `docs/superpowers/plans/`와 PR에 남깁니다. 현재 명세에 Phase, Jira와 작업 순서를 넣지 않습니다.
+- 일정, 진행과 미결 사항은 Jira, 적용과 검증 결과는 PR에 남깁니다. 현재 명세에 Phase, Jira와 작업 순서를 넣지 않습니다.
 - 코드와 계약이 다르면 차이를 기록하고 승인 없이 계약을 코드에 맞추지 않습니다. 확정된 결정은 덮어쓰지 않고 후속 기록에 대체 ID와 범위를 남깁니다.
 - 도메인의 `BACKEND/`, `AI/`, `CLIENT/ANDROID/`와 백엔드 및 AI 플랫폼 기반과 결정 기록은 다른 팀원 소유입니다. 웹 변경이 해당 계약에 걸리면 임의로 고치지 않고 사용자에게 알립니다.
 
