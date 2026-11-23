@@ -9,7 +9,7 @@ description: manyak-web의 기능 PR을 머지해 달라는 요청에 사용합�
 
 - 머지는 사용자가 요청한 PR에만 합니다. 번호가 없으면 현재 브랜치의 열린 PR이 대상이고, 대상을 정할 수 없을 때만 질문합니다. 쌓인 PR을 순서대로 머지해 달라는 요청은 `dev`에 가까운 아래 PR부터 처리합니다.
 - head가 `release/*`이면 이 스킬로 머지하지 않습니다. 릴리스 PR은 머지 커밋과 버전 태그가 필요하므로 `.agents/skills/create-release/SKILL.md`를 따릅니다.
-- 방식은 squash merge 하나입니다. 저장소는 머지 커밋과 rebase도 허용하지만 기능 PR에는 쓰지 않습니다.
+- 방식은 squash merge 하나입니다. 저장소 설정은 세 방식을 모두 허용하고 `dev` ruleset은 squash와 머지 커밋을 허용하지만, 기능 PR에는 squash만 씁니다.
 - 커밋 메시지는 GitHub 기본 메시지를 그대로 씁니다. 저장소 설정상 커밋이 하나면 그 커밋 제목, 여러 개면 PR 제목이 제목이 되고 본문에는 커밋 메시지 목록이 들어갑니다. `--subject`, `--body`, `--body-file`을 주지 않습니다.
 - 머지 요청에는 CI 대기, Draft를 Ready로 바꾸기, 쌓인 PR의 base 변경, 머지 뒤 브랜치와 worktree 정리, Jira 완료 전환이 포함됩니다. 릴리스와 배포는 포함하지 않습니다.
 - 저장소가 auto-merge를 허용하지 않으므로 `--auto`를 쓰지 않습니다. `--admin`으로 검사를 우회하지 않습니다. 요청 없이 force push하지 않습니다.

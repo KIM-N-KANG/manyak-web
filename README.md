@@ -21,7 +21,7 @@
 
 ### 사전 요구사항
 
-- **Node.js 20+**
+- **Node.js 20+** (UI 검사에 쓰는 agent-browser는 22+)
 - **pnpm 12** (`brew install pnpm` 권장. `package.json`의 `packageManager`에 핀된 버전으로 자동 전환됩니다)
 - **백엔드 API 서버**: `API_BASE_URL`로 지정한 서버가 실행 중이어야 합니다. 로컬 서버(`http://localhost:8080`)나 공용 개발 서버를 사용할 수 있으며, API 코드 생성(`pnpm api:generate`)도 같은 서버의 OpenAPI 스펙(`/v3/api-docs`)을 참조합니다.
 

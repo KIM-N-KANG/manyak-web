@@ -12,7 +12,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  // 로컬 기본값(코어의 절반)은 워커가 너무 많아 커밋 직전 실행이 머신을 점유한다.
+  // 로컬 기본값(코어의 절반)은 워커가 너무 많아 실행 중에 머신을 점유한다.
   // CI 러너(ubuntu-latest, public 레포)는 4 vCPU라 같은 값으로 맞춘다.
   workers: 4,
   // 실행 산출물(결과, HTML 리포트, 화면 캡처)은 루트의 `.playwright/` 한 곳에 모은다.

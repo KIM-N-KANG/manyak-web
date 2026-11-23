@@ -2,11 +2,11 @@ import { waitForFonts } from '../fixtures/capture';
 import { expect, test } from '../fixtures/test';
 
 /**
- * 서비스 이용약관·개인정보 처리방침 페이지의 정적 상태(상단 뷰포트)를 캡처하는 화면 캡처 스펙.
+ * 서비스 이용약관과 개인정보 처리방침 페이지의 정적 상태(상단 뷰포트)를 캡처하는 화면 캡처 스펙.
  * 새 탭 진입과 헤더 로고 동작 검증은 `legal/legal.spec.ts`가 담당한다.
  */
 
-test.describe('약관·개인정보 캡처', () => {
+test.describe('약관과 개인정보 캡처', () => {
   test('서비스 이용약관 상단 (LEGAL-DOC)', async ({ page }) => {
     await page.goto('/terms');
 
