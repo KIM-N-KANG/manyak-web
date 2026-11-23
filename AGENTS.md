@@ -12,7 +12,7 @@ pnpm lint             # ESLint
 pnpm test             # Vitest 단위 테스트
 pnpm test:e2e         # Playwright E2E (프로덕션 빌드와 3100 포트라 켜 둔 pnpm dev와 공존)
 E2E_DEV=1 pnpm test:e2e  # 개발 서버로 E2E. 스펙 몇 개 반복할 때만. 켜 둔 pnpm dev는 꺼야 함(Next 16 단일 dev 제한)
-pnpm ui:capture      # 목 데이터 화면 캡처를 .ui-capture/에 저장 (UI 검사용, CI 제외)
+pnpm ui:capture      # 목 데이터 화면 캡처를 .playwright/capture/에 저장 (UI 검사용, CI 제외)
 pnpm api:generate     # OpenAPI → API 코드 생성 (.env.local의 API_BASE_URL 백엔드 스펙)
 ```
 

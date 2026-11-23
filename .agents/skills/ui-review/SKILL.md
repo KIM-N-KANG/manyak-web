@@ -12,7 +12,7 @@ description: manyak-web의 화면 변경을 PR 전에 검사해 달라는 요청
 - 보고만 합니다. 코드 수정은 사용자가 보고서를 보고 요청한 뒤 합니다.
 - 브라우저 도구는 agent-browser입니다. 이 저장소의 화면 검사에서는 다른 브라우저 도구 지침보다 이 스킬을 따릅니다. 처음 쓰기 전에 `pnpm exec agent-browser skills get core`를 읽습니다.
 - agent-browser는 devDependency로 설치돼 있으므로 `pnpm exec agent-browser`로 실행합니다. 세션 이름은 `pnpm exec agent-browser session id --scope worktree --prefix ui-review`로 받아 모든 명령에 `--session <이름>`을 붙입니다. 이름 없는 기본 세션은 다른 에이전트와 공유되므로 쓰지 않습니다.
-- 캡처와 스크린샷은 `.ui-capture/`(gitignore)에만 남기고 커밋하지 않습니다.
+- 캡처와 스크린샷은 `.playwright/`(gitignore)에만 남기고 커밋하지 않습니다.
 - 사용자가 켜 둔 개발 서버는 건드리지 않습니다. 직접 띄운 개발 서버와 agent-browser 세션은 끝날 때 닫습니다(`pnpm exec agent-browser --session <이름> close`).
 
 ## 1. 대상 정하기
@@ -25,15 +25,15 @@ description: manyak-web의 화면 변경을 PR 전에 검사해 달라는 요청
 
 캡처 스펙은 E2E fixture(`e2e/fixtures/auth.ts`, `api-mock.ts`)로 회원 상태와 API 응답을 고정해, 로그인 없이 회원 전용 화면까지 같은 데이터로 찍습니다.
 
-- `pnpm ui:capture`는 프로덕션 빌드 뒤 Pixel 5(393x851) 화면을 `.ui-capture/<스펙 파일>/<이름>.png`로 남기고 기존 캡처를 덮어씁니다. 빌드 때문에 몇 분 걸립니다. 스펙을 골라 찍으려면 경로를 붙입니다: `pnpm ui:capture e2e/ui-capture/stories-capture.spec.ts`
+- `pnpm ui:capture`는 프로덕션 빌드 뒤 Pixel 5(393x851) 화면을 `.playwright/capture/<스펙 파일>/<이름>.png`로 남기고 기존 캡처를 덮어씁니다. 빌드 때문에 몇 분 걸립니다. 스펙을 골라 찍으려면 경로를 붙입니다: `pnpm ui:capture e2e/ui-capture/stories-capture.spec.ts`
 - 개발 서버를 직접 띄울 계획이면 캡처를 먼저 끝냅니다. 프로덕션 빌드와 개발 서버가 겹치면 CPU가 포화됩니다.
 - 변경 전과 비교하려면 작업 트리가 깨끗할 때만 아래 순서로 합니다. 커밋하지 않은 변경이 있으면 브랜치를 바꾸지 않고 비교를 건너뛰었다고 보고합니다.
   1. `git switch --detach origin/dev` 뒤 `pnpm ui:capture`로 기준을 남깁니다.
-  2. `git switch -`로 돌아와 `pnpm ui:compare`를 실행합니다. 달라진 화면은 실패로 표시되고 `test-results/`에 `-expected`, `-actual`, `-diff` 이미지가 남습니다.
+  2. `git switch -`로 돌아와 `pnpm ui:compare`를 실행합니다. 달라진 화면은 실패로 표시되고 `.playwright/results/`에 `-expected`, `-actual`, `-diff` 이미지가 남습니다.
 - 대상 화면의 이미지를 Read로 직접 봅니다. 잘림, 넘침, 겹침, 정렬과 간격, 말줄임, 하단 고정 요소와 스크롤 영역의 경계, 다크 모드의 대비와 하드코딩 색상을 확인합니다.
 - 핵심 화면과 캡처 파일은 아래와 같습니다. 나머지는 `grep -n toHaveScreenshot e2e/ui-capture/*.spec.ts`로 찾습니다.
 
-| 화면        | 캡처 (`.ui-capture/<스펙>/`)                                                                                                 |
+| 화면        | 캡처 (`.playwright/capture/<스펙>/`)                                                                                         |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 홈          | `stories-capture.spec.ts/story-list-home-sections.png`                                                                       |
 | 탐색        | `stories-capture.spec.ts/story-list-explore.png`                                                                             |
@@ -61,7 +61,7 @@ description: manyak-web의 화면 변경을 PR 전에 검사해 달라는 요청
   - 접근성: `ab a11y --tags wcag2a,wcag2aa --json`. 대비 수치와 원인은 `failureSummary`에 있습니다. `ab snapshot -i`로 이름 없는 버튼과 레이블 없는 입력도 봅니다.
   - 상호작용: 바뀐 버튼, 시트, 다이얼로그를 직접 열고 닫고 `ab snapshot -i`로 다시 확인합니다. 뒤로 가기로 닫혀야 하는 것은 Drawer, Dialog, AlertDialog뿐입니다(KNK-1613). Select나 Popover에서 뒤로 가기를 누르면 페이지를 떠납니다.
   - React: `ab react renders start`, 상호작용, `ab react renders stop`. React Compiler가 건너뛴 컴포넌트까지 렌더로 세어 수치가 크게 부풀고, 가만히 있어도 Next 개발 오버레이가 축약된 이름으로 잡힙니다. 결과는 후보로만 쓰고 의심 컴포넌트는 `ab eval`이나 DOM 변화로 다시 확인합니다. 서버 컴포넌트와 스트리밍을 바꿨으면 `ab react suspense`로 경계를 봅니다.
-- 증거 스크린샷은 `ab screenshot ./.ui-capture/review/<이름>.png`로 남깁니다. 문법이 `screenshot [selector] [path]`라서 `./` 없이 쓰면 경로가 선택자로 읽히고 임시 폴더에 저장됩니다. 고밀도 화면이라 1080px 넘게 저장되므로 Read 전에 `sips -Z 800 <파일>`로 줄입니다. 존재 확인이나 로딩 확인에는 스크린샷 대신 스냅샷을 씁니다.
+- 증거 스크린샷은 `ab screenshot ./.playwright/review/<이름>.png`로 남깁니다. 문법이 `screenshot [selector] [path]`라서 `./` 없이 쓰면 경로가 선택자로 읽히고 임시 폴더에 저장됩니다. 고밀도 화면이라 1080px 넘게 저장되므로 Read 전에 `sips -Z 800 <파일>`로 줄입니다. 존재 확인이나 로딩 확인에는 스크린샷 대신 스냅샷을 씁니다.
 - 첫 `open`에서 Chrome 버전이 낮다는 경고가 나오면 `pnpm exec agent-browser install`로 갱신할 수 있습니다.
 
 ## 4. 코드 점검
