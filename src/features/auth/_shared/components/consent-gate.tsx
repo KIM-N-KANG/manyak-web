@@ -11,7 +11,7 @@ import {
   getGetUsersMeConsentsQueryKey,
   getUsersMeConsents,
   useGetUsersMeConsents,
-} from '@/api/generated/endpoints/user/user';
+} from '@/api/generated/endpoints/users/users';
 import type { UserConsentResponse } from '@/api/generated/models';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';

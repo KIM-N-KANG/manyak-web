@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import {
   getGetTrialsQueryKey,
   useGetTrials,
-} from '@/api/generated/endpoints/trial-controller/trial-controller';
+} from '@/api/generated/endpoints/credits/credits';
 import type { TrialsResponse } from '@/api/generated/models';
 
 /**

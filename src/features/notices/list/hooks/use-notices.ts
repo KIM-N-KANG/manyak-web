@@ -5,7 +5,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   getGetNoticesQueryKey,
   getNotices,
-} from '@/api/generated/endpoints/notice-controller/notice-controller';
+} from '@/api/generated/endpoints/notices/notices';
 import type { PublicNoticeItemResponse } from '@/api/generated/models';
 
 /** 무한 목록은 페이지 배열을 캐시하므로 헤더 버튼의 단건 조회 키와 섞이지 않게 접미사를 붙인다. */

@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 
-import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
+import { getGetTrialsQueryKey } from '@/api/generated/endpoints/credits/credits';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import { getCreationEpoch } from '@/features/stories/_shared/utils/creation-db';
 import { markPendingStoryCreated } from '@/features/stories/_shared/utils/creation-request-storage';

@@ -15,12 +15,12 @@ import {
   useDeleteStoriesByStoryIdThumbnail,
   useUpdateStory,
 } from '@/api/generated/endpoints/stories/stories';
-import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+import { getGetUsersMeStoryDraftsQueryKey } from '@/api/generated/endpoints/story-drafts/story-drafts';
 import {
   getGetStoriesSubmissionsQueryKey as getStorySubmissionsQueryKey,
   getStoriesSubmissionsById as getStorySubmission,
   useResubmit,
-} from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
+} from '@/api/generated/endpoints/story-submissions/story-submissions';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import { CollapsedListItemsProvider } from '@/components/common/collapsible-list-item';

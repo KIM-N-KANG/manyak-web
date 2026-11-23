@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   getGetStoriesSubmissionsQueryKey as getStorySubmissionsQueryKey,
   useDeleteStoriesSubmissionsById as useDeleteStorySubmission,
-} from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
+} from '@/api/generated/endpoints/story-submissions/story-submissions';
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

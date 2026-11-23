@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useGetStoriesSubmissions } from '@/api/generated/endpoints/story-submission-controller/story-submission-controller';
+import { useGetStoriesSubmissions } from '@/api/generated/endpoints/story-submissions/story-submissions';
 import { getGetMyStoriesQueryKey } from '@/api/generated/endpoints/users/users';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
 import { readCreateSubmissions } from '@/features/studio/_shared/utils/story-submission';

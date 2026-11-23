@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { getUsersMeStoryDraftsByDraftId } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+import { getUsersMeStoryDraftsByDraftId } from '@/api/generated/endpoints/story-drafts/story-drafts';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import {

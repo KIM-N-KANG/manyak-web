@@ -10,7 +10,7 @@ import {
   getGetUsersMePersonasQueryKey as getPersonasQueryKey,
   usePatchUsersMePersonasByPersonaId as useUpdatePersona,
   usePostUsersMePersonas as useCreatePersona,
-} from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
+} from '@/api/generated/endpoints/personas/personas';
 import type { UserPersonaResponse } from '@/api/generated/models';
 import { hasInAppNavigation } from '@/components/providers/in-app-navigation-tracker';
 import { APP_PATH } from '@/constants/app-path';

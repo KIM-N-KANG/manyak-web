@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import {
   deleteUsersMeStoryDraftsByDraftId,
   getGetUsersMeStoryDraftsQueryKey,
-} from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+} from '@/api/generated/endpoints/story-drafts/story-drafts';
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';
 import { MascotStage } from '@/components/common/mascot-stage';
 import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
