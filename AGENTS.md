@@ -12,6 +12,7 @@ pnpm lint             # ESLint
 pnpm test             # Vitest 단위 테스트
 pnpm test:e2e         # Playwright E2E (프로덕션 빌드와 3100 포트라 켜 둔 pnpm dev와 공존)
 E2E_DEV=1 pnpm test:e2e  # 개발 서버로 E2E. 스펙 몇 개 반복할 때만. 켜 둔 pnpm dev는 꺼야 함(Next 16 단일 dev 제한)
+pnpm ui:capture      # 목 데이터 화면 캡처를 .ui-capture/에 저장 (UI 검사용, CI 제외)
 pnpm api:generate     # OpenAPI → API 코드 생성 (.env.local의 API_BASE_URL 백엔드 스펙)
 ```
 
@@ -19,7 +20,7 @@ pnpm api:generate     # OpenAPI → API 코드 생성 (.env.local의 API_BASE_UR
 
 코드와 설정 변경을 마친 작업 단위마다 `pnpm typecheck && pnpm lint && pnpm test`로 검증하세요. 읽기 전용 검토와 문서만 변경한 작업은 관련 내용, 경로, 링크를 검증합니다. 통과한 검사는 이후 변경이나 새로운 실패 근거가 없으면 반복하지 않습니다.
 
-E2E는 로컬에서 돌리지 않고 PR CI 결과로 확인합니다. `dev`와 `main` 대상 PR마다 CI가 전체 E2E와 WebKit, 비주얼 회귀를 돌리고, 머지 전에 그 결과를 확인합니다.
+E2E는 로컬에서 돌리지 않고 PR CI 결과로 확인합니다. `dev`와 `main` 대상 PR마다 CI가 전체 E2E와 WebKit을 돌리고, 머지 전에 그 결과를 확인합니다.
 
 - E2E 스펙을 새로 쓰거나 고칠 때, CI 실패를 재현할 때만 해당 스펙을 로컬에서 실행합니다. 예: `pnpm test:e2e e2e/stories --project="Mobile Chrome"`
 - E2E를 실행하기 전에 에이전트가 띄운 `pnpm dev`는 끄고, 브라우저 화면 확인은 E2E가 끝난 뒤에 다시 띄워서 합니다. Turbopack 개발 서버 하나가 코어 7~8개를 쓰기 때문에 E2E의 프로덕션 빌드, 테스트 브라우저와 겹치면 CPU가 포화됩니다. 사용자가 직접 켜 둔 개발 서버는 건드리지 않습니다.
@@ -86,7 +87,8 @@ E2E는 로컬에서 돌리지 않고 PR CI 결과로 확인합니다. `dev`와 `
 
 - 단위 테스트: `tests/` 아래에 소스 구조를 미러링해 배치하고 `*.test.ts`로 명명합니다 (예: `tests/features/chats/room/utils/parse-sse-stream.test.ts`). Vitest node 환경이므로 DOM 없는 순수 로직 위주로 작성합니다.
 - E2E 테스트: `e2e/` 아래 `*.spec.ts`. 브라우저별 실행 대상은 `playwright.config.ts`를 참고하세요. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다. 클라이언트 이동 뒤 페이지 제목은 Next 라우트 어나운서에도 노출되므로 `page.getByRole('banner').getByText(...)`처럼 헤더로 범위를 좁혀 단언합니다.
-- 비주얼 회귀 테스트: `e2e/visual/` 아래 `*-visual.spec.ts`. 화면의 **안정된 정적 상태만** `toHaveScreenshot()`으로 비교하고, 동작과 요청 계약은 일반 E2E로 검증합니다. 시간 의존 값은 `page.clock.setFixedTime()`으로 고정하세요. **로컬 기본 `pnpm test:e2e`는 비주얼 스펙을 제외하므로 비주얼 검증을 하지 않습니다.** UI를 의도적으로 바꾼 PR은 `pnpm test:e2e:visual:update`(Docker 필요)로 Linux 기준 이미지를 함께 갱신하세요.
+- 화면 캡처 스펙: `e2e/ui-capture/` 아래 `*-capture.spec.ts`. E2E fixture로 화면의 **안정된 정적 상태**를 만들고 `toHaveScreenshot()`으로 캡처만 합니다. 기준 이미지는 커밋하지 않으며, CI와 기본 `pnpm test:e2e`에서 빠지고 `pnpm ui:capture`(덮어쓰기)와 `pnpm ui:compare`(직전 캡처와 비교)로만 실행합니다. 시간 의존 값은 `page.clock.setFixedTime()`으로 고정하세요. 동작과 요청 계약은 일반 E2E로 검증합니다.
+- UI 검사: UI를 바꾼 PR은 만들기 전에 ui-review 스킬(Claude Code는 `ui-reviewer` 서브에이전트)로 검사하고 결과를 PR 본문 화면 절에 남깁니다. 이 저장소의 화면 검사와 디버깅에는 agent-browser(`pnpm exec agent-browser`)를 씁니다.
 
 ## 에이전트 스킬
 
