@@ -88,12 +88,13 @@ E2E는 로컬에서 돌리지 않고 PR CI 결과로 확인합니다. `dev`와 `
 - 단위 테스트: `tests/` 아래에 소스 구조를 미러링해 배치하고 `*.test.ts`로 명명합니다 (예: `tests/features/chats/room/utils/parse-sse-stream.test.ts`). Vitest node 환경이므로 DOM 없는 순수 로직 위주로 작성합니다.
 - E2E 테스트: `e2e/` 아래 `*.spec.ts`. 브라우저별 실행 대상은 `playwright.config.ts`를 참고하세요. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다. 클라이언트 이동 뒤 페이지 제목은 Next 라우트 어나운서에도 노출되므로 `page.getByRole('banner').getByText(...)`처럼 헤더로 범위를 좁혀 단언합니다.
 - 화면 캡처 스펙: `e2e/ui-capture/` 아래 `*-capture.spec.ts`. E2E fixture로 화면의 **안정된 정적 상태**를 만들고 `toHaveScreenshot()`으로 캡처만 합니다. 기준 이미지는 커밋하지 않으며, CI와 기본 `pnpm test:e2e`에서 빠지고 `pnpm ui:capture`(덮어쓰기)와 `pnpm ui:compare`(직전 캡처와 비교)로만 실행합니다. 시간 의존 값은 `page.clock.setFixedTime()`으로 고정하세요. 동작과 요청 계약은 일반 E2E로 검증합니다.
-- PR 전 리뷰: PR을 만들기 전에 pr-review 스킬(Claude Code는 `pr-reviewer` 서브에이전트)로 diff를 리뷰하고 남은 문제를 PR 본문 "리뷰 참고"에 남깁니다. UI를 바꿨으면 ui-review 스킬(`ui-reviewer`)로 화면도 검사해 결과를 화면 절에 남깁니다. 둘은 서로 독립이라 동시에 실행할 수 있습니다.
+- PR 전 리뷰: `create-pr` 스킬이 PR을 만들기 전에 pr-review 스킬(Claude Code는 `pr-reviewer` 서브에이전트)로 diff를 리뷰하고 남은 문제를 PR 본문 "리뷰 참고"에 남깁니다. UI를 바꿨으면 ui-review 스킬(`ui-reviewer`)로 화면도 검사해 결과를 화면 절에 남깁니다. 둘은 서로 독립이라 동시에 실행할 수 있습니다. 단, ui-review의 변경 전 비교는 체크아웃의 HEAD를 옮기므로 다른 작업과 함께 돌리지 않습니다.
 - 이 저장소의 화면 검사와 디버깅에는 agent-browser(`pnpm exec agent-browser`)를 씁니다.
 
 ## 에이전트 스킬
 
 - 스킬 원본은 `.agents/skills/`에 두고 `.claude/skills/`에는 같은 이름의 심볼릭 링크만 둡니다.
+- 브랜치, 커밋, PR은 레포 스킬 `create-branch`, `create-commit`, `create-pr`로 합니다. 하네스 공통 스킬을 읽어 따르는 연결 스킬이고, `create-pr`만 PR 전 리뷰를 먼저 실행합니다. 하네스 공통 스킬은 이 저장소에서 고치지 않습니다.
 - 외부 스킬은 `npx skills add <저장소> --skill <이름> -a claude-code -a codex -y`로 받고 `npx skills update -p`로 갱신합니다. 에이전트를 하나만 지정하면 CLI가 `.claude/skills`에 복사본을 만듭니다.
 - 받은 외부 스킬 폴더는 `.prettierignore`에 추가하고 직접 고치지 않습니다. 파일이 바뀌면 `skills-lock.json`의 해시와 어긋납니다.
 
