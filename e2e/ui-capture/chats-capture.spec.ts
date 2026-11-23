@@ -30,7 +30,7 @@ import {
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHATS_BATCH = '**/api/v1/chats/batch';
 
-// 첫 진입 안내 투어 오버레이·추천 입력 힌트가 스냅샷에 끼어들지 않게 한다.
+// 첫 진입 안내 투어 오버레이, 추천 입력 힌트가 스냅샷에 끼어들지 않게 한다.
 test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
   await skipChatChoicesHint(page);
@@ -201,7 +201,7 @@ test.describe('채팅 캡처', () => {
 });
 
 /**
- * 오버레이(드로어·다이얼로그·팝오버)는 body로 포털되고 z-index·백드롭·포커스 트랩이
+ * 오버레이(드로어, 다이얼로그, 팝오버)는 body로 포털되고 z-index, 백드롭, 포커스 트랩이
  * 얽혀 레이아웃이 깨지기 쉬우므로 별도로 고정한다. 같은 컴포넌트를 재사용하는 화면은
  * 대표 한 곳만 찍는다. 여러 장을 찍어도 같은 내용을 중복해 확인할 뿐이다.
  */
@@ -253,7 +253,7 @@ test.describe('채팅 오버레이 캡처', () => {
       .getByRole('button', { name: CHAT_MENU_COPY.delete })
       .click();
 
-    // ConfirmAlertDialog 공용 컴포넌트의 대표 스냅샷이다(스토리 삭제·퍼널 이탈도 같은 컴포넌트).
+    // ConfirmAlertDialog 공용 컴포넌트의 대표 스냅샷이다(스토리 삭제, 퍼널 이탈도 같은 컴포넌트).
     await expect(
       page.getByRole('alertdialog').getByText('채팅을 삭제할까요?'),
     ).toBeVisible();

@@ -13,7 +13,7 @@ import {
 
 /**
  * 로그인 화면과 필수 동의 시트의 정적 상태를 캡처하는 화면 캡처 스펙.
- * 뒤로가기·이동·동의 동작 검증은 `my/login-page.spec.ts`·`auth/consent.spec.ts`가 담당한다.
+ * 뒤로가기, 이동, 동의 동작 검증은 `my/login-page.spec.ts`, `auth/consent.spec.ts`가 담당한다.
  */
 
 /** 세 항목 모두 동의가 필요한 상태. 시트의 전체 구성을 한 장에 담는다. */

@@ -30,12 +30,12 @@ description: manyak-web의 화면 변경을 PR 전에 검사해 달라는 요청
 - 변경 전과 비교는 사용자가 요청했을 때만 합니다. 이 저장소는 worktree 없이 하나의 체크아웃을 쓰므로, 비교 중 HEAD를 옮기면 같은 체크아웃을 보는 다른 리뷰와 사용자 개발 서버까지 바뀝니다. 아래 조건을 모두 만족할 때만 하고, 아니면 건너뛰었다고 보고합니다.
   - 작업 트리가 깨끗하고, 다른 리뷰나 작업이 이 체크아웃을 동시에 쓰고 있지 않음
   - 기준 커밋에 `pnpm ui:capture`와 `e2e/ui-capture`가 있음
-  - 이 브랜치가 캡처 스펙이나 E2E fixture를 바꾸지 않음(바꿨으면 기준과 비교 대상이 다른 스펙으로 찍힘)
-  1. `git switch --detach origin/dev` 뒤 `pnpm ui:capture`로 기준을 남깁니다.
-  2. `git switch -`로 돌아와 `pnpm ui:compare`를 실행합니다. 달라진 화면은 실패로 표시되고 `.playwright/results/`에 `-expected`, `-actual`, `-diff` 이미지가 남습니다. 비교 허용치가 `maxDiffPixelRatio: 0.01`이라 1% 미만의 변화는 통과로 나옵니다.
-  3. 실패하든 성공하든 끝나면 `git status`로 원래 브랜치에 돌아왔는지 확인합니다.
+  - 이 브랜치가 캡처 스펙의 스크린샷 이름, 준비 단계, E2E fixture 데이터를 바꾸지 않음(바꿨으면 기준과 비교 대상이 다른 상태로 찍힘). 주석이나 테스트 제목만 바꾼 것은 괜찮습니다.
+  1. `git fetch origin dev`와 `git switch --detach origin/dev` 뒤 `pnpm install --frozen-lockfile`로 의존성을 맞추고 `pnpm ui:capture`로 기준을 남깁니다.
+  2. `git switch -`로 돌아와 `pnpm ui:compare`를 실행합니다. 달라진 화면은 실패로 표시되고 `.playwright/results/`에 `-expected`, `-actual`, `-diff` 이미지가 남습니다. 다른 픽셀 비율이 `maxDiffPixelRatio: 0.01`을 넘을 때만 실패하므로 1% 이하의 변화는 통과로 나오고, 픽셀별 색 허용치(`threshold` 기본 0.2) 안의 미세한 색 차이는 아예 세지 않습니다.
+  3. 실패하든 성공하든 끝나면 `git status`로 원래 브랜치에 돌아왔는지 확인하고, 2번 전에 `pnpm install --frozen-lockfile`로 의존성을 되돌립니다.
 - 대상 화면의 이미지를 Read로 직접 봅니다. 잘림, 넘침, 겹침, 정렬과 간격, 말줄임, 하단 고정 요소와 스크롤 영역의 경계, 다크 모드의 대비와 하드코딩 색상을 확인합니다.
-- 핵심 화면과 캡처 파일은 아래와 같습니다. 나머지는 `grep -n toHaveScreenshot e2e/ui-capture/*.spec.ts`로 찾습니다.
+- 핵심 화면과 캡처 파일은 아래와 같습니다. 나머지는 `grep -n -A2 toHaveScreenshot e2e/ui-capture/*.spec.ts`로 찾습니다. 이름이 템플릿 리터럴로 여러 줄에 걸친 경우가 있어 다음 줄까지 봅니다.
 
 | 화면        | 캡처 (`.playwright/capture/<스펙>/`)                                                                                                            |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |

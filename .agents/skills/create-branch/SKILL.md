@@ -5,7 +5,7 @@ description: Jira 티켓의 작업 브랜치 생성, 기존 브랜치 체크아�
 
 # 브랜치 생성 (하네스 공통 스킬 연결)
 
-하네스 공통 스킬 `../knk-harness/.agents/skills/create-branch/SKILL.md`를 읽고 그 절차를 그대로 따릅니다. 이 파일은 스킬 목록에 올리기 위한 연결이며 절차를 따로 정하지 않습니다.
+하네스 공통 스킬 `../knk-harness/.agents/skills/create-branch/SKILL.md`를 읽고 그 절차를 그대로 따릅니다. 이 파일은 스킬 목록에 올리기 위한 연결이며 절차를 따로 정하지 않습니다. 원본 안의 상대 경로는 이 파일이 아니라 `../knk-harness/.agents/skills/create-branch/` 기준으로 해석합니다.
 
 - 스크립트 경로는 저장소 루트 기준 `../knk-harness/.agents/skills/create-branch/scripts/create_branch.py`입니다.
 - 이 저장소는 worktree를 만들지 않고 원래 체크아웃에서 브랜치를 바꿉니다(AGENTS.md 기본 지침).
