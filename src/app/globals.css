@@ -257,6 +257,28 @@
   );
 }
 
+/* 홈 섹션 카드 줄(카드 3장 이상)의 카드. 줄은 왼쪽 16px, 오른쪽 8px 여백과 카드 사이 16px로 배치해
+   한 칸 넘긴 자리마다 양옆 카드가 화면 끝 밖에 놓이게 한다. 화면 안 두 번째 칸에 들어오는 카드만 왼쪽으로 8px
+   당겨 함께 보이는 두 장 사이를 8px로 맞춘다. 당김은 카드 위치에 연동해, 넘기는 동안 들어오는 카드와의 간격은
+   16px에서 8px로 줄고 나가는 카드와의 간격은 8px에서 16px로 벌어진다.
+   카드 폭은 (줄 폭 - 40px) / 2(줄 폭의 절반 - 20px)이다. view() inset은 카드 시작선이 두 번째 칸 자리
+   (줄 폭의 절반 + 12px)에 오는 순간 0%, 첫 번째 칸 자리(16px)에 오는 순간 100%가 되도록 잡는다.
+   스크롤 연동 애니메이션을 지원하지 않는 브라우저는 1ms 시간 애니메이션으로 끝나 당기지 않은 간격 16px로 보인다. */
+@keyframes home-section-card-slot {
+  from {
+    translate: calc(var(--spacing) * -2) 0;
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+@utility home-section-card {
+  animation: home-section-card-slot 1ms linear both;
+  animation-timeline: view(inline calc(50% - 4px) calc(50% - 12px));
+}
+
 /* useDragScroll이 붙은 가로 스크롤 영역의 커서. 칩·탭처럼 누를 수 있는 자식은
    자기 커서를 유지하고, 끄는 동안에는 포인터 위치와 무관하게 grabbing을 보인다. */
 [data-drag-scrollable] {

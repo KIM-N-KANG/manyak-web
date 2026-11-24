@@ -614,7 +614,7 @@ test.describe('홈·제작 스토리 목록', () => {
       .toBe(leftAt);
   });
 
-  test('홈은 서버 순서대로 섹션을 쌓고 섹션마다 카드 두 장과 셋째 카드 16px을 보인다 (STORY-LIST-46)', async ({
+  test('홈은 서버 순서대로 섹션을 쌓고 섹션마다 카드 두 장만 여백 안에 보인다 (STORY-LIST-46)', async ({
     page,
   }) => {
     await mockHomeSections(page, [
@@ -648,13 +648,24 @@ test.describe('홈·제작 스토리 목록', () => {
 
     await expect(row).toHaveCSS('overflow-x', 'auto');
 
-    const [rowWidth, cardWidth] = await row.evaluate((element) => [
-      element.clientWidth,
-      element.querySelector('li')?.getBoundingClientRect().width ?? 0,
-    ]);
+    const [rowWidth, cards] = await row.evaluate((element) => {
+      const rowBox = element.getBoundingClientRect();
 
-    // 왼쪽 여백 16px, 카드 두 장, 8px 간격 두 개 뒤에 셋째 카드가 16px만 보인다.
-    expect(16 + cardWidth * 2 + 8 * 2 + 16).toBeCloseTo(rowWidth, 0);
+      return [
+        rowBox.width,
+        [...element.children].map((child) => {
+          const box = child.getBoundingClientRect();
+
+          return [box.left - rowBox.left, box.right - rowBox.left];
+        }),
+      ] as const;
+    });
+
+    // 두 장과 그 사이 8px이 좌우 16px 여백 안을 채우고, 셋째 카드는 화면 오른쪽 끝 밖에서 시작한다.
+    expect(cards[0][0]).toBeCloseTo(16, 0);
+    expect(cards[1][0] - cards[0][1]).toBeCloseTo(8, 0);
+    expect(rowWidth - cards[1][1]).toBeCloseTo(16, 0);
+    expect(cards[2][0]).toBeGreaterThanOrEqual(rowWidth - 0.5);
 
     const authorlessCard = row
       .getByRole('listitem')
@@ -701,10 +712,10 @@ test.describe('홈·제작 스토리 목록', () => {
     await next.click();
     await expect(prev).toBeEnabled();
 
-    // 한 번에 카드 한 장과 간격 8px만큼 넘긴다.
+    // 한 번에 카드 한 장과 배치 간격 16px만큼 넘긴다.
     const cardStep = await row.evaluate(
       (element) =>
-        (element.querySelector('li')?.getBoundingClientRect().width ?? 0) + 8,
+        (element.querySelector('li')?.getBoundingClientRect().width ?? 0) + 16,
     );
 
     await expect
@@ -714,6 +725,22 @@ test.describe('홈·제작 스토리 목록', () => {
         ),
       )
       .toBeLessThanOrEqual(1);
+
+    // 넘긴 자리에서도 두 번째 칸 카드만 당겨 두 장 사이가 8px이고, 나간 카드는 화면 왼쪽 끝 밖에 있다.
+    const settled = await row.evaluate((element) => {
+      const rowLeft = element.getBoundingClientRect().left;
+
+      return [...element.children].slice(0, 3).map((child) => {
+        const box = child.getBoundingClientRect();
+
+        return [box.left - rowLeft, box.right - rowLeft];
+      });
+    });
+
+    // 카드 폭이 소수점이면 멈춘 스크롤 위치가 기기 픽셀에 맞춰 1px 안에서 어긋날 수 있다.
+    expect(settled[0][1]).toBeLessThanOrEqual(1);
+    expect(Math.abs(settled[1][0] - 16)).toBeLessThanOrEqual(1);
+    expect(Math.abs(settled[2][0] - settled[1][1] - 8)).toBeLessThanOrEqual(1);
 
     // 카드 5장 중 2장이 보이므로 세 번째에서 끝에 닿는다.
     await next.click();
@@ -1061,8 +1088,8 @@ test.describe('홈·제작 스토리 목록', () => {
     });
 
     await expect(loading).toBeVisible();
-    // 섹션 2개마다 제목 1개와 카드 3장의 썸네일, 제목, 한 줄 소개 두 줄, 장르 배지 두 개다.
-    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(38);
+    // 섹션 2개마다 제목 1개와 카드 2장의 썸네일, 제목, 한 줄 소개 두 줄, 장르 배지 두 개다.
+    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(26);
 
     releaseResponse();
     await expect(loading).toBeHidden();

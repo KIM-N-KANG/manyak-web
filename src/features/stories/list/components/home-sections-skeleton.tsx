@@ -14,10 +14,10 @@ export function HomeSectionsSkeleton() {
           className="flex flex-col gap-3">
           <Skeleton className="mx-4 h-7 w-32" />
           <div className="flex gap-2 overflow-hidden px-4">
-            {Array.from({ length: 3 }).map((__, index) => (
+            {Array.from({ length: 2 }).map((__, index) => (
               <div
                 key={index}
-                className="flex w-[calc((100%-1rem)/2)] shrink-0 flex-col gap-2">
+                className="flex w-[calc((100%-0.5rem)/2)] shrink-0 flex-col gap-2">
                 <Skeleton className="aspect-3/4 w-full rounded-lg" />
                 <div className="flex flex-col px-1">
                   <Skeleton className="h-6 w-3/4" />
