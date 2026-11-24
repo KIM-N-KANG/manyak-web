@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { guestConsentSections } from '@/features/legal/content/guest-consent-content';
 import { privacyContent } from '@/features/legal/content/privacy-content';
 import { termsContent } from '@/features/legal/content/terms-content';
 import type { LegalDocument } from '@/features/legal/types';
@@ -68,8 +69,8 @@ describe('법적 문서 콘텐츠', () => {
 
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
-    expect(privacyContent.effectiveDate).toBe('2026-10-22');
-    expect(privacyContent.version).toBe('v1.9');
+    expect(privacyContent.effectiveDate).toBe('2026-11-24');
+    expect(privacyContent.version).toBe('v1.10');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 
@@ -151,8 +152,8 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain(
       '제출일부터 1년 후 서비스 데이터베이스, Slack, Google Forms·Sheets에서 파기',
     );
-    expect(text).toContain('OpenSearch에서 14일');
-    expect(text).toContain('CloudWatch에서 30일');
+    expect(text).toContain('OpenSearch에서 14일 보관 후 삭제');
+    expect(text).not.toContain('CloudWatch에서 30일');
     expect(text).toContain('최대 7일 동안 복구 제한 상태');
     expect(text).not.toContain('탈퇴 시 지체 없이 파기합니다');
   });
@@ -161,7 +162,7 @@ describe('법적 문서 콘텐츠', () => {
     const text = collectText(privacyContent);
 
     for (const processor of [
-      'Amazon Web Services, Inc.',
+      'Oracle Corporation (Oracle Cloud Infrastructure)',
       'Vercel, Inc.',
       'Cloudflare, Inc.',
       'OpenAI, L.L.C.',
@@ -180,6 +181,31 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('기능 요청 시 API 전송');
     expect(text).toContain('기본 API 악용 방지 로그 최대 30일');
     expect(text).toContain('privacy@deepseek.com');
+  });
+
+  it('개인정보 처리방침은 일본 오사카 리전의 서버와 R2 저장을 국외 이전으로 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain(
+      'Oracle Corporation (Oracle Cloud Infrastructure): 일본 오사카 리전의 서버',
+    );
+    expect(text).toContain(
+      'Oracle Corporation (일본, oracle.com/kr/legal/privacy)',
+    );
+    expect(text).toContain('서비스 이용 시 네트워크 전송과 상시 저장');
+    expect(text).toContain('이미지 파일과 데이터베이스 백업 저장, CDN 운영');
+    expect(text).toContain('아시아 태평양 지역(R2 저장)');
+    expect(text).toContain(
+      '서비스 접속 시 네트워크 전송과 상시 저장 / 네트워크 정보는',
+    );
+    expect(text).toContain(
+      '이미지 파일은 제4항 보유기간 종료 시까지, 데이터베이스 백업은 최대 7일',
+    );
+    expect(text).toContain('서버와 데이터베이스 운영, 웹 호스팅');
+    expect(text).not.toContain('회원 탈퇴 또는 제4항 보유기간');
+    expect(text).toContain('Vercel, Inc. (일본(오사카 리전에서 처리), 미국');
+    expect(text).not.toContain('Amazon Web Services');
+    expect(text).not.toContain('한국 리전');
   });
 
   it('개인정보 처리방침은 AI 평가 활용과 외부 제공자 훈련 조건을 구분한다', () => {
@@ -231,6 +257,16 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain(
       '권리 또는 의무에 중대한 영향을 미치는 결정을 완전히 자동화하여 내리지 않습니다',
     );
+  });
+
+  it('게스트 동의 문서는 처리방침과 같은 애플리케이션 로그 보관 기간을 고지한다', () => {
+    const text = collectText({
+      ...privacyContent,
+      sections: guestConsentSections,
+    });
+
+    expect(text).toContain('애플리케이션 로그는 OpenSearch에서 14일 보관해요');
+    expect(text).not.toContain('CloudWatch');
   });
 
   it('모든 섹션은 최소 한 개의 콘텐츠 블록을 갖는다', () => {
