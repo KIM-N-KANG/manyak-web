@@ -37,10 +37,16 @@ async function mockMeWithLinkedProviders(
 }
 
 test.describe('마이', () => {
-  test('게스트는 게스트 표시와 로그인 버튼을 본다', async ({ page }) => {
+  test('게스트는 게스트 표시와 로그인 버튼을 본다 (MY-MENU-01)', async ({
+    page,
+  }) => {
     await page.goto('/my');
 
     await expect(page.getByText('게스트')).toBeVisible();
+    // 프로필 이미지가 없는 게스트는 빈 원 가운데에 마냑 심볼을 본다.
+    await expect(
+      page.getByTestId('profile-placeholder').locator('svg'),
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: '로그인' })).toBeVisible();
     await expect(page.getByRole('link', { name: /피드백/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /로그아웃/ })).toBeHidden();
