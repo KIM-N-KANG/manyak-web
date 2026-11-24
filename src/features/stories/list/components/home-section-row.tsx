@@ -5,11 +5,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
+import { useMainScroll } from '@/components/layout/main-scroll-context';
 import { Button } from '@/components/ui/button';
 import { StoryCard } from '@/features/stories/_shared/components/story-card';
 import { STORY_LIST_COPY } from '@/features/stories/_shared/constants/story-list';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 import { useDragScroll } from '@/hooks/use-drag-scroll';
+import { useInView } from '@/hooks/use-in-view';
 import { cn } from '@/lib/utils';
 
 /**
@@ -18,6 +20,12 @@ import { cn } from '@/lib/utils';
  * 두 번째 칸에 들어오는 카드만 8px 당겨(`home-section-card`) 처음, 끝과 화살표로 넘긴 자리에서 양옆 카드가 화면 밖에 있게 한다.
  */
 const CARDS_PER_VIEW = 2;
+
+/** 보이는 카드 뒤로 표지를 미리 받아 두는 카드 수. 넘길 때 표지가 한 장씩 늦게 나타나지 않게 한다. */
+const PREFETCH_CARD_COUNT = 2;
+
+/** 세로 스크롤 영역 밖 이 거리 안에 들어온 줄부터 표지를 받는다. 스크롤 영역 높이의 절반이다. */
+const ROW_PREFETCH_MARGIN = '50% 0px';
 
 type HomeSectionRowProps = {
   name: string;
@@ -38,6 +46,23 @@ export function HomeSectionRow({
   const dragScrollProps = useDragScroll();
   const [edges, setEdges] = useState({ atStart: true, atEnd: false });
   const hasMore = stories.length > CARDS_PER_VIEW;
+  const { scrollContainer } = useMainScroll();
+  const [sectionElement, setSectionElement] = useState<HTMLElement | null>(
+    null,
+  );
+  // 표지를 받을 앞쪽 카드 수. 넘겨서 보인 카드가 늘면 그 뒤 두 장까지 늘리고 줄이지 않는다.
+  const [coverLoadCount, setCoverLoadCount] = useState(
+    CARDS_PER_VIEW + PREFETCH_CARD_COUNT,
+  );
+  // 브라우저 기본 지연 로딩은 화면 밖 먼 거리의 표지까지 미리 받는다. 줄이 세로 스크롤 영역 근처에
+  // 들어왔을 때만 보이는 카드와 다음 두 장의 표지를 받는다.
+  const isRowNear = useInView({
+    target: sectionElement,
+    root: scrollContainer,
+    enabled: scrollContainer !== null,
+    rootMargin: ROW_PREFETCH_MARGIN,
+    initialInView: false,
+  });
 
   useEffect(() => {
     const list = listRef.current;
@@ -56,6 +81,25 @@ export function HomeSectionRow({
         atStart: list.scrollLeft <= 1,
         atEnd: list.scrollLeft + list.clientWidth >= list.scrollWidth - 1,
       });
+
+      const card = list.firstElementChild;
+
+      if (!card) return;
+
+      const { columnGap, paddingLeft, paddingRight } = getComputedStyle(list);
+      const step = card.getBoundingClientRect().width + parseFloat(columnGap);
+      // 여백 안쪽까지 들어온 카드만 보인 것으로 센다. 여백에 걸친 조각은 페이드가 지운다.
+      const visibleWidth =
+        list.scrollLeft +
+        list.clientWidth -
+        parseFloat(paddingLeft) -
+        parseFloat(paddingRight);
+      // 카드 경계에 딱 맞은 위치에서 소수점 오차로 다음 카드를 보인 것으로 세지 않게 조금 덜어 낸다.
+      const visibleCount = Math.ceil(visibleWidth / step - 0.01);
+
+      setCoverLoadCount((count) =>
+        Math.max(count, visibleCount + PREFETCH_CARD_COUNT),
+      );
     };
     const observer = new ResizeObserver(updateEdges);
 
@@ -98,7 +142,10 @@ export function HomeSectionRow({
   };
 
   return (
-    <section aria-labelledby={titleId} className="flex flex-col gap-3">
+    <section
+      ref={setSectionElement}
+      aria-labelledby={titleId}
+      className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3 px-4">
         <h2
           id={titleId}
@@ -150,6 +197,7 @@ export function HomeSectionRow({
               position={index}
               section="original"
               priority={isFirst && index < CARDS_PER_VIEW}
+              loadCover={isRowNear && index < coverLoadCount}
             />
           </li>
         ))}

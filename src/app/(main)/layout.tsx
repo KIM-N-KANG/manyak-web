@@ -31,6 +31,10 @@ export default function MainLayout({
   const [hasScrolled, setHasScrolled] = useState(false);
   const [overlayContainer, setOverlayContainer] =
     useState<HTMLDivElement | null>(null);
+  // 스크롤 복원과 스크롤 여부 판정은 ref로 읽고, 화면에서 관찰 root로 쓸 요소는 상태로 내려준다.
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(
+    null,
+  );
 
   useScrollRestoration(scrollContainerRef, pathname);
 
@@ -54,9 +58,13 @@ export default function MainLayout({
       {/* 스크롤 영역과 같은 박스를 가지는 positioned 래퍼.
           FAB처럼 스크롤·당김을 따라가지 않아야 하는 오버레이가 포털로 여기에 absolute로 붙는다. */}
       <div ref={setOverlayContainer} className="relative min-h-0 flex-1">
-        <MainScrollProvider value={{ hasScrolled, overlayContainer }}>
+        <MainScrollProvider
+          value={{ hasScrolled, overlayContainer, scrollContainer }}>
           <PullToRefresh
-            ref={scrollContainerRef}
+            ref={(element) => {
+              scrollContainerRef.current = element;
+              setScrollContainer(element);
+            }}
             onRefresh={
               isExplore
                 ? () => reshuffleExploreStories(queryClient)

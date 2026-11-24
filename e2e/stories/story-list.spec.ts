@@ -758,6 +758,65 @@ test.describe('홈·제작 스토리 목록', () => {
     ).toHaveCount(0);
   });
 
+  test('홈은 화면 근처의 줄에서 보이는 카드와 다음 두 장의 표지만 받는다 (STORY-LIST-51)', async ({
+    page,
+  }) => {
+    const coveredStory = (id: string, title: string) => ({
+      ...originalStory(id, title),
+      thumbnailUrlSm: `https://cdn.manyak.app/thumbnails/${id}.png`,
+    });
+    // 표지 없는 한 장짜리 섹션으로 마지막 섹션을 화면 아래 먼 곳에 둔다.
+    const fillerSections = ['2', '3', '4'].map((id) => ({
+      id: `filler-${id}`,
+      name: `중간 섹션 ${id}`,
+      items: [originalStory(`f${id}`, `중간 ${id}`)],
+    }));
+
+    // 표지 요청 수가 아니라 표지 이미지 요소를 그렸는지로 판정하므로 외부 이미지는 받지 않는다.
+    await page.route('**/_next/image**', (route) => route.abort());
+    await mockHomeSections(page, [
+      {
+        id: 'section-1',
+        name: '지금 인기 있는 스토리',
+        items: ['1', '2', '3', '4', '5', '6'].map((id) =>
+          coveredStory(`a${id}`, `카드 ${id}`),
+        ),
+      },
+      ...fillerSections,
+      {
+        id: 'section-5',
+        name: '마지막 섹션',
+        items: ['1', '2', '3'].map((id) =>
+          coveredStory(`z${id}`, `마지막 ${id}`),
+        ),
+      },
+    ]);
+
+    await page.goto('/');
+
+    const main = page.getByRole('main');
+    const firstSection = main.getByRole('region', {
+      name: '지금 인기 있는 스토리',
+    });
+    const lastSection = main.getByRole('region', { name: '마지막 섹션' });
+    const firstCovers = firstSection.getByRole('list').locator('img[alt=""]');
+    const lastCovers = lastSection.getByRole('list').locator('img[alt=""]');
+
+    // 보이는 두 장과 다음 두 장만 받고, 화면 아래 먼 줄은 받지 않는다.
+    await expect(firstCovers).toHaveCount(4);
+    await expect(lastCovers).toHaveCount(0);
+
+    // 한 장 넘겨 셋째 카드가 보이면 그 뒤 두 장까지 받는다.
+    await firstSection
+      .getByRole('button', { name: STORY_LIST_COPY.nextLabel })
+      .click();
+    await expect(firstCovers).toHaveCount(5);
+
+    // 먼 줄은 화면 근처에 오면 받는다. 카드가 세 장이라 모두 받는다.
+    await lastSection.scrollIntoViewIfNeeded();
+    await expect(lastCovers).toHaveCount(3);
+  });
+
   test('탐색 탭은 제작과 마이 사이에 있고, 탭으로 들어오면 새로 섞고 상세에서 돌아오면 순서와 위치를 유지한다 (STORY-LIST-47)', async ({
     page,
   }) => {

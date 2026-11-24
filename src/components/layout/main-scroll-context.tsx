@@ -6,6 +6,8 @@ interface MainScrollContextValue {
   hasScrolled: boolean;
   /** 스크롤 영역과 같은 박스를 가지는 positioned 래퍼. FAB처럼 스크롤을 따라가지 않는 오버레이의 포털 대상이다. */
   overlayContainer: HTMLElement | null;
+  /** 메인 탭의 세로 스크롤 영역. 화면 밖 일정 거리까지 미리 관찰하는 IntersectionObserver의 root로 쓴다. */
+  scrollContainer: HTMLElement | null;
 }
 
 const MainScrollContext = createContext<MainScrollContextValue | null>(null);
@@ -13,9 +15,9 @@ const MainScrollContext = createContext<MainScrollContextValue | null>(null);
 export const MainScrollProvider = MainScrollContext.Provider;
 
 /**
- * 메인 스크롤 컨텍스트에서 스크롤 상태와 오버레이 컨테이너를 읽어온다.
+ * 메인 스크롤 컨텍스트에서 스크롤 상태, 오버레이 컨테이너와 스크롤 영역을 읽어온다.
  *
- * @returns 현재 스크롤 상태와 오버레이 컨테이너를 담은 컨텍스트 값
+ * @returns 현재 스크롤 상태, 오버레이 컨테이너와 스크롤 영역을 담은 컨텍스트 값
  * @throws MainScrollProvider 외부에서 호출하면 에러
  */
 export function useMainScroll() {
