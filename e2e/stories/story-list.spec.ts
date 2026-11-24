@@ -24,6 +24,7 @@ import { mockMemberSession } from '../fixtures/auth';
 import { findOverflowingTexts, UNBROKEN_TEXT } from '../fixtures/layout';
 import {
   expect,
+  isExploreStoriesUrl,
   isHomeStoriesUrl,
   mockExploreStories,
   mockHomeSections,
@@ -1007,6 +1008,19 @@ test.describe('홈·제작 스토리 목록', () => {
       ),
       [originalStory('p2', '다음 페이지')],
     ]);
+    let releaseNextPage!: () => void;
+    const nextPageGate = new Promise<void>((resolve) => {
+      releaseNextPage = resolve;
+    });
+
+    // 다음 페이지 응답을 붙잡아 조회 중 표시를 확인한다. 나중에 등록한 route가 먼저 받는다.
+    await page.route(isExploreStoriesUrl, async (route) => {
+      if (new URL(route.request().url()).searchParams.has('cursor')) {
+        await nextPageGate;
+      }
+
+      await route.fallback();
+    });
 
     await page.goto(APP_PATH.MAIN.EXPLORE);
 
@@ -1017,9 +1031,22 @@ test.describe('홈·제작 스토리 목록', () => {
       .getByRole('link', { name: '첫 페이지 19 상세 보기' })
       .scrollIntoViewIfNeeded();
 
+    // 조회 중에는 스피너 대신 목록 끝에 골격 칸 두 줄을 잇는다.
+    const nextPageSkeletons = page.locator('main ul > li[aria-hidden="true"]');
+
+    await expect(nextPageSkeletons).toHaveCount(4);
+    await expect(
+      page
+        .getByRole('status')
+        .filter({ hasText: STORY_LIST_COPY.loadingLabel }),
+    ).toBeAttached();
+
+    releaseNextPage();
+
     await expect(
       page.getByRole('link', { name: '다음 페이지 상세 보기' }),
     ).toBeVisible();
+    await expect(nextPageSkeletons).toHaveCount(0);
     expect(explore.cursors).toEqual([null, 'c1']);
   });
 
