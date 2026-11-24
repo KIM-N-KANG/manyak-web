@@ -152,7 +152,6 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain(
       '제출일부터 1년 후 서비스 데이터베이스, Slack, Google Forms·Sheets에서 파기',
     );
-    expect(text).toContain('OpenSearch에서 14일');
     expect(text).toContain('OpenSearch에서 14일 보관 후 삭제');
     expect(text).not.toContain('CloudWatch에서 30일');
     expect(text).toContain('최대 7일 동안 복구 제한 상태');
@@ -196,6 +195,14 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('서비스 이용 시 네트워크 전송과 상시 저장');
     expect(text).toContain('이미지 파일과 데이터베이스 백업 저장, CDN 운영');
     expect(text).toContain('아시아 태평양 지역(R2 저장)');
+    expect(text).toContain(
+      '서비스 접속 시 네트워크 전송과 상시 저장 / 네트워크 정보는',
+    );
+    expect(text).toContain(
+      '이미지 파일은 제4항 보유기간 종료 시까지, 데이터베이스 백업은 최대 7일',
+    );
+    expect(text).toContain('서버와 데이터베이스 운영, 웹 호스팅');
+    expect(text).not.toContain('회원 탈퇴 또는 제4항 보유기간');
     expect(text).toContain('Vercel, Inc. (일본(오사카 리전에서 처리), 미국');
     expect(text).not.toContain('Amazon Web Services');
     expect(text).not.toContain('한국 리전');
