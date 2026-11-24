@@ -1,6 +1,6 @@
 'use client';
 
-import { useGetNotices } from '@/api/generated/endpoints/notice-controller/notice-controller';
+import { useGetNotices } from '@/api/generated/endpoints/notices/notices';
 
 import {
   hasUnreadNotice,

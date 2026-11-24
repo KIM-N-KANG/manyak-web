@@ -5,22 +5,20 @@ const isCI = !!process.env.CI;
 const E2E_PORT = 3100;
 const baseURL = `http://localhost:${E2E_PORT}`;
 const seoServer = process.env.E2E_SEO === '1';
+const captureScreens = process.env.UI_CAPTURE === '1';
 
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  // 로컬 기본값(코어의 절반)은 워커가 너무 많아 커밋 직전 실행이 머신을 점유한다.
+  // 로컬 기본값(코어의 절반)은 워커가 너무 많아 실행 중에 머신을 점유한다.
   // CI 러너(ubuntu-latest, public 레포)는 4 vCPU라 같은 값으로 맞춘다.
   workers: 4,
-  reporter: 'html',
-  // 스냅샷 기준 이미지는 CI(Linux) 렌더링만 정본으로 관리한다.
-  // 로컬(macOS)은 폰트·안티앨리어싱이 달라 비교를 건너뛰고 플로우만 실행한다.
-  // 기준 이미지 갱신은 `pnpm test:e2e:visual:update`(Docker, CI와 동일 이미지)로 한다.
-  ignoreSnapshots: !isCI,
-  snapshotPathTemplate:
-    '{testDir}/{testFileDir}/__screenshots__/{testFileName}/{arg}{ext}',
+  // 실행 산출물(결과, HTML 리포트, 화면 캡처)은 루트의 `.playwright/` 한 곳에 모은다.
+  outputDir: '.playwright/results',
+  reporter: [['html', { outputFolder: '.playwright/report' }]],
+  // 화면 캡처 스펙(`e2e/ui-capture`)의 `toHaveScreenshot` 설정이다.
   expect: {
     toHaveScreenshot: {
       animations: 'disabled',
@@ -41,11 +39,22 @@ export default defineConfig({
     },
     {
       name: 'Mobile Chrome',
-      // 비주얼 스펙은 로컬에서 스냅샷 비교(ignoreSnapshots)가 꺼져 있어 플로우만 돌고 검증은 남지 않는다.
-      // 그래서 로컬 기본 실행에서는 제외하고 CI와 `pnpm test:e2e:visual:update`(CI=1)에서만 돌린다.
-      testIgnore: isCI ? undefined : /visual\/.*\.spec\.ts/,
+      testIgnore: /ui-capture\/.*\.spec\.ts/,
       use: { ...devices['Pixel 5'] },
     },
+    // 화면 캡처는 테스트가 아니라 UI 검사(ui-review 스킬)의 입력이라 CI와 기본 실행에서 뺀다.
+    // `pnpm ui:capture`는 기존 캡처를 덮어쓰고, `pnpm ui:compare`는 직전 캡처와 비교해 바뀐 화면의 diff를 남긴다.
+    ...(captureScreens
+      ? [
+          {
+            name: 'ui-capture',
+            testMatch: /ui-capture\/.*\.spec\.ts/,
+            snapshotPathTemplate:
+              '.playwright/capture/{testFileName}/{arg}{ext}',
+            use: { ...devices['Pixel 5'] },
+          },
+        ]
+      : []),
   ],
   webServer: [
     ...(seoServer

@@ -3,15 +3,15 @@ import type { LegalDocument } from '../types';
 /**
  * 개인정보 처리방침 본문. 이 파일이 정본이며 별도 마크다운 원본은 두지 않는다.
  *
- * 화면·콘텐츠 계약은 knk-harness `docs/domain/ACCOUNT/CLIENT/3-1-INFORMATION-ARCHITECTURE.md`의 FE-SCREEN-010,
- * 실제 처리 근거는 `docs/domain/ACCOUNT/CLIENT/WEB/4-4-EXECUTION.md`, `docs/reference/ANALYTICS.md`, `docs/operations/DEPLOYMENT.md`와 각 서비스
+ * 화면·콘텐츠 계약은 knk-harness `docs/spec/ACCOUNT/CLIENT/3-1-INFORMATION-ARCHITECTURE.md`의 FE-SCREEN-010,
+ * 실제 처리 근거는 `docs/spec/ACCOUNT/CLIENT/WEB/4-4-EXECUTION.md`, `docs/reference/ANALYTICS.md`, `docs/operations/DEPLOYMENT.md`와 각 서비스
  * 레포지토리 구현이다. 개정 시 시행일·버전과 부칙을 함께 갱신하며, 공개 전 법률 전문가의
  * 검토를 권장한다.
  */
 export const privacyContent: LegalDocument = {
   title: '개인정보 처리방침',
-  effectiveDate: '2026-10-22',
-  version: 'v1.9',
+  effectiveDate: '2026-11-24',
+  version: 'v1.10',
   intro:
     '개인정보처리자인 개인 운영자 강동우(팀명 "김앤강", 이하 "운영자")는 「개인정보 보호법」 등 관련 법령을 준수하며, 마냑 웹·Android 앱 이용자의 개인정보를 보호하고 관련 고충을 처리하기 위하여 다음과 같이 개인정보 처리방침을 수립·공개합니다.',
   sections: [
@@ -102,7 +102,7 @@ export const privacyContent: LegalDocument = {
             '게스트 콘텐츠: 이용자가 삭제하거나 권리 행사를 통해 삭제를 요청할 때까지 제공하며, 삭제일부터 1년 후 파기. 브라우저 식별자를 잃은 경우 본인 확인이 어려울 수 있습니다.',
             '피드백 본문·이메일·전달 사본: 제출일부터 1년 후 서비스 데이터베이스, Slack, Google Forms·Sheets에서 파기',
             'AI 평가 원문과 Langfuse 트레이스: 수집일부터 1년 후 파기',
-            '서비스 이용·AI 호출·분석 기록: 수집일부터 1년 후 파기. 원문을 제외한 애플리케이션 로그는 OpenSearch에서 14일, CloudWatch에서 30일 보관 후 삭제',
+            '서비스 이용·AI 호출·분석 기록: 수집일부터 1년 후 파기. 원문을 제외한 애플리케이션 로그는 OpenSearch에서 14일 보관 후 삭제',
             '백업 사본: 기본 데이터에서 파기한 뒤 최대 7일 동안 복구 제한 상태로 남을 수 있으며 백업 순환 주기에 따라 삭제',
             '로그인 세션: access 토큰은 발급 후 약 30분, refresh 토큰과 웹 세션 쿠키는 마지막 발급·갱신 후 최대 14일. 로그아웃·세션 종료 시 사용할 수 없게 처리',
             '푸시 등록 토큰: 앱·웹 로그아웃 시 해당 기기(브라우저)의 토큰을 서버와 단말에서 삭제하고, 회원 탈퇴 시 전부 삭제. 광고성 정보 수신 동의 여부·동의 일시: 이용자가 동의를 철회하거나 탈퇴할 때까지 보유·이용',
@@ -145,9 +145,9 @@ export const privacyContent: LegalDocument = {
         {
           type: 'list',
           items: [
-            'Amazon Web Services, Inc.: 한국 리전의 서버·데이터베이스·캐시·파일·백업·로그 저장과 CDN 운영',
+            'Oracle Corporation (Oracle Cloud Infrastructure): 일본 오사카 리전의 서버, 데이터베이스, 캐시, 로그 처리와 저장',
             'Vercel, Inc.: 웹 애플리케이션 호스팅, 서버 렌더링과 BFF 요청 처리',
-            'Cloudflare, Inc.: DNS, 트래픽 중계, 전송 최적화와 보안',
+            'Cloudflare, Inc.: DNS, 트래픽 중계, 전송 최적화와 보안, 이미지 파일과 데이터베이스 백업 저장, CDN 운영',
             'OpenAI, L.L.C.: 스토리 구성과 인물 이미지 등 AI 콘텐츠 생성',
             'Hangzhou DeepSeek Artificial Intelligence Co., Ltd.: 스토리라인·채팅·선택지 등 AI 콘텐츠 생성',
             'Langfuse GmbH: AI 요청·응답 트레이스 저장, 품질 점검과 평가 데이터·지표 관리',
@@ -173,8 +173,9 @@ export const privacyContent: LegalDocument = {
         {
           type: 'list',
           items: [
-            'Vercel, Inc. (미국, privacy@vercel.com): 웹 요청, IP·브라우저·세션 정보와 요청에 포함된 서비스 데이터 / 웹 호스팅·BFF 처리 / 서비스 이용 시 네트워크 전송 / 운영자 프로젝트에서 목적 달성 시까지, 운영자가 보관하는 데이터는 최대 1년',
-            'Cloudflare, Inc. (미국 및 접속지 인접 네트워크, privacyquestions@cloudflare.com): IP 주소, 도메인·요청·기기·보안 정보 / DNS·트래픽 중계·보안 / 서비스 접속 시 네트워크 전송 / 제공자 보안·네트워크 로그 정책 또는 위탁계약 종료 시까지',
+            'Oracle Corporation (일본, oracle.com/kr/legal/privacy): 회원 정보, 스토리와 채팅 등 서비스 데이터, 접속과 이용 기록, 서버 로그 / 서버, 데이터베이스, 캐시 운영과 저장 / 서비스 이용 시 네트워크 전송과 상시 저장 / 제4항 보유기간 종료 시까지',
+            'Vercel, Inc. (일본(오사카 리전에서 처리), 미국, privacy@vercel.com): 웹 요청, IP·브라우저·세션 정보와 요청에 포함된 서비스 데이터 / 웹 호스팅·BFF 처리 / 서비스 이용 시 네트워크 전송 / 운영자 프로젝트에서 목적 달성 시까지, 운영자가 보관하는 데이터는 최대 1년',
+            'Cloudflare, Inc. (미국 및 접속지 인접 네트워크, 아시아 태평양 지역(R2 저장), privacyquestions@cloudflare.com): IP 주소, 도메인·요청·기기·보안 정보, 업로드 이미지 파일과 데이터베이스 백업 / DNS·트래픽 중계·보안, 파일과 백업 저장 / 서비스 접속 시 네트워크 전송과 상시 저장 / 네트워크 정보는 제공자 보안·네트워크 로그 정책 또는 위탁계약 종료 시까지, 이미지 파일은 제4항 보유기간 종료 시까지, 데이터베이스 백업은 최대 7일',
             'OpenAI, L.L.C. (미국, privacy.openai.com): 스토리 설정·인물 정보·채팅 맥락·이미지 프롬프트와 AI 응답 / 텍스트·이미지 생성 / AI 기능 요청 시 API 전송 / 기본 API 악용 방지 로그 최대 30일(법령상 예외 제외), API 입력·출력은 기본적으로 OpenAI 모델 훈련에 사용되지 않음',
             'Hangzhou DeepSeek Artificial Intelligence Co., Ltd. (중국, privacy@deepseek.com): 스토리 설정·채팅 메시지·대화 맥락과 AI 응답 / 스토리라인·채팅·선택지 생성 / AI 기능 요청 시 API 전송 / 제공자의 처리 목적 달성 또는 관련 법령상 기간까지. 제공자 정책상 네트워크 로그는 6개월 이상 보관될 수 있으며 모델 최적화·훈련 이용 거부 요청이 가능함',
             'Langfuse GmbH (일본 리전 저장, privacy@langfuse.com): 스토리 설정·채팅 메시지·AI 응답·프롬프트 원문, 기기 식별자 해시, 요청·세션 식별자와 품질 메타데이터 / AI 품질 점검·평가 데이터와 지표 관리 / AI 요청·응답 발생 시 전송 / 수집일부터 1년',
@@ -186,7 +187,7 @@ export const privacyContent: LegalDocument = {
         },
         {
           type: 'paragraph',
-          text: '이용자는 개인정보 보호책임자에게 국외 이전 거부, AI 평가 활용 제외 또는 삭제를 요청할 수 있습니다. 필수 처리의 국외 이전을 거부하면 웹 호스팅, AI 콘텐츠 생성, 오류 대응 등 해당 사업자에 의존하는 서비스 전부 또는 일부를 제공하기 어려울 수 있습니다. 웹의 Meta 픽셀과 Android 앱의 Meta SDK가 Meta로 직접 전송하는 정보와 거부 방법은 제12항을 참고하시기 바랍니다.',
+          text: '이용자는 개인정보 보호책임자에게 국외 이전 거부, AI 평가 활용 제외 또는 삭제를 요청할 수 있습니다. 필수 처리의 국외 이전을 거부하면 서버와 데이터베이스 운영, 웹 호스팅, AI 콘텐츠 생성, 오류 대응 등 해당 사업자에 의존하는 서비스 전부 또는 일부를 제공하기 어려울 수 있습니다. 웹의 Meta 픽셀과 Android 앱의 Meta SDK가 Meta로 직접 전송하는 정보와 거부 방법은 제12항을 참고하시기 바랍니다.',
         },
       ],
     },
@@ -397,11 +398,12 @@ export const privacyContent: LegalDocument = {
       blocks: [
         {
           type: 'paragraph',
-          text: '이 방침은 2026-10-22부터 시행합니다.',
+          text: '이 방침은 2026-11-24부터 시행합니다.',
         },
         {
           type: 'list',
           items: [
+            'v1.10 (2026-11-24 시행): 운영 서버를 일본 오사카 리전(Oracle Cloud Infrastructure)으로 이전, 이미지 파일과 데이터베이스 백업 저장을 Cloudflare로 이전, Vercel 처리 리전 변경 반영, 애플리케이션 로그 보관 기간에서 CloudWatch 제외',
             'v1.9 (2026-10-22 시행): 국외 이전의 Amplitude 전송 항목을 기기 식별자로 정정, 안전성 확보 조치의 기기 식별자 해시 처리 범위를 서버 로그, 오류 기록, 데이터베이스로 명확화',
             'v1.8 (2026-10-22 시행): Android 앱의 Meta SDK 사용과 광고 식별자(AAID), 앱 설치와 앱 실행 이벤트, 기기와 OS 정보의 Meta 직접 전송 고지, Android 광고 ID 삭제 또는 재설정 방법 추가, 국외 이전과 앱 단말 저장 항목에 Meta SDK 반영',
             'v1.7 (2026-09-25 시행): 웹 브라우저(홈 화면 설치본 포함) 푸시 알림의 처리 항목·목적·보유 기간을 Android 앱과 함께 고지, 광고성 정보 수신 동의(선택)의 웹 동의·철회·처리 결과 통지 경로 추가, 브라우저 저장 항목에 푸시 등록 토큰·알림 권한 요청 여부·동의 질문 단계와 로그아웃 시 삭제 반영',

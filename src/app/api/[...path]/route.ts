@@ -113,6 +113,23 @@ const createProxyRequestInit = async (request: Request) => {
 };
 
 /**
+ * 브라우저에 돌려줄 응답 헤더를 백엔드 응답 헤더에서 만든다.
+ * Node fetch는 압축된 본문을 풀어서 넘기지만 `content-encoding`과 압축 기준의 `content-length`는 그대로 남긴다.
+ * 두 헤더를 그대로 넘기면 브라우저가 이미 풀린 본문을 다시 풀려다 실패하고 길이도 어긋나므로 지운다.
+ *
+ * @param headers 백엔드 응답 헤더
+ * @returns 압축 관련 헤더를 뺀 응답 헤더
+ */
+const createProxyResponseHeaders = (headers: Headers) => {
+  const proxyHeaders = new Headers(headers);
+
+  proxyHeaders.delete('content-encoding');
+  proxyHeaders.delete('content-length');
+
+  return proxyHeaders;
+};
+
+/**
  * 세션 만료(리프레시 확정 거절) 응답을 만든다. 만료 헤더로 클라이언트의 능동 로그아웃을
  * 신호한다. 쿠키 삭제(Set-Cookie)는 ensureFreshAccessToken 내부의 clearBackendSession이
  * 처리했다.
@@ -213,7 +230,7 @@ const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: new Headers(response.headers),
+    headers: createProxyResponseHeaders(response.headers),
   });
 };
 

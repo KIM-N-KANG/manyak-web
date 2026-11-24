@@ -1,0 +1,294 @@
+import type { Page } from '@playwright/test';
+
+import { ACCOUNT_DELETION_CTA_LABEL } from '@/features/my/account-deletion/constants';
+import {
+  CREDIT_CHARGE_COPY,
+  formatKrwPrice,
+} from '@/features/my/credits/constants';
+import { LINK_ACCOUNT_COPY } from '@/features/my/menu/constants/link-account-copy';
+import {
+  LINK_RESULT_COOKIE,
+  serializeLinkResult,
+} from '@/lib/auth/link-account';
+
+import { waitForDarkTheme, waitForFonts } from '../fixtures/capture';
+import {
+  CREDIT_PRODUCTS_FIXTURE,
+  expect,
+  mockCreditProducts,
+  mockMemberSession,
+  test,
+} from '../fixtures/test';
+
+/**
+ * 마이, 이프 충전, 피드백, 친구 초대, 서비스 안내 화면의 안정된 정적 상태를 캡처하는 화면 캡처 스펙.
+ * 메뉴 이동, 폼 제출 같은 동작 검증은 `my/*.spec.ts`, `feedback/*.spec.ts`가 담당한다.
+ */
+
+/**
+ * 회원 프로필, 이프 조회(/auth/me)를 목킹한다. 회원은 로그인 수단이 최소 하나라
+ * linkedProviders도 함께 담아야 실제 화면(연동 Chip, 연동 버튼)과 같아진다.
+ *
+ * @param page 대상 페이지
+ */
+const mockAuthMe = async (page: Page) => {
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill({
+      json: {
+        id: 'user-1',
+        nickname: '배고픈 송아지',
+        profileImageUrl: null,
+        profileThumbnailBase64: null,
+        status: 'ACTIVE',
+        creditBalance: 1250,
+        attendedToday: false,
+        linkedProviders: ['google'],
+      },
+    }),
+  );
+};
+
+test.describe('마이 캡처', () => {
+  test('마이 게스트 상태 (MY-MENU)', async ({ page }) => {
+    await page.goto('/my');
+
+    await expect(page.getByText('게스트')).toBeVisible();
+    await expect(page.getByRole('link', { name: '로그인' })).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-guest.png');
+  });
+
+  test('마이 회원 상태: 프로필·이프 카드 (MY-MENU)', async ({ page }) => {
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/my');
+
+    await expect(page.getByText('배고픈 송아지')).toBeVisible();
+    await expect(page.getByRole('button', { name: /로그아웃/ })).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-member.png');
+  });
+
+  test('이프 충전 구매 탭 (MY-CREDITS)', async ({ page }) => {
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    await mockCreditProducts(page);
+
+    await page.goto('/my/credits');
+
+    await expect(
+      page.getByRole('button', {
+        name: formatKrwPrice(CREDIT_PRODUCTS_FIXTURE[0].webPriceKrw),
+      }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('credit-charge-purchase.png');
+  });
+
+  test('이프 충전 무료 충전 탭 (MY-CREDITS)', async ({ page }) => {
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/my/credits');
+    await page
+      .getByRole('tab', { name: CREDIT_CHARGE_COPY.freeChargeTab })
+      .click();
+
+    await expect(
+      page.getByRole('button', { name: CREDIT_CHARGE_COPY.attendanceButton }),
+    ).toBeEnabled();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('credit-charge-free.png');
+  });
+
+  test('이프 충전 내역 탭 (MY-CREDITS)', async ({ page }) => {
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    await page.route('**/api/v1/users/me/credits/transactions*', (route) =>
+      route.fulfill({
+        json: {
+          items: [
+            {
+              type: 'SPEND',
+              reason: 'CHAT_TURN',
+              amount: -20,
+              title: '유운잔검기',
+              expiresAt: null,
+              createdAt: '2026-08-31T09:00:00Z',
+            },
+            {
+              type: 'EARN',
+              reason: 'ATTENDANCE_REWARD',
+              amount: 350,
+              title: null,
+              expiresAt: '2026-09-30T00:00:00Z',
+              createdAt: '2026-08-31T00:10:00Z',
+            },
+            {
+              type: 'SPEND',
+              reason: 'STORY_CREATION',
+              amount: -200,
+              title: null,
+              expiresAt: null,
+              createdAt: '2026-08-30T09:00:00Z',
+            },
+            {
+              type: 'EXPIRE',
+              reason: 'EXPIRE',
+              amount: -1000,
+              title: null,
+              expiresAt: '2026-08-29T00:00:00Z',
+              createdAt: '2026-08-30T01:00:00Z',
+            },
+          ],
+          nextCursor: null,
+        },
+      }),
+    );
+
+    await page.goto('/my/credits');
+    await page
+      .getByRole('tab', { name: CREDIT_CHARGE_COPY.historyTab })
+      .click();
+
+    await expect(page.getByText('채팅 전송')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('credit-history.png');
+  });
+
+  test('계정 연동 확인 다이얼로그 (MY-MENU)', async ({ page }) => {
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/my');
+    await page
+      .getByRole('button', { name: LINK_ACCOUNT_COPY.linkButton('kakao') })
+      .click();
+
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByText(LINK_ACCOUNT_COPY.confirmTitle('kakao')),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-link-confirm-dialog.png');
+  });
+
+  test('계정 연동 실패: 다른 계정에 연결됨 다이얼로그 (MY-MENU)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+    // 연동 결과는 서버가 쿠키로 남기고 마이 페이지가 1회 소비한다(스펙 FE-SCREEN-008).
+    await page.context().addCookies([
+      {
+        name: LINK_RESULT_COOKIE,
+        value: serializeLinkResult({
+          result: 'linked_to_other_user',
+          provider: 'kakao',
+        }),
+        domain: 'localhost',
+        path: '/',
+      },
+    ]);
+
+    await page.goto('/my');
+
+    await expect(
+      page.getByRole('dialog').getByText(LINK_ACCOUNT_COPY.linkedToOtherTitle),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-link-conflict-dialog.png');
+  });
+
+  test('피드백 폼 기본 상태 (MY-FEEDBACK)', async ({ page }) => {
+    await page.goto('/my/feedback');
+
+    await expect(
+      page.getByRole('button', { name: '피드백 보내기' }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('feedback-form.png');
+  });
+
+  test('친구 초대 회원 상태: 내 코드·공유·등록 (MY-INVITE)', async ({
+    page,
+  }) => {
+    await mockMemberSession(page);
+    await page.route('**/api/v1/users/me/invite', (route) =>
+      route.fulfill({
+        json: {
+          inviteCode: 'CW6VZX7D',
+          monthlyRewardCount: 3,
+          monthlyRewardLimit: 10,
+        },
+      }),
+    );
+    // 카카오 SDK 로드가 외부로 나가지 않도록 스텁한다(공유 버튼 활성 상태 고정).
+    await page.route('**/kakao_js_sdk/**', (route) =>
+      route.fulfill({
+        contentType: 'application/javascript',
+        body: `window.Kakao = {
+          isInitialized: function () { return true; },
+          init: function () {},
+          Share: { sendDefault: function () {} },
+        };`,
+      }),
+    );
+
+    await page.goto('/my/invite');
+
+    await expect(
+      page.getByRole('button', { name: '코드 복사하기' }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('invite-member.png');
+  });
+
+  test('회원 탈퇴 확인 기본 상태 (MY-ACCOUNT-DELETION)', async ({ page }) => {
+    await mockMemberSession(page);
+
+    await page.goto('/my/account-deletion');
+
+    await expect(
+      page.getByRole('button', { name: ACCOUNT_DELETION_CTA_LABEL }),
+    ).toBeDisabled();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('account-deletion.png');
+  });
+
+  test('서비스 안내 상단 (MY-INFO)', async ({ page }) => {
+    await page.goto('/about');
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: '서비스 안내' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('banner').getByRole('img', { name: '마냑' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: '게스트 이용 안내' }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('service-info-top.png');
+  });
+});
+
+/** 다크 모드 대표 스냅샷. 이프 카드, 섹션 메뉴와 destructive(회원 탈퇴) 토큰을 덮는다. */
+test.describe('마이 다크 모드 캡처', () => {
+  test.use({ colorScheme: 'dark' });
+
+  test('마이 회원 상태 (다크)', async ({ page }) => {
+    await mockMemberSession(page, { nickname: '배고픈 송아지' });
+    await mockAuthMe(page);
+
+    await page.goto('/my');
+
+    await expect(page.getByText('배고픈 송아지')).toBeVisible();
+    await expect(page.getByRole('button', { name: /로그아웃/ })).toBeVisible();
+    await waitForDarkTheme(page);
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('my-member-dark.png');
+  });
+});

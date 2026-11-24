@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 import { getMeQueryKey, useMe } from '@/api/generated/endpoints/auth/auth';
 import { useFork } from '@/api/generated/endpoints/chats/chats';
-import { getGetTrialsQueryKey } from '@/api/generated/endpoints/trial-controller/trial-controller';
+import { getGetTrialsQueryKey } from '@/api/generated/endpoints/credits/credits';
 import { getGetMyChatsQueryKey } from '@/api/generated/endpoints/users/users';
 import type { ChatTurnResponse } from '@/api/generated/models';
 import { ConfirmAlertDialog } from '@/components/common/confirm-alert-dialog';

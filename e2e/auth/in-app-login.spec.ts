@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { getMeUrl, getMigrateUrl } from '@/api/generated/endpoints/auth/auth';
-import { getGetUsersMeConsentsUrl } from '@/api/generated/endpoints/user/user';
+import { getGetUsersMeConsentsUrl } from '@/api/generated/endpoints/users/users';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { CONSENT_SHEET_COPY } from '@/features/auth/_shared/constants/consent';

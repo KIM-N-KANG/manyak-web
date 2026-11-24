@@ -1,0 +1,318 @@
+import { LOGIN_COPY } from '@/features/auth/_shared/constants/login';
+import {
+  CHAT_MENU_COPY,
+  CHAT_SETTINGS_COPY,
+} from '@/features/chats/room/constants';
+
+import {
+  CAPTURE_FIXED_NOW,
+  waitForDarkTheme,
+  waitForFonts,
+} from '../fixtures/capture';
+import { oneLine } from '../fixtures/copy';
+import {
+  EXHAUSTED_TRIALS,
+  expect,
+  mockGuestConsents,
+  mockTrials,
+  seedChatIds,
+  skipChatChoicesHint,
+  skipChatTour,
+  test,
+} from '../fixtures/test';
+
+/**
+ * 채팅 화면의 안정된 정적 상태를 캡처하는 화면 캡처 스펙.
+ * 동작(요청 계약, 이동, 상태 전이)은 `chats/*.spec.ts`가 검증하고, 여기서는
+ * CSS와 레이아웃을 확인할 화면만 남긴다. 스트리밍 진행 중 같은 동적 상태는 다루지 않는다.
+ */
+
+const CHAT_DETAIL = '**/api/v1/chats/c1';
+const CHATS_BATCH = '**/api/v1/chats/batch';
+
+// 첫 진입 안내 투어 오버레이, 추천 입력 힌트가 스냅샷에 끼어들지 않게 한다.
+test.beforeEach(async ({ page }) => {
+  await skipChatTour(page);
+  await skipChatChoicesHint(page);
+});
+
+const chat = (id: string, storyTitle: string, lastStoryPreview: string) => ({
+  id,
+  storyId: `story-${id}`,
+  storyTitle,
+  lastStoryPreview,
+  turnCount: 3,
+  updatedAt: '2026-06-01T00:00:00Z',
+});
+
+const chatDetail = (turns: unknown[] = []) => ({
+  id: 'c1',
+  storyId: 's1',
+  storyTitle: '용의 계곡',
+  prologue: '안개 낀 계곡 앞에 한 용사가 섰다.',
+  turns,
+  suggestedInputs: ['던전에 진입한다', '주변을 둘러본다'],
+  model: 'LITE',
+});
+
+test.describe('채팅 캡처', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
+  });
+
+  test('채팅 목록 기본 상태 (CHAT-LIST-02)', async ({ page }) => {
+    await seedChatIds(page, ['c1', 'c2']);
+    await page.route(CHATS_BATCH, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          chat('c1', '용의 계곡', '이야기 미리보기입니다'),
+          chat('c2', '별빛 항해', ''),
+        ]),
+      });
+    });
+
+    await page.goto('/chats');
+
+    await expect(page.getByText('용의 계곡', { exact: true })).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-list-default.png');
+  });
+
+  test('채팅 목록 빈 상태 (CHAT-LIST-04)', async ({ page }) => {
+    await page.goto('/chats');
+
+    await expect(page.getByText('아직 진행중인 채팅이 없어요')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-list-empty.png');
+  });
+
+  test('채팅방 초기 상태: 프롤로그·추천 입력·블럭 입력 (CHAT-ENTRY-01)', async ({
+    page,
+  }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(
+      page.getByText('안개 낀 계곡 앞에 한 용사가 섰다.'),
+    ).toBeVisible();
+    await expect(
+      page.getByPlaceholder('어떤 상황을 묘사할까요?'),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-room-initial.png');
+  });
+
+  test('채팅방 대화 진행 상태: 턴·선택지·재생성 버튼 (CHAT-ENTRY-02)', async ({
+    page,
+  }) => {
+    const turns = [
+      {
+        id: 1,
+        userInput: '던전에 진입한다',
+        aiOutput: '문이 서서히 열린다. *차가운 공기가 밀려온다.*',
+        choices: [],
+        createdAt: '2026-06-01T00:00:00Z',
+      },
+      {
+        id: 2,
+        userInput: '*횃불을 켠다* 누구 없어요?',
+        aiOutput: '**어둠 속에서** 낮은 울림이 대답했다.',
+        choices: ['앞으로 나아간다', '소리의 방향을 살핀다'],
+        createdAt: '2026-06-01T00:00:00Z',
+      },
+    ];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail(turns)),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    const regenerateButton = page.getByRole('button', { name: '다시 생성' });
+    const lastChoiceButton = page.getByRole('button', {
+      name: '소리의 방향을 살핀다',
+    });
+
+    await expect(regenerateButton).toBeVisible();
+    await expect(regenerateButton.locator('xpath=..')).toHaveCSS(
+      'transform',
+      'none',
+    );
+    await expect(lastChoiceButton.locator('xpath=..')).toHaveCSS(
+      'transform',
+      'none',
+    );
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-room-turns.png');
+  });
+
+  test('채팅방 엔딩 도달 턴 (CHAT-ENDING)', async ({ page }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          chatDetail([
+            {
+              id: 1,
+              userInput: '용의 제안을 받아들인다',
+              aiOutput:
+                '계곡을 뒤덮었던 안개가 걷히고, 용은 오래된 약속을 지키기 위해 날아올랐다.',
+              choices: [],
+              reachedEnding: '용과 맺은 약속',
+              createdAt: '2026-06-01T00:00:00Z',
+            },
+          ]),
+        ),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText('엔딩 · 용과 맺은 약속')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-room-ending.png');
+  });
+
+  test('채팅방 로드 실패 상태 (CHAT-ENTRY-04)', async ({ page }) => {
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({ status: 500, body: '' });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByText('채팅을 불러오지 못했어요')).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-room-error.png');
+  });
+});
+
+/**
+ * 오버레이(드로어, 다이얼로그, 팝오버)는 body로 포털되고 z-index, 백드롭, 포커스 트랩이
+ * 얽혀 레이아웃이 깨지기 쉬우므로 별도로 고정한다. 같은 컴포넌트를 재사용하는 화면은
+ * 대표 한 곳만 찍는다. 여러 장을 찍어도 같은 내용을 중복해 확인할 뿐이다.
+ */
+test.describe('채팅 오버레이 캡처', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail()),
+      });
+    });
+  });
+
+  test('채팅 메뉴 드로어 (CHAT-SET-01)', async ({ page }) => {
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+
+    // 게스트 기준 우측 드로어 대표 스냅샷이다(이프 카드 없음, 하단 destructive 채팅 삭제).
+    const drawer = page.getByRole('dialog', { name: CHAT_MENU_COPY.title });
+
+    await expect(
+      drawer.getByRole('button', { name: CHAT_MENU_COPY.delete }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-menu-drawer.png');
+  });
+
+  test('채팅 설정 시트 (CHAT-BLOCK-07)', async ({ page }) => {
+    await page.goto('/chats/c1');
+    await page
+      .getByRole('button', { name: CHAT_SETTINGS_COPY.trigger })
+      .click();
+
+    // 스위치 3개가 모두 기본값(켬)인 대표 스냅샷이다.
+    await expect(
+      page.getByRole('switch', { name: CHAT_SETTINGS_COPY.blockInput.label }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-settings-sheet.png');
+  });
+
+  test('삭제 확인 다이얼로그 (CHAT-SET-02)', async ({ page }) => {
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: CHAT_MENU_COPY.trigger }).click();
+    await page
+      .getByRole('dialog', { name: CHAT_MENU_COPY.title })
+      .getByRole('button', { name: CHAT_MENU_COPY.delete })
+      .click();
+
+    // ConfirmAlertDialog 공용 컴포넌트의 대표 스냅샷이다(스토리 삭제, 퍼널 이탈도 같은 컴포넌트).
+    await expect(
+      page.getByRole('alertdialog').getByText('채팅을 삭제할까요?'),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('confirm-alert-dialog.png');
+  });
+
+  test('게스트 체험 한도 초과 시 로그인 필요 바텀 시트', async ({ page }) => {
+    await mockGuestConsents(page, false);
+    await mockTrials(page, EXHAUSTED_TRIALS);
+    await page.goto('/chats/c1');
+    await page.getByRole('button', { name: '추천 입력 랜덤 전송' }).click();
+
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: oneLine(LOGIN_COPY.title) }),
+    ).toBeVisible();
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('login-required-sheet.png');
+  });
+});
+
+/**
+ * 다크 모드 대표 스냅샷. next-themes가 `.dark`를 붙일 때까지 기다린 뒤 찍는다.
+ * 전 화면을 2배로 찍지 않고, 시맨틱 토큰을 가장 많이 쓰는 화면만 고정해
+ * 하드코딩 색상(`text-blue-500` 등)이 섞였는지 확인한다.
+ */
+test.describe('채팅 다크 모드 캡처', () => {
+  test.use({ colorScheme: 'dark' });
+
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(CAPTURE_FIXED_NOW);
+  });
+
+  test('채팅방 대화 진행 상태 (다크)', async ({ page }) => {
+    const turns = [
+      {
+        id: 1,
+        userInput: '던전에 진입한다',
+        aiOutput: '문이 서서히 열린다. *차가운 공기가 밀려온다.*',
+        choices: ['앞으로 나아간다', '소리의 방향을 살핀다'],
+        createdAt: '2026-06-01T00:00:00Z',
+      },
+    ];
+
+    await page.route(CHAT_DETAIL, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatDetail(turns)),
+      });
+    });
+
+    await page.goto('/chats/c1');
+
+    await expect(page.getByRole('button', { name: '다시 생성' })).toBeVisible();
+    await waitForDarkTheme(page);
+    await waitForFonts(page);
+    await expect(page).toHaveScreenshot('chat-room-turns-dark.png');
+  });
+});

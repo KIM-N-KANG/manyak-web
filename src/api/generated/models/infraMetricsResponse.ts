@@ -5,10 +5,11 @@
  * Manyak backend API documentation
  * OpenAPI spec version: v1
  */
-import type { InfraAlbMetrics } from './infraAlbMetrics';
-import type { InfraEcsMetrics } from './infraEcsMetrics';
+import type { InfraHostMetrics } from './infraHostMetrics';
+import type { InfraHostSystemMetrics } from './infraHostSystemMetrics';
 import type { InfraRdsMetrics } from './infraRdsMetrics';
 import type { InfraRedisMetrics } from './infraRedisMetrics';
+import type { InfraRequestMetrics } from './infraRequestMetrics';
 import type { InfraSearchMetrics } from './infraSearchMetrics';
 
 export interface InfraMetricsResponse {
@@ -16,8 +17,10 @@ export interface InfraMetricsResponse {
   from?: string;
   to?: string;
   periodSeconds?: number;
-  ecs?: InfraEcsMetrics | null;
-  alb?: InfraAlbMetrics | null;
+  unavailable?: string[];
+  host?: InfraHostMetrics | null;
+  hostSystem?: InfraHostSystemMetrics | null;
+  requests?: InfraRequestMetrics | null;
   rds?: InfraRdsMetrics | null;
   redis?: InfraRedisMetrics | null;
   opensearch?: InfraSearchMetrics | null;

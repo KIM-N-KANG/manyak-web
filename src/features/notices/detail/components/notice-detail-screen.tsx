@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { useGetNoticesByNoticeId } from '@/api/generated/endpoints/notice-controller/notice-controller';
+import { useGetNoticesByNoticeId } from '@/api/generated/endpoints/notices/notices';
 import { ListStatus } from '@/components/common/list-status';
 import { RetryListStatus } from '@/components/common/retry-list-status';
 import { buttonVariants } from '@/components/ui/button';

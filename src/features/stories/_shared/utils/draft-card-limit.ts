@@ -1,4 +1,4 @@
-import { getUsersMeStoryDrafts } from '@/api/generated/endpoints/story-draft-controller/story-draft-controller';
+import { getUsersMeStoryDrafts } from '@/api/generated/endpoints/story-drafts/story-drafts';
 import {
   loadPendingCreationRequests,
   loadStoryCompletionRequests,

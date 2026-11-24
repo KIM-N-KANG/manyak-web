@@ -23,12 +23,14 @@ export const PutBody = zod.object({
   schemaVersion: zod.number().optional(),
   payload: zod
     .object({
-      container: zod.boolean().optional(),
+      empty: zod.boolean().optional(),
+      array: zod.boolean().optional(),
+      null: zod.boolean().optional(),
+      object: zod.boolean().optional(),
+      float: zod.boolean().optional(),
       string: zod.boolean().optional(),
-      number: zod.boolean().optional(),
-      floatingPointNumber: zod.boolean().optional(),
-      missingNode: zod.boolean().optional(),
-      integralNumber: zod.boolean().optional(),
+      container: zod.boolean().optional(),
+      int: zod.boolean().optional(),
       nodeType: zod
         .enum([
           'ARRAY',
@@ -42,22 +44,20 @@ export const PutBody = zod.object({
           'STRING',
         ])
         .optional(),
-      int: zod.boolean().optional(),
       long: zod.boolean().optional(),
       short: zod.boolean().optional(),
       double: zod.boolean().optional(),
       bigDecimal: zod.boolean().optional(),
       bigInteger: zod.boolean().optional(),
-      valueNode: zod.boolean().optional(),
-      object: zod.boolean().optional(),
-      pojo: zod.boolean().optional(),
       textual: zod.boolean().optional(),
       boolean: zod.boolean().optional(),
+      integralNumber: zod.boolean().optional(),
+      floatingPointNumber: zod.boolean().optional(),
       binary: zod.boolean().optional(),
-      array: zod.boolean().optional(),
-      empty: zod.boolean().optional(),
-      null: zod.boolean().optional(),
-      float: zod.boolean().optional(),
+      valueNode: zod.boolean().optional(),
+      missingNode: zod.boolean().optional(),
+      pojo: zod.boolean().optional(),
+      number: zod.boolean().optional(),
       embeddedValue: zod.boolean().optional(),
     })
     .optional(),
@@ -2977,7 +2977,7 @@ export const GetCreationRequestHeader = zod.object({
 export const GetCreationRequestResponse = zod.unknown();
 
 /**
- * 검색어는 trim 후 2~100자이며 관련도순으로 반환합니다. 다음 페이지는 같은 q와 nextCursor를 사용합니다.
+ * 검색어는 trim 후 2~100자이며 관련도순으로 반환합니다. 다음 페이지는 같은 q와 nextCursor를 사용합니다. 검색 저장소 장애 중 커서 없는 요청은 DB 부분 일치 최신순 한 페이지를 nextCursor 없이 반환합니다.
  * @summary 공개 스토리 검색
  */
 export const searchStoriesQueryLimitDefault = 20;
@@ -3169,6 +3169,14 @@ export const ActivityQueryParams = zod.object({
 });
 
 export const ActivityResponse = zod.unknown();
+
+export const ActivityHoursQueryParams = zod.object({
+  days: zod.enum(['7', '30', '90']).optional(),
+  from: zod.string().optional(),
+  to: zod.string().optional(),
+});
+
+export const ActivityHoursResponse = zod.unknown();
 
 export const storiesQueryRequestSizeMax = 100;
 

@@ -34,6 +34,7 @@ import type {
   CreditProductsResponse,
   CreditTransactionPageResponse,
   GetMyCreditTransactionsParams,
+  TrialsResponse,
 } from '../../models';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -284,6 +285,150 @@ export const useClaimAttendance = <
 > => {
   return useMutation(getClaimAttendanceMutationOptions(options), queryClient);
 };
+export type getTrialsResponse200 = {
+  data: TrialsResponse;
+  status: 200;
+};
+
+export type getTrialsResponseSuccess = getTrialsResponse200 & {
+  headers: Headers;
+};
+export const getGetTrialsUrl = () => {
+  return `/api/v1/users/me/trials`;
+};
+
+/**
+ * 인증 선택. 게스트는 X-Manyak-Device-Id 필수. 회원 스토리라인과 LITE 무료 프로모션 진행 중 회원 chatTurn의 limit은 null(무제한).
+ * @summary 체험 사용량·한도 조회
+ */
+export const getTrials = async (
+  options?: RequestInit,
+): Promise<getTrialsResponseSuccess> => {
+  return customInstance<getTrialsResponseSuccess>(getGetTrialsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetTrialsQueryKey = () => {
+  return [`/api/v1/users/me/trials`] as const;
+};
+
+export const getGetTrialsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTrials>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof getTrials>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTrialsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTrials>>> = ({
+    signal,
+  }) => getTrials({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTrials>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetTrialsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTrials>>
+>;
+export type GetTrialsQueryError = ErrorType<unknown>;
+
+export function useGetTrials<
+  TData = Awaited<ReturnType<typeof getTrials>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTrials>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrials>>,
+          TError,
+          Awaited<ReturnType<typeof getTrials>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTrials<
+  TData = Awaited<ReturnType<typeof getTrials>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTrials>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrials>>,
+          TError,
+          Awaited<ReturnType<typeof getTrials>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTrials<
+  TData = Awaited<ReturnType<typeof getTrials>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTrials>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 체험 사용량·한도 조회
+ */
+
+export function useGetTrials<
+  TData = Awaited<ReturnType<typeof getTrials>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTrials>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetTrialsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export type getMyCreditsResponse200 = {
   data: CreditBalanceResponse;
   status: 200;

@@ -16,7 +16,7 @@ import {
   getGetUsersMePersonasQueryKey as getPersonasQueryKey,
   useDeleteUsersMePersonasByPersonaId as useDeletePersona,
   useGetUsersMePersonas as usePersonas,
-} from '@/api/generated/endpoints/user-persona-controller/user-persona-controller';
+} from '@/api/generated/endpoints/personas/personas';
 import type { UserPersonaResponse } from '@/api/generated/models';
 import { CardOptionsSheet } from '@/components/common/card-options-sheet';
 import { PageLoadingSpinner } from '@/components/common/page-loading-spinner';

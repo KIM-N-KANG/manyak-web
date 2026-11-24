@@ -18,7 +18,7 @@ export function useDraftImageUpload() {
       throw new Error('Presign response has no upload URL');
     }
 
-    // presigned S3 PUT은 백엔드 API가 아니라 생성된 호출 함수가 없다. 서명한 Content-Type을 그대로 보낸다.
+    // presigned PUT은 백엔드 API가 아니라 생성된 호출 함수가 없다. 서명한 Content-Type을 그대로 보낸다.
     const upload = await fetch(uploadUrl, {
       method: 'PUT',
       headers: { 'Content-Type': file.type },

@@ -39,6 +39,7 @@ import type {
   SearchStoriesParams,
   StoryDetailResponse,
   StoryEditFormResponse,
+  StoryHomeResponse,
   StoryPageResponse,
   StoryReportRequest,
   StorySummaryResponse,
@@ -1781,7 +1782,7 @@ export const getSearchStoriesUrl = (params: SearchStoriesParams) => {
 };
 
 /**
- * 검색어는 trim 후 2~100자이며 관련도순으로 반환합니다. 다음 페이지는 같은 q와 nextCursor를 사용합니다.
+ * 검색어는 trim 후 2~100자이며 관련도순으로 반환합니다. 다음 페이지는 같은 q와 nextCursor를 사용합니다. 검색 저장소 장애 중 커서 없는 요청은 DB 부분 일치 최신순 한 페이지를 nextCursor 없이 반환합니다.
  * @summary 공개 스토리 검색
  */
 export const searchStories = async (
@@ -2081,6 +2082,141 @@ export function useGetLorebooks<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetLorebooksQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export type homeResponse200 = {
+  data: StoryHomeResponse;
+  status: 200;
+};
+
+export type homeResponseSuccess = homeResponse200 & {
+  headers: Headers;
+};
+export const getHomeUrl = () => {
+  return `/api/v1/stories/home`;
+};
+
+export const home = async (
+  options?: RequestInit,
+): Promise<homeResponseSuccess> => {
+  return customInstance<homeResponseSuccess>(getHomeUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getHomeQueryKey = () => {
+  return [`/api/v1/stories/home`] as const;
+};
+
+export const getHomeQueryOptions = <
+  TData = Awaited<ReturnType<typeof home>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getHomeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof home>>> = ({
+    signal,
+  }) => home({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof home>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type HomeQueryResult = NonNullable<Awaited<ReturnType<typeof home>>>;
+export type HomeQueryError = ErrorType<unknown>;
+
+export function useHome<
+  TData = Awaited<ReturnType<typeof home>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof home>>,
+          TError,
+          Awaited<ReturnType<typeof home>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHome<
+  TData = Awaited<ReturnType<typeof home>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof home>>,
+          TError,
+          Awaited<ReturnType<typeof home>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useHome<
+  TData = Awaited<ReturnType<typeof home>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useHome<
+  TData = Awaited<ReturnType<typeof home>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getHomeQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
