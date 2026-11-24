@@ -13,6 +13,7 @@ import {
   formatKrwPrice,
 } from '../constants';
 import { useCreateCreditOrder } from '../hooks/use-create-credit-order';
+import { CreditPurchaseNotice } from './credit-purchase-notice';
 
 const PLACEHOLDER_ROW_COUNT = 6;
 
@@ -63,7 +64,9 @@ export function CreditPurchaseTab() {
 
       {products.length > 0 ? (
         <>
-          <ul className={LIST_CLASS}>
+          <ul
+            className={LIST_CLASS}
+            aria-label={CREDIT_PURCHASE_COPY.productListLabel}>
             {products.map(
               ({
                 productId = '',
@@ -107,9 +110,7 @@ export function CreditPurchaseTab() {
               },
             )}
           </ul>
-          <p className="px-4 pt-6 text-right text-xs text-foreground-secondary">
-            {CREDIT_PURCHASE_COPY.note}
-          </p>
+          <CreditPurchaseNotice />
         </>
       ) : null}
     </div>

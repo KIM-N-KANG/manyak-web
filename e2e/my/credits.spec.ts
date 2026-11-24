@@ -11,6 +11,7 @@ import {
   CREDIT_CHARGE_COPY,
   CREDIT_ORDER_COPY,
   CREDIT_PURCHASE_COPY,
+  CREDIT_PURCHASE_NOTICE,
   formatKrwPrice,
 } from '@/features/my/credits/constants';
 import { PENDING_CREDIT_ORDER_STORAGE_KEY } from '@/features/my/credits/utils/pending-credit-order-storage';
@@ -182,7 +183,9 @@ test.describe('이프 충전 (/my/credits)', () => {
     await page.goto('/my/credits');
 
     const [plain, withBonus] = CREDIT_PRODUCTS_FIXTURE;
-    const rows = page.getByRole('listitem');
+    const rows = page
+      .getByRole('list', { name: CREDIT_PURCHASE_COPY.productListLabel })
+      .getByRole('listitem');
 
     await expect(rows).toHaveCount(CREDIT_PRODUCTS_FIXTURE.length);
     await expect(
@@ -201,7 +204,19 @@ test.describe('이프 충전 (/my/credits)', () => {
     await expect(
       rows.nth(1).getByText(buildCreditBonusLabel(withBonus.bonusCredits)),
     ).toBeVisible();
-    await expect(page.getByText(CREDIT_PURCHASE_COPY.note)).toBeVisible();
+
+    // 상품 목록 아래에 환불과 이용 안내를 한 목록으로 펼쳐 둔다.
+    const notice = page.getByRole('region', {
+      name: CREDIT_PURCHASE_NOTICE.title,
+    });
+
+    await expect(notice.getByRole('listitem')).toHaveCount(
+      CREDIT_PURCHASE_NOTICE.items.length,
+    );
+
+    for (const item of CREDIT_PURCHASE_NOTICE.items) {
+      await expect(notice.getByText(item, { exact: true })).toBeVisible();
+    }
   });
 
   test('상품을 고르면 주문을 만들고 결제창으로 이동한다', async ({ page }) => {
