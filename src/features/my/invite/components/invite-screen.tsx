@@ -15,18 +15,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
 import { TOAST_MESSAGE } from '@/constants/toast-message';
 import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access';
+import { NoticeList } from '@/features/my/_shared/components/notice-list';
 import { track } from '@/observability/analytics';
 
+import { INVITE_GUIDE } from '../constants';
 import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
 import { InviteCodeForm } from './invite-code-form';
 import { InviteRewardDescription } from './invite-reward-description';
-
-const INVITE_GUIDE_LINES = [
-  '초대 보상은 매월 최대 10회까지 받을 수 있으며, 매월 1일 초기화돼요. (한국 시간 기준)',
-  '초대 코드는 계정당 한 번 입력할 수 있어요.',
-  '보상으로 받은 이프는 적립일부터 30일 동안 사용할 수 있어요.',
-  '본 이벤트는 사전 고지 없이 변경되거나 종료될 수 있어요.',
-];
 
 export function InviteScreen() {
   const { data: session, status } = useSession();
@@ -176,14 +171,11 @@ export function InviteScreen() {
         <InviteCodeForm />
       </section>
 
-      <section className="flex flex-col gap-4 p-4">
-        <h2 className="text-lg font-bold">이용 안내</h2>
-        <ul className="flex list-disc flex-col pl-5">
-          {INVITE_GUIDE_LINES.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      </section>
+      <NoticeList
+        title={INVITE_GUIDE.title}
+        items={INVITE_GUIDE.lines}
+        className="p-4"
+      />
     </div>
   );
 }
