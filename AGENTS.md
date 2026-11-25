@@ -81,8 +81,7 @@ E2E는 로컬에서 돌리지 않고 PR CI 결과로 확인합니다. `dev`와 `
 ## 테스트
 
 - 단위 테스트: `tests/` 아래에 소스 구조를 미러링해 배치하고 `*.test.ts`로 명명합니다 (예: `tests/features/chats/room/utils/parse-sse-stream.test.ts`). Vitest node 환경이므로 DOM 없는 순수 로직 위주로 작성합니다.
-- E2E 테스트: `e2e/` 아래 `*.spec.ts`. 브라우저별 실행 대상은 `playwright.config.ts`를 참고하세요. Playwright 기본 `test` 대신 `e2e/fixtures/test.ts`의 확장 fixture를 import 하세요(API 목킹 자동 적용). 온보딩 스킵 등 헬퍼는 `e2e/fixtures/storage.ts`에 있습니다. 클라이언트 이동 뒤 페이지 제목은 Next 라우트 어나운서에도 노출되므로 `page.getByRole('banner').getByText(...)`처럼 헤더로 범위를 좁혀 단언합니다.
-- 화면 캡처 스펙: `e2e/ui-capture/` 아래 `*-capture.spec.ts`. E2E fixture로 화면의 **안정된 정적 상태**를 만들고 `toHaveScreenshot()`으로 캡처만 합니다. 기준 이미지는 커밋하지 않습니다. 시간 의존 값은 `page.clock.setFixedTime()`으로 고정하고, 동작과 요청 계약은 일반 E2E로 검증합니다.
+- E2E와 화면 캡처 스펙을 쓰거나 고칠 때는 `e2e/AGENTS.md`를 따릅니다.
 - 이 저장소의 화면 검사와 디버깅에는 agent-browser(`pnpm exec agent-browser`)를 씁니다.
 
 ## 에이전트 스킬
@@ -114,4 +113,3 @@ E2E는 로컬에서 돌리지 않고 PR CI 결과로 확인합니다. `dev`와 `
 - 관련 절을 전체로 읽고 검색은 보조로 사용합니다. 화면 동작과 E2E가 바뀌면 대응 QA 케이스와 자동화 컬럼을 함께 갱신합니다.
 - 도메인의 `BACKEND/`, `AI/`, `CLIENT/ANDROID/`와 백엔드 및 AI 플랫폼 기반과 결정 기록은 다른 팀원 소유입니다. 웹 변경이 해당 계약에 걸리면 임의로 고치지 않고 사용자에게 알립니다.
 - **사용자에게 보이는 문구(카피)를 바꾸면 상수 정의, E2E 단언, 문서 리터럴을 함께 확인하세요.** 실제 렌더 값은 코드 상수(예: `src/constants/site.ts`)에서 관리합니다. 스펙은 계약 문구를 소유하고 구현 상수 위치는 구현 설계(`4-x`) 문서에서 연결하며, QA 케이스는 문자열 대신 스펙 절을 참조합니다.
-- **E2E에서 사용자 문구를 단언할 때는 리터럴 대신 상수를 import 하세요** (`e2e/`에서도 `@/` 별칭이 동작합니다).
