@@ -5,11 +5,13 @@ import { CreditMark } from '@/components/common/credit-mark';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { NoticeList } from '@/features/my/_shared/components/notice-list';
 
 import {
   buildCreditBonusLabel,
   buildCreditProductLabel,
   CREDIT_PURCHASE_COPY,
+  CREDIT_PURCHASE_NOTICE,
   formatKrwPrice,
 } from '../constants';
 import { useCreateCreditOrder } from '../hooks/use-create-credit-order';
@@ -63,7 +65,9 @@ export function CreditPurchaseTab() {
 
       {products.length > 0 ? (
         <>
-          <ul className={LIST_CLASS}>
+          <ul
+            className={LIST_CLASS}
+            aria-label={CREDIT_PURCHASE_COPY.productListLabel}>
             {products.map(
               ({
                 productId = '',
@@ -107,9 +111,12 @@ export function CreditPurchaseTab() {
               },
             )}
           </ul>
-          <p className="px-4 pt-6 text-right text-xs text-foreground-secondary">
-            {CREDIT_PURCHASE_COPY.note}
-          </p>
+          {/* 유상 구매는 웹에만 있어 맞출 앱 화면이 없으므로, 긴 안내문이 낱말 중간에서 끊기지 않게 어절 단위로 줄을 바꾼다. */}
+          <NoticeList
+            title={CREDIT_PURCHASE_NOTICE.title}
+            items={CREDIT_PURCHASE_NOTICE.items}
+            className="px-4 pt-8 break-keep"
+          />
         </>
       ) : null}
     </div>

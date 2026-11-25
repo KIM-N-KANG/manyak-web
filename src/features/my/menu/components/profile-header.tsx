@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
 import { useMe } from '@/api/generated/endpoints/auth/auth';
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
@@ -24,6 +25,7 @@ export function ProfileHeader() {
 
   const isAuthenticated = status === 'authenticated';
   const isSessionLoading = status === 'loading';
+  const isGuest = status === 'unauthenticated';
 
   const { data: meData } = useMe({
     query: { enabled: isMember, refetchOnMount: 'always' },
@@ -47,10 +49,15 @@ export function ProfileHeader() {
           onError={() => setImageError(true)}
         />
       ) : (
+        // 게스트는 프로필 이미지가 없으므로 빈 원 가운데에 마냑 심볼을 옅게 둔다.
         <div
           aria-hidden="true"
-          className="size-14 shrink-0 rounded-full bg-muted"
-        />
+          data-testid="profile-placeholder"
+          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
+          {isGuest && (
+            <ManyakSymbolIcon className="size-7 text-foreground-tertiary" />
+          )}
+        </div>
       )}
       {isSessionLoading ? (
         <div className="flex-1">
@@ -82,7 +89,7 @@ export function ProfileHeader() {
           )}
         </div>
       )}
-      {status === 'unauthenticated' && (
+      {isGuest && (
         <Link
           href={APP_PATH.LOGIN}
           className={buttonVariants()}

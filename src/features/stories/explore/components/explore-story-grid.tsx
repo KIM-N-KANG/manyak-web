@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { STORY_LIST_COPY } from '@/features/stories/_shared/constants/story-list';
 import type { StoryListItem } from '@/features/stories/_shared/types/story-list';
 import { useInView } from '@/hooks/use-in-view';
 import type { StoryCardSection } from '@/observability/analytics';
 
 import { ExploreStoryCell } from './explore-story-cell';
+import { ExploreStoryTileSkeleton } from './explore-story-grid-skeleton';
+
+/** 다음 페이지를 받는 동안 목록 끝에 잇는 골격 칸 수. 두 열 그리드의 두 줄이다. */
+const NEXT_PAGE_SKELETON_COUNT = 4;
 
 type ExploreStoryGridProps = {
   stories: StoryListItem[];
@@ -56,6 +59,11 @@ export function ExploreStoryGrid({
     fetchNextPage,
   ]);
 
+  // 마지막 줄이 한 칸만 차 있으면 빈 오른쪽 칸부터 골격으로 채워 두 줄을 온전히 잇는다.
+  const nextPageSkeletonCount = isFetchingNextPage
+    ? NEXT_PAGE_SKELETON_COUNT + (stories.length % 2)
+    : 0;
+
   return (
     <>
       <ul className="grid grid-cols-2 gap-0.5">
@@ -67,11 +75,14 @@ export function ExploreStoryGrid({
             section={section}
           />
         ))}
+        {Array.from({ length: nextPageSkeletonCount }, (_, index) => (
+          <ExploreStoryTileSkeleton key={`next-page-skeleton-${index}`} />
+        ))}
       </ul>
       {isFetchingNextPage && (
-        <div className="flex justify-center py-4">
-          <Spinner aria-label={STORY_LIST_COPY.loadingLabel} />
-        </div>
+        <p role="status" className="sr-only">
+          {STORY_LIST_COPY.loadingLabel}
+        </p>
       )}
       {isFetchNextPageError && !isFetchingNextPage && (
         <div className="flex justify-center py-4">
