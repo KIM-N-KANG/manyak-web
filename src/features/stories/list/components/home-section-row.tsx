@@ -115,14 +115,18 @@ export function HomeSectionRow({
       scrollTargetRef.current = null;
     };
     const observer = new ResizeObserver(syncScrollState);
+    // 목록을 다시 받아 카드 수가 바뀌면 줄 크기는 그대로라 크기 관찰로는 알 수 없다.
+    const cardObserver = new MutationObserver(syncScrollState);
 
     observer.observe(list);
+    cardObserver.observe(list, { childList: true });
     list.addEventListener('scroll', syncScrollState, { passive: true });
     list.addEventListener('pointerdown', clearScrollTarget);
     list.addEventListener('wheel', clearScrollTarget, { passive: true });
 
     return () => {
       observer.disconnect();
+      cardObserver.disconnect();
       list.removeEventListener('scroll', syncScrollState);
       list.removeEventListener('pointerdown', clearScrollTarget);
       list.removeEventListener('wheel', clearScrollTarget);
