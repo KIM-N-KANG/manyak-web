@@ -615,7 +615,7 @@ test.describe('홈·제작 스토리 목록', () => {
       .toBe(leftAt);
   });
 
-  test('홈은 서버 순서대로 섹션을 쌓고 섹션마다 카드 두 장만 여백 안에 보인다 (STORY-LIST-46)', async ({
+  test('홈은 서버 순서대로 섹션을 쌓고 섹션마다 카드 두 장과 셋째 카드의 앞부분을 보인다 (STORY-LIST-46)', async ({
     page,
   }) => {
     await mockHomeSections(page, [
@@ -662,11 +662,14 @@ test.describe('홈·제작 스토리 목록', () => {
       ] as const;
     });
 
-    // 두 장과 그 사이 8px이 좌우 16px 여백 안을 채우고, 셋째 카드는 화면 오른쪽 끝 밖에서 시작한다.
+    // 왼쪽 여백 16px 뒤로 카드 사이는 모두 8px이고, 셋째 카드는 앞 8px만 화면 오른쪽 끝에 걸친다.
     expect(cards[0][0]).toBeCloseTo(16, 0);
     expect(cards[1][0] - cards[0][1]).toBeCloseTo(8, 0);
-    expect(rowWidth - cards[1][1]).toBeCloseTo(16, 0);
-    expect(cards[2][0]).toBeGreaterThanOrEqual(rowWidth - 0.5);
+    expect(cards[2][0] - cards[1][1]).toBeCloseTo(8, 0);
+    expect(rowWidth - cards[2][0]).toBeCloseTo(8, 0);
+
+    // 넘기는 버튼은 두지 않는다.
+    await expect(main.getByRole('button')).toHaveCount(0);
 
     const authorlessCard = row
       .getByRole('listitem')
@@ -676,87 +679,6 @@ test.describe('홈·제작 스토리 목록', () => {
       authorlessCard.getByRole('link', { name: '작성자 없는 카드 상세 보기' }),
     ).toBeVisible();
     await expect(authorlessCard.getByText(/^@/)).toHaveCount(0);
-  });
-
-  test('섹션 제목 오른쪽 화살표로 카드를 한 장씩 넘기고 끝에서는 그 방향 화살표를 끈다 (STORY-LIST-50)', async ({
-    page,
-  }) => {
-    await mockHomeSections(page, [
-      {
-        id: 'section-1',
-        name: '지금 인기 있는 스토리',
-        items: ['1', '2', '3', '4', '5'].map((id) =>
-          originalStory(`a${id}`, `카드 ${id}`),
-        ),
-      },
-      {
-        name: '오리지널 스토리',
-        items: [originalStory('b1', '오리지널 카드')],
-      },
-    ]);
-
-    await page.goto('/');
-
-    const main = page.getByRole('main');
-    const section = main.getByRole('region', { name: '지금 인기 있는 스토리' });
-    const row = section.getByRole('list');
-    const prev = section.getByRole('button', {
-      name: STORY_LIST_COPY.prevLabel,
-    });
-    const next = section.getByRole('button', {
-      name: STORY_LIST_COPY.nextLabel,
-    });
-
-    await expect(prev).toBeDisabled();
-    await expect(next).toBeEnabled();
-
-    await next.click();
-    await expect(prev).toBeEnabled();
-
-    // 한 번에 카드 한 장과 배치 간격 16px만큼 넘긴다.
-    const cardStep = await row.evaluate(
-      (element) =>
-        (element.querySelector('li')?.getBoundingClientRect().width ?? 0) + 16,
-    );
-
-    await expect
-      .poll(async () =>
-        Math.abs(
-          (await row.evaluate((element) => element.scrollLeft)) - cardStep,
-        ),
-      )
-      .toBeLessThanOrEqual(1);
-
-    // 넘긴 자리에서도 두 번째 칸 카드만 당겨 두 장 사이가 8px이고, 나간 카드는 화면 왼쪽 끝 밖에 있다.
-    const settled = await row.evaluate((element) => {
-      const rowLeft = element.getBoundingClientRect().left;
-
-      return [...element.children].slice(0, 3).map((child) => {
-        const box = child.getBoundingClientRect();
-
-        return [box.left - rowLeft, box.right - rowLeft];
-      });
-    });
-
-    // 카드 폭이 소수점이면 멈춘 스크롤 위치가 기기 픽셀에 맞춰 1px 안에서 어긋날 수 있다.
-    expect(settled[0][1]).toBeLessThanOrEqual(1);
-    expect(Math.abs(settled[1][0] - 16)).toBeLessThanOrEqual(1);
-    expect(Math.abs(settled[2][0] - settled[1][1] - 8)).toBeLessThanOrEqual(1);
-
-    // 카드 5장 중 2장이 보이므로 세 번째에서 끝에 닿는다.
-    await next.click();
-    await next.click();
-    await expect(next).toBeDisabled();
-
-    await prev.click();
-    await prev.click();
-    await prev.click();
-    await expect(prev).toBeDisabled();
-
-    // 두 장 이하인 섹션은 넘길 카드가 없어 화살표를 두지 않는다.
-    await expect(
-      main.getByRole('region', { name: '오리지널 스토리' }).getByRole('button'),
-    ).toHaveCount(0);
   });
 
   test('홈은 화면 근처의 줄에서 보이는 카드와 다음 두 장의 표지만 받는다 (STORY-LIST-51)', async ({
@@ -779,7 +701,7 @@ test.describe('홈·제작 스토리 목록', () => {
       {
         id: 'section-1',
         name: '지금 인기 있는 스토리',
-        items: ['1', '2', '3', '4', '5', '6'].map((id) =>
+        items: ['1', '2', '3', '4', '5', '6', '7', '8'].map((id) =>
           coveredStory(`a${id}`, `카드 ${id}`),
         ),
       },
@@ -803,15 +725,17 @@ test.describe('홈·제작 스토리 목록', () => {
     const firstCovers = firstSection.getByRole('list').locator('img[alt=""]');
     const lastCovers = lastSection.getByRole('list').locator('img[alt=""]');
 
-    // 보이는 두 장과 다음 두 장만 받고, 화면 아래 먼 줄은 받지 않는다.
-    await expect(firstCovers).toHaveCount(4);
+    // 화면에 걸친 세 장과 다음 두 장만 받고, 화면 아래 먼 줄은 받지 않는다.
+    await expect(firstCovers).toHaveCount(5);
     await expect(lastCovers).toHaveCount(0);
 
-    // 한 장 넘겨 셋째 카드가 보이면 그 뒤 두 장까지 받는다.
-    await firstSection
-      .getByRole('button', { name: STORY_LIST_COPY.nextLabel })
-      .click();
-    await expect(firstCovers).toHaveCount(5);
+    // 카드 두 장만큼 넘겨 다섯째 카드까지 걸치면 그 뒤 두 장까지 받는다.
+    await firstSection.getByRole('list').evaluate((element) => {
+      const card = element.firstElementChild;
+
+      element.scrollLeft = ((card?.getBoundingClientRect().width ?? 0) + 8) * 2;
+    });
+    await expect(firstCovers).toHaveCount(7);
 
     // 먼 줄은 화면 근처에 오면 받는다. 카드가 세 장이라 모두 받는다.
     await lastSection.scrollIntoViewIfNeeded();
@@ -1174,8 +1098,8 @@ test.describe('홈·제작 스토리 목록', () => {
     });
 
     await expect(loading).toBeVisible();
-    // 섹션 2개마다 제목 1개와 카드 2장의 썸네일, 제목, 한 줄 소개 두 줄, 장르 배지 두 개다.
-    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(26);
+    // 섹션 2개마다 제목 1개와 카드 3장의 썸네일, 제목, 한 줄 소개 두 줄, 장르 배지 두 개다.
+    await expect(loading.locator('[data-slot="skeleton"]')).toHaveCount(38);
 
     releaseResponse();
     await expect(loading).toBeHidden();
