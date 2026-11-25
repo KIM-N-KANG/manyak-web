@@ -50,6 +50,9 @@ type MigrationIds = { storyIds: string[]; chatIds: string[] };
  * 게스트 식별 수단이 없어 로컬 ID가 그 데이터에 도달할 유일한 손잡이다 — 지우면
  * 로그아웃 후에도 영영 찾지 못한다. 대신 계정별 닫힘 표시를 남겨 재방문마다
  * 재호출·재안내하지 않는다.
+ *
+ * 400 응답(형식이 깨진 ID가 섞임)이면 유효한 UUID만 로컬에 다시 쓰고 한 번만 재제출한다.
+ * 그 밖의 실패는 로컬 ID를 그대로 두어 다음 방문에 다시 시도된다.
  */
 export function useAutoMigration(): void {
   const { data: session } = useSession();

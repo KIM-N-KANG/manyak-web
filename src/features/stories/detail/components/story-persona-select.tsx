@@ -25,6 +25,13 @@ type StoryPersonaSelectProps = {
   onValueChange: (personaId: string | null) => void;
 };
 
+/**
+ * 상세 본문의 페르소나 선택.
+ *
+ * @remarks
+ * 기본 주인공과 페르소나 생성은 실제 ID가 아닌 고정 값으로 목록에 넣는다. 기본 주인공을 고르면 null을 알리고,
+ * 페르소나 생성을 고르면 선택을 바꾸지 않고 생성 화면으로 보낸다(게스트는 로그인 시트를 연다).
+ */
 export function StoryPersonaSelect({
   storyId,
   value,

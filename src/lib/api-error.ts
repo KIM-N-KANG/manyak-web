@@ -3,7 +3,12 @@
  * 순환 의존을 피하기 위해 별도 모듈로 둔다.
  */
 export class FetchError extends Error {
+  /** HTTP 상태 코드다. 세션 갱신 게이트가 만료를 알릴 때는 응답 없이 401을 넣는다. */
   status: number;
+  /**
+   * 에러 응답 본문이다. JSON이면 파싱한 객체이고, 아니면 만든 곳에 따라 원문 문자열이나 null이다.
+   * {@link getApiErrorCode}가 여기서 `code`를 읽는다.
+   */
   data: unknown;
 
   constructor(message: string, status: number, data: unknown) {

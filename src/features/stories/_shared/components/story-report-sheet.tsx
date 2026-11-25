@@ -47,6 +47,13 @@ type StoryReportSheetProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+/**
+ * 스토리 신고 바텀시트.
+ *
+ * @remarks
+ * 전송 중에는 바깥 누름과 닫기를 막는다. 열 때, 제출할 때, 실패할 때 각각 분석 이벤트를 보내고, 성공하면 토스트를
+ * 띄우고 닫는다. 앱 프레임 컨테이너가 정해지기 전에는 열지 않는다.
+ */
 export function StoryReportSheet({
   storyId,
   source,

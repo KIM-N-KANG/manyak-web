@@ -22,6 +22,13 @@ type StoryDetailCtaProps = {
   onStartClick: () => void;
 };
 
+/**
+ * 스토리 상세 하단의 좋아요와 채팅 시작 버튼 줄.
+ *
+ * @remarks
+ * 로그인하지 않은 사용자가 좋아요를 누르면 좋아요 대신 로그인 시트를 연다. 세션을 판정하는 중이거나 초기 데이터를
+ * 갱신하기 전에는 좋아요를 막는다.
+ */
 export function StoryDetailCta({
   storyId,
   canLike,

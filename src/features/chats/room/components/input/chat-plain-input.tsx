@@ -18,12 +18,19 @@ import { SendButtonIcon } from './send-button-icon';
 type ChatPlainInputProps = {
   value: string;
   onChange: (value: string) => void;
+  /** 입력이 있을 때 본문을 전송한다. */
   onSend: () => void;
+  /** 공백이 아닌 추천 입력이 하나라도 있는지. 빈 입력에서 랜덤 전송을 허용하는 조건이다. */
   hasSuggestions: boolean;
+  /** 입력이 비었을 때 전송 버튼이 대신 호출한다. 추천 입력 하나를 골라 바로 보낸다. */
   onSendRandomSuggestion: () => void;
+  /** 커서 위치나 선택 영역에 `*...*` 상황 마커를 넣는다. */
   onInsertEmphasis: () => void;
+  /** 응답 생성 중이면 입력과 상황 추가 버튼을 잠그고 전송을 막는다. 설정 버튼은 누를 수 있다. */
   isStreaming: boolean;
+  /** 컴포저가 마커 삽입과 채우기 뒤 커서를 옮기는 데 쓰는 textarea ref. */
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  /** 선택지 설정. 꺼져 있으면 빈 입력의 랜덤 전송을 쓰지 않는다. */
   choicesEnabled: boolean;
   onOpenSettings: () => void;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
@@ -38,6 +45,10 @@ type ChatPlainInputProps = {
   onLockedTap: () => void;
 };
 
+/**
+ * 자유 텍스트 한 칸으로 적는 일반 입력 모드의 입력창. form submit으로 전송하고, 입력이 비었으면서 선택지가
+ * 켜져 있으면 추천 입력 랜덤 전송으로 바뀐다.
+ */
 export function ChatPlainInput({
   value,
   onChange,

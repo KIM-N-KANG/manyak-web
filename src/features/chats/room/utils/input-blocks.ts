@@ -1,6 +1,7 @@
 import { createClientId } from '@/lib/create-client-id';
 import { parseTextSegments } from '@/lib/parse-text-segments';
 
+/** 입력 블럭 종류. `situation` 은 전송할 때 `*...*` 로 감싸 상황 묘사로 보내고, `dialogue` 는 평문 대사로 보낸다. */
 export type InputBlockType = 'situation' | 'dialogue';
 
 export type InputBlock = {

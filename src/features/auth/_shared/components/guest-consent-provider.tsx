@@ -16,6 +16,7 @@ import { useMemberAccess } from '@/features/auth/_shared/hooks/use-member-access
 import { useBackLayer } from '@/hooks/use-back-layer';
 import { leaveLayers } from '@/lib/history-layers';
 
+/** 프로바이더 밖의 기본값은 동의 요청을 항상 거절(false)하고 시트를 열지 않는다. */
 const GuestConsentContext = createContext({
   requestConsent: async (): Promise<boolean> => false,
   open: false,
@@ -37,6 +38,18 @@ export function useGuestConsentOpen() {
   return useContext(GuestConsentContext).open;
 }
 
+/**
+ * 게스트가 보호 동작을 시도할 때 게스트 동의 시트를 띄우고 결과를 Promise로 돌려주는 프로바이더.
+ *
+ * @remarks
+ * `requestConsent`는 회원이면 바로 true, 게스트로 확정되지 않았으면 false로 끝난다. 게스트면
+ * 요청한 경로를 기억해 시트를 열고 시트가 끝날 때까지 기다린다. 대기 슬롯은 하나뿐이라
+ * 이미 대기 중인 요청이 있으면 새 요청은 바로 false다.
+ *
+ * 대기 중인 요청은 시트 결과 외에도 뒤로가기, 경로 변경, 인증 상태 변경으로 시트가 닫히면
+ * false로 끝난다. 시트 결과로 끝낼 때는 `leaveLayers`로 시트의 히스토리 더미를 먼저 소비한
+ * 뒤 결과를 넘겨, 재개한 동작이 이동해도 그 아래에 빈 히스토리 칸이 남지 않게 한다.
+ */
 export function GuestConsentProvider({ children }: { children: ReactNode }) {
   const { isMember, isGuest } = useMemberAccess();
   const pathname = usePathname();

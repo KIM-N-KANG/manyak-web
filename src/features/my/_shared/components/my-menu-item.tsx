@@ -19,6 +19,10 @@ type MyMenuItemBaseProps = {
   badge?: string;
 };
 
+/**
+ * 링크 행(`href`, 새 탭 여부)과 버튼 행(`onClick`, 진행 중 표시) 중 하나만 고르는 props.
+ * 두 변형의 속성을 함께 넘기면 타입 오류가 난다.
+ */
 type MyMenuItemProps = MyMenuItemBaseProps &
   (
     | {
@@ -37,6 +41,7 @@ type MyMenuItemProps = MyMenuItemBaseProps &
       }
   );
 
+/** 마이 화면 메뉴의 공용 행. `href`가 있으면 링크로, 없으면 버튼으로 그리고 진행 중에는 버튼을 비활성화한다. */
 export function MyMenuItem({
   icon,
   label,

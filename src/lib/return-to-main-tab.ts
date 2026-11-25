@@ -53,6 +53,7 @@ function findMainTabBelow() {
  *
  * @param router 앱 라우터
  * @param tab 돌아갈 하단 탭 경로
+ * @see leaveLayers
  */
 export function returnToMainTab(
   router: ReturnType<typeof useRouter>,

@@ -44,6 +44,10 @@ type CreationProgressCardProps = {
   hiddenServerDraftId?: string;
 };
 
+/**
+ * 기기 안 제작 레코드의 진행 카드. 레코드 단계로 완성 중, 스토리라인 생성 중, 초안 본문을 고르고, 카드가
+ * 보이면 이어서 만들기 배너 노출로 기록한다. 완성 중과 생성 중 본문은 서버 진행 상태를 폴링한다.
+ */
 export function CreationProgressCard({
   record,
   hiddenServerDraftId,
@@ -90,6 +94,7 @@ export function SavedAtRow({
   createdAt,
   label = CREATION_PROGRESS_CARD_COPY.savedAtLabel,
 }: {
+  /** 보일 시각(ISO)이다. `time` 요소의 `dateTime`에도 그대로 넣는다. */
   createdAt: string;
   /** 스크린 리더가 읽는 시각의 뜻이다. */
   label?: string;
@@ -166,6 +171,10 @@ function getDraftDescription(record: PendingCreationRequest): string {
   return draftDescription[record.step];
 }
 
+/**
+ * 기기 안 초안의 카드 본문. 이어서 만들기는 재개 의도를 남긴 뒤 제작 화면으로 가서, 그 화면이 이 레코드를
+ * 열게 한다. 삭제는 기기 안 레코드를 먼저 지우고, 이 카드가 가린 서버 초안이 있으면 그것만 함께 지운다.
+ */
 function DraftCardBody({ record, hiddenServerDraftId }: DraftCardBodyProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -238,7 +247,10 @@ function getServerDraftDescription(card: StoryDraftCard): string {
   return card.oneLineIntro?.trim() || draftDescription['storyline-select'];
 }
 
-/** 서버에 임시 저장한 초안(간편 제작, 일반 제작)의 진행 카드다. 기기 안 초안 카드와 같은 모양과 동작을 쓴다. */
+/**
+ * 서버에 임시 저장한 초안(간편 제작, 일반 제작)의 진행 카드다. 기기 안 초안 카드와 같은 모양과 동작을 쓴다.
+ * 삭제는 서버 초안만 지우고 초안 목록을 다시 받는다.
+ */
 export function ServerDraftCard({ card }: ServerDraftCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -302,6 +314,7 @@ type DraftCardContentProps = {
   /** 처음 임시 저장한 시각(ISO). 구 레코드에는 없다. */
   createdAt?: string;
   onResume: () => void;
+  /** 옵션 시트에서 삭제를 확인한 뒤 부른다. 실패 안내는 넘기는 쪽이 맡는다. */
   onDelete: () => Promise<void>;
 };
 
@@ -381,6 +394,10 @@ type CreationProgressCardBodyProps = {
   children?: React.ReactNode;
 };
 
+/**
+ * 초안, 완성 중, 검수 제출본 카드가 함께 쓰는 진행 카드 레이아웃. 완성 중이면 표지 자리에 마스코트 무대를
+ * 그리고 제목을 반짝이게 한다. 아니면 `cover`가 문자열이면 URL로, `Blob`이면 blob URL을 만들어 표지로 보인다.
+ */
 export function CreationProgressCardBody({
   isCompleting,
   title = isCompleting

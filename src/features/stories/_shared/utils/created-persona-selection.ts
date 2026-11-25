@@ -1,11 +1,12 @@
-import { useSyncExternalStore } from 'react';
-
 /**
- * 스토리 상세에서 페르소나 생성으로 갔다가 돌아올 때 새 페르소나를 미리 선택해 두는 메모리 저장소다.
+ * @file 스토리 상세에서 페르소나 생성으로 갔다가 돌아올 때 새 페르소나를 미리 선택해 두는 메모리 저장소다.
+ *
  * 생성 화면은 어느 스토리에서 왔는지 모르므로 상세가 이동 직전에 출발 스토리를 남기고, 생성에 성공하면
  * 그 스토리에 새 페르소나를 묶는다. 새로고침하면 사라지는 일회성 값이다.
  */
+import { useSyncExternalStore } from 'react';
 
+/** 페르소나 생성으로 떠난 스토리. 생성에 성공하면 `created`로 넘기고 비운다. */
 let originStoryId: string | null = null;
 let created: { storyId: string; personaId: string } | null = null;
 /** 채팅 시작 시트에서 페르소나 생성으로 떠난 스토리. 그 상세로 돌아오면 시트를 다시 연다. */

@@ -16,8 +16,13 @@ type Options = {
 
 const DEFAULT_QUERY_GC_TIME = 1000 * 60 * 5;
 
+/** 쿼리 기본 staleTime(1분)이다. `useCreditPolicy`가 이 값을 그대로 쓰는 것을 전제로 한다. */
 const DEFAULT_STALE_TIME = 1000 * 60 * 1;
 
+/**
+ * 앱 공통 쿼리 정책이다. 실패를 자동 재시도하지 않고, 창 포커스로 다시 조회하지 않으며,
+ * 에러를 Error Boundary로 던지지 않고 쿼리 상태로 남긴다.
+ */
 const DEFAULT_QUERY_OPTIONS: Options['queryOptions'] = {
   retry: false,
   gcTime: DEFAULT_QUERY_GC_TIME,
@@ -44,6 +49,7 @@ const DEFAULT_MUTATION_OPTIONS: Options['mutationOptions'] = {
  * 단일 조회를 가정하는 화면(카운터 기반 E2E 목킹 포함)이 늘어나면 같은 방식으로
  * 감싸면 된다.
  *
+ * @template T 페처가 돌려주는 데이터 타입
  * @param fetcher abort signal 없이 실행할 데이터 페처
  * @returns signal을 전달하지 않는 React Query queryFn
  */
@@ -72,10 +78,11 @@ export function makeQueryClient() {
 }
 
 /**
- * API 쿼리 옵션을 간소화하기 위한 타입
- * @TQueryFnData API 성공 응답 타입
- * @TError 에러 타입
- * @TData 최종 변환 타입 (select 후)
+ * API 쿼리 옵션을 간소화하기 위한 타입. `queryKey`와 `queryFn`을 뺀다.
+ *
+ * @template TQueryFnData API 성공 응답 타입
+ * @template TError 에러 타입
+ * @template TData 최종 변환 타입 (select 후)
  */
 export type OmittedQueryOptions<
   TQueryFnData = unknown,
@@ -84,10 +91,11 @@ export type OmittedQueryOptions<
 > = Omit<UseQueryOptions<TQueryFnData, TError, TData>, 'queryKey' | 'queryFn'>;
 
 /**
- * API 쿼리 옵션을 간소화하기 위한 타입
- * @TQueryFnData API 성공 응답 타입
- * @TError 에러 타입
- * @TData 최종 변환 타입 (select 후)
+ * API 서스펜스 쿼리 옵션을 간소화하기 위한 타입. `queryKey`와 `queryFn`을 뺀다.
+ *
+ * @template TQueryFnData API 성공 응답 타입
+ * @template TError 에러 타입
+ * @template TData 최종 변환 타입 (select 후)
  */
 export type OmittedSuspenseQueryOptions<
   TQueryFnData = unknown,
@@ -99,11 +107,12 @@ export type OmittedSuspenseQueryOptions<
 >;
 
 /**
- * API 뮤테이션 옵션을 간소화하기 위한 타입
- * @TData API 성공 응답 타입
- * @TError 에러 타입
- * @TVariables mutate 호출 시 넘기는 인자 타입 (Request Body 등)
- * @TContext onMutate에서 반환하는 컨텍스트 타입
+ * API 뮤테이션 옵션을 간소화하기 위한 타입. `mutationKey`와 `mutationFn`을 뺀다.
+ *
+ * @template TData API 성공 응답 타입
+ * @template TError 에러 타입
+ * @template TVariables mutate 호출 시 넘기는 인자 타입 (Request Body 등)
+ * @template TContext onMutate에서 반환하는 컨텍스트 타입
  */
 export type OmittedMutationOptions<
   TData = unknown,
@@ -116,11 +125,12 @@ export type OmittedMutationOptions<
 >;
 
 /**
- * API 무한 쿼리 옵션을 간소화하기 위한 타입
- * @TQueryFnData API 성공 응답 타입
- * @TError 에러 타입
- * @TData 최종 변환 타입 (select 후)
- * @TPageParam 페이지 파라미터 타입
+ * API 무한 쿼리 옵션을 간소화하기 위한 타입. `queryKey`, `queryFn`과 페이지 파라미터 옵션을 뺀다.
+ *
+ * @template TQueryFnData API 성공 응답 타입
+ * @template TError 에러 타입
+ * @template TData 최종 변환 타입 (select 후)
+ * @template TPageParam 페이지 파라미터 타입
  */
 export type OmittedInfiniteQueryOptions<
   TQueryFnData = unknown,

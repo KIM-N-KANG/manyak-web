@@ -30,6 +30,19 @@ import {
 import { normalizePushSettings } from '../utils/push-settings';
 import { PushConsentNoticeDialog } from './push-consent-notice-dialog';
 
+/**
+ * 광고 알림 동의를 저장하고, 첫 거절 뒤 조건이 맞으면 한 번 더 묻는 루트 시트.
+ *
+ * @remarks
+ * 두 가지 신호를 받는다.
+ * - 답 신호: 필수 동의 시트에서 고른 광고 동의 답이다. 받는 즉시 신호를 비우고 저장한다.
+ * - 재질문 신호: 재진입 집계가 요청한 회원이다. 아래 조건을 모두 만족할 때만 시트를 연다.
+ *   회원으로 확정됐고, 신호의 회원이 현재 세션 회원이고, 기기 알림 권한이 허용됐고, 초대 코드
+ *   온보딩이 대기 중이 아니거나 미뤄졌고, 서버 푸시 설정의 광고 알림이 꺼져 있어야 한다.
+ *
+ * 회원 판정이 끝난 뒤 앞의 조건(서버 설정 제외)이 깨진 재질문 신호는 렌더 중에 지워 나중에
+ * 다시 열리지 않게 한다. 시트를 닫는 것은 거절로 본다.
+ */
 export function MarketingConsentSheet() {
   const { data: session } = useSession();
   const { isMember } = useMemberAccess();

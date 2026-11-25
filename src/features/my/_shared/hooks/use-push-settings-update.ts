@@ -26,6 +26,11 @@ export type PushConsentNotice = {
  * 처리 결과 통지를 함께 돌려준다(프롬프트 시트와 설정 화면이 공유).
  *
  * @returns 저장 함수와 진행 여부
+ * - `update(current, patch)`: `current`에 `patch`를 덮어쓴 전체 설정을 저장하고, 저장된 설정
+ *   `settings`와 광고, 야간 값 변경에 따른 처리 결과 통지 `notice`(변경 없으면 null)를 돌려준다.
+ * - `isPending`: 저장 요청이 진행 중인지
+ * @throws {Error} `update`는 응답 status가 200이 아니면 Error로 reject한다. 요청 자체가 실패해도
+ *   그 오류로 reject되므로 호출부가 잡아 실패를 안내해야 한다.
  */
 export function usePushSettingsUpdate() {
   const queryClient = useQueryClient();

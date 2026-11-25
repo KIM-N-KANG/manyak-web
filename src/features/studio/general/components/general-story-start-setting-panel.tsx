@@ -81,6 +81,13 @@ type GeneralStoryStartSettingPanelProps = {
   onChange: Dispatch<SetStateAction<GeneralStoryStartSettingDraft[]>>;
 };
 
+/**
+ * 시작 상황 탭. 칩 줄에서 시작 상황을 하나 골라 아래 편집 영역에서 고친다.
+ *
+ * @remarks
+ * 첫 시작 상황은 지울 수 없다. 고른 칩을 지우면 바로 앞 칩을 고르고, 새로 추가하면 그 칩을 골라 칩 줄에서
+ * 보이게 스크롤한다. 편집 영역은 고른 시작 상황 id를 key로 두어 바꿀 때마다 안쪽 상태를 새로 시작한다.
+ */
 export function GeneralStoryStartSettingPanel({
   startSettings,
   onChange,

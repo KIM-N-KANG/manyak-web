@@ -41,6 +41,10 @@ type CreatedStoryCardProps = {
   position?: number;
 };
 
+/**
+ * 제작 탭의 내가 만든 스토리 카드. 카드 전체를 덮는 투명 상세 링크(z-10) 위에 옵션 버튼(z-20)을 올려,
+ * 카드 어디를 눌러도 상세로 가되 옵션 버튼은 따로 눌리게 한다. 노출과 클릭을 분석 이벤트로 남긴다.
+ */
 export function CreatedStoryCard({ story, position }: CreatedStoryCardProps) {
   const storyId = story.id;
   const title = story.title ?? '';
@@ -93,6 +97,10 @@ type CreatedStoryCardOptionsProps = {
   storyId: string;
 };
 
+/**
+ * 내가 만든 스토리 카드의 옵션 시트. 수정과 신고는 회원에게만, 삭제는 모두에게 보인다. 신고 시트는
+ * 옵션 시트와 따로 열린다.
+ */
 function CreatedStoryCardOptions({
   story,
   storyId,
@@ -154,10 +162,11 @@ function CreatedStoryCardOptions({
 }
 
 /**
- * 카드 본체의 props. 목록 카드와 옵션 다이얼로그의 축소판이 같은 마크업을 쓰되, 축소판은
+ * 카드 본체의 props. 상세 링크와 노출 추적은 바깥 카드가 맡고, 본체는 표지와 글, 옵션 버튼 자리만 그린다.
  */
 type CreatedStoryCardBodyProps = {
   story: StoryListItem;
+  /** 목록 안 순번이다. 4보다 작으면 첫 화면 카드로 보고 표지를 우선 불러온다. */
   position?: number;
   /** 제목 줄 오른쪽 끝에 놓는 요소(옵션 버튼) */
   action?: React.ReactNode;

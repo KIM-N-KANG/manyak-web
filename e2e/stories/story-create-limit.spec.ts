@@ -1,3 +1,8 @@
+/** @file 스토리 완성의 회원 이프 게이팅 스펙(QA STORY-LIMIT-06, STORY-LIMIT-12).
+ * 제작은 회원 전용이라 게스트 체험 한도 분기는 없다. 아는 잔액이 모자라면 퍼널에서 이프 부족 시트로 안내하고,
+ * 제작 탭으로 떠난 뒤 확정된 402는 이프 부족 토스트로 안내한다.
+ * 게스트 진입 차단은 `stories/story-login-gate.spec.ts`가 검증한다.
+ */
 import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
@@ -15,12 +20,6 @@ import {
   test,
 } from '../fixtures/test';
 
-/**
- * 스토리 완성의 회원 이프 게이팅 스펙(QA STORY-LIMIT-06, STORY-LIMIT-12).
- * 제작은 회원 전용이라 게스트 체험 한도 분기는 없다. 아는 잔액이 모자라면 퍼널에서 이프 부족 시트로 안내하고,
- * 제작 탭으로 떠난 뒤 확정된 402는 이프 부족 토스트로 안내한다.
- * 게스트 진입 차단은 `stories/story-login-gate.spec.ts`가 검증한다.
- */
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 const CREATE_STORY = '**/api/v1/stories/simple';

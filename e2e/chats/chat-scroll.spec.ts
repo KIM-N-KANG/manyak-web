@@ -59,8 +59,13 @@ const setPlainInputMode = async (page: Page) => {
   });
 };
 
-// route.fulfill은 본문을 한 번에 내려 스트리밍 중 상호작용을 재현할 수 없어,
-// 스트림 fetch만 느린 SSE(ReadableStream)로 대체한다.
+/**
+ * route.fulfill은 본문을 한 번에 내려 스트리밍 중 상호작용을 재현할 수 없어,
+ * 스트림 fetch만 느린 SSE(ReadableStream)로 대체한다. 토큰은 80ms 간격으로 보낸다.
+ *
+ * @param tokenCount 보낼 token 이벤트 수
+ * @param completedDelayMs 마지막 토큰 뒤 completed 이벤트까지 기다릴 시간(ms)
+ */
 const installSlowStream = async (
   page: Page,
   tokenCount: number,
@@ -112,7 +117,13 @@ const installSlowStream = async (
   );
 };
 
-// rAF마다 뷰포트 scrollTop 최솟값을 추적해 순간적인 위 방향 튐을 잡아낸다.
+/**
+ * rAF마다 뷰포트 scrollTop 최솟값을 추적해 순간적인 위 방향 튐을 잡아낸다.
+ *
+ * @remarks
+ * 최솟값은 `window.__minScrollTop`에 쌓이고 `window.__resetMinScrollTop()`으로 무한대로 되돌린다.
+ * 스펙은 측정 구간 직전에 초기화하고 끝난 뒤 `page.evaluate`로 값을 읽는다.
+ */
 const installScrollDipTracker = async (page: Page) => {
   await page.addInitScript(() => {
     const win = window as unknown as {
@@ -141,6 +152,11 @@ const installScrollDipTracker = async (page: Page) => {
   });
 };
 
+/**
+ * 채팅 상세를 전송 전에는 과거 턴만, 스트림 전송 뒤에는 완료 턴을 더한 응답으로 목킹한다.
+ *
+ * @param tokenCount 완료 턴 본문에 담을 토큰 수. `installSlowStream`에 넘긴 값과 맞춘다
+ */
 const mockChatDetail = async (
   page: Page,
   tokenCount: number = STREAM_TOKEN_COUNT,

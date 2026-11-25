@@ -14,6 +14,10 @@ type PersonaEditEntryProps = {
   personaId: string;
 };
 
+/**
+ * 페르소나 수정 화면의 진입점. 단건 조회 API가 없어 내 페르소나 목록에서 id로 찾아 폼에 넘기고,
+ * 목록에 없으면 찾을 수 없음 안내를 그린다.
+ */
 export function PersonaEditEntry({ personaId }: PersonaEditEntryProps) {
   const { isMember } = useMemberAccess();
   const { data, isPending, isError, refetch } = usePersonas({

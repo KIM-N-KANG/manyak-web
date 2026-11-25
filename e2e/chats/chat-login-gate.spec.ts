@@ -1,3 +1,7 @@
+/** @file 채팅 전송, 재생성, 새 채팅 시작의 게스트 동의 게이팅과 회원 이프 게이팅 스펙
+ * (웹 사용자 모델, §3-1-5 예외 처리, QA CHAT-GATE-01~03, CHAT-LIMIT-03).
+ * 게스트는 요청 없이 게스트 동의 시트를 보고, 회원의 402는 이프 부족 시트로 안내한다.
+ */
 import { type Page } from '@playwright/test';
 
 import { APP_PATH } from '@/constants/app-path';
@@ -22,11 +26,6 @@ test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
 });
 
-/**
- * 채팅 전송·재생성·새 채팅 시작의 게스트 동의 게이팅과 회원 이프 게이팅 스펙
- * (웹 사용자 모델, §3-1-5 예외 처리 — QA CHAT-GATE-01~03·CHAT-LIMIT-03).
- * 게스트는 요청 없이 게스트 동의 시트를 보고, 회원의 402는 이프 부족 시트로 안내한다.
- */
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const CHAT_STREAM = '**/api/v1/chats/c1/turns/stream';
 const CHAT_REGENERATE = '**/api/v1/chats/c1/turns/regenerate/stream';

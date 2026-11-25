@@ -29,9 +29,22 @@ import { useAppFrameContainer } from '@/hooks/use-app-frame-container';
 import { getApiErrorCode } from '@/lib/custom-fetch';
 import { cn } from '@/lib/utils';
 
+/**
+ * 게스트에게 AI 이용과 게스트 개인정보 처리 동의를 받는 시트.
+ *
+ * @remarks
+ * 마운트마다 게스트 동의 상태를 새로 조회하고, 이미 현재 버전에 동의했으면 시트를 열지 않고
+ * 바로 `onFinish(true)`로 끝낸다. 저장 응답이 요구 버전 동의를 확인해 줄 때만 true로 끝내고,
+ * 사용자가 시트를 닫으면 false로 끝낸다. 버전 불일치 응답이면 상세 화면으로 바꿔 바뀐 내용을
+ * 보여 주고 상태를 다시 조회한다.
+ *
+ * `active` ref는 이미 끝났거나 언마운트된 뒤 늦게 온 응답이 `onFinish`를 다시 부르지 않게
+ * 하고, `submitting` ref는 상태 반영 전의 연속 클릭으로 중복 제출되지 않게 막는다.
+ */
 export function GuestConsentSheet({
   onFinish,
 }: {
+  /** 동의를 마치면 true, 동의 없이 닫히면 false로 한 번 호출된다. */
   onFinish: (accepted: boolean) => void;
 }) {
   const container = useAppFrameContainer();

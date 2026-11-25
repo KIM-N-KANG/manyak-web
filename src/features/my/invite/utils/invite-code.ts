@@ -38,6 +38,11 @@ export const sanitizeInviteCodeInput = (value: string): string =>
 /**
  * 초대 코드 등록 실패 원인을 사용자용 에러 타입과 메시지로 변환한다.
  *
+ * @remarks
+ * 400과 404는 잘못된 코드(`not_found`)로, 409는 서버 오류 코드로 자기 코드(`self_code`)와 이미
+ * 등록함(`already_redeemed`)을 나눈다. 그 밖의 상태, 알 수 없는 409 코드, 네트워크 오류는 모두
+ * `network`로 본다.
+ *
  * @param error 등록 요청에서 발생한 에러
  * @returns 에러 타입과 사용자에게 보여줄 메시지
  */

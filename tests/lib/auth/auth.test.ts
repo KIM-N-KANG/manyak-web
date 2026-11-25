@@ -118,6 +118,12 @@ type CapturedAuthConfig = {
   };
 };
 
+/**
+ * 파일 위의 `import '@/lib/auth/auth'`가 모듈을 평가하며 `NextAuth`에 넘긴 설정을 꺼낸다.
+ *
+ * @returns 첫 `NextAuth` 호출의 설정. 콜백과 프로바이더를 직접 호출해 검증한다
+ * @throws {Error} 모듈 평가 전이라 `NextAuth` 호출이 기록되지 않았을 때
+ */
 const getAuthConfig = (): CapturedAuthConfig => {
   const config = authMocks.nextAuth.mock.calls[0]?.[0];
 
@@ -128,6 +134,11 @@ const getAuthConfig = (): CapturedAuthConfig => {
   return config as unknown as CapturedAuthConfig;
 };
 
+/**
+ * 캡처한 설정에서 가입 동의 Credentials 프로바이더(`signup-consent`)의 `authorize`를 꺼낸다.
+ *
+ * @throws {Error} 프로바이더나 `authorize`가 없을 때
+ */
 const getSignupConsentAuthorize = () => {
   const authorize = getAuthConfig().providers.find(
     ({ id }) => id === 'signup-consent',

@@ -49,21 +49,27 @@ type CharacterFormProps = {
   namePlaceholder: string;
   tagPlaceholder: string;
   predefinedTags: SimpleStoryTagListItemResponse[];
+  /** 이 인물의 특징 수가 상한에 닿았는지. 참이면 고르지 않은 칩과 직접 추가를 막는다. */
   isMaxSelectionReached: boolean;
   /** 특징을 반드시 골라야 하는 인물(주인공)이면 라벨에 필수 표시를 붙인다. */
   isFeatureRequired: boolean;
   /** 특징 칩 아래에 띄울 설명. 특징이 선택 항목인 인물에만 넘긴다. */
   featureDescription?: string;
   isLoadingTags: boolean;
+  /** 키워드 목록을 받지 못했는지. 참이면 칩 자리에 다시 시도 버튼을 보인다. */
   hasTagsError: boolean;
   onRetryTags: () => void;
   disabled: boolean;
   /** 이름 인풋 아래에 띄울 오류. 없으면 오류를 표시하지 않는다. */
   nameErrorMessage?: string;
+  /** 이름 인풋을 인물 id로 등록한다. 인물을 추가했을 때 그 칸으로 스크롤하는 데 쓴다. */
   onRegisterNameInput?: (id: string, element: HTMLInputElement | null) => void;
   onChangeName: (name: string) => void;
+  /** null이면 성별을 고르지 않은 상태(랜덤 성별)이며 AI가 정한다. */
   onChangeGender: (gender: CharacterGender | null) => void;
+  /** `pressed`가 참이면 특징을 고르고, 거짓이면 해제한다. */
   onTogglePredefinedTag: (tagId: number, pressed: boolean) => void;
+  /** 직접 추가한 특징을 켜거나 끈다. `tagId`는 직접 추가 키워드의 id다. */
   onToggleCustomTag: (tagId: string, pressed: boolean) => void;
   onAddCustomTag: (name: string) => void;
 };

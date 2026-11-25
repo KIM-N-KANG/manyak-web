@@ -22,7 +22,9 @@ type CreateTutorialDialogProps = {
   stage: CreateTutorialStage;
   /** 스토리라인 단계 문구에 넣을 장르 이름 */
   genres?: readonly string[];
+  /** 주 선택지. 보조 선택지가 없는 단계에서는 뒤로가기도 이 동작으로 처리한다. */
   onPrimary: () => void;
+  /** 보조 선택지(건너뛰기, 닫기). 보조 선택지가 있는 단계에서 뒤로가기도 이 동작이다. */
   onSecondary: () => void;
 };
 
@@ -43,6 +45,13 @@ function getChoiceLabels(stage: CreateTutorialStage) {
   return { primary: CREATE_TUTORIAL_COPY.confirm, secondary: null };
 }
 
+/**
+ * 간편 제작 첫 진입 안내 대화창.
+ *
+ * @remarks
+ * 앱 프레임에 포털해 프레임 안에서만 화면을 덮는다. 뒤로가기 레이어를 등록해 브라우저 뒤로가기를 선택지로
+ * 처리하고, 포털 대상이 정해지거나 단계가 바뀔 때마다 카드로 포커스를 옮긴다.
+ */
 export function CreateTutorialDialog({
   stage,
   genres,

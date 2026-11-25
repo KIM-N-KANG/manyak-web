@@ -15,6 +15,7 @@ type MarketingConsentSignal = {
   reaskUserId: string | null;
 };
 
+/** 스토어의 현재 값. `set`으로만 새 객체로 바꿔 `useSyncExternalStore`가 변경을 감지하게 한다. */
 let signal: MarketingConsentSignal = { answer: null, reaskUserId: null };
 const listeners = new Set<() => void>();
 

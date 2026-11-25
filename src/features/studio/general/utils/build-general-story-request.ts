@@ -25,6 +25,7 @@ export const CHARACTER_IMAGE_SUFFIX = '기본';
 export const toCharacterDescription = (description: string) =>
   description.replace(/[\t\r\n]/g, ' ').trim();
 
+/** 등록 요청을 만들 폼 입력이다. 폼 상태와 같되 이미지는 미리보기 없이 올린 객체 키만 갖는다. */
 export type GeneralStoryRequestInput = {
   texts: {
     title: string;
@@ -32,11 +33,14 @@ export type GeneralStoryRequestInput = {
     world: string;
     progression: string;
   };
+  /** 올린 표지의 객체 키다. 표지가 없으면 null이다. */
   coverObjectKey: string | null;
+  /** 묘사 비율(1~9)이다. 전개 규칙 글의 분량 배분 절로 싣는다. */
   descriptionRatio: number;
   protagonist: GeneralStoryCharacter;
   supporting: (GeneralStoryCharacter & {
     description: string;
+    /** 올린 인물 이미지의 객체 키다. 이미지가 없으면 null이다. */
     imageObjectKey: string | null;
   })[];
   startSettings: GeneralStoryStartSettingDraft[];

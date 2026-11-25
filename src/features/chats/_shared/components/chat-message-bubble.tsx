@@ -13,6 +13,7 @@ type ChatMessageBubbleProps = {
 
 type AiMessageBubbleProps = {
   children: ReactNode;
+  /** 이 응답으로 도달한 엔딩 이름. 값이 있으면 본문 위에 엔딩 배지를 보인다. */
   endingName?: string | null;
 };
 

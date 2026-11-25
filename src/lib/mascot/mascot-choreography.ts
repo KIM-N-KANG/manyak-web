@@ -162,9 +162,17 @@ export const cubic = (
 
 // ---- 낱동작 ----
 
+/**
+ * 안무를 이루는 낱동작이다.
+ *
+ * @template C 동작에 붙일 수 있는 소품 신호(cue) 이름
+ */
 export type Move<C extends string = never> = {
+  /** 동작 길이(ms)다. */
   millis: number;
+  /** 이 동작이 시작될 때 소품이 따라 바뀌는 신호다. 안무 안에서 한 번만 쓴다. */
   cue?: C;
+  /** 동작 진행도 `f`(0..1)에서의 자세를 돌려준다. */
   pose: (f: number) => MascotPose;
 };
 
@@ -686,13 +694,25 @@ export const paintAlong = (
 
 // ---- 막 ----
 
+/**
+ * 낱동작을 차례로 이은 막이다.
+ *
+ * @template K 막 종류 이름
+ * @template C 막 안 동작이 쓰는 cue 이름
+ */
 export type Act<K extends string, C extends string> = {
   kind: K;
   moves: Move<C>[];
 };
 
+/**
+ * 안무의 한 시각에 마스코트가 놓인 상태다.
+ *
+ * @template K 막 종류 이름
+ */
 export type Moment<K extends string> = {
   act: K;
+  /** 지금 막이 시작된 뒤 흐른 시간(ms)이다. cue 조회 함수에 그대로 넘긴다. */
   actMillis: number;
   pose: MascotPose;
 };
@@ -710,8 +730,12 @@ const movesMillis = (moves: Move<string>[]) =>
  * 막을 차례로 이어 한 바퀴 안무를 만든다. 시각으로 막·자세를 찾고, 소품이 동작에 맞춰 바뀌는 cue 의 시작과
  * 길이를 막 안의 시각으로 알려 준다. cue 는 안무 안에서 한 번만 쓴다.
  *
+ * @template K 막 종류 이름
+ * @template C cue 이름
  * @param acts 차례로 이어질 막
  * @returns 한 바퀴 길이와 시각 조회 함수
+ * @throws {Error} cue 조회 함수에 어떤 동작에도 붙지 않은 cue를 넘기거나, 막이 비어 `momentAt`이
+ * 자세를 찾지 못하면 던진다.
  */
 export function createChoreography<K extends string, C extends string>(
   acts: Act<K, C>[],

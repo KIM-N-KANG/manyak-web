@@ -43,9 +43,12 @@ const COOKIE_OPTIONS = {
   maxAge: SESSION_COOKIE_MAX_AGE_SECONDS,
 } as const;
 
+/** BFF httpOnly 쿠키에 나눠 보관하는 백엔드 세션 토큰 묶음이다. */
 export type BackendSessionTokens = {
   accessToken: string;
+  /** 세션의 실제 자격증명이다. 쓰면 회전되는 1회용 토큰이다. */
   refreshToken: string;
+  /** access 토큰 만료 시각(ms epoch)이다. */
   expiresAt: number;
 };
 

@@ -32,6 +32,10 @@ type ChatInputProps = {
   isMember: boolean;
 };
 
+/**
+ * 입력 모드에 따라 블럭 입력과 일반 입력 중 하나를 그리는 채팅 입력 영역.
+ * 설정 시트는 실시간 이미지 안내로도 열리며, 안내 카드를 닫으면 시트는 열린 채 일반 설정으로 이어진다.
+ */
 export function ChatInput({
   mode,
   onModeChange,

@@ -3,6 +3,7 @@
 import { createContext, use } from 'react';
 
 interface MainScrollContextValue {
+  /** 제작 탭에서 스크롤 영역이 맨 위에서 내려가 있으면 true다. 다른 탭에서는 항상 false다. */
   hasScrolled: boolean;
   /** 스크롤 영역과 같은 박스를 가지는 positioned 래퍼. FAB처럼 스크롤을 따라가지 않는 오버레이의 포털 대상이다. */
   overlayContainer: HTMLElement | null;
@@ -12,6 +13,7 @@ interface MainScrollContextValue {
 
 const MainScrollContext = createContext<MainScrollContextValue | null>(null);
 
+/** 메인 레이아웃이 스크롤 상태와 컨테이너를 내려주는 Provider. `useMainScroll`이 이 값을 읽는다. */
 export const MainScrollProvider = MainScrollContext.Provider;
 
 /**

@@ -43,6 +43,13 @@ async function prepareMemberInvitePage(page: Page): Promise<void> {
   await mockMyInvite(page);
 }
 
+/**
+ * 카카오 JS SDK 스크립트를 외부 요청 없이 스텁으로 바꾼다.
+ *
+ * @remarks
+ * 스텁의 `Kakao.Share.sendDefault`는 공유 대신 받은 설정을 `window.__kakaoShareSettings`에 남긴다.
+ * 스펙은 공유 버튼을 누른 뒤 이 전역을 읽어 공유 문구와 링크를 단언한다.
+ */
 async function mockKakaoSdk(page: Page): Promise<void> {
   await page.route('**/kakao_js_sdk/**', (route) =>
     route.fulfill({

@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * @file 세션과 필수 동의를 한 단계로 판정해 회원 접근 상태를 내려주는 루트 동의 게이트.
+ * `useConsentGate`가 세션 판정, 미리 보낸 동의 조회, 이 탭의 가입 대기 조회를 모아
+ * `resolvePhase`로 `ConsentGatePhase`를 정하고, `ConsentGate`가 그 단계로
+ * `MemberAccessContext`와 `ConsentSheet`를 함께 그린다. 히스토리 이동으로 다시 불러온
+ * 문서에 남은 탭 로그인 표시는 떠난 로그인으로 보고 정리한다.
+ */
+
 import { type ReactNode, useEffect, useRef } from 'react';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -172,7 +180,13 @@ function resolvePhase({
  * 회원 기능과 로그인 후 부수 효과는 전부 `useMemberAccess().isMember`로 이 판정을 재사용한다.
  * 뒤로가기·앞으로가기로 다시 불러온 문서에 남은 탭 표시는 마치지 않고 떠난 로그인으로 보고 정리한다.
  *
- * @returns 판정 단계, 필요 항목, 기록 결과 반영·재조회 함수, 시트 상태를 초기화할 사용자 키
+ * @returns 게이트 상태와 시트 콜백 묶음
+ * - `phase`: 판정한 단계
+ * - `required`: 시트에 그릴 필수 항목. 가입 단계는 가입 대기 조회, 그 밖에는 회원 동의 조회에서 뽑는다.
+ * - `applyRecordedConsent`: 회원 동의 기록 응답을 쿼리 캐시에 반영하고 광고 동의 답을 넘긴다.
+ * - `settleSignup`: 가입 동의 시트의 결과를 정산한다.
+ * - `reload`: 현재 단계에 맞는 조회(가입 대기 또는 회원 동의)를 다시 요청한다.
+ * - `sheetKey`: 시트의 `key`. 사용자 id(세션이 없으면 `'guest'`)라 사용자가 바뀌면 시트 상태가 초기화된다.
  */
 function useConsentGate() {
   const { status, data: session } = useSession();
@@ -347,6 +361,20 @@ function useConsentGate() {
   };
 }
 
+/**
+ * 앱 전체를 감싸 회원 접근 상태(`MemberAccessContext`)를 제공하고 동의 시트를 띄우는 루트 게이트.
+ *
+ * @remarks
+ * 내려주는 값은 판정 단계에서만 나온다.
+ * - `isMember`: 단계가 `satisfied`(인증되고 필수 동의까지 마침)일 때만 true다.
+ * - `isGuest`: 단계가 `guest`(비로그인 확정)일 때만 true다.
+ *
+ * 그 밖의 단계(`checking`, `required`, `blocked`, `load-error`, `forbidden`, 가입 단계)에서는
+ * 둘 다 false라 회원 기능도 열지 않고 로그인 시트도 띄우지 않는다. 세션 판정과 동의 조회가
+ * 끝나기 전에도 둘 다 false다.
+ *
+ * @see useConsentGate
+ */
 export function ConsentGate({ children }: { children: ReactNode }) {
   const {
     phase,

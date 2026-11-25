@@ -1,4 +1,4 @@
-/** 백엔드의 최장 동기 요청 예산(스토리 컴파일 180초 — docs/spec/STORY/BACKEND/5-3-ERROR-HANDLING.md의 AI 호출 타임아웃). */
+/** 백엔드의 최장 동기 요청 예산(스토리 컴파일 180초, docs/spec/STORY/BACKEND/5-3-ERROR-HANDLING.md의 AI 호출 타임아웃). */
 const BACKEND_BUDGET_MS = 180 * 1000;
 
 /**
@@ -7,6 +7,7 @@ const BACKEND_BUDGET_MS = 180 * 1000;
  */
 const TIMEOUT_HEADROOM_MS = 20 * 1000;
 
+/** 클라이언트 API 요청의 기본 타임아웃(ms)이다. 백엔드 예산에 여유를 더한 200초다. */
 export const API_TIMEOUT_MS = BACKEND_BUDGET_MS + TIMEOUT_HEADROOM_MS;
 
 /**
@@ -15,8 +16,10 @@ export const API_TIMEOUT_MS = BACKEND_BUDGET_MS + TIMEOUT_HEADROOM_MS;
  *
  * @param url 요청 URL
  * @param options fetch 요청 옵션(외부 signal 포함 가능)
- * @param timeout 타임아웃(ms), 기본값 API_TIMEOUT_MS
+ * @param timeout 타임아웃(ms). 기본값은 `API_TIMEOUT_MS`다.
  * @returns fetch 응답
+ * @throws {DOMException} 타임아웃이면 이름이 `TimeoutError`인 DOMException으로 거절한다.
+ * 외부 signal이 취소되면 그 signal의 reason으로 거절한다.
  */
 export async function fetchWithTimeout(
   url: string,

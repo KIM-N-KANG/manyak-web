@@ -12,12 +12,18 @@ import { StoryCreateBackDialog } from './story-create-back-dialog';
 type StoryCreateHeaderProps = {
   step: StoryCreateStep;
   isSavingDraft: boolean;
+  /** 저장할 입력이 있고 생성이나 완성 요청 중이 아닌지. 거짓이면 저장 버튼을 막는다. */
   canSaveDraft: boolean;
+  /** 지금 입력이 마지막 저장본과 같은지. 같으면 저장 버튼이 다시 쓰지 않고 완료 토스트만 띄운다. */
   isDraftSaved: boolean;
+  /** 임시 저장하고 성공 여부를 돌려준다. 실패 안내는 퍼널이 맡는다. */
   onSaveDraft: () => Promise<boolean>;
+  /** 열어 둘 이탈 확인 다이얼로그의 문구 종류. null이면 닫혀 있다. */
   backDialog: DraftExitDialog | null;
+  /** 닫기 버튼. 잃을 입력이 있으면 퍼널이 다이얼로그를 열고, 없으면 바로 나간다. */
   onBackClick: () => void;
   onBackDialogOpenChange: (open: boolean) => void;
+  /** 다이얼로그에서 나가기를 확정한다. 저장하지 않고 퍼널을 떠난다. */
   onConfirmBack: () => void;
 };
 

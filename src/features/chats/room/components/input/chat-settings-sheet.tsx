@@ -136,6 +136,14 @@ type ChatSettingsSheetProps = {
   isMember: boolean;
 };
 
+/**
+ * 실시간 이미지, 선택지, 블럭 입력을 켜고 끄는 채팅 설정 시트.
+ *
+ * @remarks
+ * `highlightsRealtimeImage` 이면 실시간 이미지 행만 딤 위로 올리고 안내 카드를 붙인다. 딤이나 카드의 확인을 누르면
+ * `onHighlightDismiss` 로 안내만 닫는다. 이미지 비용 안내 팝오버는 시트 안으로 포탈해 드로어가 바깥 탭으로
+ * 보고 닫히지 않게 한다.
+ */
 export function ChatSettingsSheet({
   open,
   onOpenChange,

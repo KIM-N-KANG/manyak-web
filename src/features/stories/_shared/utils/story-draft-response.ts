@@ -1,6 +1,5 @@
+/** @file 서버 임시 저장 응답을 읽는 파서. 생성 타입이 느슨한 객체라 제작 탭과 제작 화면이 쓰는 값만 직접 좁힌다. */
 import { FetchError, getApiErrorCode } from '@/lib/api-error';
-
-/** 서버 임시 저장 응답을 읽는 파서. 생성 타입이 느슨한 객체라 제작 탭과 제작 화면이 쓰는 값만 직접 좁힌다. */
 
 export type StoryDraftMode = 'SIMPLE' | 'GENERAL';
 

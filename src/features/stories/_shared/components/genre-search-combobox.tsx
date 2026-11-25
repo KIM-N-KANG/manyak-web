@@ -21,12 +21,23 @@ import type { Genre } from '@/features/stories/_shared/utils/genre-catalog';
 
 type GenreSearchComboboxProps = {
   id: string;
+  /** 선택한 제공 장르 id. 장르 목록에 없는 id는 콤보박스 선택값에서 빠진다. */
   selectedIds: number[];
+  /** 장르 선택 상한에 닿았는지. 참이면 아직 고르지 않은 항목만 비활성으로 두어 해제는 계속 할 수 있다. */
   isMaxSelectionReached: boolean;
   disabled?: boolean;
+  /** 한 번에 장르 하나를 켜거나 끈다. `pressed`가 참이면 추가, 거짓이면 해제다. */
   onToggle: (genreId: number, pressed: boolean) => void;
 };
 
+/**
+ * 제공 장르를 검색해 여러 개 고르는 콤보박스.
+ *
+ * @remarks
+ * 다중 선택이지만 한 항목을 고르거나 풀면 바로 목록을 닫고 검색어를 비운 뒤 입력의 포커스를 뺀다. 목록 자리는
+ * 로딩, 실패(다시 시도 버튼), 검색 대기(빈 자리 유지), 결과 없음 순으로 분기하며, 로딩과 실패 중에는 이전 결과를
+ * 보이지 않는다.
+ */
 export function GenreSearchCombobox({
   id,
   selectedIds,

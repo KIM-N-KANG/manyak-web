@@ -20,18 +20,24 @@ import {
 import type { CharacterGender, CharacterInput } from '../../types';
 import { CharacterForm } from './character-form';
 
+/** 주변 인물 목록의 props. 인물별 함수와 콜백은 모두 대상 인물의 id를 첫 인자로 받는다. */
 type SupportingCharacterListProps = {
   categoryLabel: string;
   characters: CharacterInput[];
   tagPlaceholder: string;
   predefinedTags: SimpleStoryTagListItemResponse[];
+  /** 인원 상한에 닿지 않았는지. 거짓이면 인물 추가 버튼을 막는다. */
   canAddCharacter: boolean;
   isLoadingTags: boolean;
+  /** 키워드 목록을 받지 못했는지. 참이면 칩 자리에 다시 시도 버튼을 보인다. */
   hasTagsError: boolean;
   onRetryTags: () => void;
   disabled: boolean;
+  /** 이 인물의 특징 수가 상한에 닿았는지 */
   isFeatureMaxReached: (characterId: string) => boolean;
+  /** 이 인물의 이름이 다른 인물과 겹치는지. 참이면 이름 칸에 중복 오류를 보인다. */
   isDuplicateName: (characterId: string) => boolean;
+  /** 이름 인풋을 인물 id로 등록한다. 인물을 추가했을 때 그 칸으로 스크롤하는 데 쓴다. */
   onRegisterNameInput: (id: string, element: HTMLInputElement | null) => void;
   onChangeName: (characterId: string, name: string) => void;
   onChangeGender: (characterId: string, gender: CharacterGender | null) => void;
@@ -47,6 +53,7 @@ type SupportingCharacterListProps = {
   ) => void;
   onAddCustomTag: (characterId: string, name: string) => void;
   onAddCharacter: () => void;
+  /** 인물을 지운다. 입력한 값이 있으면 확인 다이얼로그를 거친 뒤 부른다. */
   onRemoveCharacter: (characterId: string) => void;
 };
 

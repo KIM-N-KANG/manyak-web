@@ -2,6 +2,7 @@ import * as amplitude from '@amplitude/unified';
 
 import { IS_ANALYTICS_ENABLED } from './config';
 
+/** `track`이 모든 이벤트에 붙이는 공통 프로퍼티다. `user_id`는 로그인한 동안만 있다. */
 export type AnalyticsUserContext = { is_logged_in: boolean; user_id?: string };
 
 let userContext: AnalyticsUserContext = { is_logged_in: false };

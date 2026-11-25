@@ -1,5 +1,15 @@
+/** @file `E2E_SEO=1`일 때 `playwright.config.ts`가 띄우는 SEO 스펙용 가짜 백엔드.
+ *
+ * 127.0.0.1:3199에서 오리지널 스토리 목록, 홈, 상세를 응답한다. 서버 렌더링은 브라우저 라우트 목이 닿지 않는
+ * Next 서버에서 백엔드를 직접 부르므로, `API_BASE_URL`을 이 서버로 돌려 첫 HTML을 검증한다.
+ * `seo-unavailable`은 503, `seo-missing`과 그 밖의 경로는 404, `seo-private`는 비공개 스토리로 응답한다.
+ */
 import { createServer } from 'node:http';
 
+/**
+ * 공개 오리지널 스토리 상세 응답이다. `PRIVATE_` 접두 값은 공개 페이지에 나오면 안 되는 필드의 미끼라서,
+ * 스펙이 첫 HTML에 이 접두가 없는지 단언한다.
+ */
 const original = {
   id: 'seo-original',
   title: '별빛 도서관',

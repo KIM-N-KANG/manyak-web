@@ -1,3 +1,8 @@
+/**
+ * @file 간편 제작 첫 진입 안내 대화창의 둥근 프로필에서 마스코트가 말하는 안무다.
+ *
+ * 좌표는 정사각형 무대 폭을 1 로 둔 값이고, 통통 튀어도 몸이 원 밖으로 잘리지 않는 크기와 자리에 둔다.
+ */
 import { drawMascot, type StagePalette } from '@/lib/mascot/draw-mascot';
 import {
   blinkOpenness,
@@ -9,11 +14,6 @@ import {
   pose,
   stand,
 } from '@/lib/mascot/mascot-choreography';
-
-/**
- * 간편 제작 첫 진입 안내 대화창의 둥근 프로필에서 마스코트가 말하는 안무다. 좌표는 정사각형 무대 폭을 1 로
- * 둔 값이고, 통통 튀어도 몸이 원 밖으로 잘리지 않는 크기와 자리에 둔다.
- */
 
 const PI = Math.PI;
 

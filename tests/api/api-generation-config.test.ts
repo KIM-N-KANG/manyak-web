@@ -26,7 +26,7 @@ test('package exposes API generation dependencies and script', () => {
 
   assert.equal(
     packageJson.scripts['api:generate'],
-    'orval --config ./orval.config.ts && eslint --fix src/api/generated',
+    'orval --config ./orval.config.ts && eslint --fix src/api/generated && prettier --write src/api/generated',
   );
   assert.ok(packageJson.dependencies.zod);
   assert.ok(packageJson.devDependencies.orval);

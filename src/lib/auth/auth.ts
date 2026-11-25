@@ -1,3 +1,9 @@
+/**
+ * @file Auth.js(NextAuth) 설정.
+ * Auth.js 세션은 화면에 쓰는 회원 클레임만 담고, 백엔드 토큰은 BFF가 httpOnly 쿠키로 따로
+ * 보관한다(`token-cookies.ts`). 백엔드 호출과 토큰 회전은 `backend-session.ts`가 맡는다.
+ */
+
 import NextAuth, { type Account, CredentialsSignin } from 'next-auth';
 import type { OIDCConfig } from 'next-auth/providers';
 import Credentials from 'next-auth/providers/credentials';
@@ -115,6 +121,18 @@ const SignupConsent = Credentials({
  */
 const loginProfiles = new WeakMap<Account, BackendProfile>();
 
+/**
+ * Auth.js 진입점. `handlers`는 `/api/auth/[...nextauth]` 라우트에, `auth`는 서버의 세션 조회에 쓴다.
+ *
+ * @remarks
+ * OAuth 콜백은 프로바이더 id로 세 흐름을 가른다.
+ * - 소셜 로그인(`google`, `kakao`): signIn 콜백이 백엔드 소셜 인증을 끝내야 jwt 콜백이 클레임을
+ *   만든다. 필수 동의가 남았으면 세션 없이 원래 화면으로 돌려보내 동의 시트를 띄운다.
+ * - 계정 연동(`link-*`): jwt 콜백이 백엔드 세션을 바꾸지 않고 연동만 한 뒤 기존 세션 클레임을 복원한다.
+ * - 가입 동의 완료(Credentials): authorize가 완료 API에 성공했을 때만 세션을 만든다.
+ *
+ * 로그아웃 이벤트는 백엔드 refresh 토큰을 폐기하고 BFF 토큰 쿠키를 지운다.
+ */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     // 팝업 여부와 무관한 보안 정책이다. PKCE와 state에 OIDC nonce 검증을 더한다.

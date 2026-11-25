@@ -9,8 +9,11 @@ import { ChatTextSegments } from '@/features/chats/_shared/components/chat-text-
 
 type ChatChoicesProps = {
   choices: string[];
+  /** 선택지가 달린 턴 ID. 시작 추천 입력처럼 원본 턴이 없으면 비우고, 그때는 선택 메타데이터를 보내지 않는다. */
   sourceTurnId?: number;
+  /** 선택지를 눌러 바로 보낸다. `position` 은 `choices` 안의 0부터 세는 순번이다. */
   onSend: (text: string, position: number, sourceTurnId?: number) => void;
+  /** 선택지를 입력창에 채워 고쳐 보내게 한다. `position` 은 `onSend` 와 같은 0부터 세는 순번이다. */
   onFill: (text: string, position: number, sourceTurnId?: number) => void;
   /** 추천 입력 사용법을 처음 한 번 소개하는 인라인 힌트 노출 여부. */
   showsHint?: boolean;

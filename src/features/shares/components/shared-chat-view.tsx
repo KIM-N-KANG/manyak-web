@@ -14,28 +14,26 @@ import {
 import { CHAT_AI_NOTICE } from '@/features/chats/_shared/constants/ai-notice';
 import { track, useTrackOnView } from '@/observability/analytics';
 
+type SharedChatViewProps = {
+  storyId: string;
+  storyTitle: string;
+  /** 첫 AI 메시지로 보여 줄 프롤로그. 빈 문자열이면 그리지 않는다. */
+  prologue: string;
+  turns: ChatShareTurnResponse[];
+};
+
 /**
- * 공유 열람 화면의 입력.
+ * 공유된 채팅을 읽기 전용으로 보여 주고 간편 제작으로 이끄는 공유 열람 화면.
  *
+ * @remarks
  * 채팅방과 같은 셸 구성이다. 헤더 / 스크롤 영역 / 하단 CTA를 모두 flex 컬럼의 in-flow
  * 형제로 두고 헤더와 CTA는 항상 고정한다. 오버레이로 얹으면 스크롤 컨테이너가 프레임
- * 끝까지 늘어나 스크롤바 트랙이 헤더·CTA 뒤로 깔린다.
- *
- * CTA는 스토리 생성 퍼널로 바로 보내면서 온보딩을 본 것으로 기록한다. 공유 링크로
- * 들어온 사람은 이 화면에서 이미 서비스가 무엇인지 보았으므로, 만들기를 누른 뒤
- * 홈으로 돌아왔을 때 온보딩을 다시 마주치지 않게 한다.
+ * 끝까지 늘어나 스크롤바 트랙이 헤더와 CTA 뒤로 깔린다.
  *
  * 진입 시 화면 전체를 채팅방과 같은 150ms로 페이드인한다. 공유본은 클라이언트에서
  * 조회하므로 로딩 스피너가 이 화면으로 통째로 교체되는데, 그 전환을 그대로 두면
  * 화면이 툭 튀어나온다.
  */
-type SharedChatViewProps = {
-  storyId: string;
-  storyTitle: string;
-  prologue: string;
-  turns: ChatShareTurnResponse[];
-};
-
 export function SharedChatView({
   storyId,
   storyTitle,

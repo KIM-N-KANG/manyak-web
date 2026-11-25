@@ -1,6 +1,14 @@
 'use client';
 // beui.dev/components/motion/pull-to-refresh
 
+/**
+ * @file 스크롤러 맨 위에서 아래로 당겨 새로고침하는 영역과 마냑 심볼 표시자.
+ * 터치 제스처는 `idle`, `pulling`(당기는 중), `ready`(놓으면 새로고침), `refreshing` 상태를 오간다.
+ * 바깥이 넘긴 `refreshing`이 true인 동안은 내부 새로고침이 끝나도 표시를 유지하고, 새로고침 표시는
+ * 애니메이션 한 주기 이상, 주기 경계까지 보여준 뒤 끝낸다. beui 원본에서 출발했지만 터치 리스너, header
+ * 슬롯, 최소 표시 주기 등을 프로젝트가 다시 짰다.
+ */
+
 import {
   type ReactNode,
   type Ref,
@@ -36,7 +44,10 @@ export const PULL_TO_REFRESH_COPY = {
 } as const;
 
 export interface PullToRefreshProps {
-  /** Runs after the user pulls beyond the threshold and releases. */
+  /**
+   * 기준 거리 넘게 당겼다 놓으면 실행한다. Promise가 끝날 때까지 새로고침 표시를 유지한다.
+   * 거부해도 표시는 정상적으로 끝나지만 거부는 처리되지 않은 채 남으므로 오류는 넘기는 쪽에서 처리한다.
+   */
   onRefresh: () => void | Promise<void>;
   children: ReactNode;
   /**
@@ -46,23 +57,40 @@ export interface PullToRefreshProps {
   header?: ReactNode;
   /** 스크롤러 요소 ref. 무한 스크롤의 교차 관찰 root처럼 바깥이 스크롤러를 알아야 할 때 쓴다. */
   ref?: Ref<HTMLElement>;
-  /** 스크롤러의 scroll 이벤트. 헤더·FAB의 스크롤 상태 판정에 쓴다. */
+  /** 스크롤러의 scroll 이벤트. 헤더, FAB의 스크롤 상태 판정에 쓴다. */
   onScroll?: (event: UIEvent<HTMLElement>) => void;
-  /** Keeps the indicator active while an externally managed refresh runs. */
+  /** 바깥에서 관리하는 새로고침이 진행 중이면 true. 그동안 표시자를 유지하고 새 당김을 받지 않는다. */
   refreshing?: boolean;
+  /** true면 당김을 받지 않고, 당기는 중이던 제스처도 취소한다. */
   disabled?: boolean;
-  /** Resisted pull distance in pixels required to refresh. */
+  /**
+   * 새로고침이 일어나는 저항 적용 후 당김 거리(px). 24보다 작으면 24로 본다.
+   * @default 76
+   */
   threshold?: number;
-  /** Maximum resisted pull distance in pixels. */
+  /**
+   * 저항 적용 후 당김 거리의 상한(px). `threshold + 24`보다 작으면 그 값으로 본다.
+   * @default 132
+   */
   maxPull?: number;
-  /** Content offset in pixels while refreshing. */
+  /**
+   * 새로고침 중 콘텐츠를 내려 두는 거리(px). 0에서 `threshold` 사이로 자르고, 동작 줄이기에서는 콘텐츠를 옮기지 않는다.
+   * @default 68
+   */
   holdDistance?: number;
+  /** 기준 거리에 못 미치게 당기는 동안의 표시자 문구. 표시자 문구는 스크린 리더가 바뀔 때마다 읽는다. */
   pullingLabel?: ReactNode;
+  /** 기준 거리를 넘겨 놓으면 새로고침되는 상태의 표시자 문구. */
   releaseLabel?: ReactNode;
+  /** 새로고침 중의 표시자 문구. */
   refreshingLabel?: ReactNode;
+  /** 스크롤러 `section`의 접근 가능한 이름. */
   ariaLabel?: string;
+  /** 스크롤러 `section`에 덧붙일 클래스. */
   className?: string;
+  /** 당김에 따라 밀리는 콘텐츠 래퍼에 덧붙일 클래스. */
   contentClassName?: string;
+  /** 표시자 래퍼에 덧붙일 클래스. */
   indicatorClassName?: string;
 }
 
@@ -94,6 +122,14 @@ const CALM_PULSE = {
 } as const;
 const LABEL_SWAP = { duration: 0.16, ease: EASE_OUT } as const;
 
+/**
+ * 손가락 이동 거리를 저항이 걸린 당김 거리로 바꾼다. 처음에는 거의 그대로 따라오다가 `maxPull`에
+ * 지수적으로 가까워져 그 이상은 늘어나지 않는다.
+ *
+ * @param distance 터치 시작점에서 아래로 움직인 거리(px). 음수는 0으로 본다.
+ * @param maxPull 당김 거리의 상한(px)
+ * @returns 저항 적용 후 당김 거리(px)
+ */
 function resistedDistance(distance: number, maxPull: number) {
   return maxPull * (1 - Math.exp(-Math.max(0, distance) / maxPull));
 }
@@ -101,6 +137,10 @@ function resistedDistance(distance: number, maxPull: number) {
 /**
  * 새로고침 표시를 끝내기 전에 더 기다릴 시간(ms)을 반환한다.
  * 애니메이션을 최소 한 주기는 보여 주고, 주기 중간에 끊기지 않도록 다음 주기 경계까지 기다린다.
+ *
+ * @param elapsedMs 새로고침 표시를 시작한 뒤 지난 시간(ms)
+ * @param cycleMs 표시자 애니메이션 한 주기의 길이(ms)
+ * @returns 다음 주기 경계까지 남은 시간(ms). 경계에 딱 맞으면 0이다.
  */
 export function remainingRefreshCycleMs(elapsedMs: number, cycleMs: number) {
   const cycles = Math.max(1, Math.ceil(elapsedMs / cycleMs));
@@ -157,6 +197,16 @@ function RefreshSymbol({
   );
 }
 
+/**
+ * 스크롤러 맨 위에서 아래로 당기면 `onRefresh`를 부르는 세로 스크롤 영역.
+ *
+ * @remarks
+ * 스크롤 위치가 0일 때 한 손가락으로 시작한 터치만 받고, 위로 움직이거나 중간에 스크롤되면 취소한다.
+ * 가로 이동이 세로보다 크면 가로 스크롤에 양보한다. 브라우저 기본 스크롤과 당겨서 새로고침을 막으려고
+ * `touchmove`를 비패시브로 등록해 `preventDefault`를 부른다. 놓을 때 기준 거리를 넘었으면 `holdDistance`에
+ * 콘텐츠를 걸어 두고 새로고침하며, `onRefresh`가 끝나도 애니메이션 주기 경계까지 표시를 유지한다.
+ * 바깥이 넘긴 `refreshing`이 true면 내부 새로고침과 관계없이 표시를 유지한다.
+ */
 export function PullToRefresh({
   onRefresh,
   children,

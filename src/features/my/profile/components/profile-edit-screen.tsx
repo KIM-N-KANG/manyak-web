@@ -79,6 +79,10 @@ export function ProfileEditScreen() {
   );
 }
 
+/**
+ * 프로필 이미지와 닉네임을 고치는 폼. 바뀐 값이 있을 때만 저장할 수 있고, 저장하지 않고 떠나려 하면
+ * 이탈 확인 다이얼로그를 띄운다. 이미지 blur 자리표시는 썸네일이 그 이미지의 것인 기존 이미지일 때만 쓴다.
+ */
 function ProfileForm({ me }: { me: MeResponse }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const {

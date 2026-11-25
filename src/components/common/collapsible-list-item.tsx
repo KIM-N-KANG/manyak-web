@@ -28,7 +28,9 @@ const BODY_TRANSITION: Transition = {
 };
 
 type CollapsedListItems = {
+  /** 접힌 항목의 id 집합. 없는 id는 펼친 상태로 본다. */
   collapsedIds: ReadonlySet<string>;
+  /** `id` 항목의 접힘 여부를 바꾼다. */
   setCollapsed: (id: string, collapsed: boolean) => void;
 };
 
@@ -36,7 +38,7 @@ const CollapsedListItemsContext = createContext<CollapsedListItems | null>(
   null,
 );
 
-/** 항목의 접힘 상태를 탭·단계를 바꿔 항목이 다시 그려져도 남도록 항목 컴포넌트 밖에서 id별로 보관한다. */
+/** 항목의 접힘 상태를 탭, 단계를 바꿔 항목이 다시 그려져도 남도록 항목 컴포넌트 밖에서 id별로 보관한다. */
 export function CollapsedListItemsProvider({
   children,
 }: {
@@ -70,6 +72,7 @@ export function CollapsedListItemsProvider({
  * 항목의 접힘 상태를 읽고 바꾸는 값을 반환한다. `CollapsedListItemsProvider` 안에서만 쓴다.
  *
  * @returns 접힌 항목 id 집합과 접힘을 바꾸는 함수
+ * @throws {Error} `CollapsedListItemsProvider` 밖에서 호출했을 때
  */
 export function useCollapsedListItems() {
   const collapsedItems = use(CollapsedListItemsContext);
@@ -84,9 +87,13 @@ export function useCollapsedListItems() {
 }
 
 type CollapsibleListItemProps = {
+  /** 접힘 상태를 보관하는 키이자 본문 요소 id의 접두어. 목록 안에서 고유해야 한다. */
   id: string;
+  /** 머리 줄 제목. 접기, 삭제 버튼의 접근 가능한 이름에도 붙는다. */
   label: string;
+  /** 머리 줄 배지의 `order/maxCount`에서 항목의 순번(1부터). */
   order: number;
+  /** 머리 줄 배지의 `order/maxCount`에서 최대 항목 수. */
   maxCount: number;
   /** 없으면 삭제 버튼을 두지 않는다. */
   onRemove?: () => void;
@@ -94,6 +101,16 @@ type CollapsibleListItemProps = {
   children: ReactNode;
 };
 
+/**
+ * 머리 줄의 접기, 삭제 버튼과 높이 애니메이션으로 접히는 본문을 가진 목록 항목.
+ *
+ * @remarks
+ * 접힘 상태는 `CollapsedListItemsProvider`가 `id`별로 보관하므로 항목이 다시 마운트돼도 유지된다.
+ * 접힌 본문은 `inert`와 `invisible`로 보조 기술에서도 빼고, `overflow-hidden`은 움직이는 동안과
+ * 접힌 뒤에만 건다. motion의 `transitionEnd`는 다시 그릴 때 되돌려지므로 애니메이션 완료를 상태로 둔다.
+ *
+ * @throws {Error} `CollapsedListItemsProvider` 밖에서 렌더했을 때
+ */
 export function CollapsibleListItem({
   id,
   label,

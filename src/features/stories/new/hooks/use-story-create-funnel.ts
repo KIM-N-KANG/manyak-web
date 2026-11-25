@@ -103,9 +103,30 @@ const getGeneratedStorylines = (
 
 /**
  * 스토리 생성 퍼널(키워드 → 스토리라인 선택 → 추가 정보 → 완료)의 전체 상태를 관리하는 훅.
- * 스토리라인 생성/재생성, 스토리·채팅 생성, 실패 시 복귀, 이탈 확인 다이얼로그까지 담당한다.
+ * 스토리라인 생성/재생성, 스토리와 채팅 생성, 실패 시 복귀, 이탈 확인 다이얼로그까지 담당한다.
  *
- * @returns 현재 스텝과 퍼널 상태·데이터 및 단계 전환·생성 핸들러들
+ * @remarks
+ * 단계 흐름: `keyword`에서 생성을 요청하면 STORYLINE_GENERATION 기록을 먼저 남기고 `storyline-select`로
+ * 간다. 결과는 원 응답, 재진입 복구(`useCreationRequestRecovery`), 제작 탭 폴링 중 기록을 먼저 승격한 한
+ * 경로만 적용한다. `additional-info`에서 완성을 누르면 완성 기록을 저장한 뒤 요청을 보내고 곧바로 제작 탭으로
+ * 나가며, 결과는 제작 탭 진행 카드가 되찾는다. `complete`는 이미 만든 스토리로 채팅만 다시 여는 재시도에서만 쓴다.
+ * 내용 거절 실패는 `keyword`로, 완성과 채팅 실패는 `additional-info`로 되돌린다.
+ *
+ * 소유 기록: 한 퍼널 세션은 기기 안 진행 기록을 최대 한 건 소유한다(`ownedRequestIdRef`). 단계가 바뀌어
+ * requestId가 달라지면 이전 기록을 교체해 지운다.
+ *
+ * 세대값: 마운트 직후 읽은 제작 세대값(epoch)을 모든 저장소 쓰기에 넘긴다. 다른 탭이나 이 탭에서 로그아웃해
+ * 세대값이 바뀌면 진입 오류로 보고 늦게 도착한 응답의 부수효과를 버린다.
+ *
+ * 서버 세션과 기기 안 세션: 진입 판정(`useStoryCreateDraft`)이 정한다. 서버 세션은 사용자 저장을 세션에 고정한
+ * 서버 초안에 쓰고, 저장에 성공하면 소유한 기기 안 기록을 지운다. 게스트와 연결 없는 기존 초안은 기기 안
+ * 세션으로 IndexedDB에 쓴다. 생성 중, 생성 결과, 완성 기록은 두 세션 모두 기기 안에 두며, 서버 세션의 기록에는
+ * 서버 초안 연결(`ServerDraftLink`)을 함께 남긴다.
+ *
+ * @returns 진입 상태, 현재 단계, 임시 저장 상태, 스토리라인과 추가 정보 입력 상태, 단계 전환과 생성 핸들러,
+ * 이탈과 재선택 다이얼로그, 서버 초안 충돌 다이얼로그 제어값
+ * @see useCreationRequestRecovery
+ * @see useStoryCreateDraft
  */
 export function useStoryCreateFunnel() {
   const router = useRouter();

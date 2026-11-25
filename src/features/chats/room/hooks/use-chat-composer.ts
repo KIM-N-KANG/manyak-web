@@ -48,7 +48,11 @@ type UseChatComposerParams = {
  * @param canSend 전송 직전 추가 차단 조건(생략 시 항상 허용)
  * @param initialDraft 마운트 시 되살릴 입력 본문
  * @param onSend 완성된 텍스트와 그 출처를 전송하는 콜백
- * @returns 입력 값·블럭 상태와 전송·채우기·모드 전환 등의 동작
+ * @returns 입력 모드별 상태와 동작을 묶은 객체
+ * - 일반 모드: `value`, `setValue`, `textareaRef`, `send`, `insertEmphasis`
+ * - 블럭 모드: `blocks`, `addBlock`, `removeBlock`, `updateBlock`, `registerBlockInput`, `sendBlocks`
+ * - 선택지: `hasSuggestions`(공백이 아닌 추천이 있는지), `sendChoice`, `sendRandomSuggestion`, `fillChoice`
+ * - 초안: `hasDraft`, `serializeDraft`, `restoreDraft`, 모드 전환 시 내용을 옮기는 `convertTo`
  */
 export function useChatComposer({
   chatId,
@@ -130,6 +134,10 @@ export function useChatComposer({
     }
   };
 
+  /**
+   * 선택지를 입력창에 채워 고쳐 보내게 한다. 전송 출처 대조용으로 원문을 기억하고 채우기 분석 이벤트를 남긴다.
+   * 블럭 모드는 상황과 대사 블럭으로 나눠 채우고, 일반 모드는 본문을 바꾸고 커서를 끝에 둔다.
+   */
   const fillChoice = (
     text: string,
     position: number,

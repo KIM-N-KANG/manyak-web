@@ -1,5 +1,8 @@
+/** 빠르게 출발해 부드럽게 멈추는 cubic-bezier 제어점이다. motion의 `ease`에 넘긴다. */
 export const EASE_OUT = [0.16, 1, 0.3, 1] as const;
+/** 양 끝이 느리고 가운데가 빠른 cubic-bezier 제어점이다. 반복 로더와 회전처럼 왕복하는 움직임에 쓴다. */
 export const EASE_IN_OUT = [0.77, 0, 0.175, 1] as const;
+/** 드로어 이동에 맞춘 cubic-bezier 제어점이다. */
 export const EASE_DRAWER = [0.32, 0.72, 0, 1] as const;
 
 /** CSS string form of EASE_OUT for inline style transitions. */

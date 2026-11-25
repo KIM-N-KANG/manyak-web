@@ -18,6 +18,7 @@ import { SCREEN, track, useImpression } from '@/observability/analytics';
 
 type StoryCardProps = {
   story: StoryListItem;
+  /** 목록 안에서 0부터 센 순서. 노출과 클릭 분석 이벤트에 싣고 `priority` 기본값을 정한다. */
   position?: number;
   /** 카드가 속한 섹션. 분석에서 홈 목록과 내가 만든 스토리의 성과를 분리한다. */
   section: StoryCardSection;
@@ -26,10 +27,19 @@ type StoryCardProps = {
   /**
    * 표지 이미지를 받을지. false면 표지 자리만 두고, 목록이 화면 근처에 왔을 때 true로 바꿔 받게 한다.
    * 먼저 받는 표지는 이 값과 관계없이 받고, 한 번 받은 표지는 false가 돼도 유지한다.
+   *
+   * @default true
    */
   loadCover?: boolean;
 };
 
+/**
+ * 홈 목록과 내가 만든 스토리에 쓰는 세로 표지 스토리 카드.
+ *
+ * @remarks
+ * 카드 전체가 제목 링크의 클릭 영역이다. 화면에 보이면 노출 이벤트를, 링크를 누르면 클릭 이벤트를 보낸다.
+ * 먼저 받지 않는 표지는 `loadCover`가 참이 된 뒤 받고, 받은 뒤 옅게 드러낸다.
+ */
 export function StoryCard({
   story,
   position,

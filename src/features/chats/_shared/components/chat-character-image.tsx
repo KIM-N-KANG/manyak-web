@@ -22,6 +22,10 @@ type ChatCharacterImageProps = {
   fallback?: ReactNode;
 };
 
+/**
+ * 채팅 본문의 인물, 장면 이미지를 4:3 비율로 보이고 탭하면 전체 화면 뷰어를 여는 컴포넌트.
+ * 허용 CDN 밖 URL이거나 로드에 실패하면 `fallback` 을 대신 그린다.
+ */
 export function ChatCharacterImage({
   alt,
   imageUrl,

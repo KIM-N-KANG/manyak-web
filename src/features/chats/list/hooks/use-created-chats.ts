@@ -46,9 +46,14 @@ export const toChatListItems = (
 /**
  * 사용자의 채팅 목록을 조회하는 훅.
  * 회원은 서버 회원 목록(/users/me/chats), 게스트는 로컬 ID 배치 조회를 사용하며
- * 두 모드 모두 동일한 형태(목록·로딩·에러·빈 상태)를 반환한다.
+ * 두 모드 모두 동일한 형태(목록, 로딩, 에러, 빈 상태)를 반환한다.
  *
- * @returns 채팅 목록과 로딩·에러·빈 상태, refetch 함수를 담은 객체
+ * @returns 다음 멤버를 담은 객체
+ * - `chats`: 서버 순서(최근 진행순)를 보존한 목록
+ * - `isLoading`: 세션 판별 중이거나 첫 조회가 끝나지 않았으면 true. 게스트의 로컬 ID를 아직 읽지 못했을 때도 true다
+ * - `isError`: 조회 실패. 회원은 200이 아닌 응답도 오류로 보고, 게스트는 빈 목록으로 다룬다
+ * - `isEmpty`: 로딩과 오류가 아니면서 목록이 비었을 때만 true
+ * - `refetch`: 현재 모드의 쿼리를 다시 조회한다
  */
 export function useCreatedChats() {
   const { status } = useSession();

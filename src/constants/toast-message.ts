@@ -1,3 +1,4 @@
+/** 토스트 문구의 정본. 값을 끼워 넣는 문구는 함수로 둔다. */
 export const TOAST_MESSAGE = {
   STORY_DRAFT_SAVED: '임시 저장했어요',
   STORY_DRAFT_SAVE_FAILED: '작성 내용을 저장하지 못했어요',

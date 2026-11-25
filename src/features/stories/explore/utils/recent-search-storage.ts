@@ -1,16 +1,15 @@
+/**
+ * @file 스토리 검색 화면의 최근 검색어 저장소다.
+ *
+ * 서버에 검색 기록 API가 없어 기기 단위로 둔다. 제출한 검색어를 최신순으로 최대 10개 남기고, 같은 검색어를
+ * 다시 찾으면 맨 앞으로 옮긴다. 로그인 여부와 관계없이 이 기기의 기록을 보인다.
+ */
 import { useSyncExternalStore } from 'react';
 
 import {
   RECENT_SEARCHES_LIMIT,
   RECENT_SEARCHES_STORAGE_KEY,
 } from '@/features/stories/_shared/constants/explore-search';
-
-/**
- * 스토리 검색 화면의 최근 검색어 저장소다.
- *
- * 서버에 검색 기록 API가 없어 기기 단위로 둔다. 제출한 검색어를 최신순으로 최대 10개 남기고, 같은 검색어를
- * 다시 찾으면 맨 앞으로 옮긴다. 로그인 여부와 관계없이 이 기기의 기록을 보인다.
- */
 
 const EMPTY_TERMS: readonly string[] = [];
 

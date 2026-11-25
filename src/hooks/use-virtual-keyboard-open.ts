@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+/** 키보드 없는 높이보다 뷰포트가 이만큼(px) 이상 줄면 가상 키보드가 열린 것으로 본다. */
 const KEYBOARD_HEIGHT_THRESHOLD = 120;
 const NON_TEXT_INPUT_TYPES = new Set([
   'button',

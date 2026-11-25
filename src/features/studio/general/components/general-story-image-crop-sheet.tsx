@@ -24,6 +24,10 @@ type GeneralStoryImageCropSheetProps = {
   onConfirm: (area: Area) => void;
 };
 
+/**
+ * 고른 이미지를 정해진 비율로 자를 영역을 고르는 하단 시트. 앱 프레임 컨테이너가 준비된 뒤에 열린다.
+ * 시트를 닫으면 취소로 본다. 열고 닫을 때 상태를 비우도록 부모가 자르기 중에만 마운트한다.
+ */
 export function GeneralStoryImageCropSheet({
   imageUrl,
   aspect,
