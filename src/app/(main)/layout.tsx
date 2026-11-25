@@ -17,6 +17,14 @@ import {
   useScrollRestoration,
 } from '@/hooks/use-scroll-restoration';
 
+/**
+ * 하단 탭 화면들이 공유하는 셸 레이아웃. 헤더, 당김 새로고침 스크롤 영역, 하단 네비를 flex 컬럼으로 둔다.
+ *
+ * @remarks
+ * 스크롤 위치는 경로별로 기억해 복원하고, 헤더 구분선용 스크롤 여부는 스튜디오 탭에서만 추적한다.
+ * 당김 새로고침은 탐색 탭에서 목록을 다시 섞고 다른 탭에서는 활성 쿼리를 다시 불러오며, 마이 탭에서는 끈다.
+ * 스크롤 여부, 오버레이 래퍼, 스크롤 컨테이너는 `MainScrollProvider`로 하위 화면에 내려준다.
+ */
 export default function MainLayout({
   children,
 }: Readonly<{

@@ -19,8 +19,11 @@ type UseOptimisticCreatedResourceDeleteParams<Id> = {
   invalidateServerLists: () => void;
   /** 서버에 삭제 요청을 보낸다 */
   deleteResource: () => Promise<unknown>;
+  /** 삭제 성공 토스트 문구다. 404로 이미 삭제된 경우에는 띄우지 않는다. */
   successMessage: string;
+  /** 삭제 실패 토스트 문구다. 게스트는 롤백한 뒤 띄운다. */
   failureMessage: string;
+  /** 삭제가 확정되면 부른다. 404로 이미 삭제된 경우에도 부른다. */
   onDeleteSuccess?: () => void;
 };
 

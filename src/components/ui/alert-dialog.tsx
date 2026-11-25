@@ -12,6 +12,10 @@ import {
 } from '@/hooks/use-overlay-open-state';
 import { cn } from '@/lib/utils';
 
+/**
+ * AlertDialog Root에 뒤로가기 닫기를 더한 래퍼. 열려 있는 동안 히스토리 레이어를 쌓아 브라우저, 기기
+ * 뒤로가기로 닫고, 제어와 비제어 `open`을 합쳐 Base UI에는 항상 제어 모드로 넘긴다.
+ */
 function AlertDialog({
   closeOnBack = true,
   open,
@@ -19,7 +23,10 @@ function AlertDialog({
   onOpenChange,
   ...props
 }: AlertDialogPrimitive.Root.Props & {
-  /** 거짓이면 브라우저·기기 뒤로가기로 닫지 않는다. */
+  /**
+   * 거짓이면 브라우저, 기기 뒤로가기로 닫지 않는다.
+   * @default true
+   */
   closeOnBack?: boolean;
 }) {
   const [isOpen, handleOpenChange] =
@@ -73,6 +80,10 @@ function AlertDialogOverlay({
   );
 }
 
+/**
+ * AlertDialog 팝업. `initialFocus`를 주지 않으면 첫 버튼이나 입력 칸 대신 팝업 자체에 포커스하고,
+ * 그러려고 바깥 `ref`와 내부 ref를 합친다. `overlayClassName`은 배경에 붙는다.
+ */
 function AlertDialogContent({
   className,
   overlayClassName,

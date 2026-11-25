@@ -7,6 +7,11 @@ type TextContentProps = {
   size?: 'sm' | 'base';
 };
 
+/**
+ * 강조 표기가 섞인 본문을 줄바꿈을 살려 그린다. `*...*`는 보조 색, `**...**`는 굵게 표시한다.
+ *
+ * @see parseTextSegments 강조 표기 문법
+ */
 export function TextContent({
   children,
   font = 'default',

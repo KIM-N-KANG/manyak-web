@@ -44,6 +44,11 @@ async function copyCurrentUrl(): Promise<void> {
 const STEP_NUMBER_CLASS =
   'flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary';
 
+/**
+ * 앱 배너 버튼이 여는 안내 바텀 시트. `guide`에 따라 홈 화면 추가 스크린샷 캐러셀, 홈 화면 추가
+ * 텍스트 단계, 외부 브라우저로 열 주소 복사 버튼 중 하나를 보여준다.
+ * 앱 프레임 컨테이너가 준비되기 전(`null`)에는 열지 않는다.
+ */
 export function AppBannerGuideSheet({
   guide,
   open,

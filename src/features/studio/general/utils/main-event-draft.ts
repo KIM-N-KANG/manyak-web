@@ -1,5 +1,6 @@
-/** 주요 사건 탭의 입력 상태와 검사 규칙이다. */
+/** @file 주요 사건 탭의 입력 상태와 검사 규칙이다. */
 
+/** 주요 사건 하나의 입력이다. `id`는 폼 안에서만 쓰고 요청에는 싣지 않는다. */
 export type GeneralStoryMainEventDraft = {
   id: string;
   name: string;

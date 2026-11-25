@@ -20,6 +20,13 @@ type HomeSectionsProps = {
   initialData?: StoryHomeResponse;
 };
 
+/**
+ * 홈 섹션 목록.
+ *
+ * @remarks
+ * 서버가 미리 읽은 목록을 생성 훅의 응답 모양(status 200)으로 감싸 쿼리 초기값으로 넣어, 첫 렌더부터 목록을 그린다.
+ * 로딩 중에는 지연 골격을, 보일 섹션 없이 실패하면 다시 시도를, 보일 섹션이 없으면 빈 안내를 그린다.
+ */
 export function HomeSections({ initialData }: HomeSectionsProps) {
   useTrackOnView('client_storyList_viewed');
 

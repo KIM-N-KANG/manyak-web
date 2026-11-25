@@ -24,6 +24,12 @@ const shareImageUrl = (): string =>
 
 type KakaoShareLink = { mobileWebUrl: string; webUrl: string };
 
+/**
+ * Kakao JS SDK 중 이 훅이 쓰는 초기화와 피드 공유만 선언한 최소 타입. 아래 `Window.Kakao`
+ * 전역 선언과 함께 SDK 스크립트가 심는 전역 객체를 표현한다.
+ *
+ * @see KAKAO_SDK_URL
+ */
 type KakaoSdk = {
   isInitialized: () => boolean;
   init: (appKey: string) => void;

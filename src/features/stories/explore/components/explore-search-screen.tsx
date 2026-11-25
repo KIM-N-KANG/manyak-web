@@ -29,6 +29,17 @@ import { addRecentSearch } from '../utils/recent-search-storage';
 import { ExploreSearchHome } from './explore-search-home';
 import { ExploreSearchResults } from './explore-search-results';
 
+/**
+ * 스토리 검색 화면. 주소의 `q`가 검색어의 정본이다.
+ *
+ * @remarks
+ * 제출한 검색어를 최근 검색어에 남기고 `?q=`에 반영한다. 주소는 Next 라우터 대신 `history.replaceState`로 바꾼다.
+ * `q`가 있는 주소로 처음 연 정적 화면에서 라우터의 replace로 `q`를 빼는 이동이 프로덕션 빌드에서 반영되지 않고,
+ * 검색마다 서버 왕복이 생기기 때문이다. 기록을 쌓지 않으므로 뒤로가기는 검색 화면을 연 곳으로 돌아간다. 최소 길이에
+ * 못 미치는 검색어는 토스트로 알리고 주소를 바꾸지 않는다. 스크롤 위치는 검색어별 기록 항목마다 복원한다.
+ *
+ * @see 하네스 `docs/spec/STORY/CLIENT/WEB/DECISIONS.md`의 W-041
+ */
 export function ExploreSearchScreen() {
   const query = (useSearchParams().get('q') ?? '').trim();
   const [input, setInput] = useState(query);

@@ -1,3 +1,9 @@
+/**
+ * @file 채팅 생성 SSE 엔드포인트(전송, 재생성, 입력 수정, 이어받기)를 여는 요청 함수.
+ *
+ * @see room/hooks/use-chat-stream.ts 파일 머리 주석(생성 스트림 흐름 개요)
+ */
+
 import {
   getEditChatTurnUrl,
   getRegenerateChatTurnUrl,
@@ -75,6 +81,8 @@ async function requestSseStream(
  * @param body 이어쓰기 요청 본문
  * @param signal 요청 중단 시그널
  * @returns SSE 응답 본문 스트림
+ * @throws {FetchError} 402면 게스트 체험 한도나 이프 부족, 409면 마지막 턴이 바뀌었거나 다른 생성이 진행 중이다.
+ * 그 밖의 실패 응답이나 본문이 없을 때도 던진다
  */
 export function streamChatTurnRaw(
   chatId: string,
@@ -92,6 +100,7 @@ export function streamChatTurnRaw(
  * @param body 재생성 요청 본문
  * @param signal 요청 중단 시그널
  * @returns SSE 응답 본문 스트림
+ * @throws {FetchError} 409면 낡은 turnId다. 그 밖의 실패 응답이나 본문이 없을 때도 던진다
  */
 export function streamRegenerateChatTurnRaw(
   chatId: string,
@@ -109,6 +118,7 @@ export function streamRegenerateChatTurnRaw(
  * @param body 입력 수정 요청 본문
  * @param signal 요청 중단 시그널
  * @returns SSE 응답 본문 스트림
+ * @throws {FetchError} 404면 턴이 없거나 숨긴 턴이다. 그 밖의 실패 응답이나 본문이 없을 때도 던진다
  */
 export function streamEditChatTurnRaw(
   chatId: string,
@@ -126,6 +136,7 @@ export function streamEditChatTurnRaw(
  * @param generationId `started` 이벤트나 상세의 `generatingTurn`에서 받은 생성 ID
  * @param signal 요청 중단 시그널
  * @returns SSE 응답 본문 스트림
+ * @throws {FetchError} 404면 스트림이 없고, 503이면 지금 수신할 수 없다. 그 밖의 실패 응답이나 본문이 없을 때도 던진다
  */
 export function resumeChatGenerationRaw(
   chatId: string,

@@ -48,13 +48,18 @@ const RequiredMark = () => (
 );
 
 type GeneralStoryCharacterFieldsProps = {
+  /** 입력 요소 id와 오류 문구 id의 접두사다. 한 화면의 인물마다 달라야 한다. */
   idPrefix: string;
+  /** 이름과 성별 입력의 aria-label 앞에 붙는 인물 구분(예: 주인공)이다. */
   labelPrefix: string;
   character: GeneralStoryCharacter;
   namePlaceholder: string;
   featurePlaceholder: string;
+  /** 기본 정보 칸 아래 설명이다. 이름이나 성별 오류가 있으면 오류 문구가 대신 보인다. */
   basicInfoDescription: string;
+  /** 특징 칸 아래 설명이다. 특징 오류가 있으면 오류 문구가 대신 보인다. */
   featureDescription: string;
+  /** 특징의 필수 표시와 aria-required만 정한다. 최소 글자 수는 필수가 아니어도 본다. */
   featureRequired: boolean;
   /** 이름이 필수인지다. 기본 주인공 이름은 선택이라 비워도 되고 최소 글자 수도 보지 않는다. */
   nameRequired?: boolean;
@@ -64,10 +69,19 @@ type GeneralStoryCharacterFieldsProps = {
   registerErrorKeys?: Record<'name' | 'gender' | 'feature', string>;
   /** 기본 정보와 특징 사이에 놓는 칸이다. 주변 인물의 인물 소개를 둔다. */
   afterBasicInfo?: ReactNode;
+  /** 바뀐 인물 전체를 넘긴다. 상태는 부모가 가진다. */
   onChange: (character: GeneralStoryCharacter) => void;
+  /** 이름 입력 요소를 받는 콜백 ref다. 주변 인물 목록이 추가한 인물의 이름 칸으로 스크롤할 때 쓴다. */
   nameInputRef?: (element: HTMLInputElement | null) => void;
 };
 
+/**
+ * 인물 한 명의 기본 정보(이름, 성별)와 특징 입력. 주인공과 주변 인물이 함께 쓰는 제어 컴포넌트다.
+ *
+ * @remarks
+ * 이름 오류는 `nameError`, 등록 오류, 최소 글자 수 순으로 하나만 보이고, 이름 오류가 없을 때 성별 오류가
+ * 같은 자리에 보인다. 최소 글자 수 오류는 칸을 한 번 벗어난(blur) 뒤부터 보인다.
+ */
 export function GeneralStoryCharacterFields({
   idPrefix,
   labelPrefix,

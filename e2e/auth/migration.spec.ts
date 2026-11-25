@@ -1,3 +1,7 @@
+/** @file 로그인 직후 게스트 데이터 자동 이관 스펙(QA AUTH-MIGRATE-03, 08).
+ * 게스트가 만든 채팅(`user_id` NULL)은 회원 요청에 403이므로(백엔드 §4-5 교차 접근 차단),
+ * 이관이 소유권을 옮겨야 열린다. 이관과 상세 조회의 경쟁, 이관 1회 제한 도달을 검증한다.
+ */
 import { type Page } from '@playwright/test';
 
 import { mockMemberSession } from '../fixtures/auth';
@@ -8,11 +12,6 @@ test.beforeEach(async ({ page }) => {
   await skipChatTour(page);
 });
 
-/**
- * 로그인 직후 게스트 데이터 자동 이관 스펙(QA AUTH-MIGRATE-03·08).
- * 게스트가 만든 채팅(`user_id` NULL)은 회원 요청에 403이므로(백엔드 §4-5 교차 접근 차단),
- * 이관이 소유권을 옮겨야 열린다. 이관과 상세 조회의 경쟁, 이관 1회 제한 도달을 검증한다.
- */
 const CHAT_DETAIL = '**/api/v1/chats/c1';
 const MIGRATE = '**/api/v1/auth/migrate';
 

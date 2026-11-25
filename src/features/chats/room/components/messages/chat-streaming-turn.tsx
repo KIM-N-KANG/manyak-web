@@ -20,6 +20,10 @@ type ChatStreamingTurnProps = {
   onCharacterImageZoom: () => void;
 };
 
+/**
+ * 생성 중인 턴. 사용자 입력 아래에 첫 조각 전까지 로딩을, 이후에는 누적된 조각을 그린다.
+ * 첫 조각이 도착할 때 앵커 아이템이 줄어 스크롤이 내려앉지 않도록 로딩 높이를 래퍼의 최소 높이로 미리 잡는다.
+ */
 export function ChatStreamingTurn({
   turn,
   onCharacterImageZoom,

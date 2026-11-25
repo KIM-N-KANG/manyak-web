@@ -31,6 +31,13 @@ function resolveIsDark() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
+/**
+ * 루트 레이아웃까지 실패했을 때 그 자리를 대신하는 오류 화면.
+ *
+ * @remarks
+ * 루트 레이아웃을 대체하므로 html과 body를 직접 그리고, 앱 프레임 크기도 스스로 잡는다.
+ * `ThemeProvider`가 없어 저장된 테마를 첫 렌더에서 직접 읽어 `dark` 클래스를 붙인다.
+ */
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   const [isDark] = useState(resolveIsDark);
 

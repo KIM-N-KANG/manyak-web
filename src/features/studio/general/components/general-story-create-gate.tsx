@@ -18,6 +18,10 @@ type GeneralStoryCreateGateProps = {
   submissionId?: string;
 };
 
+/**
+ * 일반 제작 화면의 회원 확인 게이트. 회원이면 `submissionId` 유무로 재제출 진입이나 일반 제작 진입을 열고,
+ * 게스트면 로그인으로 보낸 뒤 같은 주소로 돌아오게 한다. 확인 중에는 스피너를 보인다.
+ */
 export function GeneralStoryCreateGate({
   submissionId,
 }: GeneralStoryCreateGateProps) {

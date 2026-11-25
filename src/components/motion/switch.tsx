@@ -39,6 +39,7 @@ export function Switch({
   const thumbRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const [isPressed, setIsPressed] = useState(false);
+  // 포인터로 누를 때만 손잡이를 줄이려는 표시다. pointerdown에서만 켜므로 키보드 조작에는 눌림 변형이 없다.
   const [isPointer, setIsPointer] = useState(false);
 
   // Disabled shake feedback when pressed.

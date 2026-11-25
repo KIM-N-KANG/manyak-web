@@ -1,3 +1,9 @@
+/**
+ * @file 브라우저의 `/api/*` 요청을 `API_BASE_URL` 백엔드로 전달하는 BFF 프록시 라우트.
+ * 요청 경로를 백엔드 기준 경로에 이어 붙이고, 호스트와 쿠키 헤더를 지운 뒤 회원 세션이면
+ * access 토큰을 `Authorization`으로 주입한다. 세션이 만료되면 만료 헤더로 클라이언트에
+ * 로그아웃을 신호하고, 응답은 압축 헤더만 정리해 그대로 흘려보낸다.
+ */
 import { ensureFreshAccessToken } from '@/lib/auth/backend-session';
 import { SESSION_EXPIRED_HEADER } from '@/lib/auth/session-expiry';
 
@@ -143,11 +149,17 @@ const createSessionExpiredResponse = () =>
   });
 
 /**
- * 요청을 백엔드로 프록시하며 회원 세션 토큰 주입과 만료·장애 처리를 수행한다.
+ * 요청을 백엔드로 프록시하며 회원 세션 토큰 주입과 만료, 장애 처리를 수행한다.
  *
  * @param request 원본 요청
  * @param _context 라우트 컨텍스트(경로 파라미터)
  * @returns 백엔드 응답 또는 오류 응답
+ * @remarks
+ * 백엔드에 닿기 전에 끝나는 응답은 세 가지다. `API_BASE_URL`이 없거나 잘못되면 500, 리프레시가
+ * 확정 거절돼 세션이 폐기됐으면 만료 헤더가 붙은 401, 회원인데 일시 장애로 토큰을 못 얻었으면
+ * 503이다. 회원 요청을 익명으로 흘려 게스트 콘텐츠로 잘못 귀속하지 않으려는 것이다.
+ * 백엔드가 회원 토큰을 401로 거절하면 강제 재발급을 한 번 시도해, 확정 거절이면 만료 401을
+ * 돌려주고 실제로 새 토큰을 받았을 때만 같은 요청을 한 번 다시 보낸다.
  */
 const proxyRequest = async (request: Request, _context: ApiProxyContext) => {
   const apiBaseUrl = process.env.API_BASE_URL;

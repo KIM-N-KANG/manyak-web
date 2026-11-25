@@ -9,6 +9,7 @@ export type PendingCreditOrder = {
 
 export const PENDING_CREDIT_ORDER_STORAGE_KEY = 'manyak:pending-credit-order';
 
+/** 같은 탭의 저장, 삭제를 구독자에게 알리는 커스텀 이벤트. `storage` 이벤트는 다른 탭에만 오기 때문이다. */
 const PENDING_CREDIT_ORDER_CHANGE_EVENT = 'manyak:pending-credit-order-change';
 
 /** 결제창에 이 시간 넘게 머문 기록은 버린다. 그로블 결제창은 몇 분이면 끝난다. */

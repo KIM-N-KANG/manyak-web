@@ -84,6 +84,10 @@ const DAY_THRESHOLD = 7;
  *
  * @param isoDate ISO 8601 날짜 문자열
  * @returns 상대 시간 표현 문자열(7일 이상은 yyyy-MM-dd)
+ * @example
+ * ```ts
+ * formatRelativeDate(new Date(Date.now() - 5 * 60_000).toISOString()); // '5분 전'
+ * ```
  */
 export function formatRelativeDate(isoDate: string): string {
   const date = new Date(isoDate);
@@ -130,6 +134,11 @@ export function formatRelativeDate(isoDate: string): string {
  *
  * @param isoDate ISO 8601 날짜 문자열
  * @returns 당일은 경과 시간 표현, 그 외는 yyyy-MM-dd
+ * @example
+ * ```ts
+ * formatSameDayTimeOrDate(new Date(Date.now() - 5 * 60_000).toISOString()); // '5분 전'
+ * formatSameDayTimeOrDate('2026-06-01T00:00:00Z'); // '2026-06-01' (당일이 아닐 때)
+ * ```
  */
 export function formatSameDayTimeOrDate(isoDate: string): string {
   const date = new Date(isoDate);

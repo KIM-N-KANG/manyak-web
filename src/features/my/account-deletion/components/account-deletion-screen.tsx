@@ -23,6 +23,14 @@ import {
   ACCOUNT_DELETION_TITLE_LINES,
 } from '../constants';
 
+/**
+ * 회원 탈퇴 화면. 확인 항목을 모두 체크해야 탈퇴를 요청할 수 있다.
+ *
+ * @remarks
+ * 탈퇴는 204 응답만 성공으로 보고, 그 밖의 응답과 오류는 실패 토스트만 띄운다. 성공하면 기기에
+ * 남은 회원 상태를 지우고, 쿼리 캐시를 비운 뒤 로그아웃해 마이 화면으로 보낸다. 비로그인으로
+ * 확정되면 로그인 화면으로 replace한다.
+ */
 export function AccountDeletionScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();

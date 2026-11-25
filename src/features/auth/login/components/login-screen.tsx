@@ -29,6 +29,14 @@ import { SESSION_EXPIRED_PARAM } from '@/lib/auth/session-expiry';
 import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 import { track } from '@/observability/analytics';
 
+/**
+ * 소셜 로그인 화면. 로그인을 마치면 `callbackUrl` 쿼리의 앱 내 경로(검증 실패 시 기본 경로)로 돌아간다.
+ *
+ * @remarks
+ * Auth.js가 붙인 `error` 쿼리와 세션 만료 쿼리는 한 번 토스트로 알린 뒤 `callbackUrl`만 남긴
+ * 로그인 경로로 replace해, 새로고침이나 뒤로가기로 같은 안내가 다시 뜨지 않게 한다. `error`가
+ * 있으면 이 탭의 로그인 표시도 함께 정리한다.
+ */
 export function LoginScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();

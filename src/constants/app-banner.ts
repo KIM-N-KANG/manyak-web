@@ -2,7 +2,9 @@ import { type AppBannerVariant } from '@/lib/app-banner';
 
 type AppBannerVariantCopy = {
   message: string;
+  /** 버튼에 보이는 짧은 글자다. */
   action: string;
+  /** 버튼의 `aria-label`이다. 보이는 글자보다 동작을 구체적으로 밝힌다. */
   actionLabel: string;
 };
 

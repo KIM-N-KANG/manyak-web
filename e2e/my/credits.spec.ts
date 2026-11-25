@@ -95,7 +95,12 @@ async function mockMe(
   );
 }
 
-/** 커서별 응답을 목킹한다. 키는 요청의 cursor 값이고 첫 페이지는 빈 문자열이다. */
+/**
+ * 커서별 응답을 목킹한다. 키는 요청의 cursor 값이고 첫 페이지는 빈 문자열이다.
+ * 키에 없는 cursor는 500으로 응답해 실패 상태를 만든다.
+ *
+ * @returns 요청받은 cursor를 받은 순서대로 쌓는 배열. 목킹 뒤에도 계속 채워진다
+ */
 async function mockTransactions(
   page: Page,
   pages: Record<string, { items: Transaction[]; nextCursor: string | null }>,

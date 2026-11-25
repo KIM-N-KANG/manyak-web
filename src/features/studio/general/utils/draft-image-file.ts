@@ -14,9 +14,10 @@ export const DRAFT_IMAGE_FILE_ERROR = {
 } as const;
 
 /**
- * 올리기 전에 서버가 거절할 파일을 걸러 오류 문구를 반환한다. 통과하면 null이다.
+ * 올리기 전에 서버가 거절할 파일을 걸러 오류 문구를 반환한다. 형식을 크기보다 먼저 본다.
  *
  * @param file 형식과 바이트 크기를 가진 파일
+ * @returns 형식이 아니면 형식 오류, 비었거나 최대 크기를 넘으면 크기 오류 문구. 통과하면 null
  */
 export function getDraftImageFileError(
   file: Pick<File, 'type' | 'size'>,

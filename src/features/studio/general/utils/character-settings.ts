@@ -1,10 +1,11 @@
 /**
- * 주인공(나)·주변 인물 입력과 서버 글(`userRoleSetting`·`characterSetting`) 사이를 오가는 변환이다.
+ * @file 주인공(나), 주변 인물 입력과 서버 글(`userRoleSetting`, `characterSetting`) 사이를 오가는 변환이다.
  * 제목 형식은 간편 제작 AI가 조립하는 글(manyak-ai `story_compile_render.py`)과 같다. 주인공 이름은
  * 글에 넣지 않고 `protagonistName`으로 따로 주고받으며, 성별과 주변 인물 이름만 칸으로 받고 역할, 배경, 성격 같은
  * 나머지 절은 특징 칸의 본문으로 둔다.
  */
 
+/** 인물 성별이다. 서버 글의 성별 절에는 남성, 여성으로 쓴다. */
 export type CharacterGender = 'MALE' | 'FEMALE';
 
 export type GeneralStoryCharacter = {
@@ -46,7 +47,12 @@ export function buildUserRoleSetting({
   ]);
 }
 
-/** 주변 인물 입력을 `characterSetting` 글로 합친다. 인물마다 `## 이름` 절을 만든다. */
+/**
+ * 주변 인물 입력을 `characterSetting` 글로 합친다. 인물마다 `## 이름` 절을 만든다.
+ *
+ * @param characters 주변 인물 입력. 인물 소개와 이미지는 따로 보내므로 읽지 않는다
+ * @returns `# 등장인물` 아래 인물마다 이름 절, 성별 절, 특징을 둔 글
+ */
 export function buildCharacterSetting(characters: GeneralStoryCharacter[]) {
   const blocks = characters.map(({ name, gender, feature }) =>
     joinLines([
@@ -112,6 +118,9 @@ export function parseUserRoleSetting(
 /**
  * `characterSetting` 글을 주변 인물 입력으로 나눈다. `## 이름` 줄마다 인물을 나누고, 첫 인물 앞의
  * 글은 첫 인물 특징 앞에 붙인다. 인물 제목이 없는 글은 이름 없는 인물 하나에 통째로 둔다.
+ *
+ * @param text 서버 `characterSetting` 글
+ * @returns 주변 인물 입력. 글이 비었으면 빈 배열이다
  */
 export function parseCharacterSetting(
   text: string | null | undefined,

@@ -35,6 +35,11 @@ import { track } from '@/observability/analytics';
 import { PERSONA_LIST_COPY } from '../constants';
 import { parsePersonaDescription } from '../utils/persona-description';
 
+/**
+ * 페르소나 목록의 한 행. 누르면 특징 전문을 펼치고, 접힌 동안에는 `#` 머리글과 빈 줄을 뺀 특징을
+ * 한 줄로 이어 요약한다.
+ * 삭제는 성공 여부와 관계없이 목록을 다시 조회하고, 성공하면 방금 만든 페르소나 선택 기억도 지운다.
+ */
 function PersonaRow({ persona }: { persona: UserPersonaResponse }) {
   const router = useRouter();
   const queryClient = useQueryClient();

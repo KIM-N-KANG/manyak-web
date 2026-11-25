@@ -60,6 +60,13 @@ type ChatMenuDrawerProps = {
   turnCount: number;
 };
 
+/**
+ * 채팅방 헤더의 메뉴 드로어. 메뉴와 이프 내역 뷰를 드로어 안에서 바꾸며 높이를 애니메이션한다.
+ *
+ * @remarks
+ * 이프 내역 뷰는 뒤로가기 레이어를 쌓아 뒤로가기가 드로어를 닫지 않고 메뉴로 돌아오게 한다. 드로어를 다시 열면
+ * 늘 메뉴 뷰부터 보인다. 신고 시트와 삭제 확인은 드로어를 먼저 닫고 연다.
+ */
 export function ChatMenuDrawer({
   chatId,
   storyId,

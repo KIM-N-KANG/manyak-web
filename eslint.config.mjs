@@ -57,6 +57,7 @@ const eslintConfig = defineConfig([
       'import/no-unused-modules': 'warn',
       'import/newline-after-import': ['error', { count: 1 }],
 
+      // import 그룹 순서: 부수 효과 import, react 계열, 외부 패키지, `@/` 별칭, 상대 경로, 정적 자산 파일.
       'simple-import-sort/imports': [
         'error',
         {
@@ -87,6 +88,8 @@ const eslintConfig = defineConfig([
         },
       ],
 
+      // 문 사이에 빈 줄을 기본으로 강제하고, 연속한 import, case, 지시어, const와 let 선언,
+      // 표현식 문, export 사이와 break 앞에서만 빈 줄을 생략할 수 있게 한다.
       'padding-line-between-statements': [
         'error',
         { blankLine: 'always', prev: '*', next: '*' },

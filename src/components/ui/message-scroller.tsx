@@ -52,6 +52,10 @@ function MessageScrollerViewport({
   );
 }
 
+/**
+ * 메시지 목록 영역. 라이브러리가 끝에 붙이는 스페이서는 앵커 메시지를 위에 맞추려고 높이가 계속 바뀌므로,
+ * 브라우저 스크롤 앵커링이 스페이서를 기준으로 잡아 스크롤이 튀지 않도록 `[overflow-anchor:none]`을 기본으로 준다.
+ */
 function MessageScrollerContent({
   className,
   spacerClassName,

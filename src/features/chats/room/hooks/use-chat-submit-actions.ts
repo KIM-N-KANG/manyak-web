@@ -10,8 +10,11 @@ import { resolveUserSource } from '../utils/resolve-user-source';
 import { type ChatInputMode } from './use-chat-input-mode';
 
 type FilledChoice = {
+  /** 입력창에 채운 선택지 원문(trim 전). 전송 시점의 입력과 대조해 출처를 가른다. */
   text: string;
+  /** 선택지 목록 안의 0부터 세는 순번. 서버에는 1부터 세는 `choiceOrder` 로 바꿔 보낸다. */
   position: number;
+  /** 선택지가 달린 턴 ID. 없으면 선택 메타데이터를 보내지 않는다. */
   sourceTurnId?: number;
 };
 
@@ -61,6 +64,14 @@ export function useChatSubmitActions({
     turn_number: turnCount + 1,
   });
 
+  /**
+   * 입력을 다듬어 전송한다. 앞선 전송이 `canSend` 를 기다리는 동안 다시 불리면 무시한다.
+   *
+   * @param text 보낼 원문. 앞뒤 공백을 지운 값을 보낸다
+   * @param source 분석 이벤트의 입력 경로. 생략하면 현재 입력 모드이고, `choice` 면 대조 없이 선택지 출처로 본다
+   * @param selectedChoice 선택지를 바로 보낸 경우의 선택지. 없으면 채우기로 기억한 선택지를 쓴다
+   * @returns 전송했으면 true. 빈 입력, 생성 중, 중복 호출, `canSend` 거절이면 false이고 컴포저는 입력을 유지한다
+   */
   const submitText = async (
     text: string,
     source: 'block' | 'plain' | 'choice' = inputMode,
@@ -105,6 +116,11 @@ export function useChatSubmitActions({
     }
   };
 
+  /**
+   * 선택지를 블럭 입력과 같은 형식(상황과 대사를 빈 줄로 구분)으로 맞춰 바로 전송한다.
+   *
+   * @returns 전송했으면 true, 빈 선택지나 생성 중, `submitText` 가 막았으면 false
+   */
   const submitChoice = async (
     text: string,
     position: number,

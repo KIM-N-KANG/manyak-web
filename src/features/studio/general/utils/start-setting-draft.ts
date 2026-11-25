@@ -1,19 +1,24 @@
-/** 시작 상황 설정 탭의 입력 상태와 표시 규칙이다. */
+/** @file 시작 상황 설정 탭의 입력 상태와 표시 규칙이다. */
 
+/** 시작 상황 하나에 딸린 엔딩 입력이다. `id`는 폼 안에서만 쓰고 요청에는 싣지 않는다. */
 export type GeneralStoryEndingDraft = {
   id: string;
   name: string;
   /** 숫자만 담긴 문자열이다. 비어 있으면 아직 입력하지 않은 것이다. */
   minTurns: string;
+  /** 달성 조건이다. 요청의 `requirement.achievementCondition`이다. */
   condition: string;
   epilogue: string;
 };
 
+/** 시작 상황 하나의 입력이다. `id`는 폼 안에서만 쓰고 요청에는 싣지 않는다. */
 export type GeneralStoryStartSettingDraft = {
   id: string;
   name: string;
   prologue: string;
+  /** 시작 상황 본문이다. 요청의 `startSituation`이다. */
   situation: string;
+  /** 추천 입력 세 칸이다. 칸 수가 고정이라 튜플로 둔다. */
   suggestedInputs: [string, string, string];
   endings: GeneralStoryEndingDraft[];
 };
@@ -38,6 +43,11 @@ export const createEndingDraft = (): GeneralStoryEndingDraft => ({
 /**
  * 이름이 있으면 앞뒤 공백을 뺀 이름을, 없으면 기본 라벨을 쓴다. `maxLength`자(코드 포인트)를
  * 넘으면 잘라 줄임표를 붙인다.
+ *
+ * @param name 시작 상황 이름 입력
+ * @param fallback 이름이 비었을 때 쓰는 기본 라벨. 자르지 않는다
+ * @param maxLength 보일 최대 글자 수(코드 포인트)
+ * @returns 칩에 보일 라벨
  */
 export function getStartSettingLabel(
   name: string,
@@ -55,7 +65,13 @@ export function getStartSettingLabel(
     : characters.join('');
 }
 
-/** 최소 턴 수 입력에서 숫자만 남기고 `max`를 넘지 않게 자른다. 비우면 빈 문자열이다. */
+/**
+ * 최소 턴 수 입력에서 숫자만 남기고 `max`를 넘지 않게 자른다.
+ *
+ * @param input 사용자가 입력한 글
+ * @param max 최소 턴 수의 상한
+ * @returns 숫자 문자열. 숫자가 없으면 빈 문자열이다
+ */
 export function normalizeMinTurns(input: string, max: number) {
   const digits = input.replace(/\D/g, '');
 

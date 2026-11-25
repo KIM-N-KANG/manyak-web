@@ -20,6 +20,12 @@ type ChatTurnCreditCostProps = {
   className?: string;
 };
 
+/**
+ * 이번 턴에 낼 이프를 보이는 배지. 체험이 남아 정가보다 싸지면 정가에 취소선을 긋고 체험 적용가를 함께 보이며,
+ * 정책이나 체험 잔여를 아직 몰라 적용가가 정해지지 않았으면 pulse로 표시한다.
+ *
+ * @see calcChatTurnCost
+ */
 export function ChatTurnCreditCost({
   turnCost,
   modelCode,

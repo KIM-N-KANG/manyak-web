@@ -72,6 +72,8 @@ export function useChatModel(
   /**
    * 모델을 바꾼다. 화면은 먼저 바꾸고, 서버가 거절하면 이전 모델로 되돌린 뒤 실패를 알린다.
    * 진행 중인 턴은 시작할 때의 모델을 유지하고 다음 턴부터 적용된다(서버 계약).
+   *
+   * @param next 고를 모델 코드. 지금 모델과 같으면 아무것도 하지 않고, 게스트면 `onGuestSelect` 만 부른다
    */
   const select = (next: string) => {
     if (next === modelCode) return;
@@ -97,6 +99,8 @@ export function useChatModel(
   /**
    * 긴 응답을 켜고 끈다. 모델과 같이 채팅마다 서버에 저장하고, 화면을 먼저 바꾼 뒤 서버가 거절하면 되돌린다.
    * 게스트도 자기 채팅의 설정을 바꿀 수 있어 로그인을 요구하지 않는다.
+   *
+   * @param next 바꿀 긴 응답 설정. 지금 값과 같으면 요청하지 않는다
    */
   const setLongResponse = (next: boolean) => {
     if (next === longResponse) return;

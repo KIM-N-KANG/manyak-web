@@ -1,3 +1,11 @@
+/**
+ * @file 앱 전체가 공유하는 히스토리 레이어 스택의 진입점.
+ * 브라우저 어댑터를 붙인 `HistoryLayerStack`을 문서에 하나만 만들고, 캡처 단계 popstate
+ * 리스너로 스택이 소비한 뒤로가기를 퍼널 가드와 Next 라우터에서 숨긴다. 오버레이는
+ * `openLayer`로 열고 돌려받은 `close`로 닫으며, 레이어가 열린 채 다른 화면으로 갈 때는
+ * `leaveLayers`로 더미를 먼저 되감는다.
+ */
+
 import {
   type HistoryLayerKind,
   HistoryLayerStack,

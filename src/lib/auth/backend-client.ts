@@ -43,7 +43,7 @@ export class BackendAuthError extends Error {
  * 백엔드 API 베이스 URL을 환경 변수에서 읽어 끝의 슬래시를 제거해 반환한다.
  *
  * @returns 정규화된 백엔드 베이스 URL
- * @throws API_BASE_URL이 설정돼 있지 않으면 에러
+ * @throws {Error} API_BASE_URL이 설정돼 있지 않으면
  */
 const resolveApiBaseUrl = (): string => {
   const apiBaseUrl = process.env.API_BASE_URL;
@@ -61,7 +61,7 @@ const resolveApiBaseUrl = (): string => {
  * @param path 백엔드 API 경로(생성된 URL 빌더로 만든 값)
  * @param init fetch 요청 옵션
  * @returns 파싱된 응답 본문
- * @throws 응답이 ok가 아니면 BackendAuthError
+ * @throws {BackendAuthError} 응답이 ok가 아니면
  */
 const requestBackend = async <T>(
   path: string,
@@ -96,6 +96,7 @@ const requestBackend = async <T>(
  * @param body JSON으로 직렬화할 요청 본문
  * @param headers Content-Type 외에 추가로 실을 요청 헤더
  * @returns 파싱된 응답 본문
+ * @throws {BackendAuthError} 응답이 ok가 아니면
  */
 const postJson = <T>(
   path: string,
@@ -125,6 +126,7 @@ export const CONSENT_TOKEN_HEADER = 'X-Manyak-Consent-Token';
  * @param idToken provider에서 발급한 OIDC ID 토큰
  * @param deviceId Amplitude device_id 원문(없으면 헤더 생략)
  * @returns 소셜 인증 응답(완료 토큰 또는 동의 대기 정보)
+ * @throws {BackendAuthError} 응답이 ok가 아니면
  */
 export const startSocialAuthOnServer = (
   provider: SocialLoginProvider,
@@ -146,6 +148,7 @@ export const startSocialAuthOnServer = (
  * @param consents 동의한 필수 항목과 버전
  * @param deviceId Amplitude device_id 원문(없으면 헤더 생략, 서버는 대기 코드의 값을 우선한다)
  * @returns 발급된 백엔드 토큰 응답
+ * @throws {BackendAuthError} 응답이 ok가 아니면
  */
 export const completeSocialAuthOnServer = (
   consentToken: string,
@@ -162,6 +165,7 @@ export const completeSocialAuthOnServer = (
  *
  * @param refreshToken 회전할 refresh 토큰
  * @returns 새로 발급된 백엔드 토큰 응답
+ * @throws {BackendAuthError} 응답이 ok가 아니면. 401은 refresh 토큰 family 폐기일 수 있다.
  */
 export const refreshOnServer = (refreshToken: string): Promise<TokenResponse> =>
   postJson<TokenResponse>(getRefreshUrl(), { refreshToken });
@@ -170,6 +174,7 @@ export const refreshOnServer = (refreshToken: string): Promise<TokenResponse> =>
  * refresh 토큰을 폐기한다(멱등 — 이미 폐기된 토큰도 204).
  *
  * @param refreshToken 폐기할 refresh 토큰
+ * @throws {BackendAuthError} 응답이 ok가 아니면
  */
 export const logoutOnServer = (refreshToken: string): Promise<void> =>
   postJson<void>(getLogoutUrl(), { refreshToken });
@@ -179,6 +184,7 @@ export const logoutOnServer = (refreshToken: string): Promise<void> =>
  *
  * @param accessToken 인증에 사용할 access 토큰
  * @returns 현재 사용자 프로필 응답
+ * @throws {BackendAuthError} 응답이 ok가 아니면
  */
 export const fetchMeOnServer = (accessToken: string): Promise<MeResponse> =>
   requestBackend<MeResponse>(getMeUrl(), {
@@ -202,6 +208,7 @@ const REAUTH_PROVIDER_VALUES: Record<
  * @param provider 재인증에 쓸 provider(요청자에게 이미 연동돼 있어야 한다)
  * @param idToken 방금 발급받은 OIDC ID 토큰(발급 10분 이내)
  * @returns 링크 코드 응답(TTL 5분)
+ * @throws {BackendAuthError} 응답이 ok가 아니면. 재인증 실패는 사유 구분 없이 403이다.
  */
 export const reauthenticateOnServer = (
   accessToken: string,
@@ -222,6 +229,7 @@ export const reauthenticateOnServer = (
  * @param provider 연동할 대상 provider(경로 세그먼트라 소문자)
  * @param idToken 대상 provider가 발급한 OIDC ID 토큰
  * @param linkCode 재인증으로 발급받은 일회용 링크 코드
+ * @throws {BackendAuthError} 응답이 ok가 아니면(403, 409 등)
  */
 export const linkAccountOnServer = (
   accessToken: string,

@@ -33,7 +33,9 @@ const GENRE_SEARCH_ID = 'general-story-genre';
 
 type GeneralStoryRegisterPanelProps = {
   genres: GeneralStoryGenreSelection;
+  /** 제공 목록에서 쓸 수 없는 장르를 골라 두어 선택에서 뺐으면 참이다. 다시 고르라는 안내를 보인다. */
   needsGenreReselection: boolean;
+  /** 제공 목록에 없는 저장된 장르도 칩으로 보일지다. 그런 장르를 그대로 둘 수 있는 스토리 수정에서만 참이다. */
   allowsStoredGenres: boolean;
   onGenresChange: (genres: GeneralStoryGenreSelection) => void;
   storyDescription: string;

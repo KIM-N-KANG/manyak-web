@@ -20,7 +20,7 @@ export function impressionKey(input: {
  *
  * @param lastEmittedAt 마지막 전송 시각(ms epoch, 없으면 미전송)
  * @param now 현재 시각(ms epoch)
- * @param coolingMs 재전송을 막는 쿨링 시간(ms)
+ * @param coolingMs 재전송을 막는 쿨링 시간(ms). 기본값은 30초다.
  * @returns 노출 이벤트를 다시 보낼지 여부
  */
 export function shouldEmitImpression(

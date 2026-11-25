@@ -1,3 +1,14 @@
+/**
+ * @file 기기 안 제작 기록 저장소. IndexedDB(`creation-db.ts`) 위에서 레코드의 수명과 쓰기 규칙을 정한다.
+ *
+ * - 진행 기록(`pendingCreations`): 편집 초안(KEYWORD_DRAFT, STORY_DRAFT, GENERAL_DRAFT)과 스토리라인 생성
+ *   진행 기록(STORYLINE_GENERATION)이다. 생성 결과가 오면 `replacePendingCreationRequest`로 STORY_DRAFT에 승격한다.
+ * - 완성 기록(`storyCompletions`): `addStoryCompletionRequest`가 진행 기록을 옮겨 만든다. 성공하면
+ *   `markPendingStoryCreated`로 확정하고, 실패하면 `demotePendingCompletionToDraft`로 초안에 되돌린다.
+ * - 모든 쓰기는 호출자가 미리 읽어 둔 세대값(epoch)을 받아 같은 트랜잭션 안에서 다시 확인한다. 그 사이
+ *   세션이 끝났으면 쓰지 않는다. 쓰기 함수는 reject하지 않고 false를 돌려주며, 읽기 함수는 초기화 실패를 reject한다.
+ * - 첫 접근 때 `initializeCreationStorage`가 구 localStorage 저장값을 한 번 이관한다.
+ */
 import type {
   CreateSimpleStoryRequest,
   CreateSimpleStoryRequestVisibility,
@@ -18,6 +29,7 @@ import type { GeneralStoryDraftSnapshot } from '@/features/studio/_shared/utils/
 /** 최초 IndexedDB 이관에서만 읽는 구 저장소 키다. */
 export const PENDING_CREATION_REQUEST_STORAGE_KEY =
   'manyak:pending-creation-request';
+/** 완성 요청 목록을 두던 구 저장소 키다. 최초 이관과 세션 종료 정리에서만 쓴다. */
 export const STORY_COMPLETION_REQUESTS_STORAGE_KEY =
   'manyak:story-completion-requests';
 
@@ -497,7 +509,13 @@ export function buildStorylineDraftRecord(
   };
 }
 
-/** 구 저장값 전체가 검증된 경우에만 이관 후 삭제할 수 있다. */
+/**
+ * 구 저장값 전체가 검증된 경우에만 이관 후 삭제할 수 있다.
+ *
+ * @param count 파싱을 통과한 레코드 수
+ * @param single 배열이 아닌 구 형식 단일 객체를 1건으로 인정하는지
+ * @returns 저장값이 없거나 모든 항목이 파싱을 통과했으면 true
+ */
 function isFullyParsed(
   raw: string | null,
   count: number,
@@ -516,7 +534,17 @@ function isFullyParsed(
   }
 }
 
-/** DB 초기화와 구 저장소 이관을 완료한다. 실패를 빈 목록으로 바꾸지 않는다. */
+/**
+ * DB 초기화와 구 저장소 이관을 완료한다. 실패를 빈 목록으로 바꾸지 않는다.
+ *
+ * @remarks
+ * 구 저장값은 세션을 한 번도 종료하지 않은 세대(0)에서만 가져온다. DB가 이전 세대를 기억하면 두 제작 테이블을
+ * 비운 뒤 현재 세대로 표시한다. 이미 현재 세대로 이관을 마쳤으면 아무것도 하지 않는다.
+ *
+ * @returns 이관과 세대 표시가 커밋되면 resolve한다. 구 저장값 정리 실패는 무시한다.
+ * @throws {Error} 세대값이 -1이면 'Creation storage is unavailable', DB가 더 새 세대를 기억하거나 이관 중 세대값이
+ * 바뀌면 'Creation session is expired'로 reject한다. IndexedDB 오류도 그대로 전파한다.
+ */
 export async function initializeCreationStorage(): Promise<void> {
   const epoch = getCreationEpoch();
 
@@ -617,6 +645,13 @@ function withoutOrder<T>(record: StoredCreation<T>): T {
   return value as T;
 }
 
+/**
+ * 편집 초안과 생성 진행 기록을 저장 순서대로 읽는다.
+ *
+ * @returns `storageOrder` 오름차순 목록
+ * @throws {Error} `initializeCreationStorage`나 DB 읽기가 실패하면 reject한다. 기록 없음과 구분하도록 빈 목록으로
+ * 바꾸지 않는다.
+ */
 export async function loadPendingCreationRequests(): Promise<
   PendingCreationRequest[]
 > {
@@ -627,6 +662,12 @@ export async function loadPendingCreationRequests(): Promise<
   ).map(withoutOrder);
 }
 
+/**
+ * 완성 요청 기록을 저장 순서대로 읽는다.
+ *
+ * @returns `storageOrder` 오름차순 목록
+ * @throws {Error} `initializeCreationStorage`나 DB 읽기가 실패하면 reject한다. 빈 목록으로 바꾸지 않는다.
+ */
 export async function loadStoryCompletionRequests(): Promise<
   StoryCompletionRecord[]
 > {
@@ -637,6 +678,12 @@ export async function loadStoryCompletionRequests(): Promise<
   ).map(withoutOrder);
 }
 
+/**
+ * 진행 기록 한 건을 찾는다.
+ *
+ * @returns 찾은 레코드. 없으면 null
+ * @throws {Error} `initializeCreationStorage`나 DB 읽기가 실패하면 reject한다.
+ */
 export async function findPendingCreationRequest(
   requestId: string,
 ): Promise<PendingCreationRequest | null> {
@@ -647,6 +694,12 @@ export async function findPendingCreationRequest(
   return record ? withoutOrder(record) : null;
 }
 
+/**
+ * 완성 요청 기록이 남아 있는지 확인한다.
+ *
+ * @param requestId 완성 요청 ID(생성 요청 ID가 아니다)
+ * @throws {Error} `initializeCreationStorage`나 DB 읽기가 실패하면 reject한다.
+ */
 export async function hasStoryCompletionRequest(
   requestId: string,
 ): Promise<boolean> {
@@ -655,7 +708,13 @@ export async function hasStoryCompletionRequest(
   return Boolean(await creationDb.storyCompletions.get(requestId));
 }
 
-/** 상태 확인과 쓰기를 같은 트랜잭션에서 실행한다. */
+/**
+ * 상태 확인과 쓰기를 같은 트랜잭션에서 실행한다. 쓰기 도중 세대값이 바뀌면 트랜잭션을 되돌린다.
+ *
+ * @param epoch 쓰기를 허용할 세대값. DB와 localStorage의 세대값이 모두 같아야 쓴다.
+ * @param write 트랜잭션 안에서 실행할 쓰기. 바뀐 `sequence`는 직접 `metadata`에 저장해야 한다.
+ * @returns `write`의 결과. 세대값이 다르거나 초기화, 트랜잭션이 실패하면 reject 대신 false
+ */
 async function writeCreation(
   epoch: number,
   write: (state: CreationMetadata) => Promise<boolean>,
@@ -701,7 +760,11 @@ function withServerDraftLink<Record extends ServerDraftLink>(
   };
 }
 
-/** 최초 시각과 목록 내 순서를 유지한다. */
+/**
+ * 진행 기록을 저장하며 최초 시각과 목록 내 순서를 유지한다. 새 레코드면 순번을 발급해 `metadata`도 저장한다.
+ *
+ * @param previous 이어받을 기존 레코드. 없으면 같은 requestId의 레코드를 찾아 쓴다.
+ */
 async function putPending(
   record: PendingCreationRequest,
   state: CreationMetadata,
@@ -721,7 +784,14 @@ async function putPending(
   await creationDb.metadata.put(state);
 }
 
-/** 소유 초안의 교체와 최초 저장 시각 전달을 원자적으로 처리한다. */
+/**
+ * 소유 초안의 교체와 최초 저장 시각 전달을 원자적으로 처리한다.
+ *
+ * @param epoch 쓰기를 허용할 세대값. 비동기 작업 전에 읽어 둔 값을 넘겨 그 사이 로그아웃한 결과를 버린다.
+ * @param previousId 이 레코드가 대체할 기존 레코드 ID. 그 레코드의 순서와 최초 시각을 이어받고, requestId가
+ * 다르면 기존 레코드를 지운다.
+ * @returns 저장했으면 true. `previousId` 레코드가 이미 없거나 세대값이 다르거나 저장소 오류면 false
+ */
 export function savePendingCreationRequest(
   record: PendingCreationRequest,
   epoch = getCreationEpoch(),
@@ -743,7 +813,14 @@ export function savePendingCreationRequest(
   });
 }
 
-/** 진행 요청이나 삭제된 초안에 지연 편집값이 덮어써지지 않게 한다. */
+/**
+ * 진행 요청이나 삭제된 초안에 지연 편집값이 덮어써지지 않게 한다.
+ *
+ * @param epoch 쓰기를 허용할 세대값
+ * @param previousId 이 초안이 대체할 기존 레코드 ID. 순서와 최초 시각을 이어받는다.
+ * @returns 저장했으면 true. 같은 requestId나 `previousId`가 생성 진행 기록이면, `previousId` 레코드가 없으면,
+ * 이 초안이 이미 완성 요청으로 넘어갔으면, 세대값이 다르면 false
+ */
 export function saveDraftCreationRecord(
   record: DraftCreationRecord,
   epoch = getCreationEpoch(),
@@ -778,7 +855,14 @@ export function saveDraftCreationRecord(
   });
 }
 
-/** 생성 결과를 한 경로만 초안으로 승격한다. */
+/**
+ * 생성 결과를 한 경로만 초안으로 승격한다. 교체본에 서버 초안 연결이 없으면 생성 기록의 연결을 승계한다.
+ *
+ * @param requestId 승격할 생성 진행 기록 ID
+ * @param replacement 대신 저장할 레코드. 생성 기록의 순서와 최초 시각을 이어받는다.
+ * @param epoch 쓰기를 허용할 세대값
+ * @returns 승격했으면 true. 기록이 없거나 이미 다른 경로가 승격해 STORYLINE_GENERATION이 아니면 false
+ */
 export function replacePendingCreationRequest(
   requestId: string,
   replacement: PendingCreationRequest,
@@ -804,6 +888,18 @@ export function replacePendingCreationRequest(
   });
 }
 
+/**
+ * 편집 초안을 완성 요청 기록으로 옮긴다.
+ *
+ * @remarks
+ * `generationRequest.requestId`의 진행 기록을 지우고, 그 기록이나 같은 requestId의 기존 완성 기록에서 최초 시각,
+ * 순서, 서버 초안 연결을 이어받는다. 서버 세션은 편집 초안을 기기에 두지 않으므로 `draftId`가 있는 레코드는
+ * 원본 없이도 받는다.
+ *
+ * @param epoch 쓰기를 허용할 세대값
+ * @returns 저장했으면 true. 원본 진행 기록과 기존 완성 기록이 모두 없고 `draftId`도 없으면, 또는 세대값이
+ * 다르면 false
+ */
 export function addStoryCompletionRequest(
   record: StoryCompletionRecord,
   epoch = getCreationEpoch(),
@@ -844,6 +940,13 @@ export function addStoryCompletionRequest(
   });
 }
 
+/**
+ * 진행 기록을 지우며 선점한다. 원 응답, 복구 조회, 폴링이 같은 결과를 받아도 true를 받은 한 경로만
+ * 후속 부수효과를 적용한다.
+ *
+ * @param epoch 쓰기를 허용할 세대값
+ * @returns 이번 호출이 지웠으면 true. 이미 없거나 세대값이 다르면 false
+ */
 export function takePendingCreationRequest(
   requestId: string,
   epoch = getCreationEpoch(),
@@ -857,6 +960,13 @@ export function takePendingCreationRequest(
   });
 }
 
+/**
+ * 완성 요청 기록을 지우며 선점한다. 지우는 쪽이 하나뿐이도록 결과로 선점 여부를 알린다.
+ *
+ * @param requestId 완성 요청 ID
+ * @param epoch 쓰기를 허용할 세대값
+ * @returns 이번 호출이 지웠으면 true. 이미 없거나 세대값이 다르면 false
+ */
 export function takeStoryCompletionRequest(
   requestId: string,
   epoch = getCreationEpoch(),
@@ -870,6 +980,15 @@ export function takeStoryCompletionRequest(
   });
 }
 
+/**
+ * 완성 요청 기록에 만들어진 스토리 ID를 확정한다. 이름과 달리 진행 기록이 아니라 완성 기록을 고친다.
+ * 폴링과 새로고침이 같은 성공을 다시 받을 때 성공 부수효과를 한 번만 적용하는 관문이다.
+ *
+ * @param requestId 완성 요청 ID
+ * @param storyId 만들어진 스토리 ID
+ * @param epoch 쓰기를 허용할 세대값
+ * @returns 이번 호출이 확정했으면 true. 기록이 없거나 이미 확정됐거나 세대값이 다르면 false
+ */
 export function markPendingStoryCreated(
   requestId: string,
   storyId: string,
@@ -935,7 +1054,15 @@ export function demotePendingCompletionToDraft(
   });
 }
 
-/** 세션 종료를 먼저 기록하고 두 제작 테이블을 함께 비운다. 실패해도 다음 접근에서 다시 정리한다. */
+/**
+ * 세션 종료를 먼저 기록하고 두 제작 테이블을 함께 비운다. 실패해도 다음 접근에서 다시 정리한다.
+ *
+ * @remarks
+ * 로그아웃 정리에서 호출한다. 세대값을 먼저 올려 두므로 테이블 비우기가 실패해도 다음
+ * `initializeCreationStorage`가 이전 세대 기록을 비운다. 세대값 기록마저 실패하면 이 탭의 저장소는 닫힌다.
+ *
+ * @throws 테이블 비우기 트랜잭션이 실패하면 reject한다.
+ */
 export async function clearCreationStorage(): Promise<void> {
   let epoch: number;
 

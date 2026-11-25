@@ -1,3 +1,10 @@
+/**
+ * @file 일반 제작 폼의 임시 저장 스냅숏 형식.
+ *
+ * 이미지는 세 가지로 표현된다. 폼은 미리보기 URL을 가진 `DraftImage`를, 스냅숏은 페이지마다 바뀌는 blob URL을
+ * 뺀 `GeneralStoryDraftImage`(객체 키와 원본 파일)를, 서버 payload는 객체 키만 쓴다.
+ */
+
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 import type { GeneralStoryTextField } from '@/features/studio/general/constants';
 import type { GeneralStoryCharacter } from '@/features/studio/general/utils/character-settings';

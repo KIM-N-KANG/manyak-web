@@ -42,15 +42,25 @@ type ChatStartSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   storyId: string;
+  /** 시작 설정 목록. 항목의 Select 값은 `startSettingValue`로 만든다. */
   startSettings: StoryStartSettingResponse[];
   /** 고른 시작 설정의 Select 값. 상세 본문의 Select와 같은 상태다. */
   selectedStartSetting: string;
+  /** 상세 본문과 함께 쓰는 시작 설정 상태를 바꾼다. */
   onSelectedStartSettingChange: (value: string) => void;
   /** 고른 페르소나 ID. null이면 기본 주인공이다. */
   personaId: string | null;
+  /** 상세 본문과 함께 쓰는 페르소나 상태를 바꾼다. */
   onPersonaIdChange: (personaId: string | null) => void;
 };
 
+/**
+ * 스토리 상세에서 페르소나와 시작 설정을 고르고 채팅을 시작하는 바텀시트.
+ *
+ * @remarks
+ * 페르소나와 시작 설정은 한 번에 하나만 펼치는 아코디언이며, 항목을 고르거나 시트를 닫으면 접는다. 채팅을 시작하는
+ * 중에는 닫기와 바깥 누름을 막는다. 시작하면 페르소나 생성에서 돌아와 미리 고른 선택을 지운다.
+ */
 export function ChatStartSheet({
   open,
   onOpenChange,

@@ -27,7 +27,7 @@ export function applyStorylinesGeneratedEffects(
 
 /**
  * 스토리 완성 성공 부수효과를 적용한다. 완성 레코드에 생성 ID를 먼저 확정해
- * 새로고침·폴링이 같은 결과를 다시 적용하지 않게 하고, 회원은 내 스토리 목록을
+ * 새로고침, 폴링이 같은 결과를 다시 적용하지 않게 하고, 회원은 내 스토리 목록을
  * 재조회하며 게스트는 서재 ID를 저장한다. 체험 잔여를 다시 조회한 뒤 분석 이벤트와
  * Meta 픽셀을 발화한다.
  *
@@ -36,6 +36,8 @@ export function applyStorylinesGeneratedEffects(
  * @param sessionStatus 현재 세션 상태
  * @param queryClient 회원 목록 무효화에 쓰는 쿼리 클라이언트
  * @param genres 완성된 스토리의 장르 목록(분석 이벤트 프로퍼티)
+ * @param epoch 부수효과를 허용할 제작 세대값. 요청 전에 읽어 둔 값을 넘겨 그 사이 로그아웃했으면 버린다.
+ * @returns 적용을 마치면 resolve한다. 다른 경로가 먼저 확정했거나 세대값이 바뀌었으면 아무것도 하지 않는다.
  */
 export async function applyStoryCompletedEffects(
   requestId: string,

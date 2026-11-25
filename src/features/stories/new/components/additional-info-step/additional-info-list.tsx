@@ -21,6 +21,7 @@ import type { AdditionalInfoInput } from '../../types';
 
 type AdditionalInfoListProps = {
   additionalInfos: AdditionalInfoInput[];
+  /** 칸을 더 늘릴 수 있는지. 상한에 닿으면 거짓이다. */
   canAddAdditionalInfo: boolean;
   disabled: boolean;
   onAddAdditionalInfo: () => void;
@@ -29,6 +30,7 @@ type AdditionalInfoListProps = {
     id: string,
     event: React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
+  /** 칸의 입력 요소를 id로 등록한다. 새 칸을 추가했을 때 그 칸으로 스크롤하는 데 쓴다. */
   onRegisterAdditionalInfoInput: (
     id: string,
     element: HTMLTextAreaElement | null,

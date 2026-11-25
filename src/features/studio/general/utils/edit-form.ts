@@ -1,3 +1,12 @@
+/**
+ * @file 스토리 수정 폼과 수정 PATCH 본문 사이의 변환.
+ *
+ * 폼을 연 시점의 입력으로 요청 후보(`baseline`)를 만들어 두고, 저장할 때 지금 입력의 후보와 필드 단위로 비교해
+ * 바뀐 필드만 보낸다. 반려나 실패한 수정 제출본을 덮어쓸 때는 `sendAll`로 모든 필드를 보낸다. 시작 설정은
+ * 순서로, 주변 인물은 이름으로 서버 항목과 짝지어 서버 id를 붙이고, 폼에 없는 서버 인물도 그대로 실어
+ * 지워지지 않게 한다.
+ */
+
 import type {
   GeneralCharacterImageInput,
   GeneralCharacterInput,
@@ -49,8 +58,11 @@ export type StoryEditBase = {
   sendAll: boolean;
 };
 
+/** 수정 폼 응답을 나눈 결과다. */
 export type StoryEdit = {
+  /** 폼 초기 입력이다. 미승인 제출본이 있으면 그 입력이 합쳐져 있다. */
   initial: GeneralStoryFormInitial;
+  /** PATCH 본문을 계산할 때 기준으로 삼는 서버 값이다. */
   base: StoryEditBase;
   /** 미승인 수정 제출본이다. 없거나 승인됐으면 null이다. */
   submission: StorySubmission | null;

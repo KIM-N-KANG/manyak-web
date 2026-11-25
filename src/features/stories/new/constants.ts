@@ -68,8 +68,10 @@ export const CHARACTER_GENDER_SELECT_OPTIONS = [
 
 export const ADDITIONAL_INFO_INITIAL_COUNT = 1;
 
+/** 추가 정보 입력 칸을 늘릴 수 있는 최대 개수. 복원한 초안도 이 개수까지만 되살린다. */
 export const ADDITIONAL_INFO_MAX_COUNT = 10;
 
+/** 추가 정보 한 칸의 최대 글자 수. 입력값을 이 길이에서 자른다. */
 export const ADDITIONAL_INFO_MAX_LENGTH = 100;
 
 // 인물의 이름·성별·특징은 앞선 키워드 단계에서 받으므로 예시에서 뺀다. 남은 축인
@@ -87,6 +89,7 @@ export const ADDITIONAL_INFO_PLACEHOLDERS = [
   '예: 잔인하거나 무서운 묘사는 빼줘',
 ] as const;
 
+/** 스토리라인 평가를 서버에 보내기 전 기다리는 시간(ms). 스토리라인마다 마지막 누름만 보낸다. */
 export const STORYLINE_RATING_SYNC_DEBOUNCE_MS = 300;
 
 export const GENRE_CATEGORY = {
@@ -113,6 +116,9 @@ export const SUPPORTING_CHARACTER_CATEGORY = {
   maxSelectionCount: CHARACTER_FEATURE_MAX_COUNT,
 } satisfies TagCategoryConfig;
 
+/**
+ * 키워드 단계의 카테고리. 배열 순서가 탭 순서이며, 앞쪽의 `required` 카테고리를 모두 채워야 뒤 카테고리가 열린다.
+ */
 export const TAG_CATEGORIES = [
   GENRE_CATEGORY,
   PROTAGONIST_CATEGORY,
@@ -125,6 +131,10 @@ export const STORY_CREATE_INDICATOR_STEPS = [
   { step: 'additional-info', label: '추가 정보 입력' },
 ] as const satisfies readonly { step: StoryCreateStep; label: string }[];
 
+/**
+ * 퍼널 단계 순서이자 `StoryCreateStep`의 정의. 진행 표시는 이 순번으로 지난 단계를 가린다. 표시 칸이 없는
+ * `complete`가 마지막이라 완료 단계에서는 표시 칸이 모두 지난 단계가 된다.
+ */
 export const STORY_CREATE_STEP_ORDER = [
   'keyword',
   'storyline-select',
@@ -132,6 +142,7 @@ export const STORY_CREATE_STEP_ORDER = [
   'complete',
 ] as const;
 
+/** 한 번 생성에 기대하는 스토리라인 수. 결과가 오기 전 탭 골격을 이만큼 그린다. */
 export const EXPECTED_STORYLINE_COUNT = 3;
 
 const KOREAN_ORDINAL_WORDS = [
@@ -204,6 +215,7 @@ export const STORY_COMPLETION_LOADING_PHRASES = [
   '표현을 자연스럽게 다듬는 중',
 ];
 
+/** 스토리라인 생성 로딩의 안내. `delayMs`는 로딩 화면이 뜬 뒤 경과 시간(ms)이다. */
 export const STORYLINE_GENERATING_LOADING_HINTS = [
   { delayMs: 15000, text: '스토리라인을 잡는 데 시간이 조금 더 걸리고 있어요' },
   {
@@ -212,6 +224,7 @@ export const STORYLINE_GENERATING_LOADING_HINTS = [
   },
 ] as const satisfies readonly RevealHint[];
 
+/** 스토리 완성 로딩의 안내. `delayMs`는 로딩 화면이 뜬 뒤 경과 시간(ms)이다. */
 export const STORY_COMPLETION_LOADING_HINTS = [
   { delayMs: 15000, text: '스토리를 완성하는 데 시간이 조금 더 걸리고 있어요' },
   {

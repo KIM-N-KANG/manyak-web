@@ -29,6 +29,10 @@ const THEME_OPTION_META = {
  */
 const emptySubscribe = () => () => {};
 
+/**
+ * 누를 때마다 시스템, 라이트, 다크 순으로 테마를 바꾸는 메뉴 행.
+ * 하이드레이션 전에는 저장된 테마를 알 수 없어 시스템으로 그려 서버 렌더 결과와 맞춘다.
+ */
 export function ThemeMenuItem() {
   const { theme, setTheme } = useTheme();
   const hydrated = useSyncExternalStore(

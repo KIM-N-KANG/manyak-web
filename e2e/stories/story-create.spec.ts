@@ -88,6 +88,13 @@ const storylinesResponse = {
   ],
 };
 
+/**
+ * 태그와 스토리라인 목을 등록하고 간편 제작을 첫 스토리라인 선택까지 진행해 추가 정보 단계에 도착한다.
+ *
+ * @remarks
+ * 이동만 하는 헬퍼가 아니다. 지나가는 길에 스토리라인 본문 줄 높이, 탭 패널 하단 여백, 추가 정보 단계의 섹션 간격을
+ * 함께 단언하므로 이 헬퍼를 쓰는 모든 테스트가 그 레이아웃 계약을 검증한다.
+ */
 async function reachAdditionalInfo(page: Page): Promise<void> {
   await page.route(TAGS, async (route) => {
     await route.fulfill({

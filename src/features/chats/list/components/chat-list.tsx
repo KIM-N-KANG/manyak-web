@@ -13,6 +13,10 @@ import { useCreatedChats } from '../hooks/use-created-chats';
 import { ChatCard } from './chat-card';
 import { ChatListSkeleton } from './chat-list-skeleton';
 
+/**
+ * 채팅 목록 화면 본문. 지연 스켈레톤, 스켈레톤 전 로딩(빈 화면), 오류, 빈 목록, 목록 순으로 분기한다.
+ * 서버가 준 최근 진행순을 그대로 그리고, 순서가 바뀌면 카드가 위치 애니메이션으로 자리를 옮긴다.
+ */
 export function ChatList() {
   useTrackOnView('client_chatList_viewed');
 

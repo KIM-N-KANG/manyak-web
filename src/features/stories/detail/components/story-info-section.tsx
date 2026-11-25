@@ -14,6 +14,10 @@ import { StoryCharacters } from './story-characters';
 import { StoryDetailTags } from './story-detail-tags';
 import { StoryStartSettings } from './story-start-settings';
 
+/**
+ * 상세 본문이 그리는 스토리 필드. 서버가 미리 받은 공개 상세와 브라우저 조회 응답을 모두 받도록 쓰는 필드만
+ * 선택값으로 둔다.
+ */
 type StoryInfo = {
   title?: string;
   oneLineIntro?: string | null;
@@ -24,6 +28,7 @@ type StoryInfo = {
   reachedEndings?: string[];
   startSettings?: StoryStartSettingResponse[];
   createdAt?: string;
+  /** 참일 때만 공개 범위를 보인다. */
   isOwner?: boolean;
   visibility?: StoryDetailResponseVisibility;
 };
@@ -31,14 +36,18 @@ type StoryInfo = {
 type StoryInfoSectionProps = {
   storyId: string;
   story: StoryInfo;
+  /** 제목 요소. 상세가 제목이 헤더 뒤로 갔는지 판정해 헤더 제목을 띄우는 데 쓴다. */
   titleRef?: Ref<HTMLHeadingElement>;
+  /** 본문 끝 메타 정보 영역. 스크롤 끝에서 하단 버튼 줄 배경을 이 영역 색으로 잇는 데 쓴다. 보일 정보가 없으면 붙지 않는다. */
   metadataRef?: Ref<HTMLDivElement>;
+  /** 고른 시작 설정의 Select 값. 채팅 시작 시트와 같은 상태다. */
   startSettingValue: string;
   onStartSettingValueChange: (value: string) => void;
   personaId: string | null;
   onPersonaIdChange: (personaId: string | null) => void;
 };
 
+/** 스토리 상세 본문. 공개 범위는 소유자에게만 보인다. */
 export function StoryInfoSection({
   storyId,
   story,

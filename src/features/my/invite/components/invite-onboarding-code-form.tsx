@@ -11,15 +11,19 @@ import { Label } from '@/components/ui/label';
 import { useRedeemInviteCode } from '../hooks/use-redeem-invite-code';
 import { sanitizeInviteCodeInput } from '../utils/invite-code';
 
+/** 가입 직후 초대 코드 안내 시트 안의 코드 입력 폼. 등록과 건너뛰기 버튼을 함께 둔다. */
 export function InviteOnboardingCodeForm({
   disabled = false,
   isSubmitPending = false,
   onSkip,
   onSuccess,
 }: {
+  /** 상위 시트가 안내 완료를 저장하는 동안 입력과 버튼을 모두 막는다. */
   disabled?: boolean;
+  /** 등록에 성공한 뒤 시트를 닫는 동안에도 등록 버튼의 로딩 표시를 이어 간다. */
   isSubmitPending?: boolean;
   onSkip?: () => void;
+  /** 코드 등록에 성공하면 입력을 비운 뒤 호출된다. */
   onSuccess?: () => void;
 }) {
   const inputId = useId();

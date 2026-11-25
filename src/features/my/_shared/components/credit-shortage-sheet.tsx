@@ -30,6 +30,11 @@ type CreditShortageSheetProps = {
   onCharge: () => void | Promise<void>;
 };
 
+/**
+ * 유료 동작에서 이프가 부족할 때 충전과 출석 보상을 권하는 시트.
+ * 열릴 때마다 회원 정보(`me`)를 무효화해 잔액과 오늘 출석 여부를 새로 받고, 출석 버튼은 오늘
+ * 출석하지 않았을 때만 보인다. 충전이나 출석을 처리하는 동안에는 닫히지 않는다.
+ */
 export function CreditShortageSheet({
   open,
   onOpenChange,

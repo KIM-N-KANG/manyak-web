@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * @file 앱 프레임 맨 위에 놓는 앱 설치, 외부 브라우저 전환 안내 배너.
+ * 변형 결정과 노출 조건, 폴백 타이머는 `@/lib/app-banner`가 맡고, 이 모듈은 노출 이벤트,
+ * 버튼 동작, 닫기와 `AppBannerGuideSheet` 안내 시트를 잇는다.
+ */
+
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
@@ -51,7 +57,8 @@ const ACTION_BUTTON_CLASS =
   'border-transparent text-[color-mix(in_oklch,var(--primary),var(--foreground)_30%)]';
 
 /**
- * 아무 것도 구독하지 않는 useSyncExternalStore용 빈 구독 함수를 만든다.
+ * 아무 것도 구독하지 않는 useSyncExternalStore용 구독 함수다. 서버 렌더와 하이드레이션에서는
+ * 서버 스냅숏을 쓰고, 그 뒤 렌더에서만 브라우저 값을 읽게 하려고 쓴다.
  *
  * @returns 구독 해제용 no-op 함수
  */
@@ -127,6 +134,18 @@ function focusAppScreen(): void {
   });
 }
 
+/**
+ * 브라우저와 경로에 맞는 앱 배너를 띄우고, 버튼 동작과 닫기를 처리한다.
+ *
+ * @remarks
+ * 변형은 `readVisibleVariant`로 정하며 서버 렌더와 하이드레이션에서는 항상 숨긴다. 노출 이벤트는
+ * 마운트마다 한 번만 보낸다. 버튼은 변형별로 다르게 동작한다.
+ * - `ios_inapp`: 외부 브라우저로 전환을 시도하고, 전환되지 않으면 주소 복사 안내 시트를 연다.
+ * - Android 변형: 링크의 intent로 앱을 열고, 앱이 열리지 않으면 Play 스토어로 이동한다.
+ * - `ios_browser`: 홈 화면 추가 안내 시트를 연다(지원 기기는 스크린샷, 나머지는 텍스트).
+ *
+ * 닫으면 닫힘을 저장하고 포커스를 화면 영역으로 옮긴 뒤 배너를 접는다.
+ */
 export function AppBanner() {
   const pathname = usePathname();
   const variant = useSyncExternalStore(

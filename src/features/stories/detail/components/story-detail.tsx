@@ -51,9 +51,22 @@ import { startSettingValue } from './story-start-settings';
 
 type StoryDetailProps = {
   storyId: string;
+  /** 서버가 미리 받은 공개 상세. 브라우저 조회가 끝나기 전까지만 그리며, 권한 판정에는 쓰지 않는다. */
   initialStory?: PublicStoryDetail;
 };
 
+/**
+ * 스토리 상세 화면.
+ *
+ * @remarks
+ * - 데이터: 브라우저 조회 응답이 오기 전에는 `initialStory`를 그리고, 조회가 끝난 뒤에는 응답만 쓴다. 수정, 삭제,
+ *   신고, 좋아요 권한은 브라우저 응답으로만 판정한다.
+ * - 권한: 회원은 응답의 `isOwner`로, 게스트는 기기에 남긴 만든 스토리 ID로 삭제를 허용한다. 수정은 소유 회원만,
+ *   신고는 회원만, 좋아요는 내가 만들지 않은 스토리에만 보인다.
+ * - 마운트 때 남아 있는 채팅 열기 의도를 소비해 채팅방을 연다(`pending-chat-open.ts`).
+ * - 채팅 시작 시트에서 페르소나 생성으로 떠났다가 돌아오면 시트를 다시 열고, 새로 만든 페르소나를 미리 고른다.
+ * - 본문 스크롤 위치를 기록 항목마다 복원하고, 제목이 헤더 뒤로 가면 헤더에 제목을 띄운다.
+ */
 export function StoryDetail({ storyId, initialStory }: StoryDetailProps) {
   useEffect(() => {
     track('client_storyDetail_viewed', { story_id: storyId });

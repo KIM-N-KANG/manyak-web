@@ -25,6 +25,7 @@ const toPolicy = (
  * 서버가 값을 바꾸는 순간 거짓이 되기 때문이다. 대신 화면은 자리표시 숫자를 쉬머와 함께 그린다.
  *
  * @returns 이프 정책 수치. 아직 받지 못했거나 조회에 실패하면 `undefined`다.
+ * @see useCreditPolicySnapshot
  */
 export function useCreditPolicy(): CreditPolicyResponse | undefined {
   const { data } = useGetCreditPolicies();

@@ -39,6 +39,10 @@ import {
 
 export { parseStroke, type Stroke, strokeAt };
 
+/**
+ * 안무의 막. `GEAR_UP` 은 처음 한 번만 연기하는 준비 막이고, 나머지는 밑그림(SKETCH), 숨 고르기(RELIEF),
+ * 밑칠(WASH), 인물(FIGURE), 딴짓(DAYDREAM), 마무리(FINISH), 감상(SHOWCASE), 종이 넘기기(PAGE_TURN) 순으로 반복한다.
+ */
 export type RealtimeImageAct =
   | 'GEAR_UP'
   | 'SKETCH'
@@ -109,6 +113,7 @@ export const brushTipOffset = (
 export const PAPER_GRID = 84;
 export const GRID_HEIGHT = 63;
 export const PAPER_WIDTH = 0.54;
+/** 도화지 사각형(무대 좌표). 오른쪽과 아래 변은 도화지 폭과 격자 비율에서 유도한다. */
 export const PAPER = {
   left: 0.38,
   top: 0.1,
@@ -427,6 +432,10 @@ const INTRO_ACTS: Act<RealtimeImageAct, RealtimeImageCue>[] = [
 /** 붓을 낚아채는 순간이다. 점프의 이 비율에서 붓이 손에 들어온다. */
 export const BRUSH_CATCH = 0.65;
 
+/**
+ * 반복하는 막의 동작표. 배열 순서가 곧 한 바퀴의 막 순서이며, `ORDER` 와 `paintedFor` 가 이 순서로 지난 막과
+ * 아직 오지 않은 막을 가른다. 동작에 붙인 cue 이름은 그리는 쪽이 같은 이름으로 진행을 묻는다.
+ */
 const ACTS: Act<LoopAct, RealtimeImageCue>[] = [
   {
     kind: 'SKETCH',
@@ -519,8 +528,11 @@ const ACTS: Act<LoopAct, RealtimeImageCue>[] = [
 
 const intro = createChoreography(INTRO_ACTS);
 const loop = createChoreography(ACTS);
+/** 준비 막에 속한 cue. `owner` 가 cue의 시각과 길이를 준비 막과 반복 안무 중 어디에 물을지 가르는 기준이다. */
 const INTRO_CUES = new Set<RealtimeImageCue>(['HAT', 'BRUSH']);
+/** 반복하는 막의 순서. `paintedFor` 가 cue의 막과 지금 막의 앞뒤를 비교하는 인덱스로 쓴다. */
 const ORDER = ACTS.map((act) => act.kind);
+/** 반복하는 막의 cue에서 그 cue가 속한 막을 찾는 역방향 맵(`paintedFor` 전용). */
 const CUE_ACT = new Map<RealtimeImageCue, LoopAct>(
   ACTS.flatMap((act) =>
     act.moves.flatMap((move) =>
@@ -531,6 +543,7 @@ const CUE_ACT = new Map<RealtimeImageCue, LoopAct>(
 
 /** 준비 막의 길이다. 이 시간이 지나면 밑그림부터 한 바퀴를 반복한다. */
 export const REALTIME_IMAGE_INTRO_MILLIS = intro.loopMillis;
+/** 준비 막 뒤에 반복하는 한 바퀴(밑그림부터 종이 넘기기까지)의 길이(ms). */
 export const REALTIME_IMAGE_LOOP_MILLIS = loop.loopMillis;
 
 /**
@@ -622,6 +635,7 @@ export function paintedFor(
   return actMillis - loop.cueStart(cue);
 }
 
+/** 붓털에 묻은 물감 단계. 헹굴 때마다 연필(PENCIL), 회색(GRAY), 초록(GREEN) 순으로 바뀌고 종이를 넘기면 연필로 돌아간다. */
 export type PaintColor = 'PENCIL' | 'GRAY' | 'GREEN';
 
 /** 막마다 붓에 묻은 물감과, 그 막에서 헹군 뒤 바뀌는 물감이다. */

@@ -1,3 +1,4 @@
+/** 보관하는 ID 개수 상한이다. 넘치면 오래된 ID부터 버린다. */
 const MAX_STORED_ID_COUNT = 100;
 
 type CreatedIdListStorageConfig<Id> = {
@@ -25,6 +26,7 @@ export function createCreatedIdListStorage<Id>({
   changeEvent,
   isValidId,
 }: CreatedIdListStorageConfig<Id>) {
+  /** 저장 문자열을 ID 목록으로 바꾼다. 깨진 JSON이나 배열이 아닌 값은 빈 목록으로, 유효하지 않은 항목은 걸러 낸다. */
   const parseSavedIds = (value: string | null): Id[] => {
     if (!value) {
       return [];
@@ -43,6 +45,10 @@ export function createCreatedIdListStorage<Id>({
     }
   };
 
+  /**
+   * `useSyncExternalStore`의 구독 함수다. 다른 탭의 `storage` 이벤트와 같은 탭의 `changeEvent`를
+   * 함께 듣는다.
+   */
   const subscribe = (onStoreChange: () => void) => {
     if (typeof window === 'undefined') {
       return () => {};
@@ -63,8 +69,10 @@ export function createCreatedIdListStorage<Id>({
     };
   };
 
+  /** `useSyncExternalStore`의 스냅샷 함수다. 참조가 안정적인 원문 문자열을 돌려주므로 파싱은 호출부가 한다. */
   const getSnapshot = (): string | null => localStorage.getItem(storageKey);
 
+  /** 목록 전체를 덮어쓰고 같은 탭 구독자에게 알린다. 롤백처럼 이전 목록을 되돌릴 때 쓴다. */
   const write = (ids: Id[]) => {
     if (typeof window === 'undefined') {
       return;
@@ -74,6 +82,7 @@ export function createCreatedIdListStorage<Id>({
     window.dispatchEvent(new Event(changeEvent));
   };
 
+  /** ID를 맨 앞에 넣는다. 이미 있으면 앞으로 옮기고, 상한을 넘으면 뒤에서 자른다. */
   const save = (id: Id) => {
     if (typeof window === 'undefined') {
       return;

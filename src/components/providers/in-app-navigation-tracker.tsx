@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * @file 헤더 뒤로가기가 앱 안 이전 화면으로 갈지, 대체 경로를 쓸지 판정하는 기록 추적.
+ * `InAppNavigationTracker`가 문서를 처음 연 시점의 `history.length`를 기록해 두고,
+ * `hasInAppNavigation`, `hasHistoryBelow`가 Navigation API나 그 기록을 기준으로 아래 기록을 판정한다.
+ */
+
 import { useEffect } from 'react';
 
 import { getLayerEntryCount, prepareHistoryLayers } from '@/lib/history-layers';
@@ -19,9 +25,9 @@ let landingHistoryLength: number | null = null;
 
 /**
  * 헤더 뒤로가기로 돌아갈 앱 안 화면이 아래에 있는지 돌려준다.
- * false면 현재 화면이 탭의 첫 진입(공유·외부 링크·알림)이거나 그 화면을 교체한 것이라 돌아갈 앱 화면이 없다.
+ * false면 현재 화면이 탭의 첫 진입(공유, 외부 링크, 알림)이거나 그 화면을 교체한 것이라 돌아갈 앱 화면이 없다.
  * 판정 규칙은 [hasPreviousInAppEntry](../../lib/in-app-navigation.ts)를 따르며, 오버레이가 쌓은 더미 칸은
- * 현재 화면으로 친다. `history.length` 절댓값은 인앱·자동화 브라우저가 빈 첫 기록을 남겨 부풀므로 쓰지 않는다.
+ * 현재 화면으로 친다. `history.length` 절댓값은 인앱, 자동화 브라우저가 빈 첫 기록을 남겨 부풀므로 쓰지 않는다.
  *
  * @returns 아래에 앱 안 화면이 있으면 true
  */
@@ -56,6 +62,14 @@ export function hasHistoryBelow(): boolean {
   });
 }
 
+/**
+ * 히스토리 레이어의 popstate 리스너를 미리 걸고, 문서를 처음 연 시점의 `history.length`를 기록한다.
+ * 화면에는 아무것도 그리지 않는다.
+ *
+ * @remarks
+ * 루트 레이아웃에 한 번만 마운트한다. 레이어 리스너는 Next 앱 라우터보다 먼저 걸어야 하고,
+ * 여기서 기록한 값이 Navigation API가 없는 브라우저에서 `hasInAppNavigation` 판정의 기준이 된다.
+ */
 export function InAppNavigationTracker() {
   useEffect(() => {
     prepareHistoryLayers();

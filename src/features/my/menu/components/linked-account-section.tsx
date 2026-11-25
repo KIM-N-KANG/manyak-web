@@ -44,6 +44,18 @@ const PROVIDER_LOGOS: Record<SocialLoginProvider, typeof GoogleLogo> = {
   kakao: KakaoLogo,
 };
 
+/**
+ * 연동된 소셜 계정 배지와 아직 연동하지 않은 공급자의 연동 버튼을 보여 주는 마이 화면 섹션.
+ *
+ * @remarks
+ * 서버가 돌려준 연동 목록의 첫 공급자를 재인증에 쓸 현재 계정으로 삼고, 연동 목록이 비면
+ * 섹션을 그리지 않는다. 연동 버튼은 인앱 브라우저에서 토스트로 막고, 그 밖에는 확인 다이얼로그를
+ * 거쳐 연동을 시작한다. 시작한 뒤에는 페이지를 떠날 때까지 다이얼로그를 닫지 않는다. 연동 흐름에서
+ * 돌아와 이미 다른 회원에 연결된 계정(409)이면 별도 안내 다이얼로그를 띄운다.
+ *
+ * @see startAccountLink
+ * @see useLinkResultNotice
+ */
 export function LinkedAccountSection() {
   const { data: meData, isPending } = useMe({
     query: { refetchOnMount: 'always' },

@@ -25,8 +25,11 @@ export type DraftImage = {
 };
 
 type UseDraftImagePickerOptions = {
+  /** 업로드 URL을 받을 때 보내는 이미지 종류(표지, 인물)다. */
   kind: ImagePresignRequestKind;
+  /** 지금 칸의 이미지다. 새 이미지로 바꾸거나 지우면 이 이미지의 미리보기 URL을 해제한다. */
   image: DraftImage | null;
+  /** 업로드를 마친 새 이미지로, 지우면 null로 호출한다. 업로드에 실패하면 호출하지 않는다. */
   onChange: (image: DraftImage | null) => void;
 };
 
@@ -34,6 +37,15 @@ type UseDraftImagePickerOptions = {
  * 파일 선택부터 형식·크기 검사, 정해진 비율로 자르기, 등록 전 업로드, 미리보기 URL 해제까지 맡는 훅.
  * 숨긴 파일 입력에 `inputProps`를 펼치고 `open`으로 파일 선택 창을 연다. 파일을 고르면 `crop`이 생기고,
  * 자르기 시트에서 고른 영역으로 `crop.confirm`을 부르면 잘라낸 JPEG를 올린다.
+ *
+ * @param options 이미지 종류, 지금 이미지, 변경 콜백
+ * @returns
+ * - `isUploading`: 잘라낸 이미지를 올리는 중이면 참이다.
+ * - `previewUrl`: 올리는 중이면 잘라낸 이미지의 URL을, 아니면 지금 이미지의 URL을 쓴다. 없으면 null이다.
+ * - `open`: 파일 선택 창을 연다.
+ * - `remove`: 지금 이미지를 지운다.
+ * - `crop`: 파일을 고른 뒤 자르기 시트를 열 동안만 있는 원본 URL과 취소, 확정 함수다. 그 밖에는 null이다.
+ * - `inputProps`: 숨긴 파일 입력에 펼칠 속성이다.
  */
 export function useDraftImagePicker({
   kind,

@@ -9,6 +9,10 @@ type LoadingButtonContentProps = {
   children: ReactNode;
 };
 
+/**
+ * 버튼 내용 위에 로딩 스피너를 겹친다. 로딩 중에도 내용을 `invisible`로 남겨 버튼 폭이 변하지 않게 한다.
+ * 스피너가 `absolute`로 가운데 겹치려면 부모 버튼에 `relative`가 있어야 한다.
+ */
 export function LoadingButtonContent({
   isLoading,
   loadingLabel,

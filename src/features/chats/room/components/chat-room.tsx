@@ -81,6 +81,21 @@ type ChatRoomProps = {
   chatId: string;
 };
 
+/**
+ * 채팅방 화면의 오케스트레이터. 상세 조회, 생성 스트림, 컴포저, 선택지, 투어와 각종 시트를 한곳에서 잇는다.
+ *
+ * @remarks
+ * - 전송, 재생성, 입력 수정은 `canUseChat` 을 먼저 통과한다. 순서는 게스트 동의, 게스트 체험 한도
+ *   (로그인 시트), 아는 잔액 부족(이프 부족 시트)이다. 서버의 402도 `handlePaymentRequired` 가 같은 시트로 보낸다.
+ *   포크는 회원 전용이라 게스트면 로그인 시트만 연다.
+ * - 재생성, 입력 수정, 포크와 작성 중 입력을 덮는 선택지 채우기는 확인 창을 거친다. 입력 수정 확인 창은 뒤에
+ *   이어진 턴이 있을 때만 위험색이다.
+ * - 스트림이 끝나면 `handleStreamCompleted` 가 편집기 정리, 로그인 초안 삭제, 체험과 잔액 무효화, 상세 재조회,
+ *   실시간 이미지 안내, 목록 쿼리 선조회, 선택지 생성을 이 순서로 처리한다.
+ * - 게스트가 한도에 막히면 보내려던 입력을 로그인 초안으로 저장하고, 로그인 뒤 다시 들어오면 첫 렌더에서 읽어
+ *   컴포저에 되살린 다음 저장본을 지운다.
+ * - 회원이 들어왔을 때 마지막 턴의 선택지가 비어 있으면 진행 중인 생성이 없을 때 한 번 생성한다.
+ */
 export function ChatRoom({ chatId }: ChatRoomProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -96,6 +111,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
   const [creditShortageOpen, setCreditShortageOpen] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const lastSubmitted = useRef<string | null>(null);
+  /**
+   * 생성 요청의 402를 사유별 시트로 보낸다. 게스트 체험 한도면 방금 보낸 입력을 로그인 초안으로 저장하고
+   * 로그인 시트를 열며, 이프 부족이면 충전 안내 시트를 연다. 사유를 가리지 못하면 실패 토스트를 띄운다.
+   *
+   * @param error 스트림 요청이 던진 402 에러
+   */
   const handlePaymentRequired = (error: unknown) => {
     if (
       resolvePaymentRequiredReason(error, sessionStatus) === 'guest-trial-limit'
@@ -166,6 +187,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     turnId: number;
     draft: string;
   } | null>(null);
+  /**
+   * 생성이 저장된 뒤 화면과 캐시를 맞춘다. 상세를 다시 받은 뒤에야 마지막 턴의 선택지 생성 여부를 판정할 수 있어
+   * 재조회를 기다린다.
+   *
+   * @param source 끝난 생성의 종류. 입력 수정만 편집기를 닫고, 전송만 실시간 이미지 안내 집계에 들어간다
+   */
   const handleStreamCompleted = async (source: GenerationKind) => {
     // 완료된 입력 수정만 편집기를 닫는다. 실패하면 고치던 입력이 편집기에 남아 다시 보낼 수 있다.
     if (source === 'edit') setEditing(null);
@@ -265,6 +292,12 @@ export function ChatRoom({ chatId }: ChatRoomProps) {
     return required !== undefined && creditBalance < required;
   };
 
+  /**
+   * 생성을 시작해도 되는지 확인하고, 막히면 해당 시트를 연다. 게스트 동의, 게스트 체험 한도, 아는 잔액 부족 순으로 본다.
+   *
+   * @param onLimit 게스트 체험 한도에 막혔을 때만 로그인 시트를 열기 전에 호출된다(입력을 초안으로 저장하는 데 쓴다)
+   * @returns 진행해도 되면 true, 동의 거절이나 한도, 잔액 부족으로 막혔으면 false
+   */
   const canUseChat = async (onLimit?: () => void) => {
     if (!(await requestConsent())) return false;
 

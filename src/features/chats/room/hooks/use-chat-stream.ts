@@ -1,5 +1,23 @@
 'use client';
 
+/**
+ * @file 채팅 생성 스트림 흐름의 정본 설명.
+ *
+ * 한 생성은 네 단계로 흐른다.
+ * 1. 요청 시작: `stream-chat-turn` 의 전송, 재생성, 입력 수정 API가 SSE 본문을 연다. 402와 409 같은 거절은 SSE가
+ *    아니라 동기 JSON 응답으로 와 `FetchError` 로 던져진다.
+ * 2. 파싱: `parse-sse-stream` 이 바이트 스트림을 `started`, `token`, `character-image`, `completed`, `error`
+ *    이벤트로 바꾼다.
+ * 3. 재연결: 서버는 연결이 끊겨도 생성을 계속하므로 `follow-chat-generation` 이 종료 이벤트 없이 닫힌 스트림에
+ *    `generationId` 로 다시 붙고, 모르면 상세에서 생성 중인 ID를 찾는다. 다시 붙으면 이벤트를 처음부터 받는다.
+ * 4. 확정: 이 훅의 `settle` 이 `completed`, `error`, `lost` 결과에 맞춰 상세를 다시 읽고 화면을 확정한다. 시작
+ *    요청의 402는 상위에 위임하고, 409는 보낸 입력을 입력창에 되돌린 뒤 다른 생성이 있으면 이어받는다.
+ *
+ * @see followChatGeneration
+ * @see parseSseStream
+ * @see streamChatTurnRaw
+ */
+
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import { toast } from 'sonner';
@@ -179,6 +197,17 @@ export function useChatStream({
     showFailure(turnNumber);
   };
 
+  /**
+   * 생성 하나를 종료까지 따라가고 결과를 확정한다. 시작 요청이 실패하면 사유별로 처리한다.
+   *
+   * @remarks
+   * 언마운트로 중단되면 아무것도 하지 않는다(서버는 생성을 계속한다). 402는 `onPaymentRequired` 에 넘기고,
+   * 409는 보낸 입력을 `onUnsent` 로 되돌린다. 그 밖의 실패는 요청이 서버에 닿았을 수 있어 상세를 다시 읽고,
+   * 생성 중인 턴이 있으면 이어받는다. 스트리밍 상태는 이 호출이 아직 최신 수신일 때만 해제해, 이어받기가 시작한
+   * 새 수신의 상태를 지우지 않는다.
+   *
+   * @param params 생성 종류, 시작 시점 턴 수, 처음 연결 함수나 이어받을 생성 ID
+   */
   const follow = async (params: FollowParams) => {
     const { turnNumber, open, generationId, unsentInput } = params;
     const controller = new AbortController();
@@ -248,6 +277,15 @@ export function useChatStream({
     }
   };
 
+  /**
+   * 새 턴을 전송한다. 전송 시작 시점의 턴 수를 끊긴 뒤 저장 여부를 가리는 기준으로 삼고, 서버가 낡은 화면을
+   * 가려내도록 마지막 턴 ID를 늘 싣는다(첫 턴은 null).
+   *
+   * @param userInput 다듬어진 사용자 입력
+   * @param userSource 입력 출처(직접 입력, 선택지, 채운 뒤 고친 선택지)
+   * @param selection 선택지에서 온 전송이면 서버 선택 메타데이터
+   * @returns 생성이 확정되거나 실패 처리가 끝나면 끝나는 Promise
+   */
   const send = (
     userInput: string,
     userSource?: ContinueChatRequestUserSource,
@@ -285,6 +323,9 @@ export function useChatStream({
   /**
    * 마지막 턴의 AI 응답을 재생성한다(스펙 §3-6 "재생성과 채팅 이미지").
    * 진행 중에는 대상 턴을 스트리밍 블록으로 대체하고, 실패 종류별 처리는 `settle`을 따른다.
+   *
+   * @param turn 응답을 다시 만들 마지막 턴
+   * @returns 생성이 끝나면 끝나는 Promise. `turn.id` 가 없으면 시작하지 않고 undefined를 돌려준다
    */
   const regenerate = (turn: ChatTurnResponse) => {
     if (turn.id == null) {
@@ -315,6 +356,7 @@ export function useChatStream({
    *
    * @param turn 입력을 고칠 턴
    * @param userInput 고친 입력
+   * @returns 생성이 끝나면 끝나는 Promise. `turn.id` 가 없으면 시작하지 않고 undefined를 돌려준다
    */
   const edit = (turn: ChatTurnResponse, userInput: string) => {
     if (turn.id == null) {
@@ -345,6 +387,7 @@ export function useChatStream({
    *
    * @param target 상세의 생성 중인 턴
    * @param detailTurns 그 상세의 확정 턴 목록
+   * @returns 생성이 끝나면 끝나는 Promise. 생성 ID가 없으면 시작하지 않고 undefined를 돌려준다
    */
   const resume = (
     target: GeneratingTurnResponse,

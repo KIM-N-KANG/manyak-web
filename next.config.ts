@@ -36,7 +36,9 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  // Dockerfile이 `.next/standalone` 산출물로 컨테이너 이미지를 만든다.
   output: 'standalone',
+  // React Compiler가 메모이제이션을 맡으므로 코드에서 useMemo, useCallback을 쓰지 않는다.
   reactCompiler: true,
   compiler: {
     // 프로덕션 빌드에서 콘솔 로그를 제거하되, debug 레벨은 남긴다.

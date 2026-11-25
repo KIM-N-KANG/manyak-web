@@ -4,7 +4,9 @@ const isCI = !!process.env.CI;
 // 로컬 개발 서버(3000)와 나란히 돌 수 있도록 E2E 전용 포트를 쓴다.
 const E2E_PORT = 3100;
 const baseURL = `http://localhost:${E2E_PORT}`;
+// E2E_SEO=1이면 서버 조회용 테스트 백엔드를 함께 띄우고 앱의 API_BASE_URL을 그쪽으로 돌린다.
 const seoServer = process.env.E2E_SEO === '1';
+// UI_CAPTURE=1(`pnpm ui:capture`, `pnpm ui:compare`)일 때만 화면 캡처 프로젝트를 추가한다.
 const captureScreens = process.env.UI_CAPTURE === '1';
 
 export default defineConfig({

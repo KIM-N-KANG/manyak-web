@@ -40,6 +40,7 @@ export function hasPreviousHistoryEntry({
  *
  * @param input 기록 인덱스와 같은 문서 여부, 더미 수, 히스토리 길이
  * @returns 아래에 앱 안 화면이 있으면 true
+ * @see hasPreviousHistoryEntry
  */
 export function hasPreviousInAppEntry({
   currentIndex,

@@ -1,3 +1,10 @@
+/** @file E2E 스펙이 페이지 로드 전에 브라우저 저장소를 심는 헬퍼 모음.
+ *
+ * 모든 시드는 `addInitScript`로 등록해 앱 스크립트보다 먼저 실행된다. init script는 새로고침과 이동마다
+ * 다시 돌기 때문에, 앱이 지운 기록이 되살아나면 안 되는 시드(이프 충전 대기 주문, 간편 제작 기록)는
+ * sessionStorage 마커로 탭당 한 번만 심는다.
+ * 간편 제작 기록은 앱과 같은 IndexedDB 스키마로 DB를 직접 열어 심고 `readCreationStorage`로 읽는다.
+ */
 import type { BrowserContext, Page } from '@playwright/test';
 
 import { PENDING_LOGIN_STORAGE_KEY } from '@/features/auth/_shared/utils/pending-login-storage';
@@ -112,6 +119,8 @@ export async function skipChatChoicesHint(page: Page): Promise<void> {
 /**
  * 결제창으로 나가기 직전 남긴 이프 충전 대기 주문을 심는다.
  * 그로블에서 `/my/credits`로 돌아와 주문 확인 카드가 폴링을 시작하는 상태를 재현한다.
+ *
+ * @param orderId 확인 카드가 폴링할 주문 ID. 탭당 한 번만 심으므로 앱이 지운 뒤 새로고침해도 되살아나지 않는다
  */
 export async function seedPendingCreditOrder(
   page: Page,
@@ -176,11 +185,6 @@ export async function seedStoryCompletionRequests(
 }
 
 /**
- * 이 탭에서 OAuth를 시작했다는 표시(sessionStorage)를 심는다.
- * OAuth 복귀·같은 탭 새로고침처럼 가입 동의 시트가 이어져야 하는 상태를 재현한다. 심지 않으면
- * 세션 없는 화면은 가입 대기를 조회하지 않는다.
- */
-/**
  * 신규 가입 초대 코드 안내 대기를 이전 접속에서 이미 본 상태를 심는다.
  * 가입한 접속이 끝난 다음 접속이 되어 안내가 홈 탭에서 열린다.
  *
@@ -199,6 +203,12 @@ export async function seedInviteOnboardingNextRun(
   );
 }
 
+/**
+ * 이 탭에서 OAuth를 시작했다는 표시(sessionStorage)를 심는다.
+ * OAuth 복귀, 같은 탭 새로고침처럼 가입 동의 시트가 이어져야 하는 상태를 재현한다. 심지 않으면
+ * 세션 없는 화면은 가입 대기를 조회하지 않는다. 마커 없이 로드마다 다시 심으므로 앱이 지워도 다음 로드에서
+ * 되살아난다.
+ */
 export async function seedPendingLogin(page: Page): Promise<void> {
   await page.addInitScript((key) => {
     window.sessionStorage.setItem(key, '1');
@@ -221,7 +231,16 @@ export async function seedGuestChatIds(
   );
 }
 
-/** 앱보다 먼저 DB 초기화를 예약하며 새로고침에서 같은 데이터를 다시 심지 않는다. */
+/**
+ * 앱보다 먼저 DB 초기화를 예약하며 새로고침에서 같은 데이터를 다시 심지 않는다.
+ *
+ * @remarks
+ * 앱의 `creationDb`(Dexie `version(1)`, IndexedDB 버전 10)와 같은 스토어와 인덱스를 직접 만든다. 앱이 스키마
+ * 버전이나 스토어 구성을 바꾸면 이 함수도 함께 바꿔야 한다. 어긋나면 시드가 앱과 다른 스키마로 DB를 먼저 만든다.
+ * `storageOrder`는 `metadata`의 `sequence`를 이어 붙여 매기므로 심은 순서가 목록 순서가 된다.
+ *
+ * @param table 레코드를 넣을 스토어
+ */
 async function seedCreationRecords(
   page: Page,
   table: 'pendingCreations' | 'storyCompletions',
@@ -283,7 +302,13 @@ async function seedCreationRecords(
   );
 }
 
-/** 실제 IndexedDB의 레코드를 기존 JSON 단언 형식으로 읽는다. */
+/**
+ * 실제 IndexedDB의 레코드를 기존 JSON 단언 형식으로 읽는다.
+ *
+ * @param key 예전 로컬스토리지 키. `STORY_COMPLETION_REQUESTS_STORAGE_KEY`면 완성 요청 스토어를, 그 밖의 키는
+ *   진행 중 생성 스토어를 읽는다
+ * @returns `storageOrder` 순 레코드 배열의 JSON 문자열. 레코드가 없으면 null이다
+ */
 export async function readCreationStorage(
   page: Page,
   key: string,

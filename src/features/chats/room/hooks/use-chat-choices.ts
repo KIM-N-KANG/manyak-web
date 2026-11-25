@@ -5,8 +5,11 @@ import { useRef, useState } from 'react';
 import { useGenerateChoices } from '@/api/generated/endpoints/chats/chats';
 import { useGuestConsent } from '@/features/auth/_shared/components/guest-consent-provider';
 
+/** 선택지 생성 진행 상태. 성공하면 상세 재조회 뒤 null로 돌아간다. */
 export type ChoicesStatus = {
+  /** 생성을 요청한 턴 ID. 화면은 이 ID가 마지막 턴과 같을 때만 상태를 보여 새 턴이 오면 낡은 상태가 빠진다. */
   turnId: number;
+  /** 생성 중이면 `loading`, 실패해 다시 시도할 수 있으면 `error` 다. */
   status: 'loading' | 'error';
 };
 

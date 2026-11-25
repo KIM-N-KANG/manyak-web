@@ -1,3 +1,7 @@
+/** @file 로그인 직후 필수 동의 게이트 스펙(FE-SCREEN-010 동의 모델, 웹 사용자 모델, QA AUTH-CONSENT).
+ * 동의 조회(GET /users/me/consents)가 정본이고, 필요 항목이 남으면 전역 모달 시트가 회원
+ * 기능과 부수 효과를 막는다. OAuth는 외부 의존이라 회원 세션 목과 탭 로그인 표시로 대신한다.
+ */
 import { type Page } from '@playwright/test';
 
 import type { UserConsentResponse } from '@/api/generated/models';
@@ -23,11 +27,6 @@ import {
   test,
 } from '../fixtures/test';
 
-/**
- * 로그인 직후 필수 동의 게이트 스펙(FE-SCREEN-010 동의 모델, 웹 사용자 모델, QA AUTH-CONSENT).
- * 동의 조회(GET /users/me/consents)가 정본이고, 필요 항목이 남으면 전역 모달 시트가 회원
- * 기능·부수 효과를 막는다. OAuth는 외부 의존이라 회원 세션 목과 탭 로그인 표시로 대신한다.
- */
 const CONSENTS = '**/api/v1/users/me/consents';
 const MY_STORIES = '**/api/v1/users/me/stories*';
 const MIGRATE = '**/api/v1/auth/migrate';

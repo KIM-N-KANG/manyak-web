@@ -1,3 +1,11 @@
+/**
+ * @file BFF 서버의 백엔드 세션 관리.
+ * 세 갈래로 나뉜다. 요청마다 access 토큰을 확보하고 필요하면 재발급하는 `ensureFreshAccessToken`
+ * (프록시와 재발급 게이트 라우트가 쓴다), 소셜 로그인으로 세션을 수립하거나 동의 대기로 넘기는
+ * `authenticateSocialLogin`, 동의 대기를 가입 완료로 마무리하는 `completeSignupConsent`(둘 다
+ * `auth.ts` 콜백이 쓴다)다. 토큰 쿠키는 모든 검증을 통과한 뒤에만 쓴다.
+ */
+
 import {
   type MeResponse,
   SocialAuthResponseStatus,

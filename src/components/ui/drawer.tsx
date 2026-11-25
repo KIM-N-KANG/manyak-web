@@ -30,6 +30,10 @@ function useDrawer() {
   return context;
 }
 
+/**
+ * Drawer Root에 뒤로가기 닫기를 더한 래퍼. 열려 있는 동안 히스토리 레이어를 쌓아 브라우저, 기기
+ * 뒤로가기로 닫고, 제어와 비제어 `open`을 합쳐 Base UI에는 항상 제어 모드로 넘긴다.
+ */
 function Drawer({
   modal = true,
   showSwipeHandle = true,
@@ -41,8 +45,15 @@ function Drawer({
   onOpenChange,
   ...props
 }: DrawerPrimitive.Root.Props & {
+  /**
+   * 팝업 위쪽에 끌어서 닫는 손잡이를 그린다. shadcn 원본과 달리 기본으로 켠다.
+   * @default true
+   */
   showSwipeHandle?: boolean;
-  /** 거짓이면 브라우저·기기 뒤로가기로 닫지 않는다. 뒤로가기에 다른 의미를 주는 시트만 끈다. */
+  /**
+   * 거짓이면 브라우저, 기기 뒤로가기로 닫지 않는다. 뒤로가기에 다른 의미를 주는 시트만 끈다.
+   * @default true
+   */
   closeOnBack?: boolean;
 }) {
   const hasSnapPoints = snapPoints != null && snapPoints.length > 0;

@@ -9,11 +9,17 @@ import { type RevealHint, useRevealedHints } from '@/hooks/use-revealed-hints';
 const NO_HINTS: ReadonlyArray<RevealHint> = [];
 
 type StoryGeneratingLoadingProps = {
+  /** 4초마다 돌아가며 보이는 진행 문구 */
   phrases: string[];
   label: string;
+  /** 로딩이 길어질 때 덧붙이는 안내. `delayMs`는 이 컴포넌트가 마운트된 뒤 경과 시간(ms)이다. */
   hints?: ReadonlyArray<RevealHint>;
 };
 
+/**
+ * 스토리라인 생성과 스토리 완성의 로딩 문구. 진행 문구를 돌려 보이고, 시간이 지나면 경과 시간 구분선과 안내를
+ * 차례로 덧붙인다.
+ */
 export function StoryGeneratingLoading({
   phrases,
   label,

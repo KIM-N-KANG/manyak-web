@@ -1,7 +1,8 @@
+/** @file 일반 제작 검수 제출본을 읽는 파서. 생성 타입이 느슨한 객체라 등록 흐름과 제작 탭이 쓰는 값만 직접 좁힌다. */
+
 import type { CreateGeneralStoryRequestVisibility } from '@/api/generated/models';
 
-/** 일반 제작 검수 제출본을 읽는 파서. 생성 타입이 느슨한 객체라 등록 흐름과 제작 탭이 쓰는 값만 직접 좁힌다. */
-
+/** 제출본의 검수 상태다. 검토 중(`PENDING`)에서 승인, 반려, 실패 중 하나로 끝난다. */
 export type StorySubmissionStatus =
   | 'PENDING'
   | 'APPROVED'
@@ -57,12 +58,17 @@ export type StorySubmissionIssue = { path: string; reason: string };
 /** 검수가 이미지 하나에 남긴 실행 오류다. */
 export type StorySubmissionImageError = { path: string; errorCode: string };
 
+/** 검수 제출본 하나다. */
 export type StorySubmission = {
   submissionId: string;
+  /** 신규 등록(`CREATE`)인지 기존 스토리 수정(`UPDATE`)인지다. 모르는 값은 신규 등록으로 읽는다. */
   kind: 'CREATE' | 'UPDATE';
   status: StorySubmissionStatus;
+  /** 승인된 스토리 id다. 승인 상태여도 아직 null일 수 있어 검수 폴링은 id가 생길 때까지 기다린다. */
   storyId: string | null;
+  /** 접수 시각 문자열이다. 제작 탭 카드에 보인다. */
   createdAt: string | null;
+  /** 검수가 남긴 오류 코드다. `IMAGE_`로 시작하면 이미지 문제로 안내한다. */
   errorCode: string | null;
   issues: StorySubmissionIssue[];
   imageErrors: StorySubmissionImageError[];

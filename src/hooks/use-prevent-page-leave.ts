@@ -26,6 +26,7 @@ type UsePreventPageLeaveOptions = {
  * @param interceptBack 뒤로가기를 흡수할지 여부
  * @param onBackAttempt 뒤로가기를 흡수했을 때 호출되는 콜백
  * @returns 이탈 확정(`confirmLeave`)과 정리 후 이동(`leaveAfterCleanup`) 함수
+ * @see useBackLayer
  */
 export function usePreventPageLeave({
   warnOnUnload,

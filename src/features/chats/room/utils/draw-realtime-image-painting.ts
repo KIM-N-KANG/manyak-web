@@ -39,6 +39,7 @@ import {
 export type Painted = (cue: RealtimeImageCue) => number;
 
 const PI = Math.PI;
+/** 눈 획을 따라 속눈썹을 긋는 위치. 획 길이에 대한 0..1 비율이다. */
 const LASH_TICKS = [0.25, 0.5, 0.78];
 /**
  * 처음부터 끝까지 같은 굵기로 칠하는 결이다. 영역 안으로 잘라 칠하는 밑칠에 쓴다.

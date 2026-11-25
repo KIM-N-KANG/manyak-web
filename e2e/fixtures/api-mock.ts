@@ -1,3 +1,13 @@
+/** @file E2E 공용 API 목 모음.
+ *
+ * `mockApi`는 확장 `test` 픽스처가 모든 페이지에 자동 적용하는 안전망이다. `/api/**` 전체를 `[]`로 막고,
+ * 화면 문구와 회원 기능이 기대는 조회(이프 정책, 채팅 모델, 체험, 동의, 가입 동의, 장르, 화풍, 푸시 설정, 서버 임시 저장)에
+ * 기본 응답을 깐다. 그 아래에는 기능별 `mock*` 함수, 스펙이 같은 값을 단언하는 `*_FIXTURE` 상수,
+ * 라우트 함수 안에서 요청을 고르는 `is*Url` 판별기가 이어진다.
+ *
+ * `page.route`는 나중에 등록한 핸들러가 먼저 매칭되므로 스펙은 `mockApi` 뒤에 `mock*`나 `page.route`를
+ * 다시 등록해 기본 응답을 덮는다.
+ */
 import type { Page } from '@playwright/test';
 
 import type {
@@ -26,6 +36,10 @@ import {
  * 모든 백엔드 호출은 /api/[...path] 프록시를 거친다.
  * 스모크(빈 상태)에선 목록 API가 호출되지 않지만, 어떤 요청도 실서버로 새지 않도록 가로챈다.
  * 구체 응답이 필요한 테스트는 이 함수 호출 뒤 page.route를 추가 등록해 override한다.
+ *
+ * @remarks
+ * 맨 먼저 등록한 catch-all이 우선순위가 가장 낮다. 그 위에 세션, 이프 정책, 채팅 모델, 체험, 동의, 가입 동의,
+ * 장르, 화풍, 푸시 설정, 서버 임시 저장 기본 목을 차례로 얹는다. 기본 목마다 빠지면 깨지는 화면은 본문 주석이 설명한다.
  */
 export async function mockApi(page: Page): Promise<void> {
   // page.route는 나중에 등록한 핸들러가 먼저 매칭되므로, 더 구체적인 라우트를
@@ -328,10 +342,15 @@ export async function mockStoryDrafts(
   return mock;
 }
 
+/**
+ * 게스트 동의 목이 현행으로 내려주는 개인정보 동의 버전이다. 저장 요청의 `guestPrivacy`가 이 값과 다르면
+ * 목은 `CONSENT_VERSION_MISMATCH`로 거절하므로, 스펙은 같은 상수로 요청 본문을 단언한다.
+ */
 export const GUEST_CONSENT_VERSION_FIXTURE = 'guest-v1';
 
 /**
  * 기기별 게스트 동의 조회와 저장을 목킹한다.
+ *
  * @param page 대상 페이지
  * @param needsConsent 처음 조회 시 동의 필요 여부
  */

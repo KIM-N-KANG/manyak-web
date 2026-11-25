@@ -43,6 +43,11 @@ type GeneralStoryImageFieldProps = {
   onChange: (image: DraftImage | null) => void;
 };
 
+/**
+ * 표지나 인물 이미지 칸. 파일 선택, 자르기 시트, 등록 전 업로드, 미리보기, 등록 오류 표시를 묶는다.
+ * `kind`는 업로드 URL을 받을 때의 이미지 종류다. 미리보기 버튼은 같은 동작의 아래 버튼과 겹치므로
+ * 보조 기술과 탭 이동에서 숨긴다.
+ */
 export function GeneralStoryImageField({
   id,
   label,

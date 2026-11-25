@@ -23,6 +23,11 @@ import { KAKAO_SDK_URL, useKakaoShare } from '../hooks/use-kakao-share';
 import { InviteCodeForm } from './invite-code-form';
 import { InviteRewardDescription } from './invite-reward-description';
 
+/**
+ * 내 초대 코드를 보여 주고 복사, 카카오톡 공유, 다른 사람 코드 등록을 제공하는 초대 화면.
+ * 카카오 SDK가 준비되기 전에는 공유 버튼을 비활성화하고, 이번 달 보상 진행은 서버가 횟수와
+ * 상한을 모두 돌려줄 때만 보인다. 비로그인으로 확정되면 로그인 화면으로 replace한다.
+ */
 export function InviteScreen() {
   const { data: session, status } = useSession();
   const { isMember } = useMemberAccess();

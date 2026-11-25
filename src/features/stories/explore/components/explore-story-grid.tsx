@@ -22,6 +22,14 @@ type ExploreStoryGridProps = {
   fetchNextPage: () => unknown;
 };
 
+/**
+ * 두 열 스토리 표지 그리드와 무한 스크롤.
+ *
+ * @remarks
+ * 목록 끝 감시 요소가 화면 아래 400px 안에 들어오면 다음 페이지를 받는다. 다음 페이지 조회가 실패하면 자동 재요청을
+ * 멈추고 목록 끝에 다시 시도 버튼을 둔다. 받는 동안에는 마지막 줄의 빈 칸까지 골격으로 채운다. 칸은 순번을 키로 써서
+ * 목록이 바뀌어도 자리를 유지한다.
+ */
 export function ExploreStoryGrid({
   stories,
   section,

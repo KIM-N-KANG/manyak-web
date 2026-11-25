@@ -31,6 +31,7 @@ type GeneralStoryInputFieldProps = {
   error?: string | null;
   /** 등록하기를 누른 뒤 이 칸의 오류를 찾는 키다(`REGISTER_ERROR_KEY`). */
   registerErrorKey?: string;
+  /** 숫자 칸이면 `'numeric'`이다. 이때는 최소 글자 수를 보지 않는다. */
   inputMode?: 'numeric';
   /** 한 줄 입력 오른쪽 끝에 붙는 단위다. 글자 수 대신 표시한다. */
   suffix?: string;
@@ -40,6 +41,13 @@ type GeneralStoryInputFieldProps = {
   inputRef?: Ref<HTMLInputElement>;
 };
 
+/**
+ * 일반 제작 폼의 글 입력 칸. 한 줄과 여러 줄 입력을 같은 라벨, 오류, 설명 배치로 그린다.
+ *
+ * @remarks
+ * 오류는 `error`, 등록 오류, 최소 글자 수 순으로 하나만 보이고 오류가 있으면 설명 대신 보인다. 최소 글자 수
+ * 오류는 칸을 한 번 벗어난(blur) 뒤부터 보인다. 입력 끝에는 `suffix`가 있으면 그것을, 없으면 글자 수를 둔다.
+ */
 export function GeneralStoryInputField({
   id,
   label,

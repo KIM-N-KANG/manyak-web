@@ -1,3 +1,10 @@
+/**
+ * @file 일반 제작 임시 저장 스냅숏과 서버 임시 저장 payload 사이의 변환.
+ *
+ * 폼 스냅숏(`GeneralStoryDraftSnapshot`)을 그대로 payload에 싣되 이미지는 객체 키만 보낸다. 서버에서 읽은
+ * payload는 이미지 원본 파일이 없으므로(`blob: null`) 폼은 상세 응답의 미리보기 URL로 이미지를 그린다.
+ */
+
 import type { JsonNode, PutStoryDraftRequest } from '@/api/generated/models';
 import type {
   GeneralStoryDraftImage,

@@ -7,6 +7,12 @@ const HANGUL_FINAL_CONSONANT_COUNT = 28;
  *
  * @param word 검사할 낱말
  * @returns 받침이 있으면 참
+ * @example
+ * ```ts
+ * hasFinalConsonant('채팅'); // true
+ * hasFinalConsonant('스토리'); // false
+ * hasFinalConsonant('AI'); // false
+ * ```
  */
 export function hasFinalConsonant(word: string) {
   const offset = word.charCodeAt(word.length - 1) - HANGUL_SYLLABLE_START;
@@ -27,6 +33,12 @@ const FINAL_CONSONANT_RIEUL = 8;
  *
  * @param word 조사를 붙일 낱말
  * @returns "으로" 또는 "로"
+ * @example
+ * ```ts
+ * getEuroParticle('채팅'); // '으로'
+ * getEuroParticle('서울'); // '로'
+ * getEuroParticle('스토리'); // '로'
+ * ```
  */
 export function getEuroParticle(word: string): '으로' | '로' {
   const offset = word.charCodeAt(word.length - 1) - HANGUL_SYLLABLE_START;

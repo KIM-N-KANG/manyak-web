@@ -28,6 +28,11 @@ type GeneralStorySubmissionEntryProps = {
   submissionId: string;
 };
 
+/**
+ * 반려되거나 실패한 제출본을 고쳐 다시 제출하는 화면의 진입. 제출본을 진입할 때마다 새로 받아, 고칠 수 있는
+ * 신규 등록 제출본(반려, 실패)이면 장르 목록까지 기다린 뒤 폼을 연다. 검토 중이면 안내 후 제작 탭으로,
+ * 승인돼 스토리가 있으면 상세로, 그 밖에는 조회 실패로 안내하고 제작 탭으로 한 번만 떠난다.
+ */
 export function GeneralStorySubmissionEntry({
   submissionId,
 }: GeneralStorySubmissionEntryProps) {

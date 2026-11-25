@@ -1,3 +1,9 @@
+/**
+ * @file 실시간 이미지 대기 무대를 캔버스에 그리는 함수 모음.
+ *
+ * @see realtime-image-choreography.ts 파일 머리 주석(무대 좌표계와 막, cue 안무)
+ */
+
 import {
   clamp01,
   drawBeret,
@@ -62,7 +68,9 @@ const PI = Math.PI;
 const CONTENT_SCALE = 0.72;
 const PAPER_TOP_LEFT = point(PAPER.left, PAPER.top);
 const PAPER_TOP_CENTER = point((PAPER.left + PAPER.right) / 2, PAPER.top);
+/** 모든 cue를 아직 긋지 않은 `Painted`. 책장을 넘기는 동안 아래 깔린 새 도화지를 빈 채로 그린다. */
 const BLANK = () => Number.NEGATIVE_INFINITY;
+/** 모든 cue를 다 그린 `Painted`. 넘어가는 앞장을 완성된 그림으로 그린다. */
 const DONE = () => Number.POSITIVE_INFINITY;
 
 /**
@@ -678,6 +686,10 @@ function drawRelief(stage: Stage, actMillis: number, pose: MascotPose) {
   }
 }
 
+/**
+ * 고민하는 동안 머리 위로 떠오르는 생각 점. 각 튜플은 `[dx, dy, 반지름, 등장 시점]` 이다. dx, dy, 반지름은 집
+ * 자리 마스코트의 머리 꼭대기를 기준으로 한 무대 폭 단위 값이고, 등장 시점은 PONDER cue 길이에 대한 0..1 비율이다.
+ */
 const THOUGHT_DOTS: [number, number, number, number][] = [
   [0.06, -0.016, 0.006, 0.2],
   [0.082, -0.046, 0.008, 0.45],
