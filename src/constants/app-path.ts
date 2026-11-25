@@ -56,7 +56,7 @@ export const APP_PATH = {
     STORY: {
       /** 간편 제작과 일반 제작 중 하나를 고르는 화면이다. */
       SELECT: '/studio/story',
-      /** 간편 제작 퍼널이다. 남아 있는 구 제작 경로 페이지는 여기로 영구 리다이렉트한다. */
+      /** 간편 제작 퍼널이다. 구 제작 경로 `/create/story`, `/stories/new` 페이지는 여기로 영구 리다이렉트한다. */
       SIMPLE: '/studio/story/simple',
       /** 새 일반 제작 폼이다. */
       GENERAL: '/studio/story/general',
@@ -66,8 +66,9 @@ export const APP_PATH = {
     },
   },
   /**
-   * 예전 제작 경로다. 링크 대상으로 쓰지 않는다. `/create/story`, `/stories/new` 페이지는
-   * `STUDIO.STORY.SIMPLE`로 영구 리다이렉트만 하고, `NEW_STORY`는 스토리 상세 판별에서 제외할 때 쓴다.
+   * 예전 제작 경로다. 링크 대상으로 쓰지 않는다. `/create` 페이지는 제작 탭(`MAIN.STUDIO`)으로,
+   * `/create/story`, `/stories/new` 페이지는 `STUDIO.STORY.SIMPLE`로 영구 리다이렉트만 한다.
+   * `NEW_STORY`는 스토리 상세 판별에서 제외할 때 쓴다.
    */
   LEGACY: {
     CREATE: '/create',

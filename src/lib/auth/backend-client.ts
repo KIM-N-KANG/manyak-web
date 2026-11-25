@@ -61,7 +61,7 @@ const resolveApiBaseUrl = (): string => {
  * @param path 백엔드 API 경로(생성된 URL 빌더로 만든 값)
  * @param init fetch 요청 옵션
  * @returns 파싱된 응답 본문
- * @throws {BackendAuthError} 응답이 ok가 아니면
+ * @throws {BackendAuthError} 응답이 ok가 아니면. 설정, 네트워크, 타임아웃, 본문 파싱 오류는 감싸지 않고 그대로 전파한다.
  */
 const requestBackend = async <T>(
   path: string,

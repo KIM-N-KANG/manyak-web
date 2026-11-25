@@ -6,7 +6,8 @@
  * - 완성 기록(`storyCompletions`): `addStoryCompletionRequest`가 진행 기록을 옮겨 만든다. 성공하면
  *   `markPendingStoryCreated`로 확정하고, 실패하면 `demotePendingCompletionToDraft`로 초안에 되돌린다.
  * - 모든 쓰기는 호출자가 미리 읽어 둔 세대값(epoch)을 받아 같은 트랜잭션 안에서 다시 확인한다. 그 사이
- *   세션이 끝났으면 쓰지 않는다. 쓰기 함수는 reject하지 않고 false를 돌려주며, 읽기 함수는 초기화 실패를 reject한다.
+ *   세션이 끝났으면 쓰지 않는다. `writeCreation`을 거치는 쓰기 함수는 reject하지 않고 false를 돌려주며, 읽기 함수와
+ *   `clearCreationStorage`는 실패를 reject한다.
  * - 첫 접근 때 `initializeCreationStorage`가 구 localStorage 저장값을 한 번 이관한다.
  */
 import type {
@@ -761,7 +762,7 @@ function withServerDraftLink<Record extends ServerDraftLink>(
 }
 
 /**
- * 진행 기록을 저장하며 최초 시각과 목록 내 순서를 유지한다. 새 레코드면 순번을 발급해 `metadata`도 저장한다.
+ * 진행 기록을 저장하며 최초 시각과 목록 내 순서를 유지한다. 새 레코드면 순번을 발급하고, `metadata`는 매번 저장한다.
  *
  * @param previous 이어받을 기존 레코드. 없으면 같은 requestId의 레코드를 찾아 쓴다.
  */
