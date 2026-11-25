@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "api:generate": "orval --config ./orval.config.ts && eslint --fix src/api/generated",
+    "api:generate": "orval --config ./orval.config.ts && eslint --fix src/api/generated && prettier --write src/api/generated",
     "dev": "next dev",
     "dev:grab": "REACT_GRAB=1 next dev",
     "build": "next build",
