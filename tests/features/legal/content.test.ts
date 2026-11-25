@@ -78,6 +78,15 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('보너스를 포함한 적립 총량으로 나눈 값');
     expect(text).toContain('종료 후 30일 이상 환불 요청을 받습니다');
     expect(text).toContain('잘못 낸 대금을 환급합니다');
+    expect(text).toContain(
+      '상품별 가격(원)과 적립되는 이프 수량은 구매 전에 이프 충전 화면에 표시',
+    );
+    expect(text).toContain('만료일이 가까운 것부터 사용됩니다');
+    expect(text).toContain('알 수 있었던 날부터 30일 이내에 청약을 철회');
+    expect(text).toContain(
+      '결제일부터 7일(이프가 그보다 늦게 적립된 경우 적립일부터 7일)이 지났거나',
+    );
+    expect(text).not.toContain('제4항의 기간');
     expect(text).not.toContain('무료·시험적 서비스의 특성상');
   });
 
@@ -85,6 +94,9 @@ describe('법적 문서 콘텐츠', () => {
     const text = collectText(termsContent);
 
     expect(text).toContain('개정 전후 내용을 비교하여');
+    expect(text).toContain(
+      '회원에게는 서비스 화면의 알림 등으로 따로 알립니다',
+    );
     expect(text).toContain('적용일 전날까지 거부 의사를 표시하지 않으면');
     expect(text).toContain('개정 약관에 동의한 것으로 봅니다');
     expect(text).toContain(
@@ -205,14 +217,47 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('유상 이프 구매 정보: 주문 공개 식별자');
     expect(text).toContain('판매자인 운영자에게 제공하는 휴대전화번호');
     expect(text).toContain('카드번호 등 결제수단 정보는 받지 않습니다');
-    expect(text).toContain('청약철회와 환불 요청 정보');
-    expect(text).toContain('그로블로부터 제공받습니다');
+    expect(text).toContain(
+      '판매자가 수집하도록 설정한 경우의 주문자명과 이메일',
+    );
+    expect(text).toContain('Kakao 공유, 그로블 결제창, 외부 웹사이트');
+    expect(text).toContain(
+      '그로블의 판매 관리 화면에서 주문을 확인할 때 그로블로부터 제공받고',
+    );
     expect(text).toContain('유상 이프의 결제 확인과 적립, 청약철회와 환불');
     expect(text).toContain('같은 법 시행령 제6조');
     expect(text).toContain('대금결제 및 재화 등의 공급에 관한 기록은 5년');
     expect(text).toContain('소비자의 불만 또는 분쟁처리에 관한 기록은 3년');
+    expect(text).toContain(
+      '회원 탈퇴 후에도 이 기간 동안 다른 정보와 분리하여 보관',
+    );
     expect(text).toContain('주문 공개 식별자를 그로블 결제창 주소에 담아 전달');
-    expect(text).toContain('통신판매중개자로서 자체 개인정보 처리방침에 따라');
+    expect(text).toContain(
+      '통신판매중개자로서 자체 개인정보 처리방침에 따라 결제 정보를 처리하므로 수탁자에 포함하지 않습니다',
+    );
+    expect(text).toContain(
+      '보존해야 하는 거래기록은 다른 정보와 분리하여 제4항의 기간 동안 보관',
+    );
+  });
+
+  it('개인정보 처리방침은 문의처 이메일 요청의 수집, 보관과 Gmail 국외 이전을 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain(
+      '이메일 문의와 요청 정보: 문의처 이메일로 권리 행사',
+    );
+    expect(text).toContain('이용자가 문의처로 이메일을 보낼 때 수집됩니다');
+    expect(text).toContain(
+      '청약철회와 환불 요청은 위 계약 또는 청약철회 등에 관한 기록으로 5년',
+    );
+    expect(text).toContain('처리 완료일부터 1년 보관한 후 Gmail에서 파기');
+    expect(text).toContain(
+      '확인을 마친 뒤 지체 없이 파기하고 처리 결과만 보관',
+    );
+    expect(text).toContain('문의처 이메일의 수신과 보관');
+    expect(text).toContain(
+      'Gmail 수신과 보관 / 이용자가 이메일을 보낼 때 전송',
+    );
   });
 
   it('개인정보 처리방침은 실제 수탁자와 국외 이전 항목을 고지한다', () => {
@@ -228,7 +273,7 @@ describe('법적 문서 콘텐츠', () => {
       'Amplitude, Inc.',
       'Functional Software, Inc. (Sentry)',
       'Slack Technologies, LLC',
-      'Google LLC (Google Forms·Sheets)',
+      'Google LLC (Google Forms·Sheets, Gmail)',
     ]) {
       expect(text).toContain(processor);
     }
