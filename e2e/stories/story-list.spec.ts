@@ -668,7 +668,7 @@ test.describe('홈·제작 스토리 목록', () => {
     expect(cards[2][0] - cards[1][1]).toBeCloseTo(8, 0);
     expect(rowWidth - cards[2][0]).toBeCloseTo(8, 0);
 
-    // 넘기는 버튼은 두지 않는다.
+    // 넘김 버튼은 마우스를 쓰는 화면에만 두므로 터치 기기에는 없다.
     await expect(main.getByRole('button')).toHaveCount(0);
 
     const authorlessCard = row
@@ -1385,5 +1385,126 @@ test.describe('홈·제작 스토리 목록', () => {
     await expect(
       page.getByRole('article').getByText('회원의 서재', { exact: true }),
     ).not.toBeVisible();
+  });
+});
+
+test.describe('홈 섹션 넘김 버튼 (데스크톱 마우스)', () => {
+  // 기본 프로젝트는 터치 기기라 마우스를 쓰는 데스크톱 화면으로 바꾼다.
+  test.use({
+    viewport: { width: 1280, height: 800 },
+    isMobile: false,
+    hasTouch: false,
+    deviceScaleFactor: 1,
+  });
+
+  test('카드 줄의 넘길 수 있는 쪽에 마우스를 올리면 그쪽 넘김 버튼이 나타나 두 장씩 넘긴다 (STORY-LIST-53)', async ({
+    page,
+  }) => {
+    await mockHomeSections(page, [
+      {
+        id: 'section-1',
+        name: '지금 인기 있는 스토리',
+        items: ['1', '2', '3', '4', '5', '6'].map((id) =>
+          originalStory(`a${id}`, `카드 ${id}`),
+        ),
+      },
+      {
+        name: '오리지널 스토리',
+        items: [originalStory('b1', '오리지널 카드')],
+      },
+    ]);
+
+    await page.goto('/');
+
+    const main = page.getByRole('main');
+    const section = main.getByRole('region', { name: '지금 인기 있는 스토리' });
+    const row = section.getByRole('list');
+    const prev = section.getByRole('button', {
+      name: STORY_LIST_COPY.prevLabel,
+      includeHidden: true,
+    });
+    const next = section.getByRole('button', {
+      name: STORY_LIST_COPY.nextLabel,
+      includeHidden: true,
+    });
+    const rowBox = await row.boundingBox();
+
+    if (!rowBox) throw new Error('카드 줄의 위치를 읽지 못했어요.');
+
+    // 카드 한 장과 카드 사이 8px. 버튼은 이 거리의 두 배를 넘긴다.
+    const cardStep = await row.evaluate(
+      (element) =>
+        (element.querySelector('li')?.getBoundingClientRect().width ?? 0) + 8,
+    );
+    const hoverRow = (ratio: number) =>
+      page.mouse.move(rowBox.x + rowBox.width * ratio, rowBox.y + 80);
+    const expectScrollLeft = (expected: number) =>
+      expect
+        .poll(async () =>
+          Math.abs(
+            (await row.evaluate((element) => element.scrollLeft)) - expected,
+          ),
+        )
+        .toBeLessThanOrEqual(1);
+
+    // 마우스를 올리기 전에는 두 버튼 모두 보이지 않는다.
+    await expect(next).toHaveCSS('opacity', '0');
+    await expect(prev).toHaveCSS('opacity', '0');
+
+    // 오른쪽에 올리면 다음 버튼만 나타난다. 처음에는 이전으로 넘길 카드가 없다.
+    await hoverRow(0.75);
+    await expect(next).toHaveCSS('opacity', '1');
+    await hoverRow(0.25);
+    await expect(prev).toBeDisabled();
+    await expect(prev).toHaveCSS('opacity', '0');
+    await expect(next).toHaveCSS('opacity', '0');
+
+    // 다음 버튼은 두 장을 넘겨 셋째 카드를 왼쪽 여백에 맞춘다.
+    await hoverRow(0.75);
+    await next.click();
+    await expectScrollLeft(cardStep * 2);
+
+    // 넘긴 자리에서는 앞 카드와 뒤 카드가 양옆에 8px씩 보인다.
+    const peeks = await row.evaluate((element) => {
+      const rowBox = element.getBoundingClientRect();
+      const cards = [...element.children].map((child) =>
+        child.getBoundingClientRect(),
+      );
+
+      return [cards[1].right - rowBox.left, rowBox.right - cards[4].left];
+    });
+
+    expect(Math.abs(peeks[0] - 8)).toBeLessThanOrEqual(1);
+    expect(Math.abs(peeks[1] - 8)).toBeLessThanOrEqual(1);
+
+    // 넘긴 뒤 왼쪽에 올리면 이전 버튼이 나타나 처음으로 돌아간다.
+    await hoverRow(0.25);
+    await expect(prev).toHaveCSS('opacity', '1');
+    await prev.click();
+    await expectScrollLeft(0);
+    await expect(prev).toBeDisabled();
+
+    // 줄을 벗어나면 숨긴다.
+    await hoverRow(0.75);
+    await expect(next).toHaveCSS('opacity', '1');
+    await page.mouse.move(0, 0);
+    await expect(next).toHaveCSS('opacity', '0');
+
+    // 넘길 카드가 없는 줄은 마우스를 올려도 버튼이 나타나지 않는다.
+    const singleSection = main.getByRole('region', { name: '오리지널 스토리' });
+    const singleBox = await singleSection.getByRole('list').boundingBox();
+
+    if (!singleBox) throw new Error('카드 줄의 위치를 읽지 못했어요.');
+
+    await page.mouse.move(
+      singleBox.x + singleBox.width * 0.75,
+      singleBox.y + 80,
+    );
+    await expect(
+      singleSection.getByRole('button', {
+        name: STORY_LIST_COPY.nextLabel,
+        includeHidden: true,
+      }),
+    ).toHaveCSS('opacity', '0');
   });
 });
