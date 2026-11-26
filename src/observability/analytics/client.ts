@@ -16,6 +16,7 @@ export function deriveScreenName(name: AnalyticsEventName): string {
   return name.split('_')[1];
 }
 
+/** 프로퍼티가 `void`인 이벤트는 인자 없이, 그 밖에는 프로퍼티 하나를 받도록 `track`의 나머지 인자를 정한다. */
 type TrackArgs<K extends AnalyticsEventName> =
   AnalyticsEventProps[K] extends void ? [] : [props: AnalyticsEventProps[K]];
 

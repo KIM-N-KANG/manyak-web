@@ -1,3 +1,9 @@
+/**
+ * @file 채팅 생성 SSE 응답을 이벤트로 바꾸는 파서.
+ *
+ * @see room/hooks/use-chat-stream.ts 파일 머리 주석(생성 스트림 흐름 개요)
+ */
+
 /** 채팅 턴 스트리밍에서 발생하는 SSE 이벤트 */
 export type SseEvent =
   | { type: 'started'; generationId?: string }
@@ -9,6 +15,7 @@ export type SseEvent =
 const SSE_EVENT_PREFIX = 'event:';
 const SSE_DATA_PREFIX = 'data:';
 
+/** 서버가 SSE data JSON에 싣는 필드 이름. `token` 의 `text` 만 JSON이 아니면 data 원문을 그대로 쓴다. */
 const SSE_FIELD = {
   TEXT: 'text',
   NAME: 'name',
@@ -126,6 +133,18 @@ function parseEventBlock(block: string): SseEvent | null {
 /**
  * SSE 바이트 스트림을 이벤트 단위로 파싱해 순차적으로 내보낸다.
  * 빈 줄(\n\n)을 이벤트 경계로 사용하며, 스트림 종료 시 남은 버퍼도 처리한다.
+ * `data:` 줄은 줄마다 앞뒤 공백을 지우고, 한 블록에 여러 줄이면 `\n` 으로 합친다. 서버 이벤트 이름
+ * `character_image` 는 내부 type `character-image` 로 바뀌고, 알 수 없는 이벤트는 버린다.
+ *
+ * @example
+ * // 입력 바이트(블록은 빈 줄로 구분)
+ * // event: token
+ * // data: {"text":"안녕"}
+ * //
+ * // event: character_image
+ * // data: {"name":"하린","imageUrl":"https://..."}
+ * //
+ * // 출력: { type: 'token', content: '안녕' }, { type: 'character-image', name: '하린', imageUrl: 'https://...' }
  *
  * @param stream 파싱할 SSE 바이트 스트림
  * @returns 파싱된 SSE 이벤트를 순차적으로 내보내는 async generator

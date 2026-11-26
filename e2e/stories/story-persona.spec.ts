@@ -49,7 +49,13 @@ const persona = (id: string, name: string): UserPersonaResponse => ({
 const mockStoryDetail = (page: Page) =>
   page.route(STORY_DETAIL, (route) => route.fulfill({ json: storyDetail }));
 
-/** 페르소나 목록 조회를 목킹하고 생성 요청 본문을 모은다. 생성에 성공하면 목록에 더한다. */
+/**
+ * 페르소나 목록 조회를 목킹하고 생성 요청 본문을 모은다. 생성에 성공하면 목록에 더한다.
+ *
+ * @param initial 처음 목록. 생성한 페르소나는 맨 앞에 더한다
+ * @param createStatus 생성(POST) 응답 상태. 201이 아니면 빈 본문으로 실패하고 목록은 그대로 둔다
+ * @returns 받은 생성 요청 본문 목록
+ */
 async function mockPersonas(
   page: Page,
   initial: UserPersonaResponse[],

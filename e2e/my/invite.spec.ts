@@ -3,7 +3,10 @@ import type { Page } from '@playwright/test';
 import { APP_PATH } from '@/constants/app-path';
 import { formatCreditAmount } from '@/constants/credit';
 import { INVITE_ONBOARDING_SIGNUP_RUN_STORAGE_KEY } from '@/features/my/_shared/utils/invite-onboarding-run';
-import { buildInviteRewardCopy } from '@/features/my/invite/constants';
+import {
+  buildInviteRewardCopy,
+  INVITE_GUIDE,
+} from '@/features/my/invite/constants';
 
 import {
   CREDIT_POLICY_FIXTURE,
@@ -40,6 +43,13 @@ async function prepareMemberInvitePage(page: Page): Promise<void> {
   await mockMyInvite(page);
 }
 
+/**
+ * 카카오 JS SDK 스크립트를 외부 요청 없이 스텁으로 바꾼다.
+ *
+ * @remarks
+ * 스텁의 `Kakao.Share.sendDefault`는 공유 대신 받은 설정을 `window.__kakaoShareSettings`에 남긴다.
+ * 스펙은 공유 버튼을 누른 뒤 이 전역을 읽어 공유 문구와 링크를 단언한다.
+ */
 async function mockKakaoSdk(page: Page): Promise<void> {
   await page.route('**/kakao_js_sdk/**', (route) =>
     route.fulfill({
@@ -109,6 +119,16 @@ test.describe('친구 초대 페이지 (/my/invite)', () => {
     await expect(
       page.getByRole('button', { name: '등록', exact: true }),
     ).toBeVisible();
+
+    const guide = page.getByRole('region', { name: INVITE_GUIDE.title });
+
+    await expect(guide.getByRole('listitem')).toHaveCount(
+      INVITE_GUIDE.lines.length,
+    );
+
+    for (const line of INVITE_GUIDE.lines) {
+      await expect(guide.getByText(line, { exact: true })).toBeVisible();
+    }
   });
 
   test('세션 갱신 뒤에도 페이지 조회 이벤트는 사용자당 한 번만 전송한다', async ({

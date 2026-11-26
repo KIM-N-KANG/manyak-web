@@ -37,6 +37,17 @@ import {
 } from './creation-progress-card';
 import { SubmissionCard } from './submission-card';
 
+/**
+ * 제작 탭 목록. 진행 중 구역(기기 안 초안, 서버 초안, 검수 제출본)과 내 스토리 구역(완성 중, 만든 스토리)을 조립한다.
+ *
+ * @remarks
+ * - 기기 안 초안과 서버 초안은 하나로 합쳐 같은 초안이 두 번 보이지 않게 한다.
+ * - 완성 중 레코드의 스토리가 목록에 나타나면 그 카드는 숨기고, 기기 안 레코드를 지운다(부수 효과).
+ * - 목록, 초안, 제출본 중 하나라도 불러오는 중이면 진행 중 구역과 스토리를 비우고, 지연된 뒤에만 골격을 보인다.
+ *   완성 중 카드가 있으면 골격 대신 그 카드를 계속 보인다.
+ * - 회원이 초안 상한에 닿았으면 만들기 버튼이 이동 대신 오류 토스트를 띄운다.
+ * - 완성 중 카드가 보이면 간편 제작 첫 진입 안내의 완성 중 단계를 띄운다.
+ */
 export function CreatedStoryList() {
   const router = useRouter();
   const { isMember } = useMemberAccess();

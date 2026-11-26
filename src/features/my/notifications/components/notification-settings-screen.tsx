@@ -50,10 +50,14 @@ const BANNER_COPY = {
 type SettingRowProps = {
   label: string;
   description: string;
+  /** 서버 설정 값. null이면 아직 불러오는 중이라 스위치 대신 스켈레톤을 그린다. */
   checked: boolean | null;
+  /** 스위치를 조작할 수 있는지. false면 값은 보여 주되 흐리게 그리고 스위치를 막는다. */
   enabled: boolean;
   onCheckedChange: (checked: boolean) => void;
+  /** 라벨 옆에 새 탭으로 여는 상세 문서 링크 */
   detailHref?: string;
+  /** 상세 문서 링크의 접근성 이름 */
   detailLabel?: string;
 };
 
@@ -112,6 +116,12 @@ function SettingRow({
   );
 }
 
+/**
+ * 서비스, 광고, 야간 광고 알림을 켜고 끄는 알림 설정 화면.
+ * 기기 알림 권한 상태에 따라 안내 배너(권한 요청, 거부 안내, 설치 안내, 미지원)를 띄우고, 권한이
+ * 허용됐거나 푸시 미지원 환경이면서 저장 중이 아닐 때만 스위치를 연다. 야간 광고 행은 광고 알림이
+ * 켜져 있을 때만 보인다. 광고, 야간 값을 바꾸면 처리 결과 통지 다이얼로그를 띄운다.
+ */
 export function NotificationSettingsScreen() {
   const router = useRouter();
   const { status } = useSession();

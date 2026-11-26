@@ -1,3 +1,10 @@
+/**
+ * @file 분석 이벤트 이름과 프로퍼티 타입의 정본.
+ * 이벤트 이름은 `client_{screen}_{action}` 또는 `client_{screen}_{object}_{action}` 형식이고, `track`이
+ * 두 번째 마디를 `screen_name`으로 붙인다. 프로퍼티가 없는 이벤트는 `void`로 적는다. 새 이벤트는 여기 먼저 정의해야 `track`이 받으며,
+ * 사용자 입력 원문은 프로퍼티에 싣지 않는다.
+ */
+
 import type {
   SimpleStoryTagListItemResponseCategory,
   StoryReportRequestReason,

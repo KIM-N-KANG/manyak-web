@@ -116,6 +116,14 @@ type GeneralStoryFormTabsProps = {
   ref?: Ref<GeneralStoryFormTabsHandle>;
 };
 
+/**
+ * 일반 제작 폼의 탭 화면. 탭 줄, 탭 내용 스크롤 영역, 이전과 다음 버튼을 두고 마지막 탭에서만 등록하기를 보인다.
+ *
+ * @remarks
+ * 등록하기를 누르면 `onRegisterAttempt`를 먼저 부르고, 오류가 없을 때만 `onRegister`를 부른다. 오류가 있으면
+ * 오류 칸의 접힌 항목을 펼치고 첫 오류 탭으로 옮긴 뒤, 펼침 애니메이션이 끝나면 첫 오류 칸으로 스크롤한다.
+ * 같은 동작을 `ref`의 `revealErrors`로 노출해 검수 반려처럼 폼 밖에서 생긴 오류에도 쓴다.
+ */
 export function GeneralStoryFormTabs({
   values,
   onChange,

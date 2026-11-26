@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
 import { useMe } from '@/api/generated/endpoints/auth/auth';
+import { ManyakSymbolIcon } from '@/components/icons/manyak-symbol-icon';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_PATH } from '@/constants/app-path';
@@ -17,6 +18,11 @@ import { track } from '@/observability/analytics';
 
 import { LinkedAccountSection } from './linked-account-section';
 
+/**
+ * 마이 화면 상단의 프로필 이미지, 닉네임, 연동 계정 영역.
+ * 이미지는 서버 프로필 썸네일, 세션의 소셜 프로필 이미지 순으로 쓰고, 둘 다 없거나 불러오지
+ * 못하면 빈 원을 그린다(게스트는 가운데에 심볼). 닉네임 링크로 프로필 수정에 들어가는 것은 회원만이다.
+ */
 export function ProfileHeader() {
   const { data: session, status } = useSession();
   const { isMember } = useMemberAccess();
@@ -24,6 +30,7 @@ export function ProfileHeader() {
 
   const isAuthenticated = status === 'authenticated';
   const isSessionLoading = status === 'loading';
+  const isGuest = status === 'unauthenticated';
 
   const { data: meData } = useMe({
     query: { enabled: isMember, refetchOnMount: 'always' },
@@ -47,10 +54,15 @@ export function ProfileHeader() {
           onError={() => setImageError(true)}
         />
       ) : (
+        // 게스트는 프로필 이미지가 없으므로 빈 원 가운데에 마냑 심볼을 옅게 둔다.
         <div
           aria-hidden="true"
-          className="size-14 shrink-0 rounded-full bg-muted"
-        />
+          data-testid="profile-placeholder"
+          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
+          {isGuest && (
+            <ManyakSymbolIcon className="size-7 text-foreground-tertiary" />
+          )}
+        </div>
       )}
       {isSessionLoading ? (
         <div className="flex-1">
@@ -82,7 +94,7 @@ export function ProfileHeader() {
           )}
         </div>
       )}
-      {status === 'unauthenticated' && (
+      {isGuest && (
         <Link
           href={APP_PATH.LOGIN}
           className={buttonVariants()}

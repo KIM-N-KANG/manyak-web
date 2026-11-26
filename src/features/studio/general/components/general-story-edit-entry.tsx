@@ -27,6 +27,10 @@ type GeneralStoryEditEntryProps = {
   storyId: string;
 };
 
+/**
+ * 스토리 수정 화면의 회원 확인 게이트. 회원이면 수정 폼을 불러오고, 게스트면 로그인으로 보낸 뒤 수정
+ * 화면으로 돌아오게 한다.
+ */
 export function GeneralStoryEditEntry({ storyId }: GeneralStoryEditEntryProps) {
   const { isMember, isGuest } = useMemberAccess();
   const router = useRouter();
@@ -47,6 +51,10 @@ export function GeneralStoryEditEntry({ storyId }: GeneralStoryEditEntryProps) {
   );
 }
 
+/**
+ * 수정 폼 응답과 제공 장르 목록을 받은 뒤 수정 폼을 연다. 수정 폼은 진입할 때마다 새로 받고, 받지 못하면
+ * (403, 404 등) 한 번만 안내하고 들어온 화면이나 상세로 떠난다.
+ */
 function EditFormLoader({ storyId }: GeneralStoryEditEntryProps) {
   const router = useRouter();
   const query = useGetEditForm(storyId, {

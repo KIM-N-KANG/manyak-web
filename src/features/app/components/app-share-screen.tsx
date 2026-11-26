@@ -29,6 +29,13 @@ const FEATURE_ICONS: readonly IconSvgElement[] = [
   AiImageIcon,
 ];
 
+/**
+ * 공유용 `/app` 경로의 앱 안내 화면. 마운트하면 한 번 자동 이동을 시도하고, 남은 사용자에게 설치와 웹 둘러보기를 보여 준다.
+ *
+ * @remarks
+ * Android에서 앱이 열리지 않을 때를 위한 폴백 이동은 언마운트해도 취소하지 않는다. bfcache로 복원된
+ * 문서에서만 남은 폴백을 취소해, 이미 떠났다가 뒤로 돌아온 사용자를 다시 스토어로 보내지 않는다.
+ */
 export function AppShareScreen() {
   const hasStartedRef = useRef(false);
 

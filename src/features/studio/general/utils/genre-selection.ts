@@ -1,4 +1,4 @@
-/** 등록 탭 장르 선택의 입력 상태다. */
+/** @file 등록 탭 장르 선택의 입력 상태다. */
 
 import {
   findGenreByName,
@@ -14,9 +14,11 @@ export type GeneralStoryGenreKey =
   | { kind: 'tag'; id: number }
   | { kind: 'custom'; id: string };
 
+/** 등록 탭의 장르 선택이다. 임시 저장 스냅숏에 그대로 들어간다. */
 export type GeneralStoryGenreSelection = {
   /** 고른 순서대로 놓인 장르다. 첫 번째 장르가 기본 커버를 정한다. */
   selected: GeneralStoryGenreKey[];
+  /** 제공 목록에 없는 장르의 이름이다. `selected`의 custom 키가 id로 가리키고, 선택에서 빠져도 이름은 남는다. */
   customTags: { id: string; name: string }[];
   /** 대표 밖에서 처음 고른 순서대로 놓인 장르 id다. 칩 순서를 정한다. 제공 장르 검색 도입 전 저장본에는 없다. */
   addedTagIds?: number[];

@@ -12,9 +12,17 @@ type GenreBadgeTone = 'default' | 'inverse';
 type StoryGenreBadgesProps = {
   /** 한 줄에 들어가는 만큼 보이고 나머지는 "+N"으로 줄인다. 한 장르가 줄보다 길면 "+N" 자리를 남기고 말줄임한다. */
   genres: string[];
-  /** 배지 크기. 홈 카드처럼 좁은 자리에서는 작은 배지(12px)를, 탐색 타일에서는 더 작은 배지(11px)를 쓴다. */
+  /**
+   * 배지 크기. 홈 카드처럼 좁은 자리에서는 작은 배지(12px)를, 탐색 타일에서는 더 작은 배지(11px)를 쓴다.
+   *
+   * @default 'md'
+   */
   size?: GenreBadgeSize;
-  /** 배지 색. 검은 바탕 위에서는 반투명 흰 배지(inverse)를 쓴다. */
+  /**
+   * 배지 색. 검은 바탕 위에서는 반투명 흰 배지(inverse)를 쓴다.
+   *
+   * @default 'default'
+   */
   tone?: GenreBadgeTone;
 };
 
@@ -29,11 +37,21 @@ const BADGE_TONE_CLASS: Record<GenreBadgeTone, string> = {
   inverse: 'bg-white/15 text-white/80',
 };
 
+/** 배지 사이 간격(px). 컨테이너의 `gap-1`(4px)과 같아야 한 줄 개수 계산이 맞는다. */
 const GAP_PX = 4;
 
+/** 서버 렌더링에서는 `useLayoutEffect` 경고를 피해 `useEffect`로 대신한다. */
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
+/**
+ * 장르 배지를 한 줄에 들어가는 만큼만 보이고 나머지는 "+N"으로 줄이는 목록.
+ *
+ * @remarks
+ * 보이지 않는 측정 레이어에 모든 배지와 두 자리 "+N" 배지를 그려 너비를 잰다. 다 들어가면 모두 보이고, 넘치면
+ * "+N" 자리를 남긴 채 앞에서부터 들어가는 만큼 보인다. 첫 배지가 줄보다 길어도 최소 한 개는 보인다. 컨테이너
+ * 크기가 바뀌면 다시 잰다.
+ */
 export function StoryGenreBadges({
   genres,
   size = 'md',

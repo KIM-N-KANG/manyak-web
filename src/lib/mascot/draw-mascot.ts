@@ -39,6 +39,7 @@ const WHITE: Rgb = [255, 255, 255];
 
 const DOT_GAP = 10;
 const DOT_RADIUS = 1;
+/** 로고 심벌(`public/logo/manyak-logo.svg`, `manyak-logo.tsx`)과 같은 64 viewport 기준 몸 path다. 심벌을 바꾸면 함께 고친다. */
 const MASCOT_PATH =
   'M30,44H24A12,12 0 0 1 12,32V20A12,12 0 0 1 24,8H40A12,12 0 0 1 52,20V44C52,51 50,56 44,56H16';
 let mascotBody: Path2D | undefined;

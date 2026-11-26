@@ -29,6 +29,14 @@ type DraftSaveButtonProps = {
   onSave: () => Promise<boolean>;
 };
 
+/**
+ * 퍼널 헤더의 임시 저장 버튼.
+ *
+ * @remarks
+ * 첫 누름은 바로 저장하고 1초 안의 연타는 버린다. 이미 저장한 입력이면 다시 쓰지 않고 저장 완료 토스트만 띄워,
+ * 사용자가 누를 때마다 저장됐다는 확인을 받게 한다. 저장 중에는 글자 자리를 유지한 채 스피너로 바꿔 버튼 폭이
+ * 흔들리지 않게 한다.
+ */
 export function DraftSaveButton({
   isSaving,
   disabled,

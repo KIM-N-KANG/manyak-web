@@ -75,6 +75,14 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
+/**
+ * 팝업이 원래 창으로 보내는 로그인 완료 메시지를 흉내 낸다.
+ *
+ * @remarks
+ * `attempt`는 마지막 `signIn` 호출의 `redirectTo`에서 읽으므로 `signIn`이 불린 뒤에 호출해야 한다.
+ *
+ * @param overrides `MessageEvent`에 덮어쓸 필드. `origin`, `source`, `data`를 바꿔 거부 조건을 만든다
+ */
 function sendCompletion(overrides: Record<string, unknown> = {}) {
   const callbackUrl = mocks.signIn.mock.calls.at(-1)?.[1].redirectTo;
   const event = new Event('message');

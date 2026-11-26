@@ -20,6 +20,10 @@ const SHARE_PATH_PATTERN = /(\/shares?\/)[^/?#\s]+/gi;
  *
  * @param value 공유 URL이 섞였을 수 있는 문자열
  * @returns 식별자를 가린 문자열. 대상이 없으면 원문 그대로다
+ * @example
+ * ```ts
+ * redactShareId('/share/abc-123?utm_source=kakao#top'); // '/share/[redacted]?utm_source=kakao#top'
+ * ```
  */
 export function redactShareId(value: string): string {
   return value.replace(SHARE_PATH_PATTERN, `$1${SHARE_ID_REDACTED_VALUE}`);

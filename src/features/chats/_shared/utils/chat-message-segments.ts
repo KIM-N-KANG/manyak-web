@@ -1,3 +1,16 @@
+/**
+ * @file 채팅 본문의 이미지 마커 프로토콜과 렌더 조각 모델.
+ *
+ * 저장 본문은 `[[https://...]]` 단독 줄로 이미지를 표시한다. 인물 이미지는 마커 뒤 빈 줄과
+ * `인물명:` 대사 줄이 이어져야 하고, 장면 이미지는 대사 없이 뒤의 빈 줄까지 소비한다.
+ * URL은 허용 CDN 호스트와 경로 접두사 안에서만 이미지로 인정하고 나머지는 텍스트로 남긴다.
+ * 스트리밍 중에는 마커를 파싱하지 않고 토큰과 이미지 이벤트를 조각 목록에 바로 누적한다.
+ */
+
+/**
+ * 렌더 단위 조각. `text` 는 마커를 뺀 본문, `character-image` 는 대사 라벨에서 얻은 인물명과
+ * 이미지, `scene-image` 는 인물명 없는 장면 이미지다.
+ */
 export type ChatMessageSegment =
   | { type: 'text'; content: string }
   | { type: 'character-image'; name: string; imageUrl: string }
@@ -6,10 +19,12 @@ export type ChatMessageSegment =
 export type ChatImageSegment = Exclude<ChatMessageSegment, { type: 'text' }>;
 
 const SCENE_IMAGE_PATH_PREFIX = '/scenes/originals/';
+/** 이미지로 인정하는 CDN 호스트(운영, 개발). 본문 마커의 임의 URL을 렌더하지 않기 위한 허용 목록이다. */
 const CHARACTER_IMAGE_HOSTNAMES = new Set([
   'cdn.manyak.app',
   'dev-cdn.manyak.app',
 ]);
+/** 허용 호스트 안에서 이미지로 인정하는 경로 접두사. 접두사만 있고 뒤 경로가 비면 거부한다. */
 const CHARACTER_IMAGE_PATH_PREFIXES = [
   '/characters/generated/',
   '/characters/originals/',
@@ -20,13 +35,28 @@ const CHARACTER_IMAGE_PATH_PREFIXES = [
   // 오리지널 스토리 프롤로그·시작 상황의 장면 이미지(KNK-1545). 인물 대사 없이 마커만으로 표시한다.
   SCENE_IMAGE_PATH_PREFIX,
 ] as const;
+/**
+ * 줄 전체가 이미지 마커인지 판정한다. https URL만 받고 앞뒤에 다른 글자가 있으면 마커가 아니다.
+ *
+ * @example
+ * [[https://cdn.manyak.app/characters/generated/a.webp]]
+ */
 const CHARACTER_IMAGE_MARKER_LINE = /^\[\[(https:\/\/[^\r\n]+)\]\]$/;
 const LEADING_HORIZONTAL_WHITESPACE = /^[ \t]*/;
+/**
+ * 대사 줄 앞의 `이름:` 라벨. 콜론 뒤가 공백이나 줄 끝일 때만 라벨로 본다(`12:30` 같은 시각 제외).
+ *
+ * @example
+ * 하린: 오늘은 어땠어?
+ */
 const SPEAKER_LABEL = /^(.+?)[ \t]*:(?=[ \t]|$)/;
 
 type CharacterImageMarkerMatch = {
+  /** CRLF를 LF로 바꾼 본문에서 마커 줄이 시작하는 인덱스. */
   start: number;
+  /** 소비가 끝나는 인덱스(배타). 인물 이미지는 뒤 빈 줄까지, 장면 이미지는 뒤 줄바꿈 최대 2개까지 포함한다. */
   end: number;
+  /** 대사 라벨의 인물명. 장면 이미지면 null이다. */
   name: string | null;
   imageUrl: string;
 };

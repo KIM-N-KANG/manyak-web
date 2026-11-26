@@ -1,3 +1,10 @@
+/**
+ * @file 안 읽은 공지 판정의 기준이 되는 "읽은 공지 ID" 저장소.
+ *
+ * 서버에 읽음 기록 API가 없어 기기 단위로 둔다. 공지 상세를 열면 그 ID를 기록하고, 게시된 지
+ * 30일 안인데 기록에 없는 공지를 안 읽음으로 본다. 목록만 보는 것은 읽음이 아니다. 헤더 버튼의 점,
+ * 마이 메뉴의 배지, 목록 줄 제목 끝의 점이 모두 이 판정을 쓴다.
+ */
 import { useSyncExternalStore } from 'react';
 
 import type { PublicNoticeItemResponse } from '@/api/generated/models';
@@ -8,19 +15,16 @@ import {
   NOTICE_UNREAD_WINDOW_DAYS,
 } from '../constants';
 
-/**
- * 안 읽은 공지 판정의 기준이 되는 "읽은 공지 ID" 저장소다.
- *
- * 서버에 읽음 기록 API가 없어 기기 단위로 둔다. 공지 상세를 열면 그 ID를 기록하고, 게시된 지
- * 30일 안인데 기록에 없는 공지를 안 읽음으로 본다. 목록만 보는 것은 읽음이 아니다. 헤더 버튼의 점,
- * 마이 메뉴의 배지, 목록 줄 제목 끝의 점이 모두 이 판정을 쓴다.
- */
-
 const DAY_MS = 24 * 60 * 60 * 1000;
 const EMPTY_IDS: readonly string[] = [];
 
 const listeners = new Set<() => void>();
 
+/**
+ * `useSyncExternalStore`용 구독 함수. 같은 탭의 기록은 `emit`으로, 다른 탭의 기록은 `storage` 이벤트로 받는다.
+ *
+ * @returns 구독 해제 함수
+ */
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
   window.addEventListener('storage', listener);
@@ -114,6 +118,10 @@ export function appendNoticeReadId(
   );
 }
 
+/**
+ * `readNoticeReadIds`가 마지막으로 해석한 저장소 원문과 그 결과다. 원문이 같으면 같은 배열을 돌려주려는 모듈 상태이고,
+ * `undefined`는 아직 한 번도 읽지 않았다는 뜻이다.
+ */
 let cachedRaw: string | null | undefined;
 let cachedIds: readonly string[] = EMPTY_IDS;
 

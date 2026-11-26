@@ -37,16 +37,27 @@ type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** customFetch 요청에 사용하는 설정. RequestInit에 타임아웃 옵션을 더한 형태다. */
 export interface RequestConfig extends Omit<RequestInit, 'method' | 'body'> {
-  /** 요청 타임아웃(ms). 기본값은 API_TIMEOUT_MS */
+  /**
+   * 요청 타임아웃(ms)
+   *
+   * @default API_TIMEOUT_MS
+   */
   timeout?: number;
 }
 
 /**
  * 요청 URL을 Next.js API 프록시(/api) 경로로 변환한다.
- * 절대 URL은 pathname만 남기고, 이미 /api로 시작하면 그대로 반환한다.
+ * 절대 URL은 pathname과 쿼리만 남기고, 이미 /api로 시작하면 그대로 반환한다.
  *
  * @param url 변환할 요청 URL(절대 또는 상대)
  * @returns /api 프록시 경로로 변환된 URL
+ * @example
+ * ```ts
+ * resolveApiProxyUrl('/stories'); // '/api/stories'
+ * resolveApiProxyUrl('stories?page=1'); // '/api/stories?page=1'
+ * resolveApiProxyUrl('https://example.com/v1/stories?page=1'); // '/api/v1/stories?page=1'
+ * resolveApiProxyUrl('/api/stories'); // '/api/stories'
+ * ```
  */
 export function resolveApiProxyUrl(url: string) {
   const resolvedUrl = /^https?:\/\//.test(url)
@@ -161,6 +172,14 @@ const request = async <T>(
 /**
  * 공통 fetch 래퍼. API 프록시 경로 변환, 타임아웃, JSON 직렬화,
  * 에러 변환(FetchError), Sentry 리포팅을 일괄 처리한다.
+ * 성공 응답은 JSON을 파싱해 돌려주고, 204와 빈 본문은 undefined, SSE는 본문 스트림을 돌려준다.
+ *
+ * @throws {FetchError} 응답이 ok가 아니거나 요청 전 세션 갱신이 만료로 끝났을 때
+ * @throws {DOMException} 타임아웃이면 `TimeoutError`, 외부 signal이 취소되면 그 reason으로 거절한다.
+ * @example
+ * ```ts
+ * const stories = await customFetch.get<ResponseBody>('/stories', { timeout: 1000 });
+ * ```
  */
 export const customFetch = {
   get: <T>(url: string, config?: RequestConfig) =>

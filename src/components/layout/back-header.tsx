@@ -28,6 +28,10 @@ type BackHeaderProps = {
   action?: ReactNode;
 };
 
+/**
+ * 뒤로가기 버튼과 제목을 둔 화면 헤더. 뒤로가기는 `fallbackWhen` 조건에 맞고 `fallbackHref`가 있으면
+ * 그 화면으로 `replace`하고, 아니면 `router.back()`으로 이전 기록으로 돌아간다.
+ */
 export function BackHeader({
   title,
   fallbackHref,

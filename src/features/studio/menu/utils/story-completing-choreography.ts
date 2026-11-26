@@ -1,5 +1,5 @@
 /**
- * 스토리 완성 중 표지에서 마스코트가 연기하는 안무다. 키워드를 고르고, 스토리라인을 고르고, 졸다가 에너지
+ * @file 스토리 완성 중 표지에서 마스코트가 연기하는 안무다. 키워드를 고르고, 스토리라인을 고르고, 졸다가 에너지
  * 드링크를 마시고 원고를 터보로 쓴 뒤, 베레모를 쓰고 붓으로 주인공 인물화를 그리고 소품을 하늘로 던지며
  * 뛰어다니는 순서로 제작 과정을 따라가고, 바쁜 막 사이마다 쉰다.
  *
@@ -35,6 +35,10 @@ import {
   withEyes,
 } from '@/lib/mascot/mascot-choreography';
 
+/**
+ * 완성 중 안무의 막 종류다. `INTERLUDE`는 바쁜 막 사이에 소품 없이 쉬는 막이라, 막별 소품 함수
+ * (`propVisibility`, `completingActMillis`)는 받지 않는다.
+ */
 export type CompletingAct =
   | 'KEYWORDS'
   | 'STORYLINE'
@@ -74,19 +78,26 @@ export type Cue =
 // ---- 무대 ----
 
 export const STAGE_HEIGHT = 4 / 3;
+/** 마스코트 크기다. 표지 폭에 대한 비율이고, 폭과 높이는 심벌 비율을 곱해 얻는다. */
 export const MASCOT_SIZE = 0.24;
+/** 마스코트가 딛는 바닥의 y다(표지 폭 단위). 표지 아래 끝에서 0.11 위다. */
 export const FLOOR = STAGE_HEIGHT - 0.11;
 export const MASCOT_HALF_WIDTH = (MASCOT_SIZE * MASCOT_WIDTH_RATIO) / 2;
 export const MASCOT_HEIGHT = MASCOT_SIZE * MASCOT_HEIGHT_RATIO;
 
 const WALL_GAP = 0.05;
 
+/** 바닥 가운데 발끝 자리다. 모든 막이 여기서 시작해 여기로 끝나야 막을 바꿔 이어도 순간이동하지 않는다. */
 export const HOME: Point = { x: 0.5, y: FLOOR };
 
 // ---- 소품 자리 ----
 
 /** 키워드 칩. 아래 줄부터 밟고 올라가며 고른다. */
 export const CHIP_HEIGHT = 0.09;
+/**
+ * 키워드 칩 한 장의 자리다(표지 폭 단위). `top`은 마스코트가 밟고 서는 윗변 y이고, 아래 변은
+ * `top + CHIP_HEIGHT`로 얻는다.
+ */
 export type KeywordChip = { left: number; top: number; right: number };
 export const KEYWORD_CHIPS: KeywordChip[] = [
   { left: 0.12, top: 0.34, right: 0.44 },
@@ -437,6 +448,15 @@ const interlude = (...moves: Move[]): Act<CompletingAct, Cue> => ({
   moves,
 });
 
+/**
+ * 한 바퀴 안무의 막 순서다. 동작 길이는 모두 ms다.
+ *
+ * @remarks
+ * 키워드, 스토리라인, 에너지 드링크, 타자, 인물화, 통통 튀기, 벽 차기 순으로 제작 과정을 따라가고, 바쁜 막
+ * 사이에 쉼 막(`interlude`)을 끼운다. 에너지 드링크 바로 뒤에 타자가, 통통 튀기 바로 뒤에 벽 차기가 쉼 없이
+ * 이어진다. 소품이 바뀌는 동작에는 `withCue`로 cue를 붙이고, 그리는 쪽은 그 cue의 시각으로 소품을 움직인다.
+ * cue는 안무 전체에서 한 번씩만 쓴다.
+ */
 const ACTS: Act<CompletingAct, Cue>[] = [
   {
     kind: 'KEYWORDS',
@@ -573,7 +593,15 @@ const ACTS: Act<CompletingAct, Cue>[] = [
 
 const choreography = createChoreography(ACTS);
 
+/** 안무 한 바퀴의 길이(ms)다. 모든 막 길이의 합이다. */
 export const COMPLETING_LOOP_MILLIS = choreography.loopMillis;
+/**
+ * 안무 시작부터 흐른 시간에 마스코트가 어느 막에서 어떤 자세인지 반환한다. 그리는 쪽은 매 프레임 이
+ * 함수로 시각을 막과 자세로 바꾼 뒤, 막 안의 시각으로 소품을 그린다.
+ *
+ * @param millis 안무 시작부터 흐른 시간(ms). 한 바퀴 길이로 나눈 나머지로 읽어 끝없이 되풀이하고, 음수도 받는다.
+ * @returns `act`(지금 막), `actMillis`(그 막이 시작된 뒤 흐른 ms, cue 조회 함수에 그대로 넘긴다), `pose`(자세)
+ */
 export const completingMoment = choreography.momentAt;
 /**
  * 막의 길이를 반환한다. 소품이 막 끝에서 사라질 때 쓴다. 쉼 막에는 소품이 없다.
@@ -584,6 +612,14 @@ export const completingMoment = choreography.momentAt;
 export const completingActMillis = (
   kind: Exclude<CompletingAct, 'INTERLUDE'>,
 ) => choreography.actMillis(kind);
+/**
+ * cue가 붙은 동작의 시각 조회 함수다. 시각은 모두 그 cue가 든 막 안의 ms다.
+ * - `cueStart(cue)`: 동작이 막 안에서 시작하는 시각
+ * - `cueMillis(cue)`: 동작의 길이
+ * - `cueProgress(cue, actMillis)`: 막 안의 시각에서 동작이 진행한 정도(0..1). 시작 전은 0, 끝난 뒤는 1이다.
+ *
+ * 안무 어느 동작에도 붙지 않은 cue를 넘기면 오류를 던진다.
+ */
 export const { cueStart, cueMillis, cueProgress } = choreography;
 
 /**

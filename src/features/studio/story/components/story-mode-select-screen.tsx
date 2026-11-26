@@ -40,6 +40,10 @@ const MODE_OPTIONS = [
 const OPTION_HEIGHT =
   'min-h-[calc((667px-3.5rem-2rem)/2)] max-h-[calc((924px-3.5rem-4rem)/2)]';
 
+/**
+ * 간편 제작과 일반 제작 중 하나를 고르는 화면. 고른 제작 화면은 이 화면을 대체해 열고, 게스트가 일반 제작을
+ * 고르면 이동하지 않고 로그인 안내 시트를 연다.
+ */
 export function StoryModeSelectScreen() {
   const { isGuest } = useMemberAccess();
   const [isLoginOpen, setIsLoginOpen] = useState(false);

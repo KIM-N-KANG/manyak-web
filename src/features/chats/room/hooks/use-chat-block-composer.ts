@@ -52,6 +52,7 @@ export function useChatBlockComposer({
     );
   };
 
+  /** 블럭을 직렬화해 전송하고, 성공해도 그사이 블럭이 바뀌었으면 새 입력을 지우지 않는다. */
   const send = async () => {
     const text = serializeInputBlocks(blocks, '\n\n');
 
@@ -70,8 +71,10 @@ export function useChatBlockComposer({
     }
   };
 
+  /** 기본 블럭(상황 1개, 대사 1개)으로 되돌린다. 선택지를 보낸 뒤 쓴다. */
   const reset = () => setBlocks(createDefaultInputBlocks());
 
+  /** 블럭을 모두 비운다. 일반 모드로 바꿀 때 쓰며, 다시 블럭 모드로 오면 `replace` 가 채운다. */
   const clear = () => setBlocks([]);
 
   return {

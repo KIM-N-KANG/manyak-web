@@ -37,9 +37,15 @@ type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
  */
 export type CardOptionsSheetItem = {
   icon: IconSvgElement;
+  /** 시트의 항목 문구. `confirm`이 있으면 확인 다이얼로그의 실행 버튼 문구로도 쓴다. */
   label: string;
+  /** 항목을 고르면 실행한다. `confirm`이 있으면 확인 버튼을 누른 뒤 실행하고, 끝나면 다이얼로그를 닫는다. */
   onSelect: () => void | Promise<void>;
   variant?: 'default' | 'destructive';
+  /**
+   * 실행 전에 띄울 확인 다이얼로그. `description`이 없으면 삭제 안내 문구를 쓴다.
+   * `isPending`이 true인 동안 버튼을 막고 다이얼로그를 닫지 않는다.
+   */
   confirm?: { title: string; description?: string; isPending?: boolean };
 };
 
@@ -58,13 +64,21 @@ type CardOptionsSheetProps = {
   /** 트리거 버튼 크기. 기본 `icon-xs`는 카드 제목 줄 옆에 놓는 크기다 */
   triggerSize?: ButtonSize;
   /**
-   * 트리거 버튼에 덧붙일 클래스. 기본 크기의 트리거는 제목 첫 줄 옆에 놓이므로 1px 위로 올린다 —
+   * 트리거 버튼에 덧붙일 클래스. 기본 크기의 트리거는 제목 첫 줄 옆에 놓이므로 1px 위로 올린다.
    * 한글 잉크 중심은 줄 상자 중심보다 위에 있고 더보기 아이콘의 점은 뷰박스 중심보다 아래라,
    * 상자 기준으로 맞추면 아이콘이 글자보다 처져 보인다.
    */
   triggerClassName?: string;
 };
 
+/**
+ * 목록 카드의 더보기 버튼과 옵션 바텀 시트, 항목별 확인 다이얼로그를 함께 그린다.
+ *
+ * @remarks
+ * `confirm`이 있는 항목은 시트를 먼저 닫고 확인 다이얼로그를 띄운다. 확인 다이얼로그는 실행 버튼을
+ * destructive로, 로딩 문구를 "삭제 중"으로, 기본 설명을 삭제 안내로 두므로 삭제 확인 용도를 가정한다.
+ * 앱 프레임 컨테이너가 준비되기 전(`null`)에는 시트를 열지 않는다.
+ */
 export function CardOptionsSheet({
   items,
   triggerAriaLabel,

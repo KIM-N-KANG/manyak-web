@@ -24,13 +24,20 @@ import { SendButtonIcon } from './send-button-icon';
 type ChatBlockInputProps = {
   blocks: InputBlock[];
   onAddBlock: (type: InputBlockType) => void;
+  /** 블럭을 지운다. 내용이 있는 블럭은 확인 창을 거친 뒤에만 호출된다. */
   onRemoveBlock: (id: string) => void;
   onUpdateBlock: (id: string, value: string) => void;
+  /** 블럭의 textarea를 ID로 등록한다. 새로 추가한 블럭에 포커스를 옮기는 데 쓴다. */
   onRegisterInput: (id: string, element: HTMLTextAreaElement | null) => void;
+  /** 입력이 있을 때 블럭을 직렬화해 전송한다. */
   onSend: () => void;
+  /** 공백이 아닌 추천 입력이 하나라도 있는지. 빈 입력에서 랜덤 전송을 허용하는 조건이다. */
   hasSuggestions: boolean;
+  /** 입력이 비었을 때 전송 버튼이 대신 호출한다. 추천 입력 하나를 골라 바로 보낸다. */
   onSendRandomSuggestion: () => void;
+  /** 응답 생성 중이면 입력과 블럭 버튼을 잠그고 전송을 막는다. */
   isStreaming: boolean;
+  /** 선택지 설정. 꺼져 있으면 빈 입력의 랜덤 전송을 쓰지 않는다. */
   choicesEnabled: boolean;
   onOpenSettings: () => void;
   /** 실시간 이미지가 켜져 있으면 비용 배지에 이미지 비용을 합산한다 */
@@ -45,6 +52,13 @@ type ChatBlockInputProps = {
   onLockedTap: () => void;
 };
 
+/**
+ * 상황과 대사 블럭을 따로 적는 블럭 입력 모드의 입력창.
+ *
+ * @remarks
+ * 입력이 하나라도 있으면 블럭을 전송하고, 모두 비었으면서 선택지가 켜져 있으면 전송 버튼이 추천 입력 랜덤
+ * 전송으로 바뀐다. 내용이 있는 블럭을 지울 때만 확인 창을 띄운다.
+ */
 export function ChatBlockInput({
   blocks,
   onAddBlock,

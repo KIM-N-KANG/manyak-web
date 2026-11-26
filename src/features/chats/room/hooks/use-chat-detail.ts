@@ -16,8 +16,13 @@ import { queryFnWithoutAbortSignal } from '@/lib/query-client';
  * 닫힌 계정에서는 영구적이라 재시도로 풀리지 않으므로 일반 오류와 구분해 다룬다.
  *
  * @param chatId 조회할 채팅 ID
- * @returns 스토리 ID와 제목, 프롤로그, 턴 목록, 추천 입력, 채팅 모델 코드(서버가 주지 않으면 undefined), 생성 중인 턴(없으면 null)과 로딩, 에러,
- *   차단 상태, refetch와 새 응답을 돌려주는 reload 함수. 참조 스토리가 삭제되면 서버가 제목을 비워 보내므로 `storyId`도 null로 정리한다
+ * @returns 다음 멤버를 담은 객체
+ * - `storyId`, `storyTitle`: 참조 스토리. 스토리가 삭제되면 서버가 제목을 비워 보내므로 `storyId` 도 null로 정리한다
+ * - `prologue`, `turns`, `suggestedInputs`: 프롤로그, 확정 턴 목록, 시작 추천 입력. 응답 전에는 빈 값이다
+ * - `model`, `longResponse`: 채팅 모델 코드와 긴 응답 설정. 서버가 주지 않으면 undefined
+ * - `generatingTurn`: 서버에서 진행 중인 생성. 없으면 null
+ * - `isLoading`, `isError`, `isForbidden`: 들어온 뒤 새 상세를 받기 전이면 로딩, 403은 일반 오류와 따로 차단으로 본다
+ * - `refetch`: 쿼리 재조회 함수, `reload`: 재조회 결과에서 새 상세만 돌려주는 함수
  */
 export function useChatDetail(chatId: string) {
   const query = useGetChatDetail(chatId, {

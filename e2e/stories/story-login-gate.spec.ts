@@ -1,3 +1,7 @@
+/** @file 스토리 제작과 채팅 시작의 게스트 동의 게이팅 스펙(FE-SCREEN-010 동의 모델, 웹 사용자 모델).
+ * 게스트는 제작 화면에 바로 진입하고 생성 요청 직전에 별도로 동의한다
+ * (QA STORY-GATE-01~06).
+ */
 import { APP_PATH } from '@/constants/app-path';
 import { CREATED_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/chat-id-storage';
 import { GUEST_CHAT_IDS_STORAGE_KEY } from '@/features/chats/_shared/utils/guest-chat-storage';
@@ -12,11 +16,6 @@ import { seedPendingCreationRequests } from '../fixtures/storage';
 import { startChatFromDetail } from '../fixtures/story-detail';
 import { expect, seedStoryIds, test } from '../fixtures/test';
 
-/**
- * 스토리 제작·채팅 시작의 게스트 동의 게이팅 스펙(FE-SCREEN-010 동의 모델·웹 사용자 모델).
- * 게스트는 제작 화면에 바로 진입하고 생성 요청 직전에 별도로 동의한다
- * (QA STORY-GATE-01~06).
- */
 const STORIES_BATCH = '**/api/v1/stories/batch';
 const STORY_DETAIL = '**/api/v1/stories/s1';
 const TAGS = '**/api/v1/stories/simple/tags';

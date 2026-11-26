@@ -1,3 +1,11 @@
+/**
+ * @file 일반 제작 등록하기의 클라이언트 입력 검사.
+ *
+ * 오류 하나는 칸 키(`REGISTER_ERROR_KEY`), 탭, 문구와 함께 칸을 찾아가는 데 필요한 위치(시작 상황 id, 접는
+ * 항목 id)를 가진다. 폼은 이 위치로 오류 탭을 표시하고, 선택하지 않은 시작 상황 칩을 표시하고, 접힌 항목을
+ * 펼친다. 검수 결과도 같은 오류 형태로 옮겨 같은 자리에 보인다.
+ */
+
 import {
   GENERAL_STORY_CHARACTER_COPY,
   GENERAL_STORY_DUPLICATE_NAME_ERROR,
@@ -47,6 +55,16 @@ export type GeneralStoryRegisterError = {
 
 type CharacterPart = 'name' | 'gender' | 'description' | 'feature';
 
+/**
+ * 등록 오류와 검수 결과가 칸을 가리키는 키를 만든다. 오류를 만드는 쪽(`getRegisterErrors`, 검수 결과 짝짓기)과
+ * 칸 쪽(`useRegisterError`에 넘기는 입력 컴포넌트)이 같은 함수로 키를 만들어야 오류가 그 칸에 붙는다.
+ *
+ * @remarks
+ * 키는 `{영역}.{항목 id}.{칸}` 꼴의 문자열이다(예: `start.{id}.name`, `ending.{id}.minTurns`). 항목 id는 폼 안의
+ * id라 항목 순서가 바뀌어도 같은 칸을 가리킨다. 글 칸은 필드 이름을, 장르, 소개 글, 표지는 고정 문자열을 쓴다.
+ *
+ * @see getReviewErrors 검수 결과의 요청 필드 경로를 이 키로 옮긴다.
+ */
 export const REGISTER_ERROR_KEY = {
   text: (field: GeneralStoryTextField) => field,
   protagonist: (part: CharacterPart) => `protagonist.${part}`,

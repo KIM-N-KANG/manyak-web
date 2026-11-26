@@ -19,6 +19,13 @@ type SnapStripProps = {
   children: ReactNode;
 };
 
+/**
+ * 자식마다 폭 82%의 가로 스냅 카드로 감싸고, 아래 점 표시로 현재 카드와 이동 버튼을 제공한다.
+ *
+ * @remarks
+ * 스크롤러는 `-mx-4`로 부모의 좌우 여백 16px까지 펼쳐지므로 부모가 그 여백을 가진다고 가정한다.
+ * 현재 카드는 첫 카드의 `offsetLeft`를 기준으로 스크롤 위치에 가장 가까운 카드로 정한다.
+ */
 export function SnapStrip({ children }: SnapStripProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);

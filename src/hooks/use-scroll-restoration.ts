@@ -10,6 +10,8 @@ type ScrollRestorationOptions = {
   /**
    * 참이면 기록 칸마다 따로 기억한다. 같은 화면을 새로 열면 맨 위에서 시작하고, 뒤로가기로 같은 칸에 돌아올
    * 때만 떠날 때의 위치를 되찾는다. Navigation API가 없으면 칸을 가를 수 없어 복원하지 않는다.
+   *
+   * @default false
    */
   perHistoryEntry?: boolean;
 };

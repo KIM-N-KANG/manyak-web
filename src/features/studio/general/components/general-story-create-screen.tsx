@@ -1,5 +1,14 @@
 'use client';
 
+/**
+ * @file 일반 제작 폼 화면.
+ *
+ * 진입 화면(`GeneralStoryCreateScreen`)이 임시 저장본을 판정해 폼을 열고, 폼(`GeneralStoryCreateForm`)은
+ * 새 제작, 임시 저장 이어쓰기, 반려 제출본 재제출, 스토리 수정을 한 흐름으로 처리한다. 등록하면 제출본이
+ * 접수되고 화면이 검수 결과를 기다린 뒤 승인이면 채팅으로, 반려면 칸별 사유를 붙여 폼에 남고, 상한을
+ * 넘기면 제작 탭으로 간다. 접수된 뒤에는 임시 저장본을 지우고 다시 임시 저장하지 않는다.
+ */
+
 import { useEffect, useRef, useState } from 'react';
 
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
@@ -192,6 +201,11 @@ const toStoredImage = (
 ): GeneralStoryDraftImage | null =>
   image && { objectKey: image.objectKey, blob: image.blob };
 
+/**
+ * 일반 제작 진입 화면. 이어 만들 임시 저장본이 서버에 있는지, 기기 안에만 있는지, 없는지를 판정한 뒤
+ * 그 결과로 폼의 초기 입력과 저장 레코드 id를 정해 연다. 판정 중에는 스피너를, 판정이 실패하면 다시
+ * 시도 화면을 보인다.
+ */
 export function GeneralStoryCreateScreen() {
   const { entry, isError, retry } = useGeneralStoryDraftEntry();
 
@@ -257,6 +271,22 @@ type GeneralStoryCreateFormProps = {
   edit?: GeneralStoryEditOptions;
 };
 
+/**
+ * 일반 제작과 스토리 수정이 함께 쓰는 등록 폼.
+ *
+ * @remarks
+ * props 조합으로 네 가지 모드가 갈린다.
+ * - 새 제작: `initial`이 null이다. 새 `requestId`로 임시 저장 레코드를 만든다.
+ * - 임시 저장 이어쓰기: `initial`과 `draftRequestId`가 있다. 같은 레코드에 덮어쓰고, 서버 저장본이면
+ *   `draftVersion`을 기준 버전으로 보낸다.
+ * - 반려 제출본 재제출: `submission`이 있다. 처음부터 접수된 상태로 열어 임시 저장하지 않고, 등록하면
+ *   새로 제출하지 않고 그 제출본을 재제출한다.
+ * - 스토리 수정: `edit`이 있다. 임시 저장 없이 바뀐 필드만 PATCH로 보내고, 표지 삭제는 별도 API로 지운다.
+ *   검토 중인 수정 제출본이 있으면 입력과 저장을 잠근다.
+ *
+ * 등록이 접수되면 검수 결과를 폴링하고, 화면을 떠나면 `AbortController`로 조회와 이후 이동을 멈춘다.
+ * 닫기와 뒤로가기는 잃을 입력이 있을 때만 종료 경고를 띄운다.
+ */
 export function GeneralStoryCreateForm({
   initial,
   draftRequestId,
@@ -438,8 +468,13 @@ export function GeneralStoryCreateForm({
 
   const writeDraft = () => draftSave.save(toDraftBody, snapshotKey);
 
-  // 검토 중이거나 접수된 뒤에는 저장하지 않는다. 지운 임시 저장본을 화면 숨김 저장이 되살리지 않게 한다.
-  // 저장 훅이 차례로 보내므로 앞 저장이 끝나지 않았어도 뒤에 넣는다(건너뛰면 탭 이동 전에 고친 내용이 저장되지 않는다).
+  /**
+   * 바뀐 입력이 있으면 임시 저장한다. 수정 모드와 검토 중, 접수된 뒤에는 저장하지 않아 지운 임시 저장본을
+   * 화면 숨김 저장이 되살리지 않게 한다. 저장 훅이 차례로 보내므로 앞 저장이 끝나지 않았어도 뒤에 넣는다
+   * (건너뛰면 탭 이동 전에 고친 내용이 저장되지 않는다).
+   *
+   * @param options.background 화면이 숨겨질 때의 저장이면 참이다. keepalive로 보내고 실패해도 알리지 않는다.
+   */
   const saveDraft = async ({ background = false } = {}) => {
     if (
       !edit &&
@@ -456,7 +491,10 @@ export function GeneralStoryCreateForm({
   const leaveToStudio = () =>
     leaveAfterCleanup(() => returnToMainTab(router, APP_PATH.MAIN.STUDIO));
 
-  // 잃을 것이 없으면 묻지 않고 나간다. 수정은 임시 저장이 없어 마지막으로 저장한 뒤 고친 것만 본다.
+  /**
+   * 닫기와 뒤로가기를 처리한다. 잃을 것이 없으면 묻지 않고 나가고, 있으면 상황에 맞는 종료 경고를 연다.
+   * 수정은 임시 저장이 없어 마지막으로 저장한 뒤 고친 것만 본다.
+   */
   const handleClose = () => {
     if (edit) {
       if (snapshotKey === submittedKey) {
@@ -500,7 +538,8 @@ export function GeneralStoryCreateForm({
 
   /**
    * 화면을 떠난다. 수정은 상세에서 들어왔으면 상세로 되돌아가고, 주소로 바로 열었으면 상세로 바꿔 연다.
-   * 일반 제작은 제작 탭으로 간다.
+   * 일반 제작은 제작 탭으로 간다. 어느 쪽이든 이탈 방지 가드와 그 위 기록 레이어를 먼저 정리해, 종료 경고나
+   * 뒤로가기 가로채기가 다시 걸리지 않게 한다.
    */
   const leave = () => {
     if (!edit) {
@@ -544,6 +583,8 @@ export function GeneralStoryCreateForm({
    * 제출본의 검수 결과를 기다린다. 조회가 일시적으로 실패해도 상한까지 다시 조회한다.
    * 승인됐는데 스토리 id가 아직 없으면 끝나지 않은 것으로 보고 다시 조회한다.
    *
+   * @param submissionId 접수 응답이 돌려준 제출본 id
+   * @param signal 화면을 떠나면 중단되는 신호. 중단되면 진행 중인 조회를 끊고 null을 반환한다.
    * @returns 검수가 끝난 제출본. 상한까지 끝나지 않으면 null
    */
   const waitForReview = async (
@@ -575,6 +616,20 @@ export function GeneralStoryCreateForm({
     return null;
   };
 
+  /**
+   * 등록하기(수정이면 저장하기)를 처리한다. 입력 오류 검사는 폼 탭이 먼저 끝낸 뒤 부른다.
+   *
+   * @remarks
+   * - 검토 중이거나 잠긴 수정이면 아무것도 하지 않는다. 제공 장르 목록을 받지 못했으면 요청하지 않는다.
+   * - 수정은 바뀐 필드만 PATCH로 보낸다. 바뀐 것이 없으면 요청 없이 떠나고, 표지 삭제는 삭제 API로 먼저
+   *   지운다. 200이면 바로 반영된 것이고(공개 범위만 바꾼 경우 등), 202면 검수로 넘어간다.
+   * - 일반 제작은 반려된 제출본이 있으면 재제출하고, 없으면 새로 제출한다. 재제출이 404나 409로 실패하면
+   *   다음에는 새로 제출한다.
+   * - 접수되면 일반 제작은 임시 저장본을 지우고 다시 임시 저장하지 않는다. 그 뒤 검수 결과를 기다려
+   *   반려나 실패면 폼에 칸별 사유를 붙이고 첫 사유 칸으로 옮기고, 승인이면 채팅을 시작하고, 상한을 넘기면
+   *   지연 안내와 함께 제작 탭으로 간다. 수정은 반려나 실패가 아니면 승인이든 상한 초과든 상세로 돌아간다.
+   * - 화면을 떠나 중단되면 그 시점 이후의 안내와 이동을 하지 않는다.
+   */
   const handleRegister = async () => {
     if (isReviewingRef.current || isLocked) return;
 

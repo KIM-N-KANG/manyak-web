@@ -66,7 +66,12 @@ const COVER_FILE = {
 
 type PresignBody = { kind: string; contentType: string; contentLength: number };
 
-/** presign과 S3 PUT을 목킹하고, 받은 요청을 기록한다. */
+/**
+ * presign과 S3 PUT을 목킹하고, 받은 요청을 기록한다.
+ *
+ * @param options.putStatus 업로드 URL PUT 응답 상태. 실패 상태로 업로드 실패 처리를 재현한다
+ * @returns presign 요청 본문과 PUT 요청의 `content-type` 헤더 목록
+ */
 async function mockCoverUpload(page: Page, { putStatus = 200 } = {}) {
   const presignBodies: PresignBody[] = [];
   const putContentTypes: (string | undefined)[] = [];

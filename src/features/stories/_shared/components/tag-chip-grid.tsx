@@ -11,18 +11,25 @@ import {
 type TagChipGridProps = {
   /** 스켈레톤·칩 key를 화면 안에서 유일하게 만들기 위한 접두사 */
   keyPrefix: string;
+  /** 서버가 내려 준 키워드. id나 이름이 없는 항목은 그리지 않는다. */
   predefinedTags: SimpleStoryTagListItemResponse[];
+  /** 사용자가 직접 추가한 키워드. 서버 키워드 뒤에 이어 그린다. */
   customTags?: { id: string; name: string }[];
   selectedTagIds: number[];
   selectedCustomTagIds?: string[];
+  /** 선택 상한에 닿았는지. 참이면 고르지 않은 칩만 비활성으로 두어 해제는 계속 할 수 있다. */
   isMaxSelectionReached: boolean;
+  /** 참이면 칩 대신 스켈레톤을 그린다. */
   isLoadingTags: boolean;
+  /** 참이면 칩 앞에 다시 시도 버튼을 그린다. */
   hasTagsError: boolean;
   /** 목록을 받지 못했을 때 다시 조회한다. */
   onRetryTags: () => void;
+  /** 선택 여부와 관계없이 모든 칩을 비활성으로 둔다. 상한 규칙보다 우선한다. */
   disabled: boolean;
   /** 직접 추가를 허용하는 카테고리에서만 넘긴다. */
   addTagTrigger?: ReactNode;
+  /** `pressed`가 참이면 선택, 거짓이면 해제다. */
   onTogglePredefinedTag: (tagId: number, pressed: boolean) => void;
   onToggleCustomTag?: (tagId: string, pressed: boolean) => void;
 };

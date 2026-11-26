@@ -2,6 +2,11 @@
 
 import { useEffect } from 'react';
 
+/**
+ * iOS에서 글자 크기가 작은 입력 칸에 포커스할 때 화면이 자동 확대되지 않도록 viewport 메타에
+ * `maximum-scale=1`을 붙인다. iOS는 이 값이 있어도 핀치 확대를 허용하지만 Android는 막으므로 iOS에서만 붙인다.
+ * Next가 클라이언트 이동마다 viewport 메타를 교체하므로 head를 지켜보며 다시 붙인다. 화면에는 아무것도 그리지 않는다.
+ */
 export function IosInputZoomLock() {
   useEffect(() => {
     const isIos =

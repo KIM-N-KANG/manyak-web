@@ -1,3 +1,10 @@
+/**
+ * @file 간편 제작 퍼널 기록과 서버 초안 payload 사이의 변환.
+ *
+ * payload 형식은 스키마 버전 1이며 Web과 Android가 함께 쓴다. KEYWORD_DRAFT는 키워드 스냅숏을 그대로 싣고,
+ * STORY_DRAFT는 생성 결과 원문 대신 생성 요청과 고른 스토리라인 ID만 싣는다. 읽을 때는 서버 상세에 딸린 생성 요청
+ * 복구 결과와 합쳐 퍼널 기록을 되살린다. 간편 제작이 아니거나 스키마 버전이 다른 초안은 읽지 않고 `unreadable`로 돌려준다.
+ */
 import type {
   CreateSimpleStoryRequest,
   CreateSimpleStoryRequestVisibility,

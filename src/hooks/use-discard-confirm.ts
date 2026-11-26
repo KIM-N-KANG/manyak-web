@@ -13,6 +13,8 @@ export const DISCARD_INPUT_CONFIRM_COPY = {
  * `dialogProps`를 `ConfirmAlertDialog`에 펼친다.
  *
  * @param onDiscard 항목을 실제로 지우는 함수
+ * @returns `request(id, hasInput)`는 입력이 있으면 확인 다이얼로그를 열고 없으면 바로 지운다.
+ * `dialogProps`는 확인 문구와 열림 상태, 확인 처리를 담는다.
  */
 export function useDiscardConfirm(onDiscard: (id: string) => void) {
   const [pendingId, setPendingId] = useState<string | null>(null);

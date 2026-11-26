@@ -4,9 +4,19 @@ import type { HistoryLayerKind } from '@/lib/history-layer-stack';
 import { openLayer } from '@/lib/history-layers';
 
 type UseBackLayerOptions = {
+  /** 참인 동안 레이어를 유지한다. 거짓이 되면 레이어를 닫고 남은 더미를 정리한다. */
   open: boolean;
-  /** 거짓이면 레이어를 열지 않는다. 뒤로가기에 다른 의미를 주는 오버레이가 끈다. */
+  /**
+   * 거짓이면 레이어를 열지 않는다. 뒤로가기에 다른 의미를 주는 오버레이가 끈다.
+   *
+   * @default true
+   */
   enabled?: boolean;
+  /**
+   * 레이어 종류다. 값이 바뀌면 레이어를 닫고 새로 연다.
+   *
+   * @default 'close'
+   */
   kind?: HistoryLayerKind;
   /** 뒤로가기가 이 레이어에 닿았을 때 부른다. 최신 콜백을 ref로 부른다. */
   onBack: () => void;
@@ -19,6 +29,7 @@ type UseBackLayerOptions = {
  * 다음 뒤로가기도 받는다. `guard`는 매니저가 스스로 다시 쌓는다.
  *
  * @param options 열림 여부, 사용 여부, 레이어 종류, 뒤로가기 콜백
+ * @see openLayer
  */
 export function useBackLayer({
   open,

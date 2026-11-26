@@ -7,7 +7,16 @@ import { useHoverCapable } from '@/lib/hooks/use-hover-capable';
 import type { Rgb, StagePalette } from '@/lib/mascot/draw-mascot';
 import type { Point } from '@/lib/mascot/mascot-choreography';
 
-/** 무대 한 프레임을 그리는 함수다. 크기·시간·색·포인터를 받아 그리기만 한다. */
+/**
+ * 무대 한 프레임을 그리는 함수다. 크기, 시간, 색, 포인터를 받아 그리기만 한다.
+ *
+ * @param ctx 화면 캔버스 컨텍스트. 기기 픽셀 비율이 변환으로 걸려 있어 CSS px로 그린다.
+ * @param layer 반투명 부분을 따로 그린 뒤 한 번에 합성하는 화면 밖 캔버스. 크기와 변환은 `ctx`와 같다.
+ * @param width 무대 폭(CSS px)
+ * @param height 무대 높이(CSS px)
+ * @param millis 무대가 처음 그려진 뒤 지난 안무 시각(ms). 동작 줄이기에서는 `stillMillis`로 고정된다.
+ * @param lookAt 무대 폭으로 나눈 포인터 위치(x, y 모두 폭 기준). 포인터가 없거나 동작 줄이기면 `null`이다.
+ */
 export type MascotStageDraw = (
   ctx: CanvasRenderingContext2D,
   layer: CanvasRenderingContext2D,
@@ -23,13 +32,21 @@ type MascotStageProps = {
   label: string;
   /**
    * 무대를 그리는 함수다. 모듈 수준 함수를 넘겨 프레임 루프가 다시 시작되지 않게 한다. 안무 시각은 무대가
-   * 처음 그려진 순간부터 세고, 마우스·트랙패드 환경에서는 포인터 자리를 함께 넘긴다.
+   * 처음 그려진 순간부터 세고, 마우스, 트랙패드 환경에서는 포인터 자리를 함께 넘긴다.
    */
   draw: MascotStageDraw;
   /** 동작 줄이기에서 멈춰 보일 안무 시각이다. 이때는 무대 크기가 바뀔 때만 다시 그린다. */
   stillMillis?: number;
 };
 
+/**
+ * 마스코트 안무를 캔버스에 그리는 무대.
+ *
+ * @remarks
+ * `requestAnimationFrame` 루프로 매 프레임 `draw`를 부른다. `draw`, 동작 줄이기, 테마, `stillMillis`가
+ * 바뀌면 루프를 다시 시작하고, 이때 테마 토큰 색을 다시 읽는다. 안무 시각은 루프를 다시 시작해도
+ * 첫 마운트 시점부터 이어서 센다. 동작 줄이기에서는 루프 없이 한 장만 그리고 크기가 바뀔 때만 다시 그린다.
+ */
 export function MascotStage({
   label,
   draw: drawStage,

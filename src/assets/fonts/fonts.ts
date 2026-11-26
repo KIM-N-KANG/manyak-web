@@ -7,6 +7,10 @@ export const pretendard = localFont({
   display: 'swap',
 });
 
+/**
+ * 명조 계열 마루부리 폰트. `globals.css`가 `--font-maruburi-family`를 `--font-serif`, `--font-maruburi`로 연결한다.
+ * 가변 폰트가 아니라 400, 600, 700 세 굵기만 싣는다.
+ */
 export const maruburi = localFont({
   src: [
     {

@@ -33,9 +33,14 @@ import type { ChatListItem } from '../types';
 
 type ChatCardProps = {
   chat: ChatListItem;
+  /** 목록 안의 0부터 세는 순번. 노출과 클릭 분석 이벤트에만 싣는다. */
   position?: number;
 };
 
+/**
+ * 채팅 목록 카드. 카드 전체를 덮는 링크 위에 옵션 버튼을 `z-20` 으로 겹쳐 따로 누를 수 있게 하고,
+ * 노출과 클릭을 분석 이벤트로 남긴다.
+ */
 export function ChatCard({ chat, position }: ChatCardProps) {
   const impressionRef = useImpression({
     object: 'chatCard',
@@ -134,7 +139,8 @@ function ChatCardOptions({ chat }: ChatCardOptionsProps) {
 }
 
 /**
- * 카드 본체의 props. 목록 카드와 옵션 다이얼로그의 축소판이 같은 마크업을 쓰되, 축소판은
+ * 카드 본체의 props. 링크와 노출 추적은 바깥의 `ChatCard` 가 맡고, 본체는 표지, 제목, 미리보기,
+ * 턴 수와 마지막 진행 시각만 그린다.
  */
 type ChatCardBodyProps = {
   chat: ChatListItem;

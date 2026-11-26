@@ -27,6 +27,7 @@ export type LinkResultPayload = {
   provider: SocialLoginProvider;
 };
 
+/** 쿠키 값 검증에 쓰는 `LinkAccountResult`의 런타임 목록이다. 결과 코드를 더하면 두 곳을 함께 고친다. */
 const LINK_ACCOUNT_RESULTS: readonly LinkAccountResult[] = [
   'success',
   'provider_already_linked',

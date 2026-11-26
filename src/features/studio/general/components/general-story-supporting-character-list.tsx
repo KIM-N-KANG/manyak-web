@@ -22,8 +22,11 @@ import { GeneralStoryCharacterFields } from './general-story-character-fields';
 import { GeneralStoryImageField } from './general-story-image-field';
 import { GeneralStoryInputField } from './general-story-input-field';
 
+/** 폼에서 다루는 주변 인물이다. 임시 저장 스냅숏과 달리 인물 소개가 항상 문자열이다. */
 export type GeneralStorySupportingCharacter = GeneralStoryCharacter & {
+  /** 폼 안에서만 쓰는 식별자다. 목록 key와 등록 오류 키에 쓴다. */
   id: string;
+  /** 인물 소개다. 비우면 빈 문자열이다. */
   description: string;
   image: DraftImage | null;
 };
@@ -38,6 +41,13 @@ type GeneralStorySupportingCharacterListProps = {
   onChange: Dispatch<SetStateAction<GeneralStorySupportingCharacter[]>>;
 };
 
+/**
+ * 주변 인물 목록 편집. 접는 항목마다 이미지, 기본 정보, 인물 소개, 특징 칸을 둔다.
+ *
+ * @remarks
+ * 한 명은 늘 남아 마지막 인물은 지울 수 없고, 정해진 최대 인원까지만 추가한다. 입력이 있는 인물을 지우면
+ * 확인을 묻고, 지울 때 그 인물 이미지의 미리보기 URL을 해제한다. 이름 중복은 주인공 이름까지 함께 본다.
+ */
 export function GeneralStorySupportingCharacterList({
   protagonistName,
   characters,

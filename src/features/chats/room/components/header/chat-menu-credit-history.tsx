@@ -16,6 +16,10 @@ type ChatMenuCreditHistoryProps = {
   onBack: () => void;
 };
 
+/**
+ * 채팅 메뉴 드로어 안에서 메뉴와 바꿔 보이는 이프 내역 서브 뷰. 새로고침하면 목록을 맨 위로 올린 뒤 다시 받고,
+ * 회원이 아니면 새로고침과 목록 조회를 끈다.
+ */
 export function ChatMenuCreditHistory({ onBack }: ChatMenuCreditHistoryProps) {
   const { isMember } = useMemberAccess();
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);

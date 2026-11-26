@@ -16,6 +16,10 @@ import { track } from '@/observability/analytics';
 
 import { ManyakLogo } from './manyak-logo';
 
+/**
+ * 메인 탭 화면의 헤더. 제목은 경로에 맞는 탭 이름이고, 홈은 로고를 보여주고 제목은 스크린 리더에만 남긴다.
+ * 홈, 채팅, 제작, 탐색 탭은 오른쪽에 종 버튼을 두고, 세션 확인이 끝난 게스트에게만 로그인 버튼을 더한다.
+ */
 export function MainHeader() {
   const pathname = usePathname();
   const { status } = useSession();

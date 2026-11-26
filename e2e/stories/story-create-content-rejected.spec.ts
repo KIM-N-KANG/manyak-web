@@ -1,3 +1,6 @@
+/** @file 간편 제작에서 AI가 입력 내용을 거절한 경우(422 CONTENT_REJECTED)의 안내 스펙(KNK-1869).
+ * 같은 입력은 다시 거절되므로 같은 요청을 다시 보내는 재시도 대신 입력을 고치게 한다.
+ */
 import { type Page } from '@playwright/test';
 
 import { API_ERROR_CODE } from '@/constants/api-error-code';
@@ -8,10 +11,6 @@ import { CREATION_PROGRESS_CARD_COPY } from '@/features/studio/menu/constants';
 import { completeStory } from '../fixtures/story-generation';
 import { expect, mockMemberSession, test } from '../fixtures/test';
 
-/**
- * 간편 제작에서 AI가 입력 내용을 거절한 경우(422 CONTENT_REJECTED)의 안내 스펙(KNK-1869).
- * 같은 입력은 다시 거절되므로 같은 요청을 다시 보내는 재시도 대신 입력을 고치게 한다.
- */
 const TAGS = '**/api/v1/stories/simple/tags';
 const STORYLINES = '**/api/v1/stories/simple/storylines';
 const CREATE_STORY = '**/api/v1/stories/simple';

@@ -3,6 +3,10 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * 버튼 변형과 크기별 클래스. shadcn 원본에 없는 `primaryOutline`, `destructiveOutline` 변형을 더하고
+ * 크기 체계를 프로젝트 기준으로 바꿨다. 바로 쓰지 않고 `buttonVariants`로 감싸 겹치는 유틸리티를 병합한다.
+ */
 const buttonVariantClasses = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {

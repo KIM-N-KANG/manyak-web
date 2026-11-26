@@ -42,7 +42,7 @@ diff를 읽는 리뷰입니다. 화면을 띄워 보는 검사(캡처, agent-bro
 
 ## 4. 프로젝트 규칙
 
-AGENTS.md 규칙 중 lint로 막지 못하는 것을 봅니다.
+루트 AGENTS.md와, 바뀐 파일이 있는 폴더의 하위 AGENTS.md(예: `e2e/AGENTS.md`) 규칙 중 lint로 막지 못하는 것을 봅니다. 하위 파일은 diff만으로는 로드되지 않으므로 Read로 직접 엽니다.
 
 - API: 생성 훅 대신 직접 `fetch`, 서버의 하드코딩 경로(`get*Url()` 미사용)
 - 관측성: `@amplitude/unified`, `@sentry/nextjs` 직접 import, `AnalyticsEventProps`에 정의하지 않은 이벤트, 서버 컴포넌트의 `track`

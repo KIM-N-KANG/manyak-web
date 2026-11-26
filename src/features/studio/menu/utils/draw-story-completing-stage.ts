@@ -1,3 +1,12 @@
+/**
+ * @file 완성 중 표지의 캔버스 그리기.
+ *
+ * 시간 규칙은 안무 모듈(`story-completing-choreography`)이 소유하고, 이 모듈은 `completingMoment`가 돌려준 막과
+ * 막 안의 시각(`actMillis`)으로 그 막의 소품을 그린다. 소품이 나타나고 움직이는 순간은 cue 이름으로 안무에서 읽는다.
+ * 좌표와 크기는 모두 표지 폭(`unit`)에 대한 비율이고, 소품 묶음은 보조 캔버스(`layer`)에 한 장으로 그린 뒤
+ * 투명도를 입혀 겹친 부분이 진해지지 않게 한다.
+ */
+
 import {
   brushPressure,
   clamp01,
@@ -142,7 +151,12 @@ export function drawStoryCompletingStage(
 
 // ---- 키워드와 스토리라인 ----
 
-/** 키워드 칩 무리다. 마스코트가 밟은 칩은 그 순간 브랜드 색으로 채워지며 통 튄다. */
+/**
+ * 키워드 칩 무리다. 마스코트가 밟은 칩은 그 순간 브랜드 색으로 채워지며 통 튄다.
+ *
+ * @param stage 무대
+ * @param actMillis 막 안의 시각(ms)
+ */
 function drawKeywordChips(stage: Stage, actMillis: number) {
   const { unit, palette } = stage;
 
@@ -196,7 +210,12 @@ function drawKeywordChips(stage: Stage, actMillis: number) {
   });
 }
 
-/** 스토리라인 카드 세 장이다. 올려다보는 카드는 물들며 뜨고, 머리로 받은 카드에 고른 표시가 붙는다. */
+/**
+ * 스토리라인 카드 세 장이다. 올려다보는 카드는 물들며 뜨고, 머리로 받은 카드에 고른 표시가 붙는다.
+ *
+ * @param stage 무대
+ * @param actMillis 막 안의 시각(ms)
+ */
 function drawStorylines(stage: Stage, actMillis: number) {
   const { unit, palette } = stage;
   const pickAt = cueStart('STORYLINE_PICK') + cueMillis('STORYLINE_PICK') / 2;
@@ -265,6 +284,15 @@ function drawStorylines(stage: Stage, actMillis: number) {
   });
 }
 
+/**
+ * 고른 스토리라인 카드 모서리의 체크 배지다.
+ *
+ * @param ctx 그릴 캔버스
+ * @param center 배지 중심(표지 폭 단위)
+ * @param radius 배지 반지름(표지 폭 단위). 0 이하면 그리지 않아 튀어나오는 애니메이션의 시작으로 쓴다
+ * @param unit 표지 폭(픽셀)
+ * @param palette 테마 색
+ */
 function drawCheckBadge(
   ctx: CanvasRenderingContext2D,
   center: Point,
@@ -311,7 +339,12 @@ const LINE_WIDTHS = [0.62, 1, 0.9, 1, 0.55];
 const KEY_INSET = 0.024;
 const KEY_GAP = 0.012;
 
-/** 원고와 키보드가 함께 나타났다가, 다 쓰고 기뻐 뛰는 동안 함께 사라진다. */
+/**
+ * 원고와 키보드가 함께 나타났다가, 다 쓰고 기뻐 뛰는 동안 함께 사라진다.
+ *
+ * @param actMillis 막 안의 시각(ms)
+ * @returns 보이는 정도. 나타날 때 `easeOutBack`으로 1을 잠깐 넘으므로 투명도에 쓸 때는 0..1로 자른다
+ */
 function writingVisibility(actMillis: number) {
   const enter = easeOutBack(clamp01(actMillis / 320));
   const exit = clamp01((actMillis - cueStart('TYPING_DONE') - 140) / 360);
@@ -319,6 +352,12 @@ function writingVisibility(actMillis: number) {
   return enter * (1 - exit);
 }
 
+/**
+ * 타자로 채워지는 원고다. 친 키 수에 비례해 줄을 앞에서부터 채우고, 쓰는 중인 줄 끝에서만 캐럿이 깜빡인다.
+ *
+ * @param stage 무대
+ * @param actMillis 막 안의 시각(ms)
+ */
 function drawManuscript(stage: Stage, actMillis: number) {
   const { unit, palette } = stage;
   const visibility = writingVisibility(actMillis);
@@ -384,7 +423,12 @@ function drawManuscript(stage: Stage, actMillis: number) {
   });
 }
 
-/** 마스코트 앞을 가리는 키보드다. 아래에서 밀려 올라오고, 방금 누른 키가 브랜드 색으로 빛났다 꺼진다. */
+/**
+ * 마스코트 앞을 가리는 키보드다. 아래에서 밀려 올라오고, 방금 누른 키가 브랜드 색으로 빛났다 꺼진다.
+ *
+ * @param stage 무대
+ * @param actMillis 막 안의 시각(ms)
+ */
 function drawKeyboard(stage: Stage, actMillis: number) {
   const { unit, palette } = stage;
   const visibility = writingVisibility(actMillis);

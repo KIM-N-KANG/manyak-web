@@ -21,6 +21,10 @@ type PushConsentNoticeDialogProps = {
   onClose: () => void;
 };
 
+/**
+ * 광고, 야간 알림 동의 처리 결과(전송자, 일시, 결과)를 알리는 다이얼로그.
+ * `notice`가 null로 바뀌어 닫히는 애니메이션 동안 내용이 비지 않도록 마지막 통지를 state로 붙잡아 그린다.
+ */
 export function PushConsentNoticeDialog({
   notice,
   onClose,

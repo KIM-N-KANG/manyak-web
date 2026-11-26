@@ -42,6 +42,7 @@ function CharacterImageFallback({ label }: { label?: string }) {
   );
 }
 
+/** 인물 선택 줄의 썸네일. 허용 호스트가 아니거나 이미지를 받지 못하면 기본 표시로 바꾼다. */
 function CharacterThumbnail({ imageUrl }: { imageUrl?: string | null }) {
   const [hasError, setHasError] = useState(false);
 
@@ -61,6 +62,13 @@ function CharacterThumbnail({ imageUrl }: { imageUrl?: string | null }) {
   );
 }
 
+/**
+ * 스토리 상세의 주변 인물 카드. 인물이 한 명 이상일 때만 그린다.
+ *
+ * @remarks
+ * 인물이 둘 이상이면 썸네일 선택 줄과 좌우 화살표를 보이고, 고른 썸네일을 줄 가운데로 스크롤한다. 고른 인물의
+ * 큰 이미지를 확대하면 분석 이벤트를 보낸다.
+ */
 export function StoryCharacters({ storyId, characters }: StoryCharactersProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const pickerRef = useRef<HTMLDivElement>(null);

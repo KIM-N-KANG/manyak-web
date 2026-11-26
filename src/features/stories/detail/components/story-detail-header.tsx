@@ -22,12 +22,24 @@ type StoryDetailHeaderProps = {
   /** 삭제하기 노출 여부(내가 만든 스토리만) */
   canDelete: boolean;
   onDeleteSuccess: () => void;
+  /** 본문 제목이 헤더 뒤로 스크롤돼 보이지 않는지. 참이면 헤더에 제목을 띄운다. */
   showTitle: boolean;
+  /** 상단 표지가 썸네일 이미지인지. 참이면 흰 글자로 시작해 스크롤할수록 기본 전경색으로 섞는다. */
   hasHeroImage: boolean;
+  /** 스크롤 위치를 읽을 본문 스크롤 컨테이너. 이 값이나 `heroElement`가 없으면 처음부터 불투명 헤더를 쓴다. */
   scrollContainerElement: HTMLElement | null;
+  /** 상단 표지 영역. 표지 높이에서 헤더 높이를 뺀 만큼 스크롤하면 헤더 배경이 완전히 불투명해진다. */
   heroElement: HTMLElement | null;
 };
 
+/**
+ * 스토리 상세 표지 위에 겹쳐 놓은 헤더.
+ *
+ * @remarks
+ * 스크롤 위치에 따라 배경 알파와 글자색을 CSS 변수로 갱신해 스크롤마다 리렌더하지 않는다. 갱신은 프레임당 한 번으로
+ * 모으고 헤더와 표지 크기가 바뀌어도 다시 계산한다. 앱 안 이동 이력이 없으면(공유 링크로 바로 진입) 뒤로가기를
+ * 홈 탭 이동으로 대신한다.
+ */
 export function StoryDetailHeader({
   storyId,
   title,

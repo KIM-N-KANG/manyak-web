@@ -7,16 +7,26 @@ type UseInViewParams = {
   target: Element | null;
   /** 교차 영역으로 사용할 스크롤 컨테이너 (생략 시 뷰포트) */
   root?: Element | null;
-  /** 대상이 마운트된 뒤 관찰을 시작하기 위한 활성화 플래그 */
+  /**
+   * 대상이 마운트된 뒤 관찰을 시작하기 위한 활성화 플래그
+   *
+   * @default true
+   */
   enabled?: boolean;
   /** 교차 영역을 확장/축소하는 마진 (IntersectionObserver rootMargin) */
   rootMargin?: string;
-  /** in-view로 판정할 최소 가시 비율 (0~1). 예: 0.99면 거의 전부 보여야 true */
+  /**
+   * in-view로 판정할 최소 가시 비율 (0~1). 예: 0.99면 거의 전부 보여야 true
+   *
+   * @default 0
+   */
   threshold?: number;
   /**
    * 첫 관찰 결과가 도착하기 전에 사용할 초기값.
    * 관찰은 마운트 직후가 아니라 다음 렌더링 기회에 처음 보고되므로, 목록 끝 sentinel처럼
    * "보이면 무언가를 시작"하는 용도라면 false로 시작해야 첫 렌더에서 헛돌지 않는다.
+   *
+   * @default true
    */
   initialInView?: boolean;
 };

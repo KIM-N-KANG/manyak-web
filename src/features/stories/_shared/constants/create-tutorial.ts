@@ -17,6 +17,7 @@ export type CreateTutorialStage = (typeof CREATE_TUTORIAL_STAGES)[number];
 /** 마지막으로 마친 단계를 담는 로컬스토리지 키다. 건너뛰거나 끝까지 보면 `done`이 된다. */
 export const CREATE_TUTORIAL_STORAGE_KEY = 'manyak:create-tutorial-stage';
 
+/** 안내를 건너뛰거나 끝까지 본 뒤 `CREATE_TUTORIAL_STORAGE_KEY`에 남기는 값이다. 다음 단계가 없다는 표지다. */
 export const CREATE_TUTORIAL_DONE = 'done';
 
 export const CREATE_TUTORIAL_COPY = {

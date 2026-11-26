@@ -1,3 +1,9 @@
+/**
+ * @file 끊긴 채팅 생성에 다시 붙어 종료 이벤트까지 따라가는 재연결 루프.
+ *
+ * @see room/hooks/use-chat-stream.ts 파일 머리 주석(생성 스트림 흐름 개요)
+ */
+
 import { parseSseStream, type SseEvent } from './parse-sse-stream';
 
 /** 끊긴 생성에 다시 붙는 최대 횟수. 첫 재연결을 포함하며, 간격이 두 배씩 늘어 약 7초 동안 시도한다. */

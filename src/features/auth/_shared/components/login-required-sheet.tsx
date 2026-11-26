@@ -26,9 +26,15 @@ import type { SocialLoginProvider } from '@/lib/auth/social-provider';
 
 type LoginRequiredSheetProps = {
   open: boolean;
+  /** 소셜 로그인이 진행 중인 동안에는 닫힘 요청이 전달되지 않는다. */
   onOpenChange: (open: boolean) => void;
 };
 
+/**
+ * 게스트가 회원 기능을 시도할 때 띄우는 소셜 로그인 시트.
+ * 로그인을 마치면 시트를 연 현재 앱 경로로 돌아온다. 로그인이 진행 중인 동안에는 바깥
+ * 누르기와 닫힘 요청을 막는다.
+ */
 export function LoginRequiredSheet({
   open,
   onOpenChange,

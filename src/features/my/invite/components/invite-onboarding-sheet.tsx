@@ -27,6 +27,21 @@ import { buildInviteRewardCopy } from '../constants';
 import { InviteOnboardingCodeForm } from './invite-onboarding-code-form';
 import { InviteOnboardingTitle } from './invite-onboarding-title';
 
+/**
+ * 가입 직후 초대 코드 등록을 권하는 온보딩 시트.
+ *
+ * @remarks
+ * 회원으로 확정됐고, 세션의 `inviteOnboardingPending`이 true이고, 이번 접속에서 미루지 않으며,
+ * 스토리 목록 화면일 때만 연다. 상태는 모두 사용자 id로 기억해 다른 계정으로 바뀌면 저절로 풀린다.
+ * - `dismissedUserId`: 안내를 마쳐 이 계정에서는 다시 열지 않는다.
+ * - `completingUserId`: 안내 완료를 세션에 저장하는 중이다. 이 동안에는 회원 판정이 흔들려도 열어 둔다.
+ * - `redeemedUserId`: 코드 등록에 성공했다. 닫는 동안 등록 버튼의 로딩 표시를 이어 간다.
+ * - `closeFailedUserId`: 등록 성공 뒤 완료 저장에 실패했다. 폼 대신 다시 닫기 화면을 보여 준다.
+ * - `shownUserIdRef`: 노출 이벤트를 계정당 한 번만 보낸다.
+ *
+ * 건너뛰기, 닫기, 등록 성공 모두 `session.update`로 `inviteOnboardingPending`을 false로 바꿔
+ * 안내를 소비한다. 갱신된 세션이 같은 회원이고 값이 false일 때만 성공으로 본다.
+ */
 export function InviteOnboardingSheet() {
   const { data: session, update } = useSession();
   const pathname = usePathname();

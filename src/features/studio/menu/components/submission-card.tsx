@@ -21,6 +21,7 @@ import { SUBMISSION_CARD_COPY } from '../constants';
 import { CreationProgressCardBody, SavedAtRow } from './creation-progress-card';
 
 type SubmissionCardProps = {
+  /** 진행 중 구역에 보일 제출본이다. 승인된 제출본은 만든 스토리로 보이므로 타입에서 뺀다. */
   submission: StorySubmission & { status: 'PENDING' | 'REJECTED' | 'FAILED' };
 };
 
@@ -51,6 +52,10 @@ function getDescription({
     : description.FAILED;
 }
 
+/**
+ * 제작 탭 진행 중 구역의 검수 제출본 카드. 검토 중이면 옵션의 삭제가 등록 취소가 되고, 반려나 실패면 삭제와
+ * 고쳐 다시 제출하기를 둔다. 삭제나 취소는 성공 여부와 무관하게 제출본 목록을 다시 받아 실제 상태로 맞춘다.
+ */
 export function SubmissionCard({ submission }: SubmissionCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();

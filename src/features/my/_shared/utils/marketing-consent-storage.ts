@@ -1,6 +1,14 @@
 'use client';
 
 /**
+ * @file 광고 알림 동의를 다시 묻는 시점을 정하는 회원별 질문 기록 저장소.
+ * 첫 질문은 필수 동의 시트의 선택 항목이다. 거절하면 `declined-once`가 되고, 회원 재진입이
+ * `MARKETING_CONSENT_REASK_AFTER_ENTRIES`번 쌓이면 재질문 시트를 한 번 더 띄운 뒤 `closed`가 된다.
+ * 재진입 집계는 `usePushTokenSync`가 이 모듈로 하고, 재질문 요청과 필수 동의 시트의 답은
+ * `marketing-consent-store` 신호로 루트의 `MarketingConsentSheet`에 전달된다.
+ */
+
+/**
  * 회원별 광고 알림 동의 질문 단계를 보관하는 localStorage 키 접두사. 값은
  * `{ stage, entriesSinceDecline }` JSON이며 키 뒤에 회원 공개 ID를 붙인다.
  *

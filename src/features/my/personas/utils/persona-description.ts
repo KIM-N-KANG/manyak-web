@@ -1,5 +1,27 @@
+/**
+ * @file 페르소나 성별과 특징을 서버 `description` 한 글로 직렬화하고 다시 나누는 유틸.
+ * 서버에는 성별 필드가 없어 아래 형식의 글로 저장한다.
+ *
+ * @example
+ * ```text
+ * # 주인공
+ * ## 성별
+ * 여성
+ * 특징 본문(여러 줄 가능)
+ * ```
+ */
+
+/** 폼에서 쓰는 성별 코드. 서버 필드가 아니라 `description` 글의 성별 줄로 직렬화된다. */
 export type PersonaGender = 'MALE' | 'FEMALE';
 
+/**
+ * 성별 코드별 표시 문구이자 `description`에 저장되는 성별 줄의 값.
+ *
+ * @remarks
+ * `buildPersonaDescription`이 이 값을 `## 성별` 다음 줄에 그대로 쓰고, `parsePersonaDescription`이
+ * 같은 값과 비교해 성별을 되읽는다. 값을 바꾸면 이미 저장된 페르소나의 성별을 읽지 못하고 머리글까지
+ * 특징 본문으로 보이게 되므로, 표시 문구만 바꾸려면 별도 상수를 둔다.
+ */
 export const PERSONA_GENDER_TEXT: Record<PersonaGender, string> = {
   MALE: '남성',
   FEMALE: '여성',

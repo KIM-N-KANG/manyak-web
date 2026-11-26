@@ -1,5 +1,12 @@
 'use client';
 
+/**
+ * @file 이미지를 화면 전체로 띄우고 더블 탭과 핀치로 확대하는 풀스크린 뷰어.
+ * 뷰어는 이미지 밖 검은 배경, X, 뒤로가기로 페이지 이동 없이 닫힌다. Android 뷰어와 같이 이미지를
+ * 더블 탭하면 누른 지점 기준 2.5배로 키우고 다시 더블 탭하면 되돌리며, 두 손가락으로 1~5배 확대하고
+ * 확대 중에는 끌어서 옮긴다. 브라우저 기본 확대, 스크롤은 `touch-action: none`으로 막는다.
+ */
+
 import { type PointerEvent, useRef, useState } from 'react';
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
@@ -33,6 +40,9 @@ type FullscreenImageViewerProps = {
   title: string;
 };
 
+/**
+ * 이미지를 화면 전체 다이얼로그로 띄운다. 뷰어가 닫히면 이미지가 언마운트돼 확대 상태가 초기화된다.
+ */
 export function FullscreenImageViewer({
   open,
   onOpenChange,
@@ -74,18 +84,12 @@ export function FullscreenImageViewer({
 
 type Point = { x: number; y: number };
 
-/**
- * 두 번의 탭을 더블 탭으로 묶는 최대 간격(ms)과 거리(px)다.
- * 풀스크린 뷰어는 이미지 밖 검은 배경·X·뒤로가기로 페이지 이동 없이 닫힌다. 이미지는 화면 전체 박스에 contain으로 그려
- * 박스가 여백까지 덮으므로, 탭 지점이 실제 그림 밖일 때만 배경 탭으로 닫는다.
- * Android 뷰어와 같이 이미지를 더블 탭하면 누른 지점 기준 2.5배로 키우고 다시 더블 탭하면 되돌리며,
- * 두 손가락으로 1~5배 확대하고 확대 중에는 끌어서 옮긴다. 브라우저 기본 확대·스크롤은 `touch-action: none`으로 막고,
- * 뷰어가 닫히면 이미지가 언마운트돼 확대 상태가 초기화된다.
- */
+/** 두 번의 탭을 더블 탭으로 묶는 최대 간격(ms)이다. */
 const DOUBLE_TAP_MS = 300;
+/** 두 번의 탭을 더블 탭으로 묶는 두 탭 지점 사이의 최대 거리(px)다. */
 const DOUBLE_TAP_SLOP = 30;
 
-/** 이 거리(px)보다 많이 움직인 포인터는 탭이 아니라 끌기·핀치로 본다. */
+/** 이 거리(px)보다 많이 움직인 포인터는 탭이 아니라 끌기, 핀치로 본다. */
 const DRAG_SLOP = 8;
 
 /**
@@ -110,6 +114,16 @@ type ZoomableImageProps = {
   onBackdropTap: () => void;
 };
 
+/**
+ * 탭, 끌기, 핀치를 구분해 이미지 확대와 배경 탭 닫기를 처리하는 제스처 영역.
+ *
+ * @remarks
+ * 누른 포인터를 id별 맵에 두고 앞의 두 개만 제스처에 쓴다. 포인터 수가 바뀔 때마다 현재 확대 상태와
+ * 위치를 제스처 시작점으로 다시 잡아, 손가락을 더하거나 떼도 화면이 튀지 않는다. 한 포인터라도
+ * `DRAG_SLOP`보다 움직이면 이번 제스처 전체를 끌기로 표시해 뒤이은 click을 탭으로 처리하지 않는다.
+ * 이미지는 화면 전체 박스에 contain으로 그려 박스가 여백까지 덮으므로, 탭 지점이 실제 그림 밖일 때만
+ * 배경 탭으로 닫고, 그림 안의 탭은 직전 탭과 묶어 더블 탭인지 판정한다.
+ */
 function ZoomableImage({ imageUrl, alt, onBackdropTap }: ZoomableImageProps) {
   const [zoom, setZoom] = useState(INITIAL_IMAGE_ZOOM);
   const [isGesturing, setIsGesturing] = useState(false);

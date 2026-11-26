@@ -19,16 +19,24 @@ import { RecommendedInfoSection } from './recommended-info-section';
 import { StoryCompletionCreditCost } from './story-completion-credit-cost';
 
 type StoryAdditionalInfoStepSectionProps = {
+  /** 고른 스토리라인. 본문과 추천 정보를 여기서 읽는다. */
   storylineItem: SimpleStorylineResponse;
+  /** 완성 기록을 저장하거나 요청하는 중인지. 참이면 모든 입력과 버튼을 막는다. */
   isCompletingStory: boolean;
+  /** 완성 요청이 실패해 이 단계로 돌아왔는지. 본문 끝에 실패 안내를 보인다. */
   hasCompleteStoryError: boolean;
+  /** 완성에 필요한 서버 제작 ID와 스토리라인 ID가 있는지. 화풍 선택 여부와는 무관하다. */
   canCompleteStory: boolean;
+  /** 고른 추천 정보의 문구 */
   selectedRecommendations: Set<string>;
   additionalInfos: AdditionalInfoInput[];
   canAddAdditionalInfo: boolean;
+  /** 고른 화풍 코드. 처음에는 null이고 완성을 누를 때 검증한다. */
   artStyle: string | null;
+  /** 화풍 없이 완성을 눌렀는지. 하단 버튼 위에 화풍 필수 안내를 보인다. */
   hasArtStyleError: boolean;
   visibility: CreateSimpleStoryRequestVisibility;
+  /** `pressed`가 참이면 추천 정보를 고르고, 거짓이면 해제한다. */
   onToggleRecommendation: (recommendation: string, pressed: boolean) => void;
   onAddAdditionalInfo: () => void;
   onRemoveAdditionalInfo: (id: string) => void;
@@ -36,6 +44,7 @@ type StoryAdditionalInfoStepSectionProps = {
     id: string,
     event: React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
+  /** 추가 정보 칸의 입력 요소를 등록한다. 새 칸으로 스크롤하는 데 쓴다. */
   onRegisterAdditionalInfoInput: (
     id: string,
     element: HTMLTextAreaElement | null,
@@ -43,6 +52,7 @@ type StoryAdditionalInfoStepSectionProps = {
   onArtStyleChange: (code: string) => void;
   onVisibilityChange: (value: CreateSimpleStoryRequestVisibility) => void;
   onCompleteStory: () => void;
+  /** 스토리라인을 다시 고르러 간다. 입력한 추가 정보가 있으면 퍼널이 버릴지 먼저 묻는다. */
   onBackToStorylineSelect: () => void;
   onScroll?: (event: React.UIEvent<HTMLElement>) => void;
 };

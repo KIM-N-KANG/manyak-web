@@ -23,7 +23,7 @@ const CTA_NAME = '나만의 스토리 만들고 채팅하기';
 const CHARACTER_IMAGE_URL =
   'https://cdn.manyak.app/characters/generated/serin.webp';
 
-// 1x1 투명 PNG. 인물 이미지 요청이 외부 네트워크로 나가지 않도록 목킹에 쓴다.
+/** 인물 이미지 요청이 외부 네트워크로 나가지 않도록 응답 본문으로 쓰는 1x1 투명 PNG다. */
 const TINY_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
   'base64',

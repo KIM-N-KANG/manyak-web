@@ -1,5 +1,12 @@
 'use client';
 
+/**
+ * @file 탐색 그리드 한 칸의 표지 타일과 칸 안 표지 교체 프로토콜.
+ *
+ * 칸(`ExploreStoryCell`)은 그리드 순번을 키로 자리를 유지하고, 안의 타일은 스토리 ID를 키로 `AnimatePresence`에
+ * 둔다. 칸의 스토리가 바뀌면 새 타일이 이전 타일 위에 겹쳐 나타나고, 이전 타일은 퇴장 동작 없이 남아 있다가 새 타일이
+ * 다 나타나 `ExploreCellContext`의 `shownStoryId`가 바뀐 뒤에 걷어 낸다. 그래서 교체 중에도 빈 칸이 보이지 않는다.
+ */
 import { createContext, use, useEffect, useState } from 'react';
 
 import { m, usePresence, useReducedMotion } from 'motion/react';
@@ -71,6 +78,17 @@ type ExploreStoryTileProps = {
   section: StoryCardSection;
 };
 
+/**
+ * 탐색 그리드와 검색 결과의 표지 타일.
+ *
+ * @remarks
+ * 표지 이미지를 받거나 받지 못할 때까지 등장을 미루고, 칸 순번에 따른 물결 지연 뒤 나타난다. 등장이 끝나면 칸에
+ * 알려 이전 타일을 걷어 내게 하고, 사라지는 중인 타일은 아래 층에 두고 누름을 받지 않는다. 노출과 클릭 분석 이벤트를
+ * 보낸다.
+ *
+ * @see ExploreCellContext
+ * @see tileEnterDelay
+ */
 export function ExploreStoryTile({
   story,
   position,

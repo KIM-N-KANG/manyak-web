@@ -25,6 +25,12 @@ const STARTED =
 const TOKEN = 'event: token\ndata: {"text":"문이 "}\n\n';
 const COMPLETED = 'event: completed\ndata: {"aiOutput":"문이 열린다."}\n\n';
 
+/**
+ * `followChatGeneration`에 넘길 연결, 재연결, 생성 ID 조회 모의 함수를 엮는다.
+ *
+ * @param overrides 바꿀 의존성. 생략한 `open`과 `resume`은 started 뒤 completed로 끝나는 스트림을 돌려준다
+ * @returns `run`으로 실행하고, `progress`에 토큰 본문, 그 밖의 이벤트 이름, 재연결 때의 `'reset'`이 순서대로 쌓인다
+ */
 function setup(overrides: {
   /** null이면 처음 연결 없이 재연결부터 시작한다(재진입). */
   open?: (() => Promise<ReadableStream<Uint8Array>>) | null;

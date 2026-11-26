@@ -33,12 +33,14 @@ export function useChatPlainComposer({
     element.setSelectionRange(...selection);
   }, [selection]);
 
+  /** 본문을 전송하고, 성공해도 그사이 본문이 바뀌었으면 새 입력을 지우지 않는다. */
   const send = async () => {
     if (await submitText(value)) {
       setValue((current) => (current === value ? '' : current));
     }
   };
 
+  /** 본문을 바꾸고 포커스와 커서를 끝으로 옮긴다. */
   const fill = (text: string) => {
     setValue(text);
     setSelection([text.length, text.length]);

@@ -1,3 +1,11 @@
+/**
+ * @file 서버 검수 결과를 폼의 칸 오류로 옮기는 규칙.
+ *
+ * 검수 결과는 요청 필드 경로(`startSettings[0].prologue` 등)로 칸을 가리킨다. 배열 순번은 제출한 폼의 항목 id로
+ * 바꿔 `REGISTER_ERROR_KEY`로 옮기고, 칸으로 짚을 수 없는 결과는 폼 위 안내로 보인다. 제출한 뒤 사용자가 고친
+ * 칸의 결과는 내려, 다시 등록하기 전에도 남은 사유만 보이게 한다.
+ */
+
 import type {
   StorySubmissionImageError,
   StorySubmissionIssue,
@@ -46,6 +54,11 @@ type ReviewTarget = Omit<GeneralStoryRegisterError, 'message'> & {
   tabOnly?: boolean;
 };
 
+/**
+ * 요청 필드 경로를 글 칸 이름으로 옮기는 표다. 스토리 설정 글은 폼 칸 이름이 요청 필드와 다르다.
+ *
+ * @see buildStorySettingTexts 세계관과 전개 방식 칸을 두 글로 합치는 쪽
+ */
 const TEXT_PATHS: Record<string, GeneralStoryTextField> = {
   title: 'title',
   oneLineIntro: 'oneLineIntro',

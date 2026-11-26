@@ -9,8 +9,13 @@ const pascal = (text: string) =>
     .join('');
 
 /**
- * HTTP 메서드와 경로로 operationId를 만든다.
- * 예: `GET /api/v1/stories/submissions/{id}`는 `getStoriesSubmissionsById`가 된다.
+ * HTTP 메서드와 경로로 operationId를 만든다. `/api/v{n}` 접두사는 빼고, 경로 매개변수 `{name}`은 `ByName`으로 바꾼다.
+ *
+ * @param method 소문자 HTTP 메서드
+ * @param route OpenAPI 경로 템플릿
+ * @returns 경로 기반 operationId
+ * @example
+ * routeOperationId('get', '/api/v1/stories/submissions/{id}'); // 'getStoriesSubmissionsById'
  */
 export const routeOperationId = (method: string, route: string) =>
   method +
@@ -25,16 +30,7 @@ export const routeOperationId = (method: string, route: string) =>
     })
     .join('');
 
-/**
- * 서로 겹치는 operationId를 경로 기반 이름으로 바꾸는 Orval 입력 변환기.
- * Springdoc은 Java 메서드 이름으로 operationId를 만들고 겹치면 스캔 순서대로 `get`, `get_1`처럼 순번을 붙인다.
- * 백엔드에 같은 이름의 메서드가 추가되면 순번이 밀려 같은 생성 이름이 다른 API를 가리키므로, 겹치는 이름은 전부 경로로 고정한다.
- * operationId가 자기 경로 매개변수 이름이나 Orval이 생성 코드 안에서 쓰는 인자 이름(`options`, `params` 등)과 같으면
- * 생성 훅 안에서 인자가 함수를 가려 타입 오류가 나므로 같은 방식으로 바꾼다.
- * Orval은 쿼리 매개변수의 enum 타입을 operationId와 매개변수 이름을 이어 붙여 만든다.
- * 이 이름이 스키마 이름과 같으면(예: `retention` + `cohort`와 `RetentionCohort` 스키마) 한 파일에 같은 식별자가 두 번 생기므로 역시 경로로 바꾼다.
- * 그 밖의 이름은 그대로 둔다.
- */
+/** Orval이 생성 훅 안에서 인자 이름으로 쓰는 식별자. operationId가 이와 같으면 인자가 함수를 가린다. */
 const GENERATED_ARGUMENT_NAMES = new Set([
   'options',
   'params',
@@ -45,6 +41,19 @@ const GENERATED_ARGUMENT_NAMES = new Set([
   'data',
 ]);
 
+/**
+ * 서로 겹치는 operationId를 경로 기반 이름으로 바꾸는 Orval 입력 변환기.
+ * Springdoc은 Java 메서드 이름으로 operationId를 만들고 겹치면 스캔 순서대로 `get`, `get_1`처럼 순번을 붙인다.
+ * 백엔드에 같은 이름의 메서드가 추가되면 순번이 밀려 같은 생성 이름이 다른 API를 가리키므로, 겹치는 이름은 전부 경로로 고정한다.
+ * operationId가 자기 매개변수 이름이나 Orval이 생성 코드 안에서 쓰는 인자 이름(`options`, `params` 등)과 같으면
+ * 생성 훅 안에서 인자가 함수를 가려 타입 오류가 나므로 같은 방식으로 바꾼다.
+ * Orval은 쿼리 매개변수의 enum 타입을 operationId와 매개변수 이름을 이어 붙여 만든다.
+ * 이 이름이 스키마 이름과 같으면(예: `retention` + `cohort`와 `RetentionCohort` 스키마) 한 파일에 같은 식별자가 두 번 생기므로 역시 경로로 바꾼다.
+ * 그 밖의 이름은 그대로 둔다.
+ *
+ * @param spec Orval이 넘기는 OpenAPI 문서
+ * @returns operationId를 제자리에서 고친 같은 문서
+ */
 export const stabilizeOperationIds = defineTransformer((spec) => {
   const operations = Object.entries(spec.paths ?? {}).flatMap(
     ([route, pathItem]) =>

@@ -24,6 +24,16 @@ import { StoryCreateHeader } from './header/story-create-header';
 import { StorylineSelectStepSection } from './storyline-step/storyline-select-step-section';
 import { StoryTagStepSection } from './tag-step/story-tag-step-section';
 
+/**
+ * 간편 제작 퍼널 화면. 상태와 핸들러는 `useStoryCreateFunnel`이 모두 갖고, 이 컴포넌트는 단계별 섹션과 시트,
+ * 다이얼로그를 연결한다.
+ *
+ * @remarks
+ * 진입 판정 중에는 헤더 없이 스피너만 둔다. 첫 진입 안내는 진입이 끝나고 안내를 가릴 시트, 다이얼로그, 완성 요청이
+ * 없을 때만 연다.
+ *
+ * @see useStoryCreateFunnel
+ */
 export function StoryCreateFunnel() {
   const {
     isEntryResolved,

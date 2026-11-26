@@ -22,7 +22,12 @@ import {
   test,
 } from '../fixtures/test';
 
-// 당김 새로고침은 터치 전용이라 스크롤러에 터치 이벤트를 직접 보낸다(Playwright 터치스크린은 탭만 지원).
+/**
+ * 당김 새로고침은 터치 전용이라 스크롤러에 터치 이벤트를 직접 보낸다(Playwright 터치스크린은 탭만 지원).
+ *
+ * @param x 뷰포트 기준 clientX(px)
+ * @param y 뷰포트 기준 clientY(px). touchstart와 touchmove의 차이가 당긴 거리다
+ */
 const dispatchTouch = (
   scroller: Locator,
   type: 'touchstart' | 'touchmove' | 'touchend',

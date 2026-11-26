@@ -19,8 +19,8 @@ function collectText(doc: LegalDocument): string {
 describe('법적 문서 콘텐츠', () => {
   it('약관은 확정된 시행일·버전과 주요 조항을 갖는다', () => {
     expect(termsContent.title).toBe('서비스 이용약관');
-    expect(termsContent.effectiveDate).toBe('2026-09-20');
-    expect(termsContent.version).toBe('v1.4');
+    expect(termsContent.effectiveDate).toBe('2026-12-25');
+    expect(termsContent.version).toBe('v1.5');
 
     const headings = termsContent.sections.map((section) => section.heading);
 
@@ -29,6 +29,7 @@ describe('법적 문서 콘텐츠', () => {
       '제3조 (운영자와 이용 자격)',
       '제6조 (게스트 데이터와 회원 전환)',
       '제8조 (이프 및 보상)',
+      '제8조의2 (유상 이프의 구매, 청약철회와 환불)',
       '제10조 (콘텐츠의 권리와 공개)',
       '제11조 (AI 생성 콘텐츠와 평가 데이터)',
       '제14조 (책임의 범위)',
@@ -47,9 +48,60 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('만 14세 이상');
     expect(text).toContain('Google 또는 Kakao');
     expect(text).toContain('계정당 1회');
-    expect(text).toContain('유상 구매 기능을 제공하지 않습니다');
-    expect(text).toContain('부여일로부터 30일 후 만료');
+    expect(text).not.toContain('유상 구매 기능을 제공하지 않습니다');
+    expect(text).toContain('부여일로부터 30일, 유상 이프는 적립일로부터 5년');
     expect(text).not.toContain('{{');
+  });
+
+  it('약관은 유상 이프의 구매, 청약철회, 환불과 미성년자 취소 조건을 고지한다', () => {
+    const text = collectText(termsContent);
+
+    expect(text).toContain(
+      '"보상 이프"와 회원이 대금을 지급하고 구매하는 "유상 이프"',
+    );
+    expect(text).toContain(
+      '그로블은 통신판매중개자이고 유상 이프의 판매자는 운영자',
+    );
+    expect(text).toContain('Android 앱에서는 유상 이프를 구매할 수 없습니다');
+    expect(text).toContain('보너스 이프는 기본 이프와 함께 하나의 구매분');
+    expect(text).toContain(
+      '7일 이내이고 해당 구매분의 이프를 전혀 사용하지 않은 경우',
+    );
+    expect(text).toContain(
+      '구매분의 이프를 일부라도 사용한 경우에는 청약을 철회할 수 없습니다',
+    );
+    expect(text).toContain('관련 법령에 따라 청약철회나 환불이 인정되는 경우');
+    expect(text).toContain('적립일로부터 3개월 이내');
+    expect(text).toContain('요청을 받은 날부터 3영업일 이내');
+    expect(text).toContain('만 19세 미만 회원이 법정대리인의 동의 없이');
+    expect(text).toContain('탈퇴 전에 환불을 요청해야 합니다');
+    expect(text).toContain('보너스를 포함한 적립 총량으로 나눈 값');
+    expect(text).toContain('종료 후 30일 이상 환불 요청을 받습니다');
+    expect(text).toContain('잘못 낸 대금을 환급합니다');
+    expect(text).toContain(
+      '상품별 가격(원)과 적립되는 이프 수량은 구매 전에 이프 충전 화면에 표시',
+    );
+    expect(text).toContain('만료일이 가까운 것부터 사용됩니다');
+    expect(text).toContain('알 수 있었던 날부터 30일 이내에 청약을 철회');
+    expect(text).toContain(
+      '결제일부터 7일(이프가 그보다 늦게 적립된 경우 적립일부터 7일)이 지났거나',
+    );
+    expect(text).not.toContain('제4항의 기간');
+    expect(text).not.toContain('무료·시험적 서비스의 특성상');
+  });
+
+  it('약관은 개정 공지의 간주 동의와 시행 전 구매분의 경과 규정을 둔다', () => {
+    const text = collectText(termsContent);
+
+    expect(text).toContain('개정 전후 내용을 비교하여');
+    expect(text).toContain(
+      '회원에게는 서비스 화면의 알림 등으로 따로 알립니다',
+    );
+    expect(text).toContain('적용일 전날까지 거부 의사를 표시하지 않으면');
+    expect(text).toContain('개정 약관에 동의한 것으로 봅니다');
+    expect(text).toContain(
+      '이 약관 시행 전에 구매한 유상 이프에도 이 약관을 적용합니다',
+    );
   });
 
   it('약관은 콘텐츠 공개·AI 평가·책임 범위를 좁혀 고지한다', () => {
@@ -69,8 +121,8 @@ describe('법적 문서 콘텐츠', () => {
 
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
-    expect(privacyContent.effectiveDate).toBe('2026-11-24');
-    expect(privacyContent.version).toBe('v1.10');
+    expect(privacyContent.effectiveDate).toBe('2026-12-02');
+    expect(privacyContent.version).toBe('v1.11');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 
@@ -158,6 +210,56 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).not.toContain('탈퇴 시 지체 없이 파기합니다');
   });
 
+  it('개인정보 처리방침은 유상 이프 결제 정보와 거래기록 보존 기간을 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).not.toContain('유상 결제 기능이 없으므로');
+    expect(text).toContain('유상 이프 구매 정보: 주문 공개 식별자');
+    expect(text).toContain('판매자인 운영자에게 제공하는 휴대전화번호');
+    expect(text).toContain('카드번호 등 결제수단 정보는 받지 않습니다');
+    expect(text).toContain(
+      '판매자가 수집하도록 설정한 경우의 주문자명과 이메일',
+    );
+    expect(text).toContain('Kakao 공유, 그로블 결제창, 외부 웹사이트');
+    expect(text).toContain(
+      '그로블의 판매 관리 화면에서 주문을 확인할 때 그로블로부터 제공받고',
+    );
+    expect(text).toContain('유상 이프의 결제 확인과 적립, 청약철회와 환불');
+    expect(text).toContain('같은 법 시행령 제6조');
+    expect(text).toContain('대금결제 및 재화 등의 공급에 관한 기록은 5년');
+    expect(text).toContain('소비자의 불만 또는 분쟁처리에 관한 기록은 3년');
+    expect(text).toContain(
+      '회원 탈퇴 후에도 이 기간 동안 다른 정보와 분리하여 보관',
+    );
+    expect(text).toContain('주문 공개 식별자를 그로블 결제창 주소에 담아 전달');
+    expect(text).toContain(
+      '통신판매중개자로서 자체 개인정보 처리방침에 따라 결제 정보를 처리하므로 수탁자에 포함하지 않습니다',
+    );
+    expect(text).toContain(
+      '보존해야 하는 거래기록은 다른 정보와 분리하여 제4항의 기간 동안 보관',
+    );
+  });
+
+  it('개인정보 처리방침은 문의처 이메일 요청의 수집, 보관과 Gmail 국외 이전을 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain(
+      '이메일 문의와 요청 정보: 문의처 이메일로 권리 행사',
+    );
+    expect(text).toContain('이용자가 문의처로 이메일을 보낼 때 수집됩니다');
+    expect(text).toContain(
+      '청약철회와 환불 요청은 위 계약 또는 청약철회 등에 관한 기록으로 5년',
+    );
+    expect(text).toContain('처리 완료일부터 1년 보관한 후 Gmail에서 파기');
+    expect(text).toContain(
+      '확인을 마친 뒤 지체 없이 파기하고 처리 결과만 보관',
+    );
+    expect(text).toContain('문의처 이메일의 수신과 보관');
+    expect(text).toContain(
+      'Gmail 수신과 보관 / 이용자가 이메일을 보낼 때 전송',
+    );
+  });
+
   it('개인정보 처리방침은 실제 수탁자와 국외 이전 항목을 고지한다', () => {
     const text = collectText(privacyContent);
 
@@ -171,7 +273,7 @@ describe('법적 문서 콘텐츠', () => {
       'Amplitude, Inc.',
       'Functional Software, Inc. (Sentry)',
       'Slack Technologies, LLC',
-      'Google LLC (Google Forms·Sheets)',
+      'Google LLC (Google Forms·Sheets, Gmail)',
     ]) {
       expect(text).toContain(processor);
     }

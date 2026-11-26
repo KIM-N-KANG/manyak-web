@@ -62,6 +62,7 @@ type PersonaFormProps = {
   persona?: UserPersonaResponse;
 };
 
+/** 페르소나 생성과 수정 폼. `persona`가 있으면 그 값으로 채운 수정 모드가 되고 노출 이벤트도 갈린다. */
 export function PersonaForm({ persona }: PersonaFormProps) {
   const isEdit = persona !== undefined;
 

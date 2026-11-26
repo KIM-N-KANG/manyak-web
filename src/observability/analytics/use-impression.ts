@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { impressionKey, shouldEmitImpression } from './impression';
 
+/** 노출 키별 마지막 전송 시각(ms epoch)이다. 모듈 단위라 컴포넌트가 다시 마운트돼도 쿨링이 이어진다. */
 const lastEmittedByKey = new Map<string, number>();
 const MIN_VISIBLE_MS = 1000;
 const VISIBLE_RATIO = 0.5;

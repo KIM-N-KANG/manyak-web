@@ -31,6 +31,10 @@ export const CHAT_REALTIME_IMAGE_ENABLED_STORAGE_KEY =
 /** 실시간 이미지 기본값. 꺼 두고 안내로 켜는 방법을 알린다. */
 export const DEFAULT_REALTIME_IMAGE_ENABLED = false;
 
+/**
+ * 기기 단위로 센 전송 응답 완료 횟수의 localStorage 키. 안내 기준(`REALTIME_IMAGE_NUDGE_TURN_COUNT`)을 한 번 넘기면
+ * 더 세지 않는다.
+ */
 export const CHAT_COMPLETED_TURN_COUNT_STORAGE_KEY =
   'manyak:chat-completed-turn-count';
 

@@ -18,6 +18,10 @@ type CreditBalanceCardProps = {
   onHistoryClick?: () => void;
 };
 
+/**
+ * 이프 잔액과 충전 버튼을 담은 카드. 비로그인이면 그리지 않는다.
+ * 잔액은 다른 화면에서 쓰거나 충전한 뒤 돌아왔을 때 맞도록 마운트마다 `me`를 다시 조회한다.
+ */
 export function CreditBalanceCard({
   className,
   onHistoryClick,

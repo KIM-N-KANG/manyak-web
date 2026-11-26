@@ -6,10 +6,18 @@ import {
 } from '@/lib/auth/signup-consent';
 
 type MemberSessionOptions = {
+  /** 세션의 `user.id`다. 세션 update 요청의 `expectedUserId`도 이 값과 비교한다. */
   userId?: string;
+  /** 세션의 `user.name`으로 내려가는 닉네임이다. */
   nickname?: string;
+  /** 세션의 `user.image`다. null이면 프로필 이미지가 없는 회원이다. */
   profileImageUrl?: string | null;
+  /**
+   * 초대 코드 안내 대기의 처음 값이다. 세션 update가 `expectedUserId`를 맞춰 거짓을 보내면 이후 조회부터
+   * 거짓으로 바뀐다.
+   */
   inviteOnboardingPending?: boolean;
+  /** 세션 update(POST) 응답 상태다. 400 이상이면 `SESSION_UPDATE_FAILED`로 실패하고 세션 값은 그대로 둔다. */
   sessionUpdateStatus?: number;
 };
 

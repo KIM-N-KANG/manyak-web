@@ -1,3 +1,13 @@
+/**
+ * @file 오버레이와 퍼널 가드가 쌓는 더미 히스토리 칸의 상태 머신.
+ * 브라우저 의존은 `HistoryAdapter`로 분리해 단위 테스트가 가짜를 넣을 수 있게 한다.
+ * 문서 단위 인스턴스 생성과 popstate 연결은 `history-layers.ts`가 맡는다.
+ */
+
+/**
+ * 레이어 종류. `close`는 뒤로가기 한 번에 닫히는 오버레이용이고, `guard`는 소비될 때마다
+ * 더미를 다시 쌓아 화면 이탈을 막는 퍼널 가드용이다.
+ */
 export type HistoryLayerKind = 'close' | 'guard';
 
 export type HistoryLayer = {
@@ -42,6 +52,17 @@ export class HistoryLayerStack {
 
   constructor(private readonly adapter: HistoryAdapter) {}
 
+  /**
+   * 레이어를 맨 위에 등록하고 더미 칸을 쌓는다.
+   *
+   * @remarks
+   * 사용자 활성화 없이 쌓은 칸은 Chrome이 뒤로가기에서 건너뛰므로 이때는 칸을 쌓지 않는다.
+   * `close` 레이어는 칸 없이 등록만 되어 뒤로가기를 받지 않고, `guard` 레이어는 다음 사용자 입력에서
+   * `rearm`으로 칸을 쌓는다.
+   * 입력 대기는 하나만 두므로 나중에 연 가드가 앞선 대기를 대체한다.
+   *
+   * @param layer 등록할 레이어. id는 스택 안에서 유일해야 한다.
+   */
   open(layer: HistoryLayer): void {
     this.layers.push(layer);
 
@@ -61,6 +82,10 @@ export class HistoryLayerStack {
     }
   }
 
+  /**
+   * 레이어를 지운다. 그 레이어의 칸은 주인 없는 칸으로 바꾸고, 맨 위부터 이어지는 주인 없는
+   * 칸만 되감는다. 중간 레이어의 칸은 위 레이어가 닫힐 때까지 잔여로 남는다.
+   */
   close(id: string): void {
     const index = this.layers.findIndex((layer) => layer.id === id);
 
@@ -76,6 +101,10 @@ export class HistoryLayerStack {
     this.consumeTrailingOrphans();
   }
 
+  /**
+   * 칸이 없는 레이어에 더미 칸을 다시 쌓는다. 레이어가 없거나 이미 칸이 있으면 무시한다.
+   * 소비자가 뒤로가기 닫기를 거부했을 때와 가드가 첫 사용자 입력을 받았을 때 쓴다.
+   */
   rearm(id: string): void {
     const layer = this.layers.find((candidate) => candidate.id === id);
 
@@ -93,6 +122,19 @@ export class HistoryLayerStack {
     return this.entries.length;
   }
 
+  /**
+   * 캡처 단계 popstate를 처리한다.
+   *
+   * @remarks
+   * - 스택이 건 되감기를 기다리던 중이면 그 popstate를 흡수하고 멈춘 큐를 이어 돌린다.
+   * - 더미가 없으면 관여하지 않는다. 주소가 더미를 쌓을 때와 다르면 히스토리가 바깥에서
+   *   바뀐 것으로 보고 상태를 모두 버린다.
+   * - 그 밖에는 맨 위 칸을 꺼내 주인의 `onBack`을 부른다. `guard`는 칸을 다시 쌓고, `close`는
+   *   소비자가 닫기를 거부할 수 있도록 layers에 남겨 둔다.
+   *
+   * @returns `consumed`가 true면 스택이 이벤트를 소비했으므로 호출부가 전파를 막아 퍼널 가드와
+   * 라우터에 닿지 않게 한다.
+   */
   handlePop(): { consumed: boolean } {
     if (this.pendingTraversal) {
       this.pendingTraversal = false;
@@ -135,6 +177,12 @@ export class HistoryLayerStack {
     return { consumed: true };
   }
 
+  /**
+   * 모든 레이어를 버리고 남은 더미를 한 번에 되감은 뒤 이동한다.
+   *
+   * @param navigate 실행할 이동. 큐 끝에 들어가 앞선 쌓기와 되감기의 popstate가 돌아온 뒤
+   * 실행된다. 더미와 대기 작업이 모두 없으면 즉시 실행한다.
+   */
   leave(navigate: () => void): void {
     const count = this.entries.length;
 
@@ -151,6 +199,10 @@ export class HistoryLayerStack {
     this.enqueue(navigate);
   }
 
+  /**
+   * 퍼널 이탈을 확정한다. 더미를 되감은 뒤 `go(-1)`로 퍼널 진입 직전 화면까지 한 칸 더
+   * 물러난다. 이 마지막 popstate는 스택이 흡수하지 않는다.
+   */
   confirmLeave(): void {
     // 더미 정리만 흡수하고 실제 화면 이동의 popstate는 라우터에 넘긴다.
     this.leave(() => this.adapter.go(-1));

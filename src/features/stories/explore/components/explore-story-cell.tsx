@@ -15,6 +15,11 @@ type ExploreStoryCellProps = {
   section: StoryCardSection;
 };
 
+/**
+ * 탐색 그리드의 한 칸. 이 칸에 다 나타난 표지를 기억해 이전 표지 위에 새 표지를 겹쳐 바꾼다.
+ *
+ * @see ExploreCellContext
+ */
 export function ExploreStoryCell({
   story,
   position,

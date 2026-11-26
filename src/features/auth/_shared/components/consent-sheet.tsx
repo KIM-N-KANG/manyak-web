@@ -60,11 +60,14 @@ type UseConsentFormOptions = {
   required: RequiredConsent[];
   /** 세션 없이 가입 동의를 받는 모드. 제출은 가입 완료, 뒤로가기는 가입 취소다. */
   isSignup: boolean;
+  /** 회원 모드에서 기록 응답의 필수 항목이 모두 충족됐을 때 그 응답과 광고 동의 체크 값을 받는다. */
   onRecorded: (
     recorded: UserConsentResponse,
     marketingAccepted: boolean,
   ) => void;
+  /** 가입 모드에서 제출 결과(재시도 가능한 실패 제외)나 가입 취소를 받는다. */
   onSignupSettled: (settlement: SignupSettlement) => void;
+  /** 요구 버전이 바뀌었을 때(버전 불일치 응답) 필요 항목을 다시 조회하게 한다. */
   onReload: () => void;
 };
 
@@ -106,7 +109,16 @@ const DOCUMENT_LINKS: Partial<
  * 동의하지 않은 것으로 보고 `logout`으로 이어진다(제출 중에는 무시).
  *
  * @param options 필요 항목, 기록 성공 반영 콜백, 최신 상태 재조회 콜백
- * @returns 체크 상태·토글·제출·로그아웃 핸들러와 진행·오류 상태
+ * @returns 시트가 그릴 폼 상태와 핸들러 묶음
+ * - `checked`, `marketingChecked`: 필수 항목 체크 집합과 광고 동의 체크 값
+ * - `isAllChecked`: 필수와 광고 동의까지 모두 체크됐는지. 전체 동의 체크박스에 쓴다.
+ * - `isEveryRequiredChecked`: 필수 항목만 모두 체크됐는지. 제출 가능 조건이다.
+ * - `notice`: 시트에 띄울 오류 문구 키. 없으면 null이다.
+ * - `isSubmitting`: 제출 흐름(권한 요청, 동의 기록, 가입 완료)이 진행 중이다. 제출 버튼 로딩 표시에 쓴다.
+ * - `isLoggingOut`: 로그아웃이 진행 중이다. 로그아웃 버튼 로딩 표시에 쓴다.
+ * - `isLocked`: 제출이나 로그아웃 중 하나라도 진행 중이다. 모든 입력과 버튼을 막는 데 쓴다.
+ * - `toggle`, `toggleAll`, `setMarketingChecked`: 체크 변경 핸들러
+ * - `submit`, `logout`: 제출과 로그아웃(가입 모드는 가입 취소) 핸들러. 잠긴 동안에는 무시된다.
  */
 function useConsentForm({
   required,
@@ -275,16 +287,36 @@ function useConsentForm({
 }
 
 type ConsentSheetProps = {
+  /**
+   * 게이트가 판정한 단계. `required`, `signup-required`, `load-error`, `signup-load-error`,
+   * `forbidden`에서만 시트가 열린다.
+   */
   phase: ConsentGatePhase;
+  /** 체크박스로 그릴 필수 항목과 요구 버전 */
   required: RequiredConsent[];
+  /** 회원 동의 기록이 완료됐을 때 호출된다. */
   onRecorded: (
     recorded: UserConsentResponse,
     marketingAccepted: boolean,
   ) => void;
+  /** 가입 동의 시트의 결과를 넘긴다. */
   onSignupSettled: (settlement: SignupSettlement) => void;
+  /** 조회 실패 재시도 버튼과 버전 불일치 때 현재 단계의 조회를 다시 요청한다. */
   onReload: () => void;
 };
 
+/**
+ * 필수 동의와 가입 동의를 받는 닫을 수 없는 바텀 시트.
+ *
+ * @remarks
+ * 사용자가 닫을 수 없다. `onOpenChange`를 무시하고 바깥 누르기와 스와이프 닫기를 끄며,
+ * 뒤로가기는 닫기가 아니라 로그아웃(가입 모드는 가입 취소)으로 받는다. 단계별로 그리는 내용이 다르다.
+ * - `required`, `signup-required`: 체크박스와 제출, 로그아웃 버튼
+ * - `load-error`, `signup-load-error`: 조회 실패 안내와 재시도, 로그아웃 버튼
+ * - `forbidden`: 이용 제한 안내와 로그아웃 버튼
+ *
+ * 그 밖의 단계에서는 닫혀 있다. 앱 프레임 컨테이너가 준비되기 전에도 열지 않는다.
+ */
 export function ConsentSheet({
   phase,
   required,

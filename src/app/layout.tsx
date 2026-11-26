@@ -68,6 +68,15 @@ export const viewport: Viewport = {
   interactiveWidget: 'resizes-content',
 };
 
+/**
+ * 모든 화면을 감싸는 루트 레이아웃. 뷰포트 높이를 소유하는 앱 프레임과 전역 Provider를 둔다.
+ *
+ * @remarks
+ * `ConsentGate`는 세션과 쿼리를 읽으므로 `AuthSessionProvider`, `QueryProvider` 안에 두고,
+ * `GuestConsentProvider`는 `ConsentGate`가 내려주는 회원 접근 상태를 쓰므로 그 안에 둔다.
+ * 라우트 화면은 앱 프레임 안의 `APP_SCREEN_ID` 요소에 그려지고, 토스트와 화면을 그리지 않는
+ * 동기화 컴포넌트, 전역 시트는 프레임 밖 형제로 둔다.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

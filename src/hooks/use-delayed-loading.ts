@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
+/** 로딩 표시를 미루는 기본 시간(ms)이다. 이보다 빨리 끝난 로딩은 아예 표시하지 않는다. */
 const DEFAULT_DELAY = 250;
 
 type UseDelayedLoadingOptions = {
-  /** 로딩 표시를 시작하기 전 대기 시간(ms) */
+  /**
+   * 로딩 표시를 시작하기 전 대기 시간(ms)
+   *
+   * @default 250
+   */
   delay?: number;
 };
 

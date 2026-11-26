@@ -14,10 +14,19 @@ type Params<PathParams, QueryParams> = {
 /**
  * pathParams 혹은 queryParams 를 사용해 URL 을 완성하는 유틸 함수
  *
- * @param url - 파라미터를 넣기 전 원본 URL (예: `/info/{id}` 또는 `/list?sort=desc`)
- * @param pathParams - path parameter (예: `{ id: 1 }`)
- * @param queryParams - query parameter (예: `{ bojUsername: 'alsdn1360' }`)
- * @returns 파라미터가 치환·결합된 최종 URL 문자열
+ * 경로 파라미터는 `encodeURIComponent`로 인코딩해 `{key}` 자리에 넣고, 남은 자리가 있으면 경고만 남긴다.
+ * 쿼리 파라미터의 undefined와 null은 빼고, 배열은 같은 키로 여러 번 붙인다.
+ *
+ * @param params 원본 URL(`url`), 경로 파라미터(`pathParams`), 쿼리 파라미터(`queryParams`)
+ * @returns 파라미터가 치환, 결합된 최종 URL 문자열
+ * @example
+ * ```ts
+ * buildUrlWithParams({ url: '/info/{id}', pathParams: { id: 1 } }); // '/info/1'
+ * buildUrlWithParams({
+ *   url: '/list?sort=desc',
+ *   queryParams: { page: 2, tag: ['a', 'b'], cursor: undefined },
+ * }); // '/list?sort=desc&page=2&tag=a&tag=b'
+ * ```
  */
 export function buildUrlWithParams<
   PathParams extends DefaultPathParams = DefaultPathParams,

@@ -23,6 +23,7 @@ type StoryCreateBackDialogProps = {
   onConfirm: () => void;
 };
 
+/** 퍼널 이탈 확인 다이얼로그. `variant`가 문구 종류이자 열림 상태이며, null이면 닫는다. */
 export function StoryCreateBackDialog({
   variant,
   onOpenChange,

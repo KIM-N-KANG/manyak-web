@@ -14,3 +14,14 @@ export const buildInviteRewardCopy = (amount: string | undefined) =>
     onboardingCloseFailed: `${amount} 이프는 정상 지급되었지만, 창을 닫는 데 실패했어요`,
     kakaoShareTitle: `초대 코드 등록하고 ${amount} 이프 받기 🎁`,
   }) as const;
+
+/** 친구 초대 화면 아래의 이용 안내 문구 정본. Android 초대 화면과 같은 문구를 쓴다. */
+export const INVITE_GUIDE = {
+  title: '이용 안내',
+  lines: [
+    '초대 보상은 매월 최대 10회까지 받을 수 있으며, 매월 1일 초기화돼요. (한국 시간 기준)',
+    '초대 코드는 계정당 한 번 입력할 수 있어요.',
+    '보상으로 받은 이프는 적립일부터 30일 동안 사용할 수 있어요.',
+    '본 이벤트는 사전 고지 없이 변경되거나 종료될 수 있어요.',
+  ],
+} as const;

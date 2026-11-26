@@ -14,6 +14,9 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
+/**
+ * Popover 팝업. 원본과 달리 `container`를 받아, 지정하면 body 대신 그 요소(예: 앱 프레임) 안에 포털한다.
+ */
 function PopoverContent({
   className,
   align = 'center',

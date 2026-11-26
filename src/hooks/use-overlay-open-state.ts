@@ -1,8 +1,16 @@
 import { useState } from 'react';
 
+/** @template Details Base UI가 `onOpenChange`에 넘기는 이벤트 상세 타입 */
 type UseOverlayOpenStateOptions<Details> = {
+  /** 넘기면 제어 모드로 이 값을 그대로 따르고, 내부 상태는 쓰지 않는다. */
   open?: boolean;
+  /**
+   * 비제어 모드의 초기 열림 여부다.
+   *
+   * @default false
+   */
   defaultOpen?: boolean;
+  /** 제어, 비제어 모드 모두에서 열림이 바뀔 때 부른다. */
   onOpenChange?: (open: boolean, details: Details) => void;
 };
 

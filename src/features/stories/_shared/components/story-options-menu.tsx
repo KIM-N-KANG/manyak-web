@@ -34,7 +34,11 @@ type StoryOptionsMenuProps = {
   /** 시트 머리글에 보일 스토리 제목 */
   title: string;
   source: ReportSource;
-  /** 수정하기 노출 여부(회원이 만든 스토리만) */
+  /**
+   * 수정하기 노출 여부(회원이 만든 스토리만)
+   *
+   * @default false
+   */
   canEdit?: boolean;
   canReport: boolean;
   canDelete: boolean;
@@ -43,6 +47,14 @@ type StoryOptionsMenuProps = {
   triggerClassName?: string;
 };
 
+/**
+ * 스토리 더보기 메뉴. 항목 구성과 순서는 `StoryOptionsMenuProps`를 따른다.
+ *
+ * @remarks
+ * 삭제는 시트 안에서 한 번 더 확인받는다. 신고하기는 이 메뉴가 함께 그리는 신고 시트를 연다.
+ *
+ * @see StoryReportSheet
+ */
 export function StoryOptionsMenu({
   storyId,
   title,

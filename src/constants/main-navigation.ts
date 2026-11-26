@@ -21,6 +21,7 @@ export interface MainNavigationItem {
   inactiveIcon: ComponentType<SVGProps<SVGSVGElement>>;
 }
 
+/** 하단 탭 항목이다. 배열 순서가 탭의 표시 순서다. */
 export const MAIN_NAVIGATION_ITEMS: MainNavigationItem[] = [
   {
     href: APP_PATH.MAIN.STORIES,

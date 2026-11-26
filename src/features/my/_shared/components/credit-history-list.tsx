@@ -18,6 +18,14 @@ type CreditHistoryListProps = {
   scrollElement: HTMLElement | null;
 };
 
+/**
+ * 이프 사용 내역을 무한 스크롤로 그리는 목록.
+ * 목록 끝의 센티널이 스크롤 컨테이너에 보이면 다음 페이지를 불러온다. 첫 조회 실패는 목록
+ * 자리에 재시도 안내를, 다음 페이지 실패는 이미 받은 목록 아래에 재시도 버튼만 둔다. 다음
+ * 페이지가 실패한 동안에는 센티널이 보여도 자동으로 다시 요청하지 않는다.
+ *
+ * @see useCreditTransactions
+ */
 export function CreditHistoryList({
   enabled,
   scrollElement,

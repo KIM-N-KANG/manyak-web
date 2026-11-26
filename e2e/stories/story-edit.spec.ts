@@ -96,7 +96,11 @@ type Setup = {
   result?: 'APPROVED' | 'REJECTED';
 };
 
-/** 상세와 수정 폼, PATCH, 제출본 조회를 목킹하고 받은 PATCH 본문을 모은다. */
+/**
+ * 상세와 수정 폼, PATCH, 제출본 조회를 목킹하고 받은 PATCH 본문을 모은다. 회원 세션 목도 함께 등록한다.
+ *
+ * @returns 받은 PATCH 본문 목록. 바뀐 필드만 보내는지 단언할 때 쓴다
+ */
 async function setup(
   page: Page,
   { isOwner = true, editForm = EDIT_FORM, result = 'APPROVED' }: Setup = {},

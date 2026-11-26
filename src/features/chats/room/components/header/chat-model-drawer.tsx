@@ -35,6 +35,9 @@ type ChatModelDrawerProps = {
   onLongResponseChange: (longResponse: boolean) => void;
 };
 
+/**
+ * 채팅 모델과 긴 응답을 고르는 헤더 시트. 모델을 고르면 시트를 닫고, 긴 응답 스위치는 바로 반영하며 시트를 열어 둔다.
+ */
 export function ChatModelDrawer({
   models,
   modelCode,
