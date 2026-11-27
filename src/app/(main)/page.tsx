@@ -42,7 +42,7 @@ export default async function StoriesPage() {
   return (
     <main className="flex flex-1 flex-col">
       <HomeSections initialData={initialData} />
-      <BusinessInfoFooter collapsible />
+      <BusinessInfoFooter />
     </main>
   );
 }
