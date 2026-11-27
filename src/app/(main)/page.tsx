@@ -1,5 +1,6 @@
 import type { Metadata, ResolvingMetadata } from 'next';
 
+import { BusinessInfoFooter } from '@/components/layout/business-info-footer';
 import { APP_PATH } from '@/constants/app-path';
 import { HOME_DESCRIPTION, SITE_NAME, SITE_URL } from '@/constants/site';
 import { HomeSections } from '@/features/stories/list/components/home-sections';
@@ -41,6 +42,7 @@ export default async function StoriesPage() {
   return (
     <main className="flex flex-1 flex-col">
       <HomeSections initialData={initialData} />
+      <BusinessInfoFooter />
     </main>
   );
 }

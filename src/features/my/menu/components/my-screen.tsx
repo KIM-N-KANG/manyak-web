@@ -11,6 +11,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
 
+import { BusinessInfoFooter } from '@/components/layout/business-info-footer';
 import { Label } from '@/components/ui/label';
 import { APP_PATH } from '@/constants/app-path';
 import { clearLocalMemberState } from '@/features/auth/_shared/utils/clear-local-member-state';
@@ -21,7 +22,6 @@ import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
 import { NoticeMenuItem } from '@/features/notices/_shared/components/notice-menu-item';
 import { track } from '@/observability/analytics';
 
-import { BusinessInfoFooter } from './business-info-footer';
 import { CreditBalanceCard } from './credit-balance-card';
 import { ProfileHeader } from './profile-header';
 import { ThemeMenuItem } from './theme-menu-item';
@@ -44,79 +44,82 @@ export function MyScreen() {
   };
 
   return (
-    <main className="flex flex-1 flex-col gap-8 pb-2">
-      <div className="flex flex-col gap-4 px-4 pt-4">
-        <ProfileHeader />
-        <CreditBalanceCard />
-      </div>
-      {isAuthenticated && (
-        <section className="flex flex-col">
-          <div className="mb-2 px-4">
-            <Label>{PERSONA_MENU_COPY.sectionLabel}</Label>
-          </div>
-          <MyMenuItem
-            icon={UserAccountIcon}
-            label={PERSONA_MENU_COPY.menuLabel}
-            href={APP_PATH.MY_PERSONAS}
-          />
-        </section>
-      )}
-      {isAuthenticated && (
-        <section className="flex flex-col">
-          <div className="mb-2 px-4">
-            <Label>이벤트</Label>
-          </div>
-          <InviteMenuItem />
-        </section>
-      )}
-      <section className="flex flex-col">
-        <div className="mb-2 px-4">
-          <Label>화면</Label>
-        </div>
-        <ThemeMenuItem />
-      </section>
-      <section className="flex flex-col">
-        <div className="mb-2 px-4">
-          <Label>알림</Label>
+    <main className="flex flex-1 flex-col">
+      {/* 메뉴 사이 간격은 메뉴 묶음이 갖고, 푸터와의 간격은 푸터가 갖는다. */}
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4 px-4 pt-4">
+          <ProfileHeader />
+          <CreditBalanceCard />
         </div>
         {isAuthenticated && (
-          <MyMenuItem
-            icon={Notification01Icon}
-            label={PUSH_SETTINGS_COPY.menuLabel}
-            href={APP_PATH.MY_NOTIFICATIONS}
-          />
+          <section className="flex flex-col">
+            <div className="mb-2 px-4">
+              <Label>{PERSONA_MENU_COPY.sectionLabel}</Label>
+            </div>
+            <MyMenuItem
+              icon={UserAccountIcon}
+              label={PERSONA_MENU_COPY.menuLabel}
+              href={APP_PATH.MY_PERSONAS}
+            />
+          </section>
         )}
-        <NoticeMenuItem />
-      </section>
-      <section className="flex flex-col">
-        <div className="mb-2 px-4">
-          <Label>기타</Label>
-        </div>
-        <MyMenuItem
-          icon={MailEdit01Icon}
-          label="피드백"
-          href={APP_PATH.MY_FEEDBACK}
-        />
-      </section>
-      {isAuthenticated && (
+        {isAuthenticated && (
+          <section className="flex flex-col">
+            <div className="mb-2 px-4">
+              <Label>이벤트</Label>
+            </div>
+            <InviteMenuItem />
+          </section>
+        )}
         <section className="flex flex-col">
           <div className="mb-2 px-4">
-            <Label>계정</Label>
+            <Label>화면</Label>
+          </div>
+          <ThemeMenuItem />
+        </section>
+        <section className="flex flex-col">
+          <div className="mb-2 px-4">
+            <Label>알림</Label>
+          </div>
+          {isAuthenticated && (
+            <MyMenuItem
+              icon={Notification01Icon}
+              label={PUSH_SETTINGS_COPY.menuLabel}
+              href={APP_PATH.MY_NOTIFICATIONS}
+            />
+          )}
+          <NoticeMenuItem />
+        </section>
+        <section className="flex flex-col">
+          <div className="mb-2 px-4">
+            <Label>기타</Label>
           </div>
           <MyMenuItem
-            icon={Logout03Icon}
-            label="로그아웃"
-            onClick={handleLogout}
-            loading={isLoggingOut}
-          />
-          <MyMenuItem
-            icon={UserRemove01Icon}
-            label="회원 탈퇴"
-            href={APP_PATH.MY_ACCOUNT_DELETION}
-            destructive
+            icon={MailEdit01Icon}
+            label="피드백"
+            href={APP_PATH.MY_FEEDBACK}
           />
         </section>
-      )}
+        {isAuthenticated && (
+          <section className="flex flex-col">
+            <div className="mb-2 px-4">
+              <Label>계정</Label>
+            </div>
+            <MyMenuItem
+              icon={Logout03Icon}
+              label="로그아웃"
+              onClick={handleLogout}
+              loading={isLoggingOut}
+            />
+            <MyMenuItem
+              icon={UserRemove01Icon}
+              label="회원 탈퇴"
+              href={APP_PATH.MY_ACCOUNT_DELETION}
+              destructive
+            />
+          </section>
+        )}
+      </div>
       <BusinessInfoFooter />
     </main>
   );
