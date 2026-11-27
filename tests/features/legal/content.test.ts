@@ -406,6 +406,27 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).not.toContain('개인 사이드 프로젝트');
   });
 
+  it('개인정보 처리방침은 Kakao 이메일 필수 동의와 성별, 연령대, 출생연도 선택 수집을 항목, 목적, 보유기간으로 고지한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(text).toContain(
+      'Kakao 로그인은 이메일(필수 동의)과 이용자가 Kakao 동의 화면에서 동의한 경우의 성별과 연령대(선택 동의)',
+    );
+    expect(text).toContain('Google 로그인은 제공되는 경우 이메일을');
+    expect(text).toContain(
+      '선택 프로필 정보: 가입 후 이용자가 직접 입력하는 성별과 출생연도(선택)',
+    );
+    expect(text).toContain(
+      '제공하거나 입력하지 않아도 서비스 이용에 제한이 없습니다',
+    );
+    expect(text).toContain(
+      '서비스 이용 통계·분석, 서비스 개선과 맞춤 콘텐츠 추천',
+    );
+    expect(text).toContain(
+      '선택 정보(성별, 연령대, 출생연도): 회원 탈퇴 시까지 보유하고, 탈퇴 처리 시 지체 없이 파기',
+    );
+  });
+
   it('법적 문서와 게스트 동의 문서의 문의처는 공식 문의 이메일과 같다', () => {
     const texts = [
       collectText(termsContent),
