@@ -19,7 +19,6 @@ describe('sitemap', () => {
 
     expect((await sitemap()).map((entry) => entry.url)).toEqual([
       'https://manyak.app/',
-      'https://manyak.app/about',
       'https://manyak.app/terms',
       'https://manyak.app/privacy',
     ]);
@@ -34,7 +33,6 @@ describe('sitemap', () => {
 
     expect((await sitemap()).map((entry) => entry.url)).toEqual([
       'https://manyak.app/',
-      'https://manyak.app/about',
       'https://manyak.app/terms',
       'https://manyak.app/privacy',
       'https://manyak.app/stories/story-a',

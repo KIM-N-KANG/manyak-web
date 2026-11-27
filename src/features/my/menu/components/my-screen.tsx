@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import {
-  InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
   Notification01Icon,
@@ -22,6 +21,7 @@ import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
 import { NoticeMenuItem } from '@/features/notices/_shared/components/notice-menu-item';
 import { track } from '@/observability/analytics';
 
+import { BusinessInfoFooter } from './business-info-footer';
 import { CreditBalanceCard } from './credit-balance-card';
 import { ProfileHeader } from './profile-header';
 import { ThemeMenuItem } from './theme-menu-item';
@@ -93,12 +93,6 @@ export function MyScreen() {
           <Label>기타</Label>
         </div>
         <MyMenuItem
-          icon={InformationCircleIcon}
-          label="서비스 안내"
-          href={APP_PATH.ABOUT}
-          newTab
-        />
-        <MyMenuItem
           icon={MailEdit01Icon}
           label="피드백"
           href={APP_PATH.MY_FEEDBACK}
@@ -123,6 +117,7 @@ export function MyScreen() {
           />
         </section>
       )}
+      <BusinessInfoFooter />
     </main>
   );
 }

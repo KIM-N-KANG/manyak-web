@@ -21,7 +21,7 @@ import {
 } from '../fixtures/test';
 
 /**
- * 마이, 이프 충전, 피드백, 친구 초대, 서비스 안내 화면의 안정된 정적 상태를 캡처하는 화면 캡처 스펙.
+ * 마이, 이프 충전, 피드백, 친구 초대 화면의 안정된 정적 상태를 캡처하는 화면 캡처 스펙.
  * 메뉴 이동, 폼 제출 같은 동작 검증은 `my/*.spec.ts`, `feedback/*.spec.ts`가 담당한다.
  */
 
@@ -256,22 +256,6 @@ test.describe('마이 캡처', () => {
     ).toBeDisabled();
     await waitForFonts(page);
     await expect(page).toHaveScreenshot('account-deletion.png');
-  });
-
-  test('서비스 안내 상단 (MY-INFO)', async ({ page }) => {
-    await page.goto('/about');
-
-    await expect(
-      page.getByRole('heading', { level: 1, name: '서비스 안내' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('banner').getByRole('img', { name: '마냑' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: '게스트 이용 안내' }),
-    ).toBeVisible();
-    await waitForFonts(page);
-    await expect(page).toHaveScreenshot('service-info-top.png');
   });
 });
 
