@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { SITE_CONTACT_EMAIL } from '@/constants/site';
 import { guestConsentSections } from '@/features/legal/content/guest-consent-content';
 import { privacyContent } from '@/features/legal/content/privacy-content';
 import { termsContent } from '@/features/legal/content/terms-content';
 import type { LegalDocument } from '@/features/legal/types';
+import { PUSH_CONSENT_NOTICE_COPY } from '@/features/my/_shared/constants/push-copy';
 
 function collectText(doc: LegalDocument): string {
   return doc.sections
@@ -43,8 +45,11 @@ describe('법적 문서 콘텐츠', () => {
   it('약관은 실제 운영 주체·대상·로그인·이프 정책을 고지한다', () => {
     const text = collectText(termsContent);
 
-    expect(text).toContain('개인 운영자 강동우');
-    expect(text).toContain('사업자 등록을 하지 않은');
+    expect(text).toContain(
+      '나그네랩(대표 강경현, 사업자등록번호 202-04-55303)이 운영합니다',
+    );
+    expect(text).not.toContain('사업자 등록을 하지 않은');
+    expect(text).not.toContain('사이드 프로젝트');
     expect(text).toContain('만 14세 이상');
     expect(text).toContain('Google 또는 Kakao');
     expect(text).toContain('계정당 1회');
@@ -121,8 +126,8 @@ describe('법적 문서 콘텐츠', () => {
 
   it('개인정보 처리방침은 확정된 시행일·버전과 법정 항목을 갖는다', () => {
     expect(privacyContent.title).toBe('개인정보 처리방침');
-    expect(privacyContent.effectiveDate).toBe('2026-12-02');
-    expect(privacyContent.version).toBe('v1.11');
+    expect(privacyContent.effectiveDate).toBe('2026-12-04');
+    expect(privacyContent.version).toBe('v1.12');
 
     const headings = privacyContent.sections.map((section) => section.heading);
 
@@ -298,7 +303,7 @@ describe('법적 문서 콘텐츠', () => {
     expect(text).toContain('이미지 파일과 데이터베이스 백업 저장, CDN 운영');
     expect(text).toContain('아시아 태평양 지역(R2 저장)');
     expect(text).toContain(
-      '서비스 접속 시 네트워크 전송과 상시 저장 / 네트워크 정보는',
+      '서비스 접속 시 네트워크 전송과 상시 저장, 이용자가 문의처로 이메일을 보낼 때 전송 / 네트워크 정보는',
     );
     expect(text).toContain(
       '이미지 파일은 제4항 보유기간 종료 시까지, 데이터베이스 백업은 최대 7일',
@@ -369,6 +374,55 @@ describe('법적 문서 콘텐츠', () => {
 
     expect(text).toContain('애플리케이션 로그는 OpenSearch에서 14일 보관해요');
     expect(text).not.toContain('CloudWatch');
+  });
+
+  it('약관은 운영자 변경 조항만 2026-12-04에 먼저 시행하고 기존 계약의 승계를 고지한다', () => {
+    const text = collectText(termsContent);
+
+    expect(text).toContain('나그네랩(대표 강경현, 이하 "운영자")');
+    expect(text).toContain(
+      '운영자를 나그네랩으로 바꾸는 제1조, 제3조와 제16조는 2026-12-04부터 시행',
+    );
+    expect(text).toContain('같은 날 나그네랩이 이어받습니다');
+    expect(text).toContain('마이 화면 하단에서 확인할 수 있습니다');
+  });
+
+  it('개인정보 처리방침은 사업자 나그네랩을 처리자와 보호책임자로 고지하고 이전 거부 방법을 안내한다', () => {
+    const text = collectText(privacyContent);
+
+    expect(privacyContent.intro).toContain('나그네랩(대표 강경현');
+    expect(text).toContain('개인정보처리자: 나그네랩(대표 강경현)');
+    expect(text).toContain(
+      '개인정보 보호책임자·열람청구 담당자: 강경현(나그네랩 대표)',
+    );
+    expect(text).toContain('전송자: 마냑 운영자 나그네랩');
+    expect(text).toContain('같은 날 나그네랩으로 이전됩니다');
+    expect(text).toContain('2026-12-03까지 마이 > 회원 탈퇴로 탈퇴하거나');
+    expect(text).not.toContain('사업자 정보는 별도로');
+    expect(text).not.toContain('개인 사이드 프로젝트');
+  });
+
+  it('법적 문서와 게스트 동의 문서의 문의처는 공식 문의 이메일과 같다', () => {
+    const texts = [
+      collectText(termsContent),
+      collectText(privacyContent),
+      collectText({ ...privacyContent, sections: guestConsentSections }),
+    ];
+
+    for (const text of texts) {
+      expect(text).toContain(SITE_CONTACT_EMAIL);
+      expect(text).not.toContain('manyak.help');
+    }
+
+    expect(collectText(privacyContent)).toContain(
+      '문의처 이메일(contact@manyak.app)의 Gmail 전달',
+    );
+  });
+
+  it('광고 동의 처리 결과 통지의 전송자는 처리방침 13항의 전송자와 같다', () => {
+    expect(collectText(privacyContent)).toContain(
+      `전송자: ${PUSH_CONSENT_NOTICE_COPY.sender}.`,
+    );
   });
 
   it('모든 섹션은 최소 한 개의 콘텐츠 블록을 갖는다', () => {

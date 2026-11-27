@@ -24,9 +24,10 @@ export const HOME_DESCRIPTION =
 export const SITE_TEAM_NAME = '김앤강';
 
 /**
- * 공식 문의 이메일. 랜딩 푸터가 사용한다(약관·방침 본문의 문의처와 같은 값이어야 한다).
+ * 공식 문의 이메일. 이프 충전 안내가 사용한다.
+ * Cloudflare Email Routing이 운영 Gmail로 전달하며, 약관과 처리방침 본문의 문의처와 같은 값이어야 한다.
  */
-export const SITE_CONTACT_EMAIL = 'manyak.help@gmail.com';
+export const SITE_CONTACT_EMAIL = 'contact@manyak.app';
 
 /**
  * 공식 인스타그램 프로필. 랜딩 푸터와 구조화 데이터(`sameAs`)가 공유한다.

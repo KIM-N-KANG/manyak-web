@@ -43,7 +43,7 @@ export const PUSH_SETTINGS_COPY = {
  */
 export const PUSH_CONSENT_NOTICE_COPY = {
   title: '알림 수신 동의 처리 안내',
-  sender: '마냑 운영자 강동우(팀명 김앤강)',
+  sender: '마냑 운영자 나그네랩',
   senderLabel: '전송자',
   dateLabel: '일시',
   resultLabel: '처리 내용',
