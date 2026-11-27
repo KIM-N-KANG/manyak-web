@@ -44,7 +44,7 @@ export function MyScreen() {
   };
 
   return (
-    <main className="flex flex-1 flex-col gap-8 pb-2">
+    <main className="flex flex-1 flex-col gap-8">
       <div className="flex flex-col gap-4 px-4 pt-4">
         <ProfileHeader />
         <CreditBalanceCard />
