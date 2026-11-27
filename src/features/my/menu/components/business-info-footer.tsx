@@ -6,6 +6,7 @@ import { SITE_BUSINESS_INFO } from '@/constants/site';
 /**
  * 마이 화면 맨 아래의 사업자 정보 푸터. 전자상거래법이 요구하는 사업자 정보 아래에 이용약관과
  * 개인정보 처리방침 링크를 같은 굵기로 둔다. 문서 링크는 마이의 서비스 안내처럼 새 탭에서 연다.
+ * 링크는 위아래 여백으로 탭 영역만 넓히고, 같은 크기의 음수 여백으로 배치는 그대로 둔다.
  */
 export function BusinessInfoFooter() {
   return (
@@ -21,11 +22,19 @@ export function BusinessInfoFooter() {
         </dl>
       </address>
       <nav aria-label="약관 및 정책" className="flex items-center gap-2">
-        <Link href={APP_PATH.TERMS} target="_blank" rel="noopener noreferrer">
+        <Link
+          href={APP_PATH.TERMS}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="-my-3 py-3">
           서비스 이용약관
         </Link>
         <span aria-hidden="true" className="h-3 w-px bg-border" />
-        <Link href={APP_PATH.PRIVACY} target="_blank" rel="noopener noreferrer">
+        <Link
+          href={APP_PATH.PRIVACY}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="-my-3 py-3">
           개인정보 처리방침
         </Link>
       </nav>
