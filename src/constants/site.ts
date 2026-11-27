@@ -24,9 +24,38 @@ export const HOME_DESCRIPTION =
 export const SITE_TEAM_NAME = '김앤강';
 
 /**
- * 공식 문의 이메일. 랜딩 푸터가 사용한다(약관·방침 본문의 문의처와 같은 값이어야 한다).
+ * 공식 문의 이메일. 사업자 정보 푸터와 이프 충전 안내가 사용한다.
+ * Cloudflare Email Routing이 운영 Gmail로 전달하며, 약관과 처리방침 본문의 문의처와 같은 값이어야 한다.
  */
-export const SITE_CONTACT_EMAIL = 'manyak.help@gmail.com';
+export const SITE_CONTACT_EMAIL = 'contact@manyak.app';
+
+/** 사업자등록번호. 사업자 정보 표시와 공정거래위원회 사업자정보 공개 페이지 주소가 함께 쓴다. */
+const SITE_BUSINESS_REGISTRATION_NUMBER = '202-04-55303';
+
+/**
+ * 전자상거래법 제10조와 제13조가 표시를 요구하는 사업자 정보. 홈과 마이 화면 하단 푸터가 표시 순서대로 사용한다.
+ * 통신판매업 신고번호는 발급 전이라 접수 상태로 두고, 번호가 나오면 값만 바꾼다.
+ * 호스팅서비스 제공자는 웹 호스팅과 서버 운영을 맡은 사업자이고, 호스팅을 옮기면 값만 바꾼다.
+ */
+export const SITE_BUSINESS_INFO = [
+  { label: '상호', value: '나그네랩' },
+  { label: '대표', value: '강경현' },
+  { label: '사업자등록번호', value: SITE_BUSINESS_REGISTRATION_NUMBER },
+  { label: '통신판매업 신고번호', value: '신고 접수' },
+  {
+    label: '주소',
+    value: '경기도 용인시 기흥구 서천동로21번길 6-5, 3층 303호',
+  },
+  { label: '전화', value: '010-8126-6089' },
+  { label: '이메일', value: SITE_CONTACT_EMAIL },
+  { label: '호스팅서비스 제공자', value: 'Vercel Inc., Oracle Corporation' },
+] as const;
+
+/**
+ * 공정거래위원회 사업자정보 공개 페이지 주소. 전자상거래법 시행규칙이 초기 화면에 연결하도록 한 페이지로,
+ * 사업자등록번호의 숫자만 넘긴다.
+ */
+export const SITE_FTC_BUSINESS_INFO_URL = `https://www.ftc.go.kr/bizCommPop.do?wrkr_no=${SITE_BUSINESS_REGISTRATION_NUMBER.replaceAll('-', '')}`;
 
 /**
  * 공식 인스타그램 프로필. 랜딩 푸터와 구조화 데이터(`sameAs`)가 공유한다.

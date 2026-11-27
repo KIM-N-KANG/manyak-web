@@ -12,7 +12,6 @@ export const dynamic = 'force-dynamic';
 /** 색인 대상 정적 공개 페이지. 개인화·인증 화면은 색인 대상이 아니므로 넣지 않는다. */
 const STATIC_PUBLIC_PATHS = [
   APP_PATH.MAIN.STORIES,
-  APP_PATH.ABOUT,
   APP_PATH.TERMS,
   APP_PATH.PRIVACY,
 ];

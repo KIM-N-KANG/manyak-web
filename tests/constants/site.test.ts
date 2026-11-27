@@ -4,6 +4,9 @@ import {
   DEFAULT_TITLE,
   formatDocumentTitle,
   serializeStructuredData,
+  SITE_BUSINESS_INFO,
+  SITE_CONTACT_EMAIL,
+  SITE_FTC_BUSINESS_INFO_URL,
   SITE_STRUCTURED_DATA,
   SITE_URL,
 } from '@/constants/site';
@@ -54,5 +57,44 @@ describe('serializeStructuredData', () => {
 
     expect(serialized).not.toContain('<');
     expect(JSON.parse(serialized)).toEqual(SITE_STRUCTURED_DATA);
+  });
+});
+
+describe('SITE_BUSINESS_INFO', () => {
+  it('전자상거래법이 요구하는 사업자 정보를 표시 순서대로 갖는다', () => {
+    expect(SITE_BUSINESS_INFO.map(({ label }) => label)).toEqual([
+      '상호',
+      '대표',
+      '사업자등록번호',
+      '통신판매업 신고번호',
+      '주소',
+      '전화',
+      '이메일',
+      '호스팅서비스 제공자',
+    ]);
+    expect(SITE_BUSINESS_INFO.every(({ value }) => value.length > 0)).toBe(
+      true,
+    );
+  });
+
+  it('공정위 사업자정보 주소는 사업자등록번호의 숫자로 만든다', () => {
+    const registrationNumber = SITE_BUSINESS_INFO.find(
+      ({ label }) => label === '사업자등록번호',
+    )?.value;
+
+    expect(SITE_FTC_BUSINESS_INFO_URL).toBe(
+      'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=2020455303',
+    );
+    expect(
+      SITE_FTC_BUSINESS_INFO_URL.endsWith(
+        `wrkr_no=${registrationNumber?.replaceAll('-', '')}`,
+      ),
+    ).toBe(true);
+  });
+
+  it('사업자 정보의 이메일은 공식 문의 이메일과 같다', () => {
+    expect(
+      SITE_BUSINESS_INFO.find(({ label }) => label === '이메일')?.value,
+    ).toBe(SITE_CONTACT_EMAIL);
   });
 });

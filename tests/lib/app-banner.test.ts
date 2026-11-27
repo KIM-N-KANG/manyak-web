@@ -174,8 +174,9 @@ describe('resolveAppBannerVariant', () => {
     expect(resolve(UA.iosSafari, { isStandalone: true })).toBeNull();
   });
 
+  // `/about`은 없앤 서비스 안내 경로로, 이전 Android 버전이 WebView로 열어 계속 뺀다.
   it.each(['/about', '/terms', '/privacy'])(
-    '문서 화면 %s에는 띄우지 않는다',
+    '문서 화면과 없앤 서비스 안내 경로 %s에는 띄우지 않는다',
     (pathname) => {
       expect(resolve(UA.androidWebView, { pathname })).toBeNull();
     },
