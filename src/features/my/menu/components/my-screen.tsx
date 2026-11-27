@@ -22,6 +22,7 @@ import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
 import { NoticeMenuItem } from '@/features/notices/_shared/components/notice-menu-item';
 import { track } from '@/observability/analytics';
 
+import { BusinessInfoFooter } from './business-info-footer';
 import { CreditBalanceCard } from './credit-balance-card';
 import { ProfileHeader } from './profile-header';
 import { ThemeMenuItem } from './theme-menu-item';
@@ -123,6 +124,7 @@ export function MyScreen() {
           />
         </section>
       )}
+      <BusinessInfoFooter />
     </main>
   );
 }

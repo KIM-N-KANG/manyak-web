@@ -4,6 +4,8 @@ import {
   DEFAULT_TITLE,
   formatDocumentTitle,
   serializeStructuredData,
+  SITE_BUSINESS_INFO,
+  SITE_CONTACT_EMAIL,
   SITE_STRUCTURED_DATA,
   SITE_URL,
 } from '@/constants/site';
@@ -54,5 +56,28 @@ describe('serializeStructuredData', () => {
 
     expect(serialized).not.toContain('<');
     expect(JSON.parse(serialized)).toEqual(SITE_STRUCTURED_DATA);
+  });
+});
+
+describe('SITE_BUSINESS_INFO', () => {
+  it('전자상거래법이 요구하는 사업자 정보를 표시 순서대로 갖는다', () => {
+    expect(SITE_BUSINESS_INFO.map(({ label }) => label)).toEqual([
+      '상호',
+      '대표',
+      '사업자등록번호',
+      '통신판매업 신고번호',
+      '주소',
+      '전화',
+      '이메일',
+    ]);
+    expect(SITE_BUSINESS_INFO.every(({ value }) => value.length > 0)).toBe(
+      true,
+    );
+  });
+
+  it('사업자 정보의 이메일은 공식 문의 이메일과 같다', () => {
+    expect(
+      SITE_BUSINESS_INFO.find(({ label }) => label === '이메일')?.value,
+    ).toBe(SITE_CONTACT_EMAIL);
   });
 });
