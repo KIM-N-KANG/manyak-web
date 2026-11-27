@@ -23,16 +23,14 @@ export function BusinessInfoFooter() {
   return (
     <footer className="px-4 pt-12 pb-4 text-xs text-foreground-secondary">
       <div className="flex flex-col gap-3 border-t border-border pt-4">
-        <address className="not-italic">
-          <dl className="flex flex-wrap gap-x-3 gap-y-1 break-keep">
-            {SITE_BUSINESS_INFO.map(({ label, value }) => (
-              <div key={label} className="flex gap-1">
-                <dt>{label}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </address>
+        <dl className="flex flex-wrap gap-x-3 gap-y-1 break-keep">
+          {SITE_BUSINESS_INFO.map(({ label, value }) => (
+            <div key={label} className="flex gap-1">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
         <nav aria-label="약관 및 정책" className="flex items-center gap-2">
           <Link
             href={APP_PATH.TERMS}

@@ -85,7 +85,11 @@ describe('SITE_BUSINESS_INFO', () => {
     expect(SITE_FTC_BUSINESS_INFO_URL).toBe(
       'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=2020455303',
     );
-    expect(registrationNumber?.replaceAll('-', '')).toBe('2020455303');
+    expect(
+      SITE_FTC_BUSINESS_INFO_URL.endsWith(
+        `wrkr_no=${registrationNumber?.replaceAll('-', '')}`,
+      ),
+    ).toBe(true);
   });
 
   it('사업자 정보의 이메일은 공식 문의 이메일과 같다', () => {
