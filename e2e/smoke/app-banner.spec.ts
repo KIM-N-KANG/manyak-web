@@ -137,7 +137,8 @@ test.describe('Android 브라우저', () => {
   test('문서 화면에는 띄우지 않고 접속으로 세지 않는다 (ONBD-BANNER-12)', async ({
     page,
   }) => {
-    for (const path of [APP_PATH.TERMS, APP_PATH.PRIVACY]) {
+    // `/about`은 없앤 서비스 안내 경로로, 이전 Android 버전이 WebView로 열어 계속 뺀다.
+    for (const path of [APP_PATH.TERMS, APP_PATH.PRIVACY, '/about']) {
       await page.goto(path);
       await page.waitForLoadState('networkidle');
       await expect(banner(page)).toBeHidden();
