@@ -381,7 +381,7 @@ describe('법적 문서 콘텐츠', () => {
 
     expect(text).toContain('나그네랩(대표 강경현, 이하 "운영자")');
     expect(text).toContain(
-      '운영자를 나그네랩으로 바꾸는 제1조, 제3조와 제16조는 2026-12-04부터 시행',
+      '운영자를 나그네랩으로 바꾸는 제1조, 제3조, 제16조와 다음 문단의 승계 규정은 2026-12-04부터 시행',
     );
     expect(text).toContain('같은 날 나그네랩이 이어받습니다');
     expect(text).toContain('마이 화면 하단에서 확인할 수 있습니다');
@@ -396,7 +396,11 @@ describe('법적 문서 콘텐츠', () => {
       '개인정보 보호책임자·열람청구 담당자: 강경현(나그네랩 대표)',
     );
     expect(text).toContain('전송자: 마냑 운영자 나그네랩');
-    expect(text).toContain('같은 날 나그네랩으로 이전됩니다');
+    expect(text).toContain('같은 날 위의 나그네랩으로 이전됩니다');
+    expect(text).toContain(
+      '주소: 경기도 용인시 기흥구 서천동로21번길 6-5, 3층 303호',
+    );
+    expect(text).toContain('전화번호: 010-8126-6089');
     expect(text).toContain('2026-12-03까지 마이 > 회원 탈퇴로 탈퇴하거나');
     expect(text).not.toContain('사업자 정보는 별도로');
     expect(text).not.toContain('개인 사이드 프로젝트');
