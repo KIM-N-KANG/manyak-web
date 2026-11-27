@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import {
-  InformationCircleIcon,
   Logout03Icon,
   MailEdit01Icon,
   Notification01Icon,
@@ -93,12 +92,6 @@ export function MyScreen() {
         <div className="mb-2 px-4">
           <Label>기타</Label>
         </div>
-        <MyMenuItem
-          icon={InformationCircleIcon}
-          label="서비스 안내"
-          href={APP_PATH.ABOUT}
-          newTab
-        />
         <MyMenuItem
           icon={MailEdit01Icon}
           label="피드백"

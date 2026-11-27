@@ -28,7 +28,8 @@ test.describe('검색 크롤러 색인', () => {
     const body = await response.text();
 
     expect(body).toContain('<loc>https://manyak.app/</loc>');
-    expect(body).toContain('<loc>https://manyak.app/about</loc>');
+    expect(body).toContain('<loc>https://manyak.app/terms</loc>');
+    expect(body).not.toContain('<loc>https://manyak.app/about</loc>');
   });
 
   test('오리지널로 확인되지 않는 스토리 상세는 색인을 막는다', async ({

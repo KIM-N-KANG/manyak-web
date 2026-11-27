@@ -137,7 +137,7 @@ test.describe('Android 브라우저', () => {
   test('문서 화면에는 띄우지 않고 접속으로 세지 않는다 (ONBD-BANNER-12)', async ({
     page,
   }) => {
-    for (const path of [APP_PATH.TERMS, APP_PATH.PRIVACY, APP_PATH.ABOUT]) {
+    for (const path of [APP_PATH.TERMS, APP_PATH.PRIVACY]) {
       await page.goto(path);
       await page.waitForLoadState('networkidle');
       await expect(banner(page)).toBeHidden();

@@ -65,11 +65,17 @@ export const ANDROID_PLAY_STORE_URL = buildPlayStoreUrl(
 );
 
 /**
+ * 없앤 서비스 안내 화면의 경로다. 이전 Android 버전이 마이의 서비스 안내 메뉴로 이 주소를
+ * WebView에서 열기 때문에, 미존재 안내 위에 앱 열기 배너가 뜨지 않도록 제외 목록에 남긴다.
+ */
+const LEGACY_SERVICE_INFO_PATH = '/about';
+
+/**
  * 배너를 띄우지 않는 경로다. 문서 화면은 Android 앱 WebView가 열어 앱 안에서 앱 열기를
  * 권하지 않도록 뺀다.
  */
 const EXCLUDED_PATHS: readonly string[] = [
-  APP_PATH.ABOUT,
+  LEGACY_SERVICE_INFO_PATH,
   APP_PATH.TERMS,
   APP_PATH.PRIVACY,
   APP_PATH.APP,
