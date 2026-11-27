@@ -11,6 +11,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { signOut, useSession } from 'next-auth/react';
 
+import { BusinessInfoFooter } from '@/components/layout/business-info-footer';
 import { Label } from '@/components/ui/label';
 import { APP_PATH } from '@/constants/app-path';
 import { clearLocalMemberState } from '@/features/auth/_shared/utils/clear-local-member-state';
@@ -21,7 +22,6 @@ import { PUSH_SETTINGS_COPY } from '@/features/my/_shared/constants/push-copy';
 import { NoticeMenuItem } from '@/features/notices/_shared/components/notice-menu-item';
 import { track } from '@/observability/analytics';
 
-import { BusinessInfoFooter } from './business-info-footer';
 import { CreditBalanceCard } from './credit-balance-card';
 import { ProfileHeader } from './profile-header';
 import { ThemeMenuItem } from './theme-menu-item';
